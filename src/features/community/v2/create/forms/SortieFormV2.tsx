@@ -31,6 +31,9 @@ import {
 import { useCreateSheet } from '../CreateSheetContext';
 import { createEventWithPostV2, toStartsAt } from '../createRpc';
 import { ChipsFieldV2, SegmentedFieldV2 } from '../fields/ChipsV2';
+import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
+import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
+import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { DateFieldV2, TimeFieldV2 } from '../fields/DateFieldV2';
 import { NumberFieldV2, NumberStepperV2 } from '../fields/NumberStepperV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
@@ -168,15 +171,24 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
   const clubName = typeof prefill?.clubName === 'string' ? prefill.clubName : '';
   return (
     <>
-      <ChipsFieldV2
-        name="activity"
-        label="Activité"
-        options={ACTIVITY_OPTIONS.map((option) => ({
-          value: option.value,
-          label: option.label,
-          icon: ACTIVITY_ICONS[option.value],
-        }))}
-      />
+      <div className="lkdv-cv2c-row-2">
+        <SelectDropdownV2
+          name="activity"
+          label="Activité"
+          options={ACTIVITY_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        />
+        <SelectDropdownV2
+          name="recurrence"
+          label="Récurrence"
+          options={RECURRENCES.map((entry) => ({
+            value: entry.value,
+            label: entry.label,
+          }))}
+        />
+      </div>
       <TextFieldV2
         name="title"
         label="Titre"
@@ -188,8 +200,9 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
         name="location"
         label="Lieu"
         placeholder="Chamonix…"
+        latName="meetingLat"
+        lngName="meetingLng"
         required
-        hint="Le lieu affiché sur le billet de la sortie."
       />
       {clubName ? (
         <p className="lkdv-cv2c-recap lkdv-cv2-card">
@@ -200,18 +213,18 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
       ) : null}
       <fieldset className="lkdv-cv2c-fset" data-testid="cv2-sortie-rdv">
         <legend className="lkdv-cv2-field-label">Rendez-vous</legend>
-        <TextFieldV2
-          name="meetingPoint"
-          label="Point de rendez-vous"
-          placeholder="Parking de la Flégère, 8 h"
-          maxLength={120}
-        />
         <MeetingMapV2
           lat={values.meetingLat}
           lng={values.meetingLng}
           onChange={(lat, lng) => {
             form.setValue('meetingLat', lat, { shouldDirty: true, shouldValidate: true });
             form.setValue('meetingLng', lng, { shouldDirty: true, shouldValidate: true });
+          }}
+          onResolveAddress={(labelText) => {
+            form.setValue('meetingPoint', labelText, { shouldDirty: true, shouldValidate: true });
+            if (!form.getValues('location')?.trim()) {
+              form.setValue('location', labelText, { shouldDirty: true, shouldValidate: true });
+            }
           }}
         />
         {/* FID-064 — fieldset « Rendez-vous » de la maquette (L3120-3124) :
@@ -230,23 +243,8 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
         <TimeFieldV2
           name="endTime"
           label="Fin (optionnel)"
-          hint="Laisse vide si la durée est libre."
         />
       </fieldset>
-      <SegmentedFieldV2
-        label="Récurrence"
-        options={RECURRENCES.map((entry) => ({ ...entry }))}
-        value={values.recurrence}
-        onChange={(value) =>
-          form.setValue('recurrence', value as SortieFormValuesV2['recurrence'], {
-            shouldDirty: true,
-            shouldValidate: true,
-          })
-        }
-      />
-      <p className="lkdv-cv2-field-hint">
-        La règle de récurrence est enregistrée, les occurrences ne sont pas générées.
-      </p>
     </>
   );
 }
@@ -468,44 +466,15 @@ function ItineraireStep() {
 function ParticipantsStep() {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
-  const [clubs, setClubs] = useState<ClubOption[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const { user } = useCreateSheet();
+  const { user, requestCreate } = useCreateSheet();
+  const myClubs = useMyClubsV2(user?.id ?? null);
+  const [visMode, setVisMode] = useState<'public' | 'private' | 'club'>(() =>
+    values.clubId ? 'club' : 'public',
+  );
 
-  const loadOptions = async () => {
-    if (!user || loading || clubs) return;
-    setLoading(true);
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('club_members')
-        .select('club_id, clubs(id, name, slug)')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .limit(20);
-      const clubRows = Array.isArray(data) ? data : [];
-      setClubs(
-        clubRows
-          .map((row) => {
-            const raw = (row as { clubs?: unknown }).clubs;
-            const club = Array.isArray(raw) ? raw[0] : raw;
-            if (!club || typeof club !== 'object') return null;
-            const record = club as Record<string, unknown>;
-            if (typeof record.id !== 'string') return null;
-            return {
-              id: record.id,
-              name: String(record.name ?? ''),
-              slug: String(record.slug ?? ''),
-            };
-          })
-          .filter((entry): entry is ClubOption => entry !== null)
-      );
-    } catch {
-      setClubs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (visMode === 'club') void myClubs.load();
+  }, [myClubs, visMode]);
 
   const percentage =
     values.maxParticipants > 0 ? Math.min(100, Math.round((1 / values.maxParticipants) * 100)) : 0;
@@ -513,8 +482,6 @@ function ParticipantsStep() {
   return (
     <>
       <NumberStepperV2 name="maxParticipants" label="Participants maximum" min={2} max={50} />
-      {/* FID-052 : carte « Aperçu de la jauge » de la maquette (L3133), encadrée
-          comme les autres cartes du formulaire. */}
       <div className="lkdv-cv2-card">
         <span className="lkdv-cv2-eyebrow">Aperçu de la jauge</span>
         <div className="lkdv-cv2c-capacity-row">
@@ -541,46 +508,37 @@ function ParticipantsStep() {
         </span>
         Activer la liste d’attente quand c’est complet
       </button>
-      <div className="lkdv-cv2c-inline-add">
-        <button
-          type="button"
-          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-          onClick={() => void loadOptions()}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
-          ) : (
-            <MapPin size={13} aria-hidden="true" />
-          )}
-          Choisir un club et un kit
-        </button>
-      </div>
-      {clubs && clubs.length > 0 ? (
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Club organisateur (optionnel)</span>
-          <div className="lkdv-cv2-chips">
-            {clubs.map((club) => (
-              <button
-                key={club.id}
-                type="button"
-                className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-                aria-pressed={values.clubId === club.id}
-                onClick={() =>
-                  form.setValue('clubId', values.clubId === club.id ? '' : club.id, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-              >
-                {club.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <VisibilityPickerV2
+        name="clubId"
+        label="Visibilité"
+        value={visMode}
+        onSelectValue={(next) => {
+          const mode = next as 'public' | 'private' | 'club';
+          setVisMode(mode);
+          if (mode !== 'club') {
+            form.setValue('clubId', '', { shouldDirty: true, shouldValidate: true });
+          }
+        }}
+        clubs={myClubs.clubs ?? []}
+        clubsLoading={myClubs.loading}
+        clubsError={myClubs.error}
+        onCreateClub={() => requestCreate('club')}
+      />
     </>
   );
+}
+
+interface SortieKitCardOption {
+  id: string;
+  name: string;
+  description?: string | null;
+  total_weight_g?: number | null;
+  field_proven_count?: number | null;
+}
+
+function formatKitWeight(grams?: number | null): string {
+  if (!grams || grams <= 0) return 'Poids n.c.';
+  return grams >= 1000 ? `${(grams / 1000).toFixed(1).replace('.', ',')} kg` : `${grams} g`;
 }
 
 function SecuriteStep() {
@@ -588,22 +546,25 @@ function SecuriteStep() {
   const values = form.watch();
   const ski = values.activity === 'ski';
   const { user } = useCreateSheet();
-  const [kits, setKits] = useState<KitOption[] | null>(null);
+  const [kits, setKits] = useState<SortieKitCardOption[] | null>(null);
+  const [kitsOpen, setKitsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const loadKits = async () => {
-    if (!user || loading || kits) return;
+  const openKitRail = async () => {
+    const nextOpen = !kitsOpen;
+    setKitsOpen(nextOpen);
+    if (!nextOpen || !user || loading || kits) return;
     setLoading(true);
     try {
       const supabase = createClient();
       const { data } = await supabase
         .from('materiel_kits')
-        .select('id, name')
+        .select('id, name, description, total_weight_g, field_proven_count')
         .eq('user_id', user.id)
         .eq('is_trashed', false)
         .order('updated_at', { ascending: false })
         .limit(20);
-      setKits(Array.isArray(data) ? (data as KitOption[]) : []);
+      setKits(Array.isArray(data) ? (data as SortieKitCardOption[]) : []);
     } catch {
       setKits([]);
     } finally {
@@ -611,17 +572,32 @@ function SecuriteStep() {
     }
   };
 
+  const applySafetyPreset = (preset: 'rando' | 'ski' | 'bivouac') => {
+    const items =
+      preset === 'ski'
+        ? ['DVA', 'Pelle', 'Sonde', 'Couverture de survie']
+        : preset === 'bivouac'
+          ? ['Lampe frontale', 'Couverture de survie', 'Trousse de secours', 'Eau 1,5 L']
+          : ['Eau 1,5 L', 'Coupe-vent', 'Trousse de secours'];
+    const available = items.filter((item) => (SAFETY_CHIPS as readonly string[]).includes(item));
+    form.setValue('safetyChecklist', available.length > 0 ? available : items, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
   return (
     <>
-      <ChipsFieldV2
+      <SelectDropdownV2
         name="safetyChecklist"
         label={ski ? 'Check-list de sécurité *' : 'Check-list de sécurité'}
         multiple
+        placeholder="Choisir le matériel de sécurité…"
         options={SAFETY_CHIPS.map((entry) => ({ value: entry, label: entry }))}
         hint={
           ski
-            ? 'Ski de rando : le DVA est obligatoire dans la check-list.'
-            : 'Choisis ce que chacun doit emporter.'
+            ? 'Ski de rando : le DVA est obligatoire.'
+            : undefined
         }
       />
       <TextAreaFieldV2
@@ -633,68 +609,76 @@ function SecuriteStep() {
       {/* FID-064 : « Matériel requis » sur l'étape Sécurité (maquette L3138),
           en chips de kits existants. */}
       <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Matériel requis</span>
-        <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Depuis un kit">
+        <div className="lkdv-cv2c-field-head">
+          <span className="lkdv-cv2-field-label">Matériel requis</span>
           <button
             type="button"
-            role="radio"
-            aria-checked={!values.kitId}
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => form.setValue('kitId', '', { shouldDirty: true, shouldValidate: true })}
-          >
-            Aucun kit
-          </button>
-          {kits?.map((kit) => (
-            <button
-              key={kit.id}
-              type="button"
-              role="radio"
-              aria-checked={values.kitId === kit.id}
-              className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-              onClick={() =>
-                form.setValue('kitId', values.kitId === kit.id ? '' : kit.id, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            >
-              <Mountain size={12} aria-hidden="true" />
-              {kit.name}
-            </button>
-          ))}
-        </div>
-        {kits === null ? (
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => void loadKits()}
+            className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+            onClick={() => void openKitRail()}
+            aria-expanded={kitsOpen}
           >
             {loading ? (
-              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
+              <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" />
             ) : (
-              <Mountain size={13} aria-hidden="true" />
+              <Mountain size={12} aria-hidden="true" />
             )}
-            Choisir un kit
+            {kitsOpen ? 'Fermer les kits' : 'Ajouter un kit'}
           </button>
+        </div>
+        {kitsOpen ? (
+          <div className="lkdv-cv2c-hrail lkdv-cv2c-kitcard-rail" role="radiogroup" aria-label="Mes kits">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={!values.kitId}
+              className="lkdv-cv2c-kitcard is-none"
+              data-active={!values.kitId}
+              onClick={() => form.setValue('kitId', '', { shouldDirty: true, shouldValidate: true })}
+            >
+              <b>Aucun kit</b>
+              <small>Sans liste liée</small>
+            </button>
+            {(kits ?? []).map((kit) => {
+              const active = values.kitId === kit.id;
+              return (
+                <button
+                  key={kit.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className="lkdv-cv2c-kitcard"
+                  data-active={active}
+                  onClick={() =>
+                    form.setValue('kitId', active ? '' : kit.id, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <div className="lkdv-cv2c-kitcard-top">
+                    <span className="lkdv-cv2c-kitcard-ico" aria-hidden="true">
+                      <Mountain size={14} />
+                    </span>
+                    <span className="lkdv-cv2c-kitcard-weight">{formatKitWeight(kit.total_weight_g)}</span>
+                  </div>
+                  <b className="lkdv-cv2c-kitcard-name">{kit.name}</b>
+                  <small className="lkdv-cv2c-kitcard-meta">
+                    {kit.field_proven_count && kit.field_proven_count > 0
+                      ? `${kit.field_proven_count} sortie${kit.field_proven_count > 1 ? 's' : ''} éprouvée${kit.field_proven_count > 1 ? 's' : ''}`
+                      : kit.description?.slice(0, 36) || 'Kit personnel'}
+                  </small>
+                </button>
+              );
+            })}
+          </div>
         ) : null}
       </div>
-      {/* FID-063 : le switch « Publier une annonce dans le fil » est conservé
-          (la maquette publie bien une annonce avec la sortie, L3140) ; le
-          programme reste sur l'étape Sécurité. */}
       <TextAreaFieldV2
         name="description"
         label="Programme"
         placeholder="Le programme, le matériel, le rythme…"
         maxLength={1500}
       />
-      {/* FID-063 / J-14 : le switch « Publier une annonce dans le fil » (ajout
-          V2 sans équivalent maquette) est **retiré du flux** ; la maquette
-          publie l'annonce avec la sortie (`commit`), et la RPC l'écrit dans la
-          même transaction. */}
-      <p className="lkdv-cv2-field-hint">
-        Une annonce part dans le fil avec la sortie, dans la même transaction : si elle échoue, rien
-        n’est créé.
-      </p>
     </>
   );
 }
@@ -772,27 +756,12 @@ function SortieBody({
 
   return (
     <>
-      <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.active ? (
-        <SheetPreview>
-          <div className="lkdv-cv2c-ticket-preview" inert aria-hidden="true">
-            <EventTicket event={ticket} variant="preview" />
-            {weatherState === 'loading' ? (
-              <p className="lkdv-cv2c-ticket-weather">
-                <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> Météo prévue…
-              </p>
-            ) : weather ? (
-              <p className="lkdv-cv2c-ticket-weather">
-                <CloudSun size={13} aria-hidden="true" /> Météo prévue : {weather}
-              </p>
-            ) : weatherState === 'off' ? (
-              <p className="lkdv-cv2c-ticket-weather">
-                Météo pas encore disponible pour cette date (prévisions à 14 jours).
-              </p>
-            ) : null}
-          </div>
+        <SheetPreview compact={false}>
+          <EventTicket event={ticket} variant="preview" />
         </SheetPreview>
       ) : null}
+      <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.step === 0 ? <ActivityPlaceStep prefill={prefill} /> : null}
       {api.step === 1 ? <ItineraireStep /> : null}
       {api.step === 2 ? <ParticipantsStep /> : null}

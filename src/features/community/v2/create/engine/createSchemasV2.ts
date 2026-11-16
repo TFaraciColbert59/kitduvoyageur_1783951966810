@@ -31,7 +31,7 @@ export type PostFormatV2 = (typeof POST_FORMATS_V2)[number];
 export const POST_AUDIENCES_V2 = ['public', 'abonnies', 'club'] as const;
 export type PostAudienceV2 = (typeof POST_AUDIENCES_V2)[number];
 
-export const STORY_AUDIENCES_V2 = ['public', 'abonnies', 'close_friends', 'only_me'] as const;
+export const STORY_AUDIENCES_V2 = ['public', 'abonnies', 'close_friends', 'only_me', 'club'] as const;
 export type StoryAudienceV2 = (typeof STORY_AUDIENCES_V2)[number];
 
 export const STORY_REPLY_POLICIES_V2 = ['everyone', 'followers', 'off'] as const;
@@ -66,7 +66,7 @@ export type SortieRecurrenceV2 = (typeof SORTIE_RECURRENCES_V2)[number];
 export const KIT_SEASONS_V2 = ['toute_saison', 'printemps', 'ete', 'automne', 'hiver'] as const;
 export type KitSeasonV2 = (typeof KIT_SEASONS_V2)[number];
 
-export const CARNET_VISIBILITIES_V2 = ['public', 'friends', 'private'] as const;
+export const CARNET_VISIBILITIES_V2 = ['public', 'friends', 'private', 'club'] as const;
 export type CarnetVisibilityV2 = (typeof CARNET_VISIBILITIES_V2)[number];
 
 export const CARNET_MOMENT_KINDS_V2 = ['photo', 'rencontre', 'nuit', 'depense', 'objet', 'espece'] as const;
@@ -78,8 +78,47 @@ export type ClubPrivacyV2 = (typeof CLUB_PRIVACIES_V2)[number];
 /** Limites de médias (`03 § 7`), réexportées pour l'UI. */
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const STORY_MEDIA_MAX_BYTES = 25 * 1024 * 1024;
-export const POST_MEDIA_MAX_COUNT = 10;
+export const POST_MEDIA_MAX_COUNT = 15;
 export const STORY_MAX_DURATION_MS = 60_000;
+
+export interface PhotoModifiersV2 {
+  // Catégorie 1 : Lumière (5 modificateurs)
+  brightness: number; // 50–150%, défaut 100%
+  contrast: number;   // 50–150%, défaut 100%
+  exposure: number;   // -50–50%, défaut 0%
+  shadows: number;    // -50–50%, défaut 0%
+  warmth: number;     // -50–50%, défaut 0%
+  // Catégorie 2 : Couleur (5 modificateurs)
+  saturation: number;  // 0–200%, défaut 100%
+  hue: number;         // -180–180°, défaut 0°
+  temperature: number; // -50–50%, défaut 0%
+  fade: number;        // 0–100%, défaut 0%
+  vibrance: number;    // -50–50%, défaut 0%
+  // Catégorie 3 : Détails & Géométrie (5 modificateurs)
+  rotation: number; // -45–45°, défaut 0°
+  vignette: number; // 0–100%, défaut 0%
+  blur: number;     // 0–8px, défaut 0px
+  zoom: number;     // 100–150%, défaut 100%
+  flipX: boolean;   // boolean toggle, défaut false
+}
+
+export const DEFAULT_PHOTO_MODIFIERS: PhotoModifiersV2 = {
+  brightness: 100,
+  contrast: 100,
+  exposure: 0,
+  shadows: 0,
+  warmth: 0,
+  saturation: 100,
+  hue: 0,
+  temperature: 0,
+  fade: 0,
+  vibrance: 0,
+  rotation: 0,
+  vignette: 0,
+  blur: 0,
+  zoom: 100,
+  flipX: false,
+};
 
 export type MediaCropV2 = 'original' | '4:5' | '1:1' | '9:16' | '3:1';
 export type MediaStatusV2 = 'local' | 'uploading' | 'uploaded' | 'error';
@@ -106,6 +145,7 @@ export interface MediaItemV2 {
   storageBucket: string;
   storagePath: string;
   crop: MediaCropV2;
+  modifiers?: PhotoModifiersV2;
   /** Story vidéo : extrait publié, en millisecondes. */
   durationMs?: number;
   trimStartMs?: number;
@@ -164,11 +204,14 @@ export interface KitItemV2 {
 export interface CarnetMomentV2 {
   id: string;
   kind: CarnetMomentKindV2;
+  title?: string;
   /** Heure `HH:MM`, vide si non renseignée. */
   time: string;
   text: string;
   place: string;
   photo: MediaItemV2 | null;
+  media?: MediaItemV2[];
+  encounters?: string[];
 }
 
 export interface CarnetNightV2 {
@@ -395,6 +438,11 @@ export const postSchemaV2 = z
     locationLng: z.number().nullable().default(null),
     tags: tagArray,
     mentions: handleArray,
+    allowComments: z.boolean().default(true),
+    allowLikes: z.boolean().default(true),
+    scheduleEnabled: z.boolean().default(false),
+    scheduleDate: z.string().default(''),
+    scheduleTime: z.string().default('09:00'),
     clientRequestId: clientRequestIdSchema,
   })
   .superRefine((value, ctx) => {
@@ -509,6 +557,7 @@ export const storySchemaV2 = z
     caption: z.string().max(280, '280 caractères maximum.').default(''),
     altText: z.string().max(200, '200 caractères maximum.').default(''),
     audience: z.enum(STORY_AUDIENCES_V2, { error: 'Choisis une audience.' }).default('public'),
+    clubId: z.string().default(''),
     replyPolicy: z.enum(STORY_REPLY_POLICIES_V2, { error: 'Choisis une politique de réponse.' }).default('everyone'),
     allowReshare: z.boolean().default(true),
     textLayers: z.array(storyTextLayerSchema).max(5, '5 textes maximum.').default([]),
@@ -662,6 +711,7 @@ export const kitSchemaV2 = z
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     season: z.enum(KIT_SEASONS_V2, { error: 'Choisis une saison.' }).default('toute_saison'),
     isPublic: z.boolean().default(false),
+    clubId: z.string().default(''),
     cover: mediaArray(1).default([]),
     items: z.array(kitItemSchema).default([]),
     clientRequestId: clientRequestIdSchema,
@@ -743,8 +793,9 @@ export type ClubFormValuesV2 = z.infer<typeof clubSchemaV2>;
 
 const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
 
-const carnetMomentSchema = z.object({
+export const carnetMomentSchema = z.object({
   id: z.string(),
+  title: z.string().default(''),
   kind: momentKindSchema,
   time: z
     .string()
@@ -753,15 +804,17 @@ const carnetMomentSchema = z.object({
   text: z.string().max(500, '500 caractères maximum.').default(''),
   place: z.string().max(120, '120 caractères maximum.').default(''),
   photo: mediaItemSchema.nullable().default(null),
+  media: z.array(mediaItemSchema).max(5).default([]),
+  encounters: z.array(z.string()).default([]),
 });
 
-const carnetNightSchema = z.object({
+export const carnetNightSchema = z.object({
   name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
   type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
   infos: z.string().max(300, '300 caractères maximum.').default(''),
 });
 
-const carnetDaySchema = z.object({
+export const carnetDaySchema = z.object({
   id: z.string(),
   dayNumber: z.number().int().min(1).max(60),
   title: z.string().max(120, '120 caractères maximum.').default(''),
@@ -770,7 +823,7 @@ const carnetDaySchema = z.object({
     .default('')
     .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
   night: carnetNightSchema.nullable().default(null),
-  moments: z.array(carnetMomentSchema).max(12, '12 moments par jour maximum.').default([]),
+  moments: z.array(carnetMomentSchema).max(100, '100 moments par jour maximum.').default([]),
 });
 
 const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
@@ -792,6 +845,7 @@ export const carnetSchemaV2 = z
     endDate: optionalDate,
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     visibility: z.enum(CARNET_VISIBILITIES_V2, { error: 'Choisis une visibilité.' }).default('private'),
+    clubId: z.string().default(''),
     nbVoyageurs: z
       .number()
       .int()
@@ -830,7 +884,17 @@ export const carnetSchemaV2 = z
         message: 'La date de fin ne peut pas précéder la date de début.',
       });
     }
-    if (value.days.some((day) => day.moments.some((moment) => !moment.text.trim() && !moment.photo))) {
+    if (
+      value.days.some((day) =>
+        day.moments.some(
+          (moment) =>
+            !moment.text.trim() &&
+            !(moment.title && moment.title.trim()) &&
+            !moment.photo &&
+            (!moment.media || moment.media.length === 0),
+        ),
+      )
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['days'],
@@ -859,6 +923,7 @@ const defaultsFactories = {
     format: 'photo',
     audience: 'public',
     clubId: '',
+    clubId: '',
     media: [],
     title: '',
     content: '',
@@ -874,6 +939,7 @@ const defaultsFactories = {
     caption: '',
     altText: '',
     audience: 'public',
+    clubId: '',
     replyPolicy: 'everyone',
     allowReshare: true,
     textLayers: [],
@@ -917,6 +983,7 @@ const defaultsFactories = {
     description: '',
     season: 'toute_saison',
     isPublic: false,
+    clubId: '',
     cover: [],
     items: [],
     clientRequestId: newClientRequestId(),
@@ -946,6 +1013,7 @@ const defaultsFactories = {
     endDate: '',
     description: '',
     visibility: 'private',
+    clubId: '',
     nbVoyageurs: 1,
     nbJours: 3,
     isCollaborative: false,

@@ -481,28 +481,14 @@ export function CreateFormEngineV2<T extends FieldValues>({
   };
 
   const summary = errorCount > 0 ? (
-    <button
-      type="button"
-      className="lkdv-cv2-error-summary lkdv-cv2c-error-summary"
-      onClick={() => {
-        const first = firstFieldError(form.formState.errors);
-        if (first) focusField(first.path);
-      }}
-      aria-label={`${errorCounterLabel(errorCount)}. Aller au premier champ à corriger.`}
+    <span
+      className="lkdv-cv2c-sr-only"
+      role="status"
+      aria-live="polite"
       data-testid="cv2-error-summary"
     >
-      <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
-        <path
-          d="M12 4l9 16H3zM12 10v4M12 17v.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
       {errorCounterLabel(errorCount)}
-    </button>
+    </span>
   ) : null;
 
   const keyboardGuard = (event: React.KeyboardEvent) => {

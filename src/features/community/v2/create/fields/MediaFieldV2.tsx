@@ -331,7 +331,7 @@ export function MediaFieldV2({
       required={required}
       /* Compteur de la maquette pour les listes (« 1 / 10 », HTML L2821) ;
          inutile pour un média unique (avatar, bannière, couverture). */
-      counter={max > 1 ? { value: items.length, max } : null}
+      counter={null}
     >
       {({ id, describedBy, invalid }) => (
         <div className="lkdv-cv2c-media">

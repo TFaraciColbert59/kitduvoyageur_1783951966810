@@ -121,21 +121,41 @@ export function PlaceFieldV2({
   };
 
   const applyCurrentPosition = async () => {
-    let cancelled = false;
     setGeoState('loading');
     setNotice(null);
     try {
-      const position = await getCurrentGeoPosition({ enableHighAccuracy: true, timeout: 10_000 });
-      if (cancelled) return;
-      const place = {
-        label: value.trim() || 'Ma position',
+      const position = await getCurrentGeoPosition({ enableHighAccuracy: true, timeout: 6_000 });
+      let resolvedLabel = value.trim();
+      if (!resolvedLabel) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${position.latitude}&lon=${position.longitude}&zoom=13`,
+            { headers: { Accept: 'application/json' } },
+          );
+          if (res.ok) {
+            const json = (await res.json()) as {
+              address?: { city?: string; town?: string; village?: string; municipality?: string };
+              name?: string;
+            };
+            resolvedLabel =
+              json.address?.city ||
+              json.address?.town ||
+              json.address?.village ||
+              json.address?.municipality ||
+              json.name ||
+              '';
+          }
+        } catch {
+          /* fallback label */
+        }
+      }
+      applyPlace({
+        label: resolvedLabel || 'Ma position',
         lat: position.latitude,
         lng: position.longitude,
-      };
-      applyPlace(place);
+      });
       setGeoState('idle');
     } catch {
-      if (cancelled) return;
       setGeoState('error');
       setNotice('Position indisponible. Autorise la géolocalisation puis réessaie.');
     }

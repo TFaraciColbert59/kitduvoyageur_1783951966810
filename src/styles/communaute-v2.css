@@ -925,12 +925,12 @@ button.lkdv-cv2-tile:active {
   width: 100%;
   min-height: var(--cv2-field-height);
   margin: 0;
-  padding: 0 14px;
+  padding: 10px 14px;
   border: 0;
   border-radius: var(--cv2-field-radius);
   background: var(--cv2-field-bg);
   color: var(--lkv-text-primary);
-  font: 400 16px/1.35 var(--font-sans);
+  font: 400 15.5px/1.35 var(--font-sans);
   -webkit-appearance: none;
   appearance: none;
   box-shadow: var(--cv2-field-shadow), inset 0 0 0 0.5px var(--cv2-field-border);
@@ -938,7 +938,8 @@ button.lkdv-cv2-tile:active {
 
 .lkdv-cv2-input::placeholder {
   color: var(--lkv-text-muted);
-  opacity: 1;
+  opacity: 0.85;
+  line-height: 1.35;
 }
 
 .lkdv-cv2-input:focus,
@@ -951,9 +952,11 @@ button.lkdv-cv2-tile:active {
   box-shadow: var(--cv2-field-shadow), inset 0 0 0 1.5px var(--lkv-danger);
 }
 
-textarea.lkdv-cv2-input {
-  min-height: 112px;
-  padding: 12px 14px;
+textarea.lkdv-cv2-input,
+.lkdv-cv2-textarea {
+  min-height: 96px;
+  padding: 12px 14px !important;
+  line-height: 1.45 !important;
   resize: vertical;
 }
 

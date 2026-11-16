@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Toaster } from 'sonner';
 import { ExploreIcon } from '../explore/ExploreIcons';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
 import { SheetPreviewContext } from '../shared/SheetPreview';
@@ -413,6 +414,13 @@ export function CreateSheetV2({
 
   const stepHostsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [, bumpHostsVersion] = useState(0);
+  const attachStepHost = useCallback((stepIndex: number, element: HTMLDivElement | null) => {
+    if (stepHostsRef.current[stepIndex] === element) return;
+    stepHostsRef.current[stepIndex] = element;
+    if (element) {
+      queueMicrotask(() => bumpHostsVersion((version) => version + 1));
+    }
+  }, []);
   const miniPages = useMemo(
     () =>
       CREATE_KINDS_V2.map((kind, index) =>
@@ -420,20 +428,14 @@ export function CreateSheetV2({
           ? config.steps.map((step, stepIndex) => (
               <div
                 key={`${kind}-${step.id}`}
-                ref={(element) => {
-                  if (stepHostsRef.current[stepIndex] === element) return;
-                  stepHostsRef.current[stepIndex] = element;
-                  // Les hôtes arrivent après le premier rendu du formulaire :
-                  // ce rendu les fait connaître au moteur (portails d'étapes).
-                  if (element) bumpHostsVersion((version) => version + 1);
-                }}
+                ref={(element) => attachStepHost(stepIndex, element)}
                 className="lkdv-cv2c-step-host"
                 data-step-host={stepIndex}
               />
             ))
           : [],
       ),
-    [config.steps, kindIndex],
+    [attachStepHost, config.steps, kindIndex],
   );
 
   const capsureItems = useMemo(
@@ -468,18 +470,15 @@ export function CreateSheetV2({
           {activeNav.serverError}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-foot-actions">
-        {/* Maquette (`cr-foot .back`, HTML L1138-1144) : « Retour » reste
-            **visible et désactivé** à l'étape 1 — la spec § 4.1 le voulait masqué,
-            la maquette fait foi (item 2). */}
+      <div className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact">
         <button
           type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
+          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
+          aria-label="Retour"
           onClick={activeNav.goBack}
           disabled={activeNav.busy || !activeNav.canBack}
         >
-          <ChevronLeft size={15} aria-hidden="true" />
-          Retour
+          <ChevronLeft size={16} aria-hidden="true" />
         </button>
         <button
           type="button"
@@ -492,14 +491,10 @@ export function CreateSheetV2({
             ? 'Envoi…'
             : activeNav.busyLabel ??
               (activeNav.stepIndex >= activeNav.stepCount - 1
-                ? // Maquette L2715 : après échec serveur, l'action finale devient
-                  // « Réessayer » (même action) ; elle reprend son libellé
-                  // nominal dès que l'erreur est levée (FID-032).
-                  activeNav.serverError
+                ? activeNav.serverError
                   ? 'Réessayer'
                   : activeNav.finalLabel
                 : 'Suivant')}
-          {/* Chevron de la maquette (`.cr-foot .next`, HTML L1138-1142). */}
           <ChevronRight size={15} aria-hidden="true" />
         </button>
       </div>
@@ -594,7 +589,7 @@ export function CreateSheetV2({
 
   return (
     <CreateSheetContext.Provider value={contextValue}>
-      <SheetPreviewContext.Provider value={previewSlot}>
+      <SheetPreviewContext.Provider value={activeKind === 'sortie' || activeKind === 'post' ? previewSlot : null}>
         <CommunitySheetShell
           open={open}
           onClose={requestClose}
@@ -610,11 +605,12 @@ export function CreateSheetV2({
           resetKey={`${activeKind}:${prefillNonce}`}
           island={islandNode}
           className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
-          previewSlotRef={setPreviewSlot}
+          previewSlotRef={activeKind === 'sortie' || activeKind === 'post' ? setPreviewSlot : undefined}
         >
           <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
             {activeFormByKind[activeKind]}
           </div>
+          <Toaster position="top-center" richColors />
           <ConfirmDialogV2
             open={confirmClose}
             title="Fermer sans publier ?"

@@ -172,6 +172,12 @@ export function buildPostPayload(values: PostFormValuesV2): Record<string, unkno
       title: title || null,
       mentions: values.mentions,
       media_alts: mediaAlts(values.media),
+      allow_comments: values.allowComments ?? true,
+      allow_likes: values.allowLikes ?? true,
+      scheduled_at:
+        values.scheduleEnabled && values.scheduleDate
+          ? `${values.scheduleDate}T${values.scheduleTime || '09:00'}:00`
+          : null,
     },
     tags: values.tags,
     client_request_id: values.clientRequestId,
@@ -426,6 +432,11 @@ export function carnetPhotos(values: CarnetFormValuesV2): MediaItemV2[] {
   for (const day of values.days) {
     for (const moment of day.moments) {
       if (moment.photo) photos.push(moment.photo);
+      if (Array.isArray(moment.media)) {
+        for (const item of moment.media) {
+          if (item) photos.push(item);
+        }
+      }
     }
   }
   return photos;
@@ -456,13 +467,20 @@ export function buildCarnetPayload(
   const moments: Record<string, unknown>[] = [];
   for (const day of values.days) {
     for (const moment of day.moments) {
+      const momentMedia = [
+        ...(moment.photo ? [moment.photo] : []),
+        ...(Array.isArray(moment.media) ? moment.media : []),
+      ];
+      const firstUploaded = momentMedia.find((m) => m.status === 'uploaded' && m.url);
       moments.push({
         jour_numero: day.dayNumber,
         heure: moment.time || null,
+        title: moment.title?.trim() || null,
+        titre: moment.title?.trim() || null,
         citation: moment.text.trim() || null,
         auteur_nom: null,
         lieu: moment.place.trim() || null,
-        image_url: moment.photo?.status === 'uploaded' ? moment.photo.url : null,
+        image_url: moment.photo?.status === 'uploaded' ? moment.photo.url : (firstUploaded?.url ?? null),
         moment_timestamp: day.date
           ? `${day.date}T${moment.time || '12:00'}:00`
           : moment.time
@@ -470,6 +488,7 @@ export function buildCarnetPayload(
             : null,
         source: 'manuel',
         kind: moment.kind,
+        encounters: Array.isArray(moment.encounters) ? moment.encounters : [],
       });
     }
   }
@@ -477,8 +496,8 @@ export function buildCarnetPayload(
     .filter((photo) => photo.status === 'uploaded' && photo.url)
     .map((photo, index) => ({
       url: photo.url,
-      type: 'image',
-      caption: photo.alt.trim() || null,
+      type: photo.type?.startsWith('video/') ? 'video' : 'image',
+      caption: photo.alt?.trim() || null,
       position: index,
     }));
   const payload: Record<string, unknown> = {

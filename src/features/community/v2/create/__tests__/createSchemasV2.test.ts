@@ -263,6 +263,164 @@ describe('schémas V2 — une validation par étape', () => {
         ],
       }).success,
     ).toBe(false);
+
+    // Moment avec titre ou média valide
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: 'Bivouac au lac',
+                kind: 'photo',
+                time: '19:30',
+                text: '',
+                place: 'Lac Noir',
+                photo: null,
+                media: [],
+                encounters: ['Lucas', 'Sophie'],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Moment avec jusqu'à 5 médias
+    const testMedia = {
+      id: 'med-1',
+      name: 'photo.jpg',
+      type: 'image/jpeg',
+      size: 1000,
+      previewUrl: '',
+      url: 'https://example.test/photo.jpg',
+      alt: '',
+      cover: true,
+      status: 'uploaded' as const,
+      progress: 100,
+      storageBucket: 'carnet-media',
+      storagePath: 'u/photo.jpg',
+      crop: '1:1' as const,
+    };
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: '',
+                kind: 'photo',
+                time: '',
+                text: '',
+                place: '',
+                photo: null,
+                media: Array(5).fill(testMedia),
+                encounters: [],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Refus de > 5 médias par moment
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: '',
+                kind: 'photo',
+                time: '',
+                text: '',
+                place: '',
+                photo: null,
+                media: Array(6).fill(testMedia),
+                encounters: [],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    // Jusqu'à 100 moments par jour acceptés
+    const hundredMoments = Array.from({ length: 100 }, (_, idx) => ({
+      id: `m-${idx}`,
+      title: `Moment ${idx + 1}`,
+      kind: 'photo' as const,
+      time: '10:00',
+      text: '',
+      place: '',
+      photo: null,
+      media: [],
+      encounters: [],
+    }));
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: 'Jour 1',
+            date: '',
+            night: null,
+            moments: hundredMoments,
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Refus de > 100 moments par jour
+    const hundredAndOneMoments = Array.from({ length: 101 }, (_, idx) => ({
+      id: `m-${idx}`,
+      title: `Moment ${idx + 1}`,
+      kind: 'photo' as const,
+      time: '10:00',
+      text: '',
+      place: '',
+      photo: null,
+      media: [],
+      encounters: [],
+    }));
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: 'Jour 1',
+            date: '',
+            night: null,
+            moments: hundredAndOneMoments,
+          },
+        ],
+      }).success,
+    ).toBe(false);
   });
 });
 

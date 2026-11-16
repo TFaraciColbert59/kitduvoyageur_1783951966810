@@ -404,8 +404,16 @@ export function CommunityFeedPost({
             swiped.current = false;
             return true;
           }}
-          onLike={handleLike}
-          onComment={() => openPanel('comments')}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
           onShare={() => openPanel('share')}
           videoPreferences={videoPreferences}
         />
@@ -434,8 +442,16 @@ export function CommunityFeedPost({
               commentsCount={counts.comments}
               sharesCount={counts.shares}
               liked={liked}
-              onLike={handleLike}
-              onComment={() => openPanel('comments')}
+              onLike={
+                (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+                  ? undefined
+                  : handleLike
+              }
+              onComment={
+                (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+                  ? undefined
+                  : () => openPanel('comments')
+              }
               onShare={() => openPanel('share')}
             />
           )}

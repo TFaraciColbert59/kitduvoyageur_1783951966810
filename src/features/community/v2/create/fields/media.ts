@@ -22,7 +22,7 @@ import {
  *   d'envoyer (`03 § 5`).
  */
 
-export type MediaBucketV2 = 'carnet-media' | 'stories-private';
+export type MediaBucketV2 = 'carnet-media' | 'stories-private' | 'carnet-moments-media';
 
 export interface MediaFileLimitsV2 {
   allowVideo: boolean;
@@ -31,6 +31,7 @@ export interface MediaFileLimitsV2 {
 
 export const IMAGE_LIMITS: MediaFileLimitsV2 = { allowVideo: false, maxBytes: IMAGE_MAX_BYTES };
 export const STORY_LIMITS: MediaFileLimitsV2 = { allowVideo: true, maxBytes: STORY_MEDIA_MAX_BYTES };
+export const CARNET_MOMENT_MEDIA_LIMITS: MediaFileLimitsV2 = { allowVideo: true, maxBytes: STORY_MEDIA_MAX_BYTES };
 
 export interface MediaValidationV2 {
   ok: boolean;

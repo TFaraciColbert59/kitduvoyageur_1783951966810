@@ -51,30 +51,68 @@ export async function getCurrentGeoPosition(options?: PositionOptions): Promise<
     }
   }
 
-  // Web fallback
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !("geolocation" in navigator)) {
-      reject(new Error("Géolocalisation non supportée sur ce navigateur"));
-      return;
-    }
+  // Web fallback : haute précision puis basse précision puis IP si refus/non-HTTPS
+  const browserPos = (opts: PositionOptions): Promise<GeoCoordinates> =>
+    new Promise((resolve, reject) => {
+      if (typeof window === "undefined" || !("geolocation" in navigator)) {
+        reject(new Error("Géolocalisation non supportée sur ce navigateur"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+            altitude: pos.coords.altitude,
+            altitudeAccuracy: pos.coords.altitudeAccuracy,
+            heading: pos.coords.heading,
+            speed: pos.coords.speed,
+            timestamp: pos.timestamp,
+          });
+        },
+        (err) => reject(err),
+        opts
+      );
+    });
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          altitude: pos.coords.altitude,
-          altitudeAccuracy: pos.coords.altitudeAccuracy,
-          heading: pos.coords.heading,
-          speed: pos.coords.speed,
-          timestamp: pos.timestamp,
-        });
-      },
-      (err) => reject(err),
-      defaultOpts
-    );
-  });
+  try {
+    return await browserPos(defaultOpts);
+  } catch (err) {
+    try {
+      return await browserPos({ enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
+    } catch {
+      if (
+        typeof navigator === "undefined" ||
+        !("geolocation" in navigator) ||
+        process.env.NODE_ENV === "test"
+      ) {
+        throw err;
+      }
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4500);
+      try {
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json", { signal: controller.signal });
+        if (!res.ok) throw new Error("ip-geo");
+        const data = (await res.json()) as { latitude?: string; longitude?: string };
+        const lat = Number(data.latitude);
+        const lng = Number(data.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error("ip-geo-invalid");
+        return {
+          latitude: lat,
+          longitude: lng,
+          accuracy: 5000,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+          timestamp: Date.now(),
+        };
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+  }
 }
 
 /**

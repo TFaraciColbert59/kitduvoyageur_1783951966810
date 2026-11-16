@@ -111,6 +111,8 @@ export interface CommunitySheetShellProps {
    * plus à l'écran).
    */
   previewSlotRef?: (element: HTMLDivElement | null) => void;
+  /** Plafonne le tiroir à 40% de hauteur en mode Recherche. */
+  compactSearch?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -152,6 +154,7 @@ export function CommunitySheetShell({
   kind,
   guestNotice = false,
   previewSlotRef,
+  compactSearch = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
@@ -525,7 +528,13 @@ export function CommunitySheetShell({
       data-cv2-kind={kind}
       data-testid={kind ? `communaute-v2-${kind}` : 'communaute-v2-sheet'}
     >
-      <div className="lkdv-cv2-wrap" data-det="card" data-detent={detent} data-state={state}>
+      <div
+        className="lkdv-cv2-wrap"
+        data-det="card"
+        data-detent={detent}
+        data-search-compact={compactSearch ? 'true' : undefined}
+        data-state={state}
+      >
         <div
           ref={sheetRef}
           className="lkdv-cv2-sheet"
@@ -729,41 +738,76 @@ export function CommunitySheetShell({
             </div>
           )}
 
-          {mini && !detail ? (
-            <div
-              className={cx(
-                'lkdv-cv2-mini-slot',
-                Boolean(footer) && 'has-footer',
-                Boolean(mini.sort) && 'has-sort',
-              )}
-              data-testid="cv2-mini-capsule"
-            >
-              <CapsuleTabs
-                items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
-                activeIndex={mini.active}
-                onIndexChange={mini.onChange}
-                ariaLabel={mini.label}
-                size="sm"
-                className="lkdv-cv2-mini"
-                idFor={(id) => `cv2-mini-${id}`}
-                panelIdFor={
-                  filterPages && activeVoletItem
-                    ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
-                    : undefined
-                }
-              />
-              {mini.sort ? (
-                <SortMenuButton
-                  value={mini.sort.value}
-                  defaultValue={mini.sort.defaultValue}
-                  options={mini.sort.options}
-                  onChange={mini.sort.onChange}
-                />
-              ) : null}
-            </div>
+          {!detail && (mini || footer) ? (
+            footer && mini ? (
+              <div className="lkdv-cv2-bottom-dock">
+                <div className="lkdv-cv2-footer">{footer}</div>
+                <div
+                  className={cx(
+                    'lkdv-cv2-mini-slot',
+                    'has-footer',
+                    Boolean(mini.sort) && 'has-sort',
+                  )}
+                  data-testid="cv2-mini-capsule"
+                >
+                  <CapsuleTabs
+                    items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                    activeIndex={mini.active}
+                    onIndexChange={mini.onChange}
+                    ariaLabel={mini.label}
+                    size="sm"
+                    className="lkdv-cv2-mini"
+                    idFor={(id) => `cv2-mini-${id}`}
+                    panelIdFor={
+                      filterPages && activeVoletItem
+                        ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                        : undefined
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                {mini ? (
+                  <div
+                    className={cx(
+                      'lkdv-cv2-mini-slot',
+                      Boolean(mini.sort) && 'has-sort',
+                    )}
+                    data-testid="cv2-mini-capsule"
+                  >
+                    <CapsuleTabs
+                      items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                      activeIndex={mini.active}
+                      onIndexChange={mini.onChange}
+                      ariaLabel={mini.label}
+                      size="sm"
+                      className="lkdv-cv2-mini"
+                      idFor={(id) => `cv2-mini-${id}`}
+                      panelIdFor={
+                        filterPages && activeVoletItem
+                          ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                          : undefined
+                      }
+                    />
+                    {mini.sort ? (
+                      <SortMenuButton
+                        value={mini.sort.value}
+                        defaultValue={mini.sort.defaultValue}
+                        options={mini.sort.options}
+                        onChange={mini.sort.onChange}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+                {footer ? (
+                  <div className="lkdv-cv2-bottom-dock lkdv-cv2-bottom-dock--footer-only">
+                    <div className="lkdv-cv2-footer">{footer}</div>
+                  </div>
+                ) : null}
+              </>
+            )
           ) : null}
-
-          {footer && !detail ? <div className="lkdv-cv2-footer">{footer}</div> : null}
 
           {children}
         </div>

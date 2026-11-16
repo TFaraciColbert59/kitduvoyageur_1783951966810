@@ -12,8 +12,10 @@ export interface MeetingMapV2Props {
   /** Centre initial quand aucun point n'est encore posé (lieu de la sortie). */
   defaultCenter?: [number, number] | null;
   label?: string;
+  emptyHint?: string;
   height?: number;
   onChange: (lat: number, lng: number) => void;
+  onResolveAddress?: (label: string) => void;
 }
 
 const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
@@ -34,14 +36,18 @@ export function MeetingMapV2({
   lng,
   defaultCenter = null,
   label = 'Point de rendez-vous',
+  emptyHint = 'Touche la carte pour placer le rendez-vous',
   height = 170,
   onChange,
+  onResolveAddress,
 }: MeetingMapV2Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onResolveAddressRef = useRef(onResolveAddress);
+  onResolveAddressRef.current = onResolveAddress;
   const initialCenterRef = useRef<{ lat: number | null; lng: number | null; fallback: [number, number] | null }>({
     lat,
     lng,
@@ -50,9 +56,53 @@ export function MeetingMapV2({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const commitPosition = useCallback((nextLat: number, nextLng: number) => {
-    onChangeRef.current(Number(nextLat.toFixed(6)), Number(nextLng.toFixed(6)));
+  const resolveAddress = useCallback(async (nextLat: number, nextLng: number) => {
+    const cb = onResolveAddressRef.current;
+    if (!cb) return;
+    try {
+      const response = await fetch(
+        `/api/geocode?lat=${encodeURIComponent(nextLat)}&lon=${encodeURIComponent(nextLng)}`,
+      );
+      if (!response.ok) return;
+      const payload = (await response.json()) as {
+        matches?: Array<{ name?: string; context?: string }>;
+      };
+      const first = payload.matches?.[0];
+      if (!first?.name) return;
+      const ctx = first.context?.trim();
+      cb(ctx && ctx !== first.name ? `${first.name}, ${ctx}` : first.name);
+    } catch {
+      /* géocodage inverse silencieux */
+    }
   }, []);
+
+  const commitPosition = useCallback(
+    (nextLat: number, nextLng: number) => {
+      const rLat = Number(nextLat.toFixed(6));
+      const rLng = Number(nextLng.toFixed(6));
+      onChangeRef.current(rLat, rLng);
+      void resolveAddress(rLat, rLng);
+    },
+    [resolveAddress],
+  );
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || lat == null || lng == null) return;
+    if (markerRef.current) {
+      const cur = markerRef.current.getLngLat();
+      if (Math.abs(cur.lat - lat) < 1e-4 && Math.abs(cur.lng - lng) < 1e-4) return;
+      markerRef.current.setLngLat([lng, lat]);
+    } else {
+      const marker = new Marker({ draggable: true }).setLngLat([lng, lat]).addTo(map);
+      marker.on('dragend', () => {
+        const position = marker.getLngLat();
+        commitPosition(position.lat, position.lng);
+      });
+      markerRef.current = marker;
+    }
+    map.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 11), duration: 350 });
+  }, [commitPosition, lat, lng, ready]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -158,16 +208,10 @@ export function MeetingMapV2({
         {ready && !hasPoint && !failed ? (
           <span className="lkdv-cv2c-map-empty" role="status">
             <Crosshair size={14} aria-hidden="true" />
-            Touche la carte pour placer le rendez-vous
+            {emptyHint}
           </span>
         ) : null}
       </div>
-      <p className="lkdv-cv2c-map-help">
-        <Crosshair size={11} aria-hidden="true" />{' '}
-        {hasPoint
-          ? `${formatCoordinate(lat, 'lat')} · ${formatCoordinate(lng, 'lng')} · coordonnées enregistrées`
-          : 'Aucune coordonnée pour l’instant : touche la carte ou glisse l’épingle.'}
-      </p>
     </div>
   );
 }

@@ -44,7 +44,7 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('CreateSheetV2 — moteur et coque', () => {
-  it('affiche Suivant, un Retour désactivé à l’étape 1 et les 3 étapes en mini-capsule', async () => {
+  it('affiche Suivant, un Retour désactivé à l’étape 1 et les 2 étapes du post en mini-capsule', async () => {
     renderSheet();
     const next = await screen.findByRole('button', { name: 'Suivant' });
     expect(next).toBeTruthy();
@@ -52,10 +52,9 @@ describe('CreateSheetV2 — moteur et coque', () => {
     const back = screen.getByRole('button', { name: 'Retour' });
     expect((back as HTMLButtonElement).disabled).toBe(true);
     const steps = screen.getByRole('tablist', { name: /Étapes de la création/ });
-    expect(steps.querySelectorAll('[role="tab"]')).toHaveLength(3);
+    expect(steps.querySelectorAll('[role="tab"]')).toHaveLength(2);
     expect(screen.getByRole('tab', { name: 'Étape 1 : Format' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Étape 2 : Contenu' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Étape 3 : Diffusion' })).toBeTruthy();
   });
 
   it('Retour s’active à l’étape 2 ; la capsule change d’étape sans perdre la saisie', async () => {
@@ -70,8 +69,8 @@ describe('CreateSheetV2 — moteur et coque', () => {
 
   it('Suivant bloque une étape invalide : compteur unique et focus sur le premier champ fautif', async () => {
     renderSheet();
-    // Audience « Un club » sans club choisi : l'étape 1 devient invalide.
-    fireEvent.click(await screen.findByRole('radio', { name: /Un club/ }));
+    // Audience « Club » sans club choisi : l'étape 1 devient invalide.
+    fireEvent.click(await screen.findByRole('radio', { name: /^Club$/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Suivant' }));
 
     const summary = await screen.findByTestId('cv2-error-summary');
@@ -128,7 +127,7 @@ describe('CreateSheetV2 — moteur et coque', () => {
       JSON.stringify({ version: 1, kind: 'post', updatedAt: Date.now(), values: draft }),
     );
     renderSheet();
-    const audience = await screen.findByRole('radio', { name: /Fil public/ });
+    const audience = await screen.findByRole('radio', { name: /^Public$/ });
     audience.focus();
     fireEvent.keyDown(document, { key: 'Escape' });
     const dialog = await screen.findByRole('alertdialog');

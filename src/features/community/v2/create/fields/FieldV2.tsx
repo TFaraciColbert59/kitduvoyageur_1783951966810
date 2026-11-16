@@ -159,20 +159,18 @@ export interface TextAreaFieldV2Props {
 
 export function TextAreaFieldV2({ name, label, placeholder, hint, required, maxLength, rows = 5, action, className }: TextAreaFieldV2Props) {
   const form = useFormContext<FieldValues>();
-  const value = form.watch(name);
-  const length = typeof value === 'string' ? value.length : 0;
   return (
     <FieldV2
       name={name}
       label={label}
       hint={hint}
       required={required}
-      counter={{ value: length, max: maxLength }}
+      counter={null}
       className={className}
     >
       {({ id, describedBy, invalid }) => (
-        <>
-          {action ? <div className="lkdv-cv2c-field-action">{action}</div> : null}
+        <div className="lkdv-cv2c-textarea-card">
+          {action ? <div className="lkdv-cv2c-textarea-action">{action}</div> : null}
           <textarea
             id={id}
             rows={rows}
@@ -183,7 +181,7 @@ export function TextAreaFieldV2({ name, label, placeholder, hint, required, maxL
             className="lkdv-cv2-input"
             {...form.register(name)}
           />
-        </>
+        </div>
       )}
     </FieldV2>
   );

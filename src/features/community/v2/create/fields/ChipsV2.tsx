@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useId, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { Check } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import { readError } from './FieldV2';
 
 /**
- * Chips V2 — un seul geste, deux modes :
- * - `multiple` (activités, check-list sécurité) : `aria-pressed`, libellé complet ;
- * - `single` (activité d'une sortie) : `role="radiogroup"`, options `role="radio"`
- *   avec `aria-checked` (`Sortie#1`, `Sortie#20`).
- * Cibles 44 px (`lkdv-cv2-chip--lg`).
+ * Chips V2 — composant moderne de choix rapide (framer-motion spring feedback) :
+ * - `multiple` (activités, check-list sécurité) : `aria-pressed` + coche active ;
+ * - `single` (activité d'une sortie) : `role="radiogroup"`, options `role="radio"`.
  */
 
 export interface ChipOptionV2 {
@@ -74,18 +74,26 @@ export function ChipsFieldV2({
         {options.map((option) => {
           const active = selected.includes(option.value);
           return (
-            <button
+            <motion.button
               key={option.value}
               type="button"
+              whileTap={{ scale: 0.96 }}
               className="lkdv-cv2-chip lkdv-cv2-chip--lg lkdv-cv2c-chip"
               role={multiple ? undefined : 'radio'}
               aria-checked={multiple ? undefined : active}
               aria-pressed={multiple ? active : undefined}
               onClick={() => toggle(option.value)}
             >
-              {option.icon ? <span className="lkdv-cv2c-chip-ico" aria-hidden="true">{option.icon}</span> : null}
-              {option.label}
-            </button>
+              {option.icon ? (
+                <span className="lkdv-cv2c-chip-ico" aria-hidden="true">
+                  {option.icon}
+                </span>
+              ) : null}
+              <span>{option.label}</span>
+              {multiple && active ? (
+                <Check size={12} aria-hidden="true" style={{ marginLeft: 2 }} />
+              ) : null}
+            </motion.button>
           );
         })}
       </div>
@@ -108,25 +116,46 @@ export interface SegmentedFieldV2Props {
   className?: string;
 }
 
-/** Segmented contrôlé (recadrage, visibilité courte, audience compacte). */
+/** Segmented contrôlé avec curseur animé `framer-motion` (`layoutId`). */
 export function SegmentedFieldV2({ name, label, options, value, onChange, className }: SegmentedFieldV2Props) {
-  const labelId = `${useId()}-seg`;
+  const uid = useId();
+  const labelId = `${uid}-seg`;
+  const thumbId = `${uid}-thumb`;
   return (
     <div className={['lkdv-cv2c-seg-field', className].filter(Boolean).join(' ')}>
       <span id={labelId} className="lkdv-cv2-field-label">
         {label}
       </span>
       <div className="lkdv-cv2-seg lkdv-cv2c-seg" role="group" aria-labelledby={labelId} data-field={name}>
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={option.value === value}
-            onClick={() => onChange(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
+        {options.map((option) => {
+          const active = value === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={active}
+              style={{ position: 'relative', zIndex: 1 }}
+              onClick={() => onChange(option.value)}
+            >
+              {active ? (
+                <motion.span
+                  layoutId={thumbId}
+                  aria-hidden="true"
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 2,
+                    borderRadius: 999,
+                    background: '#fff',
+                    boxShadow: '0 2px 6px rgba(23, 43, 36, 0.1)',
+                    zIndex: -1,
+                  }}
+                />
+              ) : null}
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

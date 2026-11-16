@@ -1151,7 +1151,26 @@
 /* ── Recherche ─────────────────────────────────────────────────────────── */
 
 .lkdv-cv2x-search-pane {
-  gap: 8px;
+  gap: 10px;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+.lkdv-cv2x-search-pane .lkdv-cv2-chip {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 10px;
+  font: 500 12.5px/1 var(--font-sans);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(23, 43, 36, 0.11);
+  color: var(--lkv-text-primary);
+  box-shadow: none;
+}
+
+.lkdv-cv2x-search-pane .lkdv-cv2-chip[aria-pressed='true'] {
+  background: #172B24;
+  border-color: #172B24;
+  color: #fff;
 }
 
 /* Maquette (`eyebrow-row .h5`, L938) : eyebrows de la recherche à 10,5 px. */

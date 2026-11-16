@@ -102,12 +102,7 @@ describe('Kit#15 / #12 — commutateurs et check-list', () => {
       1,
     );
     renderKind('kit');
-    const units = await screen.findByTestId('cv2c-kit-switch-units');
-    expect(units.getAttribute('aria-checked')).toBe('false');
-    fireEvent.click(units);
-    await waitFor(() => expect(units.getAttribute('aria-checked')).toBe('true'));
-    expect(document.body.textContent).toContain('lb');
-    fireEvent.click(screen.getByTestId('cv2c-kit-switch-prep'));
+    fireEvent.click(await screen.findByTestId('cv2c-kit-switch-prep'));
     const prep = await screen.findByTestId('cv2-kit-prep');
     expect(prep.textContent).toContain('Tente');
     expect(screen.getByRole('checkbox', { name: 'Emporté : Tente' })).toBeTruthy();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Mountain, Plus, Route, Search } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 
 import { joinSegments, type LngLat } from '@/features/community/create/carnet/traceEngine';
@@ -171,9 +171,6 @@ export function TrailSearchFieldV2() {
           autoComplete="off"
         />
       </div>
-      <p className="lkdv-cv2-field-hint">
-        La randonnée choisie importe son tracé réel (distance et dénivelé se remplissent seuls).
-      </p>
 
       {query.trim().length < 2 ? null : loading ? (
         <p className="lkdv-cv2-field-hint" role="status">
@@ -198,9 +195,33 @@ export function TrailSearchFieldV2() {
                 onClick={() => void pick(trail)}
                 disabled={importing}
               >
-                <span className="lkdv-cv2c-trail-name">{trail.name?.trim() || 'Randonnée sans titre'}</span>
-                <span className="lkdv-cv2c-trail-meta lkdv-cv2-field-hint">
-                  {figures(trail) || 'Chiffres non renseignés'}
+                <span className="lkdv-cv2c-trail-ico" aria-hidden="true">
+                  <Mountain size={15} strokeWidth={1.8} />
+                </span>
+                <span className="lkdv-cv2c-trail-body">
+                  <span className="lkdv-cv2c-trail-name">{trail.name?.trim() || 'Randonnée sans titre'}</span>
+                  <span className="lkdv-cv2c-trail-badges">
+                    {trail.distance_km != null ? (
+                      <span className="lkdv-cv2c-trail-badge">
+                        <Route size={10} aria-hidden="true" />
+                        {trail.distance_km.toLocaleString('fr-FR')} km
+                      </span>
+                    ) : null}
+                    {trail.elevation_gain != null ? (
+                      <span className="lkdv-cv2c-trail-badge">
+                        +{trail.elevation_gain.toLocaleString('fr-FR')} m
+                      </span>
+                    ) : null}
+                    {trail.difficulty ? (
+                      <span className="lkdv-cv2c-trail-badge is-diff">{trail.difficulty}</span>
+                    ) : null}
+                    {trail.distance_km == null && trail.elevation_gain == null && !trail.difficulty ? (
+                      <span className="lkdv-cv2c-trail-badge">Tracé GPX</span>
+                    ) : null}
+                  </span>
+                </span>
+                <span className="lkdv-cv2c-trail-add" aria-hidden="true">
+                  <Plus size={14} />
                 </span>
               </button>
             </li>

@@ -1,19 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronDown, Eye } from 'lucide-react';
 
-/**
- * FID-056 — **aperçu vivant dans un emplacement fixe de 150 px**, hors du flux
- * qui défile. La maquette monte `#crprev` entre la capsule et le carrousel
- * d'étapes (`maquette-communaute.html` L2692 : `.cr-prev` 150 px, `aria-label`
- * « Aperçu en direct »), jamais dans le pane : l'aperçu reste donc visible au
- * même endroit quel que soit le défilement du formulaire.
- *
- * Le formulaire fournit son aperçu (il garde la main sur ses valeurs) ; la
- * coque fournit la cible via un contexte. Sans coque (rendu isolé, tests),
- * `SheetPreview` ne rend rien : aucun aperçu orphelin dans le pane.
- */
 export const SheetPreviewContext = createContext<HTMLElement | null>(null);
 
 /** Cible rendue par `CommunitySheetShell` entre la capsule et le pager. */
@@ -33,18 +23,86 @@ export function SheetPreviewSlot({
   );
 }
 
+export interface SheetPreviewSummary {
+  icon?: ReactNode;
+  title: string;
+  meta?: string;
+  badge?: string;
+}
+
 /**
- * Portail de l'aperçu du formulaire vers le slot de la coque. Le contenu est
- * décoratif (il duplique les champs) : `inert` + `aria-hidden`, comme les
- * aperçus d'origine ; le nom accessible reste porté par le slot.
+ * Bandeau résumé 1 ligne dépliable (ou carte complète) dans l'emplacement fixe
+ * de la coque (`CommunitySheetShell`). En mode compact, affiche une barre
+ * claire de 44 px avec bouton « Aperçu » pour éviter de couper les cartes ou
+ * d'écraser le formulaire sur mobile.
  */
-export function SheetPreview({ children }: { children: ReactNode }) {
-  const slot = useContext(SheetPreviewContext);
-  if (!slot) return null;
+export function SheetPreview({
+  children,
+  compact = false,
+  summary,
+}: {
+  children: ReactNode;
+  compact?: boolean;
+  summary?: SheetPreviewSummary;
+}) {
+  const host = useContext(SheetPreviewContext);
+  const [expanded, setExpanded] = useState(false);
+  if (!host) return null;
+
+  const showCollapsedBar = compact && !expanded && Boolean(summary);
+
   return createPortal(
-    <div className="lkdv-cv2-preview-frame" inert aria-hidden="true">
-      {children}
+    <div
+      className="lkdv-cv2-preview-frame"
+      data-compact={showCollapsedBar ? 'true' : undefined}
+      data-expanded={compact && expanded ? 'true' : undefined}
+    >
+      {showCollapsedBar && summary ? (
+        <div className="lkdv-cv2c-preview-bar">
+          {summary.icon ? (
+            <span className="lkdv-cv2c-preview-bar-ico" aria-hidden="true">
+              {summary.icon}
+            </span>
+          ) : null}
+          <span className="lkdv-cv2c-preview-bar-txt">
+            <b>{summary.title}</b>
+            {summary.meta ? <small>{summary.meta}</small> : null}
+          </span>
+          {summary.badge ? <span className="lkdv-cv2c-preview-bar-badge">{summary.badge}</span> : null}
+          <button
+            type="button"
+            className="lkdv-cv2c-preview-toggle"
+            aria-expanded={false}
+            onClick={() => setExpanded(true)}
+          >
+            <Eye size={13} aria-hidden="true" />
+            Aperçu
+            <ChevronDown size={13} aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <>
+          {compact ? (
+            <div className="lkdv-cv2c-preview-collapse-row">
+              <button
+                type="button"
+                className="lkdv-cv2c-preview-toggle"
+                aria-expanded={true}
+                onClick={() => setExpanded(false)}
+              >
+                Masquer l’aperçu
+                <ChevronDown
+                  size={13}
+                  aria-hidden="true"
+                  style={{ transform: 'rotate(180deg)' }}
+                />
+              </button>
+            </div>
+          ) : null}
+          {children}
+        </>
+      )}
     </div>,
-    slot,
+    host,
   );
 }

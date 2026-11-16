@@ -1112,6 +1112,7 @@ export function CommunityExploreSheetV2({
       kind="explore"
       label="Explorer la communauté"
       guestNotice={isGuest}
+      compactSearch={EXPLORE_TAB_ORDER[tabIndex] === 'search' && !detailProp}
       capsule={{
         items: EXPLORE_CAPSULE_ITEMS,
         active: tabIndex,

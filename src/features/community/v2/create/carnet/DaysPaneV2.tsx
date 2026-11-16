@@ -1,10 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Camera, ChevronDown, ChevronUp, GripVertical, ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Camera, ChevronDown, ChevronUp, GripVertical, ImagePlus, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useFormContext, useFormState } from 'react-hook-form';
+import { PhotoDropzoneV2, type PhotoDropzoneResult } from '../fields/PhotoDropzoneV2';
 import {
   CARNET_MOMENT_KINDS_V2,
+  STORY_MEDIA_MAX_BYTES,
   createMediaItemV2,
   type CarnetDayV2,
   type CarnetFormValuesV2,
@@ -13,12 +16,14 @@ import {
   type MediaItemV2,
 } from '../engine/createSchemasV2';
 import { readError } from '../fields/FieldV2';
+import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
 import {
   IMAGE_LIMITS,
   cropImageToRatio,
   deleteMediaObjectsV2,
   uploadMediaV2,
   validateMediaFile,
+  type MediaBucketV2,
 } from '../fields/media';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { moveItemBetweenDays } from '../../shared/traceEditing';
@@ -54,101 +59,303 @@ function newDay(dayNumber: number, date: string): CarnetDayV2 {
 }
 
 function newMoment(): CarnetMomentV2 {
-  return { id: crypto.randomUUID(), kind: 'photo', time: '', text: '', place: '', photo: null };
+  return {
+    id: crypto.randomUUID(),
+    title: '',
+    kind: 'photo',
+    time: '',
+    text: '',
+    place: '',
+    photo: null,
+    media: [],
+    encounters: [],
+  };
 }
 
-function MomentPhotoV2({
-  userId,
-  value,
+function MomentEncountersRow({
+  encounters,
   onChange,
 }: {
-  userId: string;
-  value: MediaItemV2 | null;
-  onChange: (next: MediaItemV2 | null) => void;
+  encounters: string[];
+  onChange: (next: string[]) => void;
 }) {
+  const [adding, setAdding] = useState(false);
+  const [nameInput, setNameInput] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [state, setState] = useState<'idle' | 'uploading' | 'error'>('idle');
-  const [notice, setNotice] = useState<string | null>(null);
 
-  const upload = async (file: File | undefined) => {
-    if (!file || !userId) return;
-    const validation = validateMediaFile(file, IMAGE_LIMITS);
-    if (!validation.ok) {
-      setNotice(validation.message ?? 'Photo refusée.');
+  const addEncounter = () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      setAdding(false);
       return;
     }
-    setState('uploading');
-    setNotice(null);
-    try {
-      const prepared = await cropImageToRatio(file, '4:5');
-      const uploaded = await uploadMediaV2(prepared, { userId, bucket: 'carnet-media' });
-      onChange(
-        createMediaItemV2({
-          name: file.name,
-          type: prepared.type || file.type,
-          size: prepared.size,
-          url: uploaded.url,
-          storageBucket: uploaded.bucket,
-          storagePath: uploaded.path,
-          status: 'uploaded',
-          progress: 100,
-          crop: '4:5',
-        }),
-      );
-      setState('idle');
-    } catch (error) {
-      setState('error');
-      setNotice(error instanceof Error ? error.message : 'Envoi de la photo impossible.');
-    }
+    onChange([...encounters, trimmed]);
+    setNameInput('');
+    setAdding(false);
   };
 
   return (
-    <div className="lkdv-cv2c-moment-photo">
-      {value?.url ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element -- URL Storage du carnet */}
-          <img src={value.url} alt={value.alt || 'Photo du moment'} />
+    <div className="lkdv-cv2c-encounters-row" role="group" aria-label="Compagnons rencontrés">
+      <button
+        type="button"
+        className="lkdv-cv2c-encounter-add-btn"
+        onClick={() => {
+          setAdding(true);
+          setTimeout(() => inputRef.current?.focus(), 50);
+        }}
+        aria-label="Ajouter une rencontre"
+      >
+        <Plus size={12} aria-hidden="true" />
+        <span>Rencontre</span>
+      </button>
+
+      {adding ? (
+        <div className="lkdv-cv2c-encounter-inline-input" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <input
+            ref={inputRef}
+            type="text"
+            className="lkdv-cv2-input"
+            style={{ width: '120px', height: '28px', padding: '0 8px', fontSize: '11.5px' }}
+            placeholder="Ami ou @pseudo"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addEncounter();
+              } else if (e.key === 'Escape') {
+                setAdding(false);
+                setNameInput('');
+              }
+            }}
+            onBlur={addEncounter}
+          />
+        </div>
+      ) : null}
+
+      {encounters.map((name, index) => (
+        <span key={`${index}-${name}`} className="lkdv-cv2c-encounter-chip">
+          <span>{name}</span>
           <button
             type="button"
-            className="lkdv-cv2c-icon-btn"
-            aria-label="Retirer la photo du moment"
-            onClick={() => {
-              if (value.storagePath) {
-                void deleteMediaObjectsV2([{ bucket: 'carnet-media', path: value.storagePath }]);
-              }
-              onChange(null);
-            }}
+            className="lkdv-cv2c-encounter-chip-remove"
+            aria-label={`Retirer ${name}`}
+            onClick={() => onChange(encounters.filter((_, idx) => idx !== index))}
           >
-            <Trash2 size={13} aria-hidden="true" />
+            <X size={11} aria-hidden="true" />
           </button>
-        </>
-      ) : null}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function MomentMediaSlotV2({
+  userId,
+  media = [],
+  photo,
+  onChange,
+}: {
+  userId: string;
+  media?: MediaItemV2[];
+  photo?: MediaItemV2 | null;
+  onChange: (patch: { media: MediaItemV2[]; photo: MediaItemV2 | null }) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const mediaList = useMemo(() => {
+    if (media.length > 0) return media;
+    if (photo) return [photo];
+    return [];
+  }, [media, photo]);
+
+  const currentMedia = mediaList[activeIndex] ?? mediaList[0] ?? null;
+
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !userId) return;
+    const remaining = 5 - mediaList.length;
+    if (remaining <= 0) {
+      setNotice('5 médias maximum par moment.');
+      return;
+    }
+    const toUpload = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    setNotice(null);
+
+    const newlyAdded: MediaItemV2[] = [];
+    try {
+      for (const file of toUpload) {
+        const isVideo = file.type.startsWith('video/');
+        if (isVideo) {
+          if (file.size > STORY_MEDIA_MAX_BYTES) {
+            setNotice(`${file.name} dépasse 25 Mo.`);
+            continue;
+          }
+          const uploaded = await uploadMediaV2(file, { userId, bucket: 'carnet-moments-media' });
+          newlyAdded.push(
+            createMediaItemV2({
+              name: file.name,
+              type: file.type || 'video/mp4',
+              size: file.size,
+              url: uploaded.url,
+              storageBucket: uploaded.bucket,
+              storagePath: uploaded.path,
+              status: 'uploaded',
+              progress: 100,
+              crop: '1:1',
+            }),
+          );
+        } else {
+          const validation = validateMediaFile(file, IMAGE_LIMITS);
+          if (!validation.ok) {
+            setNotice(validation.message ?? 'Photo refusée.');
+            continue;
+          }
+          const prepared = await cropImageToRatio(file, '1:1');
+          const uploaded = await uploadMediaV2(prepared, { userId, bucket: 'carnet-media' });
+          newlyAdded.push(
+            createMediaItemV2({
+              name: file.name,
+              type: prepared.type || file.type,
+              size: prepared.size,
+              url: uploaded.url,
+              storageBucket: uploaded.bucket,
+              storagePath: uploaded.path,
+              status: 'uploaded',
+              progress: 100,
+              crop: '1:1',
+            }),
+          );
+        }
+      }
+
+      if (newlyAdded.length > 0) {
+        const nextMedia = [...mediaList, ...newlyAdded];
+        onChange({ media: nextMedia, photo: nextMedia[0] ?? null });
+        setActiveIndex(nextMedia.length - 1);
+      }
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : 'Échec de l’envoi du média.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeCurrent = () => {
+    if (!currentMedia) return;
+    if (currentMedia.storagePath && currentMedia.storageBucket) {
+      void deleteMediaObjectsV2([
+        {
+          bucket: currentMedia.storageBucket as MediaBucketV2,
+          path: currentMedia.storagePath,
+        },
+      ]);
+    }
+    const nextMedia = mediaList.filter((_, idx) => idx !== activeIndex);
+    const nextIndex = Math.max(0, Math.min(activeIndex, nextMedia.length - 1));
+    setActiveIndex(nextIndex);
+    onChange({ media: nextMedia, photo: nextMedia[0] ?? null });
+  };
+
+  return (
+    <div className="lkdv-cv2c-moment-media-slot">
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/mp4,video/webm,video/quicktime"
+        multiple
         className="lkdv-cv2c-sr-only"
-        aria-label="Photo du moment"
+        aria-label="Photos ou vidéos du moment (max 5)"
         onChange={(event) => {
-          void upload(event.target.files?.[0]);
+          void uploadFiles(event.target.files);
           event.target.value = '';
         }}
       />
-      <button
-        type="button"
-        className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-        onClick={() => inputRef.current?.click()}
-        disabled={state === 'uploading'}
-      >
-        {state === 'uploading' ? (
-          <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" />
-        ) : (
-          <ImagePlus size={12} aria-hidden="true" />
-        )}
-        {value ? 'Remplacer la photo' : 'Ajouter une photo'}
-      </button>
+
+      {mediaList.length === 0 ? (
+        <button
+          type="button"
+          className="lkdv-cv2c-moment-media-empty"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          aria-label="Ajouter une photo ou vidéo"
+        >
+          {uploading ? (
+            <Loader2 size={18} className="lkdv-cv2c-spin" aria-hidden="true" />
+          ) : (
+            <>
+              <ImagePlus size={20} strokeWidth={1.8} aria-hidden="true" />
+              <span>Média</span>
+            </>
+          )}
+        </button>
+      ) : (
+        <div className="lkdv-cv2c-moment-media-preview" style={{ position: 'relative', width: '100%', height: '100%' }}>
+          {currentMedia?.type?.startsWith('video/') ? (
+            <video
+              src={currentMedia.url}
+              className="lkdv-cv2c-moment-media-thumb"
+              muted
+              playsInline
+            />
+          ) : (
+            <img
+              src={currentMedia?.url ?? ''}
+              alt={currentMedia?.alt || 'Média du moment'}
+              className="lkdv-cv2c-moment-media-thumb"
+            />
+          )}
+
+          {uploading ? (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader2 size={18} className="lkdv-cv2c-spin" style={{ color: '#fff' }} aria-hidden="true" />
+            </div>
+          ) : null}
+
+          {/* Delete active item */}
+          <button
+            type="button"
+            className="lkdv-cv2c-icon-btn"
+            style={{ position: 'absolute', top: 3, right: 3, width: 20, height: 20, background: 'rgba(0,0,0,0.6)', color: '#fff', borderRadius: '50%' }}
+            aria-label="Retirer ce média"
+            onClick={removeCurrent}
+          >
+            <Trash2 size={10} aria-hidden="true" />
+          </button>
+
+          {/* Add more button if < 5 */}
+          {mediaList.length < 5 ? (
+            <button
+              type="button"
+              className="lkdv-cv2c-icon-btn"
+              style={{ position: 'absolute', top: 3, left: 3, width: 20, height: 20, background: 'rgba(0,0,0,0.6)', color: '#fff', borderRadius: '50%' }}
+              aria-label="Ajouter un autre média"
+              onClick={() => inputRef.current?.click()}
+            >
+              <Plus size={11} aria-hidden="true" />
+            </button>
+          ) : null}
+
+          {/* Badge & thumb switcher */}
+          <div
+            className="lkdv-cv2c-moment-media-badge"
+            onClick={() => {
+              if (mediaList.length > 1) {
+                setActiveIndex((activeIndex + 1) % mediaList.length);
+              }
+            }}
+            style={{ cursor: mediaList.length > 1 ? 'pointer' : 'default' }}
+          >
+            {activeIndex + 1}/{mediaList.length}
+          </div>
+        </div>
+      )}
+
       {notice ? (
-        <p className="lkdv-cv2-field-error" role="alert">
+        <p className="lkdv-cv2-field-error" style={{ fontSize: '10px' }} role="alert">
           {notice}
         </p>
       ) : null}
@@ -397,64 +604,163 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
         </p>
       ) : (
         <>
-          <div className="lkdv-cv2c-media-edit">
-            <div className="lkdv-cv2c-media-edit-head">
-              <b>Jour {day.dayNumber}</b>
-              <span className="lkdv-cv2-field-hint">Moments : {day.moments.length}</span>
-            </div>
-            <div className="lkdv-cv2-field">
-              <label className="lkdv-cv2-field-label" htmlFor={`cv2c-day-title-${day.id}`}>
-                Titre du jour
-              </label>
+          <div className="lkdv-cv2c-day-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            {hasNights ? (
+              <button
+                type="button"
+                className="lkdv-cv2c-switch"
+                role="switch"
+                aria-checked={Boolean(day.night)}
+                onClick={() =>
+                  updateDay(clampedActive, {
+                    night: day.night ? null : { name: '', type: 'bivouac', infos: '' },
+                  })
+                }
+              >
+                <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+                  <span className="lkdv-cv2c-switch-dot" />
+                </span>
+                Nuitée
+              </button>
+            ) : <span />}
+            {days.length > 1 ? (
+              <button
+                type="button"
+                className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                onClick={() => {
+                  const next = days.filter((_, position) => position !== clampedActive);
+                  setDays(next);
+                  setDayCount(next.length);
+                  setActive(Math.max(0, clampedActive - 1));
+                }}
+              >
+                <Trash2 size={12} aria-hidden="true" /> Retirer ce jour
+              </button>
+            ) : null}
+          </div>
+          {hasNights && day.night ? (
+            <div className="lkdv-cv2c-media-edit" style={{ marginBottom: '10px' }}>
               <input
-                id={`cv2c-day-title-${day.id}`}
                 type="text"
                 className="lkdv-cv2-input"
-                value={day.title}
-                maxLength={120}
-                placeholder="Étape, refuge, point de vue…"
-                onChange={(event) => updateDay(clampedActive, { title: event.target.value })}
+                value={day.night.name}
+                placeholder="Refuge du Temple"
+                aria-label="Nom de la nuitée"
+                onChange={(event) =>
+                  updateDay(clampedActive, { night: { ...day.night!, name: event.target.value } })
+                }
               />
-            </div>
-            <div className="lkdv-cv2-field">
-              <label className="lkdv-cv2-field-label" htmlFor={`cv2c-day-date-${day.id}`}>
-                Date
-              </label>
+              <SelectDropdownV2
+                name={`days.${clampedActive}.night.type`}
+                options={NIGHT_TYPES.map((type) => ({ value: type, label: type }))}
+                value={day.night.type}
+                placeholder="Type de nuitée"
+                onChange={(next) =>
+                  updateDay(clampedActive, {
+                    night: { ...day.night!, type: String(next) as typeof NIGHT_TYPES[number] },
+                  })
+                }
+              />
               <input
-                id={`cv2c-day-date-${day.id}`}
-                type="date"
+                type="text"
                 className="lkdv-cv2-input"
-                value={day.date}
-                onChange={(event) => updateDay(clampedActive, { date: event.target.value })}
+                value={day.night.infos}
+                placeholder="Demi-pension, eau, gardien…"
+                aria-label="Informations sur la nuitée"
+                onChange={(event) =>
+                  updateDay(clampedActive, { night: { ...day.night!, infos: event.target.value } })
+                }
               />
             </div>
-            {hasNights ? (
-              <div className="lkdv-cv2-field">
-                <div className="lkdv-cv2c-night-head">
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-switch"
-                    role="switch"
-                    aria-checked={Boolean(day.night)}
-                    onClick={() =>
-                      updateDay(clampedActive, {
-                        night: day.night ? null : { name: '', type: 'bivouac', infos: '' },
-                      })
-                    }
-                  >
-                    <span className="lkdv-cv2c-switch-track" aria-hidden="true">
-                      <span className="lkdv-cv2c-switch-dot" />
-                    </span>
-                    Nuitée
-                  </button>
-                  {/* FID-068 : glisser la nuitée vers un autre jour (ou flèches). */}
-                  {day.night ? (
+          ) : null}
+
+          <PhotoDropzoneV2
+            label="Importer des photos du jour (EXIF auto)"
+            hint="Ajoute plusieurs photos d’un coup : l’heure est remplie automatiquement"
+            disabled={!user?.id}
+            onFilesReady={async (results: PhotoDropzoneResult[]) => {
+              if (!user?.id || results.length === 0) return;
+              const added: CarnetMomentV2[] = [];
+              for (const { file, meta } of results) {
+                try {
+                  const prepared = await cropImageToRatio(file, '1:1');
+                  const uploaded = await uploadMediaV2(prepared, { userId: user.id, bucket: 'carnet-media' });
+                  const time = meta.takenAt
+                    ? meta.takenAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                    : '';
+                  const item = createMediaItemV2({
+                    name: file.name,
+                    type: prepared.type || file.type,
+                    size: prepared.size,
+                    url: uploaded.url,
+                    storagePath: uploaded.path,
+                    bucket: uploaded.bucket,
+                    ratio: '1:1',
+                    status: 'uploaded',
+                  });
+                  added.push({
+                    ...newMoment(),
+                    title: file.name.replace(/\.[a-z0-9]+$/i, ''),
+                    time,
+                    place:
+                      typeof meta.latitude === 'number' && typeof meta.longitude === 'number'
+                        ? `${meta.latitude.toFixed(3)}, ${meta.longitude.toFixed(3)}`
+                        : '',
+                    photo: item,
+                    media: [item],
+                    encounters: [],
+                  });
+                } catch {
+                  /* ignore failed single file */
+                }
+              }
+              if (added.length > 0) {
+                updateDay(clampedActive, { moments: [...day.moments, ...added] });
+                toast.success(`${added.length} moment${added.length > 1 ? 's' : ''} photo ajouté${added.length > 1 ? 's' : ''}`);
+                haptic('success');
+              }
+            }}
+          />
+
+          {day.moments.length === 0 ? (
+            <button
+              type="button"
+              className="lkdv-cv2c-moment-empty"
+              onClick={() => {
+                updateDay(clampedActive, { moments: [newMoment()] });
+                haptic('selection');
+              }}
+              aria-label="Ajouter un premier moment"
+            >
+              <span className="lkdv-cv2c-moment-empty-icon">
+                <Plus size={20} aria-hidden="true" />
+              </span>
+              <span>Ajouter un premier moment</span>
+            </button>
+          ) : (
+            <ul className="lkdv-cv2c-moments">
+              {day.moments.map((moment, momentIndex) => (
+                <li
+                  key={moment.id}
+                  className="lkdv-cv2c-moment"
+                  data-dragging={
+                    drag?.kind === 'moment' && drag.day === clampedActive && drag.moment === momentIndex
+                      ? 'true'
+                      : undefined
+                  }
+                >
+                  <div className="lkdv-cv2c-moment-head">
+                    {/* FID-068 : glisser le moment vers la pastille d'un autre jour
+                        (ou flèches gauche/droite au clavier). */}
                     <button
                       type="button"
                       className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
-                      aria-label={`Déplacer la nuitée du jour ${day.dayNumber}. Glisse sur un jour, ou flèches gauche et droite`}
+                      aria-label={`Déplacer le moment ${momentIndex + 1}. Glisse sur un jour, ou flèches gauche et droite`}
                       onPointerDown={(event) =>
-                        beginDrag({ kind: 'night', day: clampedActive }, event)
+                        beginDrag(
+                          { kind: 'moment', day: clampedActive, moment: momentIndex },
+                          event,
+                        )
                       }
                       onPointerMove={moveDrag}
                       onPointerUp={endDrag}
@@ -463,208 +769,152 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
                         if (event.key === 'ArrowLeft') {
                           event.preventDefault();
                           event.stopPropagation();
-                          applyMove({ kind: 'night', day: clampedActive }, clampedActive - 1);
+                          applyMove(
+                            { kind: 'moment', day: clampedActive, moment: momentIndex },
+                            clampedActive - 1,
+                          );
                         } else if (event.key === 'ArrowRight') {
                           event.preventDefault();
                           event.stopPropagation();
-                          applyMove({ kind: 'night', day: clampedActive }, clampedActive + 1);
+                          applyMove(
+                            { kind: 'moment', day: clampedActive, moment: momentIndex },
+                            clampedActive + 1,
+                          );
                         }
                       }}
                     >
                       <GripVertical size={13} aria-hidden="true" />
                     </button>
-                  ) : null}
-                </div>
-                {day.night ? (
-                  <div className="lkdv-cv2c-media-edit">
-                    <input
-                      type="text"
-                      className="lkdv-cv2-input"
-                      value={day.night.name}
-                      placeholder="Refuge du Temple"
-                      aria-label="Nom de la nuitée"
-                      onChange={(event) =>
-                        updateDay(clampedActive, { night: { ...day.night!, name: event.target.value } })
-                      }
-                    />
-                    <select
-                      className="lkdv-cv2-input"
-                      value={day.night.type}
-                      aria-label="Type de nuitée"
-                      onChange={(event) =>
+                    <span className="lkdv-cv2c-moment-kind">
+                      <Camera size={11} aria-hidden="true" /> {MOMENT_LABELS[moment.kind]}
+                    </span>
+                    <button
+                      type="button"
+                      className="lkdv-cv2c-icon-btn lkdv-cv2c-moment-delete"
+                      aria-label="Retirer ce moment"
+                      onClick={() =>
                         updateDay(clampedActive, {
-                          night: { ...day.night!, type: event.target.value as typeof NIGHT_TYPES[number] },
+                          moments: day.moments.filter((_, position) => position !== momentIndex),
                         })
                       }
                     >
-                      {NIGHT_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      className="lkdv-cv2-input"
-                      value={day.night.infos}
-                      placeholder="Demi-pension, eau, gardien…"
-                      aria-label="Informations sur la nuitée"
-                      onChange={(event) =>
-                        updateDay(clampedActive, { night: { ...day.night!, infos: event.target.value } })
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            <button
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => {
-                const next = days.filter((_, position) => position !== clampedActive);
-                setDays(next);
-                setDayCount(next.length);
-                setActive(Math.max(0, clampedActive - 1));
-              }}
-            >
-              <Trash2 size={12} aria-hidden="true" /> Retirer ce jour
-            </button>
-          </div>
-
-          <ul className="lkdv-cv2c-moments">
-            {day.moments.map((moment, momentIndex) => (
-              <li
-                key={moment.id}
-                className="lkdv-cv2c-moment"
-                data-dragging={
-                  drag?.kind === 'moment' && drag.day === clampedActive && drag.moment === momentIndex
-                    ? 'true'
-                    : undefined
-                }
-              >
-                <div className="lkdv-cv2c-moment-head">
-                  {/* FID-068 : glisser le moment vers la pastille d'un autre jour
-                      (ou flèches gauche/droite au clavier). */}
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-icon-btn lkdv-cv2c-drag"
-                    aria-label={`Déplacer le moment ${momentIndex + 1}. Glisse sur un jour, ou flèches gauche et droite`}
-                    onPointerDown={(event) =>
-                      beginDrag(
-                        { kind: 'moment', day: clampedActive, moment: momentIndex },
-                        event,
-                      )
-                    }
-                    onPointerMove={moveDrag}
-                    onPointerUp={endDrag}
-                    onPointerCancel={cancelDrag}
-                    onKeyDown={(event) => {
-                      if (event.key === 'ArrowLeft') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        applyMove(
-                          { kind: 'moment', day: clampedActive, moment: momentIndex },
-                          clampedActive - 1,
-                        );
-                      } else if (event.key === 'ArrowRight') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        applyMove(
-                          { kind: 'moment', day: clampedActive, moment: momentIndex },
-                          clampedActive + 1,
-                        );
-                      }
-                    }}
-                  >
-                    <GripVertical size={13} aria-hidden="true" />
-                  </button>
-                  <span className="lkdv-cv2c-moment-kind">
-                    <Camera size={11} aria-hidden="true" /> {MOMENT_LABELS[moment.kind]}
-                  </span>
-                  <button
-                    type="button"
-                    className="lkdv-cv2c-icon-btn lkdv-cv2c-moment-delete"
-                    aria-label="Retirer ce moment"
-                    onClick={() =>
-                      updateDay(clampedActive, {
-                        moments: day.moments.filter((_, position) => position !== momentIndex),
-                      })
-                    }
-                  >
-                    <Trash2 size={12} aria-hidden="true" />
-                  </button>
-                </div>
-                <div className="lkdv-cv2-chips">
-                  {CARNET_MOMENT_KINDS_V2.map((kind) => (
-                    <button
-                      key={kind}
-                      type="button"
-                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-                      aria-pressed={moment.kind === kind}
-                      onClick={() => updateMoment(clampedActive, momentIndex, { kind })}
-                    >
-                      {MOMENT_LABELS[kind]}
+                      <Trash2 size={12} aria-hidden="true" />
                     </button>
-                  ))}
-                </div>
-                <div className="lkdv-cv2c-media-edit">
-                  <div className="lkdv-cv2c-date-range">
-                    <div className="lkdv-cv2-field">
-                      <label className="lkdv-cv2-field-label">Heure</label>
-                      <input
-                        type="time"
-                        className="lkdv-cv2-input"
-                        value={moment.time}
-                        aria-label="Heure du moment"
-                        onChange={(event) =>
-                          updateMoment(clampedActive, momentIndex, { time: event.target.value })
-                        }
-                      />
+                  </div>
+
+                  <div className="lkdv-cv2c-moment-card-body">
+                    {/* Colonne gauche */}
+                    <div className="lkdv-cv2c-moment-col-left">
+                      <div className="lkdv-cv2-field">
+                        <label className="lkdv-cv2-field-label">Titre / Nomination</label>
+                        <input
+                          type="text"
+                          className="lkdv-cv2-input"
+                          value={moment.title ?? ''}
+                          placeholder="Titre ou nomination du moment…"
+                          aria-label="Titre du moment"
+                          maxLength={120}
+                          onChange={(event) =>
+                            updateMoment(clampedActive, momentIndex, { title: event.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="lkdv-cv2c-row-2">
+                        <div className="lkdv-cv2-field">
+                          <label className="lkdv-cv2-field-label">Heure</label>
+                          <input
+                            type="time"
+                            className="lkdv-cv2-input"
+                            value={moment.time}
+                            aria-label="Heure du moment"
+                            onChange={(event) =>
+                              updateMoment(clampedActive, momentIndex, { time: event.target.value })
+                            }
+                          />
+                        </div>
+                        <SelectDropdownV2
+                          name={`days.${clampedActive}.moments.${momentIndex}.kind`}
+                          label="Type"
+                          value={moment.kind}
+                          options={CARNET_MOMENT_KINDS_V2.map((kind) => ({
+                            value: kind,
+                            label: MOMENT_LABELS[kind],
+                          }))}
+                          onChange={(next) =>
+                            updateMoment(clampedActive, momentIndex, {
+                              kind: String(next) as CarnetMomentKindV2,
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="lkdv-cv2-field">
+                        <label className="lkdv-cv2-field-label">Rencontres</label>
+                        <MomentEncountersRow
+                          encounters={moment.encounters ?? []}
+                          onChange={(encounters) =>
+                            updateMoment(clampedActive, momentIndex, { encounters })
+                          }
+                        />
+                      </div>
+
+                      <div className="lkdv-cv2-field">
+                        <label className="lkdv-cv2-field-label">Lieu</label>
+                        <input
+                          type="text"
+                          className="lkdv-cv2-input"
+                          value={moment.place}
+                          maxLength={120}
+                          placeholder="Col du Vallon…"
+                          aria-label="Lieu du moment"
+                          onChange={(event) =>
+                            updateMoment(clampedActive, momentIndex, { place: event.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="lkdv-cv2-field">
+                        <label className="lkdv-cv2-field-label">Raconter</label>
+                        <textarea
+                          className="lkdv-cv2-input"
+                          rows={2}
+                          maxLength={500}
+                          value={moment.text}
+                          placeholder="Petit commentaire, rencontre, souvenir…"
+                          aria-label="Commentaire du moment"
+                          onChange={(event) =>
+                            updateMoment(clampedActive, momentIndex, { text: event.target.value })
+                          }
+                        />
+                      </div>
                     </div>
-                    <div className="lkdv-cv2-field">
-                      <label className="lkdv-cv2-field-label">Lieu</label>
-                      <input
-                        type="text"
-                        className="lkdv-cv2-input"
-                        value={moment.place}
-                        maxLength={120}
-                        placeholder="Col du Vallon…"
-                        aria-label="Lieu du moment"
-                        onChange={(event) =>
-                          updateMoment(clampedActive, momentIndex, { place: event.target.value })
+
+                    {/* Colonne droite : Slot média carré 100x100 */}
+                    <div className="lkdv-cv2c-moment-col-right">
+                      <MomentMediaSlotV2
+                        userId={user?.id ?? ''}
+                        media={moment.media ?? (moment.photo ? [moment.photo] : [])}
+                        photo={moment.photo}
+                        onChange={({ media: nextMedia, photo: nextPhoto }) =>
+                          updateMoment(clampedActive, momentIndex, { media: nextMedia, photo: nextPhoto })
                         }
                       />
                     </div>
                   </div>
-                  <div className="lkdv-cv2-field">
-                    <label className="lkdv-cv2-field-label">Raconter</label>
-                    <textarea
-                      className="lkdv-cv2-input"
-                      rows={2}
-                      maxLength={500}
-                      value={moment.text}
-                      placeholder="Petit commentaire, rencontre, souvenir…"
-                      onChange={(event) =>
-                        updateMoment(clampedActive, momentIndex, { text: event.target.value })
-                      }
-                    />
-                  </div>
-                  <MomentPhotoV2
-                    userId={user?.id ?? ''}
-                    value={moment.photo}
-                    onChange={(photo) => updateMoment(clampedActive, momentIndex, { photo })}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-          {day.moments.length < 12 ? (
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {day.moments.length > 0 && day.moments.length < 100 ? (
             <button
               type="button"
               className="lkdv-cv2c-add-media"
-              onClick={() =>
-                updateDay(clampedActive, { moments: [...day.moments, newMoment()] })
-              }
+              onClick={() => {
+                updateDay(clampedActive, { moments: [...day.moments, newMoment()] });
+                haptic('selection');
+              }}
             >
               <Plus size={14} aria-hidden="true" /> Ajouter un moment
             </button>
@@ -672,9 +922,6 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
         </>
       )}
       </div>
-      <p className="lkdv-cv2-field-hint">
-        Chaque moment peut porter une photo : elle est téléversée maintenant (EXIF retiré, 10 Mo maximum), pas à l’envoi.
-      </p>
       <div className="lkdv-cv2c-inline-add">
         {days.length > 1 ? (
           <button

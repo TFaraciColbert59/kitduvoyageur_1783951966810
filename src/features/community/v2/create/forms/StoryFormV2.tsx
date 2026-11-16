@@ -25,6 +25,8 @@ import {
 import { useCreateSheet } from '../CreateSheetContext';
 import { publishStoryV2 } from '../createRpc';
 import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
+import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
+import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { MediaFieldV2 } from '../fields/MediaFieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { STORY_LIMITS } from '../fields/media';
@@ -167,7 +169,6 @@ function StoryMediaStep({
         ]}
         showAlt={false}
         hideAdd
-        hint="Format vertical 9:16. Tu pourras recadrer et poser tes calques à l’étape suivante. Vidéo : 60 s maximum."
         spawnFiles={spawnFiles}
         onVideoDuration={(durationMs) => {
           const current = form.getValues('media') ?? [];
@@ -181,6 +182,51 @@ function StoryMediaStep({
           }
         }}
       />
+      {/* Cadre 9:16 immersif tant qu'aucun média n'est choisi */}
+      {!media ? (
+        <button
+          type="button"
+          onClick={onGallery}
+          className="lkdv-cv2c-story-frame-empty"
+          style={{
+            width: '100%',
+            maxWidth: 220,
+            aspectRatio: '9 / 16',
+            margin: '4px auto 8px',
+            borderRadius: 20,
+            border: '1.5px dashed rgba(21, 94, 117, 0.32)',
+            background:
+              'linear-gradient(160deg, rgba(16, 185, 129, 0.08), rgba(21, 94, 117, 0.06) 55%, rgba(15, 23, 42, 0.04))',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: 18,
+            color: 'var(--lkdv-ink, #0f172a)',
+            cursor: 'pointer',
+          }}
+        >
+          <span
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: '50%',
+              background: 'rgba(21, 94, 117, 0.12)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#155e75',
+            }}
+          >
+            <ImageIcon size={22} aria-hidden="true" />
+          </span>
+          <strong style={{ fontSize: '0.92rem' }}>Format Story 9:16</strong>
+          <small style={{ fontSize: '0.76rem', opacity: 0.72, textAlign: 'center' }}>
+            Touche pour choisir une photo ou une vidéo (60 s max)
+          </small>
+        </button>
+      ) : null}
       {/* Deux pilules de la maquette (`.src-btns`, HTML L2890). */}
       <div className="lkdv-cv2c-src-btns">
         <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onGallery}>
@@ -192,9 +238,6 @@ function StoryMediaStep({
           Caméra
         </button>
       </div>
-      <p className="lkdv-cv2-field-hint">
-        La caméra directe n’est proposée que dans l’application ; au navigateur, la galerie suffit.
-      </p>
       {cameraNote ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
           {cameraNote}
@@ -301,11 +344,7 @@ function LayerTools({
           {layersError}
         </p>
       ) : null}
-      {layers.length === 0 ? (
-        <p className="lkdv-cv2-field-hint">
-          Ajoute un texte : il se déplace au doigt, se redimensionne et pivote au pincement.
-        </p>
-      ) : (
+      {layers.length > 0 ? (
         <ul className="lkdv-cv2c-layer-list">
           {layers.map((layer) => (
             <li
@@ -340,7 +379,7 @@ function LayerTools({
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
       {selected ? (
         <div className="lkdv-cv2c-crop-row">
           <span className="lkdv-cv2-field-label">Style du texte sélectionné</span>
@@ -604,34 +643,76 @@ function StoryCarnetLink() {
       <span className="lkdv-cv2-field-label" id="cv2c-story-carnet-label">
         Lier à un carnet
       </span>
-      <div className="lkdv-cv2-chips" role="radiogroup" aria-labelledby="cv2c-story-carnet-label">
+      <div
+        className="lkdv-cv2c-hrail lkdv-cv2c-story-carnet-rail"
+        data-hscroll
+        role="radiogroup"
+        aria-labelledby="cv2c-story-carnet-label"
+      >
         <button
           type="button"
           role="radio"
           aria-checked={!stickers.carnetId}
-          className="lkdv-cv2-chip lkdv-cv2-chip--lg"
+          className="lkdv-cv2c-story-carnet-card is-none"
+          data-active={!stickers.carnetId}
           onClick={() => {
             setStickers({ carnetId: '', carnetTitle: '', carnetDay: null });
             haptic('selection');
           }}
         >
-          Aucun
+          <b>Aucun carnet</b>
+          <small>Story autonome</small>
         </button>
-        {carnets?.map((carnet) => (
-          <button
-            key={carnet.id}
-            type="button"
-            role="radio"
-            aria-checked={stickers.carnetId === carnet.id}
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => {
-              setStickers({ carnetId: carnet.id, carnetTitle: carnet.title, carnetDay: 1 });
-              haptic('selection');
-            }}
-          >
-            {carnet.title}
-          </button>
-        ))}
+        {carnets?.map((carnet) => {
+          const isSelected = stickers.carnetId === carnet.id;
+          return (
+            <div
+              key={carnet.id}
+              className="lkdv-cv2c-story-carnet-card"
+              data-active={isSelected}
+            >
+              <button
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                className="lkdv-cv2c-story-carnet-main"
+                onClick={() => {
+                  setStickers({ carnetId: carnet.id, carnetTitle: carnet.title, carnetDay: 1 });
+                  haptic('selection');
+                }}
+              >
+                <b>{carnet.title}</b>
+                <small>{carnet.days} jour{carnet.days > 1 ? 's' : ''}</small>
+              </button>
+              <div
+                className="lkdv-cv2c-story-carnet-days"
+                data-hscroll
+                role="radiogroup"
+                aria-label={`Jours de ${carnet.title}`}
+              >
+                {Array.from({ length: carnet.days }, (_, index) => index + 1).map((day) => {
+                  const activeDay = isSelected && (stickers.carnetDay ?? 1) === day;
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      role="radio"
+                      aria-checked={activeDay}
+                      className="lkdv-cv2c-story-day-pill"
+                      data-active={activeDay}
+                      onClick={() => {
+                        setStickers({ carnetId: carnet.id, carnetTitle: carnet.title, carnetDay: day });
+                        haptic('selection');
+                      }}
+                    >
+                      J{day}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </div>
       {carnets === null ? (
         <p className="lkdv-cv2-field-hint" role="status">
@@ -643,25 +724,6 @@ function StoryCarnetLink() {
           {error}
         </p>
       ) : null}
-      {selected ? (
-        <div className="lkdv-cv2-chips" role="radiogroup" aria-label="Jour du carnet">
-          {Array.from({ length: selected.days }, (_, index) => index + 1).map((day) => (
-            <button
-              key={day}
-              type="button"
-              role="radio"
-              aria-checked={(stickers.carnetDay ?? 1) === day}
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => {
-                setStickers({ carnetDay: day });
-                haptic('selection');
-              }}
-            >
-              Jour {day}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -669,32 +731,26 @@ function StoryCarnetLink() {
 function StoryDiffusionStep() {
   const form = useFormContext<StoryFormValuesV2>();
   const values = form.watch();
+  const { user, requestCreate } = useCreateSheet();
+  const myClubs = useMyClubsV2(user?.id ?? null);
+  useEffect(() => {
+    if (values.audience === 'club') void myClubs.load();
+  }, [myClubs, values.audience]);
   return (
     <>
-      <span className="lkdv-cv2-field-label" id="cv2c-story-audience">
-        Audience
-      </span>
-      <div className="lkdv-cv2c-audience-list" role="radiogroup" aria-labelledby="cv2c-story-audience">
-        {AUDIENCE_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={values.audience === option.value}
-            className="lkdv-cv2c-audience-card"
-            data-active={values.audience === option.value}
-            onClick={() =>
-              form.setValue('audience', option.value, { shouldDirty: true, shouldValidate: true })
-            }
-          >
-            <span className="lkdv-cv2c-radio" aria-hidden="true" />
-            <span>
-              <b>{option.label}</b>
-              <small>{option.description}</small>
-            </span>
-          </button>
-        ))}
-      </div>
+      <VisibilityPickerV2
+        name="audience"
+        label="Visibilité"
+        options={[
+          { value: 'public', label: 'Public' },
+          { value: 'only_me', label: 'Privé' },
+          { value: 'club', label: 'Club' },
+        ]}
+        clubs={myClubs.clubs ?? []}
+        clubsLoading={myClubs.loading}
+        clubsError={myClubs.error}
+        onCreateClub={() => requestCreate('club')}
+      />
       <div className="lkdv-cv2c-crop-row">
         <span className="lkdv-cv2-field-label">Réponses</span>
         <div className="lkdv-cv2-seg lkdv-cv2c-seg" role="group" aria-label="Qui peut répondre">
@@ -796,13 +852,6 @@ function StoryBody({
 
   return (
     <>
-      {/* FID-056 : l'aperçu compact vit dans l'emplacement fixe de la coque,
-          au-dessus du pager, et reste visible à toutes les étapes. */}
-      {api.active ? (
-        <SheetPreview>
-          <StoryLivePreview values={values} />
-        </SheetPreview>
-      ) : null}
       {api.step === 0 ? (
         <StoryMediaStep
           user={user}
@@ -876,13 +925,6 @@ function StoryBody({
             placeholder="Un mot sur ce moment…"
             maxLength={280}
             rows={3}
-          />
-          <TextFieldV2
-            name="altText"
-            label="Texte alternatif"
-            placeholder="Décris la story pour les personnes malvoyantes"
-            maxLength={200}
-            hint="Lu par les lecteurs d’écran. Facultatif."
           />
           <LayerTools selectedId={selectedLayerId} onSelect={setSelectedLayerId} />
           <StickerTools />

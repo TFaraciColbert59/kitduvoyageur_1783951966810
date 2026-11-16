@@ -7,6 +7,7 @@ import {
   buildPostPayload,
   buildStoryCompositionV2,
   carnetCover,
+  carnetPhotos,
   toStartsAt,
 } from '../createRpc';
 import {
@@ -65,6 +66,28 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
     const payload = buildPostPayload(values);
     expect(payload.content).toBe('La traversée\n\nRécit du jour.');
     expect((payload.creation_meta as { title: string }).title).toBe('La traversée');
+  });
+
+  it('create_community_post : paramètres commentaires, j’aime et programmation dans creation_meta', () => {
+    const values = {
+      ...createDefaultsV2('post'),
+      format: 'question' as const,
+      content: 'Meilleur bivouac ?',
+      allowComments: false,
+      allowLikes: false,
+      scheduleEnabled: true,
+      scheduleDate: '2026-12-01',
+      scheduleTime: '08:30',
+    };
+    const payload = buildPostPayload(values);
+    const meta = payload.creation_meta as {
+      allow_comments: boolean;
+      allow_likes: boolean;
+      scheduled_at: string | null;
+    };
+    expect(meta.allow_comments).toBe(false);
+    expect(meta.allow_likes).toBe(false);
+    expect(meta.scheduled_at).toBe('2026-12-01T08:30:00');
   });
 
   it('create_event_with_post : starts_at/ends_at ISO, activité, coordonnées et annonce', () => {
@@ -199,6 +222,51 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
 
     const withNights = buildCarnetPayload(values, { hasCarnetNights: true });
     expect(withNights.nights).toHaveLength(1);
+
+    // F2.7 : agrégation des médias et sérialisation de title et encounters
+    const videoMedia = {
+      ...photo,
+      id: 'video-1',
+      name: 'moment.mp4',
+      type: 'video/mp4',
+      url: 'https://example.test/moment.mp4',
+      storageBucket: 'carnet-moments-media',
+      storagePath: 'u/moment.mp4',
+    };
+    const multiValues = {
+      ...values,
+      days: [
+        {
+          id: 'd1',
+          dayNumber: 1,
+          title: 'Jour 1',
+          date: '2026-07-10',
+          night: null,
+          moments: [
+            {
+              id: 'm1',
+              title: 'Départ matinal',
+              kind: 'photo' as const,
+              time: '06:30',
+              text: 'Lever du soleil',
+              place: 'Col du Lautaret',
+              photo: null,
+              media: [photo, videoMedia],
+              encounters: ['Camille', 'Julien'],
+            },
+          ],
+        },
+      ],
+    };
+    const multiPayload = buildCarnetPayload(multiValues, { hasCarnetNights: false });
+    expect(carnetPhotos(multiValues)).toHaveLength(2);
+    expect(multiPayload.media).toHaveLength(2);
+    const m = (multiPayload.moments as Record<string, unknown>[])[0];
+    expect(m.title).toBe('Départ matinal');
+    expect(m.titre).toBe('Départ matinal');
+    expect(m.encounters).toEqual(['Camille', 'Julien']);
+    expect(m.image_url).toBe('https://example.test/moment.jpg');
+    expect((multiPayload.media as { type: string }[])[1].type).toBe('video');
   });
 });
 

@@ -5,22 +5,32 @@ import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource, type MapL
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createMapStyle } from '@/components/map/engine/createMapStyle';
 import {
+  ArrowLeftRight,
   Download,
-  Grip,
   Loader2,
-  LocateFixed,
+  Magnet,
+  Maximize2,
+  Minimize2,
+  Move,
+  Navigation,
+  Pencil,
   PenLine,
   Redo2,
   Route,
+  Search,
   Trash2,
   Undo2,
   Upload,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useFormContext } from 'react-hook-form';
 import {
   elevationGain,
   joinLines,
+  joinSegments,
   lengthKm,
+  pickWaypoints,
+  removeSpurs,
   sampleAlong,
   simplify,
   smooth,
@@ -44,6 +54,29 @@ import { parseGeoJsonTrace, readTraceFile } from './gpx';
 
 const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
 const MAX_POINTS = 2000;
+const CHUNK_PX = 48;
+const ROUTE_MAX_POINTS = 12;
+const MIN_ROUTE_M = 25;
+const MAX_DETOUR = 3.5;
+
+export interface TraceSegmentV2 {
+  id: string;
+  points: LngLat[];
+  mode: 'chemin' | 'libre';
+}
+
+interface StrokeState {
+  pointerId: number;
+  raw: LngLat[];
+  snapped: LngLat[];
+  cursor: number;
+  magnet: boolean;
+  free: boolean;
+  inFlight: boolean;
+  pendingPx: number;
+  lastPx: [number, number];
+  abort: AbortController;
+}
 
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const;
 
@@ -129,12 +162,15 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const form = useFormContext<CarnetFormValuesV2>();
   const watchedTrace = form.watch('trace');
   const trace = React.useMemo(() => (watchedTrace ?? []) as LngLat[], [watchedTrace]);
+  const startLat = form.watch('startLat');
+  const startLng = form.watch('startLng');
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const startMarker = useRef<Marker | null>(null);
   const endMarker = useRef<Marker | null>(null);
   const editMarkers = useRef<Marker[]>([]);
-  const drawRef = useRef<{ pointerId: number; points: LngLat[]; drawing: boolean } | null>(null);
+  const drawRef = useRef<StrokeState | null>(null);
+  const lastAutofocusKey = useRef<string>('');
   /**
    * FID-068 — historique **unique** du tracé (50 pas, `shared/traceEditing`) :
    * un geste validé = une entrée (tracé au doigt, import, point déplacé,
@@ -147,12 +183,20 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const [failed, setFailed] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [magnet, setMagnet] = useState(true);
+  const [snapState, setSnapState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [expanded, setExpanded] = useState(false);
+  const [troncons, setTroncons] = useState<TraceSegmentV2[]>(() =>
+    trace.length >= 2 ? [{ id: 'init', points: trace, mode: 'chemin' }] : [],
+  );
   const [selectedSegment, setSelectedSegment] = useState<number | null>(null);
   const [, bumpHistory] = useState(0);
   const [elevations, setElevations] = useState<number[]>([]);
   const [gainState, setGainState] = useState<'idle' | 'loading' | 'error'>('idle');
   const [importOpen, setImportOpen] = useState(false);
   const [sessions, setSessions] = useState<SessionOption[] | null>(null);
+  const [sessionSearch, setSessionSearch] = useState('');
+  const [sessionsLoading, setSessionsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { haptic } = useHapticFeedback();
 
@@ -219,11 +263,17 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     let map: MapLibreMap;
     try {
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+      const initialCenter: [number, number] =
+        startLng != null && startLat != null
+          ? [startLng, startLat]
+          : trace.length > 0
+            ? trace[0]
+            : DEFAULT_CENTER;
       map = new MapLibreMap({
         container: containerRef.current,
         style: createMapStyle('topo'),
-        center: DEFAULT_CENTER,
-        zoom: 6,
+        center: initialCenter,
+        zoom: (startLng != null && startLat != null) || trace.length > 0 ? 11 : 6,
         minZoom: 2,
         maxZoom: 17,
         attributionControl: false,
@@ -372,6 +422,24 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     }
   }, [form, haptic, ready, selectedSegment, setTrace, trace]);
 
+  // F2.1 — Autofocus réactif sur startLat/startLng ou trace[0]
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const target: [number, number] | null =
+      trace.length > 0
+        ? trace[0]
+        : startLng != null && startLat != null
+          ? [startLng, startLat]
+          : null;
+    if (!target) return;
+    const key = `${target[0].toFixed(5)},${target[1].toFixed(5)}`;
+    if (lastAutofocusKey.current !== key) {
+      lastAutofocusKey.current = key;
+      map.easeTo({ center: target, zoom: Math.max(map.getZoom(), 11), duration: 420 });
+    }
+  }, [ready, startLat, startLng, trace]);
+
   // FID-068 — appui sur le tracé : sélectionne le segment (comme `.seg-hit`).
   useEffect(() => {
     const map = mapRef.current;
@@ -434,13 +502,91 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     }
   }, [selectedSegment, trace]);
 
-  // ── Tracé au doigt ───────────────────────────────────────────────────────
+  const commitTroncons = useCallback(
+    (nextTroncons: TraceSegmentV2[]) => {
+      setTroncons(nextTroncons);
+      const joined = joinSegments(
+        nextTroncons.map((item) => item.points),
+        MAX_POINTS,
+      );
+      setTrace(joined);
+    },
+    [setTrace],
+  );
+
+  const flushChunk = useCallback(
+    async (stroke: StrokeState) => {
+      if (stroke.inFlight || stroke.cursor >= stroke.raw.length - 1) return;
+      stroke.inFlight = true;
+      stroke.pendingPx = 0;
+      const startIndex = Math.max(0, stroke.cursor - 1);
+      const chunk = stroke.raw.slice(startIndex);
+      stroke.cursor = stroke.raw.length;
+      const from = stroke.snapped[stroke.snapped.length - 1] ?? chunk[0];
+      const pixelTolerance = 0.00012;
+      let piece: LngLat[] | null = null;
+      let usedRoute = false;
+
+      if (stroke.magnet && lengthKm(chunk) * 1000 >= MIN_ROUTE_M) {
+        setSnapState('loading');
+        try {
+          const waypoints = pickWaypoints([from, ...chunk.slice(1)], ROUTE_MAX_POINTS, pixelTolerance);
+          const encoded = waypoints.map(([lng, lat]) => `${lng.toFixed(5)},${lat.toFixed(5)}`).join(';');
+          const res = await fetch(`/api/route?points=${encodeURIComponent(encoded)}&mode=pieton`, {
+            signal: stroke.abort.signal,
+          });
+          if (res.ok) {
+            const payload = (await res.json()) as { geometry?: LngLat[] };
+            const cleaned = Array.isArray(payload.geometry) ? removeSpurs(payload.geometry) : [];
+            const airKm = Math.max(0.02, lengthKm([from, chunk[chunk.length - 1]]));
+            const routedKm = lengthKm(cleaned);
+            if (cleaned.length >= 2 && routedKm / airKm <= MAX_DETOUR) {
+              piece = cleaned;
+              usedRoute = true;
+            }
+          }
+        } catch {
+          /* repli en tronçon libre */
+        }
+      }
+
+      if (!piece) {
+        if (stroke.magnet && lengthKm(chunk) * 1000 >= MIN_ROUTE_M) {
+          stroke.free = true;
+        }
+        piece = simplify(smooth(chunk, 2), pixelTolerance);
+      }
+
+      if (piece.length >= 2) {
+        stroke.snapped = stroke.snapped.length <= 1 && usedRoute ? piece : joinLines(stroke.snapped, piece, 2);
+      }
+      setSnapState(stroke.magnet && stroke.free ? 'error' : 'idle');
+      stroke.inFlight = false;
+    },
+    [],
+  );
+
+  // ── Tracé au doigt par tronçons ──────────────────────────────────────────
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!drawing || !mapRef.current) return;
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
-    const point = mapRef.current.unproject([event.clientX - rect.left, event.clientY - rect.top]);
-    drawRef.current = { pointerId: event.pointerId, points: [[point.lng, point.lat]], drawing: true };
+    const px: [number, number] = [event.clientX - rect.left, event.clientY - rect.top];
+    const point = mapRef.current.unproject(px);
+    const startPt: LngLat = [point.lng, point.lat];
+    drawRef.current = {
+      pointerId: event.pointerId,
+      raw: [startPt],
+      snapped: [startPt],
+      cursor: 0,
+      magnet,
+      free: false,
+      inFlight: false,
+      pendingPx: 0,
+      lastPx: px,
+      abort: new AbortController(),
+    };
+    setSnapState('idle');
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
@@ -452,22 +598,46 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     const current = drawRef.current;
     if (!current || current.pointerId !== event.pointerId || !mapRef.current) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const point = mapRef.current.unproject([event.clientX - rect.left, event.clientY - rect.top]);
-    const last = current.points[current.points.length - 1];
+    const px: [number, number] = [event.clientX - rect.left, event.clientY - rect.top];
+    const point = mapRef.current.unproject(px);
+    const last = current.raw[current.raw.length - 1];
     if (last && Math.hypot(last[0] - point.lng, last[1] - point.lat) < 0.00002) return;
-    current.points.push([point.lng, point.lat]);
+    current.raw.push([point.lng, point.lat]);
+    current.pendingPx += Math.hypot(px[0] - current.lastPx[0], px[1] - current.lastPx[1]);
+    current.lastPx = px;
+    if (current.magnet && !current.inFlight && current.pendingPx >= CHUNK_PX) {
+      void flushChunk(current);
+    }
   };
 
-  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerUp = async (event: React.PointerEvent<HTMLDivElement>) => {
     const current = drawRef.current;
     if (!current || current.pointerId !== event.pointerId) return;
     drawRef.current = null;
+    await flushChunk(current);
     const pixelTolerance = 0.00012;
-    const simplified = simplify(smooth(current.points, 2), pixelTolerance);
-    if (simplified.length < 2) return;
-    const next = joinLines((form.getValues('trace') ?? []) as LngLat[], simplified);
-    setTrace(next);
+    const finalPoints =
+      current.snapped.length >= 2
+        ? current.snapped
+        : simplify(smooth(current.raw, 2), pixelTolerance);
+    if (finalPoints.length < 2) {
+      setSnapState('idle');
+      return;
+    }
+    const mode: 'chemin' | 'libre' = current.magnet && !current.free ? 'chemin' : 'libre';
+    const nextSeg: TraceSegmentV2 = {
+      id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `seg-${Date.now()}`,
+      points: finalPoints,
+      mode,
+    };
+    const nextTroncons = [...troncons, nextSeg];
+    commitTroncons(nextTroncons);
     haptic('medium');
+    toast.success(
+      mode === 'chemin'
+        ? `Tronçon ${nextTroncons.length} accroché aux sentiers`
+        : `Tronçon ${nextTroncons.length} libre ajouté`,
+    );
   };
 
   // Pendant le tracé, la carte ne capte pas le geste : le doigt dessine.
@@ -556,24 +726,28 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     }
   };
 
-  const loadSessions = async () => {
+  const loadSessions = async (searchQuery?: string) => {
     if (!user) return;
     setImportOpen(true);
-    if (sessions) return;
+    setSessionsLoading(true);
     try {
       const supabase = createClient();
-      const { data } = await supabase
-        // RGPD : la trace brute de ses propres sorties se lit sur la vue
-        // participant, plus sur la table (colonne retirée au rôle authenticated).
+      let query = supabase
         .from('hike_sessions_participant')
         .select('id, title, started_at, positions_geojson')
-        .eq('user_id', user.id)
         .not('positions_geojson', 'is', null)
         .order('started_at', { ascending: false })
-        .limit(8);
+        .limit(20);
+      const term = searchQuery !== undefined ? searchQuery.trim() : sessionSearch.trim();
+      if (term) {
+        query = query.ilike('title', `%${term}%`);
+      }
+      const { data } = await query;
       setSessions(Array.isArray(data) ? (data as SessionOption[]) : []);
     } catch {
       setSessions([]);
+    } finally {
+      setSessionsLoading(false);
     }
   };
 
@@ -599,10 +773,10 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           Sortie enregistrée / Effacer) restent sous la carte. */}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Point de départ du tracé</span>
-        <div className="lkdv-cv2c-rcards" role="group" aria-label="Point de départ du tracé">
+        <div className="lkdv-cv2c-rcards lkdv-cv2c-rcards--grid3" role="group" aria-label="Point de départ du tracé">
           <button
             type="button"
-            className="lkdv-cv2c-rcard"
+            className="lkdv-cv2c-rcard lkdv-cv2c-rcard--compact"
             onClick={() => {
               setDrawing(true);
               setEditing(false);
@@ -619,49 +793,50 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
-              <PenLine size={18} aria-hidden="true" />
+              <Pencil size={16} strokeWidth={1.8} aria-hidden="true" />
             </span>
             <span className="lkdv-cv2c-rcard-text">
               <b>Tracer sur la carte</b>
-              <small>Dessine ton parcours au doigt.</small>
             </span>
           </button>
           <button
             type="button"
-            className="lkdv-cv2c-rcard"
+            className="lkdv-cv2c-rcard lkdv-cv2c-rcard--compact"
             onClick={() => {
               fileInputRef.current?.click();
               haptic('selection');
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
-              <Upload size={18} aria-hidden="true" />
+              <Upload size={16} strokeWidth={1.8} aria-hidden="true" />
             </span>
             <span className="lkdv-cv2c-rcard-text">
               <b>Importer un GPX</b>
-              <small>Depuis ta montre ou une application.</small>
             </span>
           </button>
           <button
             type="button"
-            className="lkdv-cv2c-rcard"
+            className="lkdv-cv2c-rcard lkdv-cv2c-rcard--compact"
             onClick={() => {
               void loadSessions();
               haptic('selection');
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
-              <Download size={18} aria-hidden="true" />
+              <Search size={16} strokeWidth={1.8} aria-hidden="true" />
             </span>
             <span className="lkdv-cv2c-rcard-text">
-              <b>Une sortie enregistrée</b>
-              <small>Reprendre une trace de ton suivi (hike_sessions).</small>
+              <b>Rechercher une sortie</b>
             </span>
           </button>
         </div>
       </div>
 
-      <div className="lkdv-cv2c-map" data-hscroll>
+      <div
+        className="lkdv-cv2c-map"
+        data-hscroll
+        style={expanded ? { height: '54dvh', minHeight: 340 } : undefined}
+      >
         <div
           ref={containerRef}
           className="lkdv-cv2c-map-canvas"
@@ -681,11 +856,13 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
             Carte indisponible
           </span>
         ) : null}
-        <div className="lkdv-cv2c-map-actions">
+        <div className="lkdv-cv2c-map-actions lkdv-cv2c-map-actions--compte" role="group" aria-label="Contrôles de la carte">
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
             aria-pressed={drawing}
+            aria-label={drawing ? 'Terminer le tracé' : 'Tracer sur la carte'}
+            title={drawing ? 'Terminer le tracé' : 'Tracer sur la carte'}
             onClick={() => {
               const next = !drawing;
               setDrawing(next);
@@ -693,14 +870,27 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
               haptic('selection');
             }}
           >
-            <PenLine size={13} aria-hidden="true" />
-            {drawing ? 'Terminer' : 'Tracer'}
+            <Pencil size={17} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2c-map-btn"
+            aria-pressed={magnet}
+            aria-label={magnet ? 'Aimant aux sentiers activé' : 'Tracé libre'}
+            title={magnet ? 'Aimant aux sentiers' : 'Tracé libre'}
+            onClick={() => {
+              setMagnet((value) => !value);
+              haptic('selection');
+            }}
+          >
+            <Magnet size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
             aria-pressed={editing}
             aria-label="Éditer le tracé : déplacer les points"
+            title="Éditer les points"
             onClick={() => {
               const next = !editing;
               setEditing(next);
@@ -709,42 +899,118 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
               haptic('selection');
             }}
           >
-            <Grip size={13} aria-hidden="true" />
-            Éditer
+            <Move size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
-          <button type="button" className="lkdv-cv2c-map-btn" onClick={() => void centerOnMyPosition()}>
-            <LocateFixed size={13} aria-hidden="true" />
-            Ma position
+          <button
+            type="button"
+            className="lkdv-cv2c-map-btn"
+            aria-pressed={expanded}
+            aria-label={expanded ? 'Réduire la carte' : 'Agrandir la carte'}
+            title={expanded ? 'Réduire la carte' : 'Agrandir la carte'}
+            onClick={() => {
+              setExpanded((value) => !value);
+              haptic('light');
+            }}
+          >
+            {expanded ? <Minimize2 size={17} strokeWidth={1.75} aria-hidden="true" /> : <Maximize2 size={17} strokeWidth={1.75} aria-hidden="true" />}
+          </button>
+          <button
+            type="button"
+            className="lkdv-cv2c-map-btn"
+            aria-label="Ma position"
+            title="Ma position"
+            onClick={() => void centerOnMyPosition()}
+          >
+            <Navigation size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
             aria-label="Annuler le dernier geste"
+            title="Annuler"
             disabled={historyRef.current.past.length === 0}
             onClick={undo}
           >
-            <Undo2 size={13} aria-hidden="true" />
+            <Undo2 size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
           <button
             type="button"
             className="lkdv-cv2c-map-btn"
             aria-label="Rétablir le geste annulé"
+            title="Rétablir"
             disabled={historyRef.current.future.length === 0}
             onClick={redo}
           >
-            <Redo2 size={13} aria-hidden="true" />
+            <Redo2 size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
       </div>
-      <p className="lkdv-cv2c-map-help">
-        <Route size={11} aria-hidden="true" />{' '}
-        {drawing
-          ? 'Trace avec le doigt, puis touche Terminer.'
-          : editing
-            ? 'Glisse un repère (départ, arrivée ou point intermédiaire) pour ajuster.'
-            : 'Touche le tracé pour choisir un segment, ou glisse le départ et l’arrivée.'}
-        {trace.length > 1 ? ' Annuler et rétablir restent disponibles.' : ''}
-      </p>
+      {snapState === 'loading' || snapState === 'error' || drawing || editing ? (
+        <p className="lkdv-cv2c-map-help">
+          <Route size={11} aria-hidden="true" />{' '}
+          {snapState === 'loading'
+            ? 'Accrochage aux sentiers…'
+            : snapState === 'error'
+              ? 'Pas de chemin trouvé : tronçon libre lissé.'
+              : drawing
+                ? magnet
+                  ? 'Trace au doigt : accrochage auto aux sentiers.'
+                  : 'Trace au doigt en mode libre.'
+                : 'Glisse un repère (départ, arrivée ou point intermédiaire) pour ajuster.'}
+        </p>
+      ) : null}
+
+      {troncons.length > 0 ? (
+        <div className="lkdv-cv2c-hrail" role="list" aria-label="Tronçons du tracé">
+          {troncons.map((seg, idx) => (
+            <div
+              key={seg.id}
+              role="listitem"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 10px',
+                borderRadius: 999,
+                background: 'var(--cv2-field-bg)',
+                boxShadow: 'inset 0 0 0 0.5px var(--cv2-field-border)',
+                font: '500 12px/1.2 var(--font-sans)',
+              }}
+            >
+              <span>
+                T{idx + 1} · {lengthKm(seg.points).toFixed(1).replace('.', ',')} km ·{' '}
+                {seg.mode === 'chemin' ? 'Chemin' : 'Libre'}
+              </span>
+              <button
+                type="button"
+                className="lkdv-cv2c-chip-x"
+                aria-label={`Inverser le tronçon ${idx + 1}`}
+                onClick={() => {
+                  const next = troncons.map((item) =>
+                    item.id === seg.id ? { ...item, points: [...item.points].reverse() } : item,
+                  );
+                  commitTroncons(next);
+                  haptic('selection');
+                }}
+              >
+                <ArrowLeftRight size={11} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="lkdv-cv2c-chip-x"
+                aria-label={`Supprimer le tronçon ${idx + 1}`}
+                onClick={() => {
+                  const next = troncons.filter((item) => item.id !== seg.id);
+                  commitTroncons(next);
+                  haptic('medium');
+                }}
+              >
+                <Trash2 size={11} aria-hidden="true" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {trace.length > 1 ? (
         <div className="lkdv-cv2c-inline-add">
@@ -768,40 +1034,6 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         </div>
       ) : null}
 
-      {trace.length > 1 ? (
-        <details className="lkdv-cv2c-point-list">
-          <summary className="lkdv-cv2-field-hint">Liste des points ({trace.length})</summary>
-          <ol>
-            {trace
-              .filter((_, index) => index % Math.max(1, Math.round(trace.length / 20)) === 0)
-              .map(([lng, lat], index) => (
-                <li key={`${index}-${lng}-${lat}`}>
-                  {lat.toFixed(4)}° N · {lng.toFixed(4)}° E
-                </li>
-              ))}
-          </ol>
-        </details>
-      ) : null}
-      <div className="lkdv-cv2c-inline-add">
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--sm" onClick={() => fileInputRef.current?.click()}>
-          <Upload size={12} aria-hidden="true" /> Importer un GPX
-        </button>
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--sm" onClick={() => void loadSessions()}>
-          <Download size={12} aria-hidden="true" /> Sortie enregistrée
-        </button>
-        <button
-          type="button"
-          className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-          onClick={() => {
-            if (trace.length === 0) return;
-            setTrace([]);
-            setSelectedSegment(null);
-            haptic('medium');
-          }}
-        >
-          <Trash2 size={12} aria-hidden="true" /> Effacer
-        </button>
-      </div>
       <input
         ref={fileInputRef}
         type="file"
@@ -815,10 +1047,25 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
       />
       {importOpen ? (
         <div className="lkdv-cv2c-story-tools">
-          {sessions === null ? (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+            <input
+              type="search"
+              className="lkdv-cv2-input"
+              placeholder="Rechercher une sortie…"
+              value={sessionSearch}
+              onChange={(e) => {
+                setSessionSearch(e.target.value);
+                void loadSessions(e.target.value);
+              }}
+              aria-label="Rechercher une sortie"
+              style={{ flex: 1 }}
+            />
+            {sessionsLoading ? <Loader2 size={15} className="lkdv-cv2c-spin" aria-hidden="true" /> : null}
+          </div>
+          {sessionsLoading && !sessions ? (
             <p className="lkdv-cv2-field-hint">Chargement de tes sorties…</p>
-          ) : sessions.length === 0 ? (
-            <p className="lkdv-cv2-field-hint">Aucune sortie enregistrée avec une trace.</p>
+          ) : !sessions || sessions.length === 0 ? (
+            <p className="lkdv-cv2-field-hint">Aucune sortie enregistrée trouvée.</p>
           ) : (
             <ul className="lkdv-cv2c-product-list">
               {sessions.map((session) => (
@@ -830,6 +1077,11 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
                       const points = parseGeoJsonTrace(session.positions_geojson);
                       if (points.length >= 2) {
                         setTrace(points);
+                        form.setValue('startLat', points[0][1], { shouldDirty: true });
+                        form.setValue('startLng', points[0][0], { shouldDirty: true });
+                        if (mapRef.current) {
+                          mapRef.current.easeTo({ center: points[0], zoom: 11, duration: 420 });
+                        }
                         haptic('success');
                         setImportOpen(false);
                       }

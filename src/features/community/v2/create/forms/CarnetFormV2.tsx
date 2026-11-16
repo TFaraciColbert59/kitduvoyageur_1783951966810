@@ -23,8 +23,18 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { carnetCover, carnetPhotos, createCarnetV2 } from '../createRpc';
-import { DateFieldV2 } from '../fields/DateFieldV2';
+import { DateRangeFieldV2 } from '../fields/DateRangeFieldV2';
+import { toast } from 'sonner';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
+import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
+import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
+import { TagsFieldV2 } from '../fields/TagsFieldV2';
+import {
+  fetchMentionProfiles,
+  normalizeMentionQuery,
+  type MentionProfile,
+} from '@/features/community/feed/MentionPicker';
+import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { NumberStepperV2 } from '../fields/NumberStepperV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
@@ -136,6 +146,10 @@ function InfosStep({ user }: { user: User | null }) {
   const values = form.watch();
   const description = values.description ?? '';
   const { haptic } = useHapticFeedback();
+  const myClubs = useMyClubsV2(user?.id ?? null);
+  useEffect(() => {
+    if (values.visibility === 'club') void myClubs.load();
+  }, [myClubs, values.visibility]);
   const dateCount = carnetDayCountV2(values.startDate, values.endDate);
   const days = values.nbJours || 1;
 
@@ -207,69 +221,36 @@ function InfosStep({ user }: { user: User | null }) {
         name="destination"
         label="Destination"
         placeholder="Chamonix, Vercors…"
+        latName="startLat"
+        lngName="startLng"
         required
       />
-      <div className="lkdv-cv2-chips">
-        {DESTINATION_SUGGESTIONS.filter((destination) => destination !== values.destination).map(
-          (destination) => (
-            <button
-              key={destination}
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => form.setValue('destination', destination, { shouldDirty: true, shouldValidate: true })}
-            >
-              {destination}
-            </button>
-          ),
-        )}
-      </div>
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Dates</span>
-        <div className="lkdv-cv2c-date-range">
-          <DateFieldV2 name="startDate" label="Début" />
-          <DateFieldV2 name="endDate" label="Fin" hint="La fin ne précède pas le début." />
-        </div>
-        {/* Maquette L2970 : stepper « Nombre de jours » + hint
-            « Proposé à partir des dates, et inversement. » (FID-029). */}
+      <DateRangeFieldV2
+        startName="startDate"
+        endName="endDate"
+        label="Dates"
+      />
+      <div className="lkdv-cv2c-row-2">
         <NumberStepperV2
           name="nbJours"
           label="Nombre de jours"
           min={1}
           max={60}
-          hint="Proposé à partir des dates, et inversement."
         />
-        {dateCount > 0 ? (
-          <p className="lkdv-cv2-field-hint" role="status">
-            <Check size={11} aria-hidden="true" /> {dateCount} jour{dateCount > 1 ? 's' : ''} d’après tes dates
-          </p>
-        ) : null}
+        <NumberStepperV2 name="nbVoyageurs" label="Voyageurs" min={1} max={50} />
       </div>
-      <NumberStepperV2 name="nbVoyageurs" label="Voyageurs" min={1} max={50} />
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Visibilité</span>
-        <div className="lkdv-cv2c-audience-list" role="radiogroup" aria-label="Visibilité du carnet">
-          {VISIBILITIES.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={values.visibility === option.value}
-              className="lkdv-cv2c-audience-card"
-              data-active={values.visibility === option.value}
-              onClick={() => {
-                form.setValue('visibility', option.value, { shouldDirty: true, shouldValidate: true });
-                haptic('selection');
-              }}
-            >
-              <span className="lkdv-cv2c-radio" aria-hidden="true" />
-              <span>
-                <b>{option.label}</b>
-                <small>{option.description}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <VisibilityPickerV2
+        name="visibility"
+        label="Visibilité"
+        options={[
+          { value: 'public', label: 'Public' },
+          { value: 'private', label: 'Privé' },
+          { value: 'club', label: 'Club' },
+        ]}
+        clubs={myClubs.clubs ?? []}
+        clubsLoading={myClubs.loading}
+        clubsError={myClubs.error}
+      />
       <TextAreaFieldV2
         name="description"
         label="Récit"
@@ -284,25 +265,7 @@ function InfosStep({ user }: { user: User | null }) {
             }
           />
         }
-        hint="L’IA relit et améliore le texte, sans inventer de faits."
       />
-      {/* « Aide à l'écriture » en chips (maquette L2982) : chaque chip ajoute la
-          question au récit (comportement de `acts['n-help']`, L3045). */}
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Aide à l’écriture</span>
-        <div className="lkdv-cv2-chips">
-          {WRITING_HELP.map((help) => (
-            <button
-              key={help}
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => appendHelp(help)}
-            >
-              <PenLine size={11} aria-hidden="true" /> {help}
-            </button>
-          ))}
-        </div>
-      </div>
       {!user ? <p className="lkdv-cv2c-warning">Connecte-toi pour créer un carnet.</p> : null}
     </>
   );
@@ -328,11 +291,11 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
         `TracePaneV2` (Distance / Dénivelé, maquette `#mstats` L3038) est la
         seule source — les `NumberFieldV2` doublons qui suivaient sont retirés.
       */}
-      <p className="lkdv-cv2-field-hint">
-        {trace.length > 1
-          ? `Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`
-          : 'Cherche une randonnée, trace au doigt ou importe un GPX : un carnet a toujours un tracé.'}
-      </p>
+      {trace.length > 1 ? (
+        <p className="lkdv-cv2-field-hint">
+          {`Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`}
+        </p>
+      ) : null}
     </>
   );
 }
@@ -340,13 +303,15 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
 function PartageStep({ user }: { user: User | null }) {
   const form = useFormContext<CarnetFormValuesV2>();
   const values = form.watch();
+  const myClubs = useMyClubsV2(user?.id ?? null);
   const photos = useMemo(
     () => carnetPhotos(values).filter((photo) => photo.status === 'uploaded' && photo.url),
     [values],
   );
   const cover = carnetCover(values);
-  const [handle, setHandle] = useState('');
-  const [resolveState, setResolveState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MentionProfile[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [collaboratorNames, setCollaboratorNames] = useState<Record<string, string>>({});
   const [friends, setFriends] = useState<FriendV2[] | null>(null);
   const [friendsError, setFriendsError] = useState<string | null>(null);
@@ -355,8 +320,7 @@ function PartageStep({ user }: { user: User | null }) {
   const { haptic } = useHapticFeedback();
 
   // « Voyageurs » de la maquette (L3005) : les personnes suivies servent de
-  // chips d'amis. Aucune table d'invitation n'existe (SP §6) : le lien copié
-  // est une invitation générique, jamais une fausse adhésion.
+  // chips d'amis.
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
@@ -382,11 +346,13 @@ function PartageStep({ user }: { user: User | null }) {
           .in('id', ids);
         if (cancelled) return;
         setFriends(
-          (Array.isArray(profiles) ? profiles : []).map((row) => {
-            const record = row as Record<string, unknown>;
-            const name = String(record.full_name ?? record.handle ?? 'Ami');
-            return { id: String(record.id ?? ''), name, handle: String(record.handle ?? '') };
-          }).filter((friend) => friend.id),
+          (Array.isArray(profiles) ? profiles : [])
+            .map((row) => {
+              const record = row as Record<string, unknown>;
+              const name = String(record.full_name ?? record.handle ?? 'Ami');
+              return { id: String(record.id ?? ''), name, handle: String(record.handle ?? '') };
+            })
+            .filter((friend) => friend.id),
         );
       } catch {
         if (!cancelled) {
@@ -401,68 +367,59 @@ function PartageStep({ user }: { user: User | null }) {
     };
   }, [user?.id]);
 
-  // Le switch « Carnet collaboratif » devient un **état dérivé** (FID-031) :
-  // un carnet est collaboratif dès qu'un voyageur y est associé.
   useEffect(() => {
-    const derived = values.collaborators.length > 0;
-    if (form.getValues('isCollaborative') !== derived) {
-      form.setValue('isCollaborative', derived, { shouldDirty: true });
+    const normalized = normalizeMentionQuery(searchQuery);
+    if (normalized.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
     }
-  }, [form, values.collaborators.length]);
+    const timer = window.setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const supabase = createClient();
+        const profiles = await fetchMentionProfiles(supabase, normalized, 6);
+        setSearchResults(profiles);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
-  const addCollaborator = async () => {
-    const raw = handle.trim().replace(/^@/, '');
-    if (!raw || !user) return;
-    setResolveState('loading');
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('public_profiles')
-        .select('id, handle, full_name')
-        .eq('handle', raw.toLowerCase())
-        .maybeSingle();
-      const record = data as { id?: string; handle?: string; full_name?: string } | null;
-      if (!record?.id) {
-        setResolveState('error');
-        return;
-      }
-      if (!values.collaborators.includes(record.id)) {
-        form.setValue('collaborators', [...values.collaborators, record.id], {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        setCollaboratorNames((current) => ({
-          ...current,
-          [record.id as string]: record.full_name ?? record.handle ?? raw,
-        }));
-      }
-      setHandle('');
-      setResolveState('idle');
-    } catch {
-      setResolveState('error');
+  const selectProfile = (profile: MentionProfile) => {
+    if (!values.collaborators.includes(profile.id)) {
+      form.setValue('collaborators', [...values.collaborators, profile.id], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      form.setValue('isCollaborative', true, { shouldDirty: true });
+      const displayName = profile.full_name || (profile.handle ? `@${profile.handle}` : 'Voyageur');
+      setCollaboratorNames((current) => ({
+        ...current,
+        [profile.id]: displayName,
+      }));
     }
+    setSearchQuery('');
+    setSearchResults([]);
+    haptic('selection');
   };
 
   const toggleFriend = (friend: FriendV2) => {
     const selected = values.collaborators.includes(friend.id);
-    form.setValue(
-      'collaborators',
-      selected
-        ? values.collaborators.filter((entry) => entry !== friend.id)
-        : [...values.collaborators, friend.id],
-      { shouldDirty: true, shouldValidate: true },
-    );
+    const next = selected
+      ? values.collaborators.filter((entry) => entry !== friend.id)
+      : [...values.collaborators, friend.id];
+    form.setValue('collaborators', next, { shouldDirty: true, shouldValidate: true });
+    if (next.length > 0) {
+      form.setValue('isCollaborative', true, { shouldDirty: true });
+    }
     setCollaboratorNames((current) => ({ ...current, [friend.id]: friend.name }));
     haptic('selection');
   };
 
-  /**
-   * « Inviter par lien » (maquette `n-invite`, L3053) : copie une URL
-   * d'invitation. Aucune route d'invitation n'existe encore (SP §6, pas de
-   * table) : l'adresse suit le format de la maquette et n'accorde aucun accès
-   * tant que le chantier invitations n'est pas livré — c'est assumé et écrit
-   * au code, pas une fausse adhésion.
-   */
   const inviteByLink = async () => {
     const token = crypto.randomUUID().slice(0, 8);
     const url = `${window.location.origin}/inviter/carnet-${token}`;
@@ -477,31 +434,78 @@ function PartageStep({ user }: { user: User | null }) {
     } catch {
       setInviteState('link');
     }
+    toast.success('Lien d’invitation prêt');
     haptic('success');
   };
 
   return (
     <>
-      <div className="lkdv-cv2-card lkdv-cv2c-recap">
-        <span className="lkdv-cv2-eyebrow">Aperçu de la fiche</span>
-        <b>{values.title || 'Titre du carnet'}</b>
-        <small>
-          {values.destination || 'Destination'} · {values.nbJours} jour{values.nbJours > 1 ? 's' : ''} ·{' '}
-          {values.distanceKm.toFixed(1).replace('.', ',')} km · {visibilityLabel(values.visibility)}
-        </small>
-        {cover?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- URL Storage du carnet
-          <img src={cover.url} alt="" className="lkdv-cv2c-carnet-cover" />
+      <VisibilityPickerV2
+        name="visibility"
+        clubId={values.clubId}
+        myClubs={myClubs}
+      />
+
+      <div className="lkdv-cv2-field">
+        <label className="lkdv-cv2-field-label">Collaboration</label>
+        <button
+          type="button"
+          className="lkdv-cv2c-switch"
+          role="switch"
+          aria-checked={Boolean(values.isCollaborative)}
+          onClick={() => {
+            const next = !values.isCollaborative;
+            form.setValue('isCollaborative', next, { shouldDirty: true, shouldValidate: true });
+            haptic('selection');
+          }}
+        >
+          <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+            <span className="lkdv-cv2c-switch-dot" />
+          </span>
+          Carnet collaboratif
+        </button>
+      </div>
+
+      <div className="lkdv-cv2-field">
+        <label className="lkdv-cv2-field-label">Publication dans le fil</label>
+        <button
+          type="button"
+          className="lkdv-cv2c-switch"
+          role="switch"
+          aria-checked={Boolean(values.postEnabled)}
+          onClick={() => {
+            const next = !values.postEnabled;
+            form.setValue('postEnabled', next, { shouldDirty: true, shouldValidate: true });
+            haptic('selection');
+          }}
+        >
+          <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+            <span className="lkdv-cv2c-switch-dot" />
+          </span>
+          Publier aussi dans le fil d’actualité
+        </button>
+        {values.postEnabled ? (
+          <div style={{ marginTop: '8px' }}>
+            <textarea
+              className="lkdv-cv2-input"
+              rows={3}
+              maxLength={2000}
+              placeholder="Texte de la publication accompagnant ce carnet…"
+              value={values.postContent ?? ''}
+              onChange={(e) =>
+                form.setValue('postContent', e.target.value, { shouldDirty: true })
+              }
+            />
+          </div>
         ) : null}
       </div>
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Couverture</span>
-        {photos.length === 0 ? (
-          <p className="lkdv-cv2-field-hint">
-            Ajoute des photos dans les moments (étape Jours) : la première devient la couverture.
-          </p>
-        ) : (
-          <div className="lkdv-cv2-media-grid">
+
+      <TagsFieldV2 name="tags" label="Hashtags" />
+
+      {photos.length > 0 ? (
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Photo de couverture</span>
+          <div className="lkdv-cv2-media-grid lkdv-cv2c-hrail">
             {photos.map((photo) => (
               <button
                 key={photo.id}
@@ -518,118 +522,168 @@ function PartageStep({ user }: { user: User | null }) {
               </button>
             ))}
           </div>
-        )}
-      </div>
-      {/* Maquette L3005 : fieldset « Voyageurs » avec chips d'amis + « Inviter
-          par lien » ; le switch collaboratif n'est plus un réglage séparé. */}
+        </div>
+      ) : null}
+
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Voyageurs</span>
-        {friends === null ? (
+        <div style={{ position: 'relative' }}>
+          <div className="lkdv-cv2c-inline-add">
+            <input
+              type="text"
+              className="lkdv-cv2-input"
+              value={searchQuery}
+              placeholder="Rechercher par nom ou @pseudo…"
+              aria-label="Rechercher un voyageur"
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+            {searchLoading ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px' }}>
+                <Loader2 size={16} className="lkdv-cv2c-spin" aria-hidden="true" />
+              </span>
+            ) : null}
+          </div>
+          {searchResults.length > 0 ? (
+            <ul
+              className="lkdv-cv2c-mention-suggestions"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 20,
+                background: 'var(--lkv-surface-paper, #ffffff)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                borderRadius: '8px',
+                margin: '4px 0 0 0',
+                padding: '4px',
+                listStyle: 'none',
+                maxHeight: '180px',
+                overflowY: 'auto',
+              }}
+            >
+              {searchResults.map((profile) => (
+                <li key={profile.id}>
+                  <button
+                    type="button"
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'transparent',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => selectProfile(profile)}
+                  >
+                    {profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt=""
+                        style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          background: 'var(--lkv-surface-muted)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 11,
+                        }}
+                      >
+                        {(profile.full_name || profile.handle || '?')[0].toUpperCase()}
+                      </span>
+                    )}
+                    <span style={{ display: 'flex', flexDirection: 'column' }}>
+                      <b style={{ fontSize: '12px' }}>{profile.full_name || profile.handle}</b>
+                      {profile.handle ? (
+                        <small style={{ fontSize: '10.5px', color: 'var(--lkv-text-secondary)' }}>
+                          @{profile.handle}
+                        </small>
+                      ) : null}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        {friends && friends.length > 0 ? (
+          <div style={{ marginTop: '8px' }}>
+            <span className="lkdv-cv2-field-hint" style={{ display: 'block', marginBottom: '4px' }}>
+              Amis suivis :
+            </span>
+            <div className="lkdv-cv2-chips" aria-label="Amis suivis">
+              {friends.map((friend) => {
+                const selected = values.collaborators.includes(friend.id);
+                return (
+                  <button
+                    key={friend.id}
+                    type="button"
+                    className={`lkdv-cv2-chip lkdv-cv2-chip--sm${selected ? ' is-active' : ''}`}
+                    onClick={() => toggleFriend(friend)}
+                  >
+                    {friend.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ marginTop: '8px' }}>
+          <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void inviteByLink()}>
+            <Link2 size={12} aria-hidden="true" /> Inviter par lien
+          </button>
+          {inviteState !== 'idle' ? (
+            <p className="lkdv-cv2-field-hint" role="status" style={{ marginTop: '4px' }}>
+              {inviteState === 'copied'
+                ? `Lien d’invitation copié · ${inviteUrl}`
+                : `Copie impossible : ${inviteUrl}`}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {values.collaborators.length > 0 ? (
+        <div className="lkdv-cv2-field">
           <p className="lkdv-cv2-field-hint" role="status">
-            <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" /> Chargement de tes amis…
+            Carnet collaboratif · {values.collaborators.length} voyageur
+            {values.collaborators.length > 1 ? 's' : ''} associé
+            {values.collaborators.length > 1 ? 's' : ''}
           </p>
-        ) : friends.length === 0 ? (
-          <p className="lkdv-cv2-field-hint">
-            {friendsError ?? 'Aucun ami à inviter pour l’instant : ajoute un pseudo ci-dessous.'}
-          </p>
-        ) : (
-          <div className="lkdv-cv2-chips" role="group" aria-label="Inviter des voyageurs">
-            {friends.map((friend) => (
-              <button
-                key={friend.id}
-                type="button"
-                className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-                aria-pressed={values.collaborators.includes(friend.id)}
-                onClick={() => toggleFriend(friend)}
-              >
-                <Users size={12} aria-hidden="true" /> {friend.name}
-              </button>
+          <div className="lkdv-cv2-chips" aria-label="Voyageurs invités">
+            {values.collaborators.map((id) => (
+              <span key={id} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
+                {collaboratorNames[id] ?? friends?.find((friend) => friend.id === id)?.name ?? 'Voyageur'}
+                <button
+                  type="button"
+                  className="lkdv-cv2c-chip-x"
+                  aria-label="Retirer ce voyageur"
+                  onClick={() =>
+                    form.setValue(
+                      'collaborators',
+                      values.collaborators.filter((entry) => entry !== id),
+                      { shouldDirty: true, shouldValidate: true },
+                    )
+                  }
+                >
+                  <X size={11} aria-hidden="true" />
+                </button>
+              </span>
             ))}
           </div>
-        )}
-        <div className="lkdv-cv2c-inline-add">
-          <input
-            type="text"
-            className="lkdv-cv2-input"
-            value={handle}
-            placeholder="@pseudo d’un compagnon de route"
-            aria-label="Pseudo du collaborateur"
-            onChange={(event) => setHandle(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                void addCollaborator();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => void addCollaborator()}
-            disabled={resolveState === 'loading'}
-          >
-            {resolveState === 'loading' ? (
-              <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" />
-            ) : (
-              <Plus size={12} aria-hidden="true" />
-            )}
-            Ajouter
-          </button>
         </div>
-        {resolveState === 'error' ? (
-          <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-            Aucun profil trouvé avec ce pseudo.
-          </p>
-        ) : null}
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void inviteByLink()}>
-          <Link2 size={12} aria-hidden="true" /> Inviter par lien
-        </button>
-        {inviteState !== 'idle' ? (
-          <p className="lkdv-cv2-field-hint" role="status">
-            {inviteState === 'copied'
-              ? `Lien d’invitation copié · ${inviteUrl}`
-              : `Copie impossible : ${inviteUrl}`}
-          </p>
-        ) : null}
-      </div>
-      {values.collaborators.length > 0 ? (
-        <>
-        {/* FID-031 : l'ancien switch « Carnet collaboratif » est un **état
-            dérivé** — un carnet est collaboratif dès qu'un voyageur est lié. */}
-        <p className="lkdv-cv2-field-hint" role="status">
-          Carnet collaboratif · {values.collaborators.length} voyageur
-          {values.collaborators.length > 1 ? 's' : ''} invité
-          {values.collaborators.length > 1 ? 's' : ''}
-        </p>
-        <div className="lkdv-cv2-chips" aria-label="Voyageurs invités">
-          {values.collaborators.map((id) => (
-            <span key={id} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
-              {collaboratorNames[id] ?? friends?.find((friend) => friend.id === id)?.name ?? 'Voyageur'}
-              <button
-                type="button"
-                className="lkdv-cv2c-chip-x"
-                aria-label="Retirer ce voyageur"
-                onClick={() =>
-                  form.setValue(
-                    'collaborators',
-                    values.collaborators.filter((entry) => entry !== id),
-                    { shouldDirty: true, shouldValidate: true },
-                  )
-                }
-              >
-                <X size={11} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-        </div>
-        </>
       ) : null}
-      <p className="lkdv-cv2-field-hint">
-        <BookOpen size={11} aria-hidden="true" /> {photos.length} photo{photos.length > 1 ? 's' : ''} et{' '}
-        {values.days.reduce((total, day) => total + day.moments.length, 0)} moment
-        {values.days.reduce((total, day) => total + day.moments.length, 0) > 1 ? 's' : ''} seront
-        enregistrés.
-      </p>
     </>
   );
 }
@@ -668,13 +722,6 @@ function CarnetBody({
   return (
     <>
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
-      {/* FID-056 : l'aperçu vivant d'Infos (FID-029) passe dans l'emplacement
-          fixe de la coque, au-dessus du pager — il suit désormais les 4 étapes. */}
-      {api.active ? (
-        <SheetPreview>
-          <CarnetPreviewV2 values={values} />
-        </SheetPreview>
-      ) : null}
       {api.step === 0 ? <InfosStep user={user} /> : null}
       {api.step === 1 ? <TraceStep user={user} active={api.active} /> : null}
       {api.step === 2 ? <DaysPaneV2 user={user} /> : null}

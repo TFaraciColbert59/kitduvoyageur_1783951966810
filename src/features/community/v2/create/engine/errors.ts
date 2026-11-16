@@ -73,8 +73,8 @@ export function focusFieldByName(root: string): boolean {
   if (typeof document === 'undefined') return false;
   for (const selector of FIELD_SELECTORS) {
     const element = document.querySelector<HTMLElement>(selector(root));
-    if (!element) continue;
-    element.focus?.({ preventScroll: false });
+    if (!element || element.closest('[inert], [aria-hidden="true"]')) continue;
+    element.focus?.({ preventScroll: true });
     if (typeof element.scrollIntoView === 'function') {
       element.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }

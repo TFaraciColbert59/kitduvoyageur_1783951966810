@@ -1,18 +1,26 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { GripVertical, Minus, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { Camera, GripVertical, MapPin, Minus, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
-import { clubSchemaV2, createDefaultsV2, type ClubFormValuesV2 } from '../engine/createSchemasV2';
+import { clubSchemaV2, createDefaultsV2, createMediaItemV2, type ClubFormValuesV2 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { checkClubSlugV2, createClubWithAdminV2 } from '../createRpc';
 import { ChipsFieldV2 } from '../fields/ChipsV2';
+import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
+import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
 import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
-import { MediaFieldV2 } from '../fields/MediaFieldV2';
-import { IMAGE_LIMITS, deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
+import {
+  IMAGE_LIMITS,
+  cropImageToRatio,
+  deleteMediaObjectsV2,
+  uploadMediaV2,
+  uploadedObjectsOf,
+  validateMediaFile,
+} from '../fields/media';
 import { isValidClubSlug, slugifyClubName } from '../club/slug';
 import { moderateText } from '@/features/community/create/moderation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -79,8 +87,161 @@ function ClubPreview() {
             {' · 1 membre (toi)'}
           </small>
           <small>
-            <ShieldCheck size={10} aria-hidden="true" /> /clubs/{slug || 'ton-club'}
+            <ShieldCheck size={10} aria-hidden="true" />{' '}
+            {values.zonePlace ? values.zonePlace : 'France & Europe'}
           </small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClubHeroEditor({
+  user,
+  onFocusField,
+}: {
+  user: User | null;
+  onFocusField?: (id: string) => void;
+}) {
+  const form = useFormContext<ClubFormValuesV2>();
+  const values = form.watch();
+  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState<'avatar' | 'banner' | null>(null);
+
+  const bannerUrl = values.banner[0]?.previewUrl || values.banner[0]?.url || '';
+  const avatarUrl = values.avatar[0]?.previewUrl || values.avatar[0]?.url || '';
+  const slug = values.slug || slugifyClubName(values.name);
+
+  const handlePickImage = async (field: 'avatar' | 'banner', file: File | undefined) => {
+    if (!file) return;
+    const err = validateMediaFile(file, IMAGE_LIMITS);
+    if (err) return;
+    const ratio = field === 'avatar' ? '1:1' : '3:1';
+    const cropped = await cropImageToRatio(file, ratio);
+    const previewUrl = URL.createObjectURL(cropped);
+    const item = createMediaItemV2({
+      name: cropped.name,
+      type: cropped.type,
+      size: cropped.size,
+      previewUrl,
+      status: user?.id ? 'uploading' : 'local',
+      crop: ratio,
+    });
+    form.setValue(field, [item], { shouldDirty: true, shouldValidate: true });
+    if (!user?.id) return;
+    setUploading(field);
+    try {
+      const uploaded = await uploadMediaV2({
+        file: cropped,
+        userId: user.id,
+        bucket: IMAGE_LIMITS.bucket,
+      });
+      form.setValue(
+        field,
+        [{ ...item, url: uploaded.url, storagePath: uploaded.storagePath, status: 'uploaded', progress: 100 }],
+        { shouldDirty: true, shouldValidate: true },
+      );
+    } catch {
+      form.setValue(field, [{ ...item, status: 'error' }], { shouldDirty: true });
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  return (
+    <div className="lkdv-cv2c-club-hero" aria-label="Aperçu interactif de la page du club">
+      <input
+        ref={bannerInputRef}
+        type="file"
+        accept="image/*"
+        className="lkdv-cv2c-sr-only"
+        aria-label="Changer la bannière du club"
+        onChange={(e) => {
+          void handlePickImage('banner', e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="lkdv-cv2c-sr-only"
+        aria-label="Changer la photo du club"
+        onChange={(e) => {
+          void handlePickImage('avatar', e.target.files?.[0]);
+          e.target.value = '';
+        }}
+      />
+      <button
+        type="button"
+        className="lkdv-cv2c-club-hero-banner"
+        onClick={() => bannerInputRef.current?.click()}
+      >
+        {bannerUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- aperçu bannière
+          <img src={bannerUrl} alt="" />
+        ) : (
+          <span className="lkdv-cv2c-club-hero-banner-empty">
+            <Camera size={16} aria-hidden="true" />
+            <span>{uploading === 'banner' ? 'Envoi…' : 'Bannière 3:1'}</span>
+          </span>
+        )}
+        <span className="lkdv-cv2c-club-hero-edit-badge" aria-hidden="true">
+          <Camera size={12} />
+        </span>
+      </button>
+
+      <div className="lkdv-cv2c-club-hero-body">
+        <button
+          type="button"
+          className="lkdv-cv2c-club-hero-avatar"
+          onClick={() => avatarInputRef.current?.click()}
+          aria-label="Modifier la photo du club"
+        >
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- aperçu avatar
+            <img src={avatarUrl} alt="" />
+          ) : (
+            <ClubCrest
+              name={values.name || 'Club'}
+              activity={values.activities[0] ?? null}
+              seed={values.name}
+              size={56}
+            />
+          )}
+          <span className="lkdv-cv2c-club-hero-avatar-badge" aria-hidden="true">
+            <Camera size={11} />
+          </span>
+        </button>
+
+        <div className="lkdv-cv2c-club-hero-meta">
+          <button
+            type="button"
+            className="lkdv-cv2c-club-hero-title"
+            onClick={() => onFocusField?.('cv2c-name')}
+          >
+            <span>{values.name || 'Nom du club'}</span>
+            <Pencil size={11} aria-hidden="true" />
+          </button>
+          <div className="lkdv-cv2c-club-hero-pills">
+            {slug ? <span className="lkdv-cv2c-club-hero-pill">@{slug}</span> : null}
+            <button
+              type="button"
+              className="lkdv-cv2c-club-hero-pill is-accent"
+              onClick={() => onFocusField?.('cv2c-club-activity')}
+            >
+              {values.activities[0] || 'Activité'}
+            </button>
+            <button
+              type="button"
+              className="lkdv-cv2c-club-hero-pill"
+              onClick={() => onFocusField?.('cv2c-locationLabel')}
+            >
+              <MapPin size={10} aria-hidden="true" />
+              {values.locationLabel || 'Zone'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -90,51 +251,66 @@ function ClubPreview() {
 function ClubActivitiesV2() {
   const form = useFormContext<ClubFormValuesV2>();
   const values = form.watch();
-  const [custom, setCustom] = useState('');
+  const current = values.activities[0] ?? '';
+  const isPreset = (ACTIVITY_CHOICES as readonly string[]).includes(current);
+  const [otherMode, setOtherMode] = useState(() => Boolean(current) && !isPreset);
+  const [custom, setCustom] = useState(() => (current && !isPreset ? current : ''));
   const { haptic } = useHapticFeedback();
 
-  const addCustom = () => {
-    const activity = custom.trim().slice(0, 40);
-    if (!activity || values.activities.includes(activity) || values.activities.length >= 5) return;
-    form.setValue('activities', [...values.activities, activity], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setCustom('');
-    haptic('selection');
-  };
+  const selectValue = otherMode ? '__other__' : current;
 
   return (
-    <>
-      <ChipsFieldV2
+    <div id="cv2c-club-activity">
+      <SelectDropdownV2
         name="activities"
-        label="Activités"
-        multiple
-        options={ACTIVITY_CHOICES.map((activity) => ({ value: activity, label: activity }))}
-        hint="Plusieurs choix possibles (5 maximum)."
-      />
-      <div className="lkdv-cv2c-inline-add">
-        <input
-          type="text"
-          className="lkdv-cv2-input"
-          value={custom}
-          maxLength={40}
-          placeholder="Autre activité…"
-          aria-label="Ajouter une activité"
-          onChange={(event) => setCustom(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              addCustom();
+        label="Activité principale"
+        placeholder="Choisir une activité…"
+        value={selectValue}
+        options={[
+          ...ACTIVITY_CHOICES.map((choice) => ({ value: choice, label: choice })),
+          { value: '__other__', label: 'Autre activité…' },
+        ]}
+        onChange={(next) => {
+          const v = String(next);
+          if (v === '__other__') {
+            setOtherMode(true);
+            if (custom.trim()) {
+              form.setValue('activities', [custom.trim().slice(0, 40)], {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
             }
-          }}
-        />
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={addCustom}>
-          <Plus size={13} aria-hidden="true" />
-          Ajouter
-        </button>
-      </div>
-    </>
+          } else {
+            setOtherMode(false);
+            form.setValue('activities', v ? [v] : [], {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+          }
+          haptic('selection');
+        }}
+      />
+      {otherMode ? (
+        <div className="lkdv-cv2c-inline-add" style={{ marginTop: 8 }}>
+          <input
+            type="text"
+            className="lkdv-cv2-input"
+            value={custom}
+            maxLength={40}
+            placeholder="Nom de l’activité (ex : Alpinisme, Gravel…)"
+            aria-label="Activité personnalisée"
+            onChange={(event) => {
+              const next = event.target.value.slice(0, 40);
+              setCustom(next);
+              form.setValue('activities', next.trim() ? [next.trim()] : [], {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -169,10 +345,14 @@ function ClubZoneV2() {
         lat={values.zoneLat}
         lng={values.zoneLng}
         label="Centre de la zone d’activité"
+        emptyHint="Touche la carte pour placer la zone principale du club"
         height={150}
         onChange={(lat, lng) => {
           form.setValue('zoneLat', lat, { shouldDirty: true, shouldValidate: true });
           form.setValue('zoneLng', lng, { shouldDirty: true, shouldValidate: true });
+        }}
+        onResolveAddress={(labelText) => {
+          form.setValue('locationLabel', labelText, { shouldDirty: true, shouldValidate: true });
         }}
       />
       <div className="lkdv-cv2-field">
@@ -228,6 +408,10 @@ function IdentiteStep() {
 
   // Disponibilité vérifiée en direct (`Club#5`).
   useEffect(() => {
+    if (!slug) {
+      setSlugState('idle');
+      return;
+    }
     if (!slugValid) {
       setSlugState('invalid');
       return;
@@ -264,36 +448,39 @@ function IdentiteStep() {
       ) : null}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Adresse du club</span>
-        <div className="lkdv-cv2c-url-preview" data-state={slugState === 'taken' || slugState === 'invalid' ? 'invalid' : 'ok'}>
-          <span>lekitduvoyageur.fr/clubs/</span>
-          <b>{slug || 'ton-club'}</b>
+        <div
+          className="lkdv-cv2c-url-input"
+          data-state={slugState === 'taken' || slugState === 'invalid' ? 'invalid' : 'ok'}
+        >
+          <span className="lkdv-cv2c-url-prefix">lekitduvoyageur.fr/clubs/</span>
+          <input
+            id="cv2c-slug"
+            type="text"
+            className="lkdv-cv2c-url-field"
+            aria-label="Adresse du club"
+            placeholder="ton-club"
+            value={values.slug}
+            maxLength={60}
+            onChange={(event) => {
+              setSlugEdited(true);
+              form.setValue('slug', event.target.value.trim().toLowerCase(), {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }}
+          />
         </div>
-        <p className="lkdv-cv2-field-hint">
-          {slugState === 'checking'
-            ? 'Vérification de la disponibilité…'
-            : slugState === 'taken'
-              ? 'Cette adresse est déjà prise.'
-              : slugState === 'invalid'
-                ? 'Adresse invalide : 2 à 60 caractères, lettres minuscules, chiffres et tirets.'
-                : slugState === 'free'
-                  ? 'Adresse disponible.'
-                  : 'Modifiable : minuscules, chiffres et tirets.'}
-        </p>
-        <input
-          id="cv2c-slug"
-          type="text"
-          className="lkdv-cv2-input"
-          aria-label="Adresse du club"
-          value={values.slug}
-          maxLength={60}
-          onChange={(event) => {
-            setSlugEdited(true);
-            form.setValue('slug', event.target.value.trim().toLowerCase(), {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
-          }}
-        />
+        {slugState === 'checking' || slugState === 'taken' || slugState === 'invalid' || slugState === 'free' ? (
+          <p className="lkdv-cv2-field-hint">
+            {slugState === 'checking'
+              ? 'Vérification…'
+              : slugState === 'taken'
+                ? 'Cette adresse est déjà prise.'
+                : slugState === 'invalid'
+                  ? '2 à 60 caractères (minuscules, chiffres, tirets).'
+                  : 'Adresse disponible.'}
+          </p>
+        ) : null}
       </div>
       {/* FID-054/FID-064 : activités sur l'étape Identité (maquette L3280),
           hint « Plusieurs choix possibles. », champ libre « Autre activité… ». */}
@@ -303,37 +490,9 @@ function IdentiteStep() {
   );
 }
 
-function UniversStep({ user }: { user: User | null }) {
+function UniversStep() {
   return (
     <>
-      {/* Les deux médias de la maquette (HTML L3283-3289) : avatar carré et
-          bannière 3:1, deux champs distincts — plus d'image unique recadrée. */}
-      <MediaFieldV2
-        name="avatar"
-        label="Image du club (carré)"
-        userId={user?.id ?? ''}
-        limits={IMAGE_LIMITS}
-        max={1}
-        cropOptions={[{ value: '1:1', label: 'Carré' }]}
-        showAlt={false}
-        addLabel="Choisir une image"
-        hint="Recadrage carré. Sans image, un blason est généré à partir du nom et de l’activité."
-      />
-      <MediaFieldV2
-        name="banner"
-        label="Bannière (3:1)"
-        userId={user?.id ?? ''}
-        limits={IMAGE_LIMITS}
-        max={1}
-        cropOptions={[{ value: '3:1', label: 'Bannière' }]}
-        showAlt={false}
-        addLabel="Ajouter une bannière"
-        hint="Recadrage 3:1, affiché en tête de la page du club."
-      />
-      <p className="lkdv-cv2-field-hint">
-        L’image n’est pas obligatoire : le blason du club est généré à partir de son nom et de
-        son activité.
-      </p>
       <TextAreaFieldV2
         name="description"
         label="Description"
@@ -432,31 +591,15 @@ function AdhesionStep() {
 
   return (
     <>
-      <span className="lkdv-cv2-field-label" id="cv2c-club-privacy">
-        Adhésion
-      </span>
-      <div className="lkdv-cv2c-mode-cards" role="radiogroup" aria-labelledby="cv2c-club-privacy">
-        <button
-          type="button"
-          role="radio"
-          aria-checked={values.privacy === 'open'}
-          className="lkdv-cv2c-mode-card"
-          onClick={() => form.setValue('privacy', 'open', { shouldDirty: true, shouldValidate: true })}
-        >
-          <b>Ouvert</b>
-          <small>Tout le monde rejoint immédiatement le club.</small>
-        </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={values.privacy === 'closed'}
-          className="lkdv-cv2c-mode-card"
-          onClick={() => form.setValue('privacy', 'closed', { shouldDirty: true, shouldValidate: true })}
-        >
-          <b>Sur validation</b>
-          <small>Chaque demande est examinée par un administrateur.</small>
-        </button>
-      </div>
+      <VisibilityPickerV2
+        name="privacy"
+        label="Visibilité du club"
+        supportClub={false}
+        options={[
+          { value: 'open', label: 'Ouvert' },
+          { value: 'closed', label: 'Privé' },
+        ]}
+      />
       <TextAreaFieldV2
         name="membershipRules"
         label="Règles du club"
@@ -635,16 +778,20 @@ function ClubBody({
   api: CreateFormEngineApiV2<ClubFormValuesV2>;
   user: User | null;
 }) {
+  const focusField = (fieldId: string) => {
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if ('focus' in el && typeof (el as HTMLElement).focus === 'function') {
+        (el as HTMLElement).focus();
+      }
+    }
+  };
   return (
     <>
-      {/* FID-056 : aperçu du club dans l'emplacement fixe 150 px de la coque. */}
-      {api.active ? (
-        <SheetPreview>
-          <ClubPreview />
-        </SheetPreview>
-      ) : null}
+      {api.step <= 1 ? <ClubHeroEditor user={user} onFocusField={focusField} /> : null}
       {api.step === 0 ? <IdentiteStep /> : null}
-      {api.step === 1 ? <UniversStep user={user} /> : null}
+      {api.step === 1 ? <UniversStep /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}
       {api.step === 3 ? <PublicationStep /> : null}
     </>

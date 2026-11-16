@@ -1,0 +1,113 @@
+'use client';
+
+import React from 'react';
+import { RotateCcw, X } from 'lucide-react';
+import {
+  type PhotoEditorCategory,
+  type PhotoModifiersV2,
+  DEFAULT_PHOTO_MODIFIERS,
+  PHOTO_EDITOR_CATEGORIES,
+} from './photoEditor';
+
+export interface PhotoEditorCardProps {
+  category: PhotoEditorCategory;
+  modifiers: PhotoModifiersV2;
+  onChangeModifier: <K extends keyof PhotoModifiersV2>(key: K, value: PhotoModifiersV2[K]) => void;
+  onResetCategory: (category: PhotoEditorCategory) => void;
+  onClose: () => void;
+  className?: string;
+}
+
+/**
+ * Carte inférieure non-défilante contenant jusqu'à 5 contrôles de retouche (F1.5)
+ * Ajustements Canvas/CSS directs et temps-réel, sans filtres prédéfinis.
+ */
+export function PhotoEditorCard({
+  category,
+  modifiers,
+  onChangeModifier,
+  onResetCategory,
+  onClose,
+  className = '',
+}: PhotoEditorCardProps) {
+  const spec = PHOTO_EDITOR_CATEGORIES.find((c) => c.id === category);
+  if (!spec) return null;
+
+  return (
+    <div
+      className={`lkdv-photo-editor-card ${className}`.trim()}
+      role="region"
+      aria-label={`Réglages photo : ${spec.label}`}
+      data-testid={`photo-editor-card-${category}`}
+    >
+      <div className="lkdv-photo-editor-controls">
+        {spec.modifiers.map((mod) => {
+          const rawValue = modifiers[mod.key];
+
+          if (mod.key === 'flipX') {
+            const isFlipped = Boolean(rawValue);
+            return (
+              <div key={mod.key} className="lkdv-photo-editor-row">
+                <span className="lkdv-photo-editor-label">{mod.label}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-label={mod.label}
+                  aria-checked={isFlipped}
+                  data-testid="toggle-flipX"
+                  className={`lkdv-photo-editor-switch ${isFlipped ? 'is-active' : ''}`}
+                  onClick={() => onChangeModifier('flipX', !isFlipped)}
+                >
+                  <span className="lkdv-photo-editor-switch-dot" />
+                  <span className="lkdv-photo-editor-switch-text">
+                    {mod.formatValue(isFlipped)}
+                  </span>
+                </button>
+              </div>
+            );
+          }
+
+          const numValue = typeof rawValue === 'number' ? rawValue : (mod.defaultValue as number);
+
+          return (
+            <div key={mod.key} className="lkdv-photo-editor-row">
+              <div className="lkdv-photo-editor-row-head">
+                <label
+                  htmlFor={`mod-${mod.key}`}
+                  className="lkdv-photo-editor-label"
+                >
+                  {mod.label}
+                </label>
+                <span
+                  className="lkdv-photo-editor-value"
+                  data-testid={`val-${mod.key}`}
+                >
+                  {mod.formatValue(numValue)}
+                </span>
+              </div>
+              <input
+                id={`mod-${mod.key}`}
+                type="range"
+                min={mod.min}
+                max={mod.max}
+                step={mod.step}
+                value={numValue}
+                aria-label={mod.label}
+                aria-valuemin={mod.min}
+                aria-valuemax={mod.max}
+                aria-valuenow={numValue}
+                data-testid={`slider-${mod.key}`}
+                className="lkdv-photo-editor-range"
+                onChange={(e) => {
+                  onChangeModifier(mod.key, parseFloat(e.target.value));
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default PhotoEditorCard;
