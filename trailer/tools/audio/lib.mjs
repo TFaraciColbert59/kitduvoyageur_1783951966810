@@ -280,6 +280,105 @@ export function habillageV4Cues() {
   ];
 }
 
+// ── Montages v6 A / B / C (qa/MUSIQUE-V6.md) ─────────────────────────────────────────────────────
+// Musique seule, aucun effet. Structure DECOUPAGE-24.md « v6 » : même grille, mesure 1 du film à l'image 0, logo en
+// mesure 34 (57,811 s). Chaque segment : film [mesure a, mesure b[ ← morceau à partir de `song` (mesure du morceau,
+// ou secondes pour l'intro). Raccords : 'beat' = fondu enchaîné de 25 ms fini 8 ms avant le temps (attaque franche) ;
+// 'long' = fondu enchaîné à puissance constante (sinus / cosinus) de `xf` s, fini 8 ms avant le temps (matière tenue).
+// Le dernier segment dépasse l'impact : décroissance exponentielle dès impact + 0,30 s, zéro à 60,000 s.
+// Aucune portion du morceau n'est jouée deux fois (vérifié par beats-v6.mjs, champ `nonRepetition`).
+const sec = (s) => ({ sec: s });
+export const V6 = {
+  A: {
+    name: 'continu', idee: 'Le morceau dans son ordre, en trois longs passages : 28 mesures continues de la montée au drop 1, le pont pour le bivouac et l\'espoir, la reprise sur le logo.',
+    segs: [
+      { id: 'A1', bars: [1, 29], song: 24, label: 'Montée m24–m39 puis drop 1 m40–m51, sans coupe' },
+      { id: 'A2', bars: [29, 31], song: 56, join: 'beat', label: 'Pont m56–m57 (le drop s\'arrête comme dans le morceau, m55 → m56)' },
+      { id: 'A3', bars: [31, 35], song: 61, join: 'long', xf: 0.4, label: 'Fin du pont m61–m63 (le grave remonte), impact sur m64 (la reprise)' },
+    ],
+    sections: { cosmos: [1, 3], declic: [4, 7], decision: [8, 13], depart: [14, 16], montagne: [17, 21], 'coureur-cycliste': [22, 28], bivouac: [29, 30], final: [31, 33], logo: [34, 34] },
+    gains: [[0, 0], [60, 0]],
+  },
+  B: {
+    name: 'doux épique', idee: 'Le lac et le panorama sur la fin de la montée, la plus ample et la plus tenue du morceau ; le drop 1 n\'arrive qu\'avec le coureur, par l\'enchaînement naturel m39 → m40.',
+    segs: [
+      { id: 'B1', bars: [1, 29], song: 19, label: 'Montée m19–m39 (panorama sur m35–m39), drop 1 m40–m46 au coureur, sans coupe' },
+      { id: 'B2', bars: [29, 31], song: 88, join: 'beat', label: 'Outro m88–m89 (bivouac)' },
+      { id: 'B3', bars: [31, 35], song: 61, join: 'long', xf: 0.4, label: 'Fin du pont m61–m63, impact sur m64 (la reprise)' },
+    ],
+    sections: { cosmos: [1, 3], declic: [4, 7], decision: [8, 13], depart: [14, 16], montagne: [17, 21], 'coureur-cycliste': [22, 28], bivouac: [29, 30], final: [31, 33], logo: [34, 34] },
+    gains: [[0, 0], [60, 0]],
+  },
+  C: {
+    name: 'le drop pour le logo', idee: 'Rien ne se répète : la montée jusqu\'à m31, le pont pour le panorama, la reprise pour le coureur, l\'outro pour la nuit, et le drop 1, gardé intact, n\'éclate qu\'une fois, sur le logo.',
+    segs: [
+      { id: 'C1', bars: [1, 4], song: sec(0.03), label: 'Intro, le vrai début du morceau (2 phrases)' },
+      { id: 'C2', bars: [4, 17], song: 19, join: 'long', xf: 0.4, label: 'Montée m19–m31' },
+      { id: 'C3', bars: [17, 29], song: 60, join: 'long', xf: 0.3, label: 'Pont m60–m63 (panorama), reprise m64–m71 (coureur, roulement final)' },
+      { id: 'C4', bars: [29, 31], song: 88, join: 'beat', label: 'Outro m88–m89 (bivouac)' },
+      { id: 'C5', bars: [31, 35], song: 37, join: 'long', xf: 0.4, label: 'Fin de la montée m37–m39, drop 1 (m40) sur le logo' },
+    ],
+    sections: { cosmos: [1, 3], declic: [4, 7], decision: [8, 13], depart: [14, 16], montagne: [17, 20], 'coureur-cycliste': [21, 28], bivouac: [29, 30], final: [31, 33], logo: [34, 34] },
+    gains: [[0, 0], [60, 0]],
+  },
+};
+export const v6Paths = (k) => ({
+  montage: join(AUDIO_DIR, `storm-ii-montage-60s-v6${k.toLowerCase()}.wav`),
+  mix: join(QA_DIR, `mix-v6${k.toLowerCase()}.wav`),
+  beats: join(QA_DIR, `mix-v6${k.toLowerCase()}.beats.json`),
+  m4a: join(TRAILER, 'livraison', `LKDV-musique-v6-${k}.m4a`),
+});
+export function v6Segments(k) {
+  return V6[k].segs.map((s) => {
+    const film = [filmBar(s.bars[0]), s.bars[1] >= 35 ? 60 : filmBar(s.bars[1])];
+    const songStart = typeof s.song === 'number' ? v3Bar(s.song) : s.song.sec;
+    return { ...s, film, off: songStart - film[0], join: s.join ?? 'start' };
+  });
+}
+export function joinsV6(k) {
+  const s = v6Segments(k);
+  return s.slice(1).map((seg, i) => ({ t: seg.film[0], from: s[i].id, to: seg.id, kind: seg.join, xf: seg.join === 'long' ? seg.xf : V3.xf,
+    songOut: seg.film[0] + s[i].off, songIn: seg.film[0] + seg.off }));
+}
+function gainExpr(points) {
+  const pts = points.map(([t, d]) => [t, Math.pow(10, d / 20)]);
+  let e = pts.at(-1)[1].toFixed(6);
+  for (let i = pts.length - 2; i >= 0; i--) {
+    const [t0, g0] = pts[i], [t1, g1] = pts[i + 1];
+    const seg = t1 - t0 < 1e-9 ? g1.toFixed(6) : `${g0.toFixed(6)}+(${(g1 - g0).toFixed(6)})*(t-${t0.toFixed(6)})/${(t1 - t0).toFixed(6)}`;
+    e = `if(lt(t,${t1.toFixed(6)}),${seg},${e})`;
+  }
+  return e;
+}
+export const V6_TAIL = { after: 0.30, decay: 2.9, cut: 59.92 };
+export function montageV6Filter(k) {
+  const segs = v6Segments(k);
+  const hit = filmBar(34);
+  const smp = (t) => Math.round(t * SR);
+  const parts = [], labels = [];
+  segs.forEach((s, i) => {
+    const next = segs[i + 1];
+    const fin = s.join === 'start' ? (typeof s.song === 'number' ? 0.005 : 0.02) : (s.join === 'long' ? s.xf : V3.xf);
+    const filmA = s.join === 'start' ? 0 : s.film[0] - V3.guard - fin;
+    const fout = next ? (next.join === 'long' ? next.xf : V3.xf) : null;
+    const filmB = next ? s.film[1] - V3.guard : 60;
+    const len = filmB - filmA;
+    const f = [`[m${i}]atrim=start_sample=${smp(filmA + s.off)}:end_sample=${smp(filmA + s.off) + smp(len)},asetpts=PTS-STARTPTS`,
+      `afade=t=in:st=0:d=${fin.toFixed(6)}:curve=${s.join === 'start' ? 'tri' : 'qsin'}`];
+    if (fout) f.push(`afade=t=out:st=${(len - fout).toFixed(6)}:d=${fout.toFixed(6)}:curve=qsin`);
+    else {
+      f.push(`afade=t=out:st=${(hit + V6_TAIL.after - filmA).toFixed(6)}:d=${V6_TAIL.decay}:curve=exp`);
+      f.push(`afade=t=out:st=${(V6_TAIL.cut - filmA).toFixed(6)}:d=${(60 - V6_TAIL.cut).toFixed(6)}:curve=qsin`);
+    }
+    f.push(`adelay=delays=${smp(filmA)}S:all=1[s${i}]`);
+    parts.push(f.join(','));
+    labels.push(`[s${i}]`);
+  });
+  const split = `[0]aresample=${SR},aformat=sample_fmts=fltp:channel_layouts=stereo,asplit=${segs.length}${segs.map((_, i) => `[m${i}]`).join('')}`;
+  return `${split};${parts.join(';')};${labels.join('')}amix=inputs=${segs.length}:normalize=0:duration=longest,apad=whole_dur=60,atrim=end_sample=${SR * 60},` +
+    `asetnsamples=n=48,volume=eval=frame:volume='${gainExpr(V6[k].gains)}'[o]`;
+}
+
 export function run(cmd, args, { allowFail = false, input } = {}) {
   const r = spawnSync(cmd, args, { encoding: 'utf8', maxBuffer: 1 << 28, input });
   if (r.status !== 0 && !allowFail) {

@@ -21,10 +21,11 @@ from PIL import Image, ImageDraw, ImageFont
 
 TRAILER = Path(__file__).resolve().parents[2]
 QA = TRAILER / 'qa'
-V = 'v4' if '--v4' in sys.argv else 'v3'
+V = next((f[2:] for f in ('--v6a', '--v6b', '--v6c', '--v4') if f in sys.argv), 'v3')
+PFX = f'{V[-1].upper()}-' if V.startswith('v6') else ''
 MIX = QA / f'mix-{V}.wav'
 BEATS = QA / f'mix-{V}.beats.json'
-SNAP = QA / 'snapshots' / f'musique-{V}'
+SNAP = QA / 'snapshots' / ('musique-v6' if V.startswith('v6') else f'musique-{V}')
 TMP = QA / 'tmp'
 SR = 48000
 
@@ -277,16 +278,23 @@ def main():
                              'M_400ms_finie_au_coup': round(mom(hit), 1), 'M_400ms_finie_0.4s_apres': round(mom(hit + 0.4), 1)}
         out['coup_final']['ecart_200ms_db'] = round(out['coup_final']['rms_200ms_apres'] - out['coup_final']['rms_200ms_avant'], 1)
         out['coup_final']['ecart_400ms_db'] = round(out['coup_final']['rms_400ms_apres'] - out['coup_final']['rms_400ms_avant'], 1)
+        if V.startswith('v6'):
+            T_ = beats['barSec']
+            stm = lambda a_, b_: round(float(fr[(fr[:, 0] >= a_ + 0.4) & (fr[:, 0] <= b_), 1].mean()), 1)
+            sts = lambda a_, b_: round(float(fr[(fr[:, 0] >= a_ + 3.0) & (fr[:, 0] <= b_), 2].mean()), 1) if b_ - a_ > 3.2 else None
+            mt = [s_ for s_ in beats['sections'] if s_['id'] == 'montagne'][0]['t']
+            out['lac_panorama'] = {'lac_mesure7': {'t': [6 * T_, 7 * T_], 'M_moyen_LUFS': stm(6 * T_, 7 * T_), 'S_fin_LUFS': round(float(fr[np.argmin(np.abs(fr[:, 0] - 7 * T_)), 2]), 1)},
+                                   'panorama': {'t': mt, 'M_moyen_LUFS': stm(*mt), 'S_moyen_LUFS': sts(*mt)}}
         out['coup_final']['ecart_M_LU'] = round(out['coup_final']['M_400ms_finie_0.4s_apres'] - out['coup_final']['M_400ms_finie_au_coup'], 1)
 
     TMP.mkdir(parents=True, exist_ok=True)
     (TMP / f'audit-{V}.json').write_text(json.dumps(out, indent=1, ensure_ascii=False))
     beats['mesures'] = {'outil': out['ffmpeg'], 'ebur128': out['ebur128'], 'debut': out['debut'], 'fin': out['fin'],
-                        'raccords': out['raccords'], 'note': f'Mesuré, non écouté (tools/audio/audit-v3.py{" --v4" if V == "v4" else ""}).'}
-    for k_ in ('niveau_par_section', 'coup_final'):
+                        'raccords': out['raccords'], 'note': f'Mesuré, non écouté (tools/audio/audit-v3.py{"" if V == "v3" else " --" + V}).'}
+    for k_ in ('niveau_par_section', 'coup_final', 'lac_panorama'):
         if k_ in out:
             beats['mesures'][k_] = out[k_]
-    if V == 'v4':
+    if V != 'v3':
         beats['intro'] = {'note': 'Attaques réelles de l\'intro (montée de 8 dB en 40 ms du RMS 10 ms), à utiliser pour couper l\'image : l\'intro est jouée librement, hors grille.',
                           'attaques': [{**a_, 'frame': int(round(a_['t'] * 24))} for a_ in out['debut']['attaques_0.5_12s'] if a_['t'] < 7.5]}
     BEATS.write_text(json.dumps(beats, indent=1, ensure_ascii=False) + '\n')
@@ -296,12 +304,15 @@ def main():
     planche(x, m, beats, fr, out)
     for k, j in enumerate(joins):
         kind = j.get('kind', 'release' if j['to'] == 'H' else 'beat')
-        win = (j['t'] - 0.02, j['t'] + 0.02) if kind == 'gap' else (j['t'] - 0.008 - (0.12 if kind == 'release' else 0.025), j['t'] - 0.008)
+        win = (j['t'] - 0.02, j['t'] + 0.02) if kind == 'gap' else (j['t'] - 0.008 - ({'release': 0.12, 'long': j.get('xf') or 0.4}.get(kind, 0.025)), j['t'] - 0.008)
         zoom(x, m, j['t'], 0.15, beats, f"raccord-{k + 1}-{j['from']}{j['to']}-{j['t']:.3f}s.png",
              f"Raccord {k + 1} {j['from']}>{j['to']} à {j['t']:.4f} s (image {j['frame']} à 24 i/s) — morceau {j['songOut']:.3f} > {j['songIn']:.3f} s", window=win)
     if V == 'v3':
         zoom(x, m, 1.5, 1.5, beats, 'debut-0-3s.png', 'Début 0–3 s (silence, fondu d\'entrée cubique 2 s, premier temps fort)', db_env=True)
         zoom(x, m, 58.5, 1.5, beats, 'fin-57-60s.png', 'Fin 57–60 s (roulement, impact à 58,000 s, queue exponentielle)', db_env=True)
+    elif V.startswith('v6'):
+        zoom(x, m, 3.0, 3.0, beats, 'debut-0-6s.png', f'{V} « {beats["nom"]} » — début 0–6 s', db_env=True)
+        zoom(x, m, 58.0, 2.0, beats, 'fin-56-60s.png', f'{V} « {beats["nom"]} » — fin 56–60 s (coup du logo à 57,811 s, décroissance)', db_env=True)
     else:
         zoom(x, m, 3.0, 3.0, beats, 'debut-0-6s.png', 'Début 0–6 s (note de m0 à l\'image 0, Soleil à l\'image 32, 3e phrase, entrée de la montée)', db_env=True)
         zoom(x, m, 58.0, 2.0, beats, 'fin-56-60s.png', 'Fin 56–60 s (roulement de m71, coup final à 57,811 s, queue)', db_env=True)
@@ -342,7 +353,7 @@ def planche(x, m, beats, fr, out):
     d = ImageDraw.Draw(im)
     F, Fs, Fb = font(18), font(14), font(24)
     X = lambda t: int(L + t / 60 * pw)
-    d.text((L, 10), f'Montage musical {V} — qa/mix-{V}.wav (60,000 s, 24 i/s = 1 440 images). Mesuré, non écouté. ' +
+    d.text((L, 10), f'Montage musical {V}' + (f' « {beats["nom"]} »' if 'nom' in beats else '') + f' — qa/mix-{V}.wav (60,000 s, 24 i/s = 1 440 images). Mesuré, non écouté. ' +
            f"{out['ebur128']['integrated']} LUFS, crête vraie {out['ebur128']['truePeak']} dBTP, LRA {out['ebur128']['lra']} LU ({out['ffmpeg']})", fill=(230, 230, 230), font=Fb)
     # sections
     y0 = 50
@@ -354,10 +365,11 @@ def planche(x, m, beats, fr, out):
             d.text((X(s['t'][0]) + 4, y0 + 24), s['emotion'], fill=(235, 235, 235), font=Fs)
         y0 += 58
     for s in beats['segments']:
-        c = SEC_COL.get(s['section'], (70, 70, 80))
+        c = SEC_COL.get(s.get('section', ''), (70, 70, 80))
         d.rectangle([X(s['film'][0]), y0, X(s['film'][1]), y0 + 40], fill=c, outline=(16, 16, 20))
         d.text((X(s['film'][0]) + 4, y0 + 2), f"{s['id']}" + ('' if v4 else f" {s['section']}"), fill=(255, 255, 255), font=F)
-        sb = s['songBars'] if isinstance(s['songBars'], str) else f"m{s['songBars'][0]}–m{s['songBars'][1]}"
+        sb0 = s.get('songBars', s.get('label', '')[:34])
+        sb = sb0 if isinstance(sb0, str) else f"m{sb0[0]}–m{sb0[1]}"
         d.text((X(s['film'][0]) + 4, y0 + 22), f"{sb} ({s['song'][0]:.2f} s)", fill=(230, 230, 230), font=Fs)
     a0 = beats['segments'][0]['film'][0]
     if a0 > 0:
@@ -406,7 +418,7 @@ def planche(x, m, beats, fr, out):
     for t in range(0, 61, 5):
         d.line([(X(t), sy + shh), (X(t), sy + shh + 4)], fill=(255, 255, 255))
         d.text((X(t) - 10, H - 26), f'{t} s · {t * 24}', fill=(220, 220, 220), font=Fs)
-    im.save(SNAP / 'planche-60s.png')
+    im.save(SNAP / f'{PFX}planche-60s.png')
     return
 
 
@@ -463,7 +475,7 @@ def zoom(x, m, c, half, beats, name, title, window=None, db_env=False):
         d.text((X(t) - 14, H - 24), f'{t:.2f}', fill=(170, 170, 170), font=Fs)
         d.line([(X(t), 555), (X(t), 560)], fill=(200, 200, 200))
         t += step
-    im.save(SNAP / name)
+    im.save(SNAP / f'{PFX}{name}')
 
 
 if __name__ == '__main__':

@@ -10,6 +10,8 @@
 //   node tools/audio/build-all.mjs --v5         → effets v5 (qa/SON-V5.md) sur la musique et l'habillage v4 : qa/mix-v5.wav, qa/mix-v5-musique.wav,
 //                                                 qa/mix-v5-habillage.wav, qa/mix-v5-effets.wav, essais AAC, planches (son-v5/) ; --no-audit
 //                                                 Films : node tools/audio/mux-ours-v5.mjs
+//   node tools/audio/build-all.mjs --v6a|--v6b|--v6c → montage v6 A / B / C (qa/MUSIQUE-V6.md), musique seule : qa/mix-v6x.wav,
+//                                                 livraison/LKDV-musique-v6-X.m4a, qa/mix-v6x.beats.json, carte du morceau, planches (musique-v6/) ; --no-audit
 //   node tools/audio/build-all.mjs --substitut  → même chaîne sur le lit de SUBSTITUTION (qa/tmp/), qa/mix-v1-SUBSTITUT.wav
 // La banque d'effets (assets/audio/sfx/) est versionnée : elle n'est régénérée qu'avec --regen-sfx.
 import { existsSync, mkdirSync } from 'node:fs';
@@ -36,6 +38,17 @@ if (subst) {
   step('Raccords (SUBSTITUT)', 'check-joins.mjs', ['--input', SUBST_MONTAGE, '--label', 'SUBSTITUT', '--json', join(QA_TMP, 'joins-SUBSTITUT.json')]);
   step("Piste d'effets", 'build-sfx.mjs', ['--bed', SUBST_MONTAGE]);
   step('Mixage (SUBSTITUT)', 'build-mix.mjs', ['--substitut']);
+} else if (['--v6a', '--v6b', '--v6c'].some((f) => process.argv.includes(f))) {
+  const k = ['A', 'B', 'C'].find((x) => process.argv.includes(`--v6${x.toLowerCase()}`));
+  step(`Montage v6 ${k} (qa/MUSIQUE-V6.md), mastering, écoute AAC 256 kb/s`, 'build-v6.mjs', [k]);
+  step(`Grille v6 ${k} et preuve de non-répétition`, 'beats-v6.mjs', [k]);
+  if (!process.argv.includes('--no-audit')) {
+    for (const [label, args] of [['Carte du morceau', [join(HERE, 'carte-morceau.py')]], [`Contrôles et planches v6 ${k}`, [join(HERE, 'audit-v3.py'), `--v6${k.toLowerCase()}`]]]) {
+      console.log(`\n── ${label} (python3 + numpy + Pillow)`);
+      const r = spawnSync('python3', args, { stdio: ['ignore', 'ignore', 'inherit'] });
+      if (r.status !== 0) { console.error(`✗ ${label} en échec`); process.exit(r.status || 1); }
+    }
+  }
 } else if (process.argv.includes('--v5')) {
   step('Banque v5 : sons générés (graines fixes) et dérivés des prises Kenney', 'gen-sfx.mjs', ['--v5']);
   step('Habillage v4 : sons générés', 'gen-sfx.mjs', ['souffle-cosmos', 'impact-soleil', 'impact-logo']);
