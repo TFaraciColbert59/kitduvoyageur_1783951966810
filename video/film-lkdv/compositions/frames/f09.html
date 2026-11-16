@@ -1,0 +1,36 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #17402c; }
+    .bg { position: absolute; inset: 0; }
+    .bg img { width: 1920px; height: 1080px; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.74) 0%, rgba(11,31,23,0.42) 52%, rgba(11,31,23,0.12) 100%); }
+    .chapter { position: absolute; left: 124px; top: 230px; color: #dfe8dc; font-weight: 700; font-size: 26px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .title { position: absolute; left: 120px; top: 276px; width: 900px; color: #faf8f5; font-weight: 800; font-size: 96px; line-height: 1.02; letter-spacing: -0.03em; }
+    .title em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .cap { position: absolute; left: 124px; top: 560px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.9); color: #17402c; font-size: 32px; font-weight: 700; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .phone { position: absolute; left: 1180px; top: 70px; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
+    .screen img { width: 412px; height: 908px; object-fit: cover; object-position: top; }
+    .panel { position: absolute; right: 120px; top: 140px; width: 760px; padding: 34px 36px; border-radius: 36px; background: rgba(250,248,245,0.86); backdrop-filter: blur(24px) saturate(1.5); border: 1px solid rgba(255,255,255,0.85); box-shadow: 0 30px 70px rgba(11,31,23,0.35); color: #1f2a24; }
+    .ptitle { font-size: 40px; font-weight: 800; color: #17402c; }
+    .tabs { display: flex; gap: 6px; margin-top: 20px; padding: 6px; border-radius: 999px; background: rgba(31,42,36,0.06); }
+    .tabs div { flex: 1; text-align: center; padding: 12px 0; border-radius: 999px; font-size: 24px; font-weight: 600; }
+    .tabs .on { background: rgba(91,127,85,0.22); font-weight: 800; color: #17402c; }
+    .row { display: flex; justify-content: space-between; gap: 20px; padding: 22px 4px; border-bottom: 1px solid rgba(31,42,36,0.1); font-size: 32px; }
+    .row b { color: #17402c; }
+    .row span { color: #4a5a51; font-weight: 600; }
+    .foot { margin-top: 20px; font-size: 24px; color: #4a5a51; }
+    .wall { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding: 40px; background: #17402c; }
+    .wall div { border-radius: 22px; overflow: hidden; background: #0b1f17; }
+    .wall img { width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0.55; }
+    .claim { position: absolute; left: 0; right: 0; top: 380px; text-align: center; color: #faf8f5; font-weight: 800; font-size: 132px; line-height: 1.02; letter-spacing: -0.035em; text-shadow: 0 8px 40px rgba(11,31,23,0.8); }
+    .claim em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+  </style>
+  <div id="root" data-composition-id="f09" data-width="1920" data-height="1080">
+    <div class="bg"><img src="assets/map/gavarnie-end.jpg" alt="" /></div><div class="shade"></div><div class="chapter">Préparer</div><div class="title" style="width:780px">Un verdict,<br /><em>sans score</em></div><div class="panel"><div class="ptitle">Verdict · Vigilance</div><div class="tabs"><div class="on">États</div><div class="">Risques</div><div class="">Météo</div><div class="">Veille</div><div class="">Sources</div></div><div class="row"><b>Physique</b><span>RAS</span></div><div class="row"><b>Technique</b><span>Vigilance</span></div><div class="row"><b>Conjoncturel</b><span>RAS partiel</span></div><div class="foot">Signaux vérifiables · sans score</div></div>
+  </div>
+  <script>
+    window.__timelines["f09"] = gsap.timeline({ paused: true });
+  </script>
+</template>

@@ -2,3 +2,5 @@
 .hyperframes/
 renders/
 node_modules/
+boards/storyboard-autonome.html
+boards/__pycache__/
