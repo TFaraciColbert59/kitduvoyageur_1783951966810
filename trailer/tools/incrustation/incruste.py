@@ -367,13 +367,70 @@ def screen_img(key, hpx, rot):
     k = (key, hpx, rot)
     if k in _cache:
         return _cache[k]
-    fn = next(f for f in os.listdir(SCREENS) if f.startswith(key + "-") or f.startswith(key + "."))
-    im = Image.open(os.path.join(SCREENS, fn)).convert("RGB")
     h = int(min(2796, max(64, hpx)))
-    im = im.resize((round(1290 * h / 2796), h), Image.LANCZOS)
+    if key.startswith("PHOTO:"):
+        im = photo_screen(key[6:], h)
+    else:
+        fn = next(f for f in os.listdir(SCREENS) if f.startswith(key + "-") or f.startswith(key + "."))
+        im = Image.open(os.path.join(SCREENS, fn)).convert("RGB")
+        im = im.resize((round(1290 * h / 2796), h), Image.LANCZOS)
     if rot:
         im = im.rotate(rot, expand=True)
     _cache[k] = im
+    return im
+
+
+# Photo ouverte en grand (P07) : image d'une vidéo (« video:image », ex. flow/clips/plans/p10.mp4:30), posée en
+# pleine largeur au centre d'un écran noir (photo plein écran, aucune interface). PHOTO_FRAC = hauteur de la photo
+# rapportée à celle de l'écran (16:9 dans un écran 1290 × 2796).
+PHOTO_FRAC = (1290 * 9 / 16) / 2796
+
+
+def photo_source(spec):
+    vid, n = spec.rsplit(":", 1)
+    out = os.path.join(TMP, f"{os.path.basename(vid).replace('.mp4', '')}_img{int(n):03d}.png")
+    if not os.path.exists(out):
+        sh(["ffmpeg", "-v", "error", "-y", "-i", os.path.join(TRAILER, vid), "-vf", f"select=eq(n\\,{int(n)})",
+            "-frames:v", "1", out])
+    return Image.open(out).convert("RGB")
+
+
+def photo_rect(w, h):
+    ph = w * 9 / 16
+    return (0.0, (h - ph) / 2, float(w), (h + ph) / 2)
+
+
+def photo_screen(spec, h):
+    w = round(1290 * h / 2796)
+    im = Image.new("RGB", (w, h), (0, 0, 0))
+    x0, y0, x1, y1 = photo_rect(w, h)
+    im.paste(photo_source(spec).resize((w, round(y1 - y0)), Image.LANCZOS), (0, round(y0)))
+    return im
+
+
+def open_photo(A, spec, src_rect, t):
+    """Ouverture de la photo touchée : la vignette (src_rect, normalisé) grandit jusqu'au cadre plein écran,
+    son contenu passe à la photo, le fond s'assombrit vers le noir."""
+    w, h = A.size
+    a = np.asarray(A, np.float32) * (1 - t)
+    im = Image.fromarray(a.astype(np.uint8))
+    fx0, fy0, fx1, fy1 = photo_rect(w, h)
+    sx0, sy0, sx1, sy1 = src_rect[0] * w, src_rect[1] * h, src_rect[2] * w, src_rect[3] * h
+    r = [sx0 + (fx0 - sx0) * t, sy0 + (fy0 - sy0) * t, sx1 + (fx1 - sx1) * t, sy1 + (fy1 - sy1) * t]
+    rw, rh = max(2, round(r[2] - r[0])), max(2, round(r[3] - r[1]))
+    thumb = A.crop((round(sx0), round(sy0), round(sx1), round(sy1))).resize((rw, rh), Image.LANCZOS)
+    ph = photo_source(spec)
+    # recadrage « remplir » de la photo au format du rectangle courant
+    pw, phh = ph.size
+    ar = rw / rh
+    if ar < pw / phh:
+        cw = phh * ar
+        ph = ph.crop((round((pw - cw) / 2), 0, round((pw + cw) / 2), phh))
+    else:
+        ch = pw / ar
+        ph = ph.crop((0, round((phh - ch) / 2), pw, round((phh + ch) / 2)))
+    ph = ph.resize((rw, rh), Image.LANCZOS)
+    im.paste(Image.blend(thumb, ph, min(1.0, t * 1.6)), (round(r[0]), round(r[1])))
     return im
 
 
@@ -395,7 +452,9 @@ def screen_at(cfg, f, hpx):
             t = ease((f - a + 1) / (dur + 1))
             A = screen_img(cur, hpx, 0)
             B = screen_img(e["ecran"], hpx, 0)
-            if e.get("mode", "fondu") == "fondu":
+            if e.get("mode") == "ouvre_photo":
+                im = open_photo(A, e["ecran"][6:], e["depuis"], t)
+            elif e.get("mode", "fondu") == "fondu":
                 im = Image.blend(A, B, t)
             else:  # glissement vertical (défilement) : haut = le nouveau monte depuis le bas
                 w, h = A.size
@@ -581,6 +640,9 @@ def composite(img, f, quad_fn, cfg, gl, noise_sd, rng):
     rb = 0.5 * (fgp[..., 0] + fgp[..., 2])  # limiteur « moyenne » : g ≤ (r + b) / 2
     spill = np.clip(fgp[..., 1] - rb, 0, None)
     fgp[..., 1] = fgp[..., 1] - spill * dz
+    # alpha un peu fort au bord (vert retiré en trop) : pas de liseré magenta, g ≥ min(r, b) autour de l'écran
+    gmin = np.minimum(fgp[..., 0], fgp[..., 2])
+    fgp[..., 1] = np.where(dz > 0, np.maximum(fgp[..., 1], gmin), fgp[..., 1])
     full = al > 0.985
     out = np.where(full[..., None], sc, fgp + sc * al[..., None])
     res = img.copy()

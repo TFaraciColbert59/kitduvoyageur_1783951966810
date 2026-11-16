@@ -19,7 +19,7 @@ import incruste as I  # noqa: E402
 
 SNAP = os.path.join(I.TRAILER, "qa/snapshots/incrustation-video")
 os.makedirs(SNAP, exist_ok=True)
-GESTE = {"P07": 18, "P09": 81, "P12": 31, "P13": 30, "P15": 103, "P16": 24, "P17": 26, "P25": 19, "P29": 30,
+GESTE = {"P07": 43, "P09": 81, "P12": 31, "P13": 30, "P15": 103, "P16": 24, "P17": 26, "P25": 19, "P29": 30,
          "P31": 55, "P36": 6, "P48": 50, "P49": 29, "P51": 28}
 
 

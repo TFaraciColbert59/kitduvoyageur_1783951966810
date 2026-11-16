@@ -1,0 +1,199 @@
+{
+ "sortie": "flow/clips/rendus/p09-plongee.mp4",
+ "images": 27,
+ "marge": 6,
+ "marge_p07": [
+  58,
+  63
+ ],
+ "plongee_p07": [
+  64,
+  84
+ ],
+ "derniere_image": "image 30 de flow/clips/plans/p10.mp4, posée telle quelle",
+ "zoom_total": 5.867,
+ "rotation_deg": 3.7,
+ "detail": [
+  {
+   "image": 6,
+   "p07": 64,
+   "zoom": 1.002,
+   "sous_images": 2
+  },
+  {
+   "image": 7,
+   "p07": 65,
+   "zoom": 1.01,
+   "sous_images": 3
+  },
+  {
+   "image": 8,
+   "p07": 66,
+   "zoom": 1.025,
+   "sous_images": 5
+  },
+  {
+   "image": 9,
+   "p07": 67,
+   "zoom": 1.047,
+   "sous_images": 7
+  },
+  {
+   "image": 10,
+   "p07": 68,
+   "zoom": 1.078,
+   "sous_images": 9
+  },
+  {
+   "image": 11,
+   "p07": 69,
+   "zoom": 1.119,
+   "sous_images": 11
+  },
+  {
+   "image": 12,
+   "p07": 70,
+   "zoom": 1.171,
+   "sous_images": 13
+  },
+  {
+   "image": 13,
+   "p07": 71,
+   "zoom": 1.236,
+   "sous_images": 16
+  },
+  {
+   "image": 14,
+   "p07": 72,
+   "zoom": 1.316,
+   "sous_images": 18
+  },
+  {
+   "image": 15,
+   "p07": 73,
+   "zoom": 1.413,
+   "sous_images": 20
+  },
+  {
+   "image": 16,
+   "p07": 74,
+   "zoom": 1.532,
+   "sous_images": 23
+  },
+  {
+   "image": 17,
+   "p07": 75,
+   "zoom": 1.676,
+   "sous_images": 24
+  },
+  {
+   "image": 18,
+   "p07": 76,
+   "zoom": 1.852,
+   "sous_images": 24
+  },
+  {
+   "image": 19,
+   "p07": 77,
+   "zoom": 2.065,
+   "sous_images": 24
+  },
+  {
+   "image": 20,
+   "p07": 78,
+   "zoom": 2.326,
+   "sous_images": 24
+  },
+  {
+   "image": 21,
+   "p07": 79,
+   "zoom": 2.645,
+   "sous_images": 24
+  },
+  {
+   "image": 22,
+   "p07": 80,
+   "zoom": 3.039,
+   "sous_images": 24
+  },
+  {
+   "image": 23,
+   "p07": 81,
+   "zoom": 3.527,
+   "sous_images": 24
+  },
+  {
+   "image": 24,
+   "p07": 82,
+   "zoom": 4.136,
+   "sous_images": 22
+  },
+  {
+   "image": 25,
+   "p07": 83,
+   "zoom": 4.9,
+   "sous_images": 1
+  },
+  {
+   "image": 26,
+   "p07": 84,
+   "zoom": 5.867,
+   "sous_images": 0
+  }
+ ],
+ "mesures": {
+  "raccord_ecart_moyen": 1.701,
+  "raccord_ecart_max": 20,
+  "mouvement_image_a_image": [
+   2.25,
+   2.03,
+   2.21,
+   2.33,
+   2.35,
+   3.58,
+   6.32,
+   9.02,
+   10.89,
+   12.55,
+   13.99,
+   15.22,
+   16.5,
+   17.82,
+   19.2,
+   18.95,
+   18.96,
+   20.67,
+   22.03,
+   23.53,
+   25.04,
+   25.27,
+   28.8,
+   35.91,
+   43.99,
+   49.36
+  ],
+  "zoom_image_a_image": [
+   1.002,
+   1.008,
+   1.0149,
+   1.0215,
+   1.0296,
+   1.038,
+   1.0465,
+   1.0555,
+   1.0647,
+   1.0737,
+   1.0842,
+   1.094,
+   1.105,
+   1.115,
+   1.1264,
+   1.1371,
+   1.149,
+   1.1606,
+   1.1727,
+   1.1847,
+   1.1973
+  ]
+ }
+}

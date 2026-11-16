@@ -1,13 +1,13 @@
 {
   "_note": "Réglages d'incrustation par vidéo source (flow/clips/plans/). plages = images montées ± 8 (base 0). etats : première capture, puis changements à l'image « a » (mode fondu, glisse_haut, glisse_bas ; durée en images). rotation : degrés (sens trigonométrique) appliqués à la capture avant de la poser (180 = tête-bêche, 90 = haut de l'appli à gauche). bas_impose : y (px) où les coins bas hors champ sont posés sur les côtés prolongés. marge_coins : part de chaque bord (haut, droite, bas, gauche) ignorée près des coins arrondis.",
   "p07.mp4": {
-    "plans": ["P07 (8–49)", "P09 (80–89)"],
-    "plages": [[0, 57], [72, 93]],
+    "plans": ["P07 (22–63)"],
+    "note": "v6 (15/11) : P07 = images 22–63. Le pouce descend (n°22–31) : le carnet (E01a) glisse vers le bas et laisse place au fil de la communauté (E13), dont la carte « Carnet de la semaine » montre le lac ; le pouce remonte jusqu'à la carte (point le plus haut n°41–43, ≈ 0,55 de la hauteur de l'écran) : au toucher, la photo s'ouvre en grand (n°43–47, la vignette grandit jusqu'au plein écran sur fond noir) et reste jusqu'à la fin (n°48–63). La plongée P09 continue sur n°64–84. La photo est l'image 30 de p10.mp4 (première image de P10), pour que la plongée de P09 (tools/incrustation/plonge.py) y arrive sans saut. Ancienne version : flow/clips/incrustes/p07-v3.mp4.",
+    "plages": [[14, 93]],
     "etats": [
       {"ecran": "E01a"},
-      {"a": 16, "ecran": "E01b", "mode": "glisse_haut", "duree": 4},
-      {"a": 40, "ecran": "E01a", "mode": "glisse_bas", "duree": 4},
-      {"a": 81, "ecran": "E01b", "mode": "fondu", "duree": 3}
+      {"a": 22, "ecran": "E13", "mode": "glisse_bas", "duree": 6},
+      {"a": 43, "ecran": "PHOTO:flow/clips/plans/p10.mp4:30", "mode": "ouvre_photo", "depuis": [0.05, 0.152, 0.95, 0.413], "duree": 5}
     ],
     "lumiere": {"gain": 0.92, "teinte": [1.04, 0.97, 0.9], "teinte_force": 0.35, "noir": 0.02},
     "flou": 0.5, "ombrage": 0.5,
