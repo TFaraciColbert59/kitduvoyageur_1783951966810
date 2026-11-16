@@ -1,0 +1,65 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+    }
+    #q-bg {
+      position: absolute;
+      inset: -40px;
+    }
+    #q-bg img {
+      width: 2000px;
+      height: 1160px;
+      object-fit: cover;
+    }
+    #q-shade {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 31, 23, 0.28);
+    }
+    .q {
+      position: absolute;
+      padding: 22px 36px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.72);
+      backdrop-filter: blur(24px) saturate(1.5);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 18px 44px rgba(11, 31, 23, 0.22);
+      color: #17402c;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+  </style>
+  <div id="root" data-composition-id="questions" data-width="1920" data-height="1080">
+    <div id="q-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="q-shade"></div>
+    <div class="q" id="q1" style="left: 150px; top: 170px; font-size: 52px">Quel parcours ?</div>
+    <div class="q" id="q2" style="left: 1150px; top: 120px; font-size: 44px">On part quand ?</div>
+    <div class="q" id="q3" style="left: 700px; top: 360px; font-size: 56px">Combien de nuits ?</div>
+    <div class="q" id="q4" style="left: 180px; top: 560px; font-size: 46px">Où dormir ?</div>
+    <div class="q" id="q5" style="left: 1080px; top: 600px; font-size: 54px">Qui porte le réchaud ?</div>
+    <div class="q" id="q6" style="left: 560px; top: 790px; font-size: 48px">Quel budget ?</div>
+    <div class="q" id="q7" style="left: 160px; top: 880px; font-size: 40px">Et si l'un de nous marche moins vite ?</div>
+    <div class="q" id="q8" style="left: 1240px; top: 860px; font-size: 44px">Il fera quel temps ?</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#q-bg", { filter: "blur(0px)" }, { filter: "blur(10px)", duration: 0.5, ease: "power2.inOut" }, 0);
+      tl.fromTo("#q-shade", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0);
+      // Une question par temps (0,469 s) ; elles s'empilent jusqu'à encombrer l'image.
+      const beat = 0.469;
+      for (let i = 1; i <= 8; i++) {
+        const t = (i - 1) * beat * 0.7 + 0.05;
+        tl.fromTo("#q" + i, { opacity: 0, scale: 0.6, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.32, ease: "back.out(1.4)" }, t);
+      }
+      // Balayage : tout part à droite d'un seul geste, flou horizontal.
+      tl.to(".q", { x: 1500, filter: "blur(12px)", duration: 0.3, ease: "power3.in", stagger: 0.012 }, 3.0);
+      window.__timelines["questions"] = tl;
+    })();
+  </script>
+</template>
