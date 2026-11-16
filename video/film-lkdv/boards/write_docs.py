@@ -46,6 +46,7 @@ def md():
         out.append(f"## Frame {f['n']}: {f['name']} ({fmt(f['start'])}-{fmt(f['end'])}s)")
         out.append(f"- act: {f['act']}")
         out.append(f"- status: built")
+        out.append(f"- realite: {f.get('status', 'reel')}")
         out.append(f"- duration: {fmt(f['end'] - f['start'])}s")
         out.append(f"- src: compositions/frames/f{f['n']:02d}.html")
         out.append(f"- poster: {fmt((f['start'] + f['end']) / 2)}")
@@ -77,7 +78,8 @@ def board(inline):
             act = f["act"]
             parts.append(f'<section class="act">{E(act)}</section>')
         src = data_uri(p) if inline else "stills/" + os.path.basename(p)
-        todo = '<span class="todo">capture à faire</span>' if "❌" in f["source"] else ""
+        lab = {"reel": ("réel", "ok"), "capture": ("capture à faire", "todo"), "partiel": ("partiel", "part"), "vision": ("vision", "vis")}[f.get("status", "reel")]
+        todo = f'<span class="tag {lab[1]}">{lab[0]}</span>'
         parts.append(f"""<div class="frame">
   <img src="{src}" alt="" />
   <div class="title">{f['n']:02d}: {E(f['name'])} {todo}</div>
@@ -110,6 +112,11 @@ def board(inline):
   .words {{ padding: 0 16px; margin: 8px 0; font-size: 14px; line-height: 1.45; }}
   .meta {{ padding: 0 16px 16px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }}
   .meta b {{ color: var(--ink); font-weight: 700; margin-right: 4px; }}
+  .tag {{ display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; vertical-align: 2px; }}
+  .tag.ok {{ background: rgba(91,127,85,.16); color: #3d6038; }}
+  .tag.todo {{ background: rgba(166,61,47,.12); color: #a63d2f; }}
+  .tag.part {{ background: rgba(201,144,44,.16); color: #8a5d0f; }}
+  .tag.vis {{ background: rgba(23,64,44,.10); color: #17402c; border: 1px dashed rgba(23,64,44,.5); }}
   .todo {{ display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(166,61,47,.12); color: #a63d2f; font-size: 11px; font-weight: 700; vertical-align: 2px; }}
 </style>
 </head>

@@ -39,6 +39,42 @@ BASE_CSS = """
     .wall img { width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0.55; }
     .claim { position: absolute; left: 0; right: 0; top: 380px; text-align: center; color: #faf8f5; font-weight: 800; font-size: 132px; line-height: 1.02; letter-spacing: -0.035em; text-shadow: 0 8px 40px rgba(11,31,23,0.8); }
     .claim em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .feedbg { position: absolute; inset: 0; background: linear-gradient(180deg, #e9efe6 0%, #f4f1ea 100%); }
+    .post { position: absolute; width: 520px; border-radius: 30px; background: #fff; box-shadow: 0 24px 60px rgba(11,31,23,0.18); overflow: hidden; }
+    .post .ph { width: 520px; height: 560px; object-fit: cover; display: block; }
+    .post .hd { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
+    .av { width: 54px; height: 54px; border-radius: 50%; background: #5b7f55; color: #fff; font-weight: 800; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+    .post .who { font-size: 24px; font-weight: 800; color: #17402c; }
+    .post .tx { padding: 0 20px 6px; font-size: 26px; font-weight: 700; color: #1f2a24; }
+    .post .ft { display: flex; justify-content: space-between; padding: 10px 20px 20px; font-size: 22px; color: #5b6b61; font-weight: 600; }
+    .post .chip { padding: 6px 14px; border-radius: 999px; background: rgba(91,127,85,0.18); color: #17402c; }
+    .headline { position: absolute; left: 120px; top: 780px; color: #17402c; font-weight: 800; font-size: 104px; line-height: 1.0; letter-spacing: -0.035em; }
+    .headline em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .tap { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(250,248,245,0.55); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.3); }
+    .chat { position: absolute; right: 160px; top: 170px; width: 640px; padding: 28px; border-radius: 40px; background: rgba(250,248,245,0.9); backdrop-filter: blur(24px); box-shadow: 0 30px 70px rgba(11,31,23,0.35); }
+    .chat .h { font-size: 30px; font-weight: 800; color: #17402c; margin-bottom: 18px; }
+    .bub { max-width: 470px; margin: 12px 0; padding: 18px 24px; border-radius: 28px; font-size: 30px; font-weight: 600; }
+    .bub small { display: block; font-size: 20px; color: #5b6b61; font-weight: 700; margin-bottom: 4px; }
+    .me { margin-left: auto; background: #17402c; color: #faf8f5; border-bottom-right-radius: 8px; }
+    .me small { color: #cfe0cc; }
+    .them { background: #fff; color: #1f2a24; border-bottom-left-radius: 8px; }
+    .banner { position: absolute; right: 150px; top: 60px; display: flex; gap: 16px; align-items: center; width: 640px; padding: 18px 22px; border-radius: 28px; background: rgba(250,248,245,0.92); backdrop-filter: blur(24px); box-shadow: 0 18px 40px rgba(11,31,23,0.3); }
+    .banner .av { width: 50px; height: 50px; font-size: 22px; flex: none; }
+    .banner b { display: block; font-size: 22px; color: #17402c; }
+    .banner span { font-size: 26px; color: #1f2a24; font-weight: 600; }
+    .prod { position: absolute; right: 120px; top: 110px; width: 820px; border-radius: 36px; background: rgba(250,248,245,0.94); box-shadow: 0 30px 70px rgba(11,31,23,0.35); overflow: hidden; display: grid; grid-template-columns: 330px 1fr; }
+    .prod img { width: 330px; height: 100%; object-fit: cover; }
+    .prod .in { padding: 30px; }
+    .prod .nm { font-size: 36px; font-weight: 800; color: #17402c; }
+    .prod .sp { font-size: 24px; color: #4a5a51; margin: 8px 0 18px; }
+    .off { display: flex; justify-content: space-between; padding: 16px 18px; margin-top: 10px; border-radius: 20px; background: #fff; font-size: 28px; }
+    .off b { color: #17402c; }
+    .off span { color: #4a5a51; font-weight: 600; }
+    .dot { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: #17402c; border: 5px solid #faf8f5; color: #faf8f5; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 14px rgba(91,127,85,0.35); }
+    .ovl { position: absolute; left: 120px; bottom: 150px; padding: 22px 30px; border-radius: 28px; background: rgba(250,248,245,0.92); box-shadow: 0 18px 40px rgba(11,31,23,0.3); }
+    .ovl b { display: block; font-size: 24px; color: #5b7f55; letter-spacing: 0.08em; text-transform: uppercase; }
+    .ovl span { font-size: 40px; font-weight: 800; color: #17402c; }
+    .arcs { position: absolute; inset: 0; }
 """
 
 
@@ -46,7 +82,10 @@ def frame_html(f):
     fid = f"f{f['n']:02d}"
     k = f["kind"]
     if k == "still":
-        body = f'<div class="bg"><img src="{f["img"]}" alt="" /></div>'
+        if f.get("fit") == "contain":
+            body = f'<div class="bg" style="background:#eeeae3"><img src="{f["img"]}" alt="" style="object-fit:contain" /></div>'
+        else:
+            body = f'<div class="bg"><img src="{f["img"]}" alt="" /></div>'
     elif k == "phone":
         body = (
             f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>'
@@ -64,16 +103,60 @@ def frame_html(f):
         foot = f'<div class="foot">{E(f["foot"])}</div>' if f.get("foot") else ""
         body = (
             f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>'
-            f'<div class="chapter">{E(f["chapter"])}</div>'
+            f'<div class="chapter">{E(f.get("chapter", ""))}</div>'
             f'<div class="title" style="width:780px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>'
-            f'<div class="panel"><div class="ptitle">{E(f["panel_title"])}</div>{tabs}{rows}{foot}</div>'
+            f'<div class="panel" style="top:{230 if f.get("msg") else 140}px"><div class="ptitle">{E(f["panel_title"])}</div>{tabs}{rows}{foot}</div>'
         )
     elif k == "wall":
         cells = "".join(f'<div><img src="{s}" alt="" /></div>' for s in f["shots"])
         body = (f'<div class="wall">{cells}</div>'
                 f'<div class="claim">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>')
+    elif k == "feed":
+        xs = [120, 700, 1280]
+        cards = ""
+        for (ini, who, tx, img, chip, likes), x, y in zip(f["posts"], xs, [60, 20, 80]):
+            cards += (f'<div class="post" style="left:{x}px; top:{y}px"><div class="hd"><div class="av">{E(ini)}</div><div class="who">{E(who)}</div></div>'
+                      f'<img class="ph" src="{img}" alt="" style="height:420px" /><div class="tx">{E(tx)}</div>'
+                      f'<div class="ft"><span class="chip">{E(chip)}</span><span>♥ {E(likes)}</span></div></div>')
+        body = (f'<div class="feedbg"></div>{cards}'
+                f'<div class="headline" style="top:820px; color:#17402c">{E(f["title"])} <em>{E(f["em"])}</em></div>')
+    elif k == "feed1":
+        ini, who, tx, img, chip, likes = f["post"]
+        body = (f'<div class="bg"><img src="{img}" alt="" style="filter: blur(30px)" /></div><div class="shade"></div>'
+                f'<div class="post" style="left:700px; top:90px; width:560px"><div class="hd"><div class="av">{E(ini)}</div><div class="who">{E(who)}</div></div>'
+                f'<img class="ph" src="{img}" alt="" style="width:560px; height:620px" /><div class="tx">{E(tx)}</div>'
+                f'<div class="ft"><span class="chip">{E(chip)}</span><span>♥ {E(likes)}</span></div></div>'
+                f'<div class="tap" style="left:940px; top:430px"></div>')
+    elif k == "chat":
+        bubs = "".join(f'<div class="bub {c}"><small>{E(w)}</small>{E(t)}</div>' for w, t, c in f["msgs"])
+        body = (f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>'
+                f'<div class="title" style="width:760px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>'
+                f'<div class="chat"><div class="h">Le W · Léa, Noé, Sam</div>{bubs}</div>')
+    elif k == "product":
+        nm, sp, img = f["product"]
+        offs = "".join(f'<div class="off"><b>{E(a)}</b><span>{E(b)}</span></div>' for a, b in f["offers"])
+        body = (f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>'
+                f'<div class="chapter">{E(f["chapter"])}</div><div class="title" style="width:760px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>'
+                f'<div class="prod"><img src="{img}" alt="" /><div class="in"><div class="nm">{E(nm)}</div><div class="sp">{E(sp)}</div>{offs}</div></div>')
+    elif k == "live":
+        dots = "".join(f'<div class="dot" style="left:{x}px; top:{y}px">{E(l)}</div>' for l, x, y in f["dots"])
+        body = (f'<div class="bg"><img src="{f["bg"]}" alt="" /></div><div class="shade"></div>{dots}'
+                f'<div class="chapter">{E(f["chapter"])}</div><div class="title" style="width:760px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>')
+    elif k == "arcs":
+        paths = "".join(f'<path d="M{a} {b} Q {(a+c)//2} {min(b,d)-260} {c} {d}" fill="none" stroke="#faf8f5" stroke-width="4" stroke-opacity="0.8" stroke-linecap="round" /><circle cx="{c}" cy="{d}" r="10" fill="#faf8f5" />'
+                        for a, b, c, d in [(560, 860, 980, 420), (980, 420, 1500, 520), (1500, 520, 1700, 820), (980, 420, 300, 500), (560, 860, 1180, 760), (300, 500, 700, 300)])
+        body = (f'<div class="bg"><img src="{f["bg"]}" alt="" style="filter: saturate(0.8) brightness(0.7)" /></div>'
+                f'<svg class="arcs" viewBox="0 0 1920 1080">{paths}</svg>'
+                f'<div class="claim" style="top:400px">{E(f["title"])}<br /><em>{E(f["em"])}</em></div>')
     else:
         raise ValueError(k)
+    if f.get("overlay"):
+        a, b = f["overlay"]
+        body += f'<div class="ovl"><b>{E(a)}</b><span>{E(b)}</span></div>'
+    if f.get("msg"):
+        who, txt = f["msg"]
+        body += f'<div class="banner"><div class="av">{E(who[0])}</div><div><b>{E(who)}</b><span>{E(txt)}</span></div></div>'
+
     return f"""<template>
   <style>{BASE_CSS}  </style>
   <div id="root" data-composition-id="{fid}" data-width="1920" data-height="1080">

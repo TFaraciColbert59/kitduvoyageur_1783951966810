@@ -23,6 +23,11 @@
   .words { padding: 0 16px; margin: 8px 0; font-size: 14px; line-height: 1.45; }
   .meta { padding: 0 16px 16px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
   .meta b { color: var(--ink); font-weight: 700; margin-right: 4px; }
+  .tag { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; vertical-align: 2px; }
+  .tag.ok { background: rgba(91,127,85,.16); color: #3d6038; }
+  .tag.todo { background: rgba(166,61,47,.12); color: #a63d2f; }
+  .tag.part { background: rgba(201,144,44,.16); color: #8a5d0f; }
+  .tag.vis { background: rgba(23,64,44,.10); color: #17402c; border: 1px dashed rgba(23,64,44,.5); }
   .todo { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(166,61,47,.12); color: #a63d2f; font-size: 11px; font-weight: 700; vertical-align: 2px; }
 </style>
 </head>
@@ -33,181 +38,193 @@
   <p>Images fixes de travail : écrans réels quand une capture existe ; sinon panneau reconstruit avec les libellés exacts de l'application (marqué « capture à faire »). Les chiffres du voyage viennent du jeu de démonstration du Compas.</p>
 </header>
 <main>
-<section class="act">Accroche</section>
+<section class="act">I · L&#x27;étincelle</section>
 <div class="frame">
   <img src="stills/frame-00-at-1.875s.png" alt="" />
-  <div class="title">01: Là où la carte se termine </div>
+  <div class="title">01: Le fil <span class="tag ok">réel</span></div>
   <div class="time">0 à 3,75 s</div>
-  <p class="words">Cartes photo de voyage sur le temps ; la phrase d&#x27;accueil du site se pose mot à mot.</p>
-  <p class="meta"><b>À lire</b> « Là où la carte » (0,3-1,6 s) ; « se termine. » (1,6-3,5 s)<br /><b>Son</b> piste calme ; aucun effet<br /><b>Source</b> trailer, plan 1 (Accueil `/`)</p>
+  <p class="words">Le fil de la Communauté défile : de vrais posts de voyageurs (photo, lieu, carnet en route, réactions). La phrase d&#x27;accueil se pose par-dessus.</p>
+  <p class="meta"><b>À lire</b> « Là où la carte » (0,3-1,6 s) ; « se termine. » (1,6-3,5 s)<br /><b>Son</b> piste calme ; léger tic de défilement<br /><b>Source</b> style des posts : `docs/audit/communaute-v2-2026-11-08/**` ; personnes fictives</p>
 </div>
-<section class="act">Rêver</section>
 <div class="frame">
   <img src="stills/frame-01-at-4.688s.png" alt="" />
-  <div class="title">02: Rêver </div>
+  <div class="title">02: Le post de Maya <span class="tag ok">réel</span></div>
   <div class="time">3,75 à 5,62 s</div>
-  <p class="words">La dernière photo devient le globe d&#x27;Explorer ; il tourne et s&#x27;aplatit sur l&#x27;Europe.</p>
-  <p class="meta"><b>À lire</b> « Rêver » (0,2-0,8 s) ; le globe Explorer (0,4-1,8 s)<br /><b>Son</b> whoosh doux sur la transition<br /><b>Source</b> 📷 docs/explorer-v2/preuves/screens/Monde.png</p>
+  <p class="words">Le pouce de Léa s&#x27;arrête sur le post de Maya (Torres del Paine, lever du soleil) et tape dessus.</p>
+  <p class="meta"><b>À lire</b> le post (0,2-1,2 s) ; le tap (1,4 s)<br /><b>Son</b> tap<br /><b>Source</b> post communauté ; personnes fictives</p>
 </div>
 <div class="frame">
   <img src="stills/frame-02-at-6.562s.png" alt="" />
-  <div class="title">03: Refuges et points d&#x27;eau </div>
+  <div class="title">03: Le carnet de Maya <span class="tag part">partiel</span></div>
   <div class="time">5,62 à 7,5 s</div>
-  <p class="words">Zoom sur une région : calques refuges, points d&#x27;eau, sommets ; la fiche « Refuge du Lac Blanc » s&#x27;ouvre.</p>
-  <p class="meta"><b>À lire</b> la fiche refuge (0,3-1,8 s)<br /><b>Son</b> pop sur la fiche<br /><b>Source</b> 📷 Refuge.png, Calques.png</p>
+  <p class="words">Le post ouvre le carnet de Maya : jours, trace, chiffres, kit. Léa touche « Refaire ce voyage ».</p>
+  <p class="meta"><b>À lire</b> le carnet (0,2-1,0 s) ; « Refaire ce voyage » (1,0-1,8 s)<br /><b>Son</b> whoosh doux<br /><b>Source</b> carnet réel 📷 ; passage carnet → Compas : `prepareActivityFromTrail.ts` (partiel, libellé à confirmer)</p>
 </div>
-<section class="act">Préparer</section>
 <div class="frame">
   <img src="stills/frame-03-at-8.438s.png" alt="" />
-  <div class="title">04: Une phrase </div>
+  <div class="title">04: « On le fait ? » <span class="tag todo">capture à faire</span></div>
   <div class="time">7,5 à 9,38 s</div>
-  <p class="words">Compas « Où veux-tu aller ? » : la phrase se tape ; clic « Préparer mon aventure » sur le temps 9,3.</p>
-  <p class="meta"><b>À lire</b> la phrase tapée (0,2-1,4 s) ; le bouton (1,4-1,8 s)<br /><b>Son</b> frappe ; clic ; montée vers l&#x27;ouverture de la piste<br /><b>Source</b> 📷 docs/compas/preuves/compas-vide-1280x800.jpg (reconstruit)</p>
+  <p class="words">Léa partage le carnet dans la messagerie du groupe ; Noé et Sam répondent.</p>
+  <p class="meta"><b>À lire</b> les trois bulles, une par temps (0,2-1,8 s)<br /><b>Son</b> trois petits sons de message<br /><b>Source</b> `/messagerie` ; ❌ capture à faire</p>
 </div>
+<section class="act">II · Préparer</section>
 <div class="frame">
   <img src="stills/frame-04-at-10.312s.png" alt="" />
-  <div class="title">05: Voici ce que j&#x27;ai compris <span class="todo">capture à faire</span></div>
+  <div class="title">05: La phrase <span class="tag ok">réel</span></div>
   <div class="time">9,38 à 11,25 s</div>
-  <p class="words">La musique s&#x27;ouvre ; la phrase se range en lignes « Voici ce que j&#x27;ai compris », la préparation visible coche ses étapes.</p>
-  <p class="meta"><b>À lire</b> six lignes, une par temps (0,1-1,8 s)<br /><b>Son</b> la piste s&#x27;ouvre ; pop discret par ligne<br /><b>Source</b> libellés `compas-steps.fr.ts` (understood.*) ; ❌ capture à faire</p>
+  <p class="words">Le Compas s&#x27;ouvre déjà rempli : « 5 jours sur le W de Torres del Paine, à 3, en refuge, fin novembre ». Clic « Préparer mon aventure » sur le dernier temps.</p>
+  <p class="meta"><b>À lire</b> la phrase (0,2-1,4 s) ; le bouton (1,4-1,8 s)<br /><b>Son</b> frappe ; clic ; la piste s&#x27;ouvre au clic<br /><b>Source</b> Compas « Où » 📷 (texte de la phrase à changer)</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-05-at-12.656s.png" alt="" />
-  <div class="title">06: Un parcours réel </div>
-  <div class="time">11,25 à 14,06 s</div>
-  <p class="words">Vol satellite jusqu&#x27;à Gavarnie, tracé D → 1 → 2 → A, « D+ 2 750 m · 44 km ».</p>
-  <p class="meta"><b>À lire</b> « sur de vrais lieux » (0,4-1,6 s) ; le tracé (1,2-2,4 s) ; D+ (2,2-2,8 s)<br /><b>Son</b> whoosh cinématique ; pops des étapes<br /><b>Source</b> carte cuite (Esri) + jeu de démo du Compas</p>
+  <img src="stills/frame-05-at-12.188s.png" alt="" />
+  <div class="title">06: Le Compas comprend <span class="tag todo">capture à faire</span></div>
+  <div class="time">11,25 à 13,12 s</div>
+  <p class="words">La phrase se range en lignes pendant que le globe plonge sur la Patagonie.</p>
+  <p class="meta"><b>À lire</b> six lignes (0,1-1,8 s)<br /><b>Son</b> pop par ligne<br /><b>Source</b> libellés `compas-steps.fr.ts` ; carte à recuire sur la Patagonie</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-06-at-15s.png" alt="" />
-  <div class="title">07: Nous </div>
-  <div class="time">14,06 à 15,94 s</div>
-  <p class="words">Panneau « Nous » : rythme du groupe (« au rythme de Noé »), charges, puis « Qui doit quoi ».</p>
-  <p class="meta"><b>À lire</b> « Le groupe marche au rythme de Noé » (0,3-1,8 s)<br /><b>Son</b> whoosh court du panneau<br /><b>Source</b> 📷 docs/compas/preuves/compas-1280x800-equipe.jpg</p>
+  <img src="stills/frame-06-at-14.062s.png" alt="" />
+  <div class="title">07: Le W <span class="tag todo">capture à faire</span></div>
+  <div class="time">13,12 à 15 s</div>
+  <p class="words">Le W se trace entre les refuges ; le panneau « Nous » cale le groupe sur le plus lent ; « Qui doit quoi » partage le budget.</p>
+  <p class="meta"><b>À lire</b> le tracé (0,2-1,0 s) ; « au rythme de Noé » (1,0-1,8 s)<br /><b>Son</b> pops des étapes<br /><b>Source</b> Compas « Nous » 📷 (jeu de démo) ; valeurs fictives</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-07-at-16.875s.png" alt="" />
-  <div class="title">08: Résa <span class="todo">capture à faire</span></div>
-  <div class="time">15,94 à 17,81 s</div>
-  <p class="words">Onglet « Résa » : nuits par étape, réservations, offres partenaires avec la mention d&#x27;honnêteté.</p>
-  <p class="meta"><b>À lire</b> les trois onglets (0,2-0,8 s) ; la mention partenaires (0,8-1,8 s)<br /><b>Son</b> clic d&#x27;onglet<br /><b>Source</b> libellés `compas-screen.fr.ts`, `compas-sheets.fr.ts` ; ❌ capture à faire ; montants à prendre dans un vrai voyage</p>
+  <img src="stills/frame-07-at-15.938s.png" alt="" />
+  <div class="title">08: Le vent <span class="tag todo">capture à faire</span></div>
+  <div class="time">15 à 16,88 s</div>
+  <p class="words">Verdict : vigilance sur le vent (MET Norway) ; les nuits en refuge et les réservations se rangent.</p>
+  <p class="meta"><b>À lire</b> « Vigilance · rafales » (0,2-1,2 s) ; « sans score » (1,2-1,8 s)<br /><b>Son</b> souffle de vent<br /><b>Source</b> libellés `compas-screen.fr.ts` ; ❌ capture à faire ; météo illustrative</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-08-at-18.75s.png" alt="" />
-  <div class="title">09: Verdict <span class="todo">capture à faire</span></div>
-  <div class="time">17,81 à 19,69 s</div>
-  <p class="words">Les trois axes s&#x27;allument ; la météo MET Norway et les alertes officielles passent ; l&#x27;état bascule.</p>
-  <p class="meta"><b>À lire</b> les trois axes (0,2-1,2 s) ; « sans score » (1,2-1,8 s)<br /><b>Son</b> pop par axe<br /><b>Source</b> libellés `compas-screen.fr.ts` (verdict*, axis*, level*) ; ❌ capture à faire ; états illustratifs</p>
+  <img src="stills/frame-08-at-17.812s.png" alt="" />
+  <div class="title">09: Ce qui manque <span class="tag ok">réel</span></div>
+  <div class="time">16,88 à 18,75 s</div>
+  <p class="words">Kit : « Pas encore prêt » ; coupe-vent et réchaud à trouver. Un message de Noé glisse en haut.</p>
+  <p class="meta"><b>À lire</b> « à trouver » (0,2-0,9 s) ; message de Noé (0,9-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> Compas « Kit » 📷 ; message fictif</p>
+</div>
+<section class="act">III · Équiper</section>
+<div class="frame">
+  <img src="stills/frame-09-at-19.688s.png" alt="" />
+  <div class="title">10: La boutique <span class="tag part">partiel</span></div>
+  <div class="time">18,75 à 20,62 s</div>
+  <p class="words">Fiche produit complète : poids, usage, avis ; quatre façons de l&#x27;avoir, du prêt entre voisins à l&#x27;achat.</p>
+  <p class="meta"><b>À lire</b> le produit (0,2-0,8 s) ; les quatre offres (0,8-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> « Emprunter · Louer · Acheter », occasion (`/api/produit/occasion-check`) ; page boutique non routée aujourd&#x27;hui (partiel) ; prix fictifs</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-09-at-20.625s.png" alt="" />
-  <div class="title">10: Le kit </div>
-  <div class="time">19,69 à 21,56 s</div>
-  <p class="words">« Pas encore prêt · 14 % » ; la ligne « Réchaud · vital » s&#x27;allume ; « Trouver : réchaud ».</p>
-  <p class="meta"><b>À lire</b> « 14 % » (0,2-0,8 s) ; « Trouver : réchaud » (0,8-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> 📷 docs/compas/preuves/compas-1280x800-tiroir.jpg</p>
-</div>
-<section class="act">Équiper</section>
-<div class="frame">
-  <img src="stills/frame-10-at-23.438s.png" alt="" />
-  <div class="title">11: Kit Studio </div>
-  <div class="time">21,56 à 25,31 s</div>
-  <p class="words">PAYOFF 1 : le vrai sac 3D tourne, change de coloris sur les mesures, reçoit ses modules.</p>
-  <p class="meta"><b>À lire</b> « Ton sac, pièce par pièce » (0,4-1,6 s) ; coloris (1,9 / 2,8 s) ; modules (3,0-3,6 s)<br /><b>Son</b> whoosh ; clics des modules<br /><b>Source</b> maillages `public/assets/bags|modules/*.glb` ; 📷 docs/kit-studio/captures</p>
+  <img src="stills/frame-10-at-21.562s.png" alt="" />
+  <div class="title">11: Les prêts du groupe <span class="tag todo">capture à faire</span></div>
+  <div class="time">20,62 à 22,5 s</div>
+  <p class="words">Inventaire du groupe : prêts, emprunts, alertes d&#x27;entretien.</p>
+  <p class="meta"><b>À lire</b> « prêté par Noé » (0,2-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> hub possession, « Prêté », « Emprunté » ; ❌ capture à faire</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-11-at-26.25s.png" alt="" />
-  <div class="title">12: Matériel <span class="todo">capture à faire</span></div>
-  <div class="time">25,31 à 27,19 s</div>
-  <p class="words">Hub « possession » : inventaire pesé, prêts (« Disponibilité »), alertes d&#x27;entretien.</p>
-  <p class="meta"><b>À lire</b> les quatre onglets (0,2-0,8 s) ; un objet prêté (0,8-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> `hubSectionRegistry.ts` ; objets du jeu de démo ; ❌ capture à faire</p>
+  <img src="stills/frame-11-at-24.375s.png" alt="" />
+  <div class="title">12: Kit Studio <span class="tag ok">réel</span></div>
+  <div class="time">22,5 à 26,25 s</div>
+  <p class="words">TEMPS FORT : Léa monte son sac en 3D — corps 45 L, coloris, poche multifonction, porte-piolets ; le poids se met à jour.</p>
+  <p class="meta"><b>À lire</b> « Ton sac, pièce par pièce » (0,4-1,6 s) ; coloris et modules (1,8-3,6 s)<br /><b>Son</b> whoosh ; clics des modules<br /><b>Source</b> vrais maillages `.glb` du Kit Studio 📷</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-12-at-28.125s.png" alt="" />
-  <div class="title">13: Lignée de kit <span class="todo">capture à faire</span></div>
-  <div class="time">27,19 à 29,06 s</div>
-  <p class="words">Un kit forké de génération en génération ; « gardé par X voyageurs sur 10 » ; la part créateur.</p>
-  <p class="meta"><b>À lire</b> « gardé par 7 voyageurs sur 10 » (0,3-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> vocabulaire CLAUDE.md (lignées) ; chiffres illustratifs ; ❌ capture à faire</p>
+  <img src="stills/frame-12-at-27.188s.png" alt="" />
+  <div class="title">13: Le départ <span class="tag todo">capture à faire</span></div>
+  <div class="time">26,25 à 28,12 s</div>
+  <p class="words">Hub du voyage : tout est coché, documents privés, verdict « Prêt à partir ».</p>
+  <p class="meta"><b>À lire</b> « Prêt à partir » (0,6-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> hub sortie (`hubSectionRegistry.ts`) ; ❌ capture à faire</p>
+</div>
+<section class="act">IV · Vivre</section>
+<div class="frame">
+  <img src="stills/frame-13-at-29.062s.png" alt="" />
+  <div class="title">14: Hors ligne <span class="tag ok">réel</span></div>
+  <div class="time">28,12 à 30 s</div>
+  <p class="words">Le globe pivote vers le sud ; la zone du W est déjà téléchargée, le réseau peut disparaître.</p>
+  <p class="meta"><b>À lire</b> « Au bout du monde » (0,2-1,0 s) ; « hors ligne » (1,0-1,8 s)<br /><b>Son</b> whoosh long<br /><b>Source</b> Explorer « Hors ligne » 📷</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-13-at-30s.png" alt="" />
-  <div class="title">14: Panier <span class="todo">capture à faire</span></div>
-  <div class="time">29,06 à 30,94 s</div>
-  <p class="words">Le réchaud manquant arrive au panier : achat, location ou occasion ; paiement.</p>
-  <p class="meta"><b>À lire</b> trois offres (0,2-1,4 s)<br /><b>Son</b> clic<br /><b>Source</b> offres du jeu de démo (`labData.ts`) ; ❌ capture panier à faire</p>
-</div>
-<section class="act">Partir</section>
-<div class="frame">
-  <img src="stills/frame-14-at-31.875s.png" alt="" />
-  <div class="title">15: Départ <span class="todo">capture à faire</span></div>
-  <div class="time">30,94 à 32,81 s</div>
-  <p class="words">Hub du voyage : checklist, sécurité, documents privés, export A4 et GPX.</p>
-  <p class="meta"><b>À lire</b> les quatre onglets (0,2-1,0 s) ; « GPX » (1,0-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> `hubSectionRegistry.ts` ; ❌ capture à faire</p>
+  <img src="stills/frame-14-at-30.938s.png" alt="" />
+  <div class="title">15: L&#x27;équipage en direct <span class="tag todo">capture à faire</span></div>
+  <div class="time">30 à 31,88 s</div>
+  <p class="words">Les trois marcheurs avancent en direct sur la trace ; la famille suit le lien de suivi.</p>
+  <p class="meta"><b>À lire</b> les trois points (0,2-1,0 s) ; message de Maman (1,0-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> partage de position en direct, `/live/[token]`, « Équipage » ; ❌ capture à faire</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-15-at-33.75s.png" alt="" />
-  <div class="title">16: Hors ligne </div>
-  <div class="time">32,81 à 34,69 s</div>
-  <p class="words">« Hors ligne » : la zone se télécharge (tuiles, zoom 10 → 15).</p>
-  <p class="meta"><b>À lire</b> « Télécharger cette zone » (0,3-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> 📷 docs/explorer-v2/preuves/hors-ligne.png</p>
+  <img src="stills/frame-15-at-32.812s.png" alt="" />
+  <div class="title">16: Le carnet s&#x27;écrit <span class="tag ok">réel</span></div>
+  <div class="time">31,88 à 33,75 s</div>
+  <p class="words">Chacun poste ses moments dans le même carnet : photo, altitude, rencontre.</p>
+  <p class="meta"><b>À lire</b> « En route · J2 / 5 » (0,2-1,8 s)<br /><b>Son</b> pop par moment<br /><b>Source</b> carnet « Fil de bord » 📷 (`prod3`)</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-16-at-36.094s.png" alt="" />
-  <div class="title">17: Sur le sentier </div>
-  <div class="time">34,69 à 37,5 s</div>
-  <p class="words">« Démarrer » (randonnée, trail, vélo, kayak, ski…) → chrono en direct → bouton SOS.</p>
-  <p class="meta"><b>À lire</b> le chrono (0,4-1,8 s) ; « SOS » (1,8-2,8 s)<br /><b>Son</b> clic ; tic du chrono<br /><b>Source</b> 📷 Demarrer.png, RandoLive.png, SOS.png</p>
+  <img src="stills/frame-16-at-34.688s.png" alt="" />
+  <div class="title">17: Le plan B <span class="tag part">partiel</span></div>
+  <div class="time">33,75 à 35,62 s</div>
+  <p class="words">La veille signale des rafales ; l&#x27;itinéraire est réordonné et le groupe prévenu.</p>
+  <p class="meta"><b>À lire</b> « plan B » (0,2-1,0 s) ; l&#x27;étape inversée (1,0-1,8 s)<br /><b>Son</b> souffle ; clic<br /><b>Source</b> « Veille », éditeur de parcours ; enchaînement automatique = partiel</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-17-at-38.438s.png" alt="" />
-  <div class="title">18: Suivi en direct <span class="todo">capture à faire</span></div>
-  <div class="time">37,5 à 39,38 s</div>
-  <p class="words">Lien de suivi en direct partagé ; montres et capteurs connectés.</p>
-  <p class="meta"><b>À lire</b> « Position partagée » (0,2-1,0 s) ; les marques (1,0-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> `/live/[token]`, `/compte/montres|sensors|connecteurs` ; ❌ capture à faire ; marques selon les clés posées</p>
+  <img src="stills/frame-17-at-36.562s.png" alt="" />
+  <div class="title">18: Le club du coin <span class="tag part">partiel</span></div>
+  <div class="time">35,62 à 37,5 s</div>
+  <p class="words">Léa poste dans un club local ; une sortie « lever de soleil » est programmée avec des voyageurs autour ; le groupe s&#x27;inscrit.</p>
+  <p class="meta"><b>À lire</b> « à 4 km » (0,2-1,0 s) ; « S&#x27;inscrire » (1,0-1,8 s)<br /><b>Son</b> clic ; son de message<br /><b>Source</b> clubs et sorties 📷 ; proposition selon la position d&#x27;un groupe en voyage = vision ; club fictif</p>
 </div>
-<section class="act">Raconter</section>
 <div class="frame">
-  <img src="stills/frame-18-at-41.25s.png" alt="" />
-  <div class="title">19: Carnet de bord </div>
-  <div class="time">39,38 à 43,12 s</div>
-  <p class="words">PAYOFF 2 : le carnet défile — jours, trace, chiffres (D+, distance), fil de bord (moments, nature, rencontres).</p>
-  <p class="meta"><b>À lire</b> « Raconte. » (0,2-1,0 s) ; chiffres (1,0-2,4 s) ; moments (2,4-3,6 s)<br /><b>Son</b> whoosh doux<br /><b>Source</b> 📷 docs/audit/carnet-drawers-2026-11-11/prod3/*</p>
+  <img src="stills/frame-18-at-39.375s.png" alt="" />
+  <div class="title">19: Le lever de soleil <span class="tag ok">réel</span></div>
+  <div class="time">37,5 à 41,25 s</div>
+  <p class="words">Neuf silhouettes au lever du soleil : le moment arrive dans le carnet avec les six nouveaux compagnons.</p>
+  <p class="meta"><b>À lire</b> la photo (0,0-1,6 s) ; « + 6 voyageurs » (1,6-3,6 s)<br /><b>Son</b> la musique respire : second temps fort<br /><b>Source</b> photo de marque (à remplacer par une photo libre des Torres) ; données fictives</p>
 </div>
-<section class="act">Partager</section>
+<section class="act">V · Transmettre</section>
 <div class="frame">
-  <img src="stills/frame-19-at-44.062s.png" alt="" />
-  <div class="title">20: Communauté </div>
+  <img src="stills/frame-19-at-42.188s.png" alt="" />
+  <div class="title">20: Le retour <span class="tag todo">capture à faire</span></div>
+  <div class="time">41,25 à 43,12 s</div>
+  <p class="words">Le carnet se termine ; chaque objet reçoit son verdict de terrain.</p>
+  <p class="meta"><b>À lire</b> « essentiel » / « jamais servi » (0,2-1,8 s)<br /><b>Son</b> pop par verdict<br /><b>Source</b> carnet « Sac · verdicts » 📷 (`prod3/10-sac-verdicts.png`) ; preuve terrain `kit_field_reports`</p>
+</div>
+<div class="frame">
+  <img src="stills/frame-20-at-44.062s.png" alt="" />
+  <div class="title">21: Kenji, à Osaka <span class="tag ok">réel</span></div>
   <div class="time">43,12 à 45 s</div>
-  <p class="words">Fil de la communauté, stories et reels ; création d&#x27;une publication.</p>
-  <p class="meta"><b>À lire</b> les quatre types (0,3-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> 📷 docs/audit/communaute-v2-2026-11-08/**</p>
+  <p class="words">À l&#x27;autre bout du monde, Kenji tombe sur le carnet de Léa et lui écrit.</p>
+  <p class="meta"><b>À lire</b> le carnet (0,2-1,0 s) ; message de Kenji (1,0-1,8 s)<br /><b>Son</b> son de message<br /><b>Source</b> post communauté ; personnes fictives</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-20-at-45.938s.png" alt="" />
-  <div class="title">21: Clubs et sorties </div>
+  <img src="stills/frame-21-at-45.938s.png" alt="" />
+  <div class="title">22: La lignée <span class="tag todo">capture à faire</span></div>
   <div class="time">45 à 46,88 s</div>
-  <p class="words">Clubs (« Vercors Alpin ») et sorties de l&#x27;agenda ; « S&#x27;inscrire ».</p>
-  <p class="meta"><b>À lire</b> « S&#x27;inscrire » (0,6-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> 📷 explorer-sorties.png, explorer-clubs.png</p>
+  <p class="words">Le kit de Léa descend de celui de Maya ; Kenji le forke à son tour.</p>
+  <p class="meta"><b>À lire</b> « gardé par 7 voyageurs sur 10 » (0,2-1,2 s) ; « Forker » (1,2-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> lignées de kits (vocabulaire CLAUDE.md) ; ❌ capture à faire ; chiffres illustratifs</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-21-at-47.812s.png" alt="" />
-  <div class="title">22: Messagerie et empreinte <span class="todo">capture à faire</span></div>
+  <img src="stills/frame-22-at-47.812s.png" alt="" />
+  <div class="title">23: Sa version <span class="tag ok">réel</span></div>
   <div class="time">46,88 à 48,75 s</div>
-  <p class="words">Messagerie entre voyageurs ; l&#x27;empreinte terrain (sceau), privée par défaut.</p>
-  <p class="meta"><b>À lire</b> « privée par défaut » (0,8-1,8 s)<br /><b>Son</b> pop<br /><b>Source</b> `user_field_signature`, `FieldSeal` ; ❌ capture à faire ; régions illustratives</p>
-</div>
-<section class="act">Fin</section>
-<div class="frame">
-  <img src="stills/frame-22-at-50.625s.png" alt="" />
-  <div class="title">23: Tout le voyage </div>
-  <div class="time">48,75 à 52,5 s</div>
-  <p class="words">Tous les écrans du film se rangent en mur puis se resserrent en un seul point : le claim se pose.</p>
-  <p class="meta"><b>À lire</b> « Une phrase. » (0,4-1,4 s) ; « Tout le voyage. » (1,4-3,6 s)<br /><b>Son</b> montée<br /><b>Source</b> écrans des plans précédents</p>
+  <p class="words">Dans le Kit Studio, Kenji adapte le sac : coloris « Nuit », un module en plus, sa version.</p>
+  <p class="meta"><b>À lire</b> le sac éclaté (0,2-1,8 s)<br /><b>Son</b> clic<br /><b>Source</b> Kit Studio 📷 (`walkthrough-13-exploded.png`)</p>
 </div>
 <div class="frame">
-  <img src="stills/frame-23-at-56.25s.png" alt="" />
-  <div class="title">24: LKDV </div>
-  <div class="time">52,5 à 60 s</div>
-  <p class="words">Le badge arrive comme une boussole qui se cale ; « Le Kit du Voyageur », « Préparer · Explorer · Partager » ; web, iOS, Android ; lekitduvoyageur.fr.</p>
-  <p class="meta"><b>À lire</b> le badge (0,0-1,0 s) ; le nom (1,0-2,4 s) ; l&#x27;adresse (2,4-7,5 s)<br /><b>Son</b> impact sous le badge ; fondu de fin 1,5 s<br /><b>Source</b> `public/logo.png` ; adresse à confirmer</p>
+  <img src="stills/frame-23-at-49.688s.png" alt="" />
+  <div class="title">24: La part créateur <span class="tag vis">vision</span></div>
+  <div class="time">48,75 à 50,62 s</div>
+  <p class="words">Léa reçoit une notification : son kit a été repris, une part créateur lui revient en crédit boutique.</p>
+  <p class="meta"><b>À lire</b> « + 3,40 € » (0,6-1,8 s)<br /><b>Son</b> son de notification<br /><b>Source</b> part créateur (« bientôt disponible » dans l&#x27;app) = vision ; montant fictif</p>
+</div>
+<section class="act">VI · Fin</section>
+<div class="frame">
+  <img src="stills/frame-24-at-52.5s.png" alt="" />
+  <div class="title">25: Chaque voyage en prépare un autre <span class="tag vis">vision</span></div>
+  <div class="time">50,62 à 54,38 s</div>
+  <p class="words">Le globe s&#x27;éloigne : des arcs relient carnets, kits et clubs d&#x27;un continent à l&#x27;autre, l&#x27;empreinte de Léa s&#x27;ajoute.</p>
+  <p class="meta"><b>À lire</b> « Chaque voyage » (0,4-1,6 s) ; « en prépare un autre » (1,6-3,6 s)<br /><b>Son</b> montée<br /><b>Source</b> vue imaginée (agrégée, sans coordonnées) = vision</p>
+</div>
+<div class="frame">
+  <img src="stills/frame-25-at-57.188s.png" alt="" />
+  <div class="title">26: LKDV <span class="tag ok">réel</span></div>
+  <div class="time">54,38 à 60 s</div>
+  <p class="words">Le badge arrive comme une boussole qui se cale ; « Le Kit du Voyageur » ; « Préparer · Explorer · Partager » ; web, iOS, Android.</p>
+  <p class="meta"><b>À lire</b> le badge (0-1,0 s) ; le nom (1,0-2,5 s) ; l&#x27;adresse (2,5-5,6 s)<br /><b>Son</b> impact sous le badge ; fondu 1,5 s<br /><b>Source</b> `public/logo.png` ; adresse à confirmer</p>
 </div>
 </main>
 </body>

@@ -26,9 +26,45 @@
     .wall img { width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: 0.55; }
     .claim { position: absolute; left: 0; right: 0; top: 380px; text-align: center; color: #faf8f5; font-weight: 800; font-size: 132px; line-height: 1.02; letter-spacing: -0.035em; text-shadow: 0 8px 40px rgba(11,31,23,0.8); }
     .claim em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .feedbg { position: absolute; inset: 0; background: linear-gradient(180deg, #e9efe6 0%, #f4f1ea 100%); }
+    .post { position: absolute; width: 520px; border-radius: 30px; background: #fff; box-shadow: 0 24px 60px rgba(11,31,23,0.18); overflow: hidden; }
+    .post .ph { width: 520px; height: 560px; object-fit: cover; display: block; }
+    .post .hd { display: flex; align-items: center; gap: 14px; padding: 18px 20px; }
+    .av { width: 54px; height: 54px; border-radius: 50%; background: #5b7f55; color: #fff; font-weight: 800; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+    .post .who { font-size: 24px; font-weight: 800; color: #17402c; }
+    .post .tx { padding: 0 20px 6px; font-size: 26px; font-weight: 700; color: #1f2a24; }
+    .post .ft { display: flex; justify-content: space-between; padding: 10px 20px 20px; font-size: 22px; color: #5b6b61; font-weight: 600; }
+    .post .chip { padding: 6px 14px; border-radius: 999px; background: rgba(91,127,85,0.18); color: #17402c; }
+    .headline { position: absolute; left: 120px; top: 780px; color: #17402c; font-weight: 800; font-size: 104px; line-height: 1.0; letter-spacing: -0.035em; }
+    .headline em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .tap { position: absolute; width: 90px; height: 90px; border-radius: 50%; background: rgba(250,248,245,0.55); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.3); }
+    .chat { position: absolute; right: 160px; top: 170px; width: 640px; padding: 28px; border-radius: 40px; background: rgba(250,248,245,0.9); backdrop-filter: blur(24px); box-shadow: 0 30px 70px rgba(11,31,23,0.35); }
+    .chat .h { font-size: 30px; font-weight: 800; color: #17402c; margin-bottom: 18px; }
+    .bub { max-width: 470px; margin: 12px 0; padding: 18px 24px; border-radius: 28px; font-size: 30px; font-weight: 600; }
+    .bub small { display: block; font-size: 20px; color: #5b6b61; font-weight: 700; margin-bottom: 4px; }
+    .me { margin-left: auto; background: #17402c; color: #faf8f5; border-bottom-right-radius: 8px; }
+    .me small { color: #cfe0cc; }
+    .them { background: #fff; color: #1f2a24; border-bottom-left-radius: 8px; }
+    .banner { position: absolute; right: 150px; top: 60px; display: flex; gap: 16px; align-items: center; width: 640px; padding: 18px 22px; border-radius: 28px; background: rgba(250,248,245,0.92); backdrop-filter: blur(24px); box-shadow: 0 18px 40px rgba(11,31,23,0.3); }
+    .banner .av { width: 50px; height: 50px; font-size: 22px; flex: none; }
+    .banner b { display: block; font-size: 22px; color: #17402c; }
+    .banner span { font-size: 26px; color: #1f2a24; font-weight: 600; }
+    .prod { position: absolute; right: 120px; top: 110px; width: 820px; border-radius: 36px; background: rgba(250,248,245,0.94); box-shadow: 0 30px 70px rgba(11,31,23,0.35); overflow: hidden; display: grid; grid-template-columns: 330px 1fr; }
+    .prod img { width: 330px; height: 100%; object-fit: cover; }
+    .prod .in { padding: 30px; }
+    .prod .nm { font-size: 36px; font-weight: 800; color: #17402c; }
+    .prod .sp { font-size: 24px; color: #4a5a51; margin: 8px 0 18px; }
+    .off { display: flex; justify-content: space-between; padding: 16px 18px; margin-top: 10px; border-radius: 20px; background: #fff; font-size: 28px; }
+    .off b { color: #17402c; }
+    .off span { color: #4a5a51; font-weight: 600; }
+    .dot { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: #17402c; border: 5px solid #faf8f5; color: #faf8f5; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 14px rgba(91,127,85,0.35); }
+    .ovl { position: absolute; left: 120px; bottom: 150px; padding: 22px 30px; border-radius: 28px; background: rgba(250,248,245,0.92); box-shadow: 0 18px 40px rgba(11,31,23,0.3); }
+    .ovl b { display: block; font-size: 24px; color: #5b7f55; letter-spacing: 0.08em; text-transform: uppercase; }
+    .ovl span { font-size: 40px; font-weight: 800; color: #17402c; }
+    .arcs { position: absolute; inset: 0; }
   </style>
   <div id="root" data-composition-id="f01" data-width="1920" data-height="1080">
-    <div class="bg"><img src="assets/board/tr-2.6.jpg" alt="" /></div>
+    <div class="feedbg"></div><div class="post" style="left:120px; top:60px"><div class="hd"><div class="av">M</div><div class="who">Maya · Québec</div></div><img class="ph" src="assets/img/community-hikers.jpg" alt="" style="height:420px" /><div class="tx">Le W au lever du soleil</div><div class="ft"><span class="chip">Carnet en route · J4 / 5</span><span>♥ 1,2 k</span></div></div><div class="post" style="left:700px; top:20px"><div class="hd"><div class="av">A</div><div class="who">Arjun · Pune</div></div><img class="ph" src="assets/img/adventure-bivouac.jpg" alt="" style="height:420px" /><div class="tx">Bivouac sous la Voie lactée</div><div class="ft"><span class="chip">Carnet · 3 jours</span><span>♥ 864</span></div></div><div class="post" style="left:1280px; top:80px"><div class="hd"><div class="av">C</div><div class="who">Clara · Annecy</div></div><img class="ph" src="assets/img/journal-refuge.jpg" alt="" style="height:420px" /><div class="tx">Refuge enneigé, 2 352 m</div><div class="ft"><span class="chip">Sortie club</span><span>♥ 412</span></div></div><div class="headline" style="top:820px; color:#17402c">Là où la carte <em>se termine.</em></div>
   </div>
   <script>
     window.__timelines["f01"] = gsap.timeline({ paused: true });
