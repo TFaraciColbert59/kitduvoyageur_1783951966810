@@ -23,7 +23,7 @@ def fmt(t):
 
 
 def stills():
-    files = sorted(glob.glob(os.path.join(HERE, "stills", "frame-*-at-*.png")))
+    files = sorted(glob.glob(os.path.join(HERE, "stills", "[0-9][0-9]-*.png")))
     return files
 
 
@@ -31,14 +31,16 @@ def md():
     out = ["---",
            "format: 1920x1080",
            "duration: 60s",
-           'message: "Une phrase suffit : LKDV accompagne tout le voyage, du rêve au récit."',
-           "arc: Accroche → Rêver → Préparer → Équiper → Partir → Raconter → Partager → Tout le voyage → Marque",
+           'message: "Un voyage en fait naître un autre : LKDV relie celui qui raconte, ceux qui partent et ceux qui suivront."',
+           "arc: L'étincelle (un post) → Préparer (Compas, kit, boutique) → Équiper (Kit Studio, J-0) → Vivre (direct, carnet à trois, club, lever de soleil) → Transmettre (Kenji, lignée) → Fin (globe, marque)",
            "audience: randonneurs, trekkeurs et voyageurs d'aventure francophones",
-           "music: « Ambient Uplift » (Soundrider/Dope, CC BY 3.0), 128 BPM, lue à partir de 16,885 s : la piste s'ouvre à 9,38 s sur « Préparer mon aventure »",
+           "music: « Ambient Uplift » (Soundrider/Dope, CC BY 3.0), 128 BPM, lue à partir de 15,015 s : la piste s'ouvre à 11,25 s, quand le bouton « Préparer mon aventure » devient le globe ; demi-mesure de silence avant le lever de soleil",
            "---", "",
-           "# Storyboard — film complet LKDV (60 s)", "",
-           "Une mesure = 1,875 s. Chaque plan tient une idée, un mot de chapitre au plus, et l'écran réel de la fonction. "
-           "Les plans marqués ❌ s'appuient sur des libellés réels reconstruits : leur capture est à refaire avec un compte de démo qui marche.", ""]
+           "# Storyboard FINAL — « Le W » (60 s)", "",
+           "Une mesure = 1,875 s ; 32 mesures, 23 plans. Un seul parcours suivi de bout en bout : le post de Maya → Léa prépare le W avec Noé et Sam → "
+           "le voyage vécu à trois → Kenji, à Osaka, reprend le kit. Personnages, prix et chiffres fictifs, signalés à l'écran (« Données illustratives »). "
+           "`realite` : reel (écran capturé), capture (fonction réelle, capture à refaire), partiel (fonction en partie là), vision (pas encore dans l'app, marquée « Bientôt » ou « Vue imaginée »). "
+           "Critique appliquée : `boards/CRITIQUE.md`.", ""]
     act = None
     for f in FRAMES:
         if f["act"] != act:
@@ -92,7 +94,7 @@ def board(inline):
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Storyboard LKDV</title>
+<title>Storyboard Le W</title>
 <style>
   :root {{ --ink: #17402c; --sage: #5b7f55; --stone: #faf8f5; --muted: #5b6b61; --card: #ffffff; --line: rgba(23,64,44,.12); }}
   @media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{ --ink: #dfe8dc; --stone: #0f1a14; --muted: #9fb0a5; --card: #16231b; --line: rgba(223,232,220,.12); }} }}
@@ -122,9 +124,10 @@ def board(inline):
 </head>
 <body>
 <header>
-  <h1>LKDV — film complet, <em>60 secondes</em></h1>
-  <p>24 plans, de « Rêver » à « Partager », calés sur « Ambient Uplift » (128 BPM, une mesure = 1,875 s). La piste s'ouvre à 9,38 s, sur le clic « Préparer mon aventure ». Deux temps forts : le sac 3D du Kit Studio (21,6 s) et le carnet de bord (39,4 s).</p>
-  <p>Images fixes de travail : écrans réels quand une capture existe ; sinon panneau reconstruit avec les libellés exacts de l'application (marqué « capture à faire »). Les chiffres du voyage viennent du jeu de démonstration du Compas.</p>
+  <h1>« Le W » — storyboard final, <em>60 secondes</em></h1>
+  <p>Un seul voyage suivi dans l'application, du post qui donne envie au kit qui repart avec quelqu'un d'autre. Léa voit le carnet de Maya (Québec), prépare le W de Torres del Paine avec Noé et Sam, le vit en direct, et son kit repart avec Kenji, à Osaka. 23 plans sur 32 mesures de « Ambient Uplift » (128 BPM, une mesure = 1,875 s).</p>
+  <p>Fils rouges : un objet-héros, le coupe-vent (manquant → occasion → rafales → « essentiel » → repris) ; la rime du pouce (Léa touche un post, Kenji touche le sien) ; la messagerie, discrète mais présente du début à la fin. La piste s'ouvre à 11,25 s quand le bouton devient le globe ; deux temps forts : le sac 3D (20,6 s) et le lever de soleil à neuf (33,75 s).</p>
+  <p>Images de travail : écran réel quand une capture existe ; sinon panneau reconstruit avec les libellés de l'application, ou emplacement hachuré « Capture à faire ». Personnages, prix et chiffres fictifs.</p>
 </header>
 <main>
 {chr(10).join(parts)}

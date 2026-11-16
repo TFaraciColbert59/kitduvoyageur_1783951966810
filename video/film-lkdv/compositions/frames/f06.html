@@ -62,9 +62,38 @@
     .ovl b { display: block; font-size: 24px; color: #5b7f55; letter-spacing: 0.08em; text-transform: uppercase; }
     .ovl span { font-size: 40px; font-weight: 800; color: #17402c; }
     .arcs { position: absolute; inset: 0; }
+    .illus { position: absolute; right: 40px; bottom: 28px; padding: 6px 14px; border-radius: 999px; background: rgba(11,31,23,0.8); color: #faf8f5; font-size: 18px; font-weight: 600; letter-spacing: 0.06em; }
+    .vision { position: absolute; left: 40px; top: 32px; padding: 8px 16px; border-radius: 999px; border: 2px dashed rgba(250,248,245,0.8); color: #faf8f5; font-size: 20px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(11,31,23,0.35); }
+    .slot { width: 412px; height: 908px; border-radius: 56px; background: repeating-linear-gradient(135deg, #f4f1ea 0 22px, #ece7dd 22px 44px); display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 40px; color: #17402c; }
+    .slot .lab { align-self: flex-start; padding: 6px 14px; border-radius: 999px; border: 2px dashed #a63d2f; color: #a63d2f; font-size: 18px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+    .slot b { font-size: 36px; line-height: 1.1; }
+    .slot span { font-size: 26px; color: #4a5a51; font-weight: 600; }
+    .compas { position: absolute; inset: 0; background: #faf8f5; }
+    .compas .q { position: absolute; left: 240px; top: 230px; font-size: 92px; font-weight: 800; color: #17402c; letter-spacing: -0.03em; }
+    .compas .q em { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-weight: 500; }
+    .compas .steps { position: absolute; left: 240px; top: 120px; display: flex; gap: 10px; }
+    .compas .steps div { padding: 10px 22px; border-radius: 999px; font-size: 22px; font-weight: 700; color: #5b6b61; background: rgba(31,42,36,0.06); }
+    .compas .steps .on { background: #17402c; color: #faf8f5; }
+    .compas .field { position: absolute; left: 240px; top: 420px; width: 1440px; padding: 40px 44px; border-radius: 36px; background: #fff; box-shadow: 0 20px 50px rgba(11,31,23,0.12); font-size: 46px; font-weight: 600; color: #1f2a24; line-height: 1.25; }
+    .compas .field i { display: inline-block; width: 4px; height: 52px; background: #17402c; vertical-align: -8px; margin-left: 4px; }
+    .compas .go { position: absolute; left: 240px; top: 700px; padding: 30px 54px; border-radius: 999px; background: #17402c; color: #faf8f5; font-size: 38px; font-weight: 800; box-shadow: 0 0 0 12px rgba(91,127,85,0.25); }
+    .checks { margin-top: 18px; }
+    .chk { display: flex; align-items: center; gap: 18px; padding: 14px 4px; font-size: 34px; font-weight: 700; color: #17402c; }
+    .chk i { width: 40px; height: 40px; border-radius: 50%; background: #5b7f55; color: #fff; font-style: normal; font-size: 26px; display: flex; align-items: center; justify-content: center; }
+    .ok { margin-top: 18px; padding-top: 14px; border-top: 2px solid rgba(31,42,36,0.1); font-size: 22px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #5b7f55; }
+    .pin { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border-radius: 50%; background: #faf8f5; border: 6px solid #17402c; }
+    .pinl { position: absolute; padding: 6px 14px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 22px; font-weight: 700; white-space: nowrap; }
+    .line { position: absolute; left: 120px; top: 560px; padding: 18px 30px; border-radius: 28px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 32px; font-weight: 700; }
+    .pill { position: absolute; left: 124px; top: 560px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 28px; font-weight: 700; }
+    .btn { margin-top: 24px; padding: 22px 0; text-align: center; border-radius: 999px; background: #17402c; color: #faf8f5; font-size: 32px; font-weight: 800; }
+    .soon { display: inline-block; margin-left: 14px; padding: 6px 16px; border-radius: 999px; border: 2px dashed #17402c; font-size: 22px; vertical-align: 8px; }
+    .stag { position: absolute; left: 120px; bottom: 120px; padding: 16px 28px; border-radius: 28px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 32px; font-weight: 800; }
+    .prev { display: flex; gap: 14px; align-items: center; margin-top: 10px; padding: 10px; border-radius: 20px; background: rgba(250,248,245,0.14); }
+    .prev img { width: 120px; height: 84px; border-radius: 14px; object-fit: cover; }
+    .prev span { font-size: 22px; font-weight: 700; }
   </style>
   <div id="root" data-composition-id="f06" data-width="1920" data-height="1080">
-    <div class="bg"><img src="assets/map/gavarnie-end.jpg" alt="" /></div><div class="shade"></div><div class="chapter">Préparer</div><div class="title" style="width:780px">Le Compas<br /><em>comprend</em></div><div class="panel" style="top:140px"><div class="ptitle">Voici ce que j&#x27;ai compris</div><div class="row"><b>Activité</b><span>Trek</span></div><div class="row"><b>Lieu</b><span>Torres del Paine</span></div><div class="row"><b>Durée</b><span>5 jours</span></div><div class="row"><b>Quand</b><span>fin novembre</span></div><div class="row"><b>Groupe</b><span>3</span></div><div class="row"><b>Nuits</b><span>en refuge</span></div></div>
+    <div class="bg"><img src="assets/map/w-patagonie-globe.jpg" alt="" /></div><div class="shade"></div><div class="chapter">Préparer</div><div class="title" style="width:780px">Le Compas<br /><em>prépare tout</em></div><div class="panel"><div class="ptitle">Préparation</div><div class="checks"><div class="chk"><i>✓</i>Voyage créé</div><div class="chk"><i>✓</i>Kit proposé</div><div class="chk"><i>✓</i>Hub du voyage</div></div><div class="ok">Voici ce que j'ai compris</div><div class="row"><b>Lieu</b><span>Torres del Paine</span></div><div class="row"><b>Durée</b><span>5 jours</span></div><div class="row"><b>Groupe</b><span>3 · en refuge</span></div></div><div class="illus" data-layout-ignore>Données illustratives</div>
   </div>
   <script>
     window.__timelines["f06"] = gsap.timeline({ paused: true });
