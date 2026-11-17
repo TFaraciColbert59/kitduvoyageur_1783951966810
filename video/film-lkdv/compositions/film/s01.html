@@ -2,32 +2,36 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg { position: absolute; inset: 0; }
+    .fg, .txt { position: absolute; inset: 0; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
-    .title { position: absolute; left: 120px; top: 280px; width: 820px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
+    .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
     .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .phone { position: absolute; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
-    .screen { position: relative; width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
-    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 908px; }
-    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
-    .tap { position: absolute; width: 84px; height: 84px; border-radius: 50%; background: rgba(250,248,245,0.6); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.35); opacity: 0; }
+    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s01" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s01-ri">
       <div class="bgw" id="s01-bg"><img id="s01-bgi" src="assets/img/community-morning.jpg" alt="" /></div>
-      <div class="shade"></div>
-      <div class="fg" id="s01-fg">
+      <div class="shade" id="s01-sh"></div>
+      <div class="txt" id="s01-txt">
         <div class="chapter" id="s01-ch">Communauté</div>
-        <div class="title" id="s01-ti"><span class="w s01-t1">Là</span> <span class="w s01-t1">où</span> <span class="w s01-t1">la</span> <span class="w s01-t1">carte</span><br /><em><span class="w s01-t2">se</span> <span class="w s01-t2">termine.</span></em></div>
-        <div class="phone" id="s01-p0" style="left:980px; top:110px"><div class="screen"><div class="cam" id="s01-p0-cam"><img id="s01-p0-i0" src="assets/app/feed-1.jpg" alt="" style="object-position:top" /><img id="s01-p0-i1" src="assets/app/feed-3.jpg" alt="" style="object-position:top; opacity:0" /></div></div></div>
-        <div class="phone" id="s01-p1" style="left:1430px; top:40px"><div class="screen"><div class="cam" id="s01-p1-cam"><img id="s01-p1-i0" src="assets/app/feed-2.jpg" alt="" style="object-position:top" /><img id="s01-p1-i1" src="assets/app/feed-4.jpg" alt="" style="object-position:top; opacity:0" /></div></div></div>
+        <div class="title" id="s01-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s01-t1">Là</span> <span class="w s01-t1">où</span> <span class="w s01-t1">la</span> <span class="w s01-t1">carte</span><br /><em><span class="w s01-t2">se</span> <span class="w s01-t2">termine.</span></em></div>
+      </div>
+      <div class="fg" id="s01-fg">
+        <div class="phone" id="s01-p0" style="left:920px; top:60px"><div class="screen"><div class="cam" id="s01-p0-cam"><img id="s01-p0-i0" src="assets/app/feed-1.jpg" alt="" /><img id="s01-p0-i1" src="assets/app/feed-3.jpg" alt="" style="opacity:0" /></div></div></div>
+        <div class="phone" id="s01-p1" style="left:1376px; top:92px"><div class="screen"><div class="cam" id="s01-p1-cam"><img id="s01-p1-i0" src="assets/app/feed-2.jpg" alt="" /><img id="s01-p1-i1" src="assets/app/feed-4.jpg" alt="" style="opacity:0" /></div></div></div>
       </div>
     </div>
   </div>
@@ -35,10 +39,10 @@
     (function () {
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#s01-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 3.750, ease: "none" }, 0);
-      tl.fromTo("#s01-p0-i1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 1.900);
-      tl.fromTo("#s01-p0-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 3.750, ease: "sine.inOut" }, 0.000);
-      tl.fromTo("#s01-p1-i1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 2.350);
-      tl.fromTo("#s01-p1-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 3.750, ease: "sine.inOut" }, 0.000);
+      tl.to("#s01-p0-i0", { y: -896, duration: 0.35, ease: "power3.inOut" }, 1.900);
+      tl.fromTo("#s01-p0-i1", { y: 896, opacity: 1 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.inOut" }, 1.900);
+      tl.to("#s01-p1-i0", { y: -896, duration: 0.35, ease: "power3.inOut" }, 2.350);
+      tl.fromTo("#s01-p1-i1", { y: 896, opacity: 1 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.inOut" }, 2.350);
       tl.to("#s01-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 3.450);
       window.__timelines["s01"] = tl;
     })();

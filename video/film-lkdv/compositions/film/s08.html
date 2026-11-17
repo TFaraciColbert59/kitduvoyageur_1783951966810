@@ -2,49 +2,50 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg { position: absolute; inset: 0; }
+    .fg, .txt { position: absolute; inset: 0; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
-    .title { position: absolute; left: 120px; top: 280px; width: 820px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
+    .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
     .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .phone { position: absolute; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
-    .screen { position: relative; width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
-    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 908px; }
-    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
-    .tap { position: absolute; width: 84px; height: 84px; border-radius: 50%; background: rgba(250,248,245,0.6); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.35); opacity: 0; }
+    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s08" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s08-ri">
       <div class="bgw" id="s08-bg"><img id="s08-bgi" src="assets/map/w-patagonie-end.jpg" alt="" /></div>
-      <div class="shade"></div>
-      <div class="fg" id="s08-fg">
+      <div class="shade" id="s08-sh"></div>
+      <div class="txt" id="s08-txt">
         <div class="chapter" id="s08-ch">Verdict</div>
-        <div class="title" id="s08-ti"><span class="w s08-t1">Prêt</span> <span class="w s08-t1">à</span><br /><em><span class="w s08-t2">partir</span> <span class="w s08-t2">?</span></em></div>
+        <div class="title" id="s08-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s08-t1">Prêt</span> <span class="w s08-t1">à</span><br /><em><span class="w s08-t2">partir</span> <span class="w s08-t2">?</span></em></div>
         <div class="cap" id="s08-cap"><i></i>1 objet vital manque</div>
-        <div class="phone" id="s08-p0" style="left:980px; top:110px"><div class="screen"><div class="cam" id="s08-p0-cam"><img id="s08-p0-i0" src="assets/app/compas-verdict.jpg" alt="" style="object-position:top" /></div></div></div>
-        <div class="phone" id="s08-p1" style="left:1430px; top:40px"><div class="screen"><div class="cam" id="s08-p1-cam"><img id="s08-p1-i0" src="assets/app/compas-sac.jpg" alt="" style="object-position:top" /></div></div></div>
+      </div>
+      <div class="fg" id="s08-fg">
+        <div class="phone" id="s08-p0" style="left:1190px; top:76px"><div class="screen"><div class="cam" id="s08-p0-cam"><img id="s08-p0-i0p" src="assets/app/compas-jour2.jpg" alt="" /><img id="s08-p0-i0" src="assets/app/compas-verdict.jpg" alt="" style="opacity:0" /><img id="s08-p0-i1" src="assets/app/compas-sac.jpg" alt="" style="opacity:0" /></div></div></div>
       </div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s08-bgi", { scale: 1.0 }, { scale: 1.05, duration: 1.875, ease: "none" }, 0);
-      tl.fromTo("#s08-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.080);
-      tl.fromTo(".s08-t1", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.16, stagger: 0.08, ease: "power1.out" }, 0.180);
-      tl.fromTo(".s08-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.2, stagger: 0.09, ease: "power1.out" }, 0.500);
-      tl.fromTo("#s08-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.300);
-      tl.fromTo("#s08-p0", { opacity: 0, filter: "blur(12px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 0.050);
-      tl.fromTo("#s08-p0-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 1.875, ease: "sine.inOut" }, 0.000);
-      tl.fromTo("#s08-p1", { opacity: 0, filter: "blur(12px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.3, ease: "power2.out" }, 0.170);
-      tl.fromTo("#s08-p1-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 1.875, ease: "sine.inOut" }, 0.000);
-      tl.to("#s08-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 1.575);
+      tl.fromTo("#s08-bgi", { x: 0.00, scale: 1.0111 }, { x: 0.00, scale: 1.0306, duration: 1.875, ease: "none" }, 0.000);
+      tl.fromTo("#s08-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.020);
+      tl.fromTo(".s08-t1", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.16, stagger: 0.08, ease: "power1.out" }, 0.080);
+      tl.fromTo(".s08-t2", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.067, ease: "power2.out" }, 0.360);
+      tl.fromTo("#s08-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.800);
+      tl.fromTo("#s08-p0-i0", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.050);
+      tl.fromTo("#s08-p0-i1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 1.406);
+      tl.to("#s08-txt", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 1.675);
       window.__timelines["s08"] = tl;
     })();
   </script>
