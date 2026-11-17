@@ -1,52 +1,100 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
-    .ri { position: absolute; inset: 0; }
-    .fg, .txt, .frm { position: absolute; inset: 0; }
-    .frm { overflow: hidden; }
-    .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
-    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
-    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
-    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
-    .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
-    .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
-    .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
-    .w { display: inline-block; }
-    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
-    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
-    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
   </style>
   <div id="root" data-composition-id="s05" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
-    <div class="ri" id="s05-ri" style="--iris: 0px; -webkit-mask-image: radial-gradient(circle at 1566px 684px, transparent var(--iris), #000 var(--iris)); mask-image: radial-gradient(circle at 1566px 684px, transparent var(--iris), #000 var(--iris));">
-      <div class="bgw" id="s05-bg"><img id="s05-bgi" src="assets/img/mountain-1.jpg" alt="" /></div>
-      <div class="shade" id="s05-sh"></div>
-      <div class="txt" id="s05-txt">
-        <div class="chapter" id="s05-ch">Compas</div>
-        <div class="title" id="s05-ti" style="font-size:68px; width:1040px; line-height:1.1"><span class="w s05-t1">Le</span> <span class="w s05-t1">W</span> <span class="w s05-t1">de</span> <span class="w s05-t1">Torres</span> <span class="w s05-t1">del</span> <span class="w s05-t1">Paine,</span><br /><em style="white-space:nowrap"><span class="w s05-t2">5</span> <span class="w s05-t2">jours</span> <span class="w s05-t2">à</span> <span class="w s05-t2">3</span> <span class="w s05-t2">en</span> <span class="w s05-t2">refuge,</span> <span class="w s05-t2">fin</span> <span class="w s05-t2">novembre</span></em></div>
-      </div>
-      <div class="fg" id="s05-fg">
-        <div class="frm"><div class="pw" id="s05-p0-w"><div class="phone" id="s05-p0"><div class="screen"><div class="cam" id="s05-p0-cam"><video id="s05-rec" class="clip" src="assets/app/video/compas-creation-w-804.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="2.2" data-playback-rate="1.5" data-track-index="1"></video></div></div></div></div></div>
-        <div class="touch" id="s05-tap" style="left:1546px; top:664px"></div>
-      </div>
+    <div class="ri" id="s05-ri" style="--iris: 0px; -webkit-mask-image: radial-gradient(circle at 463px 677px, transparent var(--iris), #000 var(--iris)); mask-image: radial-gradient(circle at 463px 677px, transparent var(--iris), #000 var(--iris));">
+      <div class="wash" style="background:radial-gradient(120% 120% at 70% 40%, #faf8f5 0%, #f1ede6 60%, #e4dfd6 100%)"></div>
+      <div class="pw" id="s05-p" style="left:96px; top:76px"><div class="phone"><div class="screen"><div class="cam" id="s05-p-cam"><video id="s05-rec" class="clip" src="assets/app/video/compas-creation-w-804.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="2.275" data-playback-rate="1.5" data-track-index="1"></video></div></div></div></div>
+      <div class="chap" style="left:644px; top:236px; color:#5b7f55">Compas · « Où veux-tu aller ? »</div>
+      <div class="ttl" style="left:640px; top:286px; font-size:88px; color:#17402c; line-height:1.12"><div><span class="w"><span class="s05-ch" id="s05-c0" style="opacity:0">L</span><span class="s05-ch" id="s05-c1" style="opacity:0">e</span></span> <span class="w"><span class="s05-ch" id="s05-c3" style="opacity:0">W</span></span> <span class="w"><span class="s05-ch" id="s05-c5" style="opacity:0">d</span><span class="s05-ch" id="s05-c6" style="opacity:0">e</span></span> <span class="w"><span class="s05-ch" id="s05-c8" style="opacity:0">T</span><span class="s05-ch" id="s05-c9" style="opacity:0">o</span><span class="s05-ch" id="s05-c10" style="opacity:0">r</span><span class="s05-ch" id="s05-c11" style="opacity:0">r</span><span class="s05-ch" id="s05-c12" style="opacity:0">e</span><span class="s05-ch" id="s05-c13" style="opacity:0">s</span></span> <span class="w"><span class="s05-ch" id="s05-c15" style="opacity:0">d</span><span class="s05-ch" id="s05-c16" style="opacity:0">e</span><span class="s05-ch" id="s05-c17" style="opacity:0">l</span></span> <span class="w"><span class="s05-ch" id="s05-c19" style="opacity:0">P</span><span class="s05-ch" id="s05-c20" style="opacity:0">a</span><span class="s05-ch" id="s05-c21" style="opacity:0">i</span><span class="s05-ch" id="s05-c22" style="opacity:0">n</span><span class="s05-ch" id="s05-c23" style="opacity:0">e</span><span class="s05-ch" id="s05-c24" style="opacity:0">,</span></span></div><div style="font-family:'EB Garamond', serif; font-style:italic; font-weight:500; color:#5b7f55; letter-spacing:-0.01em"><span class="w"><span class="s05-ch" id="s05-c26" style="opacity:0">5</span></span> <span class="w"><span class="s05-ch" id="s05-c28" style="opacity:0">j</span><span class="s05-ch" id="s05-c29" style="opacity:0">o</span><span class="s05-ch" id="s05-c30" style="opacity:0">u</span><span class="s05-ch" id="s05-c31" style="opacity:0">r</span><span class="s05-ch" id="s05-c32" style="opacity:0">s</span></span> <span class="w"><span class="s05-ch" id="s05-c34" style="opacity:0">à</span></span> <span class="w"><span class="s05-ch" id="s05-c36" style="opacity:0">3</span></span> <span class="w"><span class="s05-ch" id="s05-c38" style="opacity:0">e</span><span class="s05-ch" id="s05-c39" style="opacity:0">n</span></span> <span class="w"><span class="s05-ch" id="s05-c41" style="opacity:0">r</span><span class="s05-ch" id="s05-c42" style="opacity:0">e</span><span class="s05-ch" id="s05-c43" style="opacity:0">f</span><span class="s05-ch" id="s05-c44" style="opacity:0">u</span><span class="s05-ch" id="s05-c45" style="opacity:0">g</span><span class="s05-ch" id="s05-c46" style="opacity:0">e</span><span class="s05-ch" id="s05-c47" style="opacity:0">,</span></span></div><div style="font-family:'EB Garamond', serif; font-style:italic; font-weight:500; color:#5b7f55; letter-spacing:-0.01em"><span class="w"><span class="s05-ch" id="s05-c49" style="opacity:0">f</span><span class="s05-ch" id="s05-c50" style="opacity:0">i</span><span class="s05-ch" id="s05-c51" style="opacity:0">n</span></span> <span class="w"><span class="s05-ch" id="s05-c53" style="opacity:0">n</span><span class="s05-ch" id="s05-c54" style="opacity:0">o</span><span class="s05-ch" id="s05-c55" style="opacity:0">v</span><span class="s05-ch" id="s05-c56" style="opacity:0">e</span><span class="s05-ch" id="s05-c57" style="opacity:0">m</span><span class="s05-ch" id="s05-c58" style="opacity:0">b</span><span class="s05-ch" id="s05-c59" style="opacity:0">r</span><span class="s05-ch" id="s05-c60" style="opacity:0">e</span></span></div></div>
+      <div class="touch" id="s05-tap" style="left:443px; top:657px"></div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s05-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 2.175, ease: "none" }, 0);
-      tl.set("#s05-p0-w", { x: 1190.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
-      tl.fromTo("#s05-p0", { y: 200 }, { y: 0, duration: 0.75, ease: "expo.out" }, 0.050);
-      tl.fromTo("#s05-tap", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.140, ease: "power2.out" }, 1.720);
-      tl.to("#s05-tap", { scale: 0.8, duration: 0.08, ease: "power2.in" }, 1.880);
-      tl.to("#s05-tap", { opacity: 0, scale: 1, duration: 0.14, ease: "power2.out" }, 2.000);
-      tl.fromTo("#s05-ri", { y: 1080, filter: "blur(14px)" }, { y: 0, filter: "blur(0px)", duration: 0.340, ease: "power3.inOut" }, 0);
-      tl.fromTo("#s05-ri", { "--iris": "0px" }, { "--iris": "1900px", duration: 0.255, ease: "power2.in" }, 1.920);
+      tl.fromTo("#s05-ri", { y: 1080, filter: "blur(14px)" }, { y: 0, filter: "blur(0px)", duration: 0.34, ease: "power3.inOut" }, 0.0);
+      tl.set("#s05-p", { transformOrigin: "50% 50%", transformPerspective: 1800, scale: 0.95 }, 0.0);
+      tl.fromTo("#s05-c0", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.35);
+      tl.fromTo("#s05-c1", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.369);
+      tl.fromTo("#s05-c3", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.4071);
+      tl.fromTo("#s05-c5", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.4452);
+      tl.fromTo("#s05-c6", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.4643);
+      tl.fromTo("#s05-c8", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.4972);
+      tl.fromTo("#s05-c9", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.5111);
+      tl.fromTo("#s05-c10", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.525);
+      tl.fromTo("#s05-c11", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.5389);
+      tl.fromTo("#s05-c12", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.5528);
+      tl.fromTo("#s05-c13", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.5667);
+      tl.fromTo("#s05-c15", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.5944);
+      tl.fromTo("#s05-c16", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.6083);
+      tl.fromTo("#s05-c17", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.6222);
+      tl.fromTo("#s05-c19", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.65);
+      tl.fromTo("#s05-c20", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.6639);
+      tl.fromTo("#s05-c21", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.6778);
+      tl.fromTo("#s05-c22", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.6917);
+      tl.fromTo("#s05-c23", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.7056);
+      tl.fromTo("#s05-c24", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.7194);
+      tl.fromTo("#s05-c26", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.7472);
+      tl.fromTo("#s05-c28", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.775);
+      tl.fromTo("#s05-c29", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.7889);
+      tl.fromTo("#s05-c30", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.8028);
+      tl.fromTo("#s05-c31", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.8167);
+      tl.fromTo("#s05-c32", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.8318);
+      tl.fromTo("#s05-c34", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.8621);
+      tl.fromTo("#s05-c36", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.8924);
+      tl.fromTo("#s05-c38", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.9227);
+      tl.fromTo("#s05-c39", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.9379);
+      tl.fromTo("#s05-c41", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.9682);
+      tl.fromTo("#s05-c42", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.9833);
+      tl.fromTo("#s05-c43", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 0.9962);
+      tl.fromTo("#s05-c44", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.009);
+      tl.fromTo("#s05-c45", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0218);
+      tl.fromTo("#s05-c46", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0346);
+      tl.fromTo("#s05-c47", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0474);
+      tl.fromTo("#s05-c49", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0731);
+      tl.fromTo("#s05-c50", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0859);
+      tl.fromTo("#s05-c51", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.0987);
+      tl.fromTo("#s05-c53", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.1244);
+      tl.fromTo("#s05-c54", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.1372);
+      tl.fromTo("#s05-c55", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.15);
+      tl.fromTo("#s05-c56", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.1722);
+      tl.fromTo("#s05-c57", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.1944);
+      tl.fromTo("#s05-c58", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.2167);
+      tl.fromTo("#s05-c59", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.2389);
+      tl.fromTo("#s05-c60", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06, ease: "power2.out" }, 1.2611);
+      tl.fromTo("#s05-tap", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.14, ease: "power2.out" }, 1.72);
+      tl.to("#s05-tap", { scale: 0.8, duration: 0.08, ease: "power2.in" }, 1.88);
+      tl.to("#s05-tap", { opacity: 0, scale: 1, duration: 0.14, ease: "power2.out" }, 2.0);
+      tl.fromTo("#s05-ri", { "--iris": "0px" }, { "--iris": "2100px", duration: 0.255, ease: "power2.in", immediateRender: false }, 1.92);
       window.__timelines["s05"] = tl;
     })();
   </script>

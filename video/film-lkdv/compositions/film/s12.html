@@ -1,52 +1,57 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
-    .ri { position: absolute; inset: 0; }
-    .fg, .txt, .frm { position: absolute; inset: 0; }
-    .frm { overflow: hidden; }
-    .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
-    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
-    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
-    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
-    .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
-    .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
-    .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
-    .w { display: inline-block; }
-    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
-    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
-    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
   </style>
   <div id="root" data-composition-id="s12" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s12-ri">
-      <div class="bgw" id="s12-bg"><img id="s12-bgi" src="assets/map/w-patagonie-end.jpg" alt="" /></div>
-      <div class="shade r" id="s12-sh"></div>
-      <div class="txt" id="s12-txt">
-        <div class="chapter" id="s12-ch" style="left:864px">Terrain</div>
-        <div class="title" id="s12-ti" style="left:860px; font-size:100px; width:780px; line-height:1.02"><span class="w s12-t1">Suivi</span><br /><em style="white-space:nowrap"><span class="w s12-t2">en</span> <span class="w s12-t2">direct</span></em></div>
-        <div class="cap" id="s12-cap" style="left:864px"><i></i>Chrono · SOS</div>
-      </div>
-      <div class="fg" id="s12-fg">
-        <div class="frm"><div class="pw" id="s12-p0-w"><div class="phone" id="s12-p0"><div class="screen"><div class="cam" id="s12-p0-cam"><video id="s12-live" class="clip" src="assets/app/video/live.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="0" data-track-index="1"></video></div></div></div></div></div>
-      </div>
+      <div class="vw"><img id="s12-bg" class="full" src="assets/cut/bg-flou-rando.jpg" alt="" /></div><div class="wash" style="background:rgba(11,31,23,0.45)"></div>
+      <div class="panel" id="s12-pan" style="left:1186px; top:12px; width:594px; height:1056px"><div class="pv" id="s12-pan-pv"><video id="s12-pan-v0" class="clip" src="assets/footage/freedom-2.mp4" muted playsinline data-start="0.0" data-duration="2.175" data-media-start="0.0" data-track-index="2"></video></div></div>
+      <div class="pw" id="s12-p" style="left:690px; top:76px"><div class="phone"><div class="screen"><div class="cam" id="s12-p-cam"><video id="s12-live" class="clip" src="assets/app/video/live.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="0" data-track-index="3"></video></div></div></div></div>
+      <div class="chap" id="s12-t-ch" style="left:114px; top:284px; ">Terrain</div>
+      <div class="ttl sh" id="s12-t" style="left:110px; top:330px; font-size:104px; color:#faf8f5; "><span class="w s12-t-a">Suivi</span><br /><em><span class="w s12-t-b">en</span> <span class="w s12-t-b">direct</span></em></div>
+      <div class="cap" id="s12-cap" style="left:114px; top:590px"><i></i>Chrono · SOS</div>
       <div class="dip" id="s12-dip"></div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s12-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 2.175, ease: "none" }, 0);
-      tl.fromTo(".s12-t2", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.04, ease: "power2.out" }, 0.260);
-      tl.fromTo("#s12-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.620);
-      tl.set("#s12-p0-w", { x: 300.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
-      tl.fromTo("#s12-p0", { x: 200, filter: "blur(6px)" }, { x: 0, filter: "blur(0px)", duration: 0.75, ease: "expo.out" }, 0.050);
-      tl.fromTo("#s12-ri", { x: 1920, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.340, ease: "power3.inOut" }, 0);
-      tl.to("#s12-dip", { opacity: 1, duration: 0.1, ease: "none" }, 2.075);
+      tl.fromTo("#s12-ri", { x: 1920, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.34, ease: "power3.inOut" }, 0.0);
+      tl.fromTo("#s12-bg", { scale: 1.06 }, { scale: 1, duration: 2.175, ease: "none" }, 0.0);
+      tl.fromTo("#s12-pan-pv", { scale: 1 }, { scale: 1.05, duration: 2.175, ease: "none" }, 0.0);
+      tl.fromTo("#s12-p", { y: 260, rotationY: 24, scale: 0.95, transformOrigin: "50% 50%", transformPerspective: 1800 }, { y: 0, rotationY: 12, duration: 0.8, ease: "expo.out" }, 0.15);
+      tl.fromTo("#s12-t-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 0.21);
+      tl.fromTo(".s12-t-a", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "inherit", duration: 0.14, stagger: 0.04, ease: "power1.out" }, 0.26);
+      tl.fromTo(".s12-t-b", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.05, ease: "power2.out" }, 0.37);
+      tl.fromTo("#s12-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.62);
+      tl.fromTo("#s12-dip", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 2.075);
       window.__timelines["s12"] = tl;
     })();
   </script>
