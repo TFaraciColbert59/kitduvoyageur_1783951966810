@@ -2,10 +2,12 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg, .txt { position: absolute; inset: 0; }
+    .fg, .txt, .frm { position: absolute; inset: 0; }
+    .frm { overflow: hidden; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
@@ -13,13 +15,12 @@
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
+    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
-    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s05" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s05-ri" style="--iris: 0px; -webkit-mask-image: radial-gradient(circle at 1566px 684px, transparent var(--iris), #000 var(--iris)); mask-image: radial-gradient(circle at 1566px 684px, transparent var(--iris), #000 var(--iris));">
@@ -27,10 +28,10 @@
       <div class="shade" id="s05-sh"></div>
       <div class="txt" id="s05-txt">
         <div class="chapter" id="s05-ch">Compas</div>
-        <div class="title" id="s05-ti" style="font-size:68px; width:1030px; line-height:1.1"><span class="w s05-t1">Le</span> <span class="w s05-t1">W</span> <span class="w s05-t1">de</span> <span class="w s05-t1">Torres</span> <span class="w s05-t1">del</span> <span class="w s05-t1">Paine,</span><br /><em><span class="w s05-t2">5</span> <span class="w s05-t2">jours</span> <span class="w s05-t2">à</span> <span class="w s05-t2">3</span> <span class="w s05-t2">en</span> <span class="w s05-t2">refuge,</span> <span class="w s05-t2">fin</span> <span class="w s05-t2">novembre</span></em></div>
+        <div class="title" id="s05-ti" style="font-size:68px; width:1040px; line-height:1.1"><span class="w s05-t1">Le</span> <span class="w s05-t1">W</span> <span class="w s05-t1">de</span> <span class="w s05-t1">Torres</span> <span class="w s05-t1">del</span> <span class="w s05-t1">Paine,</span><br /><em style="white-space:nowrap"><span class="w s05-t2">5</span> <span class="w s05-t2">jours</span> <span class="w s05-t2">à</span> <span class="w s05-t2">3</span> <span class="w s05-t2">en</span> <span class="w s05-t2">refuge,</span> <span class="w s05-t2">fin</span> <span class="w s05-t2">novembre</span></em></div>
       </div>
       <div class="fg" id="s05-fg">
-        <div class="phone" id="s05-p0" style="left:1190px; top:76px"><div class="screen"><div class="cam" id="s05-p0-cam"><video id="s05-rec" class="clip" src="assets/app/video/compas-creation-w-804.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="2.2" data-playback-rate="1.5" data-track-index="1"></video></div></div></div>
+        <div class="frm"><div class="pw" id="s05-p0-w"><div class="phone" id="s05-p0"><div class="screen"><div class="cam" id="s05-p0-cam"><video id="s05-rec" class="clip" src="assets/app/video/compas-creation-w-804.mp4" muted playsinline data-start="0" data-duration="2.175" data-media-start="2.2" data-playback-rate="1.5" data-track-index="1"></video></div></div></div></div></div>
         <div class="touch" id="s05-tap" style="left:1546px; top:664px"></div>
       </div>
     </div>
@@ -39,6 +40,7 @@
     (function () {
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#s05-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 2.175, ease: "none" }, 0);
+      tl.set("#s05-p0-w", { x: 1190.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
       tl.fromTo("#s05-p0", { y: 200 }, { y: 0, duration: 0.75, ease: "expo.out" }, 0.050);
       tl.fromTo("#s05-tap", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.140, ease: "power2.out" }, 1.720);
       tl.to("#s05-tap", { scale: 0.8, duration: 0.08, ease: "power2.in" }, 1.880);

@@ -2,10 +2,12 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg, .txt { position: absolute; inset: 0; }
+    .fg, .txt, .frm { position: absolute; inset: 0; }
+    .frm { overflow: hidden; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
@@ -13,26 +15,24 @@
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
+    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
-    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s07" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s07-ri">
       <div class="bgw" id="s07-bg" style="opacity:0"><img id="s07-bgi" src="assets/map/w-patagonie-end.jpg" alt="" /></div>
       <div class="shade" id="s07-sh"></div>
       <div class="txt" id="s07-txt">
-        <div class="cap" id="s07-cap0"><i></i>5 jours · 61,5 km · 3 personnes</div>
         <div class="chapter" id="s07-ch">Itinéraire</div>
-        <div class="title" id="s07-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s07-t1">Le</span> <span class="w s07-t1">W,</span><br /><em><span class="w s07-t2">jour</span> <span class="w s07-t2">par</span> <span class="w s07-t2">jour</span></em></div>
+        <div class="title" id="s07-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s07-t1">Le</span> <span class="w s07-t1">W,</span><br /><em style="white-space:nowrap"><span class="w s07-t2">jour</span> <span class="w s07-t2">par</span> <span class="w s07-t2">jour</span></em></div>
         <div class="cap" id="s07-cap"><i></i>Refugio Chileno → Hostería Pehoé</div>
       </div>
       <div class="fg" id="s07-fg">
-        <div class="phone" id="s07-p0" style="left:1190px; top:76px"><div class="screen"><div class="cam" id="s07-p0-cam"><img id="s07-p0-i0p" src="assets/app/compas-voyage.jpg" alt="" /><img id="s07-p0-i0" src="assets/app/compas-w-satellite.jpg" alt="" style="opacity:0" /><div class="mk" id="s07-mk0" style="left:139.9px; top:287.5px"></div><div class="mk" id="s07-mk1" style="left:54.2px; top:529.4px"></div><div class="mk" id="s07-mk2" style="left:90.8px; top:675.5px"></div><img id="s07-p0-i1" src="assets/app/compas-jour2.jpg" alt="" style="opacity:0" /></div></div></div>
+        <div class="frm"><div class="pw" id="s07-p0-w"><div class="phone" id="s07-p0"><div class="screen"><div class="cam" id="s07-p0-cam"><img id="s07-p0-i0p" src="assets/app/compas-voyage.jpg" alt="" /><img id="s07-p0-i0" src="assets/app/compas-w-satellite.jpg" alt="" style="opacity:0" /></div></div></div></div></div>
       </div>
     </div>
   </div>
@@ -41,16 +41,15 @@
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#s07-bgi", { x: 0.00, scale: 1.0000 }, { x: 0.00, scale: 1.0111, duration: 1.075, ease: "none" }, 2.675);
       tl.set("#s07-bg", { opacity: 1 }, 2.675);
-      tl.fromTo("#s07-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.020);
-      tl.fromTo(".s07-t1", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 0.080);
-      tl.fromTo(".s07-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.16, stagger: 0.08, ease: "power1.out" }, 0.360);
-      tl.fromTo("#s07-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 1.975);
-      tl.to("#s07-cap0", { opacity: 0, filter: "blur(8px)", duration: 0.15, ease: "power2.in" }, 1.825);
-      tl.fromTo("#s07-p0-i0", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.050);
-      tl.fromTo("#s07-mk0", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, 0.439);
-      tl.fromTo("#s07-mk1", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, 0.907);
-      tl.fromTo("#s07-mk2", { opacity: 0, scale: 1.8 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, 1.376);
-      tl.fromTo("#s07-p0-i1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 1.875);
+      tl.fromTo("#s07-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 0.000);
+      tl.fromTo(".s07-t1", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.030);
+      tl.fromTo(".s07-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.14, stagger: 0.03, ease: "power1.out" }, 0.120);
+      tl.fromTo("#s07-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.320);
+      tl.fromTo("#s07-p0-i0p", { filter: "blur(0px)" }, { filter: "blur(8px)", duration: 0.05, ease: "power1.in", immediateRender: false }, 0.070);
+      tl.fromTo("#s07-p0-i0", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(8px)", duration: 0.001, ease: "none" }, 0.120);
+      tl.to("#s07-p0-i0", { filter: "blur(0px)", duration: 0.08, ease: "power2.out" }, 0.121);
+      tl.fromTo("#s07-p0-w", { x: 1190.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, { x: 916.0, y: 8.0, scale: 2.0, duration: 0.6, ease: "power3.inOut" }, 0.000);
+      tl.fromTo("#s07-p0-w", { y: 8.0 }, { y: -784.0, duration: 3.150, ease: "sine.inOut", immediateRender: false }, 0.600);
       tl.to("#s07-txt", { opacity: 0, filter: "blur(8px)", duration: 0.2, ease: "power2.in" }, 3.550);
       window.__timelines["s07"] = tl;
     })();

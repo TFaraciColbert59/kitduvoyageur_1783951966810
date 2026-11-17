@@ -2,10 +2,12 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg, .txt { position: absolute; inset: 0; }
+    .fg, .txt, .frm { position: absolute; inset: 0; }
+    .frm { overflow: hidden; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
@@ -13,13 +15,12 @@
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
+    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
-    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s19" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s19-ri">
@@ -27,11 +28,11 @@
       <div class="shade" id="s19-sh"></div>
       <div class="txt" id="s19-txt">
         <div class="chapter" id="s19-ch">Carnets</div>
-        <div class="title" id="s19-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s19-t1">À</span> <span class="w s19-t1">six,</span><br /><em><span class="w s19-t2">un</span> <span class="w s19-t2">autre</span> <span class="w s19-t2">carnet</span></em></div>
+        <div class="title" id="s19-ti" style="font-size:100px; width:780px; line-height:1.02"><span class="w s19-t1">À</span> <span class="w s19-t1">six,</span><br /><em style="white-space:nowrap"><span class="w s19-t2">un</span> <span class="w s19-t2">autre</span> <span class="w s19-t2">carnet</span></em></div>
         <div class="cap" id="s19-cap"><i></i>6 voyageurs</div>
       </div>
       <div class="fg" id="s19-fg">
-        <div class="phone" id="s19-p0" style="left:1190px; top:76px"><div class="screen"><div class="cam" id="s19-p0-cam"><img id="s19-p0-i0" src="assets/app/carnet-tmb.jpg" alt="" /></div></div></div>
+        <div class="frm"><div class="pw" id="s19-p0-w"><div class="phone" id="s19-p0"><div class="screen"><div class="cam" id="s19-p0-cam"><img id="s19-p0-i0" src="assets/app/carnet-tmb.jpg" alt="" /></div></div></div></div></div>
       </div>
     </div>
   </div>
@@ -39,8 +40,9 @@
     (function () {
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#s19-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 2.175, ease: "none" }, 0);
-      tl.fromTo(".s19-t2", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 1.100);
-      tl.fromTo("#s19-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.600);
+      tl.fromTo(".s19-t2", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.260);
+      tl.fromTo("#s19-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.620);
+      tl.set("#s19-p0-w", { x: 1190.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
       tl.fromTo("#s19-p0", { x: 200, filter: "blur(6px)" }, { x: 0, filter: "blur(0px)", duration: 0.75, ease: "expo.out" }, 0.050);
       tl.fromTo("#s19-ri", { x: 1920, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.340, ease: "power3.inOut" }, 0);
       tl.to("#s19-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 1.875);

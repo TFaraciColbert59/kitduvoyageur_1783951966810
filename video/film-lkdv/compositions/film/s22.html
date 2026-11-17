@@ -2,10 +2,12 @@
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
     .ri { position: absolute; inset: 0; }
-    .fg, .txt { position: absolute; inset: 0; }
+    .fg, .txt, .frm { position: absolute; inset: 0; }
+    .frm { overflow: hidden; }
     .bgw { position: absolute; inset: 0; overflow: hidden; }
-    .bgw img, .bgw video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
     .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .shade.r { background: linear-gradient(270deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
     .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 780px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
@@ -13,25 +15,24 @@
     .w { display: inline-block; }
     .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
-    .pz { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-    .phone { position: absolute; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .pw { position: absolute; left: 0; top: 0; width: 444px; height: 928px; }
+    .phone { position: absolute; left: 0; top: 0; width: 444px; height: 928px; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
     .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
     .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
     .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
-    .mk { position: absolute; width: 54px; height: 54px; border-radius: 50%; border: 3px solid #faf8f5; box-shadow: 0 0 0 3px rgba(23,64,44,0.7), 0 4px 12px rgba(11,31,23,0.4); opacity: 0; }
   </style>
   <div id="root" data-composition-id="s22" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s22-ri">
-      <div class="bgw" id="s22-bg"><video id="s22-globe" class="clip" src="assets/map/globe-chili-japon.mp4" muted playsinline data-start="0" data-duration="5.975" data-track-index="1"></video></div>
+      <div class="bgw" id="s22-bg" style="background: rgb(3,4,9)"><video id="s22-globe" class="clip" src="assets/map/globe-chili-japon.mp4" muted playsinline data-start="0" data-duration="5.975" data-track-index="1" style="position:absolute; left:418px; top:162px; width:1344px; height:756px"></video></div>
       <div class="shade" id="s22-sh"></div>
       <div class="txt" id="s22-txt">
         <div class="chapter" id="s22-ch">Explorer</div>
-        <div class="title" id="s22-ti" style="font-size:92px; width:1000px; line-height:1.02"><span class="w s22-t1">Chaque</span> <span class="w s22-t1">voyage</span><br /><em><span class="w s22-t2">en</span> <span class="w s22-t2">prépare</span> <span class="w s22-t2">un</span> <span class="w s22-t2">autre</span></em></div>
+        <div class="title" id="s22-ti" style="font-size:76px; width:640px; line-height:1.1"><span class="w s22-t1">Chaque</span> <span class="w s22-t1">voyage</span><br /><em style="white-space:nowrap"><span class="w s22-t2">en</span> <span class="w s22-t2">prépare</span> <span class="w s22-t2">un</span> <span class="w s22-t2">autre</span></em></div>
       </div>
       <div class="fg" id="s22-fg">
-        <div class="phone" id="s22-p0" style="left:1376px; top:76px"><div class="screen"><div class="cam" id="s22-p0-cam"><img id="s22-p0-i0" src="assets/app/explorer-chili.jpg" alt="" /></div></div></div>
-        <div class="phone" id="s22-p1" style="left:1376px; top:76px"><div class="screen"><div class="cam" id="s22-p1-cam"><img id="s22-p1-i0" src="assets/app/explorer-japon.jpg" alt="" /></div></div></div>
+        <div class="frm"><div class="pw" id="s22-p0-w"><div class="phone" id="s22-p0"><div class="screen"><div class="cam" id="s22-p0-cam"><img id="s22-p0-i0" src="assets/app/explorer-chili.jpg" alt="" /></div></div></div></div></div>
+        <div class="frm"><div class="pw" id="s22-p1-w"><div class="phone" id="s22-p1"><div class="screen"><div class="cam" id="s22-p1-cam"><img id="s22-p1-i0" src="assets/app/explorer-japon.jpg" alt="" /></div></div></div></div></div>
       </div>
       <div class="dip" id="s22-dip"></div>
     </div>
@@ -39,10 +40,13 @@
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo(".s22-t2", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 2.175);
+      tl.fromTo(".s22-t2", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.310);
+      tl.set("#s22-p0-w", { x: 1376.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
+      tl.to("#s22-p0", { y: 1100, duration: 0.4, ease: "power3.in" }, 1.600);
       tl.fromTo("#s22-p0", { scale: 1.08 }, { scale: 1, duration: 0.6, ease: "expo.out" }, 0.100);
+      tl.set("#s22-p1-w", { x: 1376.0, y: 76.0, scale: 1.0, transformOrigin: "0px 0px" }, 0);
       tl.fromTo("#s22-p1", { y: 1100 }, { y: 0, duration: 0.75, ease: "expo.out" }, 3.950);
-      tl.fromTo("#s22-ri", { clipPath: "inset(671px 310px 168px 1211px round 24px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 0.45, ease: "power3.inOut" }, 0);
+      tl.fromTo("#s22-ri", { x: 1210.9, y: 679.2, scale: 0.2077, transformOrigin: "0px 0px", clipPath: "inset(0px 0px 0px 0px round 116px)" }, { x: 0, y: 0, scale: 1, clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 0.5, ease: "power3.inOut" }, 0);
       tl.fromTo(["#s22-fg", "#s22-txt"], { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power2.out" }, 0.28);
       tl.to("#s22-dip", { opacity: 1, duration: 0.1, ease: "none" }, 5.875);
       window.__timelines["s22"] = tl;
