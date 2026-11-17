@@ -150,21 +150,6 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   padding: 5px 14px 8px;
   touch-action: none;
 }
-.lkdv-cv2-topnav::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 0;
-  height: 1px;
-  background: rgba(23, 43, 36, 0.1);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.16s ease;
-}
-.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-topnav::after {
-  opacity: 1;
-}
 .lkdv-cv2-capsule.lkdv-capsule {
   height: 56px !important;
   padding: 4px !important;

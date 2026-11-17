@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { ExploreIcon } from '../explore/ExploreIcons';
@@ -470,34 +471,55 @@ export function CreateSheetV2({
           {activeNav.serverError}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact">
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
-          aria-label="Retour"
-          onClick={activeNav.goBack}
-          disabled={activeNav.busy || !activeNav.canBack}
+      <LayoutGroup id="cv2c-foot-actions-group">
+        <motion.div
+          layout
+          className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact"
+          transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
         >
-          <ChevronLeft size={16} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-          onClick={activeNav.goNext}
-          disabled={activeNav.busy || !user}
-          aria-busy={activeNav.busy || undefined}
-        >
-          {activeNav.busy
-            ? 'Envoi…'
-            : activeNav.busyLabel ??
-              (activeNav.stepIndex >= activeNav.stepCount - 1
-                ? activeNav.serverError
-                  ? 'Réessayer'
-                  : activeNav.finalLabel
-                : 'Suivant')}
-          <ChevronRight size={15} aria-hidden="true" />
-        </button>
-      </div>
+          <AnimatePresence initial={false} mode="popLayout">
+            {activeNav.canBack ? (
+              <motion.button
+                key="cv2c-back-btn"
+                layout
+                type="button"
+                className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
+                aria-label="Retour"
+                onClick={activeNav.goBack}
+                disabled={activeNav.busy}
+                initial={{ opacity: 0, x: 34, scale: 0.6 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 34, scale: 0.6 }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                style={{ position: 'relative', zIndex: 1 }}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </motion.button>
+            ) : null}
+          </AnimatePresence>
+          <motion.button
+            key="cv2c-next-btn"
+            layout="position"
+            type="button"
+            className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
+            onClick={activeNav.goNext}
+            disabled={activeNav.busy || !user}
+            aria-busy={activeNav.busy || undefined}
+            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+            style={{ position: 'relative', zIndex: 2 }}
+          >
+            {activeNav.busy
+              ? 'Envoi…'
+              : activeNav.busyLabel ??
+                (activeNav.stepIndex >= activeNav.stepCount - 1
+                  ? activeNav.serverError
+                    ? 'Réessayer'
+                    : activeNav.finalLabel
+                  : 'Suivant')}
+            <ChevronRight size={15} aria-hidden="true" />
+          </motion.button>
+        </motion.div>
+      </LayoutGroup>
     </div>
   ) : null;
 

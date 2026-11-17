@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { User } from '@supabase/supabase-js';
+import { motion } from 'framer-motion';
 import { Camera, ChevronDown, MoreHorizontal } from 'lucide-react';
 import type { PostFormValuesV2 } from '../engine/createSchemasV2';
 import { PhotoEditorPill } from './PhotoEditorPill';
@@ -65,10 +66,18 @@ export function PostHeroPreview({
     ? computeVignetteOverlayStyle(activeMedia?.modifiers?.vignette)
     : null;
 
+  const smoothTransition = {
+    duration: 0.82,
+    ease: [0.22, 0.61, 0.36, 1] as const,
+  };
+
   return (
-    <div
+    <motion.div
       className={`lkdv-cv2c-post-hero-preview ${collapsed ? 'is-collapsed' : ''} ${className}`.trim()}
       data-testid="post-hero-preview"
+      initial={false}
+      animate={{ height: collapsed ? 35 : 'auto' }}
+      transition={smoothTransition}
     >
       <input
         ref={fileInputRef}
@@ -81,7 +90,17 @@ export function PostHeroPreview({
         onChange={onFilesSelected}
       />
 
-      <div className="lkdv-post-collapsed-slot" aria-hidden={!collapsed}>
+      <motion.div
+        className="lkdv-post-collapsed-slot"
+        aria-hidden={!collapsed}
+        initial={false}
+        animate={{
+          opacity: collapsed ? 1 : 0,
+          y: collapsed ? 0 : -4,
+        }}
+        transition={smoothTransition}
+        style={{ pointerEvents: collapsed ? 'auto' : 'none' }}
+      >
         <button
           type="button"
           className="lkdv-post-collapsed-pill"
@@ -105,9 +124,20 @@ export function PostHeroPreview({
           </span>
           <ChevronDown size={14} aria-hidden="true" />
         </button>
-      </div>
+      </motion.div>
 
-      <div className="lkdv-post-expanded-slot" aria-hidden={collapsed}>
+      <motion.div
+        className="lkdv-post-expanded-slot"
+        aria-hidden={collapsed}
+        initial={false}
+        animate={{
+          opacity: collapsed ? 0 : 1,
+          y: collapsed ? -6 : 0,
+          scale: collapsed ? 0.99 : 1,
+        }}
+        transition={smoothTransition}
+        style={{ pointerEvents: collapsed ? 'none' : 'auto' }}
+      >
         <div className="lkdv-post-preview-card lkdv-post-preview-card--feed">
           {/* Pilule auteur en verre dépoli en haut à gauche + bouton options en haut à droite (identique à /communaute) */}
           <div className="lkdv-post-hero-top">
@@ -218,8 +248,8 @@ export function PostHeroPreview({
             </div>
           ) : null}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

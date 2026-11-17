@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { ArrowRight, CalendarDays, Camera, Globe, HelpCircle, Lock, PenLine, Users } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
@@ -147,22 +148,6 @@ function FormatStep() {
         clubsError={myClubs.error}
         onCreateClub={() => requestCreate('club')}
       />
-      {values.audience !== 'public' && values.media.length > 0 ? (
-        <div className="lkdv-cv2c-warning" role="alert">
-          <b>Les médias ne sont autorisés que dans le fil public.</b> {values.media.length} média
-          {values.media.length > 1 ? 's' : ''} ajouté{values.media.length > 1 ? 's' : ''}.
-          <button
-            type="button"
-            className="lkdv-cv2c-linkbtn"
-            onClick={() => {
-              form.setValue('audience', 'public', { shouldDirty: true, shouldValidate: true });
-              form.setValue('clubId', '', { shouldDirty: true, shouldValidate: true });
-            }}
-          >
-            Passer en fil public
-          </button>
-        </div>
-      ) : null}
       {!user ? (
         <p className="lkdv-cv2c-warning">Connecte-toi pour publier dans la communauté.</p>
       ) : null}
@@ -216,11 +201,6 @@ function ContentStep({
       {format === 'event' ? (
         <p className="lkdv-cv2-field-hint">
           Ce format ne se publie pas ici : choisis « Créer dans Sortie » à l’étape Format.
-        </p>
-      ) : !isPublic ? (
-        <p className="lkdv-cv2c-warning" role="status">
-          Les médias ne sont disponibles que pour une publication publique : ta publication partira
-          sans photo.
         </p>
       ) : (
         <>
@@ -525,6 +505,7 @@ function PostBody({
   const hydratedValues = { ...values, media: mediaList };
   const safePhotoIndex = Math.min(Math.max(0, activePhotoIndex), Math.max(0, mediaList.length - 1));
   const activePhotoModifiers = mediaList[safePhotoIndex]?.modifiers ?? DEFAULT_PHOTO_MODIFIERS;
+  const isEditorOpen = Boolean(activeCategory && mediaList.length > 0);
 
   return (
     <>
@@ -539,22 +520,25 @@ function PostBody({
             onTriggerFileInput={handleTriggerFileInput}
             fileInputRef={fileInputRef}
             onFilesSelected={handleFilesSelected}
-            collapsed={previewCollapsed}
+            collapsed={isEditorOpen ? false : previewCollapsed}
             onExpand={() => setPreviewCollapsed(false)}
           />
-          {activeCategory && mediaList.length > 0 ? (
-            <PhotoEditorCard
-              category={activeCategory}
-              modifiers={activePhotoModifiers}
-              onChangeModifier={handleChangeModifier}
-              onResetCategory={handleResetCategory}
-              onClose={() => setActiveCategory(null)}
-            />
-          ) : null}
+          <AnimatePresence initial={false}>
+            {isEditorOpen && activeCategory ? (
+              <PhotoEditorCard
+                key="post-photo-editor"
+                category={activeCategory}
+                modifiers={activePhotoModifiers}
+                onChangeModifier={handleChangeModifier}
+                onResetCategory={handleResetCategory}
+                onClose={() => setActiveCategory(null)}
+              />
+            ) : null}
+          </AnimatePresence>
         </SheetPreview>
       ) : null}
-      {api.step === 0 ? <FormatStep /> : null}
-      {api.step === 1 ? (
+      {!isEditorOpen && api.step === 0 ? <FormatStep /> : null}
+      {!isEditorOpen && api.step === 1 ? (
         <ContentStep
           user={user}
           activePhotoIndex={activePhotoIndex}
@@ -586,8 +570,15 @@ export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
   const savedModifiersRef = useRef<Record<string, PhotoModifiersV2>>({});
 
   useEffect(() => {
-    if (!active) return undefined;
+    if (activeCategory !== null) {
+      setPreviewCollapsed(false);
+    }
+  }, [activeCategory]);
+
+  useEffect(() => {
+    if (!active || activeCategory !== null) return undefined;
     let expandTimer: number | null = null;
+    let lockUntil = 0;
     const onScroll = (event: Event) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
@@ -597,14 +588,19 @@ export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
       ) {
         return;
       }
+      const now = Date.now();
       const top = target.scrollTop;
-      if (top > 12) {
+      const overflow = target.scrollHeight - target.clientHeight;
+      if (top > 28 && overflow > 120) {
         if (expandTimer !== null) {
           window.clearTimeout(expandTimer);
           expandTimer = null;
         }
-        setPreviewCollapsed(true);
-      } else if (top <= 4) {
+        setPreviewCollapsed((prev) => {
+          if (!prev) lockUntil = now + 650;
+          return true;
+        });
+      } else if (top <= 4 && now >= lockUntil) {
         if (expandTimer === null) {
           expandTimer = window.setTimeout(() => {
             expandTimer = null;
@@ -618,7 +614,7 @@ export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
       document.removeEventListener('scroll', onScroll, true);
       if (expandTimer !== null) window.clearTimeout(expandTimer);
     };
-  }, [active]);
+  }, [active, activeCategory]);
 
   return (
     <CreateFormEngineV2<PostFormValuesV2>

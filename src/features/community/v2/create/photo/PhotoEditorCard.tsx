@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { RotateCcw, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import {
   type PhotoEditorCategory,
   type PhotoModifiersV2,
@@ -34,13 +34,22 @@ export function PhotoEditorCard({
   if (!spec) return null;
 
   return (
-    <div
+    <motion.div
       className={`lkdv-photo-editor-card ${className}`.trim()}
       role="region"
       aria-label={`Réglages photo : ${spec.label}`}
       data-testid={`photo-editor-card-${category}`}
+      initial={{ height: 0, opacity: 0, y: -14 }}
+      animate={{ height: 'auto', opacity: 1, y: 0 }}
+      exit={{ height: 0, opacity: 0, y: -14 }}
+      transition={{
+        height: { duration: 0.72, ease: [0.22, 0.61, 0.36, 1] },
+        y: { duration: 0.72, ease: [0.22, 0.61, 0.36, 1] },
+        opacity: { duration: 0.48, ease: [0.22, 0.61, 0.36, 1] },
+      }}
     >
-      <div className="lkdv-photo-editor-controls">
+      <div className="lkdv-photo-editor-card-inner">
+        <div className="lkdv-photo-editor-controls">
         {spec.modifiers.map((mod) => {
           const rawValue = modifiers[mod.key];
 
@@ -105,8 +114,9 @@ export function PhotoEditorCard({
             </div>
           );
         })}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

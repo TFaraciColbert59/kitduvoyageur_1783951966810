@@ -476,13 +476,6 @@ export const postSchemaV2 = z
     } else if (value.format === 'question' && !value.content.trim()) {
       ctx.addIssue({ code: 'custom', path: ['content'], message: 'Pose ta question.' });
     }
-    if (value.audience !== 'public' && value.media.length > 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['media'],
-        message: 'Les médias ne sont autorisés que pour une publication publique.',
-      });
-    }
     if (value.audience === 'club' && !value.clubId.trim()) {
       ctx.addIssue({ code: 'custom', path: ['clubId'], message: 'Choisis un club.' });
     }
