@@ -5,7 +5,7 @@
       -72.98,
       -51.065
     ],
-    "zoom": 10.55,
+    "zoom": 10.45,
     "size": [
       1920,
       1080
@@ -19,8 +19,8 @@
       "name": "Refugio Chileno",
       "lon": -72.9106479,
       "lat": -50.9572451,
-      "x": 1107.9,
-      "y": 174.8,
+      "x": 1098.0,
+      "y": 199.3,
       "in_frame": true,
       "query": "Refugio Chileno, Torres del Paine",
       "source": "Nominatim: node 4057206327 tourism=alpine_hut « Refugio Chileno »"
@@ -30,8 +30,8 @@
       "name": "Hostería Pehoé",
       "lon": -72.9867589,
       "lat": -51.0939362,
-      "x": 945.6,
-      "y": 638.2,
+      "x": 946.6,
+      "y": 631.6,
       "in_frame": true,
       "query": "Hostería Pehoé",
       "source": "Nominatim: node 5905229618 place=hamlet « Hostería Pehoé »"
@@ -41,8 +41,8 @@
       "name": "Villa Monzino (Administración Parque Torres del Paine)",
       "lon": -72.9544759,
       "lat": -51.1758656,
-      "x": 1014.4,
-      "y": 916.6,
+      "x": 1010.8,
+      "y": 891.4,
       "in_frame": true,
       "query": "Administración Parque Torres del Paine",
       "source": "Nominatim: place=hamlet « Villa Monzino - Administración Parque Torres del Paine » (la requête « Villa Monzino » seule renvoie l’Italie)"
@@ -52,8 +52,8 @@
       "name": "Torres del Paine",
       "lon": -72.9254451,
       "lat": -51.0827249,
-      "x": 1076.3,
-      "y": 600.2,
+      "x": 1068.5,
+      "y": 596.1,
       "in_frame": true,
       "query": "Torres del Paine",
       "source": "Nominatim: boundary=administrative (commune) « Torres del Paine » — centroïde, comme le point 5 de l’app"
@@ -69,11 +69,11 @@
       "leg3": 13.98
     },
     "svg_vertices": {
-      "w": 81,
-      "boat": 21,
+      "w": 76,
+      "boat": 20,
       "road": 18,
-      "leg2": 38,
-      "leg3": 45
+      "leg2": 36,
+      "leg3": 44
     },
     "note": "Le point 5 de l’app (et ici) est le centroïde de la commune Torres del Paine, pas les tours. Hostería Pehoé (y≈1084) et Villa Monzino (y≈1586) tombent hors de l’image cuite : repères de bord ↓."
   }

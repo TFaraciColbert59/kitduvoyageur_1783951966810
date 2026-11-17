@@ -1,7 +1,7 @@
 """Bande-son du film « Le W » : musique + bruitages, calés sur boards/frames.py.
 
 audio_clips(FRAMES, LEAD) renvoie les balises <audio> que build_film.py pose dans index.html.
-Passe 2 (17/11, frames.py v5 + montage « mouvement 2 ») : instants tirés des tweens de build_film.py.
+Passe 3 (17/11, montage v7, SPEC-V7.md) : instants tirés de `build_film.py --events`.
 128 BPM : 1 temps = 0,46875 s, 1 mesure = 1,875 s. Fichiers : assets/audio/.
 
 Mesures faites sur les fichiers (ffmpeg, enveloppes RMS 2-20 ms, flux spectral) le 17/11/2026 :
@@ -58,7 +58,6 @@ def clip_list(FRAMES, LEAD):
     de chaque plan ; LEAD n'est plus utilisé (le son ne dépend que des barres)."""
     f = {fr["n"]: fr for fr in FRAMES}
     s = {n: fr["start"] for n, fr in f.items()}          # barre du plan
-    cap = 0.80                                            # légende sonore (build_film CAP_AT) ; le son suit d'une image
     clips = []
 
     def add(cid, src, start, dur, vol, mstart=0.0, fin=None, fout=None, role=None):
@@ -86,63 +85,45 @@ def clip_list(FRAMES, LEAD):
     # Reprise PLEINE sur la barre du plan 16, à la même position de piste que sans la coupure.
     add("music2", "ambient-uplift.mp3", s[16], END - s[16], 0.8, MUSIC_IN + s[16], fin=0.03, fout=1.8, role="music")
 
-    # ---------------------------------------------------------------- bruitages (un par action visible)
-    # 01 · le fil défile (SEQ « scroll » à 1,9 et 2,35 s) : un tic par écran qui monte
-    hit("t-scroll1-a", "sfx-key-press.mp3", s[1] + 1.90, 1.6)
-    hit("t-scroll1-b", "sfx-key-press.mp3", s[1] + 2.35, 1.4)
-    # 02 · le pouce s'enfonce à barre + 1,525 (5,275 s)
+    # ---------------------------------------------------------------- bruitages (passe 3 : montage v7)
+    # Instants : `python3 boards/build_film.py --events`. Un son par action visible, rien sur les
+    # simples apparitions de légendes ni sur les raccords.
+    # 02 · le doigt appuie sur la carte « Bivouac dans les Hautes Fagnes » (5,275 s)
     hit("t-tap2", "sfx-click-soft.mp3", s[2] + BAR - 0.35, 0.9)
-    # 02 → 03 · la carte touchée devient le monde (clip-path 0,45 s depuis barre − 0,35, power3.inOut) :
-    # souffle doux, tranche du whoosh cinématique (crête 2,44 s du fichier à barre − 0,1)
-    add("t-grow3", "sfx-whoosh-cinematic.mp3", s[3] - 0.1 - (2.44 - 2.15), 3.0 - 2.15, 0.22, 2.15, fin=0.06, fout=0.35)
-    # 04 · « Envoyé à Camille » : la légende se pose (barre + 0,80)
-    hit("t-send4", "sfx-pop.mp3", s[4] + cap, 0.4)
-    # 05 · frappe de la phrase (de + 0,05 ; le fichier n'a que 1,07 s de frappe), clic sur la flèche à + 1,62
-    add("t-typing5", "sfx-typing.mp3", s[5] + 0.05 + FRAME, 1.50 - 0.40, 1.4, 0.40, fout=0.08)
-    hit("t-click5", "sfx-click-soft.mp3", s[5] + 1.62, 1.0)
-    # 05 → 06 · l'iris part du clic (10,995 s) et s'ouvre jusqu'à la barre (11,25) : la crête du souffle
-    # (fichier 2,44 s) tombe une image après l'ouverture complète
+    # 03 → 04 · fouet : la bulle du message entre
+    whip("t-whip4", s[4], 0.26)
+    # 05 · la phrase s'écrit de barre + 0,05 (9,425) à 10,358 s : la frappe démarre au 1er caractère
+    # (attaque du fichier 0,43 s) et s'éteint sur le dernier
+    t_type0, t_type1 = s[5] + 0.05, 10.358
+    add("t-typing5", "sfx-typing.mp3", t_type0 + FRAME - 0.03, (t_type1 - t_type0) + 0.06, 1.4, 0.40, fout=0.06)
+    # 05 · le doigt appuie sur la flèche (10,995) ; l'iris s'ouvre de 10,995 à 11,25
     t_iris = s[5] + 1.62
-    m_iris = 2.44 - (s[6] + FRAME - t_iris)
+    hit("t-click5", "sfx-click-soft.mp3", t_iris, 1.0)
+    m_iris = 2.44 - (s[6] + FRAME - t_iris)              # crête du souffle une image après l'ouverture complète
     add("t-iris6", "sfx-whoosh-cinematic.mp3", t_iris, 4.35 - m_iris, 0.5, m_iris, fin=0.05, fout=0.4)
-    # 06 · « Je lis ta phrase » (+ 0,47) puis le voyage prêt (+ 1,17)
-    for k, at in enumerate((0.47, 1.17)):
-        hit(f"t-pop6-{k}", "sfx-pop.mp3", s[6] + at, 0.30 if k else 0.24)
-    # 07 · trois anneaux posés sur les refuges aux temps 2, 3, 4 de la 1re mesure (rien sur le jour 2 : raccord)
-    for k in range(3):
-        hit(f"t-pop7-{k}", "sfx-pop.mp3", s[7] + (k + 1) * BEAT, (0.45, 0.5, 0.55)[k])
-    # 08 · « 1 objet vital manque » : tic sur la légende
-    hit("t-tick8", "sfx-key-press.mp3", s[8] + cap, 1.8)
-    # 09 · « 1 398 € par personne » : clic sur la légende
-    hit("t-click9", "sfx-click-soft.mp3", s[9] + cap, 1.1)
-    # 09 → 10 · fouet horizontal (temps fort 1)
-    whip("t-whip10", s[10], 0.3)
-    # 10 · le doigt s'enfonce sur chaque temps de la 2e mesure (+ 0,04) : 60 L, 80 L, Sauge, Pierre
-    for k in range(4):
-        hit(f"t-click10-{k}", "sfx-click-soft.mp3", s[10] + BAR + k * BEAT + 0.04, (1.3, 1.15, 1.2, 1.1)[k], late=0.0)
-    # 11 pluie, 12 bip, 13 crépitement : aucun fichier dans assets/audio (et pas de son synthétisé) → rien.
-    # 11 → 12 · fouet horizontal vers le suivi en direct
-    whip("t-whip12", s[12], 0.24)
-    # 14 · les médias arrivent sur le même téléphone (barre + 0,05)
-    hit("t-pop14", "sfx-pop.mp3", s[14] + 0.05, 0.45)
-    # 15 · « Prochains départs » : clic sur la légende, coupé avant la demi-mesure de silence
-    at15 = s[15] + cap
-    hit("t-click15", "sfx-click-soft.mp3", at15, 0.6, fout=0.03,
-        dur=min(TAIL["sfx-click-soft.mp3"] - 0.03, cut - 0.005 - (at15 + FRAME - 0.01)))
-    # 17 · tap sur « Explorateurs du Japon » à barre + 1,525 (40,9 s)
-    hit("t-tap17", "sfx-click-soft.mp3", s[17] + BAR - 0.35, 1.2)
-    # 17 → 18 · fouet vertical : la trace part dans la messagerie (son de message)
-    whip("t-whip18", s[18], 0.3)
-    # 19 · « sur-mesure » se pose à barre + 0,80 (em_at du montage) : pop
-    hit("t-pop19", "sfx-pop.mp3", s[19] + 0.80, 0.5)
-    # 20 · « 2,0 kg · 541 € » : clic sur la légende
-    hit("t-click20", "sfx-click-soft.mp3", s[20] + cap, 1.1)
-    # 21 · l'empreinte : notification = pop sur la légende
-    hit("t-pop21", "sfx-pop.mp3", s[21] + cap, 0.45)
-    # 22 · montée : le riser part quand le téléphone Japon monte (barre + 2 mesures − 0,15 = 52,35 s)
-    # et se coupe net (fichier 4,155 s) pile sur la coupe franche vers le plan 23
+    # 07 · wTrace (sous-composition à 13,375 s) : une pastille par étape (scale 0 → 1, back.out)
+    for k, at in enumerate((13.375, 14.781, 15.250, 15.719)):  # Chileno, Pehoé, Monzino, Torres
+        hit(f"t-step7-{k}", "sfx-pop.mp3", at, (0.42, 0.45, 0.5, 0.55)[k])
+    # 09 · le compteur 0 → 4 194 € (18,8 → 20,1 s, power3.out) : des tics serrés qui s'espacent et s'éteignent
+    add("t-count9", "sfx-typing.mp3", 18.8 + FRAME - 0.03, 0.80, 1.4, 0.40, fout=0.45)
+    # 09 → 10 · retrait : le budget s'arrache à gauche (0,3 s, power3.in, le plus vite à 20,925)
+    hit("t-retrait10", "sfx-whoosh-short.mp3", s[10] + 0.22, 0.3, late=0.0)
+    # 10 · 3D : la poche M04 puis le porte-piolets M13 se clipsent ; le corps passe en 60 L puis 80 L
+    for k, at in enumerate((21.094, 22.031)):
+        hit(f"t-clip10-{k}", "sfx-click-soft.mp3", at, (1.3, 1.25)[k])
+    for k, at in enumerate((22.500, 22.969)):
+        hit(f"t-body10-{k}", "sfx-pop.mp3", at, (0.5, 0.55)[k])
+    # 11 → 12 · fouet : en route (le randonneur)
+    whip("t-whip12", s[12], 0.22)
+    # 17 → 18 · montée : la trace partagée monte (son de message)
+    whip("t-rise18", s[18], 0.26)
+    # 20 · 3D : coloris Sauge, puis Pierre (discrets)
+    for k, at in enumerate((45.469, 45.938)):
+        hit(f"t-color20-{k}", "sfx-key-press.mp3", at, (1.4, 1.3)[k])
+    # 22 · montée : le riser part quand le téléphone Japon monte (52,35 s) et se coupe net (fichier
+    # 4,155 s) sur la coupe vers le plan 23
     r_cut = 4.155
-    r_start = s[22] + 2 * BAR - 0.15
+    r_start = 52.35
     add("t-riser", "sfx-riser.mp3", r_start, s[23] - r_start + 0.03, 0.4, r_cut - (s[23] - r_start), fin=0.2, fout=0.03)
     # 23 · impact : attaque exactement quand le badge se cale (barre + 0,2 = 54,575 s)
     hit("t-impact", "sfx-impact-bass-1.mp3", s[23] + 0.2, 0.4, fout=0.5, late=0.0)
