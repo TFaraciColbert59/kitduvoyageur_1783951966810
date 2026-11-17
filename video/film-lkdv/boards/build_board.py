@@ -348,7 +348,7 @@ def main():
   </body>
 </html>
 """
-    with open(os.path.join(ROOT, "index.html"), "w") as fh:
+    with open(os.path.join(HERE, "poses.index.html"), "w") as fh:
         fh.write(index)
     # snapshot times (milieu de chaque plan)
     times = [round((f["start"] + f["end"]) / 2, 3) for f in FRAMES]

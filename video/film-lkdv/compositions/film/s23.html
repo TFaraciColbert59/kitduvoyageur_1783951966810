@@ -1,0 +1,41 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
+    .bgw { position: absolute; inset: -40px; }
+    .bgw img { width: 2000px; height: 1160px; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.78) 0%, rgba(11,31,23,0.45) 50%, rgba(11,31,23,0.12) 100%); }
+    .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
+    .title { position: absolute; left: 120px; top: 280px; width: 820px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
+    .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
+    .w { display: inline-block; }
+    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .phone { position: absolute; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
+    .screen img { position: absolute; inset: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
+    .tap { position: absolute; width: 84px; height: 84px; border-radius: 50%; background: rgba(250,248,245,0.6); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.35); opacity: 0; }
+    .end-bg img { filter: none; }
+  </style>
+  <div id="root" data-composition-id="s23" data-width="1920" data-height="1080" data-layout-allow-overflow>
+    <div id="s23-root-inner" style="position:absolute; inset:0">
+      <div class="bgw end-bg" id="e-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+      <div class="shade" style="background: rgba(11,31,23,0.55)"></div>
+      <img id="e-badge" src="assets/img/lkdv-badge.png" alt="" style="position:absolute; left:300px; top:290px; width:500px; height:500px" />
+      <div id="e-name" style="position:absolute; left:880px; top:400px; color:#faf8f5; font-weight:800; font-size:110px; letter-spacing:-0.03em"><span class="w e-n1">Le</span> <span class="w e-n1">Kit</span> <span class="w e-n1">du</span> <em style="font-family:'EB Garamond', serif; font-weight:500"><span class="w e-n2">Voyageur</span></em></div>
+      <div id="e-tag" style="position:absolute; left:888px; top:545px; color:#dfe8dc; font-weight:700; font-size:34px; letter-spacing:0.14em; text-transform:uppercase">Préparer · Explorer · Partager</div>
+      <div class="cap" id="e-url" style="left:888px; top:640px">lekitduvoyageur.fr</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#e-bg", { scale: 1.06 }, { scale: 1.0, duration: 5.625, ease: "power1.out" }, 0);
+      tl.fromTo("#e-badge", { scale: 0.6, rotation: -28, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.9, ease: "elastic.out(1, 0.75)" }, 0.12);
+      tl.fromTo(".e-n1", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.08, ease: "power2.out" }, 0.9);
+      tl.fromTo(".e-n2", { opacity: 0.25, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.25, ease: "power1.out" }, 1.2);
+      tl.fromTo("#e-tag", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 1.6);
+      tl.fromTo("#e-url", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.55, ease: "expo.out" }, 2.4);
+      window.__timelines["s23"] = tl;
+    })();
+  </script>
+</template>
