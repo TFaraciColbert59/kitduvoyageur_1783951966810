@@ -134,6 +134,7 @@ class Shot:
         self.html, self.tl = [], []
         self.ri_style = ""
         self.seen = set()
+        self.texts = {}
         self.z = z
 
     def loc(self, t):
@@ -216,6 +217,7 @@ class Shot:
 
     def title(self, tid, x, y, l1, em, size, color=STONE, emcolor=None, chap=None, chapcolor=None, one_line=False, shadow=True, align="left"):
         sid = f"{self.sid}-{tid}"
+        self.texts[sid] = f"{l1} {em}"
         w1 = " ".join(f'<span class="w {sid}-a">{E(t)}</span>' for t in l1.split())
         w2 = " ".join(f'<span class="w {sid}-b">{E(t)}</span>' for t in em.split())
         ec = f' style="color:{emcolor}"' if emcolor else ""
@@ -229,8 +231,9 @@ class Shot:
                  f'{w1}{br}<em{ec}>{w2}</em></div>')
         return sid
 
-    def title_in(self, sid, t, style=0, chap=False):
+    def title_in(self, sid, t, style=0, chap=False, n=None):
         """Trois entrées (mots flous, ligne floue, gris → encre) ; 2e ligne posée avant t + 0,3 s."""
+        ev(t, n or self.n, f"titre « {self.texts[sid]} » (2e ligne posée à + 0,11 s)")
         if chap:
             self.ft(f"#{sid}-ch", {"opacity": 0, "filter": "blur(8px)"}, {"opacity": 1, "filter": "blur(0px)", "duration": 0.15, "ease": "power2.out"}, t - 0.05)
         for k, cls in enumerate((f".{sid}-a", f".{sid}-b")):
@@ -247,11 +250,11 @@ class Shot:
         sels = [f".{sid}-a", f".{sid}-b"] + ([f"#{sid}-ch"] if chap else [])
         self.to(sels, {"opacity": 0, "filter": "blur(8px)", "duration": 0.18, "stagger": 0.02, "ease": "power2.in"}, t)
 
-    def cap(self, cid, text, x, y, t, dx=-24):
+    def cap(self, cid, text, x, y, t, dx=-24, n=None):
         i = f"{self.sid}-{cid}"
         self.add(f'<div class="cap" id="{i}" style="left:{x}px; top:{y}px"><i></i>{E(text)}</div>')
         self.ft(f"#{i}", {"opacity": 0, "x": dx}, {"opacity": 1, "x": 0, "duration": 0.45, "ease": "expo.out"}, t - 0.03)
-        ev(t, self.n, f"légende « {text} »")
+        ev(t, n or self.n, f"légende « {text} »")
 
     def touch(self, tid, x, y, press, show=0.2):
         i = f"{self.sid}-{tid}"
@@ -363,6 +366,7 @@ def s01():
     s.add('<div class="wash" style="background: linear-gradient(90deg, rgba(11,31,23,0.55) 0%, rgba(11,31,23,0.25) 40%, rgba(11,31,23,0) 62%)"></div>')
     t1 = s.title("t", 110, 520, "Là où la carte", "se termine.", 104)
     s.title_out(t1, 3.5)
+    ev(3.5, 1, "le titre d'ouverture s'efface (0,18 s)")
     # Le téléphone monte du paysage (mesure 2), le fil réel de la Communauté y défile.
     srcs = [A + "feed-1.jpg", A + "feed-3.jpg", A + "carnet-semaine.jpg"]
     p = s.phone("p", *S1_PH, imgs("s01", "p", srcs))
@@ -376,9 +380,8 @@ def s01():
     s.to(p, {"x": S1_IN[0], "y": S1_IN[1], "scale": S1_IN[2], "rotationX": 0, "duration": 0.85, "ease": "power2.inOut"}, b2)
     ev(b2, 2, "écran : Explorer › Carnets (échange flou) ; la caméra plonge dans le téléphone (0,85 s)")
     t2 = s.title("t2", 1330, 400, "Un carnet,", "qui donne envie", 76, chap="Explorer")
-    s.title_in(t2, b2 + 0.25, 0, chap=True)
-    ev(b2 + 0.25, 2, "titre « Un carnet, qui donne envie »")
-    s.cap("cap2", "Hautes Fagnes · 2 jours", 1334, 610, b2 + CAP_AT + 0.2)
+    s.title_in(t2, b2 + 0.25, 0, chap=True, n=2)
+    s.cap("cap2", "Hautes Fagnes · 2 jours", 1334, 610, b2 + CAP_AT + 0.2, n=2)
     st = (S1_PH[0], S1_PH[1], *S1_IN)
     tx, ty = scr(st, *TAP2)
     s.touch("tap", tx, ty, b2 + BAR - 0.35)
@@ -402,7 +405,7 @@ def s03():
     s.ft("#s03-ri", {"clipPath": f"inset({y0:.0f}px {W - x1:.0f}px {H - y1:.0f}px {x0:.0f}px round 24px)"},
          {"clipPath": "inset(0px 0px 0px 0px round 0px)", "duration": 0.45, "ease": "power3.inOut"}, s.t0)
     ev(s.t0, 3, "coupe : grow — la carte touchée s'agrandit jusqu'au cadre (0,45 s)")
-    s.bg_img("assets/img/detail-hero.jpg", wash="linear-gradient(90deg, rgba(250,248,245,0.92) 0%, rgba(250,248,245,0.78) 46%, rgba(250,248,245,0.35) 100%)")
+    s.bg_img("assets/img/detail-hero.jpg", wash="linear-gradient(90deg, rgba(250,248,245,0.86) 0%, rgba(250,248,245,0.62) 46%, rgba(250,248,245,0.12) 100%)")
     s.add('<div class="lay" id="s03-fg">')
     s.card("ent", C + "carnet-entete.jpg", 110, 120, 760)
     s.card("voy", C + "carnet-voyageurs.jpg", 130, 480, 400)
@@ -411,7 +414,6 @@ def s03():
     s.cap("cap", "3 voyageurs", 572, 518, s.bar + CAP_AT)
     t = s.title("t", 110, 720, "Deux jours,", "déjà racontés", 96, color=FOREST, shadow=False)
     s.title_in(t, s.bar + 0.05, 1)
-    ev(s.bar + 0.05, 3, "titre « Deux jours, déjà racontés »")
     # Les 4 médias réels du carnet arrivent en profondeur, un par temps.
     spots = [(1010, 130, -6, -260), (1420, 96, 5, 0), (1130, 500, 3, 120), (1530, 540, -4, -120)]
     for k, (x, y, r, z) in enumerate(spots):
@@ -432,7 +434,6 @@ def s04():
     s.bg_img(C + "bg-flou-paysage.jpg", wash="rgba(11,31,23,0.28)")
     t = s.title("t", 330, 96, "Un message,", "un voyage", 88)
     s.title_in(t, s.bar - 0.04, 2)
-    ev(s.bar, 4, "titre « Un message, un voyage » (arrivé avec le fouet)")
     s.card("cam", C + "msg-camille.jpg", 330, 340, 330, glass=False)
     s.ft("#s04-cam", {"opacity": 0, "y": 20}, {"opacity": 1, "y": 0, "duration": 0.4, "ease": "expo.out"}, s.bar - 0.1)
     s.card("bul", C + "msg-bulle.jpg", 330, 480, 1260)
@@ -479,7 +480,7 @@ def s05():
                 f'<video id="s05-rec" class="clip" src="{REC}" muted playsinline data-start="0" data-duration="{round(s.D, 4)}" '
                 f'data-media-start="{round(ms, 4)}" data-playback-rate="{REC_RATE}" data-track-index="1"></video>')
     s.pstate(p, s.t0, scale=S5_PH[4])
-    s.add(f'<div class="chap" style="left:644px; top:236px; color:{SAGE}">Compas · « Où veux-tu aller ? »</div>')
+    s.add(f'<div class="chap" style="left:644px; top:300px; color:{SAGE}">Compas · « Où veux-tu aller ? »</div>')
     # La phrase exacte, caractère par caractère, à l'instant où elle se tape dans l'enregistrement.
     lines, k = [], 0
     for li, line in enumerate(PHRASE):
@@ -493,7 +494,7 @@ def s05():
             k += 1  # l'espace
         style = "" if li == 0 else f' style="font-family:\'EB Garamond\', serif; font-style:italic; font-weight:500; color:{SAGE}; letter-spacing:-0.01em"'
         lines.append(f"<div{style}>{' '.join(words)}</div>")
-    s.add(f'<div class="ttl" style="left:640px; top:286px; font-size:88px; color:{FOREST}; line-height:1.12">{"".join(lines)}</div>')
+    s.add(f'<div class="ttl" style="left:640px; top:350px; font-size:100px; color:{FOREST}; line-height:1.12">{"".join(lines)}</div>')
     k = 0
     for line in PHRASE:
         for wd in line.split(" "):
@@ -540,11 +541,10 @@ def s06():
     s.swap("s06-p-i1", "s06-p-i0", t_voy)
     ev(t_prep, 6, "écran : « Je lis ta phrase… » (échange flou)")
     ev(t_voy, 6, "écran : le voyage prêt (5 jours · 61,5 km · 1 398 €)")
-    s.add('<div class="wash" style="background: linear-gradient(90deg, rgba(11,31,23,0.0) 0%, rgba(11,31,23,0.35) 40%, rgba(11,31,23,0.0) 80%)"></div>')
-    t = s.title("t", 660, 330, "Le Compas", "prépare tout", 104, chap="Compas")
+    s.add('<div class="wash" style="background: linear-gradient(270deg, rgba(11,31,23,0.45) 0%, rgba(11,31,23,0.0) 35%)"></div>')
+    t = s.title("t", 1290, 330, "Le Compas", "prépare tout", 96, chap="Compas")
     s.title_in(t, s.bar + 0.03, 0, chap=True)
-    ev(s.bar + 0.03, 6, "titre « Le Compas prépare tout »")
-    s.cap("cap", "5 jours · 61,5 km · 3 personnes", 664, 590, t_voy + 0.05)
+    s.cap("cap", "5 jours · 61,5 km · 3 personnes", 1294, 580, t_voy + 0.05, dx=24)
     s.title_out(t, s.end - 0.2, chap=True)
     s.to(f"#{s.sid}-cap", {"opacity": 0, "filter": "blur(8px)", "duration": 0.18, "ease": "power2.in"}, s.end - 0.18)
     s.credit("Imagerie : Esri, Maxar, Earthstar Geographics", 1480, 1032)
@@ -557,12 +557,11 @@ def s07():
     s.ft(p, {"x": 0, "y": 0, "scale": S5_PH[4], "rotationY": 0, "transformOrigin": "50% 50%", "transformPerspective": PERSP},
          dict(S7_EDGE, duration=0.6, ease="power3.inOut"), s.bar)
     ev(s.bar, 7, "porté : le même téléphone glisse au bord gauche et se tourne vers la carte (0,6 s)")
-    s.add('<div id="s07-tg" style="position:absolute; left:540px; top:70px; padding:14px 30px 18px; border-radius:26px; '
+    s.add('<div id="s07-tg" style="position:absolute; left:1180px; top:66px; width:660px; height:96px; border-radius:26px; '
           'background:rgba(11,31,23,0.55); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px)"></div>')
-    t = s.title("t", 570, 80, "Le W,", "jour par jour", 64, one_line=True, shadow=False)
+    t = s.title("t", 1210, 80, "Le W,", "jour par jour", 64, one_line=True, shadow=False)
     s.ft("#s07-tg", {"opacity": 0}, {"opacity": 1, "duration": 0.2, "ease": "power2.out"}, s.bar + 0.05)
     s.title_in(t, s.bar + 0.08, 1)
-    ev(s.bar + 0.08, 7, "titre « Le W, jour par jour » (sur pastille sombre)")
     ev(13.375, 7, "wTrace : Refugio Chileno, puis le W se dessine (voir w-trace.html)")
     ev(13.375 + 1.40625, 7, "wTrace : Hostería Pehoé")
     ev(13.375 + 1.875, 7, "wTrace : Villa Monzino")
@@ -572,33 +571,38 @@ def s07():
     return s
 
 
-# 08 · Le sac : le tiroir réel extrait, ses lignes tombent sur les temps.
-ANNEAU_C = (130 + 170, 380 + 169)
+# 08 · Le sac : le tiroir réel extrait, en grand ; ses lignes tombent sur les temps.
+S8_K = 1.1
+S8_X, S8_Y = 340, 330
+S8_ANN = (S8_X + 20, S8_Y + 20 + round(90 * S8_K) + 14)
+ANNEAU_C = (S8_ANN[0] + round(378 * S8_K) / 2, S8_ANN[1] + round(375 * S8_K) / 2)
 
 
 def s08():
     s = Shot(8, lead=0.3)
     s.enter("rise")
-    s.bg_solid("radial-gradient(120% 120% at 30% 40%, #faf8f5 0%, #efebe4 55%, #e2ddd3 100%)")
-    k = 0.9
-    s.add('<div class="gc" id="s08-box" style="left:110px; top:260px; width:1017px; height:470px; padding:0"></div>')
+    s.bg_solid("radial-gradient(120% 120% at 40% 50%, #faf8f5 0%, #efebe4 55%, #e2ddd3 100%)")
+    k = S8_K
+    bw = round(1085 * k) + 40
+    bh = (S8_ANN[1] - S8_Y) + round(375 * k) + 20
+    s.add(f'<div class="gc" id="s08-box" style="left:{S8_X}px; top:{S8_Y}px; width:{bw}px; height:{bh}px; padding:0"></div>')
     s.ft("#s08-box", {"opacity": 0, "scale": 0.94}, {"opacity": 1, "scale": 1, "duration": 0.5, "ease": "expo.out"}, s.bar - 0.1)
-    s.card("ent", C + "sac-entete.jpg", 130, 280, round(1085 * k), glass=False)
-    s.card("ann", C + "sac-anneau.jpg", 130, 380, round(378 * k), glass=False)
+    s.card("ent", C + "sac-entete.jpg", S8_X + 20, S8_Y + 20, round(1085 * k), glass=False)
+    s.card("ann", C + "sac-anneau.jpg", S8_ANN[0], S8_ANN[1], round(378 * k), glass=False)
     s.ft("#s08-ent", {"opacity": 0}, {"opacity": 1, "duration": 0.25, "ease": "power2.out"}, s.bar - 0.05)
     s.ft("#s08-ann", {"opacity": 0, "scale": 0.82}, {"opacity": 1, "scale": 1, "duration": 0.5, "ease": "expo.out"}, s.bar + 0.02)
     ev(s.bar, 8, "le tiroir « Ton sac » réel, extrait : en-tête puis anneau 2,9 kg")
     names = ["Porter 1,7 kg", "Vêtements 100 g", "Sécurité 842 g", "Eau et repas 200 g", "Autre 100 g"]
+    rx = S8_ANN[0] + round(378 * k) + 16
     for i in range(5):
-        y = 400 + i * 62
-        s.card(f"l{i}", C + f"sac-l{i + 1}.jpg", 486, y, round(690 * k), glass=False)
+        y = S8_ANN[1] + 30 + i * round(70 * k)
+        s.card(f"l{i}", C + f"sac-l{i + 1}.jpg", rx, y, round(690 * k), glass=False)
         t_i = s.bar + 0.1 + i * 0.75 * BEAT
         s.ft(f"#s08-l{i}", {"opacity": 0, "y": -46, "filter": "blur(6px)"}, {"opacity": 1, "y": 0, "filter": "blur(0px)", "duration": 0.35, "ease": "expo.out"}, t_i)
         ev(t_i, 8, f"ligne du sac : {names[i]}")
-    t = s.title("t", 1210, 330, "Ton sac,", "2,9 kg pour 5 jours", 76, color=FOREST, shadow=False, chap="Sac", chapcolor=SAGE)
+    t = s.title("t", S8_X, 150, "Ton sac,", "2,9 kg pour 5 jours", 84, color=FOREST, shadow=False, chap="Sac", chapcolor=SAGE, one_line=True)
     s.title_in(t, s.bar - 0.04, 0, chap=True)
-    ev(s.bar, 8, "titre « Ton sac, 2,9 kg pour 5 jours »")
-    s.cap("cap", "14 objets", 1214, 540, s.bar + CAP_AT)
+    s.cap("cap", "14 objets", S8_X + bw - 190, S8_Y + bh + 30, s.bar + CAP_AT)
     return s
 
 
@@ -609,11 +613,11 @@ def s09():
     s.ft("#s09-ri", {"clipPath": f"circle(0px at {cx}px {cy}px)"}, {"clipPath": f"circle(2300px at {cx}px {cy}px)", "duration": 0.45, "ease": "power2.inOut"}, s.t0)
     ev(s.t0, 9, "coupe : marée — le vert monte depuis l'anneau du sac (0,45 s)")
     s.bg_solid(f"radial-gradient(120% 120% at 30% 45%, #1f4f37 0%, {FOREST} 45%, {INK} 100%)")
-    s.add(f'<div class="chap" id="s09-ch" style="left:118px; top:236px; color:#b9cdb3">À trois,</div>')
+    s.add(f'<div class="chap" id="s09-ch" style="left:118px; top:290px; color:#b9cdb3">À trois,</div>')
     s.ft("#s09-ch", {"opacity": 0}, {"opacity": 1, "duration": 0.2, "ease": "power2.out"}, s.bar - 0.05)
-    s.add('<div id="s09-num" style="position:absolute; left:104px; top:262px; color:#faf8f5; font-weight:800; font-size:236px; '
+    s.add('<div id="s09-num" style="position:absolute; left:104px; top:330px; color:#faf8f5; font-weight:800; font-size:236px; '
           'letter-spacing:-0.04em; font-variant-numeric: tabular-nums; white-space:nowrap; line-height:1">0 €</div>')
-    s.add('<div id="s09-pre" style="position:absolute; left:120px; top:520px; color:#b9cdb3; font-family:\'EB Garamond\', serif; '
+    s.add('<div id="s09-pre" style="position:absolute; left:120px; top:590px; color:#b9cdb3; font-family:\'EB Garamond\', serif; '
           'font-style:italic; font-size:104px; line-height:1">prévus</div>')
     s.ft("#s09-pre", {"opacity": 0, "filter": "blur(8px)"}, {"opacity": 1, "filter": "blur(0px)", "duration": 0.18, "ease": "power2.out"}, s.bar + 0.1)
     t_c0, t_c1 = s.bar + 0.05, s.bar + 1.35
@@ -623,8 +627,8 @@ def s09():
                 f'onUpdate: () => {{ num.textContent = fmt(cnt.v); }} }}, {s.loc(t_c0)});')
     ev(t_c0, 9, "le compteur monte de 0 à 4 194 € (1,3 s, power3.out)")
     ev(t_c1, 9, "4 194 € atteint")
-    s.cap("cap", "1 398 € par personne", 120, 690, s.bar + CAP_AT)
-    s.card("bud", C + "budget.jpg", 1100, 360, 700)
+    s.cap("cap", "1 398 € par personne", 120, 760, s.bar + CAP_AT)
+    s.card("bud", C + "budget.jpg", 1100, 420, 700)
     s.ft("#s09-bud", {"opacity": 0, "x": 260, "rotationY": -30, "transformPerspective": PERSP},
          {"opacity": 1, "x": 0, "rotationY": -14, "duration": 0.7, "ease": "expo.out"}, s.bar + 0.1)
     ev(s.bar + 0.1, 9, "le tiroir budget réel arrive de la droite")
@@ -640,13 +644,13 @@ def s11():
     s.enter("rise")
     s.bg_img(C + "bg-flou-matin.jpg", wash="rgba(11,31,23,0.42)")
     s.panel("pan", "assets/footage/freedom-4.mp4", 130, 12)
+    ev(s.t0, 11, "panneau vidéo vertical (brume, freedom-4)")
     t = s.title("t", 860, 76, "La météo,", "du 22 au 26 novembre", 72, chap=None)
     s.title_in(t, s.bar - 0.04, 1)
-    ev(s.bar, 11, "titre « La météo, du 22 au 26 novembre » ; panneau vidéo (brume, freedom-4)")
     s.card("met", C + "meteo.jpg", 860, 270, 610)
     s.ft("#s11-met", {"opacity": 0, "y": 90}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "expo.out"}, s.bar + 0.0)
     ev(s.bar, 11, "le tiroir météo réel (MET Norway) monte")
-    s.cap("cap", "Averses · 22 novembre", 1500, 300, s.bar + CAP_AT, dx=24)
+    s.cap("cap", "Averses · 22 novembre", 864, 900, s.bar + CAP_AT)
     s.leave("whip")
     return s
 
@@ -683,7 +687,7 @@ def s13():
           f'box-shadow:0 40px 100px rgba(11,31,23,0.6)"><img src="{A}carnet-stories.jpg" alt="" style="position:absolute; left:0; top:0; width:{w}px; height:{h}px" /></div>')
     s.ft("#s13-st", {"scale": 1, "x": 0, "y": 0, "transformOrigin": "0px 0px"},
          {"scale": STORY_PUSH, "x": -(STORY_PUSH - 1) * w / 2, "y": -(STORY_PUSH - 1) * h / 2, "duration": s.D, "ease": "none"}, s.t0)
-    s.card("lea", C + "story-lea.jpg", 470, 110, 416, glass=False)
+    s.add(f'<img id="s13-lea" src="{C}story-lea.jpg" alt="" style="position:absolute; left:470px; top:110px; width:416px; height:139px; border-radius:70px; box-shadow:0 20px 50px rgba(11,31,23,0.45)" />')
     s.ft("#s13-lea", {"opacity": 0, "x": 268, "y": -66, "scale": 0.42, "transformOrigin": "0px 0px"},
          {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.6, "ease": "expo.out"}, s.bar + 0.3)
     ev(s.bar + 0.3, 13, "l'en-tête « Léa Fontaine » sort de la story et s'agrandit")
@@ -723,7 +727,6 @@ def s14():
         ev(t_k, 14, f"média {k + 1}/4 se range dans la grille")
     t = s.title("t", 110, 330, "Le carnet", "se remplit", 100, chap="Carnets")
     s.title_in(t, s.bar + 0.1, 0, chap=True)
-    ev(s.bar + 0.1, 14, "titre « Le carnet se remplit »")
     s.cap("cap", "4 médias · photos et vidéos", 114, 580, s.bar + CAP_AT + 0.1)
     s.leave("whip")
     return s
@@ -827,7 +830,7 @@ def s19():
 
 
 # 21 · L'empreinte : le profil réel et la carte de ses massifs (qui va devenir le globe).
-MAP21 = (1060, 300, 720)
+MAP21 = (1080, 250, 720)
 
 
 def map21_rect():
@@ -842,8 +845,7 @@ def s21():
     s.bg_solid(f"radial-gradient(120% 120% at 60% 50%, #23523a 0%, {FOREST} 45%, {INK} 100%)")
     t = s.title("t", 110, 96, "Ton", "empreinte", 92, one_line=True, chap=None)
     s.title_in(t, s.bar - 0.04, 0)
-    ev(s.bar, 21, "titre « Ton empreinte »")
-    s.card("ent", C + "compte-entete.jpg", 110, 250, 820)
+    s.card("ent", C + "compte-entete.jpg", 110, 230, 880)
     s.ft("#s21-ent", {"opacity": 0, "y": 70}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "expo.out"}, s.bar - 0.05)
     s.card("map", C + "compte-carte.jpg", MAP21[0], MAP21[1], MAP21[2])
     s.ft("#s21-map", {"opacity": 0, "y": 90}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "expo.out"}, s.bar + 0.15)
@@ -872,10 +874,11 @@ def s22():
     s.to(p1, {"x": -760, "rotationY": 40, "duration": 0.45, "ease": "power3.in"}, s.t0 + CHILI_OUT)
     ev(s.t0 + 0.3, 22, "téléphone Explorer › Chili")
     ev(s.t0 + CHILI_OUT + 0.45, 22, "le Chili sort par la gauche quand l'Amérique du Sud quitte la face du globe")
-    t = s.title("t", 110, 380, "Chaque voyage", "en prépare un autre", 76, chap="Explorer")
-    s.title_in(t, s.t0 + 2.0, 0, chap=True)
-    s.title_out(t, s.t0 + 4.55, chap=True)
-    ev(s.t0 + 2.0, 22, "titre « Chaque voyage en prépare un autre » (jusqu'à 52,95 s)")
+    # Le titre occupe la droite, vide tant que le globe tourne vers l'Asie ; il part quand le Japon monte.
+    t = s.title("t", 1270, 380, "Chaque voyage", "en prépare un autre", 66, chap="Explorer")
+    s.title_in(t, s.t0 + 1.95, 0, chap=True)
+    s.title_out(t, s.t0 + JAPAN_IN - 0.2, chap=True)
+    ev(s.t0 + JAPAN_IN - 0.2, 22, "le titre s'efface (le Japon monte à droite)")
     p2 = s.phone("p2", 1356, 76, f'<img src="{A}explorer-japon.jpg" alt="" />')
     s.ft(p2, {"y": 1150, "scale": 0.9, "rotationY": -16, "rotationX": 18, "transformOrigin": "50% 50%", "transformPerspective": PERSP},
          {"y": 0, "rotationX": 0, "duration": 0.75, "ease": "expo.out"}, s.t0 + JAPAN_IN)
@@ -910,6 +913,11 @@ def s23():
 
 SHOTS = [s01, s03, s04, s05, s06, s07, s08, s09, s11, s12, s13, s14, s15, s16, s17, s18, s19, s21, s22, s23]
 # Sous-compositions des autres agents (lecture seule) : (fichier, id, début, durée, plan).
+SUB_EVENTS = {  # instants relevés dans les fichiers des autres agents (constantes T_* de leurs scripts)
+    "kit3dTaille": [(BEAT, "3D : la poche (M04) se clipse"), (3 * BEAT, "3D : le porte-piolets (M13) se clipse"),
+                    (4 * BEAT, "3D : le corps passe en 60 L"), (5 * BEAT, "3D : le corps passe en 80 L")],
+    "kit3dCouleur": [(BEAT, "3D : coloris Sauge"), (2 * BEAT, "3D : coloris Pierre")],
+}
 SUBS = [("kit3d-taille.html", "kit3dTaille", bar(10), 2 * BAR, 10),
         ("kit3d-couleur.html", "kit3dCouleur", bar(20), BAR, 20),
         ("w-trace.html", "wTrace", 13.375, 3.5, 7)]
@@ -935,11 +943,13 @@ def main():
         if not os.path.exists(os.path.join(film, fn)):
             print(f"ATTENTION : {fn} absent (sous-composition {cid}) — hôte non monté", file=sys.stderr)
             continue
-        z = {10: 10 + 2 * 10 - 1, 20: 10 + 2 * 20 - 1, 7: 10 + 2 * 7 - 1}[n]
+        z = {10: 10 + 2 * 9 - 1, 20: 10 + 2 * 19 - 1, 7: 10 + 2 * 7 - 1}[n]
         hosts.append(f'      <div id="{cid}" class="clip" data-composition-id="{cid}" data-composition-src="compositions/film/{fn}" '
                      f'data-start="{round(st, 4)}" data-duration="{round(du, 4)}" data-track-index="3" data-track-kind="graphics" '
                      f'data-width="1920" data-height="1080" style="z-index: {z}"></div>')
         ev(st, n, f"sous-composition {cid} ({du:.3f} s)")
+        for dt, what in SUB_EVENTS.get(cid, []):
+            ev(st + dt, n, what)
     z_fl = 10 + 2 * 6 - 3
     flight = (f'      <video id="flight" class="clip" src="assets/map/w-patagonie.mp4" muted playsinline data-start="{round(FLIGHT_T0, 4)}" '
               f'data-duration="{FLIGHT_LEN}" data-track-index="5" style="position:absolute; left:0; top:0; width:1920px; height:1080px; object-fit:cover; z-index: {z_fl}"></video>\n'

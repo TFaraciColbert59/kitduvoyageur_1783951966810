@@ -43,7 +43,7 @@ CUTS = {
     # 11 · la météo réelle (MET Norway)
     "meteo": ("compas-meteo", (25, 230, 1180, 1330)),
     # 13 · l'en-tête de la story
-    "story-lea": ("carnet-stories", (40, 80, 560, 200)),
+    "story-lea": ("carnet-stories", (48, 97, 446, 229)),
     # 15 · les prochains départs du club
     "club-departs": ("club-sorties", (20, 480, 1190, 1185)),
     # 17 · la carte du club « Explorateurs du Japon » (sans la ligne « 0 sortie ce mois »)

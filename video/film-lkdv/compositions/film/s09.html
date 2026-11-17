@@ -32,17 +32,17 @@
   <div id="root" data-composition-id="s09" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
     <div class="ri" id="s09-ri">
       <div class="wash" style="background:radial-gradient(120% 120% at 30% 45%, #1f4f37 0%, #17402c 45%, #0b1f17 100%)"></div>
-      <div class="chap" id="s09-ch" style="left:118px; top:236px; color:#b9cdb3">À trois,</div>
-      <div id="s09-num" style="position:absolute; left:104px; top:262px; color:#faf8f5; font-weight:800; font-size:236px; letter-spacing:-0.04em; font-variant-numeric: tabular-nums; white-space:nowrap; line-height:1">0 €</div>
-      <div id="s09-pre" style="position:absolute; left:120px; top:520px; color:#b9cdb3; font-family:'EB Garamond', serif; font-style:italic; font-size:104px; line-height:1">prévus</div>
-      <div class="cap" id="s09-cap" style="left:120px; top:690px"><i></i>1 398 € par personne</div>
-      <div class="gc" id="s09-bud" style="left:1100px; top:360px"><img src="assets/cut/budget.jpg" alt="" style="width:700px; height:353px" /></div>
+      <div class="chap" id="s09-ch" style="left:118px; top:290px; color:#b9cdb3">À trois,</div>
+      <div id="s09-num" style="position:absolute; left:104px; top:330px; color:#faf8f5; font-weight:800; font-size:236px; letter-spacing:-0.04em; font-variant-numeric: tabular-nums; white-space:nowrap; line-height:1">0 €</div>
+      <div id="s09-pre" style="position:absolute; left:120px; top:590px; color:#b9cdb3; font-family:'EB Garamond', serif; font-style:italic; font-size:104px; line-height:1">prévus</div>
+      <div class="cap" id="s09-cap" style="left:120px; top:760px"><i></i>1 398 € par personne</div>
+      <div class="gc" id="s09-bud" style="left:1100px; top:420px"><img src="assets/cut/budget.jpg" alt="" style="width:700px; height:353px" /></div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s09-ri", { clipPath: "circle(0px at 300px 549px)" }, { clipPath: "circle(2300px at 300px 549px)", duration: 0.45, ease: "power2.inOut" }, 0.0);
+      tl.fromTo("#s09-ri", { clipPath: "circle(0px at 568.0px 669.5px)" }, { clipPath: "circle(2300px at 568.0px 669.5px)", duration: 0.45, ease: "power2.inOut" }, 0.0);
       tl.fromTo("#s09-ch", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.3);
       tl.fromTo("#s09-pre", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.45);
       const cnt = { v: 0 }; const num = document.querySelector('#s09-num'); const fmt = (v) => String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f') + ' €';

@@ -35,7 +35,7 @@
       <div class="panel" id="s11-pan" style="left:130px; top:12px; width:594px; height:1056px"><div class="pv" id="s11-pan-pv"><video id="s11-pan-v0" class="clip" src="assets/footage/freedom-4.mp4" muted playsinline data-start="0.0" data-duration="2.175" data-media-start="0.0" data-track-index="2"></video></div></div>
       <div class="ttl sh" id="s11-t" style="left:860px; top:76px; font-size:72px; color:#faf8f5; "><span class="w s11-t-a">La</span> <span class="w s11-t-a">météo,</span><br /><em><span class="w s11-t-b">du</span> <span class="w s11-t-b">22</span> <span class="w s11-t-b">au</span> <span class="w s11-t-b">26</span> <span class="w s11-t-b">novembre</span></em></div>
       <div class="gc" id="s11-met" style="left:860px; top:270px"><img src="assets/cut/meteo.jpg" alt="" style="width:610px; height:581px" /></div>
-      <div class="cap" id="s11-cap" style="left:1500px; top:300px"><i></i>Averses · 22 novembre</div>
+      <div class="cap" id="s11-cap" style="left:864px; top:900px"><i></i>Averses · 22 novembre</div>
     </div>
   </div>
   <script>
@@ -47,7 +47,7 @@
       tl.fromTo(".s11-t-a", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.26);
       tl.fromTo(".s11-t-b", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "inherit", duration: 0.14, stagger: 0.04, ease: "power1.out" }, 0.37);
       tl.fromTo("#s11-met", { opacity: 0, y: 90 }, { opacity: 1, y: 0, duration: 0.6, ease: "expo.out" }, 0.3);
-      tl.fromTo("#s11-cap", { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.62);
+      tl.fromTo("#s11-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.62);
       tl.to("#s11-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 1.875);
       window.__timelines["s11"] = tl;
     })();
