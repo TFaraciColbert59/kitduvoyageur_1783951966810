@@ -1,43 +1,53 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
-    .bgw { position: absolute; inset: -40px; }
-    .bgw img { width: 2000px; height: 1160px; object-fit: cover; }
-    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.78) 0%, rgba(11,31,23,0.45) 50%, rgba(11,31,23,0.12) 100%); }
+    .ri { position: absolute; inset: 0; }
+    .fg { position: absolute; inset: 0; }
+    .bgw { position: absolute; inset: 0; overflow: hidden; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 820px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
     .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
     .w { display: inline-block; }
-    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
+    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
     .phone { position: absolute; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
-    .screen img { position: absolute; inset: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 908px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
     .tap { position: absolute; width: 84px; height: 84px; border-radius: 50%; background: rgba(250,248,245,0.6); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.35); opacity: 0; }
-    .end-bg img { filter: none; }
   </style>
-  <div id="root" data-composition-id="s10" data-width="1920" data-height="1080" data-layout-allow-overflow>
-    <div id="s10-root-inner" style="position:absolute; inset:0">
-      <div class="bgw" id="s10-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+  <div id="root" data-composition-id="s10" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s10-ri">
+      <div class="bgw" id="s10-bg"><img id="s10-bgi" src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
       <div class="shade"></div>
-      <div class="chapter" id="s10-ch">Kit Studio</div>
-      <div class="title" id="s10-ti"><span class="w s10-t1">Ton</span> <span class="w s10-t1">sac,</span><br /><em><span class="w s10-t2">pièce</span> <span class="w s10-t2">par</span> <span class="w s10-t2">pièce</span></em></div>
-      <div class="cap" id="s10-cap"><i></i>Commander · 5 pièces · 471 €</div>
-      <div class="phone" id="s10-p0" style="left:980px; top:110px"><div class="screen"><img id="s10-p0-i0" src="assets/app/kit-studio-modules.jpg" alt="" style="object-position:top" /></div></div>
-      <div class="phone" id="s10-p1" style="left:1430px; top:40px"><div class="screen"><img id="s10-p1-i0" src="assets/app/kit-studio-corps.jpg" alt="" style="object-position:top" /></div></div>
+      <div class="fg" id="s10-fg">
+        <div class="chapter" id="s10-ch">Kit Studio</div>
+        <div class="title" id="s10-ti"><span class="w s10-t1">Ton</span> <span class="w s10-t1">sac,</span><br /><em><span class="w s10-t2">pièce</span> <span class="w s10-t2">par</span> <span class="w s10-t2">pièce</span></em></div>
+        <div class="cap" id="s10-cap"><i></i>Commander · 5 pièces · 471 €</div>
+        <div class="phone" id="s10-p0" style="left:980px; top:110px"><div class="screen"><div class="cam" id="s10-p0-cam"><img id="s10-p0-i0" src="assets/app/kit-studio-modules.jpg" alt="" style="object-position:top" /></div></div></div>
+        <div class="phone" id="s10-p1" style="left:1430px; top:40px"><div class="screen"><div class="cam" id="s10-p1-cam"><img id="s10-p1-i0" src="assets/app/kit-studio-corps.jpg" alt="" style="object-position:top" /><img id="s10-p1-i1" src="assets/app/kit-studio-coloris.jpg" alt="" style="object-position:top; opacity:0" /></div></div></div>
+      </div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s10-bg", { x: -36, scale: 1.04 }, { x: 0, scale: 1.0, duration: 3.750, ease: "none" }, 0);
-      tl.fromTo("#s10-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.080);
-      tl.fromTo(".s10-t1", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.067, ease: "power2.out" }, 0.200);
-      tl.fromTo(".s10-t2", { opacity: 0.25, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.2, stagger: 0.09, ease: "power1.out" }, 0.500);
-      tl.fromTo("#s10-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.55, ease: "expo.out" }, 0.830);
-      tl.fromTo("#s10-p0", { x: 280, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 0.020);
-      tl.fromTo("#s10-p1", { x: 280, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 0.140);
-      tl.to("#s10-root-inner", { x: -300, opacity: 0, filter: "blur(12px)", duration: 0.22, ease: "power3.in" }, 3.530);
+      tl.fromTo("#s10-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 4.150, ease: "none" }, 0);
+      tl.fromTo("#s10-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.480);
+      tl.fromTo(".s10-t1", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power2.out" }, 0.580);
+      tl.fromTo(".s10-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.2, stagger: 0.09, ease: "power1.out" }, 0.900);
+      tl.fromTo("#s10-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.700);
+      tl.fromTo("#s10-p0-cam", { scale: 1, x: 0, y: 0, transformOrigin: "0% 0%" }, { scale: 2, x: 0, y: -900, duration: 0.42, ease: "expo.out" }, 2.275);
+      tl.to("#s10-p0-cam", { x: -206, duration: 0.32, ease: "power3.inOut" }, 2.694);
+      tl.to("#s10-p0-cam", { x: -412, duration: 0.32, ease: "power3.inOut" }, 3.163);
+      tl.fromTo("#s10-p1-i1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 3.681);
+      tl.fromTo("#s10-p1", { x: 320, opacity: 0, filter: "blur(8px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 1.217);
+      tl.fromTo("#s10-p1-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 3.750, ease: "sine.inOut" }, 0.400);
+      tl.fromTo("#s10-ri", { opacity: 0, filter: "blur(20px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.400, ease: "power2.out" }, 0);
+      tl.to("#s10-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 3.850);
       window.__timelines["s10"] = tl;
     })();
   </script>

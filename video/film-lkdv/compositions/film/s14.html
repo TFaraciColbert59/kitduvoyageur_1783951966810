@@ -1,41 +1,48 @@
 <template>
   <style>
     #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
-    .bgw { position: absolute; inset: -40px; }
-    .bgw img { width: 2000px; height: 1160px; object-fit: cover; }
-    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.78) 0%, rgba(11,31,23,0.45) 50%, rgba(11,31,23,0.12) 100%); }
+    .ri { position: absolute; inset: 0; }
+    .fg { position: absolute; inset: 0; }
+    .bgw { position: absolute; inset: 0; overflow: hidden; }
+    .bgw img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,31,23,0.80) 0%, rgba(11,31,23,0.50) 48%, rgba(11,31,23,0.14) 100%); }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
     .chapter { position: absolute; left: 124px; top: 232px; color: #dfe8dc; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; }
     .title { position: absolute; left: 120px; top: 280px; width: 820px; color: #faf8f5; font-weight: 800; font-size: 100px; line-height: 1.02; letter-spacing: -0.03em; }
     .title em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; }
     .w { display: inline-block; }
-    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
+    .cap { position: absolute; left: 124px; top: 606px; display: flex; align-items: center; gap: 16px; padding: 16px 28px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 32px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); }
     .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
     .phone { position: absolute; width: 444px; height: 940px; border-radius: 70px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
     .screen { position: relative; width: 412px; height: 908px; border-radius: 56px; overflow: hidden; background: #faf8f5; }
-    .screen img { position: absolute; inset: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 908px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 908px; object-fit: cover; object-position: top; }
     .tap { position: absolute; width: 84px; height: 84px; border-radius: 50%; background: rgba(250,248,245,0.6); border: 4px solid #faf8f5; box-shadow: 0 8px 24px rgba(11,31,23,0.35); opacity: 0; }
-    .end-bg img { filter: none; }
   </style>
-  <div id="root" data-composition-id="s14" data-width="1920" data-height="1080" data-layout-allow-overflow>
-    <div id="s14-root-inner" style="position:absolute; inset:0">
-      <div class="bgw" id="s14-bg"><img src="assets/map/w-patagonie-end.jpg" alt="" /></div>
+  <div id="root" data-composition-id="s14" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s14-ri">
+      <div class="bgw" id="s14-bg"><img id="s14-bgi" src="assets/map/w-patagonie-end.jpg" alt="" /></div>
       <div class="shade"></div>
-      <div class="chapter" id="s14-ch">Itinéraire</div>
-      <div class="title" id="s14-ti"><span class="w s14-t1">36,2</span> <span class="w s14-t1">km,</span><br /><em><span class="w s14-t2">+642</span> <span class="w s14-t2">m</span></em></div>
-      <div class="cap" id="s14-cap"><i></i>Pluie · 4° à 10°</div>
-      <div class="phone" id="s14-p0" style="left:1190px; top:70px"><div class="screen"><img id="s14-p0-i0" src="assets/app/compas-jour2.jpg" alt="" style="object-position:top" /></div></div>
+      <div class="fg" id="s14-fg">
+        <div class="chapter" id="s14-ch">Itinéraire</div>
+        <div class="title" id="s14-ti"><span class="w s14-t1">36,2</span> <span class="w s14-t1">km,</span><br /><em><span class="w s14-t2">+642</span> <span class="w s14-t2">m</span></em></div>
+        <div class="cap" id="s14-cap"><i></i>Pluie · 4° à 10°</div>
+        <div class="phone" id="s14-p0" style="left:1190px; top:70px"><div class="screen"><div class="cam" id="s14-p0-cam"><img id="s14-p0-i0" src="assets/app/compas-jour2.jpg" alt="" style="object-position:top" /></div></div></div>
+      </div>
     </div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#s14-bg", { x: -36, scale: 1.04 }, { x: 0, scale: 1.0, duration: 1.875, ease: "none" }, 0);
-      tl.fromTo("#s14-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.080);
-      tl.fromTo(".s14-t1", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.067, ease: "power2.out" }, 0.200);
-      tl.fromTo(".s14-t2", { opacity: 0.25, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.2, stagger: 0.09, ease: "power1.out" }, 0.500);
-      tl.fromTo("#s14-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.55, ease: "expo.out" }, 0.830);
-      tl.fromTo("#s14-p0", { x: 280, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "expo.out" }, 0.020);
-      tl.to("#s14-root-inner", { x: -300, opacity: 0, filter: "blur(12px)", duration: 0.22, ease: "power3.in" }, 1.655);
+      tl.fromTo("#s14-bgi", { x: -30, scale: 1.06 }, { x: 0, scale: 1.0, duration: 2.175, ease: "none" }, 0);
+      tl.fromTo("#s14-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power2.out" }, 0.380);
+      tl.fromTo(".s14-t1", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.16, stagger: 0.08, ease: "power1.out" }, 0.480);
+      tl.fromTo(".s14-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.2, stagger: 0.09, ease: "power1.out" }, 0.800);
+      tl.fromTo("#s14-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.600);
+      tl.fromTo("#s14-p0", { x: 260, filter: "blur(6px)" }, { x: 0, filter: "blur(0px)", duration: 0.75, ease: "expo.out" }, 0.050);
+      tl.fromTo("#s14-p0-cam", { scale: 1.06, x: -12, y: 0, transformOrigin: "0% 0%" }, { y: -54, duration: 2.175, ease: "sine.inOut" }, 0.000);
+      tl.fromTo("#s14-ri", { x: 1920, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.340, ease: "power3.inOut" }, 0);
+      tl.to("#s14-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 1.875);
       window.__timelines["s14"] = tl;
     })();
   </script>
