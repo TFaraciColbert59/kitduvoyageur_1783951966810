@@ -27,12 +27,11 @@
       <div class="shade" id="s11-sh"></div>
       <div class="txt" id="s11-txt">
         <div class="chapter" id="s11-ch">Départ</div>
-        <div class="title" id="s11-ti" style="font-size:88px; width:780px; line-height:1.02"><span class="w s11-t1">La</span> <span class="w s11-t1">météo,</span><br /><em><span class="w s11-t2">la</span> <span class="w s11-t2">liste</span> <span class="w s11-t2">du</span> <span class="w s11-t2">départ</span></em></div>
+        <div class="title" id="s11-ti" style="font-size:88px; width:780px; line-height:1.02"><span class="w s11-t1">La</span> <span class="w s11-t1">météo,</span><br /><em><span class="w s11-t2">du</span> <span class="w s11-t2">22</span> <span class="w s11-t2">au</span> <span class="w s11-t2">26</span> <span class="w s11-t2">novembre</span></em></div>
         <div class="cap" id="s11-cap"><i></i>Averses · 22 novembre</div>
       </div>
       <div class="fg" id="s11-fg">
-        <div class="phone" id="s11-p0" style="left:920px; top:60px"><div class="screen"><div class="cam" id="s11-p0-cam"><img id="s11-p0-i0" src="assets/app/compas-meteo.jpg" alt="" /></div></div></div>
-        <div class="phone" id="s11-p1" style="left:1376px; top:92px"><div class="screen"><div class="cam" id="s11-p1-cam"><img id="s11-p1-i0" src="assets/app/hub-checklist.jpg" alt="" /></div></div></div>
+        <div class="phone" id="s11-p0" style="left:1190px; top:76px"><div class="screen"><div class="cam" id="s11-p0-cam"><img id="s11-p0-i0" src="assets/app/compas-meteo.jpg" alt="" /></div></div></div>
       </div>
     </div>
   </div>
@@ -43,7 +42,6 @@
       tl.fromTo(".s11-t2", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "#faf8f5", duration: 0.16, stagger: 0.08, ease: "power1.out" }, 0.280);
       tl.fromTo("#s11-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.600);
       tl.fromTo("#s11-p0", { y: 200 }, { y: 0, duration: 0.75, ease: "expo.out" }, 0.050);
-      tl.fromTo("#s11-p1", { y: 200 }, { y: 0, duration: 0.75, ease: "expo.out" }, 0.150);
       tl.fromTo("#s11-ri", { y: 1080, filter: "blur(14px)" }, { y: 0, filter: "blur(0px)", duration: 0.340, ease: "power3.inOut" }, 0);
       tl.to("#s11-ri", { x: -600, filter: "blur(10px)", duration: 0.3, ease: "power3.in" }, 1.875);
       window.__timelines["s11"] = tl;
