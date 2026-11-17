@@ -4,3 +4,4 @@ renders/
 node_modules/
 boards/storyboard-autonome.html
 boards/__pycache__/
+assets/map/frames-*/
