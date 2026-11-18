@@ -94,7 +94,7 @@
       // Parallaxe du premier plan (×1,4) : le mot et la ligne Garamond montent un peu plus vite.
       tl.fromTo(["#s03-gar"], { y: 30 }, { y: -50, duration: END - 0.7, ease: "none" }, 0.7);
       tl.to("#s03-word", { y: -30, duration: 1.181 - 0.858 - 7 * F, ease: "none" }, 0.858 + 7 * F);
-      tl.to(["#s03-word", "#s03-gar"], { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 1.181 - 3 * F);
+      tl.to(["#s03-word", "#s03-gar"], { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 1.181);
       // --- Pastille « Sac » 2,263 (local 1,181) : claque, anneau laiton.
       tl.fromTo("#s03-sac", { scale: 1, boxShadow: "0 0 0 0px rgba(208,160,112,0)" }, { scale: 1.22, boxShadow: "0 0 0 10px rgba(208,160,112,0.9)", duration: 2 * F, ease: "power2.out", immediateRender: false }, 1.181);
       tl.to("#s03-sac", { scale: 1.08, duration: 3 * F, ease: "sine.inOut" }, 1.181 + 2 * F);

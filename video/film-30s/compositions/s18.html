@@ -142,7 +142,7 @@
       const tP = L(23.917);
       tl.to("#s18-btn", { scale: 0.94, duration: 2 * F, ease: "power2.out" }, tP);
       tl.to("#s18-btn", { scale: 1, duration: 4 * F, ease: "back.out(3)" }, tP + 2 * F);
-      tl.fromTo("#s18-halo", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.14, duration: 0.3, ease: "power2.out" }, tP);
+      tl.fromTo("#s18-halo", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.14, duration: 0.3, ease: "power2.out", immediateRender: false }, tP);
 
       // La story se referme dans le point laiton (groupe d'Anna) ; le mot sort (3 images).
       const tC = L(24.043);

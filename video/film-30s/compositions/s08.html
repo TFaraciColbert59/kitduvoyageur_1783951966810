@@ -95,7 +95,9 @@
       const M0 = 1.82, M1 = 2.10;
       tl.to("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0, duration: M1 - M0, ease: "power3.in" }, M0);
       tl.to("#s08-cam", Object.assign({ duration: M1 - M0, ease: "power3.in" }, camAt(S1, SAC, 540, 960)), M0);
-      tl.to("#s08-sac", { backgroundColor: "#17402C", borderRadius: 0, borderColor: "rgba(23,64,44,1)", duration: M1 - M0 - 2 * F, ease: "power2.in" }, M0 + 2 * F);
+      tl.to("#s08-sac", { backgroundColor: "#17402C", borderColor: "rgba(23,64,44,1)", duration: 4 * F, ease: "none" }, M0 + 4 * F);
+      tl.to("#s08-sac", { borderRadius: 0, duration: M1 - M0 - 2 * F, ease: "power2.in" }, M0 + 2 * F);
+      tl.to(["#s08-map", "#s08-km", "#s08-met", "#s08-bud", "#s08-grp", "#s08-pap"], { opacity: 0, duration: 3 * F, ease: "none" }, M1 - 4 * F);
       tl.to("#s08-sacin", { opacity: 0, scale: 0.9, filter: "blur(6px)", duration: 5 * F, ease: "power2.in" }, M0 + 2 * F);
       tl.set({}, {}, END);
       window.__timelines["s08"] = tl;
