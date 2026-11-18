@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HeaderBackButton from '@/components/ui/HeaderBackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import { PlaceMiniMap } from '@/features/community/v2/shared/PlaceMiniMap';
+import type { SortiePerformanceEstimate } from '@/features/community/v2/create/sortie/sortiePerformanceEngine';
 import {
   buildEventIcs,
   eventIcsFilename,
@@ -107,6 +108,37 @@ export default function EventDetailClient({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [groupEstimate, setGroupEstimate] = useState<SortiePerformanceEstimate | null>(null);
+  const [liveDuration, setLiveDuration] = useState<string | null>(event.duration);
+
+  const refreshGroupPerformance = useCallback(
+    async (syncDb = false) => {
+      if ((event.distanceKm ?? 0) <= 0 && (event.elevationGainM ?? 0) <= 0) return;
+      try {
+        const res = await fetch(
+          `/api/sorties/performance-estimate?eventId=${encodeURIComponent(event.id)}${syncDb ? '&sync=1' : ''}`,
+        );
+        if (!res.ok) return;
+        const payload = (await res.json()) as {
+          ok?: boolean;
+          estimate?: SortiePerformanceEstimate;
+        };
+        if (payload?.ok && payload.estimate) {
+          setGroupEstimate(payload.estimate);
+          if (payload.estimate.formattedDuration) {
+            setLiveDuration(payload.estimate.formattedDuration);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    },
+    [event.distanceKm, event.elevationGainM, event.id],
+  );
+
+  useEffect(() => {
+    void refreshGroupPerformance(false);
+  }, [refreshGroupPerformance]);
 
   const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
   const meeting = coords(event);
@@ -173,6 +205,7 @@ export default function EventDetailClient({
           : 'registered'
         : 'none';
       setStatus(next);
+      void refreshGroupPerformance(true);
       haptic(next === 'none' ? 'selection' : 'success');
       setNotice(
         next === 'none'
@@ -326,7 +359,15 @@ export default function EventDetailClient({
         {event.elevationGainM != null ? (
           <span className="lkdv-event-chip">{formatElevationM(event.elevationGainM)}</span>
         ) : null}
-        {event.duration ? <span className="lkdv-event-chip">{event.duration}</span> : null}
+        {liveDuration ? <span className="lkdv-event-chip">{liveDuration}</span> : null}
+        {groupEstimate && groupEstimate.durationHoursP50 > 0 ? (
+          <span className="lkdv-event-chip" title="Ajusté selon la densité statistique des participants">
+            Densité stat. {groupEstimate.collectiveStatDensityPct} %
+            {groupEstimate.groupDeltaMinutes !== 0
+              ? ` (${groupEstimate.groupDeltaMinutes > 0 ? '+' : ''}${groupEstimate.groupDeltaMinutes} min groupe)`
+              : ''}
+          </span>
+        ) : null}
         {event.recurrence ? (
           <span className="lkdv-event-chip">
             {event.recurrence === 'weekly' ? 'Chaque semaine' : 'Chaque mois'}

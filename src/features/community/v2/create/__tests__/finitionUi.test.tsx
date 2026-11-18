@@ -44,25 +44,29 @@ function seedDraft(kind: CreateKindV2, values: Record<string, unknown>, step: nu
 }
 
 describe('Sortie#20 — chaque étape est un fieldset avec sa legend', () => {
-  it('étape 1 : legend d’étape et groupe « Rendez-vous »', async () => {
+  it('étape 1 : legend d’étape, groupe « Rendez-vous » et bloc carte complet multi-jours', async () => {
     renderKind('sortie');
     await waitFor(() => expect(screen.getByTestId('cv2-form-sortie')).toBeTruthy());
     const legends = Array.from(document.querySelectorAll('fieldset > legend')).map((node) => node.textContent);
     expect(legends).toContain('Étape 1 sur 4 : Activité et lieu');
     expect(legends).toContain('Rendez-vous');
+    const traceStartGroup = screen.getByRole('group', { name: 'Point de départ du tracé' });
+    expect(traceStartGroup.textContent).toContain('Tracer sur la carte');
+    expect(traceStartGroup.textContent).toContain('Importer un GPX');
+    expect(traceStartGroup.textContent).toContain('Rechercher une sortie');
+    expect(screen.getByRole('tablist', { name: 'Choisir le tracé par jour' })).toBeTruthy();
   });
 
-  it('étape 2 : « Importer un itinéraire » propose trace, carnet et sortie enregistrée', async () => {
-    seedDraft('sortie', {}, 1);
+  it('étape 2 : calcul auto durée/difficulté/distance/dénivelé personnalisable sans bloc « Importer un itinéraire »', async () => {
+    seedDraft('sortie', { distanceKm: 12.4, elevationGainM: 780 }, 1);
     renderKind('sortie');
-    await waitFor(() => expect(screen.getByTestId('cv2-sortie-import')).toBeTruthy());
-    const group = screen.getByRole('group', { name: 'Source de l’itinéraire' });
-    expect(group.textContent).toContain('Une trace');
-    expect(group.textContent).toContain('Un carnet');
-    expect(group.textContent).toContain('Une sortie enregistrée');
+    await waitFor(() => expect(screen.getByTestId('cv2-sortie-perf-card')).toBeTruthy());
+    expect(screen.queryByTestId('cv2-sortie-import')).toBeNull();
     const legends = Array.from(document.querySelectorAll('fieldset > legend')).map((node) => node.textContent);
     expect(legends).toContain('Étape 2 sur 4 : Itinéraire');
-    expect(legends).toContain('Importer un itinéraire');
+    expect(legends).not.toContain('Importer un itinéraire');
+    const durationInput = screen.getByLabelText('Durée estimée') as HTMLInputElement;
+    expect(durationInput.value).toMatch(/h/);
   });
 });
 

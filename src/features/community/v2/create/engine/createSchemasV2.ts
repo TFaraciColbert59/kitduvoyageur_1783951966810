@@ -605,6 +605,51 @@ export const storySchemaV2 = z
 export type StoryFormValuesV2 = z.infer<typeof storySchemaV2>;
 
 // ---------------------------------------------------------------------------
+// Briques Tracé & Jours (partagées entre Carnet et Sortie)
+// ---------------------------------------------------------------------------
+
+const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+
+const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
+
+export const carnetMomentSchema = z.object({
+  id: z.string(),
+  title: z.string().default(''),
+  kind: momentKindSchema,
+  time: z
+    .string()
+    .default('')
+    .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
+  text: z.string().max(500, '500 caractères maximum.').default(''),
+  place: z.string().max(120, '120 caractères maximum.').default(''),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  photo: mediaItemSchema.nullable().default(null),
+  media: z.array(mediaItemSchema).max(5).default([]),
+  encounters: z.array(z.string()).default([]),
+});
+
+export const carnetNightSchema = z.object({
+  name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
+  type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
+  altitudeM: z.number().int().min(-500).max(9000).nullable().optional(),
+  infos: z.string().max(300, '300 caractères maximum.').default(''),
+});
+
+export const carnetDaySchema = z.object({
+  id: z.string(),
+  dayNumber: z.number().int().min(1).max(60),
+  title: z.string().max(120, '120 caractères maximum.').default(''),
+  date: z
+    .string()
+    .default('')
+    .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
+  night: carnetNightSchema.nullable().default(null),
+  trace: z.array(tracePointSchema).max(2000).optional(),
+  moments: z.array(carnetMomentSchema).max(100, '100 moments par jour maximum.').default([]),
+});
+
+// ---------------------------------------------------------------------------
 // Sortie — Activité et lieu, Itinéraire, Participants, Sécurité
 // ---------------------------------------------------------------------------
 
@@ -621,15 +666,22 @@ export const sortieSchemaV2 = z
       .default('')
       .refine((value) => value.trim().length > 0, 'Le lieu est requis.')
       .refine((value) => value.trim().length <= 120, '120 caractères maximum.'),
+    destination: z.string().default(''),
     meetingPoint: z.string().max(120, '120 caractères maximum.').default(''),
     meetingLat: z.number().nullable().default(null),
     meetingLng: z.number().nullable().default(null),
+    startLat: z.number().nullable().default(null),
+    startLng: z.number().nullable().default(null),
     date: requiredDate('La date est requise.'),
+    endDate: optionalDate,
+    nbJours: z.number().int().min(1, '1 jour minimum.').max(30, '30 jours maximum.').default(1),
     startTime: requiredClock,
     endTime: z
       .string()
       .default('')
       .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
+    trace: z.array(tracePointSchema).max(2000, 'Tracé trop long.').default([]),
+    days: z.array(carnetDaySchema).max(30, '30 jours maximum.').default([]),
     level: z.enum(SORTIE_LEVELS_V2, { error: 'Choisis un niveau.' }).default('moyen'),
     distanceKm: z.number().min(0, 'La distance ne peut pas être négative.').max(500, '500 km maximum.').default(0),
     elevationGainM: z
@@ -638,6 +690,9 @@ export const sortieSchemaV2 = z
       .min(0, 'Le dénivelé ne peut pas être négatif.')
       .max(20_000, '20 000 m maximum.')
       .default(0),
+    deniveleM: z.number().int().min(0).max(30_000).default(0),
+    elevationLossM: z.number().int().min(0).max(30_000).default(0),
+    maxAltitudeM: z.number().int().min(0).max(9000).nullable().default(null),
     duration: z.string().max(60, '60 caractères maximum.').default(''),
     maxParticipants: z
       .number()
@@ -664,7 +719,13 @@ export const sortieSchemaV2 = z
         message: 'La date doit être aujourd’hui ou dans le futur.',
       });
     }
-    if (value.endTime && isClock(value.endTime) && isClock(value.startTime) && value.endTime <= value.startTime) {
+    if (
+      (value.nbJours ?? 1) <= 1 &&
+      value.endTime &&
+      isClock(value.endTime) &&
+      isClock(value.startTime) &&
+      value.endTime <= value.startTime
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['endTime'],
@@ -809,47 +870,6 @@ export type ClubFormValuesV2 = z.infer<typeof clubSchemaV2>;
 // Carnet — Infos, Tracé, Jours, Partage
 // ---------------------------------------------------------------------------
 
-const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
-
-const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
-
-export const carnetMomentSchema = z.object({
-  id: z.string(),
-  title: z.string().default(''),
-  kind: momentKindSchema,
-  time: z
-    .string()
-    .default('')
-    .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
-  text: z.string().max(500, '500 caractères maximum.').default(''),
-  place: z.string().max(120, '120 caractères maximum.').default(''),
-  lat: z.number().min(-90).max(90).nullable().optional(),
-  lng: z.number().min(-180).max(180).nullable().optional(),
-  photo: mediaItemSchema.nullable().default(null),
-  media: z.array(mediaItemSchema).max(5).default([]),
-  encounters: z.array(z.string()).default([]),
-});
-
-export const carnetNightSchema = z.object({
-  name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
-  type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
-  altitudeM: z.number().int().min(-500).max(9000).nullable().optional(),
-  infos: z.string().max(300, '300 caractères maximum.').default(''),
-});
-
-export const carnetDaySchema = z.object({
-  id: z.string(),
-  dayNumber: z.number().int().min(1).max(60),
-  title: z.string().max(120, '120 caractères maximum.').default(''),
-  date: z
-    .string()
-    .default('')
-    .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
-  night: carnetNightSchema.nullable().default(null),
-  trace: z.array(tracePointSchema).max(2000).optional(),
-  moments: z.array(carnetMomentSchema).max(100, '100 moments par jour maximum.').default([]),
-});
-
 export const carnetSchemaV2 = z
   .object({
     title: z
@@ -981,15 +1001,25 @@ const defaultsFactories = {
     activity: 'rando',
     title: '',
     location: '',
+    destination: '',
     meetingPoint: '',
     meetingLat: null,
     meetingLng: null,
+    startLat: null,
+    startLng: null,
     date: '',
+    endDate: '',
+    nbJours: 1,
     startTime: '',
     endTime: '',
+    trace: [],
+    days: [],
     level: 'moyen',
     distanceKm: 0,
     elevationGainM: 0,
+    deniveleM: 0,
+    elevationLossM: 0,
+    maxAltitudeM: null,
     duration: '',
     maxParticipants: 10,
     waitlist: false,

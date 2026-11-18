@@ -19,6 +19,7 @@ import {
   Navigation,
   Pencil,
   PenLine,
+  Plus,
   Redo2,
   Route,
   Search,
@@ -173,12 +174,24 @@ interface SessionOption {
  * intermédiaire) et historique de 50 pas, partagé avec la suppression dans
  * `shared/traceEditing`.
  */
-export function TracePaneV2({ user }: { user: { id: string } | null }) {
+export interface TracePaneV2Props {
+  user: { id: string } | null;
+  mode?: 'carnet' | 'sortie';
+  onResolveStartAddress?: (label: string) => void;
+}
+
+export function TracePaneV2({
+  user,
+  mode = 'carnet',
+  onResolveStartAddress,
+}: TracePaneV2Props) {
   const form = useFormContext<CarnetFormValuesV2>();
   const watchedTrace = form.watch('trace');
   const watchedDays = form.watch('days');
   const nbJours = form.watch('nbJours') || 1;
-  const startDate = form.watch('startDate') || '';
+  const watchedStartDate = form.watch('startDate');
+  const watchedSortieDate = form.watch('date' as never) as unknown as string | undefined;
+  const startDate = watchedStartDate || watchedSortieDate || '';
   const globalTrace = React.useMemo(() => (watchedTrace ?? []) as LngLat[], [watchedTrace]);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(-1);
   const ensuredDays = React.useMemo(
@@ -194,9 +207,18 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     }
     return globalTrace;
   }, [ensuredDays, globalTrace, selectedDayIndex]);
-  const startLat = form.watch('startLat');
-  const startLng = form.watch('startLng');
-  const destination = form.watch('destination');
+  const watchedStartLat = form.watch('startLat');
+  const watchedStartLng = form.watch('startLng');
+  const watchedMeetingLat = form.watch('meetingLat' as never) as unknown as number | null | undefined;
+  const watchedMeetingLng = form.watch('meetingLng' as never) as unknown as number | null | undefined;
+  const startLat = watchedStartLat ?? watchedMeetingLat ?? null;
+  const startLng = watchedStartLng ?? watchedMeetingLng ?? null;
+  const watchedDestination = form.watch('destination');
+  const watchedLocation = form.watch('location' as never) as unknown as string | undefined;
+  const destination = watchedDestination || watchedLocation || '';
+  const onResolveStartAddressRef = useRef(onResolveStartAddress);
+  onResolveStartAddressRef.current = onResolveStartAddress;
+  const hadTraceRef = useRef(globalTrace.length >= 2);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const startMarker = useRef<Marker | null>(null);
@@ -303,13 +325,56 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     }
   }, [fitTraceBounds, selectedDayIndex, trace]);
 
+  const syncStartCoordinates = useCallback(
+    (lng: number, lat: number, resolveAddr = false) => {
+      const rLat = Number(lat.toFixed(6));
+      const rLng = Number(lng.toFixed(6));
+      form.setValue('startLng', rLng, { shouldDirty: true });
+      form.setValue('startLat', rLat, { shouldDirty: true });
+      if (mode === 'sortie') {
+        form.setValue('meetingLng' as never, rLng as never, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        form.setValue('meetingLat' as never, rLat as never, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        if (resolveAddr && onResolveStartAddressRef.current) {
+          void fetch(
+            `/api/geocode?lat=${encodeURIComponent(rLat)}&lon=${encodeURIComponent(rLng)}`,
+          )
+            .then((res) => (res.ok ? res.json() : null))
+            .then(
+              (
+                payload: { matches?: Array<{ name?: string; context?: string }> } | null,
+              ) => {
+                const first = payload?.matches?.[0];
+                if (!first?.name) return;
+                const ctx = first.context?.trim();
+                const label = ctx && ctx !== first.name ? `${first.name}, ${ctx}` : first.name;
+                onResolveStartAddressRef.current?.(label);
+              },
+            )
+            .catch(() => {
+              /* ignore */
+            });
+        }
+      }
+    },
+    [form, mode],
+  );
+
   const writeTraceTarget = useCallback(
     (clipped: LngLat[]) => {
       if (selectedDayIndex >= 0) {
+        const currentStartDate =
+          form.getValues('startDate') ||
+          ((form.getValues('date' as never) as unknown as string) ?? '');
         const baseDays = syncCarnetDaysV2(
           form.getValues('days') ?? [],
           Math.max(selectedDayIndex + 1, form.getValues('nbJours') || 1),
-          form.getValues('startDate') || '',
+          currentStartDate,
         );
         const nextDays = baseDays.map((day, idx) =>
           idx === selectedDayIndex ? { ...day, trace: clipped } : day,
@@ -327,18 +392,16 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           shouldValidate: true,
         });
         if (effectiveGlobal[0]) {
-          form.setValue('startLng', effectiveGlobal[0][0], { shouldDirty: true });
-          form.setValue('startLat', effectiveGlobal[0][1], { shouldDirty: true });
+          syncStartCoordinates(effectiveGlobal[0][0], effectiveGlobal[0][1], true);
         }
       } else {
         form.setValue('trace', clipped, { shouldDirty: true, shouldValidate: true });
         if (clipped[0]) {
-          form.setValue('startLng', clipped[0][0], { shouldDirty: true });
-          form.setValue('startLat', clipped[0][1], { shouldDirty: true });
+          syncStartCoordinates(clipped[0][0], clipped[0][1], true);
         }
       }
     },
-    [form, selectedDayIndex],
+    [form, selectedDayIndex, syncStartCoordinates],
   );
 
   const setTrace = useCallback(
@@ -818,8 +881,46 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         });
         endMarker.current = end;
       }
+    } else if (startLat != null && startLng != null) {
+      const rdvMarker = new Marker({ draggable: true, color: activeColor })
+        .setLngLat([startLng, startLat])
+        .addTo(map);
+      rdvMarker.on('dragend', () => {
+        const pos = rdvMarker.getLngLat();
+        haptic('selection');
+        syncStartCoordinates(pos.lng, pos.lat, true);
+      });
+      startMarker.current = rdvMarker;
     }
-  }, [ensuredDays, fetchSnappedRoute, haptic, ready, selectedDayIndex, selectedSegment, setTrace, trace]);
+  }, [
+    ensuredDays,
+    fetchSnappedRoute,
+    haptic,
+    ready,
+    selectedDayIndex,
+    selectedSegment,
+    setTrace,
+    startLat,
+    startLng,
+    syncStartCoordinates,
+    trace,
+  ]);
+
+  // En mode Sortie, quand aucun tracé n'est en cours et que le crayon n'est pas actif,
+  // un simple tap sur la carte place ou déplace le point de rendez-vous / départ.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || mode !== 'sortie') return;
+    const onMapClick = (event: { lngLat: { lng: number; lat: number } }) => {
+      if (drawingRef.current || traceRef.current.length >= 2) return;
+      haptic('selection');
+      syncStartCoordinates(event.lngLat.lng, event.lngLat.lat, true);
+    };
+    map.on('click', onMapClick);
+    return () => {
+      map.off('click', onMapClick);
+    };
+  }, [haptic, mode, ready, syncStartCoordinates]);
 
   // Cadrage initial unique (sans jamais déplacer la caméra pendant le tracé ou changement d'onglet).
   useEffect(() => {
@@ -1340,16 +1441,30 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
   const fullCarnetTrace = globalTrace.length >= 2 ? globalTrace : trace;
   const totalKm = lengthKm(fullCarnetTrace);
   useEffect(() => {
-    form.setValue('distanceKm', Math.min(10_000, Math.round(totalKm * 10) / 10), {
-      shouldDirty: totalKm > 0,
-    });
-  }, [form, totalKm]);
+    const maxKm = mode === 'sortie' ? 500 : 10_000;
+    if (fullCarnetTrace.length >= 2) {
+      hadTraceRef.current = true;
+      form.setValue('distanceKm', Math.min(maxKm, Math.round(totalKm * 10) / 10), {
+        shouldDirty: totalKm > 0,
+      });
+    } else if (hadTraceRef.current || mode === 'carnet') {
+      hadTraceRef.current = false;
+      form.setValue('distanceKm', 0, { shouldDirty: false });
+    }
+  }, [form, fullCarnetTrace.length, mode, totalKm]);
 
   useEffect(() => {
     if (fullCarnetTrace.length < 2) {
       setElevations([]);
       setGainState('idle');
-      form.setValue('deniveleM', 0);
+      if (hadTraceRef.current || mode === 'carnet') {
+        form.setValue('deniveleM', 0);
+        if (mode === 'sortie') {
+          form.setValue('elevationGainM' as never, 0 as never);
+          form.setValue('elevationLossM' as never, 0 as never);
+          form.setValue('maxAltitudeM' as never, null as never);
+        }
+      }
       return;
     }
     const profileSource = trace.length >= 2 ? trace : fullCarnetTrace;
@@ -1365,9 +1480,14 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
         if (!response.ok) throw new Error('elevation');
         const payload = (await response.json()) as { elevations?: Array<number | null> };
         const values = Array.isArray(payload.elevations) ? payload.elevations : [];
+        const numericVals = values.filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
         setElevations(values.map((value) => (typeof value === 'number' ? value : 0)));
 
-        let totalGain = elevationGain(values).gain;
+        const primaryStats = elevationGain(values);
+        let totalGain = primaryStats.gain;
+        let totalLoss = primaryStats.loss;
+        let maxAlt = numericVals.length > 0 ? Math.round(Math.max(...numericVals)) : null;
+
         if (profileSource !== fullCarnetTrace) {
           const totalCount = Math.max(2, Math.min(100, Math.round(totalKm * 8) + 2));
           const totalSamples = sampleAlong(fullCarnetTrace, totalCount);
@@ -1376,11 +1496,29 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
           if (totalRes.ok) {
             const totalPayload = (await totalRes.json()) as { elevations?: Array<number | null> };
             if (Array.isArray(totalPayload.elevations)) {
-              totalGain = elevationGain(totalPayload.elevations).gain;
+              const totStats = elevationGain(totalPayload.elevations);
+              totalGain = totStats.gain;
+              totalLoss = totStats.loss;
+              const totNums = totalPayload.elevations.filter(
+                (v): v is number => typeof v === 'number' && Number.isFinite(v),
+              );
+              if (totNums.length > 0) maxAlt = Math.round(Math.max(...totNums));
             }
           }
         }
         form.setValue('deniveleM', Math.min(30_000, totalGain), { shouldDirty: true });
+        if (mode === 'sortie') {
+          form.setValue('elevationGainM' as never, Math.min(20_000, totalGain) as never, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+          form.setValue('elevationLossM' as never, Math.min(30_000, totalLoss) as never, {
+            shouldDirty: true,
+          });
+          form.setValue('maxAltitudeM' as never, maxAlt as never, {
+            shouldDirty: true,
+          });
+        }
         setGainState('idle');
       } catch {
         if (!controller.signal.aborted) setGainState('error');
@@ -1422,8 +1560,7 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
       const point: LngLat = [position.longitude, position.latitude];
       if (trace.length === 0) setTrace([point]);
       mapRef.current?.flyTo({ center: point, zoom: 12, duration: 700 });
-      form.setValue('startLat', position.latitude, { shouldDirty: true });
-      form.setValue('startLng', position.longitude, { shouldDirty: true });
+      syncStartCoordinates(position.longitude, position.latitude, true);
       haptic('success');
     } catch {
       setGainState('error');
@@ -1630,6 +1767,24 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
             </button>
           );
         })}
+        {ensuredDays.length < (mode === 'sortie' ? 30 : 60) ? (
+          <button
+            type="button"
+            className="lkdv-cv2c-day-tab lkdv-cv2c-day-tab--add"
+            aria-label="Ajouter un jour au tracé"
+            title="Ajouter un jour"
+            onClick={() => {
+              const nextCount = ensuredDays.length + 1;
+              const nextDays = syncCarnetDaysV2(ensuredDays, nextCount, startDate);
+              form.setValue('nbJours', nextCount, { shouldDirty: true, shouldValidate: true });
+              form.setValue('days', nextDays, { shouldDirty: true, shouldValidate: true });
+              setSelectedDayIndex(nextCount - 1);
+              haptic('selection');
+            }}
+          >
+            <Plus size={12} aria-hidden="true" /> J{ensuredDays.length + 1}
+          </button>
+        ) : null}
       </div>
 
       <div
@@ -1920,8 +2075,7 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
                       const points = parseGeoJsonTrace(session.positions_geojson);
                       if (points.length >= 2) {
                         setTrace(points);
-                        form.setValue('startLat', points[0][1], { shouldDirty: true });
-                        form.setValue('startLng', points[0][0], { shouldDirty: true });
+                        syncStartCoordinates(points[0][0], points[0][1], true);
                         if (mapRef.current) {
                           mapRef.current.easeTo({ center: points[0], zoom: 11, duration: 420 });
                         }

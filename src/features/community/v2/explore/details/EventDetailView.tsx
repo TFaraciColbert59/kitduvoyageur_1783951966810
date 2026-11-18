@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { levelLabel } from '@/features/community/v2/shared/format';
 import AppImage from '@/components/ui/AppImage';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
+import type { SortiePerformanceEstimate } from '@/features/community/v2/create/sortie/sortiePerformanceEngine';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
 import {
   buildEventIcs,
@@ -65,6 +66,29 @@ export function EventDetailView({
   const point = detail?.meetingPointPoint ?? detail?.locationPoint ?? null;
   const mapLabel = event.meetingPoint ?? event.location;
   const daysToEvent = event.eventDate ? daysBetweenIso(todayIso(), event.eventDate) : null;
+  const [groupEstimate, setGroupEstimate] = useState<SortiePerformanceEstimate | null>(null);
+
+  useEffect(() => {
+    if ((event.distanceKm ?? 0) <= 0 && (event.elevationGainM ?? 0) <= 0) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.id)) return;
+    const controller = new AbortController();
+    void fetch(
+      `/api/sorties/performance-estimate?eventId=${encodeURIComponent(event.id)}&sync=1`,
+      { signal: controller.signal },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: { ok?: boolean; estimate?: SortiePerformanceEstimate } | null) => {
+        if (payload?.ok && payload.estimate) {
+          setGroupEstimate(payload.estimate);
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => controller.abort();
+  }, [event.currentParticipants, event.distanceKm, event.elevationGainM, event.id, status]);
+
+  const effectiveDuration = groupEstimate?.formattedDuration || event.duration;
 
   const downloadIcs = useCallback(() => {
     if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') return;
@@ -115,7 +139,7 @@ export function EventDetailView({
             {levelLabel(event.level) ? <i>{levelLabel(event.level)}</i> : null}
             {event.distanceKm != null ? <i>{formatKm(event.distanceKm)}</i> : null}
             {event.elevationGainM != null ? <i>+{event.elevationGainM} m</i> : null}
-            {event.duration ? <i>{event.duration}</i> : null}
+            {effectiveDuration ? <i>{effectiveDuration}</i> : null}
           </span>
         </span>
       </div>
@@ -330,6 +354,15 @@ export function EventDetailView({
                   : ''}
               </span>
             </div>
+            {groupEstimate && groupEstimate.durationHoursP50 > 0 ? (
+              <small className="lkdv-cv2-meta" style={{ display: 'block', marginTop: '6px' }}>
+                Temps groupe ajusté : <b>{groupEstimate.formattedDuration}</b> (
+                {groupEstimate.formattedRange}) · Densité stat. {groupEstimate.collectiveStatDensityPct} %
+                {groupEstimate.groupDeltaMinutes !== 0
+                  ? ` (${groupEstimate.groupDeltaMinutes > 0 ? '+' : ''}${groupEstimate.groupDeltaMinutes} min selon les inscrits)`
+                  : ''}
+              </small>
+            ) : null}
           </div>
 
           {detail.description ? <p className="lkdv-cv2x-detail-text">{detail.description}</p> : null}

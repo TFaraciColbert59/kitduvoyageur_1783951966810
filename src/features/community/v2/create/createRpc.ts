@@ -345,12 +345,26 @@ export async function publishStoryV2(
 
 export function buildEventPayload(values: SortieFormValuesV2): Record<string, unknown> {
   const startsAt = toStartsAt(values.date, values.startTime);
-  const endsAt = values.endTime ? toStartsAt(values.date, values.endTime) : null;
+  const nbJours = Math.max(1, values.nbJours ?? 1);
+  let targetEndDate = values.date;
+  if (nbJours > 1 && values.date) {
+    const startMs = Date.parse(`${values.date}T12:00:00Z`);
+    if (Number.isFinite(startMs)) {
+      const endObj = new Date(startMs + (nbJours - 1) * 86_400_000);
+      targetEndDate = endObj.toISOString().slice(0, 10);
+    }
+  }
+  const endsAt = values.endTime
+    ? toStartsAt(targetEndDate, values.endTime)
+    : nbJours > 1
+      ? toStartsAt(targetEndDate, values.startTime || '18:00')
+      : null;
   const payload: Record<string, unknown> = {
     title: values.title.trim(),
     starts_at: startsAt,
     ends_at: endsAt,
     event_date: values.date || null,
+    duration: values.duration.trim() || null,
     activity: SORTIE_ACTIVITY_LABELS[values.activity],
     type: values.activity,
     emoji: SORTIE_ACTIVITY_EMOJI[values.activity],
@@ -386,7 +400,19 @@ export function buildEventPayload(values: SortieFormValuesV2): Record<string, un
 }
 
 export async function createEventWithPostV2(values: SortieFormValuesV2): Promise<CreateEventResultV2> {
-  return callRpc<CreateEventResultV2>('create_event_with_post', buildEventPayload(values));
+  const result = await callRpc<CreateEventResultV2>('create_event_with_post', buildEventPayload(values));
+  if (result?.id && values.duration?.trim()) {
+    try {
+      const supabase = createClient();
+      await supabase
+        .from('events')
+        .update({ duration: values.duration.trim() })
+        .eq('id', result.id);
+    } catch {
+      /* repli silencieux si RLS bloque */
+    }
+  }
+  return result;
 }
 
 export function buildClubPayload(values: ClubFormValuesV2, slug: string): Record<string, unknown> {

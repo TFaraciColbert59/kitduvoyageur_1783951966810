@@ -1,31 +1,40 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   Bike,
-  CloudSun,
+  Clock,
   Footprints,
+  Gauge,
   Loader2,
-  MapPin,
   Mountain,
+  RotateCcw,
   Snowflake,
-  Upload,
+  Sparkles,
   Users,
 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import { EventTicket } from '../../shared/EventTicket';
+import { lengthKm } from '@/features/community/create/carnet/traceEngine';
+import { TracePaneV2 } from '../carnet/TracePaneV2';
 import {
-  elevationGain,
-  lengthKm,
-  sampleAlong,
-} from '@/features/community/create/carnet/traceEngine';
-import { parseGpxTrace } from '../carnet/gpx';
+  carnetEndDateForDaysV2,
+  syncCarnetDaysV2,
+} from '../carnet/daySync';
 import {
   TrailSearchFieldV2,
   type TrailDetail,
   type TrailSummary,
 } from '../carnet/TrailSearchFieldV2';
+import {
+  estimateSortiePerformance,
+  formatPreciseDurationFr,
+  type DayRouteMetrics,
+  type ParticipantPerformanceStats,
+  type SortiePerformanceEstimate,
+} from '../sortie/sortiePerformanceEngine';
 import type { EventCardVM } from '../../shared/types';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
@@ -45,14 +54,6 @@ import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
-import { MeetingMapV2 } from '../sortie/MeetingMapV2';
-import {
-  formatFiguresFr,
-  importedFiguresV2,
-  loadItinerarySourcesV2,
-  type ItinerarySourceKindV2,
-  type ItinerarySourceV2,
-} from '../sortie/itinerarySourcesV2';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { SheetPreview } from '../../shared/SheetPreview';
@@ -145,18 +146,9 @@ function mapHikeDifficultyToSortieLevel(raw: string | null | undefined): SortieL
   return null;
 }
 
-function formatHikeDurationFr(hours: number | null | undefined, km: number, gainM: number): string {
-  const effectiveHours =
-    hours != null && Number.isFinite(hours) && hours > 0
-      ? hours
-      : km > 0 || gainM > 0
-        ? km / 4 + gainM / 350
-        : 0;
-  if (effectiveHours <= 0) return '';
-  const totalMin = Math.max(30, Math.round((effectiveHours * 60) / 15) * 15);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  return m > 0 ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+function clampRatio(ratio: number, dayCount: number): number {
+  if (!Number.isFinite(ratio) || ratio <= 0) return 1 / Math.max(1, dayCount);
+  return Math.min(1, Math.max(0.05, ratio));
 }
 
 function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM {
@@ -203,12 +195,93 @@ function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM
   };
 }
 
-function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | null }) {
+interface SortieAutoCalcProps {
+  user: User | null;
+  estimate: SortiePerformanceEstimate;
+  customDuration: boolean;
+  customLevel: boolean;
+  onSetCustomDuration: (custom: boolean) => void;
+  onSetCustomLevel: (custom: boolean) => void;
+  onReapplyAuto: () => void;
+}
+
+function ActivityPlaceStep({
+  prefill,
+  user,
+  estimate,
+  onSetCustomDuration,
+  onSetCustomLevel,
+}: {
+  prefill?: Record<string, unknown> | null;
+  user: User | null;
+  estimate: SortiePerformanceEstimate;
+  onSetCustomDuration: (custom: boolean) => void;
+  onSetCustomLevel: (custom: boolean) => void;
+}) {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
+  const { haptic } = useHapticFeedback();
+  const [importedTrailName, setImportedTrailName] = useState<string | null>(null);
   const clubName = typeof prefill?.clubName === 'string' ? prefill.clubName : '';
   const returnToPostEvent = Boolean(prefill?.returnToPostEvent);
   const prefilledDate = typeof prefill?.date === 'string' ? prefill.date : '';
+
+  const pickTrail = useCallback(
+    (trail: TrailSummary, points: [number, number][], detail: TrailDetail) => {
+      const rawKm =
+        trail.distance_km ??
+        detail.distance_km ??
+        (points.length >= 2 ? Math.round(lengthKm(points) * 10) / 10 : 0);
+      const km = Math.min(500, Math.max(0, Math.round(rawKm * 10) / 10));
+      const gain = Math.min(
+        20_000,
+        Math.max(0, Math.round(trail.elevation_gain ?? detail.elevation_gain ?? 0)),
+      );
+      const mappedLevel = mapHikeDifficultyToSortieLevel(trail.difficulty ?? detail.difficulty);
+      const trailTitle = (trail.name ?? detail.name ?? '').trim();
+
+      if (points.length >= 2) {
+        form.setValue('trace', points, { shouldDirty: true, shouldValidate: true });
+      }
+      if (km > 0) form.setValue('distanceKm', km, { shouldDirty: true, shouldValidate: true });
+      if (gain > 0) {
+        form.setValue('elevationGainM', gain, { shouldDirty: true, shouldValidate: true });
+        form.setValue('deniveleM', gain, { shouldDirty: true });
+      }
+      onSetCustomDuration(false);
+      if (mappedLevel) {
+        form.setValue('level', mappedLevel, { shouldDirty: true, shouldValidate: true });
+        onSetCustomLevel(false);
+      } else {
+        onSetCustomLevel(false);
+      }
+      if (trailTitle && !form.getValues('title')?.trim()) {
+        form.setValue('title', trailTitle.slice(0, 120), { shouldDirty: true, shouldValidate: true });
+      }
+      if (trailTitle && !form.getValues('location')?.trim()) {
+        form.setValue('location', trailTitle.slice(0, 120), { shouldDirty: true });
+        form.setValue('destination', trailTitle.slice(0, 120), { shouldDirty: true });
+      }
+      const startLat = points[0]?.[1] ?? detail.lat ?? trail.lat;
+      const startLng = points[0]?.[0] ?? detail.lng ?? trail.lng;
+      if (typeof startLat === 'number' && typeof startLng === 'number') {
+        form.setValue('meetingLat', startLat, { shouldDirty: true });
+        form.setValue('meetingLng', startLng, { shouldDirty: true });
+        form.setValue('startLat', startLat, { shouldDirty: true });
+        form.setValue('startLng', startLng, { shouldDirty: true });
+      }
+      const extraDesc = (detail.ai_description ?? trail.ai_description ?? '').trim();
+      if (extraDesc && !form.getValues('description')?.trim()) {
+        form.setValue('description', extraDesc.slice(0, 1500), { shouldDirty: true });
+      }
+      setImportedTrailName(trailTitle || 'Randonnée');
+      haptic('success');
+    },
+    [form, haptic, onSetCustomDuration, onSetCustomLevel],
+  );
+
+  const currentLevelLabel = LEVELS.find((l) => l.value === values.level)?.label ?? 'Moyen';
+
   return (
     <>
       {returnToPostEvent ? (
@@ -261,163 +334,124 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
       ) : null}
       <fieldset className="lkdv-cv2c-fset" data-testid="cv2-sortie-rdv">
         <legend className="lkdv-cv2-field-label">Rendez-vous</legend>
-        <MeetingMapV2
-          lat={values.meetingLat}
-          lng={values.meetingLng}
-          onChange={(lat, lng) => {
-            form.setValue('meetingLat', lat, { shouldDirty: true, shouldValidate: true });
-            form.setValue('meetingLng', lng, { shouldDirty: true, shouldValidate: true });
-          }}
-          onResolveAddress={(labelText) => {
-            form.setValue('meetingPoint', labelText, { shouldDirty: true, shouldValidate: true });
-            if (!form.getValues('location')?.trim()) {
-              form.setValue('location', labelText, { shouldDirty: true, shouldValidate: true });
-            }
-          }}
-        />
-        {/* FID-064 — fieldset « Rendez-vous » de la maquette (L3120-3124) :
-          date, heure de départ, heure de fin et récurrence sont sur l'étape 1.
-          FID-063 — la photo de couverture (ajout V2 sans équivalent maquette)
-          est retirée du flux. */}
-        <DateFieldV2
-          name="date"
-          label="Date"
-          required
-          min={new Date().toISOString().slice(0, 10)}
-        />
+        <div className="lkdv-cv2c-row-2">
+          <DateFieldV2
+            name="date"
+            label="Date"
+            required
+            min={new Date().toISOString().slice(0, 10)}
+          />
+          <NumberStepperV2
+            name="nbJours"
+            label="Nombre de jours"
+            unit="j"
+            min={1}
+            max={30}
+            step={1}
+          />
+        </div>
         <div className="lkdv-cv2c-row-2">
           <TimeFieldV2 name="startTime" label="Départ" required />
           <TimeFieldV2 name="endTime" label="Fin (optionnel)" />
         </div>
+
+        <TrailSearchFieldV2
+          label="Rechercher une randonnée (pré-remplissage auto)"
+          placeholder="Lac Blanc, Chamonix, GR20…"
+          selectedHint={
+            importedTrailName
+              ? `« ${importedTrailName} » appliqué : tracé, difficulté, distance, dénivelé et durée mis à jour.`
+              : undefined
+          }
+          onPickTrail={pickTrail}
+        />
+
+        <TracePaneV2
+          user={user}
+          mode="sortie"
+          onResolveStartAddress={(labelText) => {
+            form.setValue('meetingPoint', labelText, { shouldDirty: true, shouldValidate: true });
+            if (!form.getValues('location')?.trim()) {
+              form.setValue('location', labelText, { shouldDirty: true, shouldValidate: true });
+              form.setValue('destination', labelText, { shouldDirty: true });
+            }
+          }}
+        />
+
+        {values.distanceKm > 0 || values.elevationGainM > 0 ? (
+          <div
+            className="lkdv-cv2-card lkdv-cv2c-sortie-autobar"
+            data-testid="cv2-sortie-step1-autobar"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              padding: '10px 12px',
+              marginTop: '6px',
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600 }}>
+              <Sparkles size={14} aria-hidden="true" />
+              Estimé auto : {values.duration || estimate.formattedDuration || '—'} · {currentLevelLabel}
+            </span>
+            <small style={{ fontSize: '11.5px', opacity: 0.78 }}>
+              {values.distanceKm.toFixed(1).replace('.', ',')} km · +{values.elevationGainM} m
+              {estimate.ibpIndex > 0 ? ` · IBP ${estimate.ibpIndex}` : ''}
+            </small>
+          </div>
+        ) : null}
       </fieldset>
     </>
   );
 }
 
-function ItineraireStep() {
+function ItineraireStep({
+  estimate,
+  customDuration,
+  customLevel,
+  onSetCustomDuration,
+  onSetCustomLevel,
+  onReapplyAuto,
+}: SortieAutoCalcProps) {
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
   const { haptic } = useHapticFeedback();
-  const [traceState, setTraceState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const traceInputRef = useRef<HTMLInputElement | null>(null);
-  // Sortie#5 — import depuis un carnet ou une sortie enregistrée.
-  const { user } = useCreateSheet();
-  const [sourceKind, setSourceKind] = useState<ItinerarySourceKindV2 | null>(null);
-  const [sources, setSources] = useState<ItinerarySourceV2[] | null>(null);
-  const [sourcesError, setSourcesError] = useState<string | null>(null);
-  const [imported, setImported] = useState<string | null>(null);
-
-  const openSources = async (kind: ItinerarySourceKindV2) => {
-    haptic('selection');
-    if (sourceKind === kind) {
-      setSourceKind(null);
-      return;
-    }
-    setSourceKind(kind);
-    setSources(null);
-    setSourcesError(null);
-    const result = await loadItinerarySourcesV2(kind, user?.id ?? '');
-    setSources(result.data);
-    setSourcesError(result.error);
-  };
-
-  const pickSource = (source: ItinerarySourceV2) => {
-    const figures = importedFiguresV2(source);
-    form.setValue('distanceKm', figures.distanceKm, { shouldDirty: true, shouldValidate: true });
-    form.setValue('elevationGainM', figures.elevationGainM, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-    setImported(source.name);
-    setSourceKind(null);
-    setTraceState('idle');
-    haptic('success');
-  };
-
-  const pickTrail = (trail: TrailSummary, points: [number, number][], detail: TrailDetail) => {
-    const rawKm =
-      trail.distance_km ??
-      detail.distance_km ??
-      (points.length >= 2 ? Math.round(lengthKm(points) * 10) / 10 : 0);
-    const km = Math.min(500, Math.max(0, Math.round(rawKm * 10) / 10));
-    const gain = Math.min(
-      20_000,
-      Math.max(0, Math.round(trail.elevation_gain ?? detail.elevation_gain ?? 0)),
-    );
-    const mappedLevel = mapHikeDifficultyToSortieLevel(trail.difficulty ?? detail.difficulty);
-    const durationStr = formatHikeDurationFr(trail.duration_hours ?? detail.duration_hours, km, gain);
-    const trailTitle = (trail.name ?? detail.name ?? '').trim();
-
-    if (km > 0) form.setValue('distanceKm', km, { shouldDirty: true, shouldValidate: true });
-    if (gain > 0) form.setValue('elevationGainM', gain, { shouldDirty: true, shouldValidate: true });
-    if (mappedLevel) form.setValue('level', mappedLevel, { shouldDirty: true, shouldValidate: true });
-    if (durationStr) form.setValue('duration', durationStr, { shouldDirty: true, shouldValidate: true });
-    if (trailTitle && !form.getValues('title')?.trim()) {
-      form.setValue('title', trailTitle.slice(0, 120), { shouldDirty: true, shouldValidate: true });
-    }
-    if (trailTitle && !form.getValues('location')?.trim()) {
-      form.setValue('location', trailTitle.slice(0, 120), { shouldDirty: true });
-    }
-    const startLat = points[0]?.[1] ?? detail.lat ?? trail.lat;
-    const startLng = points[0]?.[0] ?? detail.lng ?? trail.lng;
-    if (typeof startLat === 'number' && typeof startLng === 'number') {
-      form.setValue('meetingLat', startLat, { shouldDirty: true });
-      form.setValue('meetingLng', startLng, { shouldDirty: true });
-    }
-    const extraDesc = (detail.ai_description ?? trail.ai_description ?? '').trim();
-    if (extraDesc && !form.getValues('description')?.trim()) {
-      form.setValue('description', extraDesc.slice(0, 1500), { shouldDirty: true });
-    }
-    setImported(trailTitle || 'Randonnée');
-    setTraceState('idle');
-    haptic('success');
-  };
-
-  const importTrace = async (file: File | undefined) => {
-    if (!file) return;
-    setTraceState('loading');
-    try {
-      const points = parseGpxTrace(await file.text());
-      if (points.length < 2) throw new Error('trace');
-      const km = Math.min(500, Math.round(lengthKm(points) * 10) / 10);
-      form.setValue('distanceKm', km, { shouldDirty: true, shouldValidate: true });
-      const samples = sampleAlong(points, Math.max(2, Math.min(100, Math.round(km * 8) + 2)));
-      const query = samples.map(([lng, lat]) => `${lng.toFixed(5)},${lat.toFixed(5)}`).join(';');
-      const response = await fetch(`/api/elevation?points=${query}`);
-      if (response.ok) {
-        const payload = (await response.json()) as { elevations?: Array<number | null> };
-        const gain = elevationGain(
-          Array.isArray(payload.elevations) ? payload.elevations : []
-        ).gain;
-        form.setValue('elevationGainM', Math.min(20_000, gain), {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-      }
-      setTraceState('idle');
-      setImported(file.name);
-      haptic('success');
-    } catch {
-      setTraceState('error');
-    }
-  };
+  const recLevelLabel =
+    LEVELS.find((l) => l.value === estimate.recommendedLevel)?.label ?? 'Moyen';
 
   return (
     <>
-      <TrailSearchFieldV2
-        label="Rechercher une randonnée (pré-remplissage auto)"
-        placeholder="Lac Blanc, Chamonix, GR20…"
-        selectedHint={
-          imported
-            ? `« ${imported} » appliqué : difficulté, distance, dénivelé et durée mis à jour.`
-            : undefined
-        }
-        onPickTrail={pickTrail}
-      />
       <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label" id="cv2c-level-label">
-          Niveau de difficulté
-        </span>
+        <div
+          className="lkdv-cv2c-field-head"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
+        >
+          <span className="lkdv-cv2-field-label" id="cv2c-level-label">
+            Niveau de difficulté
+          </span>
+          {customLevel && (values.distanceKm > 0 || values.elevationGainM > 0) ? (
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={() => {
+                onSetCustomLevel(false);
+                form.setValue('level', estimate.recommendedLevel, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                haptic('selection');
+              }}
+            >
+              <RotateCcw size={11} aria-hidden="true" /> Auto ({recLevelLabel})
+            </button>
+          ) : values.distanceKm > 0 || values.elevationGainM > 0 ? (
+            <span className="lkdv-cv2-field-hint" style={{ margin: 0 }}>
+              Calculé auto · personnalisable
+            </span>
+          ) : null}
+        </div>
         <div className="lkdv-cv2c-difficulty" role="radiogroup" aria-labelledby="cv2c-level-label">
           {LEVELS.map((level, index) => (
             <button
@@ -427,6 +461,7 @@ function ItineraireStep() {
               aria-checked={values.level === level.value}
               aria-label={`${index + 1}. ${level.label}`}
               onClick={() => {
+                onSetCustomLevel(level.value !== estimate.recommendedLevel);
                 form.setValue('level', level.value, { shouldDirty: true, shouldValidate: true });
                 haptic('selection');
               }}
@@ -437,9 +472,9 @@ function ItineraireStep() {
           ))}
         </div>
       </div>
+
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
-        {/* Maquette L3129 : dénivelé en **stepper** (pas de champ libre). */}
         <NumberStepperV2
           name="elevationGainM"
           label="Dénivelé positif"
@@ -449,106 +484,129 @@ function ItineraireStep() {
           step={50}
         />
       </div>
-      <fieldset className="lkdv-cv2c-fset" data-testid="cv2-sortie-import">
-        <legend className="lkdv-cv2-field-label">Importer un itinéraire</legend>
+
+      <div className="lkdv-cv2-field">
+        <div
+          className="lkdv-cv2c-field-head"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}
+        >
+          <span className="lkdv-cv2-field-label">Durée estimée</span>
+          {(customDuration || customLevel) && estimate.formattedDuration ? (
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              data-testid="cv2-sortie-reapply-auto"
+              onClick={() => {
+                onReapplyAuto();
+                haptic('selection');
+              }}
+            >
+              <RotateCcw size={11} aria-hidden="true" /> Recalculer auto ({estimate.formattedDuration})
+            </button>
+          ) : estimate.formattedDuration ? (
+            <span className="lkdv-cv2-field-hint" style={{ margin: 0 }}>
+              Fourchette : {estimate.formattedRange}
+            </span>
+          ) : null}
+        </div>
         <input
-          ref={traceInputRef}
-          type="file"
-          accept=".gpx,application/gpx+xml"
-          className="lkdv-cv2c-sr-only"
-          aria-label="Importer une trace GPX"
-          onChange={(event) => {
-            void importTrace(event.target.files?.[0]);
-            event.target.value = '';
+          type="text"
+          className="lkdv-cv2-input"
+          aria-label="Durée estimée"
+          placeholder="4 h 30"
+          maxLength={60}
+          value={values.duration ?? ''}
+          onChange={(e) => {
+            const nextVal = e.target.value;
+            onSetCustomDuration(
+              nextVal.trim().length > 0 && nextVal.trim() !== estimate.formattedDuration,
+            );
+            form.setValue('duration', nextVal, { shouldDirty: true, shouldValidate: true });
           }}
         />
-        <div className="lkdv-cv2-chips" role="group" aria-label="Source de l’itinéraire">
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => traceInputRef.current?.click()}
-            disabled={traceState === 'loading'}
+      </div>
+
+      <div
+        className="lkdv-cv2-card lkdv-cv2c-perf-card"
+        data-testid="cv2-sortie-perf-card"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          padding: '13px 14px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <span
+            className="lkdv-cv2-eyebrow"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', margin: 0 }}
           >
-            {traceState === 'loading' ? (
-              <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" />
-            ) : (
-              <Upload size={13} aria-hidden="true" />
-            )}
-            Une trace
-          </button>
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            aria-expanded={sourceKind === 'carnet'}
-            aria-controls="cv2c-import-list"
-            onClick={() => void openSources('carnet')}
+            <Activity size={13} aria-hidden="true" />
+            Modèle de performance & densité statistique
+          </span>
+          <span
+            className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+            style={{ pointerEvents: 'none', fontWeight: 700 }}
           >
-            Un carnet
-          </button>
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            aria-expanded={sourceKind === 'sortie'}
-            aria-controls="cv2c-import-list"
-            onClick={() => void openSources('sortie')}
-          >
-            Une sortie enregistrée
-          </button>
+            Densité {estimate.collectiveStatDensityPct} %
+          </span>
         </div>
-        {sourceKind ? (
-          <div
-            id="cv2c-import-list"
-            className="lkdv-cv2c-kit-sources"
-            data-testid="cv2-import-list"
-          >
-            {sources == null ? (
-              <p className="lkdv-cv2-field-hint" role="status">
-                <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" /> Chargement…
-              </p>
-            ) : null}
-            {sourcesError ? (
-              <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-                {sourcesError}
-              </p>
-            ) : null}
-            {sources && !sourcesError && sources.length === 0 ? (
-              <p className="lkdv-cv2-field-hint">
-                {sourceKind === 'carnet'
-                  ? 'Aucun de tes carnets n’a de distance renseignée.'
-                  : 'Aucune sortie enregistrée avec une distance.'}
-              </p>
-            ) : null}
-            {sources?.map((source) => (
-              <button
-                key={source.id}
-                type="button"
-                className="lkdv-cv2c-kit-source"
-                onClick={() => pickSource(source)}
-              >
-                <b>{source.name}</b>
-                <small>
-                  {formatFiguresFr(source)} · {source.meta}
-                </small>
-              </button>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: '8px',
+          }}
+        >
+          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={11} aria-hidden="true" /> Marche + pauses
+            </span>
+            <b>
+              {estimate.movingHours > 0
+                ? `${formatPreciseDurationFr(estimate.movingHours, 1)} + ${estimate.pauseMinutes} min`
+                : '—'}
+            </b>
+          </div>
+          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Gauge size={11} aria-hidden="true" /> Allure retenue
+            </span>
+            <b>
+              {estimate.effectiveFlatSpeedKmh.toFixed(1).replace('.', ',')} km/h · +
+              {estimate.effectiveAscentSpeedMPerH} m/h
+            </b>
+          </div>
+          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <Mountain size={11} aria-hidden="true" /> Effort IBP / KE
+            </span>
+            <b>
+              {estimate.ibpIndex > 0
+                ? `IBP ${estimate.ibpIndex} · ${String(estimate.effortScoreKe).replace('.', ',')} KE/j`
+                : '—'}
+            </b>
+          </div>
+        </div>
+
+        {estimate.factors.perDayFormatted.length > 1 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {estimate.factors.perDayFormatted.map((label, idx) => (
+              <span key={`day-est-${idx}`} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
+                J{idx + 1} : {label || '—'}
+              </span>
             ))}
           </div>
         ) : null}
-        {imported && traceState !== 'error' ? (
-          <p
-            className="lkdv-cv2-field-hint lkdv-cv2c-notice"
-            role="status"
-            data-testid="cv2-import-done"
-          >
-            Importé : {imported}. Distance et D+ calculés.
-          </p>
-        ) : null}
-        {traceState === 'error' ? (
-          <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-            Trace illisible ou vide : distance et dénivelé peuvent être saisis à la main.
-          </p>
-        ) : null}
-      </fieldset>
-      <TextFieldV2 name="duration" label="Durée estimée" placeholder="5 h" maxLength={60} />
+
+        <small className="lkdv-cv2-field-hint" style={{ margin: 0, lineHeight: 1.45 }}>
+          {estimate.totalAnalyzedOutings > 0
+            ? `Calibré sur ton profil terrain (${estimate.totalAnalyzedOutings} sortie${estimate.totalAnalyzedOutings > 1 ? 's' : ''} analysée${estimate.totalAnalyzedOutings > 1 ? 's' : ''}) + ${estimate.factors.modelLabel}. `
+            : `Calculé via ${estimate.factors.modelLabel}. `}
+          À la création tu es seul (1 participant) : plus des participants rejoignent la sortie, plus la densité de statistiques de chacun fait évoluer automatiquement cette durée.
+        </small>
+      </div>
     </>
   );
 }
@@ -770,10 +828,216 @@ function SortieBody({
   prefill?: Record<string, unknown> | null;
   prefillNonce: number;
 }) {
-  const values = api.form.watch();
+  const form = api.form;
+  const values = form.watch();
   const ticket = useMemo(() => buildTicket(values, user), [user, values]);
   const [weather, setWeather] = useState<string | null>(null);
   const [weatherState, setWeatherState] = useState<'idle' | 'loading' | 'off'>('idle');
+  const [creatorStats, setCreatorStats] = useState<ParticipantPerformanceStats | null>(null);
+  const [packWeightKg, setPackWeightKg] = useState<number | null>(null);
+  const [customDuration, setCustomDuration] = useState(false);
+  const [customLevel, setCustomLevel] = useState(false);
+
+  // Charge les statistiques réelles de performance du créateur depuis la BDD
+  // (`user_performance_profiles`, `hike_sessions`, `trip_member_profiles`, `user_profiles`, `materiel_kits`)
+  useEffect(() => {
+    if (!api.active) return;
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      activity: values.activity,
+      distanceKm: String(values.distanceKm || 0),
+      elevationGainM: String(values.elevationGainM || 0),
+      nbJours: String(values.nbJours || 1),
+    });
+    if (values.kitId) params.set('kitId', values.kitId);
+
+    void fetch(`/api/sorties/performance-estimate?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          payload: {
+            ok?: boolean;
+            creatorStats?: ParticipantPerformanceStats | null;
+          } | null,
+        ) => {
+          if (payload?.ok && payload.creatorStats) {
+            setCreatorStats(payload.creatorStats);
+          }
+        },
+      )
+      .catch(() => {
+        /* repli local sur le moteur biomécanique pur */
+      });
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api.active, user?.id, values.kitId]);
+
+  // Si un kit est sélectionné, lit son poids réel en base pour la pénalité de portage de Pandolf
+  useEffect(() => {
+    if (!values.kitId) {
+      setPackWeightKg(null);
+      return;
+    }
+    let cancelled = false;
+    const supabase = createClient();
+    void supabase
+      .from('materiel_kits')
+      .select('total_weight_g')
+      .eq('id', values.kitId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const g = Number((data as { total_weight_g?: unknown } | null)?.total_weight_g ?? 0);
+        setPackWeightKg(Number.isFinite(g) && g > 0 ? Math.round((g / 1000) * 100) / 100 : null);
+      })
+      .catch(() => {
+        if (!cancelled) setPackWeightKg(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [values.kitId]);
+
+  // Synchronise `nbJours` ↔ `days` & `endDate` pour la planification multi-jours
+  useEffect(() => {
+    const nb = Math.max(1, values.nbJours || 1);
+    const currentDays = form.getValues('days') ?? [];
+    if (currentDays.length !== nb) {
+      form.setValue('days', syncCarnetDaysV2(currentDays, nb, values.date || ''), {
+        shouldDirty: false,
+      });
+    }
+    if (values.date) {
+      const end = carnetEndDateForDaysV2(values.date, nb);
+      if (end && form.getValues('endDate') !== end) {
+        form.setValue('endDate', end, { shouldDirty: false });
+      }
+    }
+  }, [form, values.date, values.nbJours]);
+
+  // Synchronise `meetingLat`/`meetingLng` → `startLat`/`startLng` et `location` → `destination`
+  useEffect(() => {
+    if (values.meetingLat != null && values.meetingLng != null) {
+      if (form.getValues('startLat') !== values.meetingLat) {
+        form.setValue('startLat', values.meetingLat, { shouldDirty: false });
+      }
+      if (form.getValues('startLng') !== values.meetingLng) {
+        form.setValue('startLng', values.meetingLng, { shouldDirty: false });
+      }
+    }
+  }, [form, values.meetingLat, values.meetingLng]);
+
+  useEffect(() => {
+    const loc = (values.location ?? '').trim();
+    if (loc && form.getValues('destination') !== loc) {
+      form.setValue('destination', loc, { shouldDirty: false });
+    }
+  }, [form, values.location]);
+
+  // Synchronise `elevationGainM` → `deniveleM` quand modifié manuellement à l'étape 2
+  useEffect(() => {
+    if (
+      typeof values.elevationGainM === 'number' &&
+      form.getValues('deniveleM') !== values.elevationGainM
+    ) {
+      form.setValue('deniveleM', values.elevationGainM, { shouldDirty: false });
+    }
+  }, [form, values.elevationGainM]);
+
+  const daysMetrics: DayRouteMetrics[] = useMemo(() => {
+    const list = values.days ?? [];
+    if (list.length <= 1) return [];
+    const totalKm = Math.max(0.1, values.distanceKm || 0);
+    const totalGain = Math.max(0, values.elevationGainM || 0);
+    return list.map((d, idx) => {
+      const pts = (d.trace ?? []) as [number, number][];
+      const dKm = pts.length >= 2 ? lengthKm(pts) : totalKm / list.length;
+      const ratio = totalKm > 0 ? clampRatio(dKm / totalKm, list.length) : 1 / list.length;
+      return {
+        dayNumber: idx + 1,
+        distanceKm: Math.round(dKm * 10) / 10,
+        elevationGainM: Math.round(totalGain * ratio),
+      };
+    });
+  }, [values.days, values.distanceKm, values.elevationGainM]);
+
+  const estimate = useMemo(
+    () =>
+      estimateSortiePerformance(
+        {
+          activity: values.activity,
+          distanceKm: values.distanceKm || 0,
+          elevationGainM: values.elevationGainM || 0,
+          elevationLossM: values.elevationLossM || null,
+          maxAltitudeM: values.maxAltitudeM ?? null,
+          nbJours: values.nbJours || 1,
+          packWeightKg,
+          daysMetrics: daysMetrics.length > 1 ? daysMetrics : undefined,
+        },
+        creatorStats ? [creatorStats] : [],
+      ),
+    [
+      creatorStats,
+      daysMetrics,
+      packWeightKg,
+      values.activity,
+      values.distanceKm,
+      values.elevationGainM,
+      values.elevationLossM,
+      values.maxAltitudeM,
+      values.nbJours,
+    ],
+  );
+
+  // Applique automatiquement la durée estimée et la difficulté recommandée tant que
+  // l'utilisateur ne les a pas personnalisées manuellement.
+  useEffect(() => {
+    const hasMetrics = (values.distanceKm ?? 0) > 0 || (values.elevationGainM ?? 0) > 0;
+    if (!hasMetrics) return;
+    if (!customDuration && estimate.formattedDuration) {
+      if (form.getValues('duration') !== estimate.formattedDuration) {
+        form.setValue('duration', estimate.formattedDuration, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    }
+    if (!customLevel && estimate.recommendedLevel) {
+      if (form.getValues('level') !== estimate.recommendedLevel) {
+        form.setValue('level', estimate.recommendedLevel, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+      }
+    }
+  }, [
+    customDuration,
+    customLevel,
+    estimate.formattedDuration,
+    estimate.recommendedLevel,
+    form,
+    values.distanceKm,
+    values.elevationGainM,
+  ]);
+
+  const reapplyAuto = useCallback(() => {
+    setCustomDuration(false);
+    setCustomLevel(false);
+    if (estimate.formattedDuration) {
+      form.setValue('duration', estimate.formattedDuration, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+    if (estimate.recommendedLevel) {
+      form.setValue('level', estimate.recommendedLevel, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [estimate.formattedDuration, estimate.recommendedLevel, form]);
 
   // Météo du billet (FID-052) : mêmes conditions que le formulaire, appel à la
   // route `/api/weather` existante, aucun nouvel accès réseau.
@@ -857,8 +1121,26 @@ function SortieBody({
         </SheetPreview>
       ) : null}
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
-      {api.step === 0 ? <ActivityPlaceStep prefill={prefill} /> : null}
-      {api.step === 1 ? <ItineraireStep /> : null}
+      {api.step === 0 ? (
+        <ActivityPlaceStep
+          prefill={prefill}
+          user={user}
+          estimate={estimate}
+          onSetCustomDuration={setCustomDuration}
+          onSetCustomLevel={setCustomLevel}
+        />
+      ) : null}
+      {api.step === 1 ? (
+        <ItineraireStep
+          user={user}
+          estimate={estimate}
+          customDuration={customDuration}
+          customLevel={customLevel}
+          onSetCustomDuration={setCustomDuration}
+          onSetCustomLevel={setCustomLevel}
+          onReapplyAuto={reapplyAuto}
+        />
+      ) : null}
       {api.step === 2 ? <ParticipantsStep /> : null}
       {api.step === 3 ? <SecuriteStep /> : null}
     </>
