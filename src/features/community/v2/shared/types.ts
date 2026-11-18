@@ -10,14 +10,15 @@
 export type TypeKind = 'post' | 'carnet' | 'club' | 'sortie' | 'membre';
 
 /** Volet du tiroir Explorer (capsule 56 px). */
-export type ExploreTab = 'search' | 'carnets' | 'clubs' | 'sorties';
+export type ExploreTab = 'search' | 'carnets' | 'clubs' | 'sorties' | 'kits';
 
-export type CarnetFilter = 'discover' | 'mine' | 'followed' | 'near';
+export type CarnetFilter = 'discover' | 'mine' | 'followed' | 'near' | 'map';
 export type CarnetSort = 'recent' | 'popular' | 'near' | 'duration';
-export type ClubFilter = 'discover' | 'mine' | 'near';
+export type ClubFilter = 'discover' | 'mine' | 'near' | 'map';
 export type ClubSort = 'activity' | 'near' | 'size';
-export type EventFilter = 'discover' | 'mine' | 'near';
-export type SearchScope = 'all' | 'posts' | 'carnets' | 'clubs' | 'sorties' | 'membres';
+export type EventFilter = 'discover' | 'mine' | 'near' | 'map';
+export type KitFilter = 'discover' | 'mine' | 'map';
+export type SearchScope = 'all' | 'posts' | 'carnets' | 'clubs' | 'sorties' | 'membres' | 'map';
 
 /** Type de création du tiroir Création (capsule 56 px). */
 export type CreateKindV2 = 'post' | 'story' | 'carnet' | 'sortie' | 'kit' | 'club';

@@ -31,6 +31,8 @@ import {
   EVENT_FILTERS,
   EXPLORE_CAPSULE_ITEMS,
   EXPLORE_TAB_ORDER,
+  KIT_FILTER_ITEMS,
+  KIT_FILTERS,
   SEARCH_SCOPE_ITEMS,
   SEARCH_SCOPES,
   filterIndex,
@@ -54,6 +56,7 @@ import { activityLabel } from '../data/communityFeedMappers';
 import { CarnetsPane } from './panes/CarnetsPane';
 import { ClubsPane, effectiveClubMembers, effectiveClubStatus } from './panes/ClubsPane';
 import { EventsPane, effectiveEventState } from './panes/EventsPane';
+import { KitsPane } from './panes/KitsPane';
 import { SearchPane } from './panes/SearchPane';
 import { ClubDetailView } from './details/ClubDetailView';
 import { EventDetailView } from './details/EventDetailView';
@@ -852,13 +855,16 @@ export function CommunityExploreSheetV2({
         ? filterIndex(CARNET_FILTER_ITEMS, explore.carnetFilter)
         : explore.tab === 'clubs'
           ? filterIndex(CLUB_FILTER_ITEMS, explore.clubFilter)
-          : filterIndex(EVENT_FILTER_ITEMS, explore.eventFilter);
+          : explore.tab === 'sorties'
+            ? filterIndex(EVENT_FILTER_ITEMS, explore.eventFilter)
+            : filterIndex(KIT_FILTER_ITEMS, explore.kitFilter);
 
   const voletActive = (tab: ExploreTab): boolean => open && explore.tab === tab;
   const activeScope = explore.searchScope;
   const activeCarnetFilter = explore.carnetFilter;
   const activeClubFilter = explore.clubFilter;
   const activeEventFilter = explore.eventFilter;
+  const activeKitFilter = explore.kitFilter;
 
   // ── Une pane par filtre (LensPager de la mini-capsule, `00-MISSION § 3`) ──
   const filterPages: React.ReactNode[][] = [
@@ -978,6 +984,19 @@ export function CommunityExploreSheetV2({
         </FilterSlot>
       );
     }),
+    KIT_FILTERS.map((filterValue, index) => {
+      const paneActive = voletActive('kits') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={filterValue} active={paneActive}>
+          <KitsPane
+            filter={filterValue}
+            userId={viewerId}
+            online={isOnline}
+            onCreateKit={() => onCreateRequested?.('kit')}
+          />
+        </FilterSlot>
+      );
+    }),
   ];
 
   const mini = (() => {
@@ -1030,6 +1049,15 @@ export function CommunityExploreSheetV2({
             else explore.setClubSort(value as typeof explore.clubSort);
           },
         },
+      };
+    }
+    if (explore.tab === 'kits') {
+      return {
+        items: KIT_FILTER_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
+        active: filterIndex(KIT_FILTER_ITEMS, activeKitFilter),
+        onChange: (index: number) => explore.setKitFilter(KIT_FILTERS[index] ?? 'discover'),
+        label: 'Filtres des kits',
+        pages: filterPages,
       };
     }
     return {
@@ -1125,7 +1153,7 @@ export function CommunityExploreSheetV2({
       kind="explore"
       label="Explorer la communauté"
       guestNotice={isGuest}
-      compactSearch={EXPLORE_TAB_ORDER[tabIndex] === 'search' && !detailProp}
+      compactSearch={!detailProp}
       capsule={{
         items: EXPLORE_CAPSULE_ITEMS,
         active: tabIndex,

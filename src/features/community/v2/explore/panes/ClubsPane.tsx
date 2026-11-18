@@ -6,8 +6,9 @@ import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { activityLabel } from '../../data/communityFeedMappers';
 import { formatCountFr } from '../../shared/format';
 import { ClubTileV2 } from '../tiles/ClubTileV2';
-import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
+import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
+import { ExploreWorldMap } from '../details/ExploreWorldMap';
 
 export const CLUB_ACTIVITY_CHIPS: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tous' },
@@ -82,6 +83,14 @@ export function ClubsPane({
   );
 
   const chips = null;
+
+  if (filter === 'map') {
+    return (
+      <div className="lkdv-cv2x-pane lkdv-cv2x-pane--map">
+        <ExploreWorldMap kind="clubs" />
+      </div>
+    );
+  }
 
   if (filter === 'near' && !nearPointKnown) {
     return (
@@ -170,52 +179,27 @@ export function ClubsPane({
     );
   }
 
-  const featured = filter === 'discover' && !activity ? feed.items[0] : null;
-  const gridItems = featured ? feed.items.slice(1) : feed.items;
-
   return (
     <div ref={scrollRef} className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
-      {chips}
-      {featured ? (
-        <div className="lkdv-cv2x-featured">
-          <ClubTileV2
-            club={featured}
-            status={effectiveClubStatus(featured, overrides)}
-            membersCount={effectiveClubMembers(featured, effectiveClubStatus(featured, overrides))}
-            month
-            busy={busyClubId === featured.id}
-            onOpen={onOpen}
-            onJoin={onJoin}
-            onPeek={onPeek}
-          />
-        </div>
-      ) : null}
-      <div className="lkdv-cv2-grid lkdv-cv2x-club-grid">
-        {gridItems.map((club) => {
+      <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Clubs">
+        {feed.items.map((club) => {
           const status = effectiveClubStatus(club, overrides);
           return (
-            <ClubTileV2
-              key={club.id}
-              club={club}
-              status={status}
-              membersCount={effectiveClubMembers(club, status)}
-              busy={busyClubId === club.id}
-              onOpen={onOpen}
-              onJoin={onJoin}
-              onPeek={onPeek}
-            />
+            <div key={club.id} className="lkdv-cv2x-hrail-item" role="listitem">
+              <ClubTileV2
+                club={club}
+                status={status}
+                membersCount={effectiveClubMembers(club, status)}
+                busy={busyClubId === club.id}
+                onOpen={onOpen}
+                onJoin={onJoin}
+                onPeek={onPeek}
+              />
+            </div>
           );
         })}
-      </div>
-      <div ref={nearBottomRef}>
-        <ExploreListFoot
-          hasMore={feed.hasMore}
-          loadingMore={feed.loadingMore}
-          onLoadMore={feed.loadMore}
-          total={feed.items.length}
-          label={formatCountFr(feed.items.length, 'club')}
-        />
+        <div ref={nearBottomRef} className="lkdv-cv2x-hrail-sentinel" aria-hidden="true" />
       </div>
     </div>
   );

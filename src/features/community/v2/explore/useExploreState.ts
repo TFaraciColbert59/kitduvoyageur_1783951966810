@@ -8,6 +8,7 @@ import type {
   ClubSort,
   EventFilter,
   ExploreTab,
+  KitFilter,
   SearchScope,
 } from '../shared/types';
 import { useSessionMemory } from '../shared/useSessionMemory';
@@ -41,6 +42,8 @@ export interface ExploreState {
   setClubActivity: (next: string | null) => void;
   eventFilter: EventFilter;
   setEventFilter: (next: EventFilter) => void;
+  kitFilter: KitFilter;
+  setKitFilter: (next: KitFilter) => void;
   eventDay: string | null;
   setEventDay: (next: string | null) => void;
   eventView: EventView;
@@ -72,6 +75,7 @@ export function useExploreState(): ExploreState {
   const [clubSort, setClubSort] = useSessionMemory<ClubSort>('cv2:explore:clubs:sort', 'activity');
   const [clubActivity, setClubActivity] = useSessionMemory<string | null>('cv2:explore:clubs:activity', null);
   const [eventFilter, setEventFilter] = useSessionMemory<EventFilter>('cv2:explore:sorties:filter', 'discover');
+  const [kitFilter, setKitFilter] = useSessionMemory<KitFilter>('cv2:explore:kits:filter', 'discover');
   const [eventDay, setEventDay] = useSessionMemory<string | null>('cv2:explore:sorties:day', null);
   const [eventView, setEventView] = useSessionMemory<EventView>('cv2:explore:sorties:view', 'grid');
   const [searchQuery, setSearchQuery] = useSessionMemory<string>('cv2:explore:search:query', '');
@@ -108,6 +112,8 @@ export function useExploreState(): ExploreState {
     setClubActivity,
     eventFilter,
     setEventFilter,
+    kitFilter,
+    setKitFilter,
     eventDay,
     setEventDay,
     eventView,

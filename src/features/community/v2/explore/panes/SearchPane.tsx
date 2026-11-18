@@ -16,7 +16,7 @@ import { ExploreError, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreS
 import { ExploreIcon } from '../ExploreIcons';
 import { SearchHome } from '../search/SearchHome';
 import { SearchResults, visibleSearchHits, scopeToKind } from '../search/SearchResults';
-import { SearchMap } from '../details/SearchMap';
+import { ExploreWorldMap } from '../details/ExploreWorldMap';
 import { suggestAlternatives, withSuggestedTerm } from '../search/suggest';
 
 export interface SearchPaneProps {
@@ -186,10 +186,10 @@ export function SearchPane({
         ? 'Recherche en cours'
         : `${visibleCount} résultat${visibleCount > 1 ? 's' : ''}${query.trim() ? ` pour « ${query.trim()} »` : ''}`;
 
-  const showHome = !search.hasQuery;
+  const showHome = scope !== 'map' && !search.hasQuery;
 
   return (
-    <div ref={scrollRef} className="lkdv-cv2x-pane lkdv-cv2x-search-pane">
+    <div ref={scrollRef} className={`lkdv-cv2x-pane lkdv-cv2x-search-pane${scope === 'map' ? ' lkdv-cv2x-pane--map' : ''}`}>
       {!online ? <ExploreOfflineBanner /> : null}
 
       <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
@@ -202,7 +202,7 @@ export function SearchPane({
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
-          placeholder="Posts, carnets, clubs, sorties, membres…"
+          placeholder="Rechercher dans toute la communauté…"
           aria-label="Rechercher dans toute la communauté"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
@@ -224,35 +224,13 @@ export function SearchPane({
         ) : null}
       </div>
 
-      <div className="lkdv-cv2-chips lkdv-cv2x-ctx-chips" role="group" aria-label="Contexte de la recherche">
-        {SEARCH_CONTEXT_ORDER.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className="lkdv-cv2-chip"
-            aria-pressed={context.includes(key)}
-            onClick={() => toggleContext(key)}
-            data-testid={`cv2-ctx-${key}`}
-          >
-            {SEARCH_CONTEXT_LABELS[key]}
-          </button>
-        ))}
-      </div>
-
-      <div className="lkdv-cv2-seg lkdv-cv2x-search-view" role="group" aria-label="Affichage des résultats">
-        <button type="button" aria-pressed={!showMap} onClick={() => onShowMapChange(false)}>
-          <ExploreIcon name="feed" size={14} /> Liste
-        </button>
-        <button type="button" aria-pressed={showMap} onClick={() => onShowMapChange(true)}>
-          <ExploreIcon name="map" size={14} /> Sur la carte
-        </button>
-      </div>
-
       <p className="lkdv-cv2-sr" role="status" aria-live="polite" aria-atomic="true">
         {liveMessage}
       </p>
 
-      {showHome ? (
+      {scope === 'map' ? (
+        <ExploreWorldMap kind="search" query={query} />
+      ) : showHome ? (
         <SearchHome
           recents={recents}
           trending={search.trending}
@@ -262,7 +240,7 @@ export function SearchPane({
           onPickTrend={pickSuggestion}
         />
       ) : search.error ? (
-        <ExploreError title="Recherche indisponible" onRetry={search.retry} message="Vérifie ta connexion, puis réessaie. Ce n’est pas « aucun résultat »." />
+        <ExploreError title="Recherche indisponible" onRetry={search.retry} message="Vérifie ta connexion, puis réessaie." />
       ) : search.loading ? (
         <ExploreSkeleton variant="rows" />
       ) : visibleCount === 0 ? (
@@ -271,11 +249,6 @@ export function SearchPane({
             <ExploreIcon name="search" size={19} />
           </span>
           <b>Aucun résultat pour « {query.trim()} »</b>
-          <p>
-            {scopeToKind(scope)
-              ? 'Dans ce filtre, rien ne correspond. Essaie d’autres mots ou retire un filtre.'
-              : 'Essaie d’autres mots ou retire un filtre.'}
-          </p>
           {alternatives?.best ? (
             <button
               type="button"
@@ -284,15 +257,6 @@ export function SearchPane({
             >
               Vous vouliez dire « {alternatives.best.to} » ?
             </button>
-          ) : null}
-          {alternatives && alternatives.near.length > 0 ? (
-            <div className="lkdv-cv2-chips lkdv-cv2x-suggest-chips">
-              {alternatives.near.map((word) => (
-                <button key={word} type="button" className="lkdv-cv2-chip" onClick={() => pickSuggestion(word)}>
-                  {word}
-                </button>
-              ))}
-            </div>
           ) : null}
           {onCreateRequested ? (
             <button
@@ -304,35 +268,29 @@ export function SearchPane({
             </button>
           ) : null}
         </div>
-      ) : showMap ? (
-        <SearchMap hits={search.results} terms={terms} onPeek={onPeek} />
       ) : (
-        <SearchResults
-          results={search.results}
-          terms={terms}
-          scope={scope}
-          activeIndex={activeIndex}
-          rowIdFor={rowIdFor}
-          onSeeAll={(kind) => {
-            const scopeByKind: Record<string, SearchScope> = {
-              post: 'posts',
-              carnet: 'carnets',
-              club: 'clubs',
-              sortie: 'sorties',
-              membre: 'membres',
-            };
-            const target = scopeByKind[kind];
-            if (target) onScopeChange(target);
-          }}
-          onPeek={onPeek}
-        />
+        <div className="lkdv-cv2x-hrail" data-hscroll="">
+          <SearchResults
+            results={search.results}
+            terms={terms}
+            scope={scope}
+            activeIndex={activeIndex}
+            rowIdFor={rowIdFor}
+            onSeeAll={(kind) => {
+              const scopeByKind: Record<string, SearchScope> = {
+                post: 'posts',
+                carnet: 'carnets',
+                club: 'clubs',
+                sortie: 'sorties',
+                membre: 'membres',
+              };
+              const target = scopeByKind[kind];
+              if (target) onScopeChange(target);
+            }}
+            onPeek={onPeek}
+          />
+        </div>
       )}
-
-      {!search.hasQuery && nearState === 'denied' && context.includes('near') ? (
-        <button type="button" className="lkdv-cv2x-search-geo" onClick={onRequestGeo}>
-          Position refusée · Autoriser
-        </button>
-      ) : null}
     </div>
   );
 }

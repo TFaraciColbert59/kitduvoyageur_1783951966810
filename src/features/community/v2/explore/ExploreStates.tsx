@@ -164,17 +164,15 @@ export function ExploreOfflineBanner() {
   );
 }
 
-/** Pied de liste : fin de flux ou bouton « Charger la suite ». */
+/** Pied de liste : chargement automatique (aucun bouton manuel). */
 export function ExploreListFoot({
-  hasMore,
   loadingMore,
-  onLoadMore,
   total,
   label,
 }: {
-  hasMore: boolean;
+  hasMore?: boolean;
   loadingMore: boolean;
-  onLoadMore: () => void;
+  onLoadMore?: () => void;
   total: number;
   label: string;
 }) {
@@ -185,17 +183,8 @@ export function ExploreListFoot({
       </p>
     );
   }
-  if (hasMore) {
-    return (
-      <div className="lkdv-cv2x-list-foot">
-        <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onLoadMore}>
-          Charger la suite
-        </button>
-      </div>
-    );
-  }
   if (total === 0) return null;
-  return <p className="lkdv-cv2x-list-foot">Tu as tout vu. {label}</p>;
+  return <p className="lkdv-cv2x-list-foot">{label}</p>;
 }
 
 /**

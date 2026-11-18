@@ -8,9 +8,10 @@ import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { AgendaStrip } from '../../shared/AgendaStrip';
 import { formatCountFr, groupEventsByAgenda } from '../../shared/format';
 import { EventTicketV2 } from '../tiles/EventTicketV2';
-import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
+import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
 import type { EventView } from '../useExploreState';
+import { ExploreWorldMap } from '../details/ExploreWorldMap';
 
 export interface EventsPaneProps {
   feed: CursorFeedResult<EventCardVM>;
@@ -164,6 +165,14 @@ export function EventsPane({
     </div>
   );
 
+  if (filter === 'map') {
+    return (
+      <div className="lkdv-cv2x-pane lkdv-cv2x-pane--map">
+        <ExploreWorldMap kind="sorties" />
+      </div>
+    );
+  }
+
   if (filter === 'near' && !nearPointKnown) {
     return (
       <div ref={scrollRef} className="lkdv-cv2x-pane">
@@ -253,53 +262,18 @@ export function EventsPane({
     );
   };
 
-  const groups = groupEventsByAgenda(upcoming);
+  const allOrdered = [...upcoming, ...past];
 
   return (
     <div ref={scrollRef} className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
-      {agenda}
-
-      {upcoming.length === 0 && past.length > 0 ? (
-        <p className="lkdv-cv2x-events-empty-line">Aucune sortie à venir. Récap des sorties passées ci-dessous.</p>
-      ) : null}
-
-      {view === 'list' ? (
-        groups.map((group) => (
-          <div key={group.key} className="lkdv-cv2-group">
-            <div className="lkdv-cv2-group-head">
-              <span className="lkdv-cv2-eyebrow">
-                {group.label}
-                <b>{group.items.length}</b>
-              </span>
-            </div>
-            <div className="lkdv-cv2x-event-rows">{group.items.map((event) => renderEvent(event, 'compact'))}</div>
+      <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Sorties">
+        {allOrdered.map((event) => (
+          <div key={event.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
+            {renderEvent(event)}
           </div>
-        ))
-      ) : (
-        <div className="lkdv-cv2x-event-billets">{upcoming.map((event) => renderEvent(event))}</div>
-      )}
-
-      {past.length > 0 ? (
-        <div className="lkdv-cv2-group">
-          <div className="lkdv-cv2-group-head">
-            <span className="lkdv-cv2-eyebrow">
-              Sorties passées
-              <b>{past.length}</b>
-            </span>
-          </div>
-          <div className="lkdv-cv2x-event-rows">{past.map((event) => renderEvent(event, 'compact'))}</div>
-        </div>
-      ) : null}
-
-      <div ref={nearBottomRef}>
-        <ExploreListFoot
-          hasMore={feed.hasMore}
-          loadingMore={feed.loadingMore}
-          onLoadMore={feed.loadMore}
-          total={feed.items.length}
-          label={formatCountFr(feed.items.length, 'sortie')}
-        />
+        ))}
+        <div ref={nearBottomRef} className="lkdv-cv2x-hrail-sentinel" aria-hidden="true" />
       </div>
     </div>
   );
