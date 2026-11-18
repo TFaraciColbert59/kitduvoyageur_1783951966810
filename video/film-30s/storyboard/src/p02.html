@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p02 · Double-tap</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--stone); }
+  #main { position: absolute; left: 30px; top: 200px; width: 1020px; height: 1320px; border-radius: 70px; overflow: hidden; box-shadow: 0 40px 90px rgba(11,31,23,0.3); transform: rotate(-1.2deg); }
+  #main img { position: absolute; inset: 0; }
+  #shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,18,12,0) 50%, rgba(6,18,12,0.55) 100%); }
+  #heart { left: 330px; top: 470px; width: 420px; height: 420px; filter: drop-shadow(0 20px 40px rgba(6,18,12,0.45)); }
+  .shard { position: absolute; width: 46px; height: 46px; background: var(--brass); }
+  .streak { position: absolute; height: 10px; border-radius: 10px; background: linear-gradient(90deg, rgba(208,160,112,0), rgba(208,160,112,0.9)); transform-origin: 0 50%; }
+  #counter { left: 90px; top: 1130px; height: 250px; padding: 0 60px 0 50px; gap: 34px; background: rgba(10,22,16,0.58); border: 2px solid rgba(255,255,255,0.25); backdrop-filter: blur(12px); }
+  #counter .num { font-size: 200px; color: var(--brass); }
+  .roll { display: inline-block; position: relative; }
+  .roll i { position: absolute; left: 0; top: -150px; font-style: normal; opacity: 0.32; filter: blur(4px); }
+  #small { position: absolute; right: 60px; top: 1170px; font-size: 40px; color: var(--stone); display: flex; gap: 30px; align-items: center; font-weight: 600; }
+</style></head>
+<body><div id="frame">
+  <div id="main">
+    <img class="cover" src="../../assets/photos/tdp-amanecer-06.jpg" style="object-position: 50% 42%">
+    <div id="shade"></div>
+  </div>
+  <div id="streaks"></div>
+  <svg id="heart" class="abs" viewBox="0 0 24 24"><path fill="#D0A070" stroke="#FAF8F5" stroke-width="0.6" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+  <div id="counter" class="abs pill"><i data-ic="heart" data-s="120" data-c="#D0A070" data-f="#D0A070" data-w="1.5"></i><span class="num">1<span style="display:inline-block;width:0.3em"></span>28<span class="roll" style="filter: blur(1.5px)">4</span></span></div>
+</div>
+<script src="icons.js"></script>
+<script>
+  // 12 éclats du cœur, à l'image 3 de l'explosion (trajectoires radiales).
+  const c = { x: 540, y: 690 }, st = document.getElementById('streaks');
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 + 0.2, r = 330 + (i % 3) * 70, x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r;
+    const s = document.createElement('div'); s.className = 'shard';
+    s.style.left = (x - 23) + 'px'; s.style.top = (y - 23) + 'px'; s.style.transform = `rotate(${a * 57 + 45}deg) scale(${0.7 + (i % 4) * 0.25})`;
+    s.style.clipPath = 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)';
+    const l = document.createElement('div'); l.className = 'streak';
+    l.style.left = (c.x + Math.cos(a) * 150) + 'px'; l.style.top = (c.y + Math.sin(a) * 150 - 5) + 'px'; l.style.width = (r - 170) + 'px'; l.style.transform = `rotate(${a * 57.2958}deg)`;
+    st.appendChild(l); st.appendChild(s);
+  }
+</script>
+</body></html>

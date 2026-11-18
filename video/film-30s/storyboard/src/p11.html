@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p11 · Implosion</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--deep); }
+  #pt { left: 515px; top: 835px; width: 50px; height: 50px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 0 18px rgba(208,160,112,0.18), 0 0 90px 20px rgba(208,160,112,0.55); }
+  #line { left: 538px; top: 885px; width: 4px; height: 210px; background: linear-gradient(180deg, rgba(208,160,112,0.95), rgba(208,160,112,0)); }
+  .s { position: absolute; height: 6px; border-radius: 6px; transform-origin: 0 50%; }
+  .frag { position: absolute; border-radius: 18px; background: rgba(250,248,245,0.5); filter: blur(4px); }
+</style></head>
+<body><div id="frame">
+  <div id="fx"></div>
+  <div id="line" class="abs"></div>
+  <div id="pt" class="abs"></div>
+</div>
+<script>
+  // 13,85 s : image 7 sur 8 de l'aspiration — traînées radiales qui convergent vers le point GPS.
+  const c = { x: 540, y: 860 }, fx = document.getElementById('fx');
+  let seed = 3; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 46; i++) {
+    const a = r() * Math.PI * 2, d0 = 70 + r() * 120, len = 140 + r() * 420;
+    const s = document.createElement('div'); s.className = 's';
+    const col = r() < 0.4 ? '208,160,112' : (r() < 0.5 ? '91,127,85' : '250,248,245');
+    s.style.background = `linear-gradient(90deg, rgba(${col},0.85), rgba(${col},0))`;
+    s.style.left = (c.x + Math.cos(a) * d0) + 'px'; s.style.top = (c.y + Math.sin(a) * d0) + 'px';
+    s.style.width = len + 'px'; s.style.height = (2 + r() * 8) + 'px'; s.style.transform = `rotate(${a}rad)`;
+    fx.appendChild(s);
+  }
+  for (let i = 0; i < 9; i++) {
+    const a = r() * Math.PI * 2, d = 230 + r() * 260, w = 40 + r() * 70;
+    const f = document.createElement('div'); f.className = 'frag';
+    f.style.left = (c.x + Math.cos(a) * d - w / 2) + 'px'; f.style.top = (c.y + Math.sin(a) * d - w / 3) + 'px';
+    f.style.width = w + 'px'; f.style.height = (w * 0.6) + 'px'; f.style.transform = `rotate(${a}rad) scaleX(1.8)`;
+    if (i % 3 === 0) f.style.background = 'rgba(208,160,112,0.55)';
+    fx.appendChild(f);
+  }
+</script>
+</body></html>

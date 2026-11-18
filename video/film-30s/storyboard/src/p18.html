@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p18 · La story</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: #2a1d22; }
+  #ph { transform: scale(1.06); }
+  #shade { background: linear-gradient(180deg, rgba(6,18,12,0.45) 0%, rgba(6,18,12,0) 25%, rgba(6,18,12,0) 50%, rgba(6,18,12,0.6) 100%); }
+  .bars { left: 60px; top: 228px; width: 960px; display: flex; gap: 12px; }
+  .bars i { flex: 1; height: 8px; border-radius: 8px; background: rgba(255,255,255,0.4); }
+  .bars i.on { background: #fff; }
+  #who { left: 60px; top: 262px; height: 130px; padding: 0 40px 0 12px; gap: 22px; background: rgba(20,14,16,0.35); border: 2px solid rgba(255,255,255,0.3); color: #fff; }
+  #who .ring { width: 108px; height: 108px; border-radius: 50%; padding: 6px; background: var(--brass); }
+  #who img { width: 96px; height: 96px; border: 4px solid #2a1d22; }
+  #who b { font-size: 42px; display: block; }
+  #who span { font-size: 34px; opacity: 0.85; }
+  #tk { left: 90px; top: 520px; width: 900px; padding: 40px 44px; border-radius: 52px; background: rgba(250,248,245,0.95); box-shadow: 0 40px 90px rgba(6,18,12,0.45); transform: rotate(-3deg); }
+  #tk .k { font-size: 32px; font-weight: 700; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase; }
+  #tk b { display: block; white-space: nowrap; font-size: 56px; font-weight: 800; color: var(--forest); margin: 12px 0 8px; letter-spacing: -0.02em; }
+  #tk p { font-size: 36px; color: #3b4a42; margin-top: 8px; display: flex; align-items: center; gap: 14px; }
+  #tk .btn { margin-top: 28px; height: 120px; width: 100%; justify-content: center; gap: 18px; background: var(--forest); color: #fff; font-size: 50px; font-weight: 800; box-shadow: 0 0 0 16px rgba(208,160,112,0.35), 0 0 0 36px rgba(208,160,112,0.14); transform: scale(0.96); }
+  #word { left: 60px; top: 1190px; color: var(--stone); text-shadow: 0 10px 40px rgba(6,18,12,0.5); }
+  #wordg { left: 82px; top: 1176px; color: var(--brass); filter: blur(3px); }
+</style></head>
+<body><div id="frame">
+  <img id="ph" class="fill cover" src="assets/plates/story-sunrise.jpg">
+  <div id="shade" class="fill"></div>
+  <div class="bars abs"><i class="on"></i><i class="on"></i><i></i></div>
+  <div id="who" class="abs pill"><div class="ring"><img class="av" src="assets/avatars/a05.jpg"></div><div><b>Anna Kovacs</b><span>Groupe « Patagonie 4 » · 1 h</span></div></div>
+  <div id="tk" class="abs">
+    <div class="k">Sortie</div>
+    <b>Sortie demain 5 h · mirador</b>
+    <p><i data-ic="pin" data-s="44" data-c="#5B7F55" data-w="2.4"></i>Mirador Base Las Torres</p>
+    <p><i data-ic="clock" data-s="44" data-c="#5B7F55" data-w="2.4"></i>Départ du Refugio Chileno · 2 places</p>
+    <span class="btn pill">S'inscrire</span>
+  </div>
+  <div id="wordg" class="abs slam ghost" data-fit="960" data-max="300">S'INSCRIRE</div>
+  <div id="word" class="abs slam" data-fit="960" data-max="300" data-ghost="wordg">S'INSCRIRE</div>
+</div>
+<script src="icons.js"></script><script src="fit.js"></script>
+</body></html>

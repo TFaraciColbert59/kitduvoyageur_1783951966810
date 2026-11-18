@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p15 · Publié</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--stone); }
+  .feed { position: absolute; left: 190px; width: 700px; height: 380px; border-radius: 48px; overflow: hidden; opacity: 0.35; filter: blur(3px); }
+  #card { left: 210px; top: 470px; width: 660px; padding: 22px; border-radius: 56px; background: rgba(250,248,245,0.95); box-shadow: 0 0 0 8px var(--brass), 0 40px 90px rgba(11,31,23,0.35); transform: rotate(-4deg); }
+  #card .ph { width: 616px; height: 340px; border-radius: 38px; object-fit: cover; display: block; }
+  #card h4 { font-size: 44px; font-weight: 800; color: var(--forest); margin: 20px 10px 4px; }
+  #card p { font-size: 34px; color: var(--label2); margin: 0 10px; }
+  #card .cnt { display: flex; gap: 34px; margin: 18px 10px 4px; font-size: 40px; font-weight: 700; color: var(--forest); }
+  #card .cnt span { display: inline-flex; align-items: center; gap: 12px; }
+  .av { position: absolute; border: 6px solid #fff; box-shadow: 0 20px 40px rgba(11,31,23,0.3); }
+  #word { left: 56px; top: 1250px; color: var(--forest); }
+  #wordg { left: 80px; top: 1236px; color: var(--brass); filter: blur(3px); }
+</style></head>
+<body><div id="frame">
+  <div class="feed" style="top:-120px"><img class="cover" src="../../../film-lkdv/assets/app/feed-3.jpg" style="object-position:50% 25%"></div>
+  <div class="feed" style="top:1500px"><img class="cover" src="../../../film-lkdv/assets/app/feed-4.jpg" style="object-position:50% 40%"></div>
+  <div id="card" class="abs">
+    <img class="ph" src="../../assets/photos/tdp-cuernos-01.jpg">
+    <h4>Le W · Torres del Paine</h4><p>Carnet de Léa · 5 jours · 3 voyageurs</p>
+    <div class="cnt"><span>♥ 312</span><span>↗ 48</span></div>
+  </div>
+  <div id="avs"></div>
+  <div id="wordg" class="abs slam ghost" data-fit="960" data-max="300">PUBLIÉ.</div>
+  <div id="word" class="abs slam" data-fit="960" data-max="300" data-ghost="wordg">PUBLIÉ<span class="dot">.</span></div>
+</div>
+<script>
+  // 19,30 s : 16 avatars (comptes de démo) explosent depuis le carnet vers la caméra.
+  const files = ['a02','a03','a04','a05','a06','a07','a08','a09','a10','a11','a12','a13','a15','a16','a17','a18'];
+  const c = { x: 540, y: 735 };
+  files.forEach((f, i) => {
+    const a = (i / 16) * Math.PI * 2 - Math.PI / 2 + 0.15, near = i % 3 === 0;
+    const s = near ? 190 : (i % 3 === 1 ? 130 : 96);
+    const x = c.x + Math.cos(a) * (near ? 400 : 430), y = c.y + Math.sin(a) * (near ? 470 : 430);
+    if (y + s / 2 > 1240) return;
+    const im = document.createElement('img'); im.className = 'av'; im.src = 'assets/avatars/' + f + '.jpg';
+    im.style.width = im.style.height = s + 'px'; im.style.left = (x - s / 2) + 'px'; im.style.top = (y - s / 2) + 'px';
+    if (near) im.style.filter = 'blur(2px)';
+    document.getElementById('avs').appendChild(im);
+  });
+</script>
+<script src="fit.js"></script>
+</body></html>

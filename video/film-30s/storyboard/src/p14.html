@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p14 · Le carnet s'écrit</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--sage); }
+  #map { position: absolute; left: -100px; top: 0px; width: 1600px; height: 2600px; transform: scale(0.75); transform-origin: 0 0; }
+  #map img, #map svg { position: absolute; left: 0; top: 0; width: 1600px; height: 2600px; }
+  #tint { background: linear-gradient(180deg, rgba(91,127,85,0.25), rgba(91,127,85,0.55)); }
+  .pol { position: absolute; width: 300px; padding: 16px 16px 60px; background: var(--stone); border-radius: 14px; box-shadow: 0 30px 60px rgba(6,18,12,0.45); }
+  .pol img { width: 268px; height: 268px; object-fit: cover; display: block; border-radius: 6px; }
+  .pol b { position: absolute; left: 20px; bottom: 12px; font-size: 34px; color: var(--forest); font-weight: 700; }
+  .pin { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--stone); border: 8px solid var(--forest); transform: translate(-50%, -50%); }
+  #stack { left: 60px; top: 1330px; width: 600px; }
+  .day { position: absolute; left: 0; width: 600px; height: 150px; border-radius: 40px; background: rgba(250,248,245,0.94); box-shadow: 0 20px 40px rgba(6,18,12,0.3); display: flex; align-items: center; gap: 22px; padding: 0 22px; }
+  .day img { width: 108px; height: 108px; border-radius: 26px; object-fit: cover; }
+  .day .chip { height: 56px; padding: 0 20px; background: var(--forest); color: #fff; font-size: 32px; font-weight: 700; }
+  .day b { font-size: 38px; color: var(--forest); display: block; }
+  .day span { font-size: 34px; color: var(--label2); }
+  #word { left: 56px; top: 250px; color: var(--stone); text-shadow: 0 10px 40px rgba(6,18,12,0.45); }
+  #wordg { left: 78px; top: 236px; color: var(--brass); filter: blur(3px); }
+</style></head>
+<body><div id="frame">
+  <div id="map"><img src="assets/sat/sat-w.jpg"><svg id="wsvg" viewBox="0 0 1600 2600"></svg></div>
+  <div id="tint" class="fill"></div>
+  <div id="pins"></div>
+  <div id="stack" class="abs">
+    <div class="day" style="top:0; transform: translateY(-84px) scale(0.9); filter: blur(2px) brightness(0.92)"><img src="../../assets/photos/tdp-mirador-base.jpg"><span class="chip pill">J1</span><div><b>Refugio Chileno</b><span>12 photos</span></div></div>
+    <div class="day" style="top:0; transform: translateY(-42px) scale(0.95); filter: blur(1px) brightness(0.96)"><img src="../../assets/photos/tdp-cuernos-01.jpg"><span class="chip pill">J2</span><div><b>Hostería Pehoé</b><span>9 photos</span></div></div>
+    <div class="day" style="top:20px; transform: rotate(-3deg)"><img src="../../assets/photos/tdp-sunrise-szekely.jpg"><span class="chip pill">J3</span><div><b>Villa Monzino</b><span>en cours</span></div></div>
+  </div>
+  <div id="wordg" class="abs slam ghost" data-fit="960" data-max="300">UN<br>RÉCIT.</div>
+  <div id="word" class="abs slam" data-fit="960" data-max="300" data-ghost="wordg">UN<br>RÉCIT<span class="dot">.</span></div>
+</div>
+<script>
+  window.__ready = false;
+  fetch('assets/sat/sat-w.json').then(r => r.json()).then(J => {
+    let h = '';
+    for (const [k, pts] of Object.entries(J.routes)) {
+      const d = 'M' + pts.map(p => p.join(' ')).join(' L');
+      h += `<path d="${d}" fill="none" stroke="#17402C" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#D0A070" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" ${k === 'boat' ? 'stroke-dasharray="2 22"' : ''}/>`;
+    }
+    document.getElementById('wsvg').innerHTML = h;
+    const tx = (x) => -100 + x * 0.75, ty = (y) => 0 + y * 0.75;
+    const P = document.getElementById('pins');
+    const photos = [['tdp-mirador-base.jpg', 'J1', J.stops[0], 140, 70, 6, 1], ['tdp-cuernos-01.jpg', 'J2', J.stops[1], -230, -300, -5, 1], ['tdp-amanecer-06.jpg', 'J3', J.stops[2], 230, -400, -10, 1.2]];
+    photos.forEach(([f, j, s, dx, dy, rot, sc]) => {
+      const pin = document.createElement('div'); pin.className = 'pin'; pin.style.left = tx(s.x) + 'px'; pin.style.top = ty(s.y) + 'px'; P.appendChild(pin);
+      const p = document.createElement('div'); p.className = 'pol';
+      p.innerHTML = `<img src="../../assets/photos/${f}"><b>${j}</b>`;
+      p.style.left = (tx(s.x) + dx - 150) + 'px'; p.style.top = (ty(s.y) + dy) + 'px'; p.style.transform = `rotate(${rot}deg) scale(${sc})`;
+      if (sc > 1.1) p.style.filter = 'blur(1.5px)';
+      P.appendChild(p);
+    });
+    window.__ready = true;
+  });
+</script>
+<script src="fit.js"></script>
+</body></html>
