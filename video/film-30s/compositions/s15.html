@@ -116,7 +116,7 @@
       tl.to("#s15-wordg", { opacity: 0, x: 30, y: -20, scale: 1.12, duration: 2 * F - 0.001, ease: "none" }, T_WORD + 0.001);
 
       // 19,278 : 16 avatars réels (comptes de démo) explosent du carnet vers la caméra (graine fixe).
-      const files = ["a02", "a03", "a04", "a05", "a06", "a07", "a08", "a09", "a10", "a11", "a12", "a15", "a16", "a17", "a18", "lea"];
+      const files = ["a01", "a02", "a03", "a04", "a05", "a06", "a07", "a08", "a09", "a10", "a11", "a12", "a15", "a16", "a17", "a18"];
       let seed = 1278;
       const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
       const avs = document.getElementById("s15-avs");
@@ -150,7 +150,8 @@
 
       // Zoom-through : l'avatar de Tom (a13) jaillit du carnet et remplit le cadre à la dernière image (s16 commence dedans).
       tl.fromTo("#s15-tomp", { x: 0, y: 0 }, { x: 0, y: 225, duration: T_FULL - T_BOOM, ease: "power2.in" }, T_BOOM);
-      tl.fromTo("#s15-tom", { scale: 0.4, opacity: 0 }, { scale: 13.5, opacity: 1, duration: T_FULL - T_BOOM, ease: "power2.in" }, T_BOOM);
+      tl.fromTo("#s15-tom", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_BOOM);
+      tl.fromTo("#s15-tom", { scale: 0.4 }, { scale: 13.5, duration: T_FULL - T_BOOM, ease: "power2.in" }, T_BOOM);
 
       window.__timelines = window.__timelines || {};
       window.__timelines[ID] = tl;

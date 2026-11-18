@@ -1,15 +1,103 @@
 <template>
+  <!-- Plan 08 · Le voyage se monte — film 8,405 → 10,345 (hôte 8,205 ; local = film − 8,205).
+       8,372 : raccord image pour image avec la carte de s07 (tuile à ×3,8) ; 8,405 : dézoom brusque, la carte devient une tuile.
+       Tuiles sur les croches : km 8,566 · météo 8,728 · budget 8,890 (compteur) → claque 9,041 · groupe 9,364 · sac 9,525 · papiers 9,687.
+       Survol en perspective (rotation Y −16° → +6°). Match cut final : la tuile « Sac 2,9 kg » grandit et couvre le cadre en Forest à 10,305. -->
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s08-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s08-all { position:absolute; inset:0; opacity:0; }
+    #s08-shake { position:absolute; inset:0; }
+    #s08-bg { position:absolute; inset:-80px; background:radial-gradient(80% 60% at 50% 50%, #1f5038 0%, #17402C 60%, #0f2c1e 100%); }
+    #s08-cam { position:absolute; left:0; top:0; width:1080px; height:1920px; perspective:1400px; perspective-origin:540px 900px; }
+    #s08-grid { position:absolute; left:70px; top:230px; width:940px; height:1260px; transform-style:preserve-3d; }
+    .s08-t { position:absolute; border-radius:48px; background:rgba(250,248,245,0.94); border:2px solid rgba(255,255,255,0.9); box-shadow:0 30px 70px rgba(6,18,12,0.45); padding:34px 38px; color:#1f2a24; overflow:hidden; opacity:0; }
+    .s08-k { font-size:34px; font-weight:700; color:#5B7F55; letter-spacing:0.1em; text-transform:uppercase; display:flex; align-items:center; gap:12px; white-space:nowrap; }
+    .s08-v { font-size:92px; font-weight:800; letter-spacing:-0.03em; color:#17402C; margin-top:14px; line-height:1; white-space:nowrap; position:relative; }
+    .s08-s { font-size:34px; color:#56665D; margin-top:10px; white-space:nowrap; }
+    #s08-map { left:0; top:0; width:560px; height:520px; padding:0; border:none; opacity:1; background:#3a4a3a; }
+    #s08-mapin { position:absolute; left:-60px; top:-250px; width:640px; height:1040px; }
+    #s08-mapin img, #s08-mapin svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
+    #s08-cap { position:absolute; left:24px; bottom:24px; height:70px; padding:0 26px; border-radius:999px; display:flex; align-items:center; background:rgba(250,248,245,0.94); font-size:36px; font-weight:800; color:#17402C; white-space:nowrap; opacity:0; }
+    #s08-km { left:590px; top:0; width:350px; height:250px; }
+    #s08-met { left:590px; top:270px; width:350px; height:250px; }
+    #s08-bud { left:-40px; top:550px; width:1020px; height:330px; background:#FAF8F5; box-shadow:0 0 0 6px #D0A070, 0 40px 90px rgba(6,18,12,0.6); }
+    #s08-bud .s08-v { font-size:200px; font-weight:900; color:#17402C; margin-top:4px; font-variant-numeric:tabular-nums; isolation:isolate; }
+    #s08-eur { color:#D0A070; }
+    #s08-bghost { position:absolute; left:24px; top:-14px; color:#D0A070; filter:blur(3px); opacity:0; z-index:-1; }
+    #s08-bud .s08-s { position:absolute; right:40px; top:40px; }
+    #s08-grp { left:0; top:910px; width:300px; height:250px; }
+    #s08-sac { left:320px; top:910px; width:300px; height:250px; }
+    #s08-sacin { position:absolute; inset:0; padding:34px 38px; }
+    #s08-pap { left:640px; top:910px; width:300px; height:250px; }
+    #s08-grp .s08-v, #s08-sac .s08-v, #s08-pap .s08-v { font-size:76px; }
   </style>
   <div id="root" data-composition-id="s08" data-width="1080" data-height="1920">
-    <div id="s08-t">S08 · à animer</div>
+    <div id="s08-all"><div id="s08-shake">
+      <div id="s08-bg"></div>
+      <div id="s08-cam"><div id="s08-grid">
+        <div id="s08-map" class="s08-t"><div id="s08-mapin"><img src="assets/sat/sat-w.jpg" alt="">
+          <svg viewBox="0 0 1600 2600" preserveAspectRatio="none"><g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1079 701 L1082 717 L1093 728 L1106 734 L1114 745 L1120 780 L1113 809 L1106 825 L1104 870 L1095 882 L1089 883 L1086 888 L1084 897 L1073 904 L1067 918 L1033 935 L1006 963 L1005 970 L1001 971 L998 978 L986 986 L979 997 L966 1005 L957 1014 L950 1016 L922 1041 L914 1046 L906 1045 L901 1051 L869 1056 L864 1059 L856 1056 L840 1057 L834 1050 L827 1053 L818 1049 L810 1049 L800 1054 L786 1055 L765 1046 L754 1054 L738 1054 L727 1059 L723 1059 L721 1055 L716 1059 L693 1062 L675 1069 L671 1067 L668 1071 L664 1069 L660 1072 L655 1071 L655 1080 L644 1091 L627 1089 L612 1109 L586 1128 L579 1139 L567 1148 L551 1165 L549 1172 L543 1179 L538 1189 L541 1201 L538 1214 L523 1232 L521 1244 L518 1244 L514 1260 L515 1273 L512 1291 L502 1294 L501 1297 L480 1300 L477 1313" stroke="#17402C" stroke-width="18"/><path d="M1079 701 L1082 717 L1093 728 L1106 734 L1114 745 L1120 780 L1113 809 L1106 825 L1104 870 L1095 882 L1089 883 L1086 888 L1084 897 L1073 904 L1067 918 L1033 935 L1006 963 L1005 970 L1001 971 L998 978 L986 986 L979 997 L966 1005 L957 1014 L950 1016 L922 1041 L914 1046 L906 1045 L901 1051 L869 1056 L864 1059 L856 1056 L840 1057 L834 1050 L827 1053 L818 1049 L810 1049 L800 1054 L786 1055 L765 1046 L754 1054 L738 1054 L727 1059 L723 1059 L721 1055 L716 1059 L693 1062 L675 1069 L671 1067 L668 1071 L664 1069 L660 1072 L655 1071 L655 1080 L644 1091 L627 1089 L612 1109 L586 1128 L579 1139 L567 1148 L551 1165 L549 1172 L543 1179 L538 1189 L541 1201 L538 1214 L523 1232 L521 1244 L518 1244 L514 1260 L515 1273 L512 1291 L502 1294 L501 1297 L480 1300 L477 1313" stroke="#D0A070" stroke-width="9"/>
+            <path d="M477 1313 L482 1313 L496 1323 L568 1377 L597 1396 L613 1402 L655 1407 L717 1400 L775 1387 L793 1381 L802 1371 L806 1362 L805 1354 L790 1325 L787 1313 L796 1283 L810 1270 L812 1255 L814 1253 L816 1255" stroke="#17402C" stroke-width="18"/><path d="M477 1313 L482 1313 L496 1323 L568 1377 L597 1396 L613 1402 L655 1407 L717 1400 L775 1387 L793 1381 L802 1371 L806 1362 L805 1354 L790 1325 L787 1313 L796 1283 L810 1270 L812 1255 L814 1253 L816 1255" stroke="#D0A070" stroke-width="9" stroke-dasharray="2 22"/>
+            <path d="M816 1255 L825 1247 L831 1246 L836 1258 L821 1275 L802 1288 L796 1303 L798 1322 L805 1333 L814 1331 L813 1339 L823 1362 L825 1372 L837 1380 L833 1394 L838 1419 L836 1421 L828 1419" stroke="#17402C" stroke-width="18"/><path d="M816 1255 L825 1247 L831 1246 L836 1258 L821 1275 L802 1288 L796 1303 L798 1322 L805 1333 L814 1331 L813 1339 L823 1362 L825 1372 L837 1380 L833 1394 L838 1419 L836 1421 L828 1419" stroke="#D0A070" stroke-width="9"/>
+            <path d="M828 1419 L836 1421 L838 1420 L840 1450 L835 1464 L835 1480 L826 1489 L826 1500 L819 1508 L815 1518 L818 1524 L848 1535 L867 1560 L880 1571 L889 1587 L894 1601 L889 1618 L892 1623 L897 1627 L895 1632 L901 1652 L900 1679 L904 1687 L913 1725 L920 1731 L916 1752 L924 1767 L920 1771 L916 1771 L911 1777 L914 1786 L896 1822 L914 1849 L925 1854 L928 1851 L934 1850" stroke="#17402C" stroke-width="18"/><path d="M828 1419 L836 1421 L838 1420 L840 1450 L835 1464 L835 1480 L826 1489 L826 1500 L819 1508 L815 1518 L818 1524 L848 1535 L867 1560 L880 1571 L889 1587 L894 1601 L889 1618 L892 1623 L897 1627 L895 1632 L901 1652 L900 1679 L904 1687 L913 1725 L920 1731 L916 1752 L924 1767 L920 1771 L916 1771 L911 1777 L914 1786 L896 1822 L914 1849 L925 1854 L928 1851 L934 1850" stroke="#D0A070" stroke-width="9"/>
+            <path d="M934 1850 L928 1851 L926 1854 L914 1849 L896 1822 L914 1786 L911 1777 L916 1771 L920 1771 L924 1767 L916 1753 L920 1731 L913 1725 L908 1700 L910 1678 L907 1670 L908 1663 L914 1656 L916 1651 L922 1648 L924 1640 L941 1617 L964 1610 L974 1601 L984 1599 L990 1589 L1001 1583 L1028 1557 L1037 1554 L1037 1547 L1033 1540 L1038 1526 L1034 1487 L1043 1458 L1041 1445 L1054 1430 L1048 1428 L1040 1428 L1038 1423 L1028 1416 L1018 1380 L1020 1374 L1016 1365 L1030 1360" stroke="#17402C" stroke-width="18"/><path d="M934 1850 L928 1851 L926 1854 L914 1849 L896 1822 L914 1786 L911 1777 L916 1771 L920 1771 L924 1767 L916 1753 L920 1731 L913 1725 L908 1700 L910 1678 L907 1670 L908 1663 L914 1656 L916 1651 L922 1648 L924 1640 L941 1617 L964 1610 L974 1601 L984 1599 L990 1589 L1001 1583 L1028 1557 L1037 1554 L1037 1547 L1033 1540 L1038 1526 L1034 1487 L1043 1458 L1041 1445 L1054 1430 L1048 1428 L1040 1428 L1038 1423 L1028 1416 L1018 1380 L1020 1374 L1016 1365 L1030 1360" stroke="#D0A070" stroke-width="9"/>
+          </g><g fill="#FAF8F5" stroke="#17402C" stroke-width="8"><circle cx="1079" cy="701" r="22"/><circle cx="828" cy="1419" r="22"/><circle cx="934" cy="1850" r="22"/><circle cx="1030" cy="1360" r="22"/></g></svg>
+        </div><div id="s08-cap">Le W · 4 étapes</div></div>
+        <div id="s08-km" class="s08-t"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>Parcours</div><div class="s08-v" style="font-size:76px">61,5 km</div><div class="s08-s">5 jours</div></div>
+        <div id="s08-met" class="s08-t"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>Averses</div><div class="s08-v" style="font-size:80px">4° / 8°</div><div class="s08-s">MET Norway</div></div>
+        <div id="s08-bud" class="s08-t"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></svg>Budget</div><div id="s08-bv" class="s08-v"><span id="s08-bghost">4&nbsp;194 €</span><span id="s08-bn">0</span> <span id="s08-eur">€</span></div><div class="s08-s">1 398 € par personne</div></div>
+        <div id="s08-grp" class="s08-t"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Nous</div><div class="s08-v">3</div><div class="s08-s">voyageurs</div></div>
+        <div id="s08-sac" class="s08-t" style="padding:0"><div id="s08-sacin"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg>Sac</div><div class="s08-v">2,9 kg</div><div class="s08-s">14 objets</div></div></div>
+        <div id="s08-pap" class="s08-t"><div class="s08-k"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>Papiers</div><div class="s08-v">✓</div><div class="s08-s">Chili</div></div>
+      </div></div>
+    </div></div>
   </div>
   <script>
     (function () {
+      const F = 1 / 30, T0 = 0.2, END = 2.14;
       const tl = gsap.timeline({ paused: true });
-      tl.set({}, {}, 2.14);
+      // Caméra : origine 0 0 ; un point p de la grille (repère caméra) va à x + s·p.
+      const MAP = { x: 350, y: 490 }, SAC = { x: 540, y: 1265 };
+      const S0 = 3.8, S1 = 9.5;
+      const camAt = (s, c, tx, ty) => ({ scale: s, x: tx - s * c.x, y: ty - s * c.y });
+      // --- Raccord avec s07 (carte identique à ×3,8), puis dézoom brusque ×3,8 → ×1 en 5 images (dépassement 0,97).
+      tl.set("#s08-all", { opacity: 1 }, 0.167);
+      tl.fromTo("#s08-cam", Object.assign({ transformOrigin: "0px 0px" }, camAt(S0, MAP, 540, 960)), Object.assign({ duration: 5 * F, ease: "expo.out", immediateRender: false }, camAt(0.97, MAP, 540 + (350 - 540) * 0.97, 960 + (490 - 960) * 0.97)), T0);
+      tl.set("#s08-cam", Object.assign({ transformOrigin: "0px 0px" }, camAt(S0, MAP, 540, 960)), 0);
+      tl.to("#s08-cam", { scale: 1, x: 0, y: 0, duration: 3 * F, ease: "sine.inOut" }, T0 + 5 * F);
+      // Survol : légère poussée et descente pendant que la mosaïque balaye en Y.
+      tl.to("#s08-cam", { scale: 1.04, x: -540 * 0.04, y: -960 * 0.04 - 30, duration: 1.82 - (T0 + 8 * F), ease: "none" }, T0 + 8 * F);
+      tl.fromTo("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0 }, { rotationY: -16, rotationX: 8, rotationZ: -3, duration: 6 * F, ease: "expo.out", immediateRender: false }, T0);
+      tl.set("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0 }, 0);
+      tl.to("#s08-grid", { rotationY: 6, rotationX: 4, rotationZ: -1, duration: 1.82 - (T0 + 6 * F), ease: "sine.inOut" }, T0 + 6 * F);
+      // --- Les tuiles claquent, une par croche.
+      function clap(sel, t, z) {
+        tl.set(sel, { opacity: 1 }, t);
+        tl.fromTo(sel, { scale: 1.45, z: (z || 0) + 160 }, { scale: 0.93, z: z || 0, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(sel, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+      }
+      tl.set("#s08-cap", { opacity: 1 }, 0.361);
+      tl.fromTo("#s08-cap", { scale: 1.4 }, { scale: 1, duration: 5 * F, ease: "expo.out", immediateRender: false }, 0.361);
+      clap("#s08-km", 0.361); clap("#s08-met", 0.523);
+      clap("#s08-bud", 0.685, 80);
+      // Compteur 0 → 4 194 (linéaire), claque à 9,041 (local 0,836) avec secousse et fantôme laiton.
+      const bn = document.getElementById("s08-bn"), c = { v: 0 };
+      const fmt = (n) => (n >= 1000 ? Math.floor(n / 1000) + " " + String(n % 1000).padStart(3, "0") : String(n));
+      tl.fromTo(c, { v: 0 }, { v: 4194, duration: 0.836 - 0.685, ease: "none", onUpdate: () => { bn.textContent = fmt(Math.round(c.v)); } }, 0.685);
+      tl.fromTo("#s08-bv", { scale: 1, filter: "blur(2px)", transformOrigin: "0% 60%" }, { scale: 1.18, filter: "blur(0px)", duration: 2 * F, ease: "power2.out", immediateRender: false }, 0.836);
+      tl.to("#s08-bv", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, 0.836 + 2 * F);
+      tl.set("#s08-bghost", { opacity: 0.35 }, 0.836);
+      tl.set("#s08-bghost", { opacity: 0 }, 0.836 + 2 * F);
+      tl.fromTo("#s08-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -8 }, { x: -10, y: 6 }, { x: 6, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, 0.836);
+      clap("#s08-grp", 1.159); clap("#s08-sac", 1.320); clap("#s08-pap", 1.482);
+      // --- Match cut final : la tuile « Sac » grandit, se met à plat et devient le fond Forest (10,025 → 10,305).
+      const M0 = 1.82, M1 = 2.10;
+      tl.to("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0, duration: M1 - M0, ease: "power3.in" }, M0);
+      tl.to("#s08-cam", Object.assign({ duration: M1 - M0, ease: "power3.in" }, camAt(S1, SAC, 540, 960)), M0);
+      tl.to("#s08-sac", { backgroundColor: "#17402C", borderRadius: 0, borderColor: "rgba(23,64,44,1)", duration: M1 - M0 - 2 * F, ease: "power2.in" }, M0 + 2 * F);
+      tl.to("#s08-sacin", { opacity: 0, scale: 0.9, filter: "blur(6px)", duration: 5 * F, ease: "power2.in" }, M0 + 2 * F);
+      tl.set({}, {}, END);
       window.__timelines["s08"] = tl;
     })();
   </script>
