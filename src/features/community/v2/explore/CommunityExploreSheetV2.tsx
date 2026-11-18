@@ -171,15 +171,21 @@ export function CommunityExploreSheetV2({
 
   const showIsland = useCallback((message: IslandMessage) => setIsland(message), []);
 
-  // ── Ouverture : volet mémorisé, sauf loupe (Recherche focalisée) ──────────
+  // ── Ouverture : applique toujours l'onglet demandé (ou Recherche sur loupe) ──
   const setTab = explore.setTab;
+  const prevOpenRef = useRef(false);
   useEffect(() => {
+    const justOpened = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
     if (!open) return;
-    if (!firstOpenRef.current) {
+    if (initialSearch) {
+      setTab('search');
+      return;
+    }
+    if (justOpened || !firstOpenRef.current) {
       firstOpenRef.current = true;
       setTab(initialTabToExplore(initialTab));
     }
-    if (initialSearch) setTab('search');
   }, [open, initialSearch, initialTab, setTab]);
 
   // ── « Près de moi » : position demandée au premier usage ────────────────
@@ -906,6 +912,13 @@ export function CommunityExploreSheetV2({
             onCreateCarnet={() => onCreateRequested?.('carnet')}
             onDiscover={() => explore.setCarnetFilter('discover')}
             onRequestGeo={() => void nearMe.request()}
+            onSeeAll={() => {
+              if (filterValue !== 'discover') {
+                explore.setCarnetFilter('discover');
+              } else {
+                void carnetsFeed.loadMore();
+              }
+            }}
           />
         </FilterSlot>
       );
