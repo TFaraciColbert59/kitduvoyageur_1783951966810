@@ -2350,17 +2350,44 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   aspect-ratio: auto !important;
   min-height: 0 !important;
   height: auto !important;
-  background: #ffffff !important;
+  background: rgba(247, 250, 246, 0.92) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
 }
 
 .lkdv-feed-post--sortie:has(.lkdv-post-panel) {
   min-height: 360px !important;
 }
 
-.lkdv-feed-post--sortie .lkdv-feed-creation-card {
-  padding: 54px 10px 10px !important;
-  gap: 6px !important;
+.lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 62px 12px 12px !important;
+  gap: 8px !important;
   min-height: 0 !important;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2-ticket {
+  width: 100% !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(23, 43, 36, 0.08), inset 0 0 0 0.5px rgba(23, 43, 36, 0.08) !important;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2-ticket-foot {
+  display: none !important;
+}
+
+.lkdv-feed-sortie-engage {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.lkdv-feed-sortie-engage .lkdv-engage-bar,
+.lkdv-feed-post--sortie .lkdv-engage-bar {
+  position: static !important;
+  margin-left: auto;
 }
 
 .lkdv-feed-post--sortie .lkdv-post-panel,

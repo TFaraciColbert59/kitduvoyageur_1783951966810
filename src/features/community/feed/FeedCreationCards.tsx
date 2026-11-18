@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { EventTicket } from '@/features/community/v2/shared/EventTicket';
 import type { EventCardVM } from '@/features/community/v2/shared/types';
+import { normalizeRouteTrace } from '@/features/community/v2/data/communityFeedMappers';
 import { KitRectangularPreviewV2 } from '@/features/community/v2/create/forms/KitFormV2';
 import type { KitFormValuesV2, KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import { EngagementBar } from '@/components/social-kit';
@@ -42,6 +43,9 @@ function normalizeSortieLevel(raw: unknown): EventCardVM['level'] {
 function buildFallbackEventVM(post: FeedPost): EventCardVM {
   const meta = (post.creation_meta ?? {}) as CreationMetaRecord;
   const contentTitle = (post.content ?? '').split('·')[0]?.replace(/\*\*/g, '').trim();
+  const tracePts = normalizeRouteTrace(
+    meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
+  );
   return {
     id: typeof meta.event_id === 'string' ? meta.event_id : post.id,
     title:
@@ -86,6 +90,7 @@ function buildFallbackEventVM(post: FeedPost): EventCardVM {
     recurrence: null,
     past: false,
     distanceKmFromMe: null,
+    routeTrace: tracePts,
   };
 }
 
@@ -169,25 +174,27 @@ export function FeedSortiePostCard({
   };
 
   return (
-    <div className="lkdv-feed-creation-card" data-testid="feed-sortie-card">
+    <div className="lkdv-feed-creation-card lkdv-feed-creation-card--sortie" data-testid="feed-sortie-card">
       <EventTicket
         event={eventVM}
-        variant="preview"
+        variant="tile"
         showCapacity={false}
         onOpen={openSortie}
         href={`/sorties/${encodeURIComponent(eventVM.id)}`}
       />
       {showEngagement ? (
-        <EngagementBar
-          tone="ink"
-          likesCount={likesCount}
-          commentsCount={commentsCount}
-          sharesCount={sharesCount}
-          liked={liked}
-          onLike={onLike ?? (() => undefined)}
-          onComment={onComment ?? (() => undefined)}
-          onShare={onShare}
-        />
+        <div className="lkdv-feed-sortie-engage">
+          <EngagementBar
+            tone="ink"
+            likesCount={likesCount}
+            commentsCount={commentsCount}
+            sharesCount={sharesCount}
+            liked={liked}
+            onLike={onLike ?? (() => undefined)}
+            onComment={onComment ?? (() => undefined)}
+            onShare={onShare}
+          />
+        </div>
       ) : null}
     </div>
   );
