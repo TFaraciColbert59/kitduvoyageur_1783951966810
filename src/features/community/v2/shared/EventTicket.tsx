@@ -44,13 +44,30 @@ function ticketHash(value: string): number {
  * et topo de la sortie à droite »). Purement décoratif et déterministe :
  * aucune donnée réelle n'est inventée, `aria-hidden`.
  */
-function TicketTopo({ seed }: { seed: string }) {
+function TicketTopo({
+  seed,
+  routeTrace,
+}: {
+  seed: string;
+  routeTrace?: ReadonlyArray<[number, number]> | null;
+}) {
   const hashValue = ticketHash(seed || 'sortie');
   const shift = hashValue % 7;
   const wobble = hashValue % 5;
-  const route = `M6 ${46 - shift} L24 ${30 - shift} L40 ${36 - shift} L58 ${18 + wobble} L76 ${
-    26 - shift
-  } L94 ${12 + wobble}`;
+  const hasReal = Boolean(routeTrace && routeTrace.length >= 2);
+  const realPoints = hasReal
+    ? routeTrace!.map(([x, y]) => [
+        Math.max(4, Math.min(96, 6 + x * 0.88)),
+        Math.max(4, Math.min(56, 6 + y * 0.48)),
+      ] as [number, number])
+    : null;
+  const route = realPoints
+    ? realPoints.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')
+    : `M6 ${46 - shift} L24 ${30 - shift} L40 ${36 - shift} L58 ${18 + wobble} L76 ${
+        26 - shift
+      } L94 ${12 + wobble}`;
+  const startPt = realPoints ? realPoints[0]! : [6, 46 - shift];
+  const endPt = realPoints ? realPoints[realPoints.length - 1]! : [94, 12 + wobble];
   return (
     <span className="lkdv-cv2-ticket-side lkdv-cv2-ticket-topo" aria-hidden="true">
       <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid slice" focusable="false">
@@ -64,8 +81,8 @@ function TicketTopo({ seed }: { seed: string }) {
           60 + shift
         }, 108 ${44 + shift}`} />
         <path className="lkdv-cv2-ticket-route" d={route} />
-        <circle className="lkdv-cv2-ticket-dot" cx="6" cy={46 - shift} r="2.4" />
-        <circle className="lkdv-cv2-ticket-dot lkdv-cv2-ticket-dot--end" cx="94" cy={12 + wobble} r="2.4" />
+        <circle className="lkdv-cv2-ticket-dot" cx={startPt[0]} cy={startPt[1]} r="2.4" />
+        <circle className="lkdv-cv2-ticket-dot lkdv-cv2-ticket-dot--end" cx={endPt[0]} cy={endPt[1]} r="2.4" />
       </svg>
     </span>
   );
@@ -191,7 +208,7 @@ export function EventTicket({
           {chips.length > 0 ? <span className="lkdv-cv2-ticket-chips">{chips}</span> : null}
           {meta ? <span className="lkdv-cv2-ticket-meta">{meta}</span> : null}
         </span>
-        {variant === 'tile' ? <TicketTopo seed={event.id} /> : null}
+        {variant === 'tile' ? <TicketTopo seed={event.id} routeTrace={event.routeTrace} /> : null}
       </span>
       {variant === 'tile' ? (
         <span className="lkdv-cv2-ticket-foot">

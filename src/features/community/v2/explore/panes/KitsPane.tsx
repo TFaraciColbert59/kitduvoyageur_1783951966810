@@ -248,19 +248,17 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
         {kits.map((kit) => {
           const svgPath = kit.usage && kit.usage.points.length >= 2 ? kitSvgPath(kit.usage.points) : null;
           return (
-            <div key={kit.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
+            <div key={kit.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide lkdv-cv2x-kit-card-wrap" role="listitem">
               <KitRectangularPreviewV2 items={kit.items} values={kit.values} />
               {filter === 'mine' && kit.usage ? (
-                <div className="lkdv-cv2x-kit-bar">
-                  <span className="lkdv-cv2x-kit-trace-pill" title={kit.usage.label}>
-                    {svgPath ? (
-                      <svg width="26" height="20" viewBox="0 0 100 100" aria-hidden="true">
-                        <path d={svgPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : null}
-                    <span>Utilisé sur : {kit.usage.label}</span>
-                  </span>
-                </div>
+                <span className="lkdv-cv2x-kit-trace-pill lkdv-cv2x-kit-trace-pill--top" title={kit.usage.label}>
+                  {svgPath ? (
+                    <svg width="24" height="18" viewBox="0 0 100 100" aria-hidden="true">
+                      <path d={svgPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : null}
+                  <span>{kit.usage.label}</span>
+                </span>
               ) : null}
             </div>
           );

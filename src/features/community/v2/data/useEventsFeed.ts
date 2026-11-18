@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import type { EventCardVM, EventFilter, GeoPoint } from '../shared/types';
 import { FEED_PAGE_SIZE, fetchEventsPage, type FeedCursor } from './communityFeedRpc';
-import { mapEventRow, nextFeedCursor } from './communityFeedMappers';
+import { mapEventRow, nextFeedCursor, normalizeRouteTrace } from './communityFeedMappers';
 import { useCursorFeed, type CursorFeedResult, type FeedPageOutcome } from './useCursorFeed';
 
 export interface EventsFeedParams {
@@ -37,9 +38,35 @@ export function useEventsFeed({ filter, day, near, enabled = true }: EventsFeedP
         return { ok: false, items: [], nextCursor: null, message: 'Les sorties sont indisponibles.' };
       }
       const rows = Array.isArray(page.data) ? page.data : [];
+      const traceByEvent = new Map<string, Array<[number, number]>>();
+      if (rows.length > 0) {
+        try {
+          const supabase = createClient();
+          const { data: postRows } = await supabase
+            .from('community_posts')
+            .select('creation_meta, snapshot_payload')
+            .in('post_type', ['sortie', 'event'])
+            .order('created_at', { ascending: false })
+            .limit(60);
+          for (const pr of (postRows ?? []) as Array<Record<string, unknown>>) {
+            const meta = (pr.creation_meta ?? pr.snapshot_payload ?? {}) as Record<string, unknown>;
+            const evId = typeof meta.event_id === 'string' ? meta.event_id : null;
+            if (!evId || traceByEvent.has(evId)) continue;
+            const pts = normalizeRouteTrace(
+              meta.trace ?? meta.route ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
+            );
+            if (pts && pts.length >= 2) traceByEvent.set(evId, pts);
+          }
+        } catch {
+          /* repli sans tracé */
+        }
+      }
       return {
         ok: true,
-        items: rows.map((row) => mapEventRow(row)),
+        items: rows.map((row) => ({
+          ...mapEventRow(row),
+          routeTrace: traceByEvent.get(row.id) ?? null,
+        })),
         nextCursor: nextFeedCursor(rows, FEED_PAGE_SIZE),
       };
     },

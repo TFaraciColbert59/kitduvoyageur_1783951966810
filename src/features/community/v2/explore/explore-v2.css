@@ -2556,3 +2556,65 @@
 .lkdv-cv2x-event .lkdv-cv2-ticket-foot {
   padding-top: 4px !important;
 }
+
+/* ── Correctifs Sortie (bouton intégré, zéro barre coupée), Kits (pastille haut-droite) & Recherche horizontale propre ── */
+.lkdv-cv2x-event {
+  position: relative;
+  overflow: hidden;
+  padding: 6px 8px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot {
+  display: none !important;
+}
+
+.lkdv-cv2x-event-cta-wrap {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  z-index: 3;
+}
+
+.lkdv-cv2x-kit-card-wrap {
+  position: relative;
+}
+
+.lkdv-cv2x-kit-trace-pill--top {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  max-width: calc(100% - 16px);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.lkdv-cv2x-hrail .lkdv-cv2-group {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: 6px;
+}
+
+.lkdv-cv2x-hrail .lkdv-cv2-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.lkdv-cv2x-hrail .lkdv-cv2x-search-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.lkdv-cv2x-hrail .lkdv-cv2x-search-row {
+  flex: none;
+  width: 232px;
+  min-width: 232px;
+  max-width: 232px;
+  overflow: hidden;
+}

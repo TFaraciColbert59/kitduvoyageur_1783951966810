@@ -161,6 +161,8 @@ export interface EventCardVM {
   recurrence: 'weekly' | 'monthly' | null;
   /** Sortie déjà passée (récap, non inscriptible). */
   past: boolean;
+  /** Tracé normalisé (points [x,y] 0-100) pour le topo du billet. */
+  routeTrace?: Array<[number, number]> | null;
   distanceKmFromMe: number | null;
   /**
    * Coordonnées du lieu (feed `community_events_feed.lat/lng`) : la tuile s'en

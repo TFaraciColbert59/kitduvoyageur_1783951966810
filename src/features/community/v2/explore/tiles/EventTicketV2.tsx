@@ -221,7 +221,7 @@ export function EventTicketV2({
         onOpen(event, domEvent.currentTarget);
       }}
     >
-      <EventTicket event={effectiveEvent} />
+      <EventTicket event={effectiveEvent} showCapacity={false} />
       {weather ? (
         <span
           className="lkdv-cv2x-wxc"
@@ -233,22 +233,7 @@ export function EventTicketV2({
           <i>{weather.tempMin}°</i>
         </span>
       ) : null}
-      {/* Pied de la maquette (`.tk-foot`, L1078-1079) : jauge + « n places restantes » à gauche, pilule
-          d'inscription de 44 px à droite, sur une seule rangée posée sur le pied du billet. */}
-      <div className="lkdv-cv2x-event-action">
-        <span className="lkdv-cv2x-gauge-w">
-          {gaugePercent != null ? (
-            <span
-              className="lkdv-cv2x-gauge"
-              data-tone={gaugeTone}
-              role="img"
-              aria-label={`${event.maxParticipants - Math.max(0, spotsLeft)} places prises sur ${event.maxParticipants}`}
-            >
-              <i style={{ width: `${gaugePercent}%` }} />
-            </span>
-          ) : null}
-          <span className="lkdv-cv2x-event-foot-note">{footNote}</span>
-        </span>
+      <div className="lkdv-cv2x-event-cta-wrap">
         <EventActionButton event={event} status={status} spotsLeft={spotsLeft} busy={busy} onSignup={onSignup} />
       </div>
     </article>

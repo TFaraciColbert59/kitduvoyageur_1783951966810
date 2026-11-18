@@ -57,29 +57,21 @@ function props(overrides: Partial<React.ComponentProps<typeof EventTicketV2>> = 
 }
 
 describe('EventTicketV2 (Sorties#1-6, 19)', () => {
-  it('affiche le billet daté sans doubler le pied de capacité partagé', () => {
+  it('affiche le billet daté sans pied de capacité coupé et avec le bouton intégré en bas à droite', () => {
     render(<EventTicketV2 {...props()} />);
     expect(screen.getByText('Footing de la Bastille')).toBeTruthy();
     expect(screen.getByTestId('cv2-tile-sortie').getAttribute('data-id')).toBe('e1');
-    // Une seule jauge de capacité dans la tuile (le pied du composant partagé).
-    expect(document.querySelectorAll('.lkdv-cv2-capacity').length).toBe(1);
+    expect(document.querySelectorAll('.lkdv-cv2-capacity').length).toBe(0);
+    expect(document.querySelector('.lkdv-cv2x-gauge')).toBeNull();
+    expect(document.querySelector('.lkdv-cv2x-event-cta-wrap')).toBeTruthy();
     expect(screen.getByRole('button', { name: /S’inscrire à Footing/ })).toBeTruthy();
   });
 
-  it('porte la jauge de la maquette : places prises sur le total et « n places restantes »', () => {
-    render(<EventTicketV2 {...props()} />);
-    const gauge = document.querySelector('.lkdv-cv2x-gauge') as HTMLElement;
-    expect(gauge.getAttribute('role')).toBe('img');
-    expect(gauge.getAttribute('aria-label')).toMatch(/^\d+ places prises sur \d+$/);
-    expect(gauge.getAttribute('data-tone')).toBe('open');
-    expect(document.querySelector('.lkdv-cv2x-event-foot-note')?.textContent).toMatch(/places? restantes?/);
-  });
-
-  it('jauge « presque complète » à 2 places ou moins, « complète » à 0', () => {
-    const { rerender } = render(<EventTicketV2 {...props({ spotsLeft: 2 })} />);
-    expect(document.querySelector('.lkdv-cv2x-gauge')?.getAttribute('data-tone')).toBe('low');
-    rerender(<EventTicketV2 {...props({ spotsLeft: 0 })} />);
-    expect(document.querySelector('.lkdv-cv2x-gauge')?.getAttribute('data-tone')).toBe('full');
+  it('affiche le vrai tracé de la sortie sur le topo quand il est fourni', () => {
+    const ev = { ...props().event, routeTrace: [[10, 80], [50, 40], [90, 20]] as Array<[number, number]> };
+    render(<EventTicketV2 {...props()} event={ev} />);
+    const route = document.querySelector('.lkdv-cv2-ticket-route') as SVGPathElement | null;
+    expect(route?.getAttribute('d')).toContain('M');
   });
 
   it('la tuile est un lien intercepté qui ouvre le détail', () => {
