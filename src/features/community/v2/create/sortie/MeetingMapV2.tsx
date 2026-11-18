@@ -3,7 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 import { Crosshair, Loader2 } from 'lucide-react';
 
 export interface MeetingMapV2Props {
@@ -112,17 +116,22 @@ export function MeetingMapV2({
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       map = new MapLibreMap({
         container: containerRef.current,
-        style: createMapStyle('topo'),
+        style: createMapStyle('topo', { projection: 'mercator' }),
         center:
           initial.lat != null && initial.lng != null
             ? [initial.lng, initial.lat]
             : initial.fallback ?? DEFAULT_CENTER,
         zoom: initial.lat != null && initial.lng != null ? 12 : 6,
         minZoom: 2,
-        maxZoom: 17,
+        maxZoom: 18,
         attributionControl: false,
         renderWorldCopies: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        ...SMOOTH_MAPLIBRE_OPTIONS,
       });
+      applySmoothMapPhysics(map, { lockRotation: true });
     } catch {
       setFailed(true);
       return;
@@ -201,13 +210,23 @@ export function MeetingMapV2({
     <div className="lkdv-cv2c-meeting-map">
       <div
         className="lkdv-cv2c-map"
-        style={{ height }}
-        data-hscroll
+        style={{ height, touchAction: 'none' }}
+        data-hscroll=""
+        data-no-swipe=""
+        data-vaul-no-drag=""
         data-testid="cv2-meeting-map"
         role="group"
         aria-label={label}
       >
-        <div ref={containerRef} className="lkdv-cv2c-map-canvas" aria-hidden="true" />
+        <div
+          ref={containerRef}
+          className="lkdv-cv2c-map-canvas"
+          aria-hidden="true"
+          data-hscroll=""
+          data-no-swipe=""
+          data-vaul-no-drag=""
+          style={{ touchAction: 'none' }}
+        />
         {!ready && !failed ? (
           <span className="lkdv-cv2c-map-status">
             <Loader2 size={11} className="lkdv-cv2c-spin" aria-hidden="true" /> Carte…

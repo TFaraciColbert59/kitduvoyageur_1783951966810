@@ -11,7 +11,11 @@ import {
   type MapLayerMouseEvent,
 } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
 import {
   cameraForScale,
@@ -434,7 +438,9 @@ export function CompteMap({
       attributionControl: false,
       renderWorldCopies: false,
       locale: { 'Map.Title': 'Carte du compte' },
+      ...SMOOTH_MAPLIBRE_OPTIONS,
     });
+    applySmoothMapPhysics(instance);
     mapRef.current = instance;
     setMap(instance);
     (window as unknown as { __lkdvCompteMapInstance?: MapLibreMap }).__lkdvCompteMapInstance =

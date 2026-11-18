@@ -15,7 +15,12 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { ExpressionSpecification, GeoJSONSource, Map as MlMap } from 'maplibre-gl';
-import { ATLAS_TILES, createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  ATLAS_TILES,
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
 import { formatNumber } from '@/lib/i18n/format';
 import { useTranslation } from '@/lib/i18n/context';
@@ -384,7 +389,7 @@ export function LiveMap(props: LiveMapProps) {
           : FALLBACK_CENTER;
         const m = new maplibre.Map({
           container,
-          style: { ...createMapStyle(latestProps.current.base), projection: { type: 'mercator' } },
+          style: createMapStyle(latestProps.current.base, { projection: 'mercator' }),
           center,
           zoom: startBounds ? 9 : 4,
           minZoom: 2,
@@ -395,12 +400,13 @@ export function LiveMap(props: LiveMapProps) {
           pitchWithRotate: false,
           touchPitch: false,
           locale: { 'Map.Title': tRef.current('compas.v5.carte.mapLabel') },
+          ...SMOOTH_MAPLIBRE_OPTIONS,
         });
         instance = m;
         mapRef.current = m;
         // Crochet de test (hors production) : les parcours e2e et le banc visuel lisent la caméra.
         if (process.env.NODE_ENV !== 'production') (window as unknown as { __v5Map?: MlMap }).__v5Map = m;
-        m.touchZoomRotate?.disableRotation?.();
+        applySmoothMapPhysics(m, { lockRotation: true });
 
         const forest = themeColor(container, '--lkv-primary', 'rgb(23, 64, 44)');
         const reduced = prefersReducedMotion();

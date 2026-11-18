@@ -4,7 +4,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Check, MapPin, Search, X } from 'lucide-react';
-import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 import type { LngLat } from '@/features/community/create/carnet/traceEngine';
 import './MomentMapOverlayV2.css';
 
@@ -60,14 +64,19 @@ export function MomentMapOverlayV2({
       setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
       map = new MapLibreMap({
         container: containerRef.current,
-        style: createMapStyle('topo'),
+        style: createMapStyle('topo', { projection: 'mercator' }),
         center: initialCenter,
         zoom: trace.length > 0 || (lng != null && lat != null) ? 12 : 7,
         minZoom: 2,
         maxZoom: 18,
         attributionControl: false,
         renderWorldCopies: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        ...SMOOTH_MAPLIBRE_OPTIONS,
       });
+      applySmoothMapPhysics(map, { lockRotation: true });
     } catch {
       return;
     }
@@ -313,9 +322,20 @@ export function MomentMapOverlayV2({
       className="lkdv-cv2c-moment-map-overlay"
       role="dialog"
       aria-label="Carte checkpoint du moment"
+      data-hscroll=""
+      data-no-swipe=""
+      data-vaul-no-drag=""
+      style={{ touchAction: 'none' }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div ref={containerRef} className="lkdv-cv2c-moment-map-canvas" />
+      <div
+        ref={containerRef}
+        className="lkdv-cv2c-moment-map-canvas"
+        data-hscroll=""
+        data-no-swipe=""
+        data-vaul-no-drag=""
+        style={{ touchAction: 'none' }}
+      />
 
       <div className="lkdv-cv2c-moment-map-top">
         <span className="lkdv-cv2c-moment-map-badge">

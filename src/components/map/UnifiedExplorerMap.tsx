@@ -18,7 +18,12 @@ import { Badge, Button, Card, IconButton, Spinner, Tabs } from '@/components/ui'
 import type { MapTrail } from '@/components/explorer/types';
 import { getDifficultyColor, isValidLatLng, sanitizeGeoJSON } from '@/components/explorer/types';
 import type { UnifiedPOI } from '@/lib/queries/pois';
-import { ATLAS_TILES, createMapStyle, type AtlasTileMode } from './engine/createMapStyle';
+import {
+  ATLAS_TILES,
+  SMOOTH_MAPLIBRE_OPTIONS,
+  createMapStyle,
+  type AtlasTileMode,
+} from './engine/createMapStyle';
 import {
   OPENFREEMAP_STYLE_URL,
   baseCredits,
@@ -544,6 +549,7 @@ export default function UnifiedExplorerMap({
           pitchWithRotate: true,
           // Nom du canevas pour les lecteurs d'écran (MapLibre dit « Map »).
           locale: { 'Map.Title': 'Carte' },
+          ...SMOOTH_MAPLIBRE_OPTIONS,
         });
       } catch (caught) {
         // Jamais de spinner infini : erreur journalisée avec contexte, UI débloquée.
@@ -568,6 +574,12 @@ export default function UnifiedExplorerMap({
       // « glisse » après le geste au lieu de s'arrêter net.
       if (instance.dragPan && typeof instance.dragPan.enable === 'function') {
         instance.dragPan.enable({ linearity: 0.3, maxSpeed: 1400, deceleration: 2500 });
+      }
+      try {
+        instance.scrollZoom?.setWheelZoomRate?.(1 / 160);
+        instance.scrollZoom?.setZoomRate?.(1 / 65);
+      } catch {
+        /* ignore */
       }
 
       // MapLibre v6 (projection globe) n'applique pas `minZoom` au dézoom

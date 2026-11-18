@@ -1174,13 +1174,18 @@
   border-radius: var(--cv2-radius-tile-lg);
   overflow: hidden;
   background: var(--lkv-surface-muted);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .lkdv-cv2c-map iframe,
-.lkdv-cv2c-map canvas {
+.lkdv-cv2c-map canvas,
+.lkdv-cv2c-map .maplibregl-canvas-container {
   display: block;
   width: 100%;
   height: 100%;
+  touch-action: none;
 }
 
 .lkdv-cv2c-map-actions {

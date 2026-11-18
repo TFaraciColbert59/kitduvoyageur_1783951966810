@@ -3,7 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Map as MapLibreMap, Marker, setWorkerUrl, type GeoJSONSource, type MapLayerMouseEvent } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 import {
   ArrowLeftRight,
   Download,
@@ -400,14 +404,19 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
             : DEFAULT_CENTER;
       map = new MapLibreMap({
         container: containerRef.current,
-        style: createMapStyle('topo'),
+        style: createMapStyle('topo', { projection: 'mercator' }),
         center: initialCenter,
         zoom: (startLng != null && startLat != null) || trace.length > 0 ? 13 : 12,
         minZoom: 2,
-        maxZoom: 17,
+        maxZoom: 18,
         attributionControl: false,
         renderWorldCopies: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        ...SMOOTH_MAPLIBRE_OPTIONS,
       });
+      applySmoothMapPhysics(map, { lockRotation: true });
     } catch {
       setFailed(true);
       return;
@@ -1185,7 +1194,7 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     if (!map || !previous || !rect) return;
     const next = pinchState();
     map.panBy([previous.cx - next.cx, previous.cy - next.cy], { animate: false });
-    map.zoomTo(map.getZoom() + Math.log2(next.dist / previous.dist), {
+    map.zoomTo(map.getZoom() + Math.log2(next.dist / previous.dist) * 1.35, {
       animate: false,
       around: map.unproject([next.cx - rect.left, next.cy - rect.top]),
     });
@@ -1301,7 +1310,7 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
     if (!drawing || !mapRef.current) return;
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
-    const nextZoom = Math.max(2, Math.min(17, mapRef.current.getZoom() - event.deltaY * 0.0025));
+    const nextZoom = Math.max(2, Math.min(18, mapRef.current.getZoom() - event.deltaY * 0.006));
     mapRef.current.zoomTo(nextZoom, {
       animate: false,
       around: mapRef.current.unproject([event.clientX - rect.left, event.clientY - rect.top]),
@@ -1320,12 +1329,9 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
       map.boxZoom?.disable?.();
       map.touchPitch?.disable?.();
     } else {
-      map.dragPan?.enable?.();
-      map.dragRotate?.enable?.();
       map.doubleClickZoom?.enable?.();
-      map.touchZoomRotate?.enable?.();
       map.boxZoom?.enable?.();
-      map.touchPitch?.enable?.();
+      applySmoothMapPhysics(map, { lockRotation: true });
     }
   }, [drawing, ready]);
 
@@ -1628,17 +1634,20 @@ export function TracePaneV2({ user }: { user: { id: string } | null }) {
 
       <div
         className="lkdv-cv2c-map"
-        data-hscroll
-        data-vaul-no-drag={drawing ? '' : undefined}
+        data-hscroll=""
+        data-no-swipe=""
+        data-vaul-no-drag=""
         style={expanded ? { height: '54dvh', minHeight: 340 } : { height: 288, minHeight: 288 }}
       >
         <div
           ref={containerRef}
           className="lkdv-cv2c-map-canvas"
           aria-label="Carte du tracé du carnet"
-          data-vaul-no-drag={drawing ? '' : undefined}
+          data-hscroll=""
+          data-no-swipe=""
+          data-vaul-no-drag=""
           style={{
-            touchAction: drawing ? 'none' : 'pan-y',
+            touchAction: 'none',
             minHeight: 288,
             cursor: drawing ? 'crosshair' : undefined,
           }}
