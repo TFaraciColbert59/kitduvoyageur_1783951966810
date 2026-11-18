@@ -7,8 +7,12 @@ import { KitRectangularPreviewV2 } from '../../create/forms/KitFormV2';
 import type { KitFormValuesV2, KitItemV2 } from '../../create/engine/createSchemasV2';
 import { ExploreEmpty, ExploreError, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
-import { normalizeRouteTrace, routeSvgPath } from '../../data/communityFeedMappers';
+import { normalizeRouteTrace } from '../../data/communityFeedMappers';
 import { routeTraceFromMapPoints } from '../../data/communityDetails';
+
+function kitSvgPath(points: ReadonlyArray<[number, number]>): string {
+  return points.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ');
+}
 
 interface KitUsageTrace {
   label: string;
@@ -242,7 +246,7 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
       {!online ? <ExploreOfflineBanner /> : null}
       <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Liste des kits">
         {kits.map((kit) => {
-          const svgPath = kit.usage && kit.usage.points.length >= 2 ? routeSvgPath(kit.usage.points, 56, 20, 2) : null;
+          const svgPath = kit.usage && kit.usage.points.length >= 2 ? kitSvgPath(kit.usage.points) : null;
           return (
             <div key={kit.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
               <KitRectangularPreviewV2 items={kit.items} values={kit.values} />
@@ -250,8 +254,8 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
                 <div className="lkdv-cv2x-kit-bar">
                   <span className="lkdv-cv2x-kit-trace-pill" title={kit.usage.label}>
                     {svgPath ? (
-                      <svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true">
-                        <path d={svgPath} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg width="26" height="20" viewBox="0 0 100 100" aria-hidden="true">
+                        <path d={svgPath} fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     ) : null}
                     <span>Utilisé sur : {kit.usage.label}</span>

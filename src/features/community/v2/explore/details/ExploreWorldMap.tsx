@@ -18,7 +18,21 @@ import {
   fetchEventsPage,
 } from '../../data/communityFeedRpc';
 import { fetchCarnetExtras, routeTraceFromMapPoints } from '../../data/communityDetails';
-import { normalizeRouteTrace, toNumber } from '../../data/communityFeedMappers';
+import { toNumber } from '../../data/communityFeedMappers';
+
+function extractLngLatTrace(raw: unknown): Array<[number, number]> | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const pts: Array<[number, number]> = [];
+  for (const entry of raw) {
+    if (!Array.isArray(entry) || entry.length < 2) continue;
+    const lng = toNumber(entry[0] as number | string | null);
+    const lat = toNumber(entry[1] as number | string | null);
+    if (lng == null || lat == null) continue;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
+    pts.push([lng, lat]);
+  }
+  return pts.length >= 2 ? pts : undefined;
+}
 
 export type WorldMapCriterion = 'popular' | 'recent' | 'verified';
 
@@ -96,11 +110,23 @@ export function ExploreWorldMap({
           limit: 40,
         });
         const rows = Array.isArray(res.data) ? res.data : [];
-        const extras = await fetchCarnetExtras(rows.map((r) => r.id));
+        const ids = rows.map((r) => r.id).filter(Boolean);
+        const [extras, rawMapPointsRes] = await Promise.all([
+          fetchCarnetExtras(ids),
+          ids.length > 0
+            ? createClient().from('carnets').select('id, map_points').in('id', ids)
+            : Promise.resolve({ data: [] }),
+        ]);
+        const rawTraceById = new Map<string, Array<[number, number]>>();
+        for (const r of (rawMapPointsRes.data ?? []) as Array<{ id?: string; map_points?: unknown }>) {
+          if (!r?.id) continue;
+          const pts = extractLngLatTrace(routeTraceFromMapPoints(r.map_points));
+          if (pts) rawTraceById.set(String(r.id), pts);
+        }
         for (const row of rows) {
           const extra = extras[row.id];
           if (criterion === 'verified' && !extra?.verifiedGps) continue;
-          const trace = extra?.routeTrace ?? undefined;
+          const trace = rawTraceById.get(row.id);
           let lat = toNumber(row.lat);
           let lng = toNumber(row.lng);
           if ((lat == null || lng == null) && trace && trace.length > 0) {
@@ -179,10 +205,10 @@ export function ExploreWorldMap({
               const meta = (pr.creation_meta ?? pr.snapshot_payload ?? {}) as Record<string, unknown>;
               const evId = typeof meta.event_id === 'string' ? meta.event_id : null;
               if (!evId || traceByEvent.has(evId)) continue;
-              const pts = normalizeRouteTrace(
+              const pts = extractLngLatTrace(
                 meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
               );
-              if (pts && pts.length >= 2) traceByEvent.set(evId, pts);
+              if (pts) traceByEvent.set(evId, pts);
             }
           } catch {
             /* repli sans tracé */
@@ -239,9 +265,9 @@ export function ExploreWorldMap({
             const meta = (row.creation_meta ?? row.snapshot_payload ?? {}) as Record<string, unknown>;
             const lat = toNumber(meta.lat as number | null);
             const lng = toNumber(meta.lng as number | null);
-            const trace = normalizeRouteTrace(
+            const trace = extractLngLatTrace(
               meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
-            ) ?? undefined;
+            );
             const carnetId = typeof meta.carnet_id === 'string' ? meta.carnet_id : null;
             if (carnetId) carnetIds.add(carnetId);
             metaList.push({
@@ -262,7 +288,7 @@ export function ExploreWorldMap({
               .select('id, title, destination, map_points')
               .in('id', Array.from(carnetIds));
             for (const c of (carnets ?? []) as Array<Record<string, unknown>>) {
-              const pts = normalizeRouteTrace(routeTraceFromMapPoints(c.map_points)) ?? undefined;
+              const pts = extractLngLatTrace(routeTraceFromMapPoints(c.map_points));
               if (pts && pts.length > 0) {
                 carnetMap.set(String(c.id), {
                   lng: pts[0]![0],
