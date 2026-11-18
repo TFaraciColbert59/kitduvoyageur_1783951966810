@@ -1318,9 +1318,9 @@
 .lkdv-cv2c-day-tabs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 6px 2px 6px;
   scrollbar-width: none;
 }
 
@@ -1335,6 +1335,7 @@
   gap: 6px;
   min-height: 34px;
   padding: 0 12px;
+  white-space: nowrap;
   border: 1px solid transparent;
   border-radius: var(--lkv-radius-full);
   background: var(--cv2-field-bg);
@@ -2590,7 +2591,6 @@
 
 .lkdv-cv2-sheet .lkdv-cv2-chip--sm::after,
 .lkdv-cv2-sheet .lkdv-cv2c-chip-x::after,
-.lkdv-cv2-sheet .lkdv-cv2c-day-tab::after,
 .lkdv-cv2-sheet .lkdv-cv2c-map-btn::after,
 .lkdv-cv2-sheet .lkdv-cv2c-story-dock button::after,
 .lkdv-cv2-sheet .lkdv-cv2c-story-sticker::after {
@@ -2600,6 +2600,15 @@
   right: -6px;
   top: -8px;
   bottom: -8px;
+}
+
+.lkdv-cv2-sheet .lkdv-cv2c-day-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -5px;
+  bottom: -5px;
 }
 
 .lkdv-cv2c-map-btn {

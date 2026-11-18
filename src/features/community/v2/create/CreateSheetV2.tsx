@@ -81,10 +81,11 @@ interface IslandState {
   title: string;
   subtitle: string;
   kind: CreateKindV2;
-  actionLabel: string;
-  action: () => void;
+  actionLabel?: string;
+  action?: () => void;
   undoLabel?: string;
   undo?: () => void;
+  stayOpen?: boolean;
 }
 
 function kindIndexOf(kind: CreateKindV2): number {
@@ -144,6 +145,24 @@ export function CreateSheetV2({
       setPrefillNonce((nonce) => nonce + 1);
     }
   }, [initialKind, initialPrefill, open]);
+
+  // Écoute des notifications d'erreur/alerte Dynamic Island iPhone (ex. tracé trop long d'un coup).
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return undefined;
+    const onIslandEvent = (event: Event) => {
+      const detailPayload = (event as CustomEvent<{ title?: string; subtitle?: string }>).detail;
+      if (!detailPayload?.title) return;
+      keepOpenRef.current = true;
+      setIsland({
+        title: detailPayload.title,
+        subtitle: detailPayload.subtitle ?? '',
+        kind: activeKind,
+        stayOpen: true,
+      });
+    };
+    window.addEventListener('lkdv-create-island', onIslandEvent);
+    return () => window.removeEventListener('lkdv-create-island', onIslandEvent);
+  }, [activeKind, open]);
 
   // Clavier mobile : le champ actif reste visible au-dessus du clavier.
   useEffect(() => {
@@ -623,10 +642,10 @@ export function CreateSheetV2({
       open
       title={island.title}
       subtitle={island.subtitle}
-      action={{ label: island.actionLabel, onAction: island.action }}
+      action={island.action && island.actionLabel ? { label: island.actionLabel, onAction: island.action } : undefined}
       undo={island.undo && island.undoLabel ? { label: island.undoLabel, onUndo: island.undo } : undefined}
       onClose={() => {
-        const stay = keepOpenRef.current;
+        const stay = keepOpenRef.current || Boolean(island.stayOpen);
         keepOpenRef.current = false;
         setIsland(null);
         if (!stay) finishCreated(island.kind);

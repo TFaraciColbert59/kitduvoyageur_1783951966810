@@ -580,11 +580,24 @@
 .freedom-comments-panel .freedom-drawer-content {
   flex: 1 1 auto;
   min-height: 0;
+  padding-bottom: calc(68px + var(--kb-inset, 0px));
 }
 .freedom-comments-panel .freedom-comments-composer {
-  padding-bottom: calc(12px + var(--kb-inset, 0px));
-  border-radius: 0 0 inherit inherit;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 8;
+  padding: 8px 10px calc(10px + var(--kb-inset, 0px));
+  border-top: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  pointer-events: none;
   transition: padding-bottom 0.22s ease;
+}
+.freedom-comments-panel .freedom-composer-form {
+  pointer-events: auto;
 }
 
 /* Tiroir des pièces jointes ouvert depuis un post : il couvre la carte du post

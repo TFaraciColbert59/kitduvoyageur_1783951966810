@@ -6,6 +6,7 @@ import { DEFAULT_VIDEO_PREFERENCES, type VideoPreferences } from '@/features/com
 import { DEFAULT_DOUBLE_TAP_WINDOW_MS } from '@/hooks/gestures';
 import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ImageOff, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 
 export interface CommunityPostMediaProps {
@@ -176,7 +177,24 @@ export function CommunityPostMedia({
   videoPreferences = DEFAULT_VIDEO_PREFERENCES,
 }: CommunityPostMediaProps) {
   const [failed, setFailed] = useState(false);
+  const [localBurst, setLocalBurst] = useState(0);
   const clickTimer = useRef<number | null>(null);
+  const prevLikedRef = useRef(liked);
+  const effectiveBurst = Math.max(burst, localBurst);
+
+  useEffect(() => {
+    if (liked && !prevLikedRef.current) {
+      setLocalBurst((k) => k + 1);
+    }
+    prevLikedRef.current = liked;
+  }, [liked]);
+
+  const triggerLikeWithAnim = useCallback(() => {
+    if (!liked) {
+      setLocalBurst((k) => k + 1);
+    }
+    onLike();
+  }, [liked, onLike]);
   const mediaLabel = alt?.trim() || 'Média de la publication';
   // Le poster d'une vidéo est une image distante comme les autres : sans
   // passage par l'optimiseur, il partait en 1600 px / 500 Ko pour une carte
@@ -201,14 +219,14 @@ export function CommunityPostMedia({
     if (clickTimer.current) {
       window.clearTimeout(clickTimer.current);
       clickTimer.current = null;
-      onLike();
+      triggerLikeWithAnim();
       return;
     }
     clickTimer.current = window.setTimeout(() => {
       clickTimer.current = null;
-      onLike();
+      triggerLikeWithAnim();
     }, DEFAULT_DOUBLE_TAP_WINDOW_MS);
-  }, [onLike]);
+  }, [triggerLikeWithAnim]);
 
   return (
     <div className="lkdv-post-main">
@@ -272,11 +290,25 @@ export function CommunityPostMedia({
               onError={() => setFailed(true)}
             />
           )}
-          {burst > 0 ? (
-            <span key={burst} className="lkdv-post-heart-burst" aria-hidden="true">
-              <LikeIcon plain size={82} />
-            </span>
-          ) : null}
+          <AnimatePresence>
+            {effectiveBurst > 0 ? (
+              <motion.span
+                key={effectiveBurst}
+                className="lkdv-post-heart-burst"
+                aria-hidden="true"
+                initial={{ scale: 0.25, opacity: 0, rotate: -14 }}
+                animate={{
+                  scale: [0.25, 1.32, 0.95, 1.08, 1.15],
+                  opacity: [0, 1, 1, 0.85, 0],
+                  rotate: [-14, 8, -4, 0, 0],
+                }}
+                exit={{ opacity: 0, scale: 1.25 }}
+                transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <LikeIcon plain size={84} />
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
         </div>
 
         {nav ? (
@@ -295,7 +327,7 @@ export function CommunityPostMedia({
           commentsCount={commentsCount}
           sharesCount={sharesCount}
           liked={liked}
-          onLike={onLike}
+          onLike={triggerLikeWithAnim}
           onComment={onComment}
           onShare={onShare}
         />

@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { MessageCircle, Send } from 'lucide-react';
 import { LikeIcon } from './LikeIcon';
 
@@ -40,6 +41,7 @@ export function EngagementBar({
   tone = 'media',
   className,
 }: EngagementBarProps) {
+  const [pulseKey, setPulseKey] = useState(0);
   const stop = (fn: () => void) => (event: React.MouseEvent) => {
     event.stopPropagation();
     fn();
@@ -50,8 +52,26 @@ export function EngagementBar({
       role="group"
       aria-label="Actions de la publication"
     >
-      <button type="button" className={liked ? 'on' : ''} onClick={stop(onLike)} aria-label={`Aimer (${likesCount})`} aria-pressed={liked}>
-        <LikeIcon active={liked} size={18} />
+      <button
+        type="button"
+        className={liked ? 'on' : ''}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!liked) setPulseKey((k) => k + 1);
+          onLike();
+        }}
+        aria-label={`Aimer (${likesCount})`}
+        aria-pressed={liked}
+      >
+        <motion.span
+          key={pulseKey}
+          initial={pulseKey > 0 ? { scale: 0.72 } : false}
+          animate={liked ? { scale: [0.72, 1.38, 0.92, 1.08, 1] } : { scale: 1 }}
+          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <LikeIcon active={liked} size={18} />
+        </motion.span>
         <span className="lkdv-post-action-count" aria-hidden="true">{formatEngagementCount(likesCount)}</span>
       </button>
       <button type="button" onClick={stop(onComment)} aria-label={`Commenter (${commentsCount})`}>

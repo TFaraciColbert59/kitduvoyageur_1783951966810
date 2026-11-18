@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Check } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostShareTargets } from './usePostShareTargets';
@@ -32,6 +33,7 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   const { conversations, loading, sending, send } = usePostShareTargets(user?.id);
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState('');
+  const [sentIds, setSentIds] = useState<string[]>([]);
   const filteredConversations = conversations.filter((conversation) => {
     const text = query.trim().toLowerCase();
     if (!text) return true;
@@ -121,8 +123,9 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
         ) : (
           filteredConversations.map((conversation) => {
             const title = conversation.title || conversation.name || 'Conversation';
+            const alreadySent = sentIds.includes(conversation.id);
             return (
-              <div key={conversation.id} className="lkdv-share-conv">
+              <div key={conversation.id} className={`lkdv-share-conv${alreadySent ? ' is-sent' : ''}`}>
                 <Avatar url={conversation.avatar_url} name={title} />
                 <div>
                   <b>{title}</b>
@@ -131,14 +134,25 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
                 <button
                   type="button"
                   disabled={sending === conversation.id}
-                  aria-label={`Envoyer à ${title}`}
+                  className={alreadySent ? 'is-sent' : undefined}
+                  aria-label={alreadySent ? `Envoyé à ${title}` : `Envoyer à ${title}`}
                   onClick={async () => {
                     const ok = await send(post.id, conversation.id);
-                    toast(ok ? 'Publication envoyée.' : 'Envoi impossible.', ok ? 'success' : 'error');
-                    if (ok) onClose();
+                    if (ok) {
+                      setSentIds((prev) =>
+                        prev.includes(conversation.id) ? prev : [...prev, conversation.id],
+                      );
+                    }
+                    toast(ok ? `Envoyé à ${title}.` : 'Envoi impossible.', ok ? 'success' : 'error');
                   }}
                 >
-                  {sending === conversation.id ? '…' : <Icon name="send" size={15} aria-hidden="true" />}
+                  {sending === conversation.id ? (
+                    '…'
+                  ) : alreadySent ? (
+                    <Check size={15} strokeWidth={2.5} aria-hidden="true" />
+                  ) : (
+                    <Icon name="send" size={15} aria-hidden="true" />
+                  )}
                 </button>
               </div>
             );

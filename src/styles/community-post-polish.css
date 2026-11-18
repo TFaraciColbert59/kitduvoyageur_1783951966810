@@ -337,3 +337,87 @@ html body .lkdv-share-panel .lkdv-share-conv button:not(#lkdv-post-polish) {
   .lkdv-share-top button { animation: none; }
   .lkdv-share-search { transition: none; }
 }
+
+/* --- Hauteur minimum 35% de la vue sur tous les posts du fil --------------- */
+html body .lkdv-feed-post:not(#lkdv-post-polish),
+html body .lkdv-feed-post.lkdv-feed-post--text:not(#lkdv-post-polish) {
+  min-height: 35dvh;
+}
+
+/* --- Panneaux swipe : transparents sans fond blanc + glissement fluide --- */
+html body .lkdv-feed-post .lkdv-feed-panel-surface:not(#lkdv-post-polish) {
+  background: transparent !important;
+}
+html body .lkdv-feed-post .lkdv-post-panel:not(#lkdv-post-polish) {
+  background: var(--post-glass-bg) !important;
+}
+html body .lkdv-post-panel-slot:not(#lkdv-post-polish) {
+  user-select: none;
+  -webkit-user-select: none;
+}
+html body .lkdv-post-panel-slot :is(input, textarea, select):not(#lkdv-post-polish) {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* --- Cartes Sortie & Kit dans le fil : identiques aux aperçus ----------- */
+.lkdv-feed-creation-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+.lkdv-feed-creation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.lkdv-feed-kit-import-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(23, 64, 44, 0.16);
+  background: rgba(255, 255, 255, 0.72);
+  color: #17402c;
+  font: 600 12px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  cursor: pointer;
+}
+.lkdv-feed-kit-import-pill:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* --- Conversations de partage (Liquid Glass Design System) --------------- */
+html body .lkdv-share-panel .lkdv-share-list:not(#lkdv-post-polish) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+html body .lkdv-share-panel .lkdv-share-conv:not(#lkdv-post-polish) {
+  min-height: 50px;
+  padding: 7px 10px;
+  border-radius: 16px;
+  border-bottom: 0;
+  background: rgba(255, 255, 255, 0.56);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 0 0 0.5px rgba(23, 43, 36, 0.08);
+}
+html body .lkdv-share-panel .lkdv-share-conv.is-sent:not(#lkdv-post-polish) {
+  background: rgba(221, 235, 216, 0.65);
+}
+html body .lkdv-share-panel .lkdv-share-conv button:not(#lkdv-post-polish) {
+  width: 36px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.12);
+  color: #17402c;
+}
+html body .lkdv-share-panel .lkdv-share-conv button.is-sent:not(#lkdv-post-polish) {
+  background: #17402c;
+  color: #ffffff;
+}

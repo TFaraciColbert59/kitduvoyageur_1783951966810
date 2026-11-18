@@ -69,6 +69,7 @@ const SAMPLE_PX = 5;
 const WAYPOINT_PX = 14;
 const ROUTE_MAX_POINTS = 8;
 const MIN_ROUTE_M = 12;
+const MAX_STROKE_KM = 35;
 const MAX_DETOUR = 9.0;
 const ROUTE_ATTEMPT_TIMEOUT_MS = 4500;
 const TAP_MAX_PX = 8;
@@ -196,7 +197,7 @@ export function TracePaneV2({
   const watchedSortieDate = form.watch('date' as never) as unknown as string | undefined;
   const startDate = watchedStartDate || watchedSortieDate || '';
   const globalTrace = React.useMemo(() => (watchedTrace ?? []) as LngLat[], [watchedTrace]);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(-1);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const ensuredDays = React.useMemo(
     () =>
       watchedDays && watchedDays.length > 0
@@ -204,12 +205,14 @@ export function TracePaneV2({
         : syncCarnetDaysV2([], Math.max(1, nbJours), startDate),
     [nbJours, startDate, watchedDays],
   );
+  const safeDayIndex = Math.max(0, Math.min(ensuredDays.length - 1, selectedDayIndex));
   const trace = React.useMemo(() => {
-    if (selectedDayIndex >= 0 && ensuredDays[selectedDayIndex]) {
-      return ((ensuredDays[selectedDayIndex].trace ?? []) as LngLat[]);
+    if (ensuredDays[safeDayIndex]) {
+      const dayTrace = (ensuredDays[safeDayIndex].trace ?? []) as LngLat[];
+      if (dayTrace.length > 0 || safeDayIndex > 0) return dayTrace;
     }
-    return globalTrace;
-  }, [ensuredDays, globalTrace, selectedDayIndex]);
+    return ((ensuredDays[0]?.trace ?? globalTrace) as LngLat[]);
+  }, [ensuredDays, globalTrace, safeDayIndex]);
   const watchedStartLat = form.watch('startLat');
   const watchedStartLng = form.watch('startLng');
   const watchedMeetingLat = form.watch('meetingLat' as never) as unknown as number | null | undefined;
@@ -1374,6 +1377,23 @@ export function TracePaneV2({
         return;
       }
 
+      const strokeKm = lengthKm(gesturePoints);
+      if (strokeKm > MAX_STROKE_KM) {
+        setSnapState('idle');
+        haptic('error');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('lkdv-create-island', {
+              detail: {
+                title: `Tracé trop long (max ${MAX_STROKE_KM} km d’un coup)`,
+                subtitle: 'Trace par étapes plus courtes ou importe un GPX.',
+              },
+            }),
+          );
+        }
+        return;
+      }
+
       const tol = pixelTolerance(3);
       const initialPoints =
         gesturePoints.length > 2 ? simplify(smooth(gesturePoints, 2), tol) : gesturePoints;
@@ -1886,50 +1906,25 @@ export function TracePaneV2({
         role="tablist"
         aria-label="Choisir le tracé par jour"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={selectedDayIndex === -1}
-          className={`lkdv-cv2c-day-tab ${selectedDayIndex === -1 ? 'is-active' : ''}`}
-          onClick={() => {
-            if (dayJiggleMode) setDayJiggleMode(false);
-            setSelectedDayIndex(-1);
-            haptic('selection');
-            centerAndLockMap();
-            if (mapRef.current && globalTrace.length >= 2) {
-              const lngs = globalTrace.map((p) => p[0]);
-              const lats = globalTrace.map((p) => p[1]);
-              mapRef.current.fitBounds(
-                [
-                  [Math.min(...lngs), Math.min(...lats)],
-                  [Math.max(...lngs), Math.max(...lats)],
-                ],
-                { padding: 48, maxZoom: 14, duration: 360 },
-              );
-            }
-          }}
-        >
-          Global
-        </button>
         <Reorder.Group
           as="div"
           axis="x"
           values={ensuredDays}
           onReorder={handleReorderDays}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
         >
           {ensuredDays.map((day, idx) => {
             const dPts = (day.trace ?? []) as LngLat[];
             const dKm = lengthKm(dPts);
             const color = dayTraceColor(idx);
-            const isActive = selectedDayIndex === idx;
+            const isActive = safeDayIndex === idx;
             return (
               <Reorder.Item
                 as="div"
                 key={day.id}
                 value={day}
                 dragListener={dayJiggleMode}
-                style={{ position: 'relative', display: 'inline-flex' }}
+                style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}
                 animate={
                   dayJiggleMode
                     ? {

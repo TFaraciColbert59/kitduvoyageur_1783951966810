@@ -13,6 +13,12 @@ import { EngagementBar } from '@/components/social-kit';
 import { isHorizontalSwipe, isVerticalDismiss, useTouchSwipe } from '@/hooks/gestures';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
+import {
+  FeedKitPostCard,
+  FeedSortiePostCard,
+  isKitPost,
+  isSortiePost,
+} from './FeedCreationCards';
 import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
 import { PostSharePanel } from './PostSharePanel';
 import { PostAttachments } from './PostAttachments';
@@ -115,6 +121,8 @@ export function CommunityFeedPost({
     : firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
+  const isSortie = !hasMedia && !post.sportCard && isSortiePost(post);
+  const isKit = !hasMedia && !post.sportCard && !isSortie && isKitPost(post);
   const optionsId = `feed-options-${post.id}`;
 
   /** Appui sur une action du menu : le bouton « pop », le menu se replie, puis l'action part. */
@@ -432,6 +440,47 @@ export function CommunityFeedPost({
             onReport={user?.id === post.author_id ? undefined : () => setReportOpen(true)}
           />
         </div>
+      ) : isSortie ? (
+        <FeedSortiePostCard
+          post={post}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
+      ) : isKit ? (
+        <FeedKitPostCard
+          post={post}
+          userId={user?.id}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
       ) : (
         <>
           <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
@@ -651,7 +700,7 @@ export function CommunityFeedPost({
     </article>
   );
 
-  const hasAttachments = !source && (Boolean(post.linked_kit_id) || Boolean(post.snapshot_payload));
+  const hasAttachments = !source && !isKit && (Boolean(post.linked_kit_id) || Boolean(post.snapshot_payload));
   return source?.footer || hasAttachments ? (
     <div className="lkdv-feed-post-stack">
       {articleEl}

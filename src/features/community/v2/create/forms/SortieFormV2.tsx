@@ -561,71 +561,24 @@ function ItineraireStep({
       </div>
 
       <div
-        className="lkdv-cv2-card lkdv-cv2c-perf-card"
+        className="lkdv-cv2-field-hint"
         data-testid="cv2-sortie-perf-card"
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
-          padding: '13px 14px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '6px',
+          margin: 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-          <span
-            className="lkdv-cv2-eyebrow"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', margin: 0 }}
-          >
-            <Activity size={13} aria-hidden="true" />
-            Modèle de performance & densité statistique
-          </span>
-          <span
-            className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-            style={{ pointerEvents: 'none', fontWeight: 700 }}
-          >
-            Densité {estimate.collectiveStatDensityPct} %
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-            gap: '8px',
-          }}
-        >
-          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={11} aria-hidden="true" /> Marche + pauses
-            </span>
-            <b>
-              {estimate.movingHours > 0
-                ? `${formatPreciseDurationFr(estimate.movingHours, 1)} + ${estimate.pauseMinutes} min`
-                : '—'}
-            </b>
-          </div>
-          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Gauge size={11} aria-hidden="true" /> Allure retenue
-            </span>
-            <b>
-              {estimate.effectiveFlatSpeedKmh.toFixed(1).replace('.', ',')} km/h · +
-              {estimate.effectiveAscentSpeedMPerH} m/h
-            </b>
-          </div>
-          <div className="lkdv-cv2c-metric" style={{ padding: '8px 10px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Mountain size={11} aria-hidden="true" /> Effort IBP / KE
-            </span>
-            <b>
-              {estimate.ibpIndex > 0
-                ? `IBP ${estimate.ibpIndex} · ${String(estimate.effortScoreKe).replace('.', ',')} KE/j`
-                : '—'}
-            </b>
-          </div>
-        </div>
-
+        <span>
+          {estimate.movingHours > 0
+            ? `Allure ${estimate.effectiveFlatSpeedKmh.toFixed(1).replace('.', ',')} km/h · +${estimate.effectiveAscentSpeedMPerH} m/h`
+            : 'Durée estimée automatiquement selon ton profil'}
+        </span>
         {estimate.factors.perDayFormatted.length > 1 ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {estimate.factors.perDayFormatted.map((label, idx) => (
               <span key={`day-est-${idx}`} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
                 J{idx + 1} : {label || '—'}
@@ -633,13 +586,6 @@ function ItineraireStep({
             ))}
           </div>
         ) : null}
-
-        <small className="lkdv-cv2-field-hint" style={{ margin: 0, lineHeight: 1.45 }}>
-          {estimate.totalAnalyzedOutings > 0
-            ? `Calibré sur ton profil terrain (${estimate.totalAnalyzedOutings} sortie${estimate.totalAnalyzedOutings > 1 ? 's' : ''} analysée${estimate.totalAnalyzedOutings > 1 ? 's' : ''}) + ${estimate.factors.modelLabel}. `
-            : `Calculé via ${estimate.factors.modelLabel}. `}
-          À la création tu es seul (1 participant) : plus des participants rejoignent la sortie, plus la densité de statistiques de chacun fait évoluer automatiquement cette durée.
-        </small>
       </div>
     </>
   );
