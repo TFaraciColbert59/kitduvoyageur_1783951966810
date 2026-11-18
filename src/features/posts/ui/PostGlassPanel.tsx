@@ -76,10 +76,14 @@ export function PostGlassPanel({
     }, SHEET_EXIT_MS);
   }, [onClosed]);
 
-  /* Tactile : retour à la photo par balayage vers la gauche. */
+  /* Tactile : retour à la photo par balayage horizontal (gauche ou droite). */
   useTouchSwipe(rootRef, {
     ignore: (target) => Boolean((target as HTMLElement | null)?.closest?.('input,textarea,select')),
     onSwipeLeft: () => {
+      swipedRef.current = true;
+      onClose();
+    },
+    onSwipeRight: () => {
       swipedRef.current = true;
       onClose();
     },
@@ -203,7 +207,7 @@ export function PostGlassPanel({
         if (!start) return;
         const dx = event.clientX - start.x;
         const dy = event.clientY - start.y;
-        if (isHorizontalSwipe(dx, dy) && dx < -40) {
+        if (isHorizontalSwipe(dx, dy) && Math.abs(dx) > 40) {
           pointerStart.current = null;
           swipedRef.current = true;
           setGesture(false);

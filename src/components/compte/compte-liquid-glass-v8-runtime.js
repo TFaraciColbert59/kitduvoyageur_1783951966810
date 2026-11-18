@@ -4365,12 +4365,12 @@ function applyAccountBootstrap(data) {
   return true;
 }
 
-const notifyHostAction = (a, v) => {
+function notifyHostAction(a, v) {
   if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
     try { return window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
-};
+}
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
 function renderPostModal(postId) {
   if (!isCurrent()) return;

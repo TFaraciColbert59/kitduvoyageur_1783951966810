@@ -297,7 +297,7 @@ export function ExploreWorldMap({
             const { data: postRows } = await supabase
               .from('community_posts')
               .select('post_type, creation_meta, snapshot_payload')
-              .in('post_type', ['sortie', 'event'])
+              .not('creation_meta', 'is', null)
               .order('created_at', { ascending: false })
               .limit(80);
             for (const pr of (postRows ?? []) as Array<Record<string, unknown>>) {
