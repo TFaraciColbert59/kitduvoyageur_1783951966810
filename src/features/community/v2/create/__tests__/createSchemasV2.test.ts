@@ -79,19 +79,25 @@ describe('schémas V2 — une validation par étape', () => {
     }
   });
 
-  it('Publication : le format Événement renvoie vers Sortie (maquette L2803)', () => {
-    const values = {
+  it('Publication : le format Événement se crée directement avec date, titre et détails ou sortie', () => {
+    const missing = {
       ...createDefaultsV2('post'),
       format: 'event' as const,
       audience: 'public' as const,
     };
-    const result = postSchemaV2.safeParse(values);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const issues = result.error.issues.filter((issue) => issue.path[0] === 'format');
-      expect(issues).toHaveLength(1);
-      expect(issues[0].message).toBe('Un événement se crée dans le formulaire Sortie.');
+    const invalid = postSchemaV2.safeParse(missing);
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) {
+      expect(invalid.error.issues.some((issue) => issue.path[0] === 'eventDate')).toBe(true);
+      expect(invalid.error.issues.some((issue) => issue.path[0] === 'title')).toBe(true);
     }
+    const valid = postSchemaV2.safeParse({
+      ...missing,
+      eventDate: tomorrow,
+      title: 'Rando lever du soleil',
+      linkedEventId: '00000000-0000-0000-0000-000000000001',
+    });
+    expect(valid.success).toBe(true);
   });
 
   it('Sortie : ski de rando sans DVA → une seule erreur de check-list', () => {

@@ -14,8 +14,8 @@ const nextConfig = {
     root: '/Users/fr168256/Documents/Codex/2026-11-11/files-pasted-by-the-user-lkdv/work',
   },
   onDemandEntries: {
-    maxInactiveAge: 1000 * 60 * 60 * 24,
-    pagesBufferLength: 100,
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
   },
   productionBrowserSourceMaps: false,
   distDir: process.env.DIST_DIR || '.next',
@@ -91,6 +91,7 @@ const nextConfig = {
     NEXT_PUBLIC_I18N_IT_ENABLED: process.env.NEXT_PUBLIC_I18N_IT_ENABLED ?? '',
   },
   experimental: {
+    webpackMemoryOptimizations: true,
     optimizePackageImports: [
       '@heroicons/react/24/outline',
       '@heroicons/react/24/solid',
@@ -220,12 +221,38 @@ const nextConfig = {
         headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
       },
       {
+        source: '/communaute',
+        headers:
+          process.env.NODE_ENV === 'production'
+            ? [{ key: 'Cache-Control', value: 'private, no-cache, must-revalidate' }]
+            : [
+                { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate, max-age=0' },
+                { key: 'Clear-Site-Data', value: '"cache"' },
+              ],
+      },
+      {
         source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? 'public, max-age=31536000, immutable'
+                : 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        ],
       },
       {
         source: '/_next/static/media/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [
+          {
+            key: 'Cache-Control',
+            value:
+              process.env.NODE_ENV === 'production'
+                ? 'public, max-age=31536000, immutable'
+                : 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        ],
       },
       // Assets publics non hachés : ils étaient servis en `max-age=0,
       // must-revalidate`, donc revalidés à chaque visite (worker MapLibre de

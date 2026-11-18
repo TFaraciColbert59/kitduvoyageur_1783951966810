@@ -21,6 +21,11 @@ import {
   sampleAlong,
 } from '@/features/community/create/carnet/traceEngine';
 import { parseGpxTrace } from '../carnet/gpx';
+import {
+  TrailSearchFieldV2,
+  type TrailDetail,
+  type TrailSummary,
+} from '../carnet/TrailSearchFieldV2';
 import type { EventCardVM } from '../../shared/types';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
@@ -51,6 +56,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { SheetPreview } from '../../shared/SheetPreview';
+import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
 import type { CreateFormV2Props } from './types';
 
 /** Icônes **linéaires** de la maquette (FID-052) : plus d'emoji. */
@@ -121,6 +127,38 @@ function weatherLabelFor(label: string, tMax: number | null): string {
   return tMax != null ? `${Math.round(tMax)}° · ${label || 'prévision'}` : label || 'prévision';
 }
 
+type SortieLevel = (typeof LEVELS)[number]['value'];
+
+function mapHikeDifficultyToSortieLevel(raw: string | null | undefined): SortieLevel | null {
+  if (!raw) return null;
+  const s = raw
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
+  if (!s) return null;
+  if (s.includes('tres facile') || s === 'tres_facile' || s === 't1' || s === '1') return 'tres_facile';
+  if (s.includes('tres difficile') || s.includes('expert') || s.includes('alpin') || s === 't5' || s === 't6' || s === '5') return 'expert';
+  if (s.includes('difficile') || s.includes('soutenu') || s === 't4' || s === '4') return 'difficile';
+  if (s.includes('moyen') || s.includes('modere') || s.includes('intermediaire') || s === 't3' || s === '3') return 'moyen';
+  if (s.includes('facile') || s === 't2' || s === '2' || s === 'f') return 'facile';
+  return null;
+}
+
+function formatHikeDurationFr(hours: number | null | undefined, km: number, gainM: number): string {
+  const effectiveHours =
+    hours != null && Number.isFinite(hours) && hours > 0
+      ? hours
+      : km > 0 || gainM > 0
+        ? km / 4 + gainM / 350
+        : 0;
+  if (effectiveHours <= 0) return '';
+  const totalMin = Math.max(30, Math.round((effectiveHours * 60) / 15) * 15);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m > 0 ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
+
 function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM {
   const startsAt = toStartsAt(values.date, values.startTime);
   return {
@@ -169,8 +207,18 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
   const form = useFormContext<SortieFormValuesV2>();
   const values = form.watch();
   const clubName = typeof prefill?.clubName === 'string' ? prefill.clubName : '';
+  const returnToPostEvent = Boolean(prefill?.returnToPostEvent);
+  const prefilledDate = typeof prefill?.date === 'string' ? prefill.date : '';
   return (
     <>
+      {returnToPostEvent ? (
+        <div className="lkdv-cv2-card lkdv-cv2c-event-sortie-banner" data-testid="cv2c-sortie-return-banner">
+          <b>Sortie pour ton post Événement{prefilledDate ? ` · ${prefilledDate}` : ''}</b>
+          <small>
+            Une fois créée, cette sortie sera automatiquement rattachée à ta publication.
+          </small>
+        </div>
+      ) : null}
       <div className="lkdv-cv2c-row-2">
         <SelectDropdownV2
           name="activity"
@@ -231,19 +279,16 @@ function ActivityPlaceStep({ prefill }: { prefill?: Record<string, unknown> | nu
           date, heure de départ, heure de fin et récurrence sont sur l'étape 1.
           FID-063 — la photo de couverture (ajout V2 sans équivalent maquette)
           est retirée du flux. */}
-        <div className="lkdv-cv2c-date-range">
-          <DateFieldV2
-            name="date"
-            label="Date"
-            required
-            min={new Date().toISOString().slice(0, 10)}
-          />
-          <TimeFieldV2 name="startTime" label="Départ" required />
-        </div>
-        <TimeFieldV2
-          name="endTime"
-          label="Fin (optionnel)"
+        <DateFieldV2
+          name="date"
+          label="Date"
+          required
+          min={new Date().toISOString().slice(0, 10)}
         />
+        <div className="lkdv-cv2c-row-2">
+          <TimeFieldV2 name="startTime" label="Départ" required />
+          <TimeFieldV2 name="endTime" label="Fin (optionnel)" />
+        </div>
       </fieldset>
     </>
   );
@@ -289,6 +334,45 @@ function ItineraireStep() {
     haptic('success');
   };
 
+  const pickTrail = (trail: TrailSummary, points: [number, number][], detail: TrailDetail) => {
+    const rawKm =
+      trail.distance_km ??
+      detail.distance_km ??
+      (points.length >= 2 ? Math.round(lengthKm(points) * 10) / 10 : 0);
+    const km = Math.min(500, Math.max(0, Math.round(rawKm * 10) / 10));
+    const gain = Math.min(
+      20_000,
+      Math.max(0, Math.round(trail.elevation_gain ?? detail.elevation_gain ?? 0)),
+    );
+    const mappedLevel = mapHikeDifficultyToSortieLevel(trail.difficulty ?? detail.difficulty);
+    const durationStr = formatHikeDurationFr(trail.duration_hours ?? detail.duration_hours, km, gain);
+    const trailTitle = (trail.name ?? detail.name ?? '').trim();
+
+    if (km > 0) form.setValue('distanceKm', km, { shouldDirty: true, shouldValidate: true });
+    if (gain > 0) form.setValue('elevationGainM', gain, { shouldDirty: true, shouldValidate: true });
+    if (mappedLevel) form.setValue('level', mappedLevel, { shouldDirty: true, shouldValidate: true });
+    if (durationStr) form.setValue('duration', durationStr, { shouldDirty: true, shouldValidate: true });
+    if (trailTitle && !form.getValues('title')?.trim()) {
+      form.setValue('title', trailTitle.slice(0, 120), { shouldDirty: true, shouldValidate: true });
+    }
+    if (trailTitle && !form.getValues('location')?.trim()) {
+      form.setValue('location', trailTitle.slice(0, 120), { shouldDirty: true });
+    }
+    const startLat = points[0]?.[1] ?? detail.lat ?? trail.lat;
+    const startLng = points[0]?.[0] ?? detail.lng ?? trail.lng;
+    if (typeof startLat === 'number' && typeof startLng === 'number') {
+      form.setValue('meetingLat', startLat, { shouldDirty: true });
+      form.setValue('meetingLng', startLng, { shouldDirty: true });
+    }
+    const extraDesc = (detail.ai_description ?? trail.ai_description ?? '').trim();
+    if (extraDesc && !form.getValues('description')?.trim()) {
+      form.setValue('description', extraDesc.slice(0, 1500), { shouldDirty: true });
+    }
+    setImported(trailTitle || 'Randonnée');
+    setTraceState('idle');
+    haptic('success');
+  };
+
   const importTrace = async (file: File | undefined) => {
     if (!file) return;
     setTraceState('loading');
@@ -320,6 +404,16 @@ function ItineraireStep() {
 
   return (
     <>
+      <TrailSearchFieldV2
+        label="Rechercher une randonnée (pré-remplissage auto)"
+        placeholder="Lac Blanc, Chamonix, GR20…"
+        selectedHint={
+          imported
+            ? `« ${imported} » appliqué : difficulté, distance, dénivelé et durée mis à jour.`
+            : undefined
+        }
+        onPickTrail={pickTrail}
+      />
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label" id="cv2c-level-label">
           Niveau de difficulté
@@ -342,10 +436,6 @@ function ItineraireStep() {
             </button>
           ))}
         </div>
-        <p className="lkdv-cv2c-difficulty-def">
-          <b>{LEVELS.find((level) => level.value === values.level)?.label}.</b>{' '}
-          {LEVELS.find((level) => level.value === values.level)?.hint}
-        </p>
       </div>
       <div className="lkdv-cv2c-metric-row">
         <NumberFieldV2 name="distanceKm" label="Distance" unit="km" max={500} step={0.1} />
@@ -482,20 +572,6 @@ function ParticipantsStep() {
   return (
     <>
       <NumberStepperV2 name="maxParticipants" label="Participants maximum" min={2} max={50} />
-      <div className="lkdv-cv2-card">
-        <span className="lkdv-cv2-eyebrow">Aperçu de la jauge</span>
-        <div className="lkdv-cv2c-capacity-row">
-          <span className="lkdv-cv2-gauge">
-            <span className="lkdv-cv2-gauge-track">
-              <span className="lkdv-cv2-gauge-fill" style={{ width: `${percentage}%` }} />
-            </span>
-            <span className="lkdv-cv2-field-hint">
-              <Users size={11} aria-hidden="true" /> {values.maxParticipants - 1} places restantes ·{' '}
-              {values.waitlist ? 'liste d’attente activée' : 'pas de liste d’attente'}
-            </span>
-          </span>
-        </div>
-      </div>
       <button
         type="button"
         className="lkdv-cv2c-switch"
@@ -749,16 +825,35 @@ function SortieBody({
     if (typeof prefill.clubId === 'string' && prefill.clubId) mapped.clubId = prefill.clubId;
     if (typeof prefill.kitId === 'string' && prefill.kitId) mapped.kitId = prefill.kitId;
     if (typeof prefill.place === 'string' && prefill.place) mapped.location = prefill.place;
+    if (typeof prefill.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(prefill.date)) {
+      mapped.date = prefill.date;
+    }
     // Pont Publication → Sortie : le titre (ou la légende) est repris (maquette L2864).
     if (typeof prefill.title === 'string' && prefill.title) mapped.title = prefill.title;
     return Object.keys(mapped).length > 0 ? mapped : null;
   }, [prefill]);
 
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active);
+  const lastReturnNonceRef = useRef(-1);
+  useEffect(() => {
+    if (!prefill?.returnToPostEvent || lastReturnNonceRef.current === prefillNonce) return;
+    lastReturnNonceRef.current = prefillNonce;
+    api.setStep(0);
+  }, [api, prefill?.returnToPostEvent, prefillNonce]);
+
   return (
     <>
       {api.active ? (
         <SheetPreview compact={false}>
-          <EventTicket event={ticket} variant="preview" />
+          <CollapsibleHeroPreview
+            collapsed={previewCollapsed}
+            onExpand={() => setPreviewCollapsed(false)}
+            title={ticket.title}
+            subtitle={ticket.location || ticket.eventDate || 'Sortie'}
+            badge={ACTIVITY_ICONS[values.activity]}
+          >
+            <EventTicket event={ticket} variant="preview" />
+          </CollapsibleHeroPreview>
         </SheetPreview>
       ) : null}
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
@@ -799,7 +894,14 @@ export function SortieFormV2({
       onSubmit={async (values) => {
         try {
           const result = await createEventWithPostV2(values);
-          reportCreated('sortie', { id: result.id, name: values.title.trim() });
+          reportCreated('sortie', {
+            id: result.id,
+            name: values.title.trim(),
+            extra: {
+              eventDate: values.date,
+              eventLocation: values.location.trim(),
+            },
+          });
         } catch (error) {
           // Un échec de RPC ne laisse pas de couverture orpheline.
           await deleteMediaObjectsV2(uploadedObjectsOf(values.cover));

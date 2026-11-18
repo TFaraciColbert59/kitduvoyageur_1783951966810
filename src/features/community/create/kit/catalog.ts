@@ -11,16 +11,45 @@ const euros = (cents: number) => `${Math.round(cents / 100)} €`;
  */
 const CONDITION_WEAR: Record<string, number> = {
   neuf: 0,
+  excellent: 10,
+  tres_bon: 15,
   bon: 25,
-  use: 60,
+  moyen: 45,
+  use: 65,
   a_remplacer: 90,
   pour_pieces: 100,
 };
 
+const CONDITION_LABELS: Record<string, string> = {
+  neuf: 'Neuf',
+  excellent: 'Excellent état',
+  tres_bon: 'Très bon état',
+  bon: 'Bon état',
+  moyen: 'État correct',
+  use: 'Usé',
+  a_remplacer: 'À réviser',
+  pour_pieces: 'Pour pièces',
+};
+
+function normalizeConditionKey(condition?: string | null): string {
+  return (condition ?? '')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
 export function conditionWear(condition?: string | null): number | null {
   if (!condition) return null;
-  const value = CONDITION_WEAR[condition.toLowerCase()];
+  const value = CONDITION_WEAR[normalizeConditionKey(condition)];
   return value === undefined ? null : value;
+}
+
+export function conditionLabelOf(condition?: string | null): string | null {
+  if (!condition?.trim()) return null;
+  const key = normalizeConditionKey(condition);
+  return CONDITION_LABELS[key] ?? condition.trim();
 }
 
 export function mapInventoryItem(item: InventoryItem): PickerProduct {
@@ -34,6 +63,8 @@ export function mapInventoryItem(item: InventoryItem): PickerProduct {
     weightG: typeof item.weightG === 'number' && item.weightG > 0 ? item.weightG : null,
     image: item.photoUrl?.trim() || null,
     wear: conditionWear(item.condition),
+    conditionLabel: conditionLabelOf(item.condition),
+    description: null,
     priceLabel: null,
     cartable: null,
     ownershipId: asUuid(item.id),
@@ -54,6 +85,8 @@ export function mapShopRow(row: unknown): PickerProduct | null {
     weightG: product.weight_g,
     image: product.image,
     wear: null,
+    conditionLabel: null,
+    description: product.description ?? null,
     priceLabel: product.price_eur !== null ? `${Math.round(product.price_eur)} €` : null,
     cartable: product.price_eur !== null ? product : null,
     ownershipId: null,
@@ -67,10 +100,24 @@ export function mapListing(
 ): PickerProduct {
   const priceLabel =
     source === 'pret'
-      ? 'Prêt gratuit'
+      ? 'Gratuit'
       : source === 'location'
         ? `${euros(listing.price_cents)} / jour`
         : euros(listing.price_cents);
+  const depositCents =
+    source === 'pret'
+      ? listing.deposit_cents > 0
+        ? listing.deposit_cents
+        : listing.price_cents > 0
+          ? listing.price_cents
+          : 0
+      : listing.deposit_cents > 0
+        ? listing.deposit_cents
+        : null;
+  const wear = conditionWear(listing.condition) ?? (source === 'pret' || source === 'occasion' || source === 'location' ? 20 : null);
+  const conditionLabel =
+    conditionLabelOf(listing.condition) ??
+    (source === 'pret' || source === 'occasion' || source === 'location' ? 'Bon état' : null);
   return {
     key: `${source}:${listing.id}`,
     source,
@@ -80,8 +127,26 @@ export function mapListing(
     category: listing.category?.trim() || null,
     weightG: null,
     image: listing.photo_url?.trim() || null,
-    wear: null,
+    wear,
+    conditionLabel,
+    description: listing.description?.trim() || null,
     priceLabel,
+    depositCents,
+    owner: listing.owner?.id
+      ? {
+          id: listing.owner.id,
+          name: listing.owner.full_name?.trim() || 'Voyageur LKDV',
+          avatarUrl: listing.owner.avatar_url ?? null,
+          trustScore: typeof listing.owner.trust_score === 'number' ? listing.owner.trust_score : null,
+        }
+      : listing.owner_id
+        ? {
+            id: listing.owner_id,
+            name: 'Voyageur LKDV',
+            avatarUrl: null,
+            trustScore: null,
+          }
+        : null,
     cartable: null,
     ownershipId: null,
     productId: null,

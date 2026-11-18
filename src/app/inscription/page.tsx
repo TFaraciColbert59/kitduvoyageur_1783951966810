@@ -12,6 +12,9 @@ export default async function InscriptionPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const next = typeof params?.next === 'string' ? params.next : null;
-  redirect(`/connexion?mode=inscription${next ? `&next=${encodeURIComponent(next)}` : ''}`);
+  const query = new URLSearchParams({ mode: 'inscription' });
+  if (typeof params?.next === 'string' && params.next) query.set('next', params.next);
+  if (typeof params?.ref === 'string' && params.ref) query.set('ref', params.ref);
+  if (typeof params?.carnet === 'string' && params.carnet) query.set('carnet', params.carnet);
+  redirect(`/connexion?${query.toString()}`);
 }

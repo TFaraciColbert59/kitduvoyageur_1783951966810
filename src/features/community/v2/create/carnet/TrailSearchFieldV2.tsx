@@ -25,7 +25,7 @@ const FRANCE_BBOX = {
   max_lat: '51',
 } as const;
 
-interface TrailSummary {
+export interface TrailSummary {
   id: string;
   name: string | null;
   lat: number;
@@ -33,10 +33,31 @@ interface TrailSummary {
   distance_km: number | null;
   elevation_gain: number | null;
   difficulty: string | null;
+  duration_hours?: number | null;
+  terrain_type?: string | null;
+  ai_description?: string | null;
+  season?: string | null;
+  activity?: string | null;
 }
 
-interface TrailDetail {
+export interface TrailDetail {
   geojson?: unknown;
+  name?: string | null;
+  distance_km?: number | null;
+  elevation_gain?: number | null;
+  difficulty?: string | null;
+  duration_hours?: number | null;
+  terrain_type?: string | null;
+  ai_description?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}
+
+export interface TrailSearchFieldV2Props {
+  label?: string;
+  placeholder?: string;
+  selectedHint?: string;
+  onPickTrail?: (trail: TrailSummary, points: LngLat[], detail: TrailDetail) => void;
 }
 
 /** GeoJSON (LineString, MultiLineString ou Feature) → points [lng, lat]. */
@@ -74,7 +95,12 @@ function figures(trail: TrailSummary): string {
   return parts.join(' · ');
 }
 
-export function TrailSearchFieldV2() {
+export function TrailSearchFieldV2({
+  label = 'Rechercher une randonnée existante',
+  placeholder = 'Mont-Blanc, Écrins, GR20…',
+  selectedHint,
+  onPickTrail,
+}: TrailSearchFieldV2Props = {}) {
   const form = useFormContext<CarnetFormValuesV2>();
   const { haptic } = useHapticFeedback();
   const [query, setQuery] = useState('');
@@ -131,6 +157,12 @@ export function TrailSearchFieldV2() {
       if (!response.ok) throw new Error(`http ${response.status}`);
       const detail = (await response.json()) as TrailDetail;
       const points = traceFromGeoJson(detail.geojson);
+      if (onPickTrail) {
+        onPickTrail(trail, points, detail);
+        setSelectedName(trail.name?.trim() || 'Randonnée sans titre');
+        haptic('success');
+        return;
+      }
       if (points.length < 2) {
         setError('Cette randonnée n’a pas de tracé disponible.');
         return;
@@ -141,7 +173,7 @@ export function TrailSearchFieldV2() {
       setSelectedName(trail.name?.trim() || 'Randonnée sans titre');
       haptic('success');
     } catch {
-      setError('Impossible de charger le tracé de cette randonnée.');
+      setError('Impossible de charger les détails de cette randonnée.');
     } finally {
       setImporting(false);
     }
@@ -151,7 +183,7 @@ export function TrailSearchFieldV2() {
     <div className="lkdv-cv2-field lkdv-cv2c-field lkdv-cv2c-trail-search" data-testid="cv2-trail-search">
       <div className="lkdv-cv2c-field-head">
         <label htmlFor="cv2-trail-search" className="lkdv-cv2-field-label">
-          Rechercher une randonnée existante
+          {label}
         </label>
       </div>
       <div style={{ position: 'relative' }}>
@@ -167,7 +199,7 @@ export function TrailSearchFieldV2() {
           style={{ paddingLeft: 38 }}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Mont-Blanc, Écrins, GR20…"
+          placeholder={placeholder}
           autoComplete="off"
         />
       </div>
@@ -231,7 +263,8 @@ export function TrailSearchFieldV2() {
 
       {selectedName ? (
         <p className="lkdv-cv2-field-hint" role="status">
-          Tracé « {selectedName} » importé. Tu peux le retoucher sur la carte ou remplacer par un GPX.
+          {selectedHint ??
+            `Tracé « ${selectedName} » importé. Tu peux le retoucher sur la carte ou remplacer par un GPX.`}
         </p>
       ) : null}
     </div>

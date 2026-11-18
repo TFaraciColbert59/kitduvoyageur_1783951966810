@@ -27,6 +27,8 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { MeetingMapV2 } from '../sortie/MeetingMapV2';
 import { SheetPreview } from '../../shared/SheetPreview';
+import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
+import { ClubHeroEditorV2 } from '../club/ClubHeroEditorV2';
 import type { CreateFormV2Props } from './types';
 
 /**
@@ -88,7 +90,7 @@ function ClubPreview() {
           </small>
           <small>
             <ShieldCheck size={10} aria-hidden="true" />{' '}
-            {values.zonePlace ? values.zonePlace : 'France & Europe'}
+            {values.locationLabel ? values.locationLabel : 'France & Europe'}
           </small>
         </div>
       </div>
@@ -132,14 +134,22 @@ function ClubHeroEditor({
     if (!user?.id) return;
     setUploading(field);
     try {
-      const uploaded = await uploadMediaV2({
-        file: cropped,
+      const uploaded = await uploadMediaV2(cropped, {
         userId: user.id,
-        bucket: IMAGE_LIMITS.bucket,
+        bucket: 'carnet-media',
       });
       form.setValue(
         field,
-        [{ ...item, url: uploaded.url, storagePath: uploaded.storagePath, status: 'uploaded', progress: 100 }],
+        [
+          {
+            ...item,
+            url: uploaded.url,
+            storageBucket: uploaded.bucket,
+            storagePath: uploaded.path,
+            status: 'uploaded',
+            progress: 100,
+          },
+        ],
         { shouldDirty: true, shouldValidate: true },
       );
     } catch {
@@ -216,14 +226,21 @@ function ClubHeroEditor({
         </button>
 
         <div className="lkdv-cv2c-club-hero-meta">
-          <button
-            type="button"
-            className="lkdv-cv2c-club-hero-title"
-            onClick={() => onFocusField?.('cv2c-name')}
-          >
-            <span>{values.name || 'Nom du club'}</span>
-            <Pencil size={11} aria-hidden="true" />
-          </button>
+          <div className="lkdv-cv2c-club-hero-title-wrap">
+            <input
+              id="cv2c-name"
+              type="text"
+              className="lkdv-cv2c-club-hero-title-input"
+              value={values.name}
+              maxLength={80}
+              placeholder="Nom du club"
+              aria-label="Nom du club"
+              onChange={(e) =>
+                form.setValue('name', e.target.value, { shouldDirty: true, shouldValidate: true })
+              }
+            />
+            <Pencil size={11} aria-hidden="true" className="lkdv-cv2c-hero-pencil" />
+          </div>
           <div className="lkdv-cv2c-club-hero-pills">
             {slug ? <span className="lkdv-cv2c-club-hero-pill">@{slug}</span> : null}
             <button
@@ -382,7 +399,6 @@ function ClubZoneV2() {
               <Plus size={16} aria-hidden="true" />
             </button>
           </div>
-          <span className="lkdv-cv2-field-hint">5 – 60 km</span>
         </div>
       </div>
     </>
@@ -434,13 +450,6 @@ function IdentiteStep() {
 
   return (
     <>
-      <TextFieldV2
-        name="name"
-        label="Nom du club"
-        placeholder="La Cordée du Vercors"
-        required
-        maxLength={80}
-      />
       {values.name.trim() && moderateText(values.name) ? (
         <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
           {moderateText(values.name)}
@@ -698,9 +707,6 @@ function AdhesionStep() {
             ))}
           </ul>
         )}
-        <p className="lkdv-cv2-field-hint" id="cv2c-questions-hint">
-          Glisse la poignée pour changer l’ordre, ou utilise les flèches haut et bas.
-        </p>
         <p className="lkdv-cv2c-sr-only" role="status">
           {announcement}
         </p>
@@ -749,23 +755,7 @@ function PublicationStep() {
           placeholder="Bienvenue dans le club ! Présente-toi…"
           maxLength={2000}
           rows={4}
-          hint="Le post est publié dans le fil du club (audience club)."
         />
-      ) : null}
-      <p className="lkdv-cv2-field-hint">
-        {values.privacy === 'open'
-          ? 'Club ouvert : le post d’accueil part dès la création.'
-          : 'Club sur validation : le post d’accueil partira à la création du club, quand l’adhésion est ouverte.'}
-      </p>
-      {/* FID-054 : aperçu du post d'accueil (maquette L3296, `.wpost`).
-          FID-063 : la carte « ENSUITE » (ajout V2 sans équivalent maquette) est
-          retirée. */}
-      {values.welcomePost ? (
-        <div className="lkdv-cv2-card lkdv-cv2c-recap" aria-label="Aperçu du post d’accueil">
-          <span className="lkdv-cv2-eyebrow">Aperçu du post</span>
-          <b>{values.name || 'Ton club'}</b>
-          <small>{values.welcomeContent || 'Bienvenue dans le club ! Présente-toi en quelques mots…'}</small>
-        </div>
       ) : null}
     </>
   );
@@ -778,6 +768,11 @@ function ClubBody({
   api: CreateFormEngineApiV2<ClubFormValuesV2>;
   user: User | null;
 }) {
+  const values = api.form.watch();
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active);
+  const avatarUrl = values.avatar?.[0]?.previewUrl || values.avatar?.[0]?.url || null;
+  const slug = values.slug || slugifyClubName(values.name);
+
   const focusField = (fieldId: string) => {
     const el = document.getElementById(fieldId);
     if (el) {
@@ -789,7 +784,20 @@ function ClubBody({
   };
   return (
     <>
-      {api.step <= 1 ? <ClubHeroEditor user={user} onFocusField={focusField} /> : null}
+      {api.active ? (
+        <SheetPreview compact={false}>
+          <CollapsibleHeroPreview
+            collapsed={previewCollapsed}
+            onExpand={() => setPreviewCollapsed(false)}
+            title={values.name.trim() || 'Nom du club'}
+            subtitle={slug ? `@${slug}` : values.activities[0] || 'Club'}
+            avatarUrl={avatarUrl}
+            fallbackText={values.name || 'C'}
+          >
+            <ClubHeroEditorV2 user={user} />
+          </CollapsibleHeroPreview>
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? <IdentiteStep /> : null}
       {api.step === 1 ? <UniversStep /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}

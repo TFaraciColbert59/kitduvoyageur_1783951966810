@@ -1,0 +1,289 @@
+/* Réplique exacte de `.lkdv-carnet-card` (`CarnetCardV2`) pour l'aperçu du drawer Carnet */
+
+.lkdv-cv2c-carnet-ig-editor.lkdv-carnet-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(196, 224, 204, 0.92) 0%,
+    rgba(222, 236, 225, 0.9) 55%,
+    rgba(205, 220, 209, 0.92) 100%
+  );
+  -webkit-backdrop-filter: blur(24px) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(24px) saturate(1.8) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 10px 26px rgba(23, 43, 36, 0.14);
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-carnet-card-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 8px;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-header {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-avi-wrap {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  padding: 3px;
+  border: 0;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.62),
+    rgba(150, 179, 145, 0.55),
+    rgba(255, 255, 255, 0.9),
+    rgba(91, 127, 85, 0.5),
+    rgba(23, 64, 44, 0.62)
+  );
+  box-shadow:
+    0 3px 14px rgba(23, 64, 44, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1.5px rgba(91, 127, 85, 0.3);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-avi {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  background: #1b4d3e;
+  overflow: hidden;
+  position: relative;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-avi img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-ig-avi-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1b4d3e, #2f7a5c);
+}
+
+.lkdv-cv2c-carnet-ig-editor .seal {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, #ffffff, #ebf2ec);
+  box-shadow: 0 2px 6px rgba(23, 43, 36, 0.2), 0 0 0 1.5px #ffffff;
+  display: grid;
+  place-items: center;
+  color: #17402c;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-stat {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4px 6px;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-stat b {
+  font: 700 18px/1.2 var(--font-display, var(--font-sans, sans-serif));
+  letter-spacing: -0.02em;
+  color: #17402c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-stat span {
+  font: 500 11.5px/1.2 var(--font-sans, sans-serif);
+  color: #46574e;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-bio {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 2px 0;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-name.lkdv-cv2c-ig-inline-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: 700 14.5px/1.25 var(--font-display, var(--font-sans, sans-serif));
+  color: #17402c;
+  letter-spacing: -0.01em;
+  outline: none;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-name.lkdv-cv2c-ig-inline-input::placeholder {
+  color: rgba(23, 64, 44, 0.68);
+}
+
+.lkdv-cv2c-ig-subline-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-carnet-ig-editor .lkdv-ig-handle-sub {
+  font: 500 11.5px/1.25 var(--font-sans, sans-serif);
+  color: #46574e;
+}
+
+.lkdv-cv2c-ig-inline-subinput {
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+  min-width: 72px;
+  max-width: 52%;
+  width: auto;
+  field-sizing: content;
+}
+
+.lkdv-cv2c-ig-inline-subinput::placeholder {
+  color: rgba(70, 87, 78, 0.78);
+}
+
+.lkdv-cv2c-ig-date-pills {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.lkdv-cv2c-date--modern.is-hero-compact {
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 10px;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(23, 43, 36, 0.14);
+}
+
+.lkdv-cv2c-date--modern.is-hero-compact .lkdv-cv2-input {
+  min-height: 26px;
+  padding: 2px 0 !important;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #17402c;
+  width: auto;
+  min-width: 102px;
+}
+
+.lkdv-cv2c-ig-recit-box {
+  margin-top: 2px;
+}
+
+.lkdv-cv2c-ig-recit-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.lkdv-cv2c-ig-recit-text {
+  margin: 0;
+  font: 400 12px/1.35 var(--font-sans, sans-serif);
+  color: #1e293b;
+  white-space: pre-wrap;
+  cursor: text;
+  width: 100%;
+}
+
+.lkdv-cv2c-ig-recit-text.is-placeholder {
+  color: rgba(70, 87, 78, 0.75);
+}
+
+.lkdv-cv2c-ig-recit-text.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lkdv-cv2c-ig-recit-more {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: 600 11.5px/1.2 var(--font-sans, sans-serif);
+  color: #17402c;
+  cursor: pointer;
+}
+
+.lkdv-cv2c-ig-recit-textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(23, 64, 44, 0.25);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 6px 8px;
+  font: 400 12px/1.35 var(--font-sans, sans-serif);
+  color: #0f172a;
+  outline: none;
+  resize: none;
+}
+
+/* Zone 50px en bas : sélecteur horizontal de voyageurs */
+.lkdv-cv2-preview-slot:has(.lkdv-cv2c-carnet-ig-editor) {
+  overflow: visible !important;
+  z-index: 30;
+}
+
+.lkdv-cv2c-ig-title-error {
+  margin: 0;
+  font: 600 11px/1.2 var(--font-sans, sans-serif);
+  color: #dc2626;
+}
+
+.lkdv-cv2c-ig-travelers-bar {
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  border-top: 0.5px solid rgba(23, 43, 36, 0.1);
+  padding: 6px 0 4px;
+}
+
+.lkdv-cv2c-travelers-wrap.is-compact {
+  width: 100%;
+  margin: 0;
+}

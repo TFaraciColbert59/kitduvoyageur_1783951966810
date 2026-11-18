@@ -113,6 +113,7 @@ const USER_AGENT = appUserAgent('Compas, preparation de voyage');
  * un trace qui ne va pas au lieu demande.
  */
 export const ARRIVAL_TOLERANCE_M = 500;
+export const SNAP_ARRIVAL_TOLERANCE_M = 2500;
 
 /**
  * Le vocabulaire exact du produit, strictement verifie.
@@ -153,14 +154,16 @@ interface AttemptProfile {
   readonly valhallaCosting: string;
   readonly valhallaOptions?: Readonly<Record<string, unknown>>;
   readonly fallbackOnRefusal: boolean;
+  readonly toleranceM?: number;
 }
 
-function profileForMode(mode: TravelMode): AttemptProfile {
+function profileForMode(mode: TravelMode, snap = false): AttemptProfile {
   return {
-    key: mode,
+    key: snap ? `${mode}:snap` : mode,
     geoapifyMode: GEOAPIFY_MODE[mode],
     valhallaCosting: VALHALLA_COSTING[mode],
-    fallbackOnRefusal: false,
+    fallbackOnRefusal: snap,
+    ...(snap ? { toleranceM: SNAP_ARRIVAL_TOLERANCE_M } : {}),
   };
 }
 
@@ -634,10 +637,11 @@ export function decodeValhallaShape(shape: unknown): Pair[] {
 /** L extremite du trace est-elle bien le lieu demande ? */
 function reaches(
   point: readonly [number, number],
-  target: { readonly lat: number; readonly lon: number }
+  target: { readonly lat: number; readonly lon: number },
+  toleranceM: number = ARRIVAL_TOLERANCE_M
 ): boolean {
   const gapKm = haversineKm({ lat: point[1], lon: point[0] }, target);
-  return gapKm * 1000 <= ARRIVAL_TOLERANCE_M;
+  return gapKm * 1000 <= toleranceM;
 }
 
 /**
@@ -690,7 +694,8 @@ export interface RouteAttempt {
  */
 export function normalizeValhallaRouteDetailed(
   payload: unknown,
-  points: readonly RoutePoint[]
+  points: readonly RoutePoint[],
+  toleranceM: number = ARRIVAL_TOLERANCE_M
 ): RouteAttempt {
   const trip = (payload as { trip?: { status?: unknown; legs?: unknown } } | null)?.trip;
   if (!trip || trip.status !== 0 || !Array.isArray(trip.legs)) {
@@ -712,8 +717,8 @@ export function normalizeValhallaRouteDetailed(
     const from = points[index];
     const to = points[index + 1];
     if (!from || !to) return { legs: null, reason: 'provider_unavailable' };
-    if (!reaches(geometry[0], from)) return { legs: null, reason: 'off_network' };
-    if (!reaches(geometry[geometry.length - 1], to)) return { legs: null, reason: 'off_network' };
+    if (!reaches(geometry[0], from, toleranceM)) return { legs: null, reason: 'off_network' };
+    if (!reaches(geometry[geometry.length - 1], to, toleranceM)) return { legs: null, reason: 'off_network' };
     legs.push({ distanceKm: km, durationMin: seconds / 60, geometry });
   }
   return { legs, reason: null, provider: 'valhalla' };
@@ -765,7 +770,8 @@ function readLines(value: unknown): Pair[][] | null {
  */
 export function normalizeGeoapifyRouteDetailed(
   payload: unknown,
-  points: readonly RoutePoint[]
+  points: readonly RoutePoint[],
+  toleranceM: number = ARRIVAL_TOLERANCE_M
 ): RouteAttempt {
   const unavailable: RouteAttempt = { legs: null, reason: 'provider_unavailable' };
   const features = (payload as { features?: unknown } | null)?.features;
@@ -788,8 +794,8 @@ export function normalizeGeoapifyRouteDetailed(
     const from = points[index];
     const to = points[index + 1];
     if (!from || !to) return unavailable;
-    if (!reaches(geometry[0], from)) return { legs: null, reason: 'off_network' };
-    if (!reaches(geometry[geometry.length - 1], to)) return { legs: null, reason: 'off_network' };
+    if (!reaches(geometry[0], from, toleranceM)) return { legs: null, reason: 'off_network' };
+    if (!reaches(geometry[geometry.length - 1], to, toleranceM)) return { legs: null, reason: 'off_network' };
     legs.push({ distanceKm: meters / 1000, durationMin: seconds / 60, geometry });
   }
   return { legs, reason: null, provider: 'geoapify' };
@@ -970,6 +976,7 @@ async function routeAttemptWithProfile(
   // et un budget epuise doit s arreter AVANT de partir, pas en revenant.
   if (!consumeRateToken()) return { legs: null, reason: 'rate_limited' };
 
+  const toleranceM = profile.toleranceM ?? ARRIVAL_TOLERANCE_M;
   const apiKey = geoapifyKey();
   const fromGeoapify =
     apiKey && (await geoapifyAllowed(geoapifyRouteCredits(points)))
@@ -979,7 +986,8 @@ async function routeAttemptWithProfile(
             signal,
             { 'User-Agent': USER_AGENT }
           ),
-          points
+          points,
+          toleranceM
         )
       : null;
   // Un mode historique garde la regle d avant : `off_network` est une mesure
@@ -997,7 +1005,8 @@ async function routeAttemptWithProfile(
           'User-Agent': USER_AGENT,
           'X-Client-Id': CLIENT_ID,
         }),
-        points
+        points,
+        toleranceM
       );
   // Seule une trace REUSSIE est memorisee — cote memoire ET cote base. Un
   // echec ne doit pas etre fige : une panne de cinq minutes finirait par etre
@@ -1018,10 +1027,11 @@ export async function routeAttempt(
   signal?: AbortSignal,
   cacheBaseUrl?: string,
   /** Signature serveur d'une clé de cache (`signRouteCacheKey`) : sans elle, rien n'est écrit en base. */
-  signCacheKey?: (key: string) => string
+  signCacheKey?: (key: string) => string,
+  options?: { readonly snap?: boolean }
 ): Promise<RouteAttempt> {
   if (!isTravelMode(mode)) return { legs: null, reason: 'mode_expected' };
-  return routeAttemptWithProfile(points, profileForMode(mode), signal, cacheBaseUrl, signCacheKey);
+  return routeAttemptWithProfile(points, profileForMode(mode, options?.snap === true), signal, cacheBaseUrl, signCacheKey);
 }
 
 /**

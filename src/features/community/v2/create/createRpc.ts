@@ -157,21 +157,41 @@ export function toStartsAt(date: string, time: string): string | null {
 // ---------------------------------------------------------------------------
 
 export function buildPostPayload(values: PostFormValuesV2): Record<string, unknown> {
-  const title = values.title.trim();
-  const content =
-    values.format === 'billet' && title ? `${title}\n\n${values.content.trim()}` : values.content.trim();
+  const title = values.title.trim() || values.linkedEventTitle.trim();
+  const body = values.content.trim();
+  const rawContent =
+    values.format === 'event'
+      ? [
+          title ? `**${title}**` : '',
+          values.eventDate ? `📅 ${values.eventDate}` : '',
+          body,
+        ]
+          .filter(Boolean)
+          .join('\n\n')
+      : values.format === 'billet' && title
+        ? `${title}\n\n${body}`
+        : body;
   const urls = mediaUrls(values.media);
+  const content = rawContent || (urls.length > 0 ? title || '📷' : '');
   const payload: Record<string, unknown> = {
     content,
-    post_type: values.format === 'question' ? 'question' : 'post',
+    post_type: values.format === 'question' ? 'question' : values.format === 'event' ? 'share' : 'post',
     audience: values.audience,
     media_urls: urls,
     creation_meta: {
       created_from: 'create_community_post',
       format: values.format,
+      source: values.format === 'event' ? 'event' : undefined,
       title: title || null,
+      event_id: values.format === 'event' && values.linkedEventId.trim() ? values.linkedEventId.trim() : null,
+      event_date: values.format === 'event' && values.eventDate ? values.eventDate : null,
+      event_title:
+        values.format === 'event' && (values.linkedEventTitle.trim() || title)
+          ? values.linkedEventTitle.trim() || title
+          : null,
       mentions: values.mentions,
       media_alts: mediaAlts(values.media),
+      media_modifiers: (values.media ?? []).map((item) => item.modifiers ?? null),
       allow_comments: values.allowComments ?? true,
       allow_likes: values.allowLikes ?? true,
       scheduled_at:
@@ -202,6 +222,7 @@ export const STORY_VISIBILITY: Record<StoryFormValuesV2['audience'], string> = {
   abonnies: 'followers',
   close_friends: 'close_friends',
   only_me: 'only_me',
+  club: 'public',
 };
 
 export interface StoryCompositionEntryV2 {
@@ -259,51 +280,67 @@ export async function publishStoryV2(
   values: StoryFormValuesV2,
   userId: string,
 ): Promise<{ id: string }> {
-  const media = values.media[0];
-  if (!media || media.status !== 'uploaded' || !media.storagePath) {
-    throw new CreateRpcError('Le média n’a pas pu être envoyé. Réessaie ou retire-le.');
+  const mediaList = values.media ?? [];
+  if (mediaList.length === 0) {
+    throw new CreateRpcError('Ajoute au moins une photo ou une vidéo.');
   }
-  const isVideo = media.type.startsWith('video/');
+  const hasPending = mediaList.some((m) => m.status === 'uploading');
+  if (hasPending) {
+    throw new CreateRpcError('Envoi des médias en cours… Réessaie dans un instant.');
+  }
   const composition = buildStoryCompositionV2(values);
   const supabase = createClient();
-  const storyId = crypto.randomUUID();
-  const insert = {
-    id: storyId,
-    author_id: userId,
-    image_url: null,
-    storage_bucket: media.storageBucket || 'stories-private',
-    storage_path: media.storagePath,
-    media_type: isVideo ? 'video' : 'image',
-    mime_type: media.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
-    composition,
-    composition_version: composition ? 2 : null,
-    status: 'ready',
-    client_request_id: crypto.randomUUID(),
-    caption: values.caption.trim() ? values.caption.trim().slice(0, 280) : null,
-    visibility: STORY_VISIBILITY[values.audience],
-    reply_policy: values.replyPolicy,
-    allow_reshare: values.allowReshare,
-    alt_text: values.altText.trim() || null,
-    trim_start_ms: isVideo ? values.trimStartMs ?? 0 : null,
-    trim_end_ms: isVideo ? values.trimEndMs ?? media.durationMs ?? null : null,
-    linked_carnet_id: values.stickers.carnetId || null,
-    // FID-028 : jour du carnet lié (`linked_carnet_day`, migration lot F L22).
-    linked_carnet_day: values.stickers.carnetId ? values.stickers.carnetDay ?? null : null,
-  };
-  const { error } = await supabase.from('post_stories').insert(insert);
+  const rows = mediaList.map((media) => {
+    const isVideo = media.type.startsWith('video/');
+    const validPrivatePath =
+      media.storageBucket === 'stories-private' &&
+      Boolean(media.storagePath) &&
+      media.storagePath.startsWith(`${userId}/`);
+    const validPublicUrl =
+      media.url && /^https?:\/\//.test(media.url) ? media.url : null;
+
+    if (!validPrivatePath && !validPublicUrl) {
+      throw new CreateRpcError('Le média n’a pas pu être envoyé. Réessaie ou retire-le.');
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      author_id: userId,
+      image_url: validPrivatePath ? null : validPublicUrl,
+      storage_bucket: validPrivatePath ? 'stories-private' : null,
+      storage_path: validPrivatePath ? media.storagePath : null,
+      media_type: isVideo ? 'video' : 'image',
+      mime_type: media.type || (isVideo ? 'video/mp4' : 'image/jpeg'),
+      composition,
+      composition_version: composition ? 2 : null,
+      status: 'ready',
+      client_request_id: crypto.randomUUID(),
+      caption: null,
+      visibility: STORY_VISIBILITY[values.audience],
+      reply_policy: values.replyPolicy,
+      allow_reshare: values.allowReshare,
+      alt_text: values.altText.trim() || null,
+      trim_start_ms: isVideo ? values.trimStartMs ?? 0 : null,
+      trim_end_ms: isVideo ? values.trimEndMs ?? media.durationMs ?? null : null,
+      linked_carnet_id: values.stickers.carnetId || null,
+      linked_carnet_day: values.stickers.carnetId ? values.stickers.carnetDay ?? null : null,
+    };
+  });
+
+  const { error } = await supabase.from('post_stories').insert(rows);
   if (error) {
-    // L'insert a échoué : le média envoyé ne doit pas rester orphelin.
     try {
       const { deleteMediaObjectsV2 } = await import('./fields/media');
-      await deleteMediaObjectsV2([
-        { bucket: (media.storageBucket || 'stories-private') as MediaBucketV2, path: media.storagePath },
-      ]);
+      const objects = mediaList
+        .filter((m) => m.storageBucket === 'stories-private' && m.storagePath?.startsWith(`${userId}/`))
+        .map((m) => ({ bucket: 'stories-private' as MediaBucketV2, path: m.storagePath }));
+      if (objects.length > 0) await deleteMediaObjectsV2(objects);
     } catch {
       /* le cron purge-stories nettoiera */
     }
     throw toRpcError(error);
   }
-  return { id: storyId };
+  return { id: rows[0]!.id };
 }
 
 export function buildEventPayload(values: SortieFormValuesV2): Record<string, unknown> {
@@ -429,12 +466,18 @@ export async function createKitWithItemsV2(values: KitFormValuesV2): Promise<Cre
 /** Carte des photos de moments (id → média téléversé) pour la couverture et les médias. */
 export function carnetPhotos(values: CarnetFormValuesV2): MediaItemV2[] {
   const photos: MediaItemV2[] = [];
+  const seen = new Set<string>();
+  const pushUnique = (item: MediaItemV2 | null | undefined) => {
+    if (!item || seen.has(item.id)) return;
+    seen.add(item.id);
+    photos.push(item);
+  };
   for (const day of values.days) {
     for (const moment of day.moments) {
-      if (moment.photo) photos.push(moment.photo);
+      pushUnique(moment.photo);
       if (Array.isArray(moment.media)) {
         for (const item of moment.media) {
-          if (item) photos.push(item);
+          pushUnique(item);
         }
       }
     }
@@ -472,12 +515,15 @@ export function buildCarnetPayload(
         ...(Array.isArray(moment.media) ? moment.media : []),
       ];
       const firstUploaded = momentMedia.find((m) => m.status === 'uploaded' && m.url);
+      const momentTitle = moment.title?.trim() ?? '';
+      const momentBody = moment.text.trim();
+      const momentCitation = [momentTitle, momentBody].filter(Boolean).join('\n\n') || null;
       moments.push({
         jour_numero: day.dayNumber,
         heure: moment.time || null,
-        title: moment.title?.trim() || null,
-        titre: moment.title?.trim() || null,
-        citation: moment.text.trim() || null,
+        title: momentTitle || null,
+        titre: momentTitle || null,
+        citation: momentCitation,
         auteur_nom: null,
         lieu: moment.place.trim() || null,
         image_url: moment.photo?.status === 'uploaded' ? moment.photo.url : (firstUploaded?.url ?? null),
@@ -504,7 +550,7 @@ export function buildCarnetPayload(
     title: values.title.trim(),
     destination: values.destination.trim(),
     description: values.description.trim() || null,
-    visibility: values.visibility,
+    visibility: values.visibility === 'club' ? 'public' : values.visibility,
     start_date: values.startDate || null,
     end_date: values.endDate || null,
     cover_image: cover?.url ?? null,
@@ -531,6 +577,7 @@ export function buildCarnetPayload(
             jour_numero: day.dayNumber,
             nom: day.night?.name ?? '',
             type: day.night?.type ?? 'autre',
+            altitude_m: day.night?.altitudeM ?? null,
             infos: day.night?.infos?.trim() || null,
           }))
       : [],

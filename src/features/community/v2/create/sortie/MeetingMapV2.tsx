@@ -128,7 +128,19 @@ export function MeetingMapV2({
       return;
     }
     mapRef.current = map;
+    const resizeTimer = window.setTimeout(() => {
+      try {
+        map.resize();
+      } catch {
+        /* ignore */
+      }
+    }, 420);
     map.on('load', () => {
+      try {
+        map.resize();
+      } catch {
+        /* ignore */
+      }
       if (initial.lat != null && initial.lng != null) {
         const marker = new Marker({ draggable: true }).setLngLat([initial.lng, initial.lat]).addTo(map);
         marker.on('dragend', () => {
@@ -154,6 +166,7 @@ export function MeetingMapV2({
       commitPosition(nextLat, nextLng);
     });
     return () => {
+      window.clearTimeout(resizeTimer);
       markerRef.current = null;
       try {
         map.remove();

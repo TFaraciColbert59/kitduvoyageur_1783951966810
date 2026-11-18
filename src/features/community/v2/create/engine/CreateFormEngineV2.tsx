@@ -463,7 +463,6 @@ export function CreateFormEngineV2<T extends FieldValues>({
       }
       if (event.key === 'Enter' && target.tagName !== 'TEXTAREA') {
         event.preventDefault();
-        event.stopPropagation();
       }
     };
     document.addEventListener('keydown', onKeyDown, true);

@@ -12,15 +12,15 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.5.0"),
-        .package(name: "CapacitorApp", path: "../../../../lkdv-p01-social/node_modules/@capacitor/app"),
-        .package(name: "CapacitorCamera", path: "../../../../lkdv-p01-social/node_modules/@capacitor/camera"),
-        .package(name: "CapacitorGeolocation", path: "../../../../lkdv-p01-social/node_modules/@capacitor/geolocation"),
-        .package(name: "CapacitorHaptics", path: "../../../../lkdv-p01-social/node_modules/@capacitor/haptics"),
-        .package(name: "CapacitorKeyboard", path: "../../../../lkdv-p01-social/node_modules/@capacitor/keyboard"),
-        .package(name: "CapacitorNetwork", path: "../../../../lkdv-p01-social/node_modules/@capacitor/network"),
-        .package(name: "CapacitorPreferences", path: "../../../../lkdv-p01-social/node_modules/@capacitor/preferences"),
-        .package(name: "CapacitorSplashScreen", path: "../../../../lkdv-p01-social/node_modules/@capacitor/splash-screen"),
-        .package(name: "CapacitorStatusBar", path: "../../../../lkdv-p01-social/node_modules/@capacitor/status-bar")
+        .package(name: "CapacitorApp", path: "../../../node_modules/@capacitor/app"),
+        .package(name: "CapacitorCamera", path: "../../../node_modules/@capacitor/camera"),
+        .package(name: "CapacitorGeolocation", path: "../../../node_modules/@capacitor/geolocation"),
+        .package(name: "CapacitorHaptics", path: "../../../node_modules/@capacitor/haptics"),
+        .package(name: "CapacitorKeyboard", path: "../../../node_modules/@capacitor/keyboard"),
+        .package(name: "CapacitorNetwork", path: "../../../node_modules/@capacitor/network"),
+        .package(name: "CapacitorPreferences", path: "../../../node_modules/@capacitor/preferences"),
+        .package(name: "CapacitorSplashScreen", path: "../../../node_modules/@capacitor/splash-screen"),
+        .package(name: "CapacitorStatusBar", path: "../../../node_modules/@capacitor/status-bar")
     ],
     targets: [
         .target(

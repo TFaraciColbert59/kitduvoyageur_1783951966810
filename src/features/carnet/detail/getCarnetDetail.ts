@@ -63,6 +63,7 @@ const CARNET_COLUMNS_WITH_LIVE = [
   'lieu_arrivee',
   'country_iso',
   'trip_id',
+  'map_points',
   'live_sharing',
 ].join(', ');
 
@@ -87,7 +88,25 @@ const CARNET_COLUMNS_BASE = [
   'lieu_arrivee',
   'country_iso',
   'trip_id',
+  'map_points',
 ].join(', ');
+
+/** Extrait la trace manuelle `carnets.map_points.trace` en GeoJSON LineString quand aucune `hike_session` n'existe. */
+function parseManualCarnetTrace(mapPoints: unknown): { type: 'LineString'; coordinates: [number, number][] } | null {
+  if (!mapPoints || typeof mapPoints !== 'object' || Array.isArray(mapPoints)) return null;
+  const rawTrace = (mapPoints as { trace?: unknown }).trace;
+  if (!Array.isArray(rawTrace) || rawTrace.length < 2) return null;
+  const coordinates: [number, number][] = [];
+  for (const pt of rawTrace) {
+    if (!Array.isArray(pt) || pt.length < 2) continue;
+    const lng = Number(pt[0]);
+    const lat = Number(pt[1]);
+    if (Number.isFinite(lng) && Number.isFinite(lat) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      coordinates.push([lng, lat]);
+    }
+  }
+  return coordinates.length >= 2 ? { type: 'LineString', coordinates } : null;
+}
 
 /**
  * Lit un carnet, son auteur, ses étapes, ses moments, son kit et l'engagement
@@ -461,11 +480,11 @@ export async function getCarnetDetail(id: string) {
     );
   });
   const traceSession = rawTraceSession ?? pickCarnetTraceSession(sharedTraceCandidates, window);
+  const manualTrace = sessions.length === 0 ? parseManualCarnetTrace(carnet.map_points) : null;
   const traceWithheld = Boolean(anyTraceSession && !traceSession);
-  const traceVisibility = mostRestrictiveTraceVisibility(
-    carnet.visibility,
-    traceSession?.visibility,
-  );
+  const traceVisibility = traceSession
+    ? mostRestrictiveTraceVisibility(carnet.visibility, traceSession.visibility)
+    : (carnet.visibility ?? 'public');
   const isTraceSessionParticipant = Boolean(
     traceSession && rawSessionIdSet.has(traceSession.id),
   );
@@ -479,12 +498,15 @@ export async function getCarnetDetail(id: string) {
    * relation réelle avec le propriétaire de la sortie, comme la route
    * `GET /api/hike-sessions/[id]`. Sinon il reste `visitor` (tout masqué pour
    * `friends`, extrémités masquées pour une sortie publique).
+   * En l'absence de sortie liée (carnet saisi à la main), l'auteur/collaborateur
+   * garde sa trace manuelle complète et un visiteur reçoit la trace projetée.
    */
-  const traceViewer = isTraceSessionParticipant
-    ? ('participant' as const)
-    : traceVisibility === 'friends' && followsTraceOwner
-      ? ('follower' as const)
-      : ('visitor' as const);
+  const traceViewer =
+    isTraceSessionParticipant || (sessions.length === 0 && manualTrace !== null && isCarnetParticipant)
+      ? ('participant' as const)
+      : traceVisibility === 'friends' && followsTraceOwner
+        ? ('follower' as const)
+        : ('visitor' as const);
 
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
   const momentIds = momentRows.map((m) => m.id);
@@ -727,7 +749,7 @@ export async function getCarnetDetail(id: string) {
       sessionIds.every((id) => sessions.some((session) => session.id === id)),
     rawSessionIds,
     metricVisibilities,
-    trace: traceSession?.positions_geojson ?? null,
+    trace: traceSession?.positions_geojson ?? manualTrace ?? null,
     traceVisibility,
     traceWithheld,
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],

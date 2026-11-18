@@ -13,8 +13,10 @@ import {
   Loader2,
   Minus,
   Plus,
+  Search,
   ShieldCheck,
   Shirt,
+  ShoppingBag,
   Sparkles,
   Tent,
   Trash2,
@@ -31,10 +33,10 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { createKitWithItemsV2 } from '../createRpc';
-import { ChipsFieldV2 } from '../fields/ChipsV2';
 import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
 import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
 import { useMyClubsV2 } from '../club/useMyClubsV2';
+import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
 import { KitCatalogDrawerV2 } from '../kit/KitCatalogDrawerV2';
 import { KitFavoritesDrawerV2 } from '../kit/KitFavoritesDrawerV2';
 import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
@@ -103,14 +105,25 @@ const CATEGORY_ORDER = [
   'Divers',
 ];
 
-/** Saisons de la maquette (`SEASONS`, HTML L3172) : **3** valeurs. */
+/** Les 4 saisons sélectionnables (multi-sélection). */
 const SEASON_OPTIONS = [
+  { value: 'printemps', label: 'Printemps' },
   { value: 'ete', label: 'Été' },
-  // `toute_saison` est la valeur métier de « 3 saisons » (le schéma garde les
-  // anciennes valeurs printemps/automne pour les brouillons existants).
-  { value: 'toute_saison', label: '3 saisons' },
+  { value: 'automne', label: 'Automne' },
   { value: 'hiver', label: 'Hiver' },
 ] as const;
+
+function formatSeasonsSummary(seasons: readonly string[] | undefined, fallbackSeason: string): string {
+  const active = seasons && seasons.length > 0 ? seasons : [];
+  if (active.length === 4) return '4 saisons';
+  if (active.length > 0) {
+    const labels = active
+      .map((s) => SEASON_OPTIONS.find((opt) => opt.value === s)?.label)
+      .filter((x): x is string => Boolean(x));
+    if (labels.length > 0) return labels.join(' · ');
+  }
+  return SEASON_OPTIONS.find((opt) => opt.value === fallbackSeason)?.label ?? 'Toute saison';
+}
 
 /**
  * Catégories toujours visibles, même vides, avec « Glisse un objet ici »
@@ -711,6 +724,7 @@ function InventoryStep({
   const [favOpen, setFavOpen] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogCategory, setCatalogCategory] = useState('');
+  const [inventoryQuery, setInventoryQuery] = useState('');
 
   const addedKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -718,6 +732,7 @@ function InventoryStep({
       if (item.ownershipId) keys.add(item.ownershipId);
       if (item.productId) keys.add(item.productId);
       keys.add(item.id);
+      keys.add(`name:${item.name.trim().toLowerCase()}`);
     });
     return keys;
   }, [items]);
@@ -729,7 +744,7 @@ function InventoryStep({
   ) => {
     const cat = overrides?.category || targetCategory || product.category || 'Divers';
     const nextItem: KitItemV2 = {
-      id: crypto.randomUUID(),
+      id: product.id || crypto.randomUUID(),
       name: product.name,
       category: CATEGORY_ORDER.includes(cat) ? cat : 'Divers',
       weightG: Math.max(0, overrides?.weightG ?? product.weightG ?? 0),
@@ -741,6 +756,19 @@ function InventoryStep({
     };
     setItems([...items, nextItem]);
     haptic('success');
+  };
+
+  const removeCatalogProduct = (product: PickerProduct) => {
+    setItems(
+      items.filter(
+        (item) =>
+          item.id !== product.id &&
+          !(product.productId && item.productId === product.productId) &&
+          !(product.ownershipId && item.ownershipId === product.ownershipId) &&
+          item.name.trim().toLowerCase() !== product.name.trim().toLowerCase(),
+      ),
+    );
+    haptic('selection');
   };
 
   return (
@@ -771,6 +799,37 @@ function InventoryStep({
           {items.length} objet{items.length > 1 ? 's' : ''} · {kg(total)}
         </span>
       </div>
+      {items.length > 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 4,
+          }}
+        >
+          <div className="lkdv-cv2c-stack-search" style={{ height: 34, flex: 1 }}>
+            <Search size={13} aria-hidden="true" />
+            <input
+              type="search"
+              value={inventoryQuery}
+              onChange={(event) => setInventoryQuery(event.target.value)}
+              placeholder="Filtrer tes objets…"
+              aria-label="Filtrer les objets du kit"
+            />
+          </div>
+          <button
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+            onClick={() => {
+              setCatalogCategory('');
+              setCatalogOpen(true);
+            }}
+          >
+            <ShoppingBag size={12} aria-hidden="true" /> Boutique
+          </button>
+        </div>
+      ) : null}
       {itemsError ? (
         <p className="lkdv-cv2-field-error" role="alert">
           {itemsError}
@@ -778,16 +837,25 @@ function InventoryStep({
       ) : null}
       <div className="lkdv-cv2c-kit-groups" data-hscroll>
         {groups.map(([category, groupItems]) => {
+          const visibleItems = inventoryQuery.trim()
+            ? groupItems.filter((item) =>
+                item.name.toLowerCase().includes(inventoryQuery.trim().toLowerCase()),
+              )
+            : groupItems;
+          if (inventoryQuery.trim() && visibleItems.length === 0) return null;
           const weight = groupItems.reduce((sum, item) => sum + item.weightG * item.quantity, 0);
           return (
             <section key={category} className="lkdv-cv2c-kit-group" data-kit-category={category}>
               <div className="lkdv-cv2c-kit-group-head">
                 {CATEGORY_ICONS[category] ?? <Backpack size={13} aria-hidden="true" />}
                 {category}
-                <small>{kg(weight)}</small>
+                <small>
+                  {groupItems.length > 0 ? `${groupItems.length} · ` : ''}
+                  {kg(weight)}
+                </small>
               </div>
               <div className="lkdv-cv2c-kit-plus-row" data-hscroll>
-                {groupItems.map((item) => (
+                {visibleItems.map((item) => (
                   <div key={`tile-${item.id}`} className="lkdv-cv2c-kit-mini-tile" data-kit-item={item.id}>
                     <div className="lkdv-cv2c-kit-mini-tile-top">
                       <span className="lkdv-cv2c-kit-mini-ico" aria-hidden="true">
@@ -805,16 +873,28 @@ function InventoryStep({
                     <b title={item.name}>{item.name}</b>
                     <div className="lkdv-cv2c-kit-mini-tile-foot">
                       <small>{kg(item.weightG * item.quantity)}</small>
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-kit-mini-qty"
-                        aria-label={`Quantité ${item.name} : ${item.quantity}`}
-                        onClick={() =>
-                          patchItem(item.id, { quantity: Math.min(20, item.quantity + 1) })
-                        }
-                      >
-                        ×{item.quantity}
-                      </button>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                        {item.quantity > 1 ? (
+                          <button
+                            type="button"
+                            className="lkdv-cv2c-kit-mini-qty"
+                            aria-label={`Diminuer quantité ${item.name}`}
+                            onClick={() => patchItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}
+                          >
+                            −
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="lkdv-cv2c-kit-mini-qty"
+                          aria-label={`Quantité ${item.name} : ${item.quantity}`}
+                          onClick={() =>
+                            patchItem(item.id, { quantity: Math.min(20, item.quantity + 1) })
+                          }
+                        >
+                          ×{item.quantity}
+                        </button>
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -850,8 +930,18 @@ function InventoryStep({
         inventory={products}
         addedKeys={addedKeys}
         currentKitWeightG={total}
+        addedCount={items.length}
+        units={form.watch('units') === 'imperial' ? 'imperial' : 'metric'}
+        emptyCategories={groups.filter(([, g]) => g.length === 0).map(([c]) => c)}
         onClose={() => setCatalogOpen(false)}
         onAddProduct={addCatalogProduct}
+        onRemoveProduct={removeCatalogProduct}
+        onCreateCustom={(presetName, cat) => {
+          setCustomName(presetName);
+          if (cat && CATEGORY_ORDER.includes(cat)) setCustomCategory(cat);
+          setCustomOpen(true);
+          setCatalogOpen(false);
+        }}
       />
       <KitFavoritesDrawerV2
         open={favOpen}
@@ -922,14 +1012,10 @@ function InventoryStep({
                 <Plus size={16} aria-hidden="true" />
               </button>
             </div>
-            <span className="lkdv-cv2-field-hint">Poids en grammes.</span>
           </div>
           <button type="button" className="lkdv-cv2-add-media" onClick={addCustom}>
             <Plus size={14} aria-hidden="true" /> Ajouter l’objet
           </button>
-          <p className="lkdv-cv2-field-hint">
-            Catégorie au choix · glisse les objets pour les reclasser.
-          </p>
         </div>
       ) : null}
 
@@ -969,9 +1055,9 @@ function KitSwitchV2({
         justifyContent: 'space-between',
         gap: 12,
         padding: '10px 12px',
-        borderRadius: 12,
-        background: 'rgba(255, 255, 255, 0.72)',
-        border: '1px solid rgba(15, 23, 42, 0.08)',
+        borderRadius: 14,
+        background: '#ffffff',
+        border: '1px solid #e5e7eb',
       }}
     >
       <span
@@ -1018,10 +1104,10 @@ function ComplementsStep({ user }: { user: User | null }) {
   const suggestions = useMemo(
     () =>
       mergeKitSuggestionsV2(
-        kitSuggestionsV2(values.model, values.season, items),
+        kitSuggestionsV2(values.model, values.season, items, values.seasons),
         kitWeatherSuggestionsV2(weather, items),
       ),
-    [items, values.model, values.season, weather],
+    [items, values.model, values.season, values.seasons, weather],
   );
 
   const fetchLiveWeather = async () => {
@@ -1084,7 +1170,6 @@ function ComplementsStep({ user }: { user: User | null }) {
 
   return (
     <>
-      <KitRectangularPreviewV2 items={items} values={values} weather={weather} />
       <div className="lkdv-cv2c-kit-weight-panel">
         <KitRingV2 weightG={totalWeightG(items)} goal={values.goal} />
         <div className="lkdv-cv2c-kit-weight-side">
@@ -1098,49 +1183,53 @@ function ComplementsStep({ user }: { user: User | null }) {
         <KitCategoryChartV2 items={items} />
       ) : null}
       <GoalChipsV2 />
-      <ChipsFieldV2
-        name="model"
-        label="Modèle"
-        options={KIT_MODELS_V2.map((model) => ({ value: model.id, label: model.label }))}
-      />
-      <ChipsFieldV2
-        name="season"
-        label="Saison"
-        options={SEASON_OPTIONS.map((season) => ({ ...season }))}
-      />
-      {/* Suggestions actionnables (FID-023) : chaque ligne porte son bouton
-          « Ajouter » 44 px, l'ajout est immédiat et le poids recalculé ; une
-          suggestion déjà dans le sac laisse un état « ajouté » coché/désactivé
-          (maquette `.sgrow`, HTML L3202-3204). */}
+      <div className="lkdv-cv2c-row-2">
+        <TextFieldV2
+          name="model"
+          label="Modèle"
+          placeholder="Bivouac, Trail, Alpi…"
+          maxLength={80}
+        />
+        <SelectDropdownV2
+          name="seasons"
+          label="Saison"
+          multiple
+          options={SEASON_OPTIONS.map((season) => ({ ...season }))}
+          placeholder="Choisir…"
+          onChange={(next) => {
+            const arr = Array.isArray(next) ? next : [next];
+            form.setValue('seasons', arr as KitFormValuesV2['seasons'], {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
+            const rpcSeason =
+              arr.length === 1 && (arr[0] === 'printemps' || arr[0] === 'ete' || arr[0] === 'automne' || arr[0] === 'hiver')
+                ? arr[0]
+                : 'toute_saison';
+            form.setValue('season', rpcSeason, { shouldDirty: true });
+          }}
+        />
+      </div>
+      {/* Suggestions actionnables (FID-023) */}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">
           <Sparkles size={11} aria-hidden="true" /> Suggestions ·{' '}
-          {KIT_MODELS_V2.find((model) => model.id === values.model)?.label ?? 'Bivouac'} ·{' '}
-          {SEASON_OPTIONS.find((season) => season.value === values.season)?.label ?? '3 saisons'}
+          {values.model?.trim() || 'Bivouac'} ·{' '}
+          {formatSeasonsSummary(values.seasons, values.season)}
         </span>
-        <div className="lkdv-cv2c-kit-weather">
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => void requestWeather()}
-            aria-busy={weatherState === 'loading' || undefined}
-            disabled={weatherState === 'loading'}
-            data-testid="cv2-kit-weather"
-          >
-            <CloudSun size={13} aria-hidden="true" />
-            {weather ? 'Actualiser la météo' : 'Adapter à la météo près de moi'}
-          </button>
-          {weather ? (
-            <small role="status">
-              Près de toi : {weather.tempMax}° / {weather.tempMin}° · {weather.label}
-            </small>
-          ) : null}
-          {weatherState === 'error' ? (
-            <small role="status">
-              Position ou météo indisponible : les suggestions de saison restent proposées.
-            </small>
-          ) : null}
-        </div>
+        {weather || weatherState === 'error' ? (
+          <div className="lkdv-cv2c-kit-weather">
+            {weather ? (
+              <small role="status">
+                Près de toi : {weather.tempMax}° / {weather.tempMin}° · {weather.label}
+              </small>
+            ) : (
+              <small role="status">
+                Météo locale indisponible : suggestions de saison proposées.
+              </small>
+            )}
+          </div>
+        ) : null}
         <ul className="lkdv-cv2c-kit-suggestions" role="list">
           {suggestions.map((suggestion) => (
             <li key={suggestion.name} className="lkdv-cv2c-kit-suggestion" data-added={suggestion.added || undefined}>
@@ -1198,16 +1287,19 @@ export function KitRectangularPreviewV2({
   weather,
 }: {
   items: readonly KitItemV2[];
-  values: Pick<KitFormValuesV2, 'name' | 'model' | 'season' | 'goal'>;
+  values: Pick<KitFormValuesV2, 'name' | 'model' | 'season' | 'seasons' | 'goal'>;
   weather?: { tempMin: number; tempMax: number; label: string } | null;
 }) {
+  const { kg } = useKitWeight();
   const totalG = totalWeightG(items);
   const title =
     values.name?.trim() ||
-    kitProposedNameV2({ model: values.model, season: values.season, items }) ||
+    kitProposedNameV2({ model: values.model, season: values.season, seasons: values.seasons, items }) ||
     'Kit d’aventure';
-  const modelLabel = KIT_MODELS_V2.find((m) => m.id === values.model)?.label ?? 'Bivouac';
-  const seasonLabel = SEASON_OPTIONS.find((s) => s.value === values.season)?.label ?? 'Toute saison';
+  const modelLabel =
+    KIT_MODELS_V2.find((m) => m.id === values.model)?.label ??
+    (values.model?.trim() || 'Bivouac');
+  const seasonLabel = formatSeasonsSummary(values.seasons, values.season);
   const goalLabel = KIT_GOALS_V2.find((g) => g.id === values.goal)?.label ?? 'Léger';
 
   const catTotals = useMemo(() => {
@@ -1350,9 +1442,21 @@ function PartageStep() {
   const form = useFormContext<KitFormValuesV2>();
   const values = form.watch();
   const items = values.items ?? [];
-  const proposed = kitProposedNameV2({ model: values.model, season: values.season, items });
+  const { kg } = useKitWeight();
+  const proposed = kitProposedNameV2({
+    model: values.model,
+    season: values.season,
+    seasons: values.seasons,
+    items,
+  });
   const isAuto = !values.name.trim() || values.name.trim() === proposed;
   const { haptic } = useHapticFeedback();
+  const categoriesCount = useMemo(
+    () => new Set(items.map((item) => item.category?.trim() || 'Divers')).size,
+    [items],
+  );
+  const totalG = totalWeightG(items);
+  const classGoal = kitGoalV2(kitGoalOfWeightV2(totalG));
 
   // Le nom proposé remplit le champ tant que l'utilisateur ne l'a pas modifié.
   useEffect(() => {
@@ -1361,9 +1465,31 @@ function PartageStep() {
     }
   }, [form, isAuto, items.length, proposed]);
 
+  const appendTagToDescription = (tag: string) => {
+    const current = (form.getValues('description') ?? '').trim();
+    if (current.toLowerCase().includes(tag.toLowerCase())) return;
+    form.setValue('description', current ? `${current} · ${tag}` : tag, {
+      shouldDirty: true,
+    });
+    haptic('selection');
+  };
+
   return (
     <>
-      <KitRectangularPreviewV2 items={items} values={values} />
+      <div className="lkdv-cv2c-kit-summary-card" role="group" aria-label="Synthèse du kit">
+        <div className="lkdv-cv2c-kit-summary-stat">
+          <small>Contenu</small>
+          <b>{items.length} objet{items.length > 1 ? 's' : ''}</b>
+        </div>
+        <div className="lkdv-cv2c-kit-summary-stat">
+          <small>Poids total</small>
+          <b>{kg(totalG)}</b>
+        </div>
+        <div className="lkdv-cv2c-kit-summary-stat">
+          <small>{categoriesCount} cat. · Classe</small>
+          <b>{classGoal.label}</b>
+        </div>
+      </div>
       <TextFieldV2
         name="name"
         label="Nom du kit"
@@ -1378,6 +1504,18 @@ function PartageStep() {
         maxLength={1000}
         rows={3}
       />
+      <div className="lkdv-cv2-chips" aria-label="Compléments rapides de description">
+        {['Ultraléger', 'Autonomie 2 jours', 'Haute montagne', 'Bivouac confort'].map((tag) => (
+          <button
+            key={tag}
+            type="button"
+            className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+            onClick={() => appendTagToDescription(tag)}
+          >
+            + {tag}
+          </button>
+        ))}
+      </div>
       <KitVisibilitySection />
     </>
   );
@@ -1434,8 +1572,33 @@ function KitBody({
   onRetry: () => void;
 }) {
   const values = api.form.watch();
+  const items = values.items ?? [];
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active);
+  const totalGrams = totalWeightG(items);
+  const weightLabel =
+    totalGrams >= 1000
+      ? `${(totalGrams / 1000).toFixed(2).replace('.', ',')} kg`
+      : `${totalGrams} g`;
+  const kitTitle =
+    values.name.trim() ||
+    kitProposedNameV2({ model: values.model, season: values.season, items }) ||
+    'Mon kit';
+
   return (
     <KitUnitsContext.Provider value={values.units === 'imperial' ? 'imperial' : 'metric'}>
+      {api.active ? (
+        <SheetPreview compact={false}>
+          <CollapsibleHeroPreview
+            collapsed={previewCollapsed}
+            onExpand={() => setPreviewCollapsed(false)}
+            title={kitTitle}
+            subtitle={`${items.length} objet${items.length > 1 ? 's' : ''} · ${weightLabel}`}
+            badge={<Backpack size={14} aria-hidden="true" />}
+          >
+            <KitRectangularPreviewV2 items={items} values={values} />
+          </CollapsibleHeroPreview>
+        </SheetPreview>
+      ) : null}
       {api.step === 0 ? (
         <InventoryStep
           user={user}

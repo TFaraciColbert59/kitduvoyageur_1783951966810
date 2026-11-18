@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
     'surfacePref',
     'avoidSteps',
     'avoidFerries',
+    'snap',
   ]);
   const unknownKeys = [...params.keys()].filter((key) => !ALLOWED_KEYS.has(key));
   if (unknownKeys.length > 0) {
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest) {
   // L origine de la requete donne au cache persistant une URL ABSOLUE : cote
   // serveur, fetch('/api/...') serait une URL invalide. Sans elle, le cache
   // resterait muet et l on retomberait sur la seule memoire.
+  const snap = params.get('snap') === '1' || params.get('snap') === 'true';
   const attempt =
     sport != null
       ? await routeAttemptForSport(
@@ -150,7 +152,14 @@ export async function GET(request: NextRequest) {
           signRouteCacheKey,
           routingOptions
         )
-      : await routeAttempt(points, mode as TravelMode, request.signal, request.nextUrl.origin, signRouteCacheKey);
+      : await routeAttempt(
+          points,
+          mode as TravelMode,
+          request.signal,
+          request.nextUrl.origin,
+          signRouteCacheKey,
+          snap ? { snap: true } : undefined
+        );
   if (!attempt.legs) {
     // Panne, reponse malformee, ou LIEU HORS RESEAU : « indisponible », jamais
     // « 0 km ». La raison est公开发 : sans elle, un sommet a 4 000 m et une

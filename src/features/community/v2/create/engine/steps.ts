@@ -28,7 +28,7 @@ export interface CreateKindConfigV2 {
 }
 
 export const POST_STEPS: readonly CreateStepV2[] = [
-  { id: 'format', label: 'Format', fields: ['format', 'audience', 'clubId'] },
+  { id: 'format', label: 'Format', fields: ['format', 'audience', 'clubId', 'eventDate', 'linkedEventId'] },
   {
     id: 'contenu',
     label: 'Contenu',
@@ -37,11 +37,10 @@ export const POST_STEPS: readonly CreateStepV2[] = [
 ];
 
 const STORY_STEPS: readonly CreateStepV2[] = [
-  { id: 'media', label: 'Média', fields: ['media'] },
   {
     id: 'edition',
-    label: 'Édition',
-    fields: ['caption', 'altText', 'textLayers', 'stickers', 'trimStartMs', 'trimEndMs'],
+    label: 'Contenu',
+    fields: ['media', 'caption', 'altText', 'textLayers', 'stickers', 'trimStartMs', 'trimEndMs'],
   },
   { id: 'diffusion', label: 'Diffusion', fields: ['audience', 'clubId', 'replyPolicy', 'allowReshare'] },
 ];
@@ -50,13 +49,11 @@ const CARNET_STEPS: readonly CreateStepV2[] = [
   {
     id: 'infos',
     label: 'Infos',
-    // FID-064 : le stepper « Nombre de jours » vit en Infos (maquette L2970).
-    // `days` reste validé à l'étape Jours (moments incomplets).
-    fields: ['title', 'destination', 'startDate', 'endDate', 'nbJours', 'description', 'nbVoyageurs', 'visibility', 'clubId'],
+    fields: ['title', 'destination', 'startDate', 'endDate', 'nbJours', 'description', 'nbVoyageurs'],
   },
   { id: 'trace', label: 'Tracé', fields: ['trace', 'distanceKm', 'deniveleM'] },
   { id: 'jours', label: 'Jours', fields: ['days'] },
-  { id: 'partage', label: 'Partage', fields: ['coverMediaId', 'tags', 'collaborators', 'postContent'] },
+  { id: 'partage', label: 'Partage', fields: ['visibility', 'clubId', 'coverMediaId', 'tags', 'collaborators', 'postContent'] },
 ];
 
 const SORTIE_STEPS: readonly CreateStepV2[] = [

@@ -90,6 +90,28 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
     expect(meta.scheduled_at).toBe('2026-12-01T08:30:00');
   });
 
+  it('create_community_post : événement direct avec date et sortie rattachée', () => {
+    const values = {
+      ...createDefaultsV2('post'),
+      format: 'event' as const,
+      title: 'Rando lever du jour',
+      eventDate: '2026-12-28',
+      linkedEventId: 'evt-42',
+      linkedEventTitle: 'Lac Blanc',
+      content: 'Départ 6 h 30 depuis le parking.',
+    };
+    const payload = buildPostPayload(values);
+    expect(payload.post_type).toBe('share');
+    expect(String(payload.content)).toContain('Rando lever du jour');
+    expect(String(payload.content)).toContain('2026-12-28');
+    const meta = payload.creation_meta as Record<string, unknown>;
+    expect(meta.format).toBe('event');
+    expect(meta.source).toBe('event');
+    expect(meta.event_id).toBe('evt-42');
+    expect(meta.event_date).toBe('2026-12-28');
+    expect(meta.event_title).toBe('Lac Blanc');
+  });
+
   it('create_event_with_post : starts_at/ends_at ISO, activité, coordonnées et annonce', () => {
     const values = {
       ...createDefaultsV2('sortie'),
@@ -201,7 +223,7 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
           dayNumber: 1,
           title: 'Refuge du Temple',
           date: '2026-07-10',
-          night: { name: 'Refuge du Temple', type: 'refuge', infos: 'Demi-pension' },
+          night: { name: 'Refuge du Temple', type: 'refuge', altitudeM: 2410, infos: 'Demi-pension' },
           moments: [
             { id: 'm1', kind: 'photo', time: '18:00', text: 'Arrivée au refuge.', place: '', photo },
           ],
@@ -222,6 +244,7 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
 
     const withNights = buildCarnetPayload(values, { hasCarnetNights: true });
     expect(withNights.nights).toHaveLength(1);
+    expect((withNights.nights as Array<Record<string, unknown>>)[0].altitude_m).toBe(2410);
 
     // F2.7 : agrégation des médias et sérialisation de title et encounters
     const videoMedia = {

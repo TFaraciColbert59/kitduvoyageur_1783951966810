@@ -83,17 +83,20 @@ describe('Milestone 2 : Carnet Creation Flow & Moments Timeline', () => {
       expect(emptyBtn).toBeTruthy();
       fireEvent.click(emptyBtn);
 
-      // Le bouton vide disparaît, la carte de moment apparaît
+      // La carte de moment apparaît et le même bloc pointillé reste en dessous pour ajouter d’autres moments
       await waitFor(() => {
-        expect(document.querySelector('button.lkdv-cv2c-moment-empty')).toBeNull();
         expect(screen.getByLabelText(/Titre du moment/i)).toBeTruthy();
       });
       expect(screen.getByLabelText(/Heure du moment/i)).toBeTruthy();
-      expect(screen.getByLabelText(/Lieu du moment/i)).toBeTruthy();
+      const placeInput = screen.getByLabelText(/Lieu du moment/i) as HTMLInputElement;
+      expect(placeInput.placeholder).toBe('Lieu');
+      expect(screen.queryByLabelText(/Type du moment/i)).toBeNull();
+      expect(screen.queryByRole('button', { name: /Importer des photos du jour/i })).toBeNull();
       expect(screen.getByRole('button', { name: /Ajouter une rencontre/i })).toBeTruthy();
       expect(screen.getByRole('button', { name: /Ajouter une photo ou vidéo/i })).toBeTruthy();
 
-      // Bouton séquentiel présent
+      const appendDashedBtn = document.querySelector('button.lkdv-cv2c-moment-empty');
+      expect(appendDashedBtn).toBeTruthy();
       expect(screen.getByRole('button', { name: /Ajouter un moment/i })).toBeTruthy();
     });
 

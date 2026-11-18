@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowUpDown,
   Backpack,
+  Bookmark,
   CalendarClock,
   Check,
   Handshake,
-  Info,
+  LayoutGrid,
+  List,
   Loader2,
   Plus,
   Repeat,
@@ -17,25 +20,38 @@ import {
   Tag,
   X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useKitCatalog } from '@/features/community/create/kit/useKitCatalog';
 import type { KitSource, PickerProduct } from '@/features/community/create/kit/types';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
-import { KitProductSheetV2, type ProductAddOverrides } from './KitProductSheetV2';
+import { formatKitItemWeightV2, formatKitWeightV2, type KitUnitsV2 } from './kitContextV2';
+import {
+  KitProductSheetV2,
+  readFavoriteProductIds,
+  type ProductAddOverrides,
+} from './KitProductSheetV2';
 import type { InventoryItemV2 } from './kitSourcesV2';
 
 export interface KitCatalogDrawerV2Props {
   open: boolean;
   initialCategory?: string;
-  inventory: InventoryItemV2[];
+  inventory: Array<InventoryItemV2 | PickerProduct>;
   addedKeys: Set<string>;
   currentKitWeightG?: number;
+  addedCount?: number;
+  units?: KitUnitsV2;
+  emptyCategories?: string[];
   onClose: () => void;
   onAddProduct: (
     product: PickerProduct,
     targetCategory?: string,
     overrides?: ProductAddOverrides,
   ) => void;
+  onRemoveProduct?: (product: PickerProduct) => void;
+  onCreateCustom?: (presetName: string, category?: string) => void;
 }
+
+type SortMode = 'default' | 'weight_asc' | 'weight_desc' | 'name_asc';
 
 const SOURCES: {
   id: KitSource;
@@ -51,18 +67,21 @@ const SOURCES: {
 
 const SOURCE_LABELS: Record<KitSource, string> = {
   inventory: 'Inventaire',
-  achat: 'Neuf · Boutique',
+  achat: 'Boutique',
   location: 'Location',
   occasion: 'Occasion',
-  pret: 'Prêt',
+  pret: 'Gratuit',
 };
 
 const CATEGORY_ALIASES: Record<string, string[]> = {
+  portage: ['sac', 'portage', 'backpack', 'dos'],
   abri: ['abri', 'tente', 'tent', 'bivouac', 'tarp', 'hamac', 'shelter'],
   couchage: ['couchage', 'sac', 'duvet', 'matelas', 'sleeping', 'pad', 'quilt'],
   cuisine: ['cuisine', 'réchaud', 'rechaud', 'popote', 'stove', 'cook', 'repas'],
-  vêtements: ['vêtement', 'vetement', 'veste', 'pantalon', 'polaire', 'doudoune', 'clothing', 'apparel'],
-  hydratation: ['hydratation', 'gourde', 'flasque', 'filtre', 'water', 'hydration'],
+  vêtements: ['vêtement', 'vetement', 'veste', 'pantalon', 'polaire', 'doudoune', 'clothing'],
+  hydratation: ['hydratation', 'eau', 'gourde', 'flasque', 'filtre', 'water', 'hydration'],
+  électronique: ['électronique', 'electronique', 'lampe', 'frontale', 'batterie', 'gps', 'solaire'],
+  sécurité: ['sécurité', 'securite', 'secours', 'dva', 'pelle', 'sonde', 'couverture'],
   divers: ['divers', 'lampe', 'bâton', 'baton', 'secours', 'accessoire', 'other', 'gear'],
 };
 
@@ -76,7 +95,18 @@ function matchesKitCategory(productCat: string | null | undefined, filterCat: st
   return aliases ? aliases.some((a) => prod.includes(a)) : false;
 }
 
+export function formatLoanBreakageLabel(product: PickerProduct): string | null {
+  if (product.source !== 'pret') return null;
+  const cents = product.depositCents ?? 0;
+  if (cents > 0) return `Casse/perte : ${Math.round(cents / 100)} €`;
+  return 'Casse/perte : 0 €';
+}
+
 function stateLabel(product: PickerProduct): string {
+  if (product.source === 'pret') {
+    const cents = product.depositCents ?? 0;
+    return cents > 0 ? `Gratuit · Casse/perte ${Math.round(cents / 100)} €` : 'Gratuit · Casse/perte 0 €';
+  }
   if (product.source === 'inventory') {
     if (product.wear != null) return `Usure ${product.wear}%`;
     return 'En stock';
@@ -85,12 +115,8 @@ function stateLabel(product: PickerProduct): string {
   return SOURCE_LABELS[product.source];
 }
 
-function formatWeight(grams: number | null): string {
-  if (!grams || grams <= 0) return 'Poids n.c.';
-  return grams >= 1000 ? `${(grams / 1000).toFixed(1).replace('.', ',')} kg` : `${grams} g`;
-}
-
-function mapInventoryToPicker(item: InventoryItemV2): PickerProduct {
+function mapInventoryToPicker(item: InventoryItemV2 | PickerProduct): PickerProduct {
+  if ('source' in item && 'key' in item) return item;
   return {
     key: `inv-${item.ownershipId}`,
     source: 'inventory',
@@ -108,11 +134,18 @@ function mapInventoryToPicker(item: InventoryItemV2): PickerProduct {
   };
 }
 
+function isProductAdded(product: PickerProduct, addedKeys: Set<string>): boolean {
+  return (
+    addedKeys.has(product.id) ||
+    addedKeys.has(product.key) ||
+    addedKeys.has(`name:${product.name.trim().toLowerCase()}`)
+  );
+}
+
 /**
- * Tiroir superposé niveau 1 (Catalogue unifié : Nos produits / Boutique /
- * Location / Occasion / Prêt) + niveau 2 (Fiche produit via bouton `i`).
- * Même esthétique Liquid Glass 90dvh que les tiroirs principaux, sélecteur
- * haut en icônes uniquement, fermeture niveau par niveau via `✕`.
+ * Tiroir Boutique / Catalogue V2 : même structure que les volets V2 — scroll plein
+ * jusqu'en bas sous les contrôles flottants (zéro barre blanche), sélecteur capsule
+ * unifié en bas à droite et menus modernes.
  */
 export function KitCatalogDrawerV2({
   open,
@@ -120,26 +153,34 @@ export function KitCatalogDrawerV2({
   inventory,
   addedKeys,
   currentKitWeightG = 0,
+  units = 'metric',
   onClose,
   onAddProduct,
+  onRemoveProduct,
+  onCreateCustom,
 }: KitCatalogDrawerV2Props) {
   const { state, load } = useKitCatalog();
   const [source, setSource] = useState<KitSource>(() => (inventory.length > 0 ? 'inventory' : 'achat'));
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
-  const [catOpen, setCatOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [maxWeightFilter, setMaxWeightFilter] = useState<'all' | '500' | '1500'>('all');
   const [onlyWithWeight, setOnlyWithWeight] = useState(false);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [hideAdded, setHideAdded] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>('default');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [favIds, setFavIds] = useState<string[]>(() => readFavoriteProductIds());
+  const [openMenu, setOpenMenu] = useState<'cat' | 'filter' | null>(null);
   const [infoProduct, setInfoProduct] = useState<PickerProduct | null>(null);
+  const swipeStartY = useRef<number | null>(null);
 
   useEffect(() => {
     if (open) {
       setSource(inventory.length > 0 ? 'inventory' : 'achat');
       setCategoryFilter(initialCategory);
       setInfoProduct(null);
-      setFilterOpen(false);
-      setCatOpen(false);
+      setOpenMenu(null);
+      setFavIds(readFavoriteProductIds());
     }
   }, [initialCategory, inventory.length, open]);
 
@@ -148,13 +189,22 @@ export function KitCatalogDrawerV2({
     void load(source);
   }, [load, open, source]);
 
-  const inventoryItems = useMemo(() => inventory.map(mapInventoryToPicker), [inventory]);
+  useEffect(() => {
+    if (!open || infoProduct) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (openMenu) setOpenMenu(null);
+        else onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [infoProduct, onClose, open, openMenu]);
 
+  const inventoryItems = useMemo(() => inventory.map(mapInventoryToPicker), [inventory]);
   const rawItems: PickerProduct[] =
     source === 'inventory' ? inventoryItems : (state[source]?.items ?? []);
 
-  // Si la catégorie initiale n'a aucune correspondance exacte dans cette source,
-  // on bascule sur toutes les catégories pour ne jamais afficher une liste vide à tort.
   const effectiveCategoryFilter = useMemo(() => {
     if (!categoryFilter) return '';
     const hasAny = rawItems.some((item) => matchesKitCategory(item.category, categoryFilter));
@@ -170,12 +220,16 @@ export function KitCatalogDrawerV2({
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'fr'));
   }, [initialCategory, rawItems]);
 
+  const favSet = useMemo(() => new Set(favIds), [favIds]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rawItems.filter((item) => {
+    const list = rawItems.filter((item) => {
       if (effectiveCategoryFilter && !matchesKitCategory(item.category, effectiveCategoryFilter)) {
         return false;
       }
+      if (hideAdded && isProductAdded(item, addedKeys)) return false;
+      if (onlyFavorites && !favSet.has(item.id)) return false;
       if (onlyWithWeight && (!item.weightG || item.weightG <= 0)) return false;
       if (maxWeightFilter === '500' && item.weightG && item.weightG > 500) return false;
       if (maxWeightFilter === '1500' && item.weightG && item.weightG > 1500) return false;
@@ -186,7 +240,50 @@ export function KitCatalogDrawerV2({
         (item.category ?? '').toLowerCase().includes(q)
       );
     });
-  }, [effectiveCategoryFilter, maxWeightFilter, onlyWithWeight, query, rawItems]);
+    if (sortMode === 'weight_asc') {
+      return [...list].sort((a, b) => (a.weightG ?? 999999) - (b.weightG ?? 999999));
+    }
+    if (sortMode === 'weight_desc') {
+      return [...list].sort((a, b) => (b.weightG ?? -1) - (a.weightG ?? -1));
+    }
+    if (sortMode === 'name_asc') {
+      return [...list].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    }
+    return list;
+  }, [
+    addedKeys,
+    effectiveCategoryFilter,
+    favSet,
+    hideAdded,
+    maxWeightFilter,
+    onlyFavorites,
+    onlyWithWeight,
+    query,
+    rawItems,
+    sortMode,
+  ]);
+
+  const fmtItemWeight = (g: number | null) =>
+    !g || g <= 0 ? 'Poids n.c.' : formatKitItemWeightV2(g, units);
+  const fmtTotalWeight = (g: number) => formatKitWeightV2(g, units);
+
+  const handleQuickAdd = (event: React.MouseEvent, product: PickerProduct) => {
+    event.stopPropagation();
+    onAddProduct(product, initialCategory || undefined);
+    toast.success(`${product.name} ajouté`);
+  };
+
+  const resetFilters = () => {
+    setQuery('');
+    setCategoryFilter('');
+    setMaxWeightFilter('all');
+    setOnlyWithWeight(false);
+    setOnlyFavorites(false);
+    setHideAdded(false);
+    setSortMode('default');
+  };
+
+  const infoIndex = infoProduct ? filtered.findIndex((p) => p.key === infoProduct.key) : -1;
 
   if (!open || typeof document === 'undefined') return null;
 
@@ -195,6 +292,14 @@ export function KitCatalogDrawerV2({
     0,
     SOURCES.findIndex((s) => s.id === source),
   );
+  const hasActiveFilter =
+    Boolean(query) ||
+    Boolean(effectiveCategoryFilter) ||
+    maxWeightFilter !== 'all' ||
+    onlyWithWeight ||
+    onlyFavorites ||
+    hideAdded ||
+    sortMode !== 'default';
 
   return createPortal(
     <>
@@ -205,9 +310,23 @@ export function KitCatalogDrawerV2({
         aria-modal="true"
         aria-label="Catalogue de matériel"
       >
-        <div className="lkdv-cv2-grab" aria-hidden="true">
+        <div
+          className="lkdv-cv2-grab"
+          aria-hidden="true"
+          onPointerDown={(e) => {
+            swipeStartY.current = e.clientY;
+          }}
+          onPointerUp={(e) => {
+            if (swipeStartY.current != null && e.clientY - swipeStartY.current > 75) {
+              onClose();
+            }
+            swipeStartY.current = null;
+          }}
+        >
           <span />
         </div>
+
+        {/* En-tête épuré : fermer + sources + poids kit */}
         <div className="lkdv-cv2c-stack-head">
           <button
             type="button"
@@ -248,26 +367,132 @@ export function KitCatalogDrawerV2({
               );
             })}
           </div>
+          <span className="lkdv-cv2c-cat-kpi" aria-label="Poids actuel du kit">
+            {fmtTotalWeight(currentKitWeightG)}
+          </span>
         </div>
 
-        <div className="lkdv-cv2c-stack-body">
+        {/* Barre unique calme */}
+        <div className="lkdv-cv2c-cat-bar">
+          <div className="lkdv-cv2c-cat-bar-chips">
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              aria-pressed={!hasActiveFilter}
+              onClick={resetFilters}
+            >
+              Tous ({rawItems.length})
+            </button>
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              aria-pressed={sortMode === 'weight_asc'}
+              onClick={() => setSortMode((s) => (s === 'weight_asc' ? 'default' : 'weight_asc'))}
+            >
+              <ArrowUpDown size={11} aria-hidden="true" /> + légers
+            </button>
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              aria-pressed={onlyFavorites}
+              onClick={() => setOnlyFavorites((v) => !v)}
+            >
+              <Bookmark size={11} aria-hidden="true" /> Favoris
+            </button>
+            {effectiveCategoryFilter ? (
+              <button
+                type="button"
+                className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                aria-pressed={true}
+                onClick={() => setCategoryFilter('')}
+              >
+                {effectiveCategoryFilter} ×
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Corps scrollable plein jusqu'en bas sous le dock flottant */}
+        <div className="lkdv-cv2c-stack-body" onClick={() => openMenu && setOpenMenu(null)}>
           {isLoading ? (
-            <p className="lkdv-cv2-field-hint" style={{ padding: 16 }} role="status">
+            <p className="lkdv-cv2-field-hint" style={{ padding: 20 }} role="status">
               <Loader2 size={14} className="lkdv-cv2c-spin" aria-hidden="true" /> Chargement…
             </p>
           ) : filtered.length === 0 ? (
             <div className="lkdv-cv2c-stack-empty">
               <b>Aucun produit trouvé</b>
-              <small>Essaie une autre source ou recherche.</small>
+              <small>Essaie une autre source ou réinitialise les filtres.</small>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                {hasActiveFilter ? (
+                  <button
+                    type="button"
+                    className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                    onClick={resetFilters}
+                  >
+                    Réinitialiser
+                  </button>
+                ) : null}
+                {query.trim() && onCreateCustom ? (
+                  <button
+                    type="button"
+                    className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                    onClick={() => onCreateCustom(query.trim(), effectiveCategoryFilter || undefined)}
+                  >
+                    <Plus size={12} aria-hidden="true" /> Créer « {query.trim()} »
+                  </button>
+                ) : null}
+              </div>
             </div>
+          ) : viewMode === 'grid' ? (
+            <ul className="lkdv-cv2c-cat-grid" role="list">
+              {filtered.map((product) => {
+                const thumb = product.image || generatedProductImage(product.name, 192);
+                const added = isProductAdded(product, addedKeys);
+                return (
+                  <li
+                    key={product.key}
+                    className={`lkdv-cv2c-cat-card ${added ? 'is-added' : ''}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setInfoProduct(product)}
+                  >
+                    <div className="lkdv-cv2c-cat-card-top">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- vignette produit */}
+                      <img src={thumb} alt="" />
+                    </div>
+                    <b className="lkdv-cv2c-cat-card-name">{product.name}</b>
+                    <div className="lkdv-cv2c-cat-attrs" style={{ justifyContent: 'space-between' }}>
+                      <span className="is-weight">{fmtItemWeight(product.weightG)}</span>
+                      <span className="is-state">{stateLabel(product)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="lkdv-cv2c-prod-add"
+                      data-added={added}
+                      style={{ width: '100%', gap: 4 }}
+                      aria-label={`Ajouter ${product.name} au kit`}
+                      onClick={(e) => handleQuickAdd(e, product)}
+                    >
+                      {added ? <Check size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>
+                        {added ? 'Ajouté' : 'Ajouter'}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           ) : (
             <ul className="lkdv-cv2c-cat-list" role="list">
               {filtered.map((product) => {
-                const thumb =
-                  product.image || generatedProductImage(product.name, product.category ?? 'Matériel');
-                const added = addedKeys.has(product.id) || addedKeys.has(product.key);
+                const thumb = product.image || generatedProductImage(product.name, 96);
+                const added = isProductAdded(product, addedKeys);
                 return (
-                  <li key={product.key} className="lkdv-cv2c-cat-row">
+                  <li
+                    key={product.key}
+                    className={`lkdv-cv2c-cat-row ${added ? 'is-added' : ''}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setInfoProduct(product)}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element -- vignette produit */}
                     <img src={thumb} alt="" className="lkdv-cv2c-cat-thumb" width={44} height={44} />
                     <div className="lkdv-cv2c-cat-meta">
@@ -275,30 +500,20 @@ export function KitCatalogDrawerV2({
                       <div className="lkdv-cv2c-cat-attrs">
                         <span className="is-name">{product.brand || product.category || 'Équipement'}</span>
                         <span className="is-dot" aria-hidden="true">·</span>
-                        <span className="is-weight">{formatWeight(product.weightG)}</span>
+                        <span className="is-weight">{fmtItemWeight(product.weightG)}</span>
                         <span className="is-dot" aria-hidden="true">·</span>
                         <span className="is-state">{stateLabel(product)}</span>
                       </div>
                     </div>
-                    <div className="lkdv-cv2c-cat-actions">
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-prod-add"
-                        data-added={added}
-                        aria-label={`Ajouter ${product.name} au kit`}
-                        onClick={() => onAddProduct(product, initialCategory || undefined)}
-                      >
-                        {added ? <Check size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-                      </button>
-                      <button
-                        type="button"
-                        className="lkdv-cv2c-prod-info"
-                        aria-label={`Informations sur ${product.name}`}
-                        onClick={() => setInfoProduct(product)}
-                      >
-                        <Info size={14} aria-hidden="true" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="lkdv-cv2c-prod-add"
+                      data-added={added}
+                      aria-label={`Ajouter ${product.name} au kit`}
+                      onClick={(e) => handleQuickAdd(e, product)}
+                    >
+                      {added ? <Check size={14} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
+                    </button>
                   </li>
                 );
               })}
@@ -306,8 +521,9 @@ export function KitCatalogDrawerV2({
           )}
         </div>
 
-        <div className="lkdv-cv2c-stack-foot">
-          <div className="lkdv-cv2c-stack-search">
+        {/* Dock flottant bas transparent (zéro barre blanche) : recherche glass + sélecteur style étapes */}
+        <div className="lkdv-cv2c-stack-float-dock">
+          <div className="lkdv-cv2c-stack-search-glass">
             <Search size={14} aria-hidden="true" />
             <input
               type="search"
@@ -316,74 +532,157 @@ export function KitCatalogDrawerV2({
               placeholder="Rechercher un produit…"
               aria-label="Rechercher un produit"
             />
-          </div>
-          <div className="lkdv-cv2c-stack-foot-right">
-            <div className="lkdv-cv2c-filter-wrap">
+            {query ? (
               <button
                 type="button"
-                className="lkdv-cv2c-filter-btn"
-                aria-expanded={catOpen}
+                aria-label="Effacer la recherche"
+                style={{ border: 0, background: 'transparent', cursor: 'pointer', padding: 0, color: '#64748b' }}
+                onClick={() => setQuery('')}
+              >
+                <X size={13} />
+              </button>
+            ) : null}
+          </div>
+
+          <div className="lkdv-cv2c-filter-wrap">
+            <div className="lkdv-cv2c-pill-seg" role="group" aria-label="Catégories et filtres">
+              <button
+                type="button"
+                className="lkdv-cv2c-pill-seg-btn"
+                aria-expanded={openMenu === 'cat'}
                 aria-label="Catégories"
                 title="Catégories"
-                data-active={Boolean(effectiveCategoryFilter)}
-                onClick={() => {
-                  setCatOpen((v) => !v);
-                  setFilterOpen(false);
-                }}
+                data-active={openMenu === 'cat' || Boolean(effectiveCategoryFilter)}
+                onClick={() => setOpenMenu((m) => (m === 'cat' ? null : 'cat'))}
               >
                 <Tag size={14} aria-hidden="true" />
               </button>
-              {catOpen ? (
-                <div className="lkdv-cv2c-filter-menu" role="listbox" aria-label="Catégories">
-                  <span className="lkdv-cv2-field-label">Catégorie</span>
-                  <div className="lkdv-cv2-chips">
+              <button
+                type="button"
+                className="lkdv-cv2c-pill-seg-btn"
+                aria-expanded={openMenu === 'filter'}
+                aria-label="Filtres et affichage"
+                title="Filtres et affichage"
+                data-active={
+                  openMenu === 'filter' ||
+                  maxWeightFilter !== 'all' ||
+                  onlyWithWeight ||
+                  hideAdded ||
+                  viewMode === 'grid' ||
+                  sortMode !== 'default'
+                }
+                onClick={() => setOpenMenu((m) => (m === 'filter' ? null : 'filter'))}
+              >
+                <SlidersHorizontal size={14} aria-hidden="true" />
+              </button>
+            </div>
+
+            {openMenu === 'cat' ? (
+              <div className="lkdv-cv2c-dock-menu" role="listbox" aria-label="Catégories">
+                <div className="lkdv-cv2c-dock-menu-head">
+                  <b>Catégorie</b>
+                  {effectiveCategoryFilter ? (
                     <button
                       type="button"
-                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-                      aria-pressed={!effectiveCategoryFilter}
+                      className="lkdv-cv2c-dock-menu-reset"
                       onClick={() => {
                         setCategoryFilter('');
-                        setCatOpen(false);
+                        setOpenMenu(null);
                       }}
                     >
                       Toutes
                     </button>
-                    {categories.map((cat) => (
+                  ) : null}
+                </div>
+                <div className="lkdv-cv2-chips">
+                  <button
+                    type="button"
+                    className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                    aria-pressed={!effectiveCategoryFilter}
+                    onClick={() => {
+                      setCategoryFilter('');
+                      setOpenMenu(null);
+                    }}
+                  >
+                    Toutes
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                      aria-pressed={effectiveCategoryFilter === cat}
+                      onClick={() => {
+                        setCategoryFilter(cat);
+                        setOpenMenu(null);
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {openMenu === 'filter' ? (
+              <div className="lkdv-cv2c-dock-menu" role="dialog" aria-label="Filtres produits">
+                <div className="lkdv-cv2c-dock-menu-head">
+                  <b>Affichage & Filtres</b>
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-dock-menu-reset"
+                    onClick={() => {
+                      resetFilters();
+                      setViewMode('list');
+                    }}
+                  >
+                    Réinitialiser
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span className="lkdv-cv2-field-label">Affichage</span>
+                  <div className="lkdv-cv2-chips">
+                    <button
+                      type="button"
+                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                      aria-pressed={viewMode === 'list'}
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List size={11} aria-hidden="true" /> Liste
+                    </button>
+                    <button
+                      type="button"
+                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                      aria-pressed={viewMode === 'grid'}
+                      onClick={() => setViewMode('grid')}
+                    >
+                      <LayoutGrid size={11} aria-hidden="true" /> Grille
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span className="lkdv-cv2-field-label">Trier par</span>
+                  <div className="lkdv-cv2-chips">
+                    {[
+                      { id: 'default', label: 'Défaut' },
+                      { id: 'weight_asc', label: 'Poids ↑' },
+                      { id: 'weight_desc', label: 'Poids ↓' },
+                      { id: 'name_asc', label: 'A → Z' },
+                    ].map((opt) => (
                       <button
-                        key={cat}
+                        key={opt.id}
                         type="button"
                         className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-                        aria-pressed={effectiveCategoryFilter === cat}
-                        onClick={() => {
-                          setCategoryFilter(cat);
-                          setCatOpen(false);
-                        }}
+                        aria-pressed={sortMode === opt.id}
+                        onClick={() => setSortMode(opt.id as SortMode)}
                       >
-                        {cat}
+                        {opt.label}
                       </button>
                     ))}
                   </div>
                 </div>
-              ) : null}
-            </div>
-            <div className="lkdv-cv2c-filter-wrap">
-              <button
-                type="button"
-                className="lkdv-cv2c-filter-btn"
-                aria-expanded={filterOpen}
-                aria-label="Filtres"
-                title="Filtres"
-                data-active={maxWeightFilter !== 'all' || onlyWithWeight}
-                onClick={() => {
-                  setFilterOpen((v) => !v);
-                  setCatOpen(false);
-                }}
-              >
-                <SlidersHorizontal size={14} aria-hidden="true" />
-              </button>
-              {filterOpen ? (
-                <div className="lkdv-cv2c-filter-menu" role="dialog" aria-label="Filtres produits">
-                  <span className="lkdv-cv2-field-label">Poids max</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span className="lkdv-cv2-field-label">Poids max & Options</span>
                   <div className="lkdv-cv2-chips">
                     {[
                       { id: 'all', label: 'Tous' },
@@ -400,33 +699,60 @@ export function KitCatalogDrawerV2({
                         {opt.label}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                      aria-pressed={onlyWithWeight}
+                      onClick={() => setOnlyWithWeight((v) => !v)}
+                    >
+                      Poids connu
+                    </button>
+                    <button
+                      type="button"
+                      className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                      aria-pressed={hideAdded}
+                      onClick={() => setHideAdded((v) => !v)}
+                    >
+                      Masquer ajoutés
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-                    aria-pressed={onlyWithWeight}
-                    onClick={() => setOnlyWithWeight((v) => !v)}
-                  >
-                    Avec poids connu
-                  </button>
                 </div>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* Tiroir superposé niveau 2 : Fiche produit blanche (20+20 améliorations) */}
+      {/* Tiroir superposé niveau 2 : Fiche produit */}
       {infoProduct ? (
         <KitProductSheetV2
           product={infoProduct}
           initialCategory={initialCategory}
           currentKitWeightG={currentKitWeightG}
+          units={units}
+          alreadyInKit={isProductAdded(infoProduct, addedKeys)}
+          positionLabel={infoIndex >= 0 ? `${infoIndex + 1} / ${filtered.length}` : undefined}
+          hasPrev={infoIndex > 0}
+          hasNext={infoIndex >= 0 && infoIndex < filtered.length - 1}
+          onPrev={() => {
+            if (infoIndex > 0) setInfoProduct(filtered[infoIndex - 1]);
+          }}
+          onNext={() => {
+            if (infoIndex >= 0 && infoIndex < filtered.length - 1) setInfoProduct(filtered[infoIndex + 1]);
+          }}
+          onFavoriteChange={() => setFavIds(readFavoriteProductIds())}
           onClose={() => setInfoProduct(null)}
           onAdd={(prod, overrides, keepOpen) => {
             onAddProduct(prod, overrides.category ?? (initialCategory || undefined), overrides);
             if (!keepOpen) setInfoProduct(null);
           }}
+          onRemove={
+            onRemoveProduct
+              ? (prod) => {
+                  onRemoveProduct(prod);
+                }
+              : undefined
+          }
         />
       ) : null}
     </>,

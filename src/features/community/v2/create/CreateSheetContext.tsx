@@ -11,6 +11,8 @@ export interface CreateSuccessV2 {
   slug?: string;
   /** Nom lisible (club, kit, sortie) pour le sous-titre et le partage. */
   name?: string;
+  /** Données complémentaires pour les enchaînements (ex. retour Sortie -> Post Événement). */
+  extra?: Record<string, unknown>;
 }
 
 export interface CreateDetailRequest {

@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { motion } from 'framer-motion';
-import { Camera, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CalendarDays, Camera, ChevronDown, Compass, MoreHorizontal, Sparkles, Trash2 } from 'lucide-react';
 import type { PostFormValuesV2 } from '../engine/createSchemasV2';
 import { PhotoEditorPill } from './PhotoEditorPill';
 import {
@@ -21,6 +21,8 @@ export interface PostHeroPreviewProps {
   onTriggerFileInput: () => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onFilesSelected: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveActivePhoto?: () => void;
+  onPassToStory?: () => void;
   collapsed?: boolean;
   onExpand?: () => void;
   className?: string;
@@ -44,15 +46,37 @@ export function PostHeroPreview({
   onTriggerFileInput,
   fileInputRef,
   onFilesSelected,
+  onRemoveActivePhoto,
+  onPassToStory,
   collapsed = false,
   onExpand,
   className = '',
 }: PostHeroPreviewProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuWrapRef = useRef<HTMLDivElement | null>(null);
   const mediaList = values.media ?? [];
   const safeIndex = Math.min(Math.max(0, activePhotoIndex), Math.max(0, mediaList.length - 1));
   const activeMedia = mediaList[safeIndex];
   const hasPhotos = mediaList.length > 0 && Boolean(activeMedia);
   const isTextFormat = values.format === 'billet' || values.format === 'question' || values.format === 'event';
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (menuWrapRef.current && !menuWrapRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [menuOpen]);
+
+  const formatEventChipDate = (iso?: string) => {
+    if (!iso) return '';
+    const parsed = new Date(`${iso}T12:00:00`);
+    if (Number.isNaN(parsed.getTime())) return iso;
+    return parsed.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  };
 
   const metadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
   const authorName =
@@ -117,9 +141,17 @@ export function PostHeroPreview({
             )}
           </span>
           <span className="lkdv-post-collapsed-txt">
-            <b>{values.title || authorName}</b>
+            <b>{values.title || values.linkedEventTitle || authorName}</b>
             <small>
-              {hasPhotos ? `${mediaList.length} photo${mediaList.length > 1 ? 's' : ''}` : values.format}
+              {hasPhotos
+                ? `${mediaList.length} photo${mediaList.length > 1 ? 's' : ''}`
+                : values.format === 'event'
+                  ? 'Événement'
+                  : values.format === 'question'
+                    ? 'Question'
+                    : values.format === 'billet'
+                      ? 'Billet'
+                      : 'Photo'}
             </small>
           </span>
           <ChevronDown size={14} aria-hidden="true" />
@@ -155,18 +187,92 @@ export function PostHeroPreview({
                 <small>{values.location || 'Ma position'} · à l’instant</small>
               </span>
             </div>
-            <span className="lkdv-post-hero-more-pill" aria-hidden="true">
+            <div ref={menuWrapRef} className="lkdv-post-hero-more-wrap">
               {hasPhotos && mediaList.length > 1 ? (
-                <span className="lkdv-post-hero-count">{safeIndex + 1}/{mediaList.length}</span>
-              ) : (
+                <span className="lkdv-post-hero-more-pill lkdv-post-hero-more-pill--count" aria-hidden="true">
+                  <span className="lkdv-post-hero-count">{safeIndex + 1}/{mediaList.length}</span>
+                </span>
+              ) : null}
+              <button
+                type="button"
+                className="lkdv-post-hero-more-pill lkdv-post-hero-more-btn"
+                aria-label="Options de la photo"
+                aria-expanded={menuOpen}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+              >
                 <MoreHorizontal size={18} />
-              )}
-            </span>
+              </button>
+              <AnimatePresence>
+                {menuOpen ? (
+                  <motion.div
+                    className="lkdv-post-hero-menu"
+                    role="menu"
+                    initial={{ opacity: 0, scale: 0.92, y: -6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -6 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {hasPhotos && onRemoveActivePhoto ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="lkdv-post-hero-menu-item is-danger"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onRemoveActivePhoto();
+                        }}
+                      >
+                        <Trash2 size={15} className="lkdv-post-hero-menu-ico" aria-hidden="true" />
+                        <span>Retirer la photo</span>
+                      </button>
+                    ) : null}
+                    {hasPhotos && onPassToStory ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="lkdv-post-hero-menu-item"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onPassToStory();
+                        }}
+                      >
+                        <Sparkles size={15} className="lkdv-post-hero-menu-ico" aria-hidden="true" />
+                        <span>Passer en Story</span>
+                      </button>
+                    ) : null}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
           </div>
 
           {isTextFormat && !hasPhotos ? (
             <div className="lkdv-post-text-preview-box">
-              {values.title ? <b className="lkdv-post-text-preview-title">{values.title}</b> : null}
+              {values.format === 'event' && (values.eventDate || values.linkedEventTitle) ? (
+                <div className="lkdv-post-event-chips">
+                  {values.eventDate ? (
+                    <span className="lkdv-post-event-chip">
+                      <CalendarDays size={12} aria-hidden="true" />
+                      {formatEventChipDate(values.eventDate)}
+                    </span>
+                  ) : null}
+                  {values.linkedEventId ? (
+                    <span className="lkdv-post-event-chip is-sortie">
+                      <Compass size={12} aria-hidden="true" />
+                      {values.linkedEventTitle || 'Sortie rattachée'}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {values.title || values.linkedEventTitle ? (
+                <b className="lkdv-post-text-preview-title">{values.title || values.linkedEventTitle}</b>
+              ) : null}
               <p className="lkdv-post-text-preview-body">
                 {values.content?.trim() ||
                   (values.format === 'question'

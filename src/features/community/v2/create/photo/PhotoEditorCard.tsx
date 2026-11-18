@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Check, RotateCcw } from 'lucide-react';
 import {
   type PhotoEditorCategory,
   type PhotoModifiersV2,
@@ -49,6 +50,29 @@ export function PhotoEditorCard({
       }}
     >
       <div className="lkdv-photo-editor-card-inner">
+        <div className="lkdv-photo-editor-head">
+          <span className="lkdv-photo-editor-title">{spec.label}</span>
+          <div className="lkdv-photo-editor-head-actions">
+            <button
+              type="button"
+              className="lkdv-photo-editor-head-btn"
+              data-testid="editor-reset-btn"
+              onClick={() => onResetCategory(category)}
+            >
+              <RotateCcw size={12} aria-hidden="true" />
+              Réinitialiser
+            </button>
+            <button
+              type="button"
+              className="lkdv-photo-editor-head-btn is-done"
+              data-testid="editor-close-btn"
+              onClick={onClose}
+            >
+              <Check size={12} aria-hidden="true" />
+              Terminé
+            </button>
+          </div>
+        </div>
         <div className="lkdv-photo-editor-controls">
         {spec.modifiers.map((mod) => {
           const rawValue = modifiers[mod.key];

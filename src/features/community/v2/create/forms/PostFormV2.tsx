@@ -1,8 +1,22 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, CalendarDays, Camera, Globe, HelpCircle, Lock, PenLine, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarDays,
+  Camera,
+  Check,
+  Compass,
+  Globe,
+  HelpCircle,
+  Loader2,
+  Lock,
+  MapPin,
+  PenLine,
+  Plus,
+  Users,
+} from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
 import {
@@ -24,7 +38,9 @@ import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { mediaProgress } from '../fields/media';
 import { useMyClubsV2 } from '../club/useMyClubsV2';
-import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
+import { useMySortiesV2, type MySortieOptionV2 } from '../post/useMySortiesV2';
+import { todayIso } from '../../shared/format';
+import { deleteMediaObjectsV2, uploadMediaV2, uploadedObjectsOf } from '../fields/media';
 import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 import { PostHeroPreview } from '../photo/PostHeroPreview';
@@ -64,7 +80,184 @@ const FORMAT_OPTIONS = [
   },
 ] as const;
 
-function FormatStep() {
+function formatFrenchDate(iso: string): string {
+  if (!iso) return '';
+  const parsed = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return parsed.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+interface SortieAttachmentPanelProps {
+  sorties: MySortieOptionV2[] | null;
+  loading: boolean;
+  error: string | null;
+  onCreateSortie: () => void;
+}
+
+function SortieAttachmentPanel({
+  sorties,
+  loading,
+  error,
+  onCreateSortie,
+}: SortieAttachmentPanelProps) {
+  const form = useFormContext<PostFormValuesV2>();
+  const values = form.watch();
+  const eventDate = values.eventDate;
+  const linkedEventId = values.linkedEventId;
+
+  const matchingForDate = useMemo(
+    () => (sorties ?? []).filter((s) => !eventDate || s.eventDate === eventDate),
+    [eventDate, sorties],
+  );
+  const otherUpcoming = useMemo(
+    () => (sorties ?? []).filter((s) => eventDate && s.eventDate !== eventDate),
+    [eventDate, sorties],
+  );
+
+  // Auto-rattachement si l'utilisateur n'a qu'une sortie exacte à cette date et aucune sélection manuelle encore faite
+  useEffect(() => {
+    if (!eventDate || linkedEventId || matchingForDate.length !== 1) return;
+    const only = matchingForDate[0];
+    if (!only) return;
+    form.setValue('linkedEventId', only.id, { shouldDirty: false, shouldValidate: true });
+    form.setValue('linkedEventTitle', only.title, { shouldDirty: false });
+    if (!form.getValues('title')?.trim()) {
+      form.setValue('title', only.title, { shouldDirty: false });
+    }
+    if (!form.getValues('location')?.trim() && only.location) {
+      form.setValue('location', only.location, { shouldDirty: false });
+    }
+  }, [eventDate, form, linkedEventId, matchingForDate]);
+
+  const attachSortie = (sortie: MySortieOptionV2) => {
+    const isAlready = linkedEventId === sortie.id;
+    if (isAlready) {
+      form.setValue('linkedEventId', '', { shouldDirty: true, shouldValidate: true });
+      form.setValue('linkedEventTitle', '', { shouldDirty: true });
+      return;
+    }
+    form.setValue('eventDate', sortie.eventDate, { shouldDirty: true, shouldValidate: true });
+    form.setValue('linkedEventId', sortie.id, { shouldDirty: true, shouldValidate: true });
+    form.setValue('linkedEventTitle', sortie.title, { shouldDirty: true });
+    if (!form.getValues('title')?.trim()) {
+      form.setValue('title', sortie.title, { shouldDirty: true });
+    }
+    if (!form.getValues('location')?.trim() && sortie.location) {
+      form.setValue('location', sortie.location, { shouldDirty: true });
+    }
+  };
+
+  return (
+    <div className="lkdv-cv2-card lkdv-cv2c-event-sortie-box" data-testid="cv2c-event-sortie-panel">
+      <div className="lkdv-cv2c-section-head">
+        <span className="lkdv-cv2-field-label">Sortie rattachée</span>
+        <button
+          type="button"
+          className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+          onClick={onCreateSortie}
+        >
+          <Plus size={12} aria-hidden="true" />
+          Créer une sortie
+        </button>
+      </div>
+
+      {loading && !sorties ? (
+        <p className="lkdv-cv2-field-hint">
+          <Loader2 size={13} className="lkdv-cv2c-spin" aria-hidden="true" /> Recherche de tes sorties…
+        </p>
+      ) : null}
+
+      {error ? <p className="lkdv-cv2-field-error">{error}</p> : null}
+
+      {!loading && matchingForDate.length > 0 ? (
+        <div className="lkdv-cv2c-sortie-pick-list" role="radiogroup" aria-label="Sorties à cette date">
+          {matchingForDate.map((sortie) => {
+            const selected = linkedEventId === sortie.id;
+            return (
+              <button
+                key={sortie.id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className="lkdv-cv2c-sortie-pick-item"
+                data-active={selected || undefined}
+                onClick={() => attachSortie(sortie)}
+              >
+                <span className="lkdv-cv2c-sortie-pick-main">
+                  <b>{sortie.title}</b>
+                  <small>
+                    {[
+                      sortie.location || null,
+                      sortie.distanceKm ? `${sortie.distanceKm} km` : null,
+                      sortie.maxParticipants ? `${sortie.currentParticipants}/${sortie.maxParticipants} part.` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || formatFrenchDate(sortie.eventDate)}
+                  </small>
+                </span>
+                <span className="lkdv-cv2c-sortie-pick-check" aria-hidden="true">
+                  {selected ? <Check size={14} /> : null}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {!loading && matchingForDate.length === 0 ? (
+        <div className="lkdv-cv2c-event-empty-sortie" data-testid="cv2c-event-no-sortie">
+          <p className="lkdv-cv2-field-hint">
+            <b>
+              {eventDate
+                ? `Aucune sortie créée le ${formatFrenchDate(eventDate)}.`
+                : 'Aucune sortie sélectionnée.'}
+            </b>{' '}
+            Crée ta sortie au préalable pour y rattacher les inscriptions et l’itinéraire, ou poursuis avec une annonce directe.
+          </p>
+          <button
+            type="button"
+            className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-format-cta"
+            onClick={onCreateSortie}
+            data-testid="cv2c-event-create-sortie-btn"
+          >
+            Créer la sortie {eventDate ? `du ${formatFrenchDate(eventDate)}` : 'au préalable'}
+            <ArrowRight size={15} aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+
+      {otherUpcoming.length > 0 ? (
+        <div className="lkdv-cv2c-event-other-sorties">
+          <span className="lkdv-cv2-field-hint">Ou rattacher une sortie à une autre date :</span>
+          <div className="lkdv-cv2c-hrail lkdv-cv2c-story-carnet-rail">
+            {otherUpcoming.slice(0, 8).map((sortie) => {
+              const selected = linkedEventId === sortie.id;
+              return (
+                <button
+                  key={sortie.id}
+                  type="button"
+                  className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                  aria-pressed={selected}
+                  data-active={selected || undefined}
+                  onClick={() => attachSortie(sortie)}
+                >
+                  <Compass size={12} aria-hidden="true" />
+                  {sortie.title} · {sortie.eventDate.slice(5)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function FormatStep({
+  sortiesState,
+}: {
+  sortiesState: ReturnType<typeof useMySortiesV2>;
+}) {
   const form = useFormContext<PostFormValuesV2>();
   const values = form.watch();
   const { requestCreate, user } = useCreateSheet();
@@ -77,9 +270,23 @@ function FormatStep() {
     if (values.audience === 'club') void myClubs.load();
   }, [myClubs, values.audience]);
 
-  const goToSortie = () => {
+  useEffect(() => {
+    if (values.format === 'event') {
+      if (!values.eventDate) {
+        form.setValue('eventDate', todayIso(), { shouldDirty: false, shouldValidate: false });
+      }
+      void sortiesState.load();
+    }
+  }, [form, sortiesState, values.eventDate, values.format]);
+
+  const goToSortieUpstream = () => {
     const title = values.title.trim() || values.content.trim().slice(0, 60);
-    requestCreate('sortie', title ? { title } : undefined);
+    requestCreate('sortie', {
+      ...(title ? { title } : {}),
+      ...(values.eventDate ? { date: values.eventDate } : {}),
+      ...(values.location.trim() ? { place: values.location.trim() } : {}),
+      returnToPostEvent: true,
+    });
   };
 
   return (
@@ -100,9 +307,12 @@ function FormatStep() {
               aria-checked={active}
               className="lkdv-cv2c-format-card"
               data-active={active}
-              onClick={() =>
-                form.setValue('format', option.value, { shouldValidate: true, shouldDirty: true })
-              }
+              onClick={() => {
+                form.setValue('format', option.value, { shouldValidate: true, shouldDirty: true });
+                if (option.value === 'event' && !form.getValues('eventDate')) {
+                  form.setValue('eventDate', todayIso(), { shouldDirty: true });
+                }
+              }}
             >
               <span className="lkdv-cv2c-format-ico" aria-hidden="true">
                 {option.icon}
@@ -114,20 +324,20 @@ function FormatStep() {
         })}
       </div>
       {values.format === 'event' ? (
-        <>
-          <p className="lkdv-cv2-card lkdv-cv2-field-hint" data-testid="cv2c-event-note">
-            <b>Un événement se crée dans le formulaire Sortie.</b> Date, lieu, capacité et sécurité
-            y sont réunis, et l’annonce part avec la sortie, en une seule fois.
-          </p>
-          <button
-            type="button"
-            className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-format-cta"
-            onClick={goToSortie}
-          >
-            Créer dans Sortie
-            <ArrowRight size={15} aria-hidden="true" />
-          </button>
-        </>
+        <div className="lkdv-cv2c-event-format-flow" data-testid="cv2c-event-flow">
+          <DateFieldV2
+            name="eventDate"
+            label="Date de l’événement"
+            required
+            min={todayIso()}
+          />
+          <SortieAttachmentPanel
+            sorties={sortiesState.sorties}
+            loading={sortiesState.loading}
+            error={sortiesState.error}
+            onCreateSortie={goToSortieUpstream}
+          />
+        </div>
       ) : null}
       {formatError ? (
         <p className="lkdv-cv2-field-error" role="alert">
@@ -169,6 +379,8 @@ interface ContentStepProps {
 
 function ContentStep({
   user: _user,
+  sortiesState,
+  onCreateSortieUpstream,
   activePhotoIndex,
   setActivePhotoIndex,
   activeCategory,
@@ -177,7 +389,10 @@ function ContentStep({
   onRemovePhoto,
   onChangeModifier,
   onResetCategory,
-}: ContentStepProps) {
+}: ContentStepProps & {
+  sortiesState: ReturnType<typeof useMySortiesV2>;
+  onCreateSortieUpstream: () => void;
+}) {
   const form = useFormContext<PostFormValuesV2>();
   const values = form.watch();
   const format = values.format;
@@ -198,57 +413,93 @@ function ContentStep({
 
   return (
     <>
-      {format === 'event' ? (
-        <p className="lkdv-cv2-field-hint">
-          Ce format ne se publie pas ici : choisis « Créer dans Sortie » à l’étape Format.
+      {mediaError ? (
+        <p className="lkdv-cv2-field-error" role="alert">
+          {mediaError}
         </p>
-      ) : (
-        <>
-          {/* Bandeau de miniatures horizontales (F1.2) */}
-          <PhotoThumbnailStrip
-            media={values.media}
-            activeIndex={safeIndex}
-            onSelectPhoto={setActivePhotoIndex}
-            onRemovePhoto={onRemovePhoto}
-            onAddPhotoClick={onTriggerFileInput}
-            maxCount={POST_MEDIA_MAX_COUNT}
-          />
+      ) : null}
 
-          {mediaError ? (
-            <p className="lkdv-cv2-field-error" role="alert">
-              {mediaError}
+      {format === 'event' ? (
+        <div className="lkdv-cv2-card lkdv-cv2c-event-linked-summary" data-testid="cv2c-event-step2-sortie">
+          <div className="lkdv-cv2c-section-head">
+            <span className="lkdv-cv2-field-label">
+              {values.eventDate ? `Événement du ${formatFrenchDate(values.eventDate)}` : 'Événement'}
+            </span>
+            <button
+              type="button"
+              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+              onClick={onCreateSortieUpstream}
+            >
+              <Plus size={12} aria-hidden="true" />
+              {values.linkedEventId ? 'Nouvelle sortie' : 'Créer la sortie'}
+            </button>
+          </div>
+          {values.linkedEventId ? (
+            <div className="lkdv-cv2c-event-linked-pill">
+              <Compass size={14} aria-hidden="true" />
+              <span>
+                Sortie rattachée : <b>{values.linkedEventTitle || 'Sortie sélectionnée'}</b>
+              </span>
+              <button
+                type="button"
+                className="lkdv-cv2-chip lkdv-cv2-chip--sm"
+                onClick={() => {
+                  form.setValue('linkedEventId', '', { shouldDirty: true, shouldValidate: true });
+                  form.setValue('linkedEventTitle', '', { shouldDirty: true });
+                }}
+              >
+                Détacher
+              </button>
+            </div>
+          ) : (
+            <p className="lkdv-cv2-field-hint">
+              Aucune sortie rattachée — tu peux en créer une ou publier l’annonce directement.
             </p>
-          ) : null}
-        </>
-      )}
+          )}
+        </div>
+      ) : null}
 
-      {format === 'billet' || format === 'question' ? (
+      {format === 'billet' || format === 'question' || format === 'event' ? (
         <TextFieldV2
           name="title"
-          label={format === 'question' ? 'Titre de la question' : 'Titre'}
+          label={
+            format === 'question'
+              ? 'Titre de la question'
+              : format === 'event'
+                ? 'Titre de l’événement'
+                : 'Titre'
+          }
           placeholder={
             format === 'question'
               ? 'Votre meilleur spot pour bivouaquer ?'
-              : 'Lac Blanc au lever du jour'
+              : format === 'event'
+                ? 'Sortie lever de soleil au Lac Blanc'
+                : 'Lac Blanc au lever du jour'
           }
           required
           maxLength={120}
         />
       ) : null}
 
-      {format !== 'event' ? (
-        <TextAreaFieldV2
-          name="content"
-          label={format === 'photo' ? 'Légende' : 'Texte'}
-          placeholder={
-            format === 'question'
-              ? 'Pose ta question… (@mention, #hashtag)'
+      <TextAreaFieldV2
+        name="content"
+        label={
+          format === 'photo'
+            ? 'Légende'
+            : format === 'event'
+              ? 'Détails & programme'
+              : 'Texte'
+        }
+        placeholder={
+          format === 'question'
+            ? 'Pose ta question… (@mention, #hashtag)'
+            : format === 'event'
+              ? 'Heure de RDV, matériel conseillé, programme… (@mention, #hashtag)'
               : 'Raconte, partage… (@mention, #hashtag)'
-          }
-          maxLength={600}
-          required={format !== 'photo'}
-        />
-      ) : null}
+        }
+        maxLength={600}
+        required={format !== 'photo' && !(format === 'event' && Boolean(values.linkedEventId))}
+      />
 
       <PlaceFieldV2
         name="location"
@@ -354,6 +605,8 @@ function ContentStep({
 function PostBody({
   api,
   user,
+  prefill,
+  prefillNonce,
   activePhotoIndex,
   setActivePhotoIndex,
   activeCategory,
@@ -364,6 +617,8 @@ function PostBody({
 }: {
   api: CreateFormEngineApiV2<PostFormValuesV2>;
   user: User | null;
+  prefill?: Record<string, unknown> | null;
+  prefillNonce?: number;
   activePhotoIndex: number;
   setActivePhotoIndex: React.Dispatch<React.SetStateAction<number>>;
   activeCategory: PhotoEditorCategory | null;
@@ -374,7 +629,37 @@ function PostBody({
 }) {
   const form = api.form;
   const values = form.watch();
+  const { requestCreate } = useCreateSheet();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const sortiesState = useMySortiesV2(user?.id ?? null);
+  const lastPrefillNonceRef = useRef<number>(-1);
+
+  useEffect(() => {
+    if (!prefill || prefillNonce === undefined || prefillNonce === lastPrefillNonceRef.current) return;
+    lastPrefillNonceRef.current = prefillNonce;
+    if (typeof prefill.format === 'string') {
+      form.setValue('format', prefill.format as PostFormValuesV2['format'], { shouldDirty: true });
+    }
+    if (typeof prefill.eventDate === 'string' && prefill.eventDate) {
+      form.setValue('eventDate', prefill.eventDate, { shouldDirty: true });
+    }
+    if (typeof prefill.linkedEventId === 'string' && prefill.linkedEventId) {
+      form.setValue('linkedEventId', prefill.linkedEventId, { shouldDirty: true, shouldValidate: true });
+    }
+    if (typeof prefill.linkedEventTitle === 'string' && prefill.linkedEventTitle) {
+      form.setValue('linkedEventTitle', prefill.linkedEventTitle, { shouldDirty: true });
+      if (!form.getValues('title')?.trim()) {
+        form.setValue('title', prefill.linkedEventTitle, { shouldDirty: true });
+      }
+    }
+    if (typeof prefill.location === 'string' && prefill.location && !form.getValues('location')?.trim()) {
+      form.setValue('location', prefill.location, { shouldDirty: true });
+    }
+    void sortiesState.reload();
+    if (prefill.step === 1) {
+      api.setStep(1);
+    }
+  }, [api, form, prefill, prefillNonce, sortiesState]);
 
   const handleTriggerFileInput = useCallback(() => {
     fileInputRef.current?.click();
@@ -418,8 +703,41 @@ function PostBody({
       form.setValue('media', nextMedia, { shouldValidate: true, shouldDirty: true });
       setActivePhotoIndex(currentMedia.length);
       e.target.value = '';
+
+      if (user?.id) {
+        addedFiles.forEach((file, idx) => {
+          const itemId = newItems[idx].id;
+          void uploadMediaV2(file, {
+            userId: user.id,
+            bucket: 'carnet-media',
+          })
+            .then((uploaded) => {
+              const latest = form.getValues('media') ?? [];
+              const updated = latest.map((m) =>
+                m.id === itemId
+                  ? {
+                      ...m,
+                      url: uploaded.url,
+                      storageBucket: uploaded.bucket,
+                      storagePath: uploaded.path,
+                      status: 'uploaded' as const,
+                      progress: 100,
+                      modifiers:
+                        savedModifiersRef.current[itemId] ??
+                        m.modifiers ??
+                        DEFAULT_PHOTO_MODIFIERS,
+                    }
+                  : m,
+              );
+              form.setValue('media', updated, { shouldDirty: true, shouldValidate: true });
+            })
+            .catch(() => {
+              /* conserve l'aperçu en cas d'erreur réseau */
+            });
+        });
+      }
     },
-    [form],
+    [form, savedModifiersRef, setActivePhotoIndex, user?.id],
   );
 
   const handleRemovePhoto = useCallback(
@@ -520,9 +838,28 @@ function PostBody({
             onTriggerFileInput={handleTriggerFileInput}
             fileInputRef={fileInputRef}
             onFilesSelected={handleFilesSelected}
+            onRemoveActivePhoto={() => handleRemovePhoto(safePhotoIndex)}
+            onPassToStory={() => {
+              const target = mediaList[safePhotoIndex];
+              if (!target) return;
+              requestCreate('story', { media: [target] });
+            }}
             collapsed={isEditorOpen ? false : previewCollapsed}
             onExpand={() => setPreviewCollapsed(false)}
           />
+          {!isEditorOpen && !previewCollapsed ? (
+            <PhotoThumbnailStrip
+              media={mediaList}
+              activeIndex={safePhotoIndex}
+              onSelectPhoto={setActivePhotoIndex}
+              onRemovePhoto={handleRemovePhoto}
+              onReorderPhotos={(nextMedia) => {
+                form.setValue('media', nextMedia, { shouldDirty: true, shouldTouch: true });
+              }}
+              onAddPhotoClick={handleTriggerFileInput}
+              maxCount={POST_MEDIA_MAX_COUNT}
+            />
+          ) : null}
           <AnimatePresence initial={false}>
             {isEditorOpen && activeCategory ? (
               <PhotoEditorCard
@@ -537,10 +874,20 @@ function PostBody({
           </AnimatePresence>
         </SheetPreview>
       ) : null}
-      {!isEditorOpen && api.step === 0 ? <FormatStep /> : null}
+      {!isEditorOpen && api.step === 0 ? <FormatStep sortiesState={sortiesState} /> : null}
       {!isEditorOpen && api.step === 1 ? (
         <ContentStep
           user={user}
+          sortiesState={sortiesState}
+          onCreateSortieUpstream={() => {
+            const title = values.title.trim() || values.content.trim().slice(0, 60);
+            requestCreate('sortie', {
+              ...(title ? { title } : {}),
+              ...(values.eventDate ? { date: values.eventDate } : {}),
+              ...(values.location.trim() ? { place: values.location.trim() } : {}),
+              returnToPostEvent: true,
+            });
+          }}
           activePhotoIndex={activePhotoIndex}
           setActivePhotoIndex={setActivePhotoIndex}
           activeCategory={activeCategory}
@@ -561,7 +908,7 @@ function PostBody({
  * La retouche photo Instagram (3 catégories, 15 modificateurs) et le carrousel
  * de miniatures sont intégrés directement avec proportions réalistes.
  */
-export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
+export function PostFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('post')).current;
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -640,6 +987,8 @@ export function PostFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
         <PostBody
           api={api}
           user={user}
+          prefill={prefill}
+          prefillNonce={prefillNonce}
           activePhotoIndex={activePhotoIndex}
           setActivePhotoIndex={setActivePhotoIndex}
           activeCategory={activeCategory}

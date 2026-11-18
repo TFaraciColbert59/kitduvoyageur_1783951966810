@@ -20,10 +20,9 @@ export const CREATE_KINDS_V2 = ['post', 'story', 'carnet', 'sortie', 'kit', 'clu
 export type CreateKindV2 = (typeof CREATE_KINDS_V2)[number];
 
 /**
- * Formats de publication. `event` est une **vraie option de la grille** (radio
- * de la maquette, HTML L2771/L2811) : elle ne se publie pas ici, elle renvoie
- * vers le formulaire Sortie par le bouton « Créer dans Sortie » — le schéma
- * bloque l'étape Format avec le message de la maquette (L2803).
+ * Formats de publication. `event` se crée directement ici avec une date cible
+ * et le rattachement d'une Sortie existante (ou créée en amont si aucune
+ * sortie n'existe encore à cette date).
  */
 export const POST_FORMATS_V2 = ['photo', 'billet', 'question', 'event'] as const;
 export type PostFormatV2 = (typeof POST_FORMATS_V2)[number];
@@ -65,6 +64,9 @@ export type SortieRecurrenceV2 = (typeof SORTIE_RECURRENCES_V2)[number];
 
 export const KIT_SEASONS_V2 = ['toute_saison', 'printemps', 'ete', 'automne', 'hiver'] as const;
 export type KitSeasonV2 = (typeof KIT_SEASONS_V2)[number];
+
+export const KIT_SEASON_CHOICES_V2 = ['printemps', 'ete', 'automne', 'hiver'] as const;
+export type KitSeasonChoiceV2 = (typeof KIT_SEASON_CHOICES_V2)[number];
 
 export const CARNET_VISIBILITIES_V2 = ['public', 'friends', 'private', 'club'] as const;
 export type CarnetVisibilityV2 = (typeof CARNET_VISIBILITIES_V2)[number];
@@ -209,6 +211,8 @@ export interface CarnetMomentV2 {
   time: string;
   text: string;
   place: string;
+  lat?: number | null;
+  lng?: number | null;
   photo: MediaItemV2 | null;
   media?: MediaItemV2[];
   encounters?: string[];
@@ -217,6 +221,7 @@ export interface CarnetMomentV2 {
 export interface CarnetNightV2 {
   name: string;
   type: 'refuge' | 'gite' | 'bivouac' | 'hotel' | 'camping' | 'autre';
+  altitudeM?: number | null;
   infos: string;
 }
 
@@ -227,6 +232,7 @@ export interface CarnetDayV2 {
   title: string;
   date: string;
   night: CarnetNightV2 | null;
+  trace?: [number, number][];
   moments: CarnetMomentV2[];
 }
 
@@ -433,6 +439,9 @@ export const postSchemaV2 = z
     title: z.string().max(120, '120 caractères maximum.').default(''),
     /** 600 caractères pour **tous** les formats (maquette `max:600, count:600`, L2824). */
     content: z.string().max(600, '600 caractères maximum.').default(''),
+    eventDate: optionalDate,
+    linkedEventId: z.string().default(''),
+    linkedEventTitle: z.string().max(120, '120 caractères maximum.').default(''),
     location: z.string().max(120, '120 caractères maximum.').default(''),
     locationLat: z.number().nullable().default(null),
     locationLng: z.number().nullable().default(null),
@@ -447,12 +456,27 @@ export const postSchemaV2 = z
   })
   .superRefine((value, ctx) => {
     if (value.format === 'event') {
-      // La maquette bloque l'étape Format et renvoie vers Sortie (L2803, L2814).
-      ctx.addIssue({
-        code: 'custom',
-        path: ['format'],
-        message: 'Un événement se crée dans le formulaire Sortie.',
-      });
+      if (!value.eventDate.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['eventDate'],
+          message: 'Choisis la date de l’événement.',
+        });
+      }
+      if (!value.title.trim() && !value.linkedEventTitle.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['title'],
+          message: 'Le titre de l’événement est requis.',
+        });
+      }
+      if (!value.content.trim() && !value.linkedEventId.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content'],
+          message: 'Décris ton événement ou rattache une sortie.',
+        });
+      }
     }
     if (value.format === 'photo') {
       if (value.media.length === 0) {
@@ -546,7 +570,7 @@ const storyStickersSchema = z.object({
 
 export const storySchemaV2 = z
   .object({
-    media: mediaArray(1, 1, 'Ajoute une photo ou une vidéo.').default([]),
+    media: mediaArray(20, 1, 'Ajoute une photo ou une vidéo.').default([]),
     caption: z.string().max(280, '280 caractères maximum.').default(''),
     altText: z.string().max(200, '200 caractères maximum.').default(''),
     audience: z.enum(STORY_AUDIENCES_V2, { error: 'Choisis une audience.' }).default('public'),
@@ -686,7 +710,7 @@ export const kitSchemaV2 = z
      * suggestions de l'étape Compléter et le point de départ « Modèle ».
      * Champ d'interface : non envoyé à la RPC `create_kit_with_items`.
      */
-    model: z.enum(['jour', 'bivouac', 'alpi']).default('bivouac'),
+    model: z.string().trim().max(80, '80 caractères maximum.').default('Bivouac'),
     /** Objectif de poids sélectionnable (`GOALS`, L3172) — interface seule. */
     goal: z.enum(['ultra', 'light', 'std']).default('light'),
     /**
@@ -703,6 +727,7 @@ export const kitSchemaV2 = z
       .refine((value) => value.trim().length <= 100, '100 caractères maximum.'),
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     season: z.enum(KIT_SEASONS_V2, { error: 'Choisis une saison.' }).default('toute_saison'),
+    seasons: z.array(z.enum(KIT_SEASON_CHOICES_V2)).default(['printemps', 'ete', 'automne']),
     isPublic: z.boolean().default(false),
     clubId: z.string().default(''),
     cover: mediaArray(1).default([]),
@@ -784,6 +809,8 @@ export type ClubFormValuesV2 = z.infer<typeof clubSchemaV2>;
 // Carnet — Infos, Tracé, Jours, Partage
 // ---------------------------------------------------------------------------
 
+const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+
 const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
 
 export const carnetMomentSchema = z.object({
@@ -796,6 +823,8 @@ export const carnetMomentSchema = z.object({
     .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
   text: z.string().max(500, '500 caractères maximum.').default(''),
   place: z.string().max(120, '120 caractères maximum.').default(''),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
   photo: mediaItemSchema.nullable().default(null),
   media: z.array(mediaItemSchema).max(5).default([]),
   encounters: z.array(z.string()).default([]),
@@ -804,6 +833,7 @@ export const carnetMomentSchema = z.object({
 export const carnetNightSchema = z.object({
   name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
   type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
+  altitudeM: z.number().int().min(-500).max(9000).nullable().optional(),
   infos: z.string().max(300, '300 caractères maximum.').default(''),
 });
 
@@ -816,10 +846,9 @@ export const carnetDaySchema = z.object({
     .default('')
     .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
   night: carnetNightSchema.nullable().default(null),
+  trace: z.array(tracePointSchema).max(2000).optional(),
   moments: z.array(carnetMomentSchema).max(100, '100 moments par jour maximum.').default([]),
 });
-
-const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
 
 export const carnetSchemaV2 = z
   .object({
@@ -916,15 +945,22 @@ const defaultsFactories = {
     format: 'photo',
     audience: 'public',
     clubId: '',
-    clubId: '',
     media: [],
     title: '',
     content: '',
+    eventDate: '',
+    linkedEventId: '',
+    linkedEventTitle: '',
     location: '',
     locationLat: null,
     locationLng: null,
     tags: [],
     mentions: [],
+    allowComments: true,
+    allowLikes: true,
+    scheduleEnabled: false,
+    scheduleDate: '',
+    scheduleTime: '09:00',
     clientRequestId: newClientRequestId(),
   }),
   story: (): StoryFormValuesV2 => ({
@@ -968,13 +1004,14 @@ const defaultsFactories = {
     clientRequestId: newClientRequestId(),
   }),
   kit: (): KitFormValuesV2 => ({
-    model: 'bivouac',
+    model: 'Bivouac',
     goal: 'light',
     units: 'metric',
     prep: false,
     name: '',
     description: '',
     season: 'toute_saison',
+    seasons: ['printemps', 'ete', 'automne'],
     isPublic: false,
     clubId: '',
     cover: [],

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { ExploreIcon } from '../explore/ExploreIcons';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
 import { SheetPreviewContext } from '../shared/SheetPreview';
@@ -319,6 +319,31 @@ export function CreateSheetV2({
   const reportCreated = useCallback(
     (kind: CreateKindV2, result: CreateSuccessV2) => {
       haptic('success');
+      if (kind === 'sortie' && prefillByKind.sortie?.returnToPostEvent) {
+        keepOpenRef.current = true;
+        setPrefillByKind((current) => {
+          const prevSortie = current.sortie ?? {};
+          const { returnToPostEvent: _consumed, ...restSortie } = prevSortie;
+          return {
+            ...current,
+            sortie: restSortie,
+          };
+        });
+        toast.success('Sortie créée et rattachée à ton événement.');
+        requestCreate('post', {
+          format: 'event',
+          linkedEventId: result.id,
+          linkedEventTitle: result.name ?? '',
+          eventDate:
+            typeof result.extra?.eventDate === 'string' ? result.extra.eventDate : undefined,
+          location:
+            typeof result.extra?.eventLocation === 'string' && result.extra.eventLocation
+              ? result.extra.eventLocation
+              : undefined,
+          step: 1,
+        });
+        return;
+      }
       const openPage = () => {
         keepOpenRef.current = false;
         if (kind === 'club' && result.slug) router.push(`/clubs/${result.slug}`);
@@ -398,7 +423,7 @@ export function CreateSheetV2({
       // L'île est posée : la feuille se referme derrière elle (FID-033).
       closeBehindIsland(kind);
     },
-    [closeBehindIsland, config.successTitle, finishCreated, haptic, requestCreate, router],
+    [closeBehindIsland, config.successTitle, finishCreated, haptic, prefillByKind.sortie, requestCreate, router],
   );
 
   const contextValue = useMemo<CreateSheetContextValue>(
@@ -609,9 +634,17 @@ export function CreateSheetV2({
     />
   ) : null;
 
+  const usesPreviewSlot =
+    activeKind === 'post' ||
+    activeKind === 'story' ||
+    activeKind === 'carnet' ||
+    activeKind === 'sortie' ||
+    activeKind === 'club' ||
+    activeKind === 'kit';
+
   return (
     <CreateSheetContext.Provider value={contextValue}>
-      <SheetPreviewContext.Provider value={activeKind === 'sortie' || activeKind === 'post' ? previewSlot : null}>
+      <SheetPreviewContext.Provider value={usesPreviewSlot ? previewSlot : null}>
         <CommunitySheetShell
           open={open}
           onClose={requestClose}
@@ -627,12 +660,19 @@ export function CreateSheetV2({
           resetKey={`${activeKind}:${prefillNonce}`}
           island={islandNode}
           className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
-          previewSlotRef={activeKind === 'sortie' || activeKind === 'post' ? setPreviewSlot : undefined}
+          previewSlotRef={usesPreviewSlot ? setPreviewSlot : undefined}
         >
           <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
             {activeFormByKind[activeKind]}
           </div>
-          <Toaster position="top-center" richColors />
+          <Toaster
+            position="top-center"
+            richColors
+            offset="max(11px, calc(env(safe-area-inset-top, 0px) - 48px))"
+            toastOptions={{
+              className: 'lkdv-island-toast',
+            }}
+          />
           <ConfirmDialogV2
             open={confirmClose}
             title="Fermer sans publier ?"

@@ -28,6 +28,7 @@ export interface CarnetRow {
   /** Code ISO 3166-1 alpha-2 réel de la colonne `carnets.country_iso`. */
   country_iso?: string | null;
   trip_id?: string | null;
+  map_points?: unknown;
   live_sharing?: boolean | null;
   created_at?: string | null;
   status?: string | null;

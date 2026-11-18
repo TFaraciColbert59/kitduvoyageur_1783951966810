@@ -15,9 +15,9 @@ import type { KitFormValuesV2, KitItemV2 } from '../engine/createSchemasV2';
  * suggestions actionnables à l'étape Compléter (FID-023/FID-024).
  */
 
-export type KitModelV2 = 'jour' | 'bivouac' | 'alpi';
+export type KitModelV2 = string;
 
-export const KIT_MODELS_V2: ReadonlyArray<{ id: KitModelV2; label: string }> = [
+export const KIT_MODELS_V2: ReadonlyArray<{ id: 'jour' | 'bivouac' | 'alpi'; label: string }> = [
   { id: 'jour', label: 'Journée' },
   { id: 'bivouac', label: 'Bivouac' },
   { id: 'alpi', label: 'Alpinisme' },
@@ -72,7 +72,9 @@ function toKitItem(entry: readonly [string, string, number]): KitItemV2 {
 
 /** Objets préremplis d'un modèle (neufs, identifiants uniques). */
 export function kitModelItemsV2(model: KitModelV2): KitItemV2[] {
-  return KIT_MODEL_INDEXES_V2[model].map((index) => toKitItem(C[index])).filter(Boolean);
+  const key: 'jour' | 'bivouac' | 'alpi' =
+    model === 'jour' || model === 'bivouac' || model === 'alpi' ? model : 'bivouac';
+  return KIT_MODEL_INDEXES_V2[key].map((index) => toKitItem(C[index])).filter(Boolean);
 }
 
 /** Total en grammes d'une liste d'objets (quantités comprises). */
@@ -100,8 +102,9 @@ export function kitSuggestionsV2(
   model: KitModelV2,
   season: KitFormValuesV2['season'],
   items: readonly KitItemV2[],
+  seasons?: readonly string[],
 ): KitSuggestionV2[] {
-  const base: Record<KitModelV2, ReadonlyArray<readonly [string, string, number]>> = {
+  const base: Record<'jour' | 'bivouac' | 'alpi', ReadonlyArray<readonly [string, string, number]>> = {
     jour: [['Eau 1 L', 'Sécurité', 1000]],
     bivouac: [
       ['Duvet 0 °C', 'Abri', 780],
@@ -112,8 +115,14 @@ export function kitSuggestionsV2(
       ['Crampons', 'Sécurité', 900],
     ],
   };
-  const list: Array<readonly [string, string, number]> = [...base[model]];
-  if (season === 'hiver') list.push(['Doudoune', 'Vêtements', 380]);
+  const norm = model.trim().toLowerCase();
+  const key: 'jour' | 'bivouac' | 'alpi' = norm.includes('jour')
+    ? 'jour'
+    : norm.includes('alpi')
+      ? 'alpi'
+      : 'bivouac';
+  const list: Array<readonly [string, string, number]> = [...base[key]];
+  if (season === 'hiver' || seasons?.includes('hiver')) list.push(['Doudoune', 'Vêtements', 380]);
   const names = new Set(items.map((item) => item.name.trim()));
   return list.map(([name, category, weightG]) => ({
     name,
@@ -166,19 +175,26 @@ export function kitGoalOfWeightV2(weightG: number): KitGoalV2 {
 export function kitProposedNameV2(values: {
   model: KitModelV2;
   season: KitFormValuesV2['season'];
+  seasons?: readonly string[];
   items: readonly KitItemV2[];
 }): string {
-  const model = KIT_MODELS_V2.find((entry) => entry.id === values.model)?.label ?? 'Bivouac';
+  const preset = KIT_MODELS_V2.find((entry) => entry.id === values.model)?.label;
+  const model = (preset ?? values.model.trim()) || 'Bivouac';
+  const activeSeasons = values.seasons && values.seasons.length > 0 ? values.seasons : [values.season];
   const season =
-    values.season === 'hiver'
-      ? 'hiver'
-      : values.season === 'printemps'
-        ? 'printemps'
-        : values.season === 'automne'
-          ? 'automne'
-          : values.season === 'ete'
-            ? 'été'
-            : '3 saisons';
+    activeSeasons.length === 4
+      ? '4 saisons'
+      : activeSeasons.length > 1
+        ? `${activeSeasons.length} saisons`
+        : activeSeasons[0] === 'hiver'
+          ? 'hiver'
+          : activeSeasons[0] === 'printemps'
+            ? 'printemps'
+            : activeSeasons[0] === 'automne'
+              ? 'automne'
+              : activeSeasons[0] === 'ete'
+                ? 'été'
+                : '3 saisons';
   const kg = (kitItemsWeightV2(values.items) / 1000).toFixed(1).replace('.', ',');
   return `Kit ${model.toLowerCase()} ${season} · ${kg} kg`;
 }

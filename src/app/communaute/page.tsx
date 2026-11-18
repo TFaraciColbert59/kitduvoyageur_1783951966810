@@ -31,7 +31,7 @@ const loadSectionsDrawer = () =>
     default: m.CommunitySectionsDrawer,
   }));
 const loadCreateSheetV2 = () =>
-  import('@/features/community/v2/create/CreateSheetV2').then((m) => ({
+  import('@/features/community/v2/create/CreateSheetV2Live').then((m) => ({
     default: m.CreateSheetV2,
   }));
 const loadExploreSheetV2 = () =>

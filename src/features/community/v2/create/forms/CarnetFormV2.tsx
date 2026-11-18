@@ -1,20 +1,16 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BookOpen,
   Check,
-  Link2,
-  Loader2,
   Mountain,
   PenLine,
   Plus,
   Users,
-  X,
 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
-import { AiImproveButton } from '@/features/community/create/shared/AiImproveButton';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
   carnetSchemaV2,
@@ -23,19 +19,11 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { carnetCover, carnetPhotos, createCarnetV2 } from '../createRpc';
-import { DateRangeFieldV2 } from '../fields/DateRangeFieldV2';
-import { toast } from 'sonner';
-import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
+import { TextFieldV2 } from '../fields/FieldV2';
 import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
 import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
 import { TagsFieldV2 } from '../fields/TagsFieldV2';
-import {
-  fetchMentionProfiles,
-  normalizeMentionQuery,
-  type MentionProfile,
-} from '@/features/community/feed/MentionPicker';
 import { useMyClubsV2 } from '../club/useMyClubsV2';
-import { NumberStepperV2 } from '../fields/NumberStepperV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
@@ -49,9 +37,10 @@ import {
   carnetEndDateForDaysV2,
   syncCarnetDaysV2,
 } from '../carnet/daySync';
-import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { SheetPreview } from '../../shared/SheetPreview';
+import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
+import { CarnetHeroEditorV2 } from '../carnet/CarnetHeroEditorV2';
 import type { CreateFormV2Props } from './types';
 
 const VISIBILITIES = [
@@ -72,12 +61,6 @@ const WRITING_HELP = [
   'Une rencontre marquante',
   'Ce que tu emporterais la prochaine fois',
 ];
-
-interface FriendV2 {
-  id: string;
-  name: string;
-  handle: string;
-}
 
 function visibilityLabel(value: CarnetFormValuesV2['visibility']): string {
   return value === 'public' ? 'Public' : value === 'friends' ? 'Amis' : 'Privé';
@@ -153,14 +136,7 @@ function InfosStep({ user }: { user: User | null }) {
   const dateCount = carnetDayCountV2(values.startDate, values.endDate);
   const days = values.nbJours || 1;
 
-  // Dates → nombre de jours, dans les deux sens (maquette `onInput`, L2971).
-  useEffect(() => {
-    if (dateCount <= 0) return;
-    if (form.getValues('nbJours') === dateCount) return;
-    form.setValue('nbJours', dateCount, { shouldDirty: true });
-  }, [dateCount, form]);
-
-  // Nombre de jours → date de fin (maquette `onSet days`, L2972).
+  // Nombre de jours → date de fin (unidirectionnel, sans boucle sur les dates).
   useEffect(() => {
     if (!values.startDate) return;
     const end = carnetEndDateForDaysV2(values.startDate, days);
@@ -193,6 +169,13 @@ function InfosStep({ user }: { user: User | null }) {
     });
   }, [days, form, values.startDate]);
 
+  const handleDatesChange = (nextStart: string, nextEnd: string) => {
+    const nextCount = carnetDayCountV2(nextStart, nextEnd);
+    if (nextCount > 0 && form.getValues('nbJours') !== nextCount) {
+      form.setValue('nbJours', nextCount, { shouldDirty: true });
+    }
+  };
+
   const appendHelp = (question: string) => {
     const current = form.getValues('description') ?? '';
     const next = `${current.replace(/\s+$/, '')}${current ? '\n\n' : ''}${question}\n`;
@@ -208,15 +191,7 @@ function InfosStep({ user }: { user: User | null }) {
   };
 
   return (
-    <>
-      <TextFieldV2
-        name="title"
-        label="Titre du carnet"
-        placeholder="Tour des Écrins"
-        required
-        // Maquette L2967 : `max:100` (le schéma borne à 100).
-        maxLength={100}
-      />
+    <div className="lkdv-cv2c-carnet-step0">
       <PlaceFieldV2
         name="destination"
         label="Destination"
@@ -225,49 +200,8 @@ function InfosStep({ user }: { user: User | null }) {
         lngName="startLng"
         required
       />
-      <DateRangeFieldV2
-        startName="startDate"
-        endName="endDate"
-        label="Dates"
-      />
-      <div className="lkdv-cv2c-row-2">
-        <NumberStepperV2
-          name="nbJours"
-          label="Nombre de jours"
-          min={1}
-          max={60}
-        />
-        <NumberStepperV2 name="nbVoyageurs" label="Voyageurs" min={1} max={50} />
-      </div>
-      <VisibilityPickerV2
-        name="visibility"
-        label="Visibilité"
-        options={[
-          { value: 'public', label: 'Public' },
-          { value: 'private', label: 'Privé' },
-          { value: 'club', label: 'Club' },
-        ]}
-        clubs={myClubs.clubs ?? []}
-        clubsLoading={myClubs.loading}
-        clubsError={myClubs.error}
-      />
-      <TextAreaFieldV2
-        name="description"
-        label="Récit"
-        placeholder="Récit, idée, points forts…"
-        maxLength={1000}
-        rows={5}
-        action={
-          <AiImproveButton
-            value={description}
-            onChange={(next) =>
-              form.setValue('description', next, { shouldDirty: true, shouldValidate: true })
-            }
-          />
-        }
-      />
       {!user ? <p className="lkdv-cv2c-warning">Connecte-toi pour créer un carnet.</p> : null}
-    </>
+    </div>
   );
 }
 
@@ -309,141 +243,21 @@ function PartageStep({ user }: { user: User | null }) {
     [values],
   );
   const cover = carnetCover(values);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<MentionProfile[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [collaboratorNames, setCollaboratorNames] = useState<Record<string, string>>({});
-  const [friends, setFriends] = useState<FriendV2[] | null>(null);
-  const [friendsError, setFriendsError] = useState<string | null>(null);
-  const [inviteState, setInviteState] = useState<'idle' | 'copied' | 'link'>('idle');
-  const [inviteUrl, setInviteUrl] = useState('');
   const { haptic } = useHapticFeedback();
-
-  // « Voyageurs » de la maquette (L3005) : les personnes suivies servent de
-  // chips d'amis.
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const supabase = createClient();
-        const { data: follows, error } = await supabase
-          .from('user_follows')
-          .select('following_id')
-          .eq('follower_id', user.id)
-          .limit(20);
-        if (error) throw error;
-        const ids = (Array.isArray(follows) ? follows : [])
-          .map((row) => String((row as Record<string, unknown>).following_id ?? ''))
-          .filter(Boolean);
-        if (ids.length === 0) {
-          if (!cancelled) setFriends([]);
-          return;
-        }
-        const { data: profiles } = await supabase
-          .from('public_profiles')
-          .select('id, handle, full_name')
-          .in('id', ids);
-        if (cancelled) return;
-        setFriends(
-          (Array.isArray(profiles) ? profiles : [])
-            .map((row) => {
-              const record = row as Record<string, unknown>;
-              const name = String(record.full_name ?? record.handle ?? 'Ami');
-              return { id: String(record.id ?? ''), name, handle: String(record.handle ?? '') };
-            })
-            .filter((friend) => friend.id),
-        );
-      } catch {
-        if (!cancelled) {
-          setFriends([]);
-          setFriendsError('Ta liste d’amis est indisponible pour le moment.');
-        }
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  useEffect(() => {
-    const normalized = normalizeMentionQuery(searchQuery);
-    if (normalized.length < 2) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      return;
-    }
-    const timer = window.setTimeout(async () => {
-      setSearchLoading(true);
-      try {
-        const supabase = createClient();
-        const profiles = await fetchMentionProfiles(supabase, normalized, 6);
-        setSearchResults(profiles);
-      } catch {
-        setSearchResults([]);
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 200);
-    return () => window.clearTimeout(timer);
-  }, [searchQuery]);
-
-  const selectProfile = (profile: MentionProfile) => {
-    if (!values.collaborators.includes(profile.id)) {
-      form.setValue('collaborators', [...values.collaborators, profile.id], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-      form.setValue('isCollaborative', true, { shouldDirty: true });
-      const displayName = profile.full_name || (profile.handle ? `@${profile.handle}` : 'Voyageur');
-      setCollaboratorNames((current) => ({
-        ...current,
-        [profile.id]: displayName,
-      }));
-    }
-    setSearchQuery('');
-    setSearchResults([]);
-    haptic('selection');
-  };
-
-  const toggleFriend = (friend: FriendV2) => {
-    const selected = values.collaborators.includes(friend.id);
-    const next = selected
-      ? values.collaborators.filter((entry) => entry !== friend.id)
-      : [...values.collaborators, friend.id];
-    form.setValue('collaborators', next, { shouldDirty: true, shouldValidate: true });
-    if (next.length > 0) {
-      form.setValue('isCollaborative', true, { shouldDirty: true });
-    }
-    setCollaboratorNames((current) => ({ ...current, [friend.id]: friend.name }));
-    haptic('selection');
-  };
-
-  const inviteByLink = async () => {
-    const token = crypto.randomUUID().slice(0, 8);
-    const url = `${window.location.origin}/inviter/carnet-${token}`;
-    setInviteUrl(url);
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        setInviteState('copied');
-      } else {
-        setInviteState('link');
-      }
-    } catch {
-      setInviteState('link');
-    }
-    toast.success('Lien d’invitation prêt');
-    haptic('success');
-  };
 
   return (
     <>
       <VisibilityPickerV2
         name="visibility"
-        clubId={values.clubId}
-        myClubs={myClubs}
+        label="Visibilité"
+        options={[
+          { value: 'public', label: 'Public' },
+          { value: 'private', label: 'Privé' },
+          { value: 'club', label: 'Club' },
+        ]}
+        clubs={myClubs.clubs ?? []}
+        clubsLoading={myClubs.loading}
+        clubsError={myClubs.error}
       />
 
       <div className="lkdv-cv2-field">
@@ -524,166 +338,6 @@ function PartageStep({ user }: { user: User | null }) {
           </div>
         </div>
       ) : null}
-
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Voyageurs</span>
-        <div style={{ position: 'relative' }}>
-          <div className="lkdv-cv2c-inline-add">
-            <input
-              type="text"
-              className="lkdv-cv2-input"
-              value={searchQuery}
-              placeholder="Rechercher par nom ou @pseudo…"
-              aria-label="Rechercher un voyageur"
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-            {searchLoading ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 8px' }}>
-                <Loader2 size={16} className="lkdv-cv2c-spin" aria-hidden="true" />
-              </span>
-            ) : null}
-          </div>
-          {searchResults.length > 0 ? (
-            <ul
-              className="lkdv-cv2c-mention-suggestions"
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                zIndex: 20,
-                background: 'var(--lkv-surface-paper, #ffffff)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                borderRadius: '8px',
-                margin: '4px 0 0 0',
-                padding: '4px',
-                listStyle: 'none',
-                maxHeight: '180px',
-                overflowY: 'auto',
-              }}
-            >
-              {searchResults.map((profile) => (
-                <li key={profile.id}>
-                  <button
-                    type="button"
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '6px 8px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: 'transparent',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => selectProfile(profile)}
-                  >
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt=""
-                        style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: '50%',
-                          background: 'var(--lkv-surface-muted)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 11,
-                        }}
-                      >
-                        {(profile.full_name || profile.handle || '?')[0].toUpperCase()}
-                      </span>
-                    )}
-                    <span style={{ display: 'flex', flexDirection: 'column' }}>
-                      <b style={{ fontSize: '12px' }}>{profile.full_name || profile.handle}</b>
-                      {profile.handle ? (
-                        <small style={{ fontSize: '10.5px', color: 'var(--lkv-text-secondary)' }}>
-                          @{profile.handle}
-                        </small>
-                      ) : null}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-
-        {friends && friends.length > 0 ? (
-          <div style={{ marginTop: '8px' }}>
-            <span className="lkdv-cv2-field-hint" style={{ display: 'block', marginBottom: '4px' }}>
-              Amis suivis :
-            </span>
-            <div className="lkdv-cv2-chips" aria-label="Amis suivis">
-              {friends.map((friend) => {
-                const selected = values.collaborators.includes(friend.id);
-                return (
-                  <button
-                    key={friend.id}
-                    type="button"
-                    className={`lkdv-cv2-chip lkdv-cv2-chip--sm${selected ? ' is-active' : ''}`}
-                    onClick={() => toggleFriend(friend)}
-                  >
-                    {friend.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        <div style={{ marginTop: '8px' }}>
-          <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void inviteByLink()}>
-            <Link2 size={12} aria-hidden="true" /> Inviter par lien
-          </button>
-          {inviteState !== 'idle' ? (
-            <p className="lkdv-cv2-field-hint" role="status" style={{ marginTop: '4px' }}>
-              {inviteState === 'copied'
-                ? `Lien d’invitation copié · ${inviteUrl}`
-                : `Copie impossible : ${inviteUrl}`}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      {values.collaborators.length > 0 ? (
-        <div className="lkdv-cv2-field">
-          <p className="lkdv-cv2-field-hint" role="status">
-            Carnet collaboratif · {values.collaborators.length} voyageur
-            {values.collaborators.length > 1 ? 's' : ''} associé
-            {values.collaborators.length > 1 ? 's' : ''}
-          </p>
-          <div className="lkdv-cv2-chips" aria-label="Voyageurs invités">
-            {values.collaborators.map((id) => (
-              <span key={id} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
-                {collaboratorNames[id] ?? friends?.find((friend) => friend.id === id)?.name ?? 'Voyageur'}
-                <button
-                  type="button"
-                  className="lkdv-cv2c-chip-x"
-                  aria-label="Retirer ce voyageur"
-                  onClick={() =>
-                    form.setValue(
-                      'collaborators',
-                      values.collaborators.filter((entry) => entry !== id),
-                      { shouldDirty: true, shouldValidate: true },
-                    )
-                  }
-                >
-                  <X size={11} aria-hidden="true" />
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
@@ -719,8 +373,30 @@ function CarnetBody({
     form.setValue('startLng', trace[0][0], { shouldDirty: true });
   }, [form, trace]);
 
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active && api.step > 0);
+  const daysCount = values.nbJours || values.days.length || 1;
+  const cover = carnetCover(values);
+
+  useEffect(() => {
+    if (api.step === 0) setPreviewCollapsed(false);
+  }, [api.step, setPreviewCollapsed]);
+
   return (
     <>
+      {api.active ? (
+        <SheetPreview compact={false}>
+          <CollapsibleHeroPreview
+            collapsed={api.step > 0 ? previewCollapsed : false}
+            onExpand={() => setPreviewCollapsed(false)}
+            title={values.title.trim() || 'Carnet sans titre'}
+            subtitle={`${daysCount} j · ${values.nbVoyageurs || 1} voy.`}
+            avatarUrl={cover?.url ?? null}
+            fallbackText={values.title || 'C'}
+          >
+            <CarnetHeroEditorV2 user={user} />
+          </CollapsibleHeroPreview>
+        </SheetPreview>
+      ) : null}
       <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.step === 0 ? <InfosStep user={user} /> : null}
       {api.step === 1 ? <TraceStep user={user} active={api.active} /> : null}
