@@ -1,14 +1,156 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s16-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s16-abs { position:absolute; }
+    #s16-bg { position:absolute; left:-80px; top:-80px; width:1240px; height:2080px; opacity:0;
+      background: radial-gradient(80% 50% at 60% 40%, #6a9163 0%, #5B7F55 60%, #4b6b46 100%); }
+    #s16-shake { position:absolute; inset:0; }
+    #s16-cam { position:absolute; inset:0; }
+    #s16-nous { left:60px; top:240px; width:620px; padding:34px 36px 36px; border-radius:48px; background:rgba(250,248,245,0.94);
+      box-shadow:0 30px 60px rgba(11,31,23,0.25); opacity:0; }
+    #s16-nous .s16-k { font-size:34px; font-weight:700; letter-spacing:0.12em; color:#5B7F55; text-transform:uppercase; }
+    #s16-nous b { display:block; font-size:46px; font-weight:800; color:#17402C; margin:12px 0 6px; line-height:1.1; white-space:nowrap; }
+    #s16-nous .s16-sub { font-size:34px; color:#56665D; }
+    #s16-btn { margin-top:24px; height:88px; padding:0 34px; border-radius:999px; background:#17402C; color:#FAF8F5; font-size:38px; font-weight:700;
+      display:inline-flex; align-items:center; box-shadow:0 0 0 0 rgba(208,160,112,0); }
+    #s16-halo { left:96px; top:470px; width:410px; height:88px; border-radius:999px; border:6px solid #D0A070; opacity:0; }
+    #s16-face { left:-760px; top:-340px; width:2600px; height:2600px; border-radius:50%; overflow:hidden; border:121px solid #FAF8F5;
+      box-shadow:0 280px 600px rgba(11,31,23,0.3); background:#2b2b2b; opacity:0; }
+    #s16-face img { width:100%; height:100%; object-fit:cover; display:block; }
+    #s16-bottle { left:380px; top:470px; width:640px; padding:32px 36px 34px; border-radius:48px; background:#FAF8F5;
+      box-shadow:0 0 0 6px #D0A070, 0 40px 80px rgba(11,31,23,0.35); opacity:0; }
+    #s16-bottle .s16-k { font-size:34px; font-weight:700; letter-spacing:0.03em; white-space:nowrap; color:#9E7243; text-transform:uppercase; }
+    #s16-bottle b { display:block; white-space:nowrap; font-size:48px; font-weight:800; color:#17402C; margin:10px 0 8px; line-height:1.1; }
+    #s16-bottle .s16-sub { font-size:34px; color:#56665D; line-height:1.3; }
+    #s16-bottle .s16-sea { margin-top:18px; height:66px; padding:0 28px; border-radius:999px; background:#17402C; color:#FAF8F5; font-size:34px; font-weight:700; display:inline-flex; align-items:center; }
+    .s16-dot { width:22px; height:22px; border-radius:50%; background:#D0A070; opacity:0; box-shadow:0 0 18px rgba(208,160,112,0.7); }
+    .s16-rep { left:60px; height:94px; padding:0 14px 0 8px; gap:20px; border-radius:999px; background:rgba(250,248,245,0.96);
+      box-shadow:0 18px 40px rgba(11,31,23,0.25); font-size:38px; font-weight:700; color:#17402C; display:flex; align-items:center; white-space:nowrap; opacity:0; }
+    .s16-rep img { width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; }
+    .s16-rep em { font-style:normal; font-weight:500; color:#56665D; font-size:34px; }
+    .s16-rep .s16-ok { height:74px; padding:0 28px; border-radius:999px; background:#17402C; color:#fff; font-size:34px; display:inline-flex; align-items:center; }
+    #s16-gar { left:64px; top:1228px; font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; font-size:82px; color:#FAF8F5; white-space:nowrap; opacity:0; }
+    .s16-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; font-size:242px; }
+    #s16-word { left:56px; top:1306px; color:#FAF8F5; opacity:0; transform-origin:30% 60%; }
+    #s16-wordg { left:80px; top:1292px; color:#D0A070; opacity:0; transform-origin:30% 60%; }
+    #s16-word span { color:#D0A070; }
   </style>
   <div id="root" data-composition-id="s16" data-width="1080" data-height="1920">
-    <div id="s16-t">S16 · à animer</div>
+    <div id="s16-bg"></div>
+    <div id="s16-shake">
+      <div id="s16-cam">
+        <div id="s16-nous" class="s16-abs">
+          <div class="s16-k">Compas · Nous</div>
+          <b>Le W · fin novembre</b>
+          <div class="s16-sub">4 places · confiance ≥ 60</div>
+          <div id="s16-btn">Lancer une bouteille</div>
+        </div>
+        <div id="s16-halo" class="s16-abs"></div>
+        <div id="s16-trail"></div>
+        <div id="s16-rep1" class="s16-rep s16-abs" style="top:924px; left:70px"><img src="assets/avatars/a12.jpg" alt="">Lou <em>confiance 68/100</em><span class="s16-ok">Accepter</span></div>
+        <div id="s16-rep2" class="s16-rep s16-abs" style="top:1024px; left:60px"><img src="assets/avatars/a10.jpg" alt="">Nadia <em>confiance 82/100</em><span class="s16-ok">Accepter</span></div>
+        <div id="s16-rep3" class="s16-rep s16-abs" style="top:1124px; left:110px"><img src="assets/avatars/a17.jpg" alt="">Sam <em>confiance 74/100</em><span class="s16-ok">Accepter</span></div>
+        <div id="s16-bottle" class="s16-abs">
+          <div class="s16-k">Bouteille à la mer lancée</div>
+          <b>Le W · fin novembre</b>
+          <div class="s16-sub">Visible dans la communauté<br>du pays · confiance ≥ 60</div>
+          <span class="s16-sea">En mer</span>
+        </div>
+        <div id="s16-face" class="s16-abs"><img src="assets/avatars/a13.jpg" alt=""></div>
+      </div>
+    </div>
+    <div id="s16-gar" class="s16-abs">une bouteille à la</div>
+    <div id="s16-wordg" class="s16-abs s16-slam">MER.</div>
+    <div id="s16-word" class="s16-abs s16-slam">MER<span>.</span></div>
   </div>
   <script>
     (function () {
+      // Plan 16 · bible 19,396 → 20,690 ; hôte à 19,196 : local = film − 19,196.
+      const F = 1 / 30;
+      const L = (T) => +(T - 19.196).toFixed(4);
       const tl = gsap.timeline({ paused: true });
+
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+      function shake(el, t, a) {
+        const k = [1, -0.7, 0.43, -0.2, 0];
+        k.forEach((m, i) => tl.to(el, { x: a * m, y: -a * m * 0.6, duration: F, ease: "none" }, t + i * F));
+      }
+
+      // Entrée (0 → 0,2) : on finit de plonger dans l'avatar de Tom, plein cadre à 19,396.
+      tl.set("#s16-face", { opacity: 0, scale: 0.5, transformOrigin: "50% 50%" }, 0);
+      tl.to("#s16-face", { opacity: 1, duration: 2 * F, ease: "none" }, 0.1);
+      tl.to("#s16-face", { scale: 1, duration: 0.1, ease: "expo.in" }, 0.1);
+      // 19,396 : le fond Sage existe derrière ; l'avatar recule (5 images, expo.out, dépassement 0,97).
+      tl.set(["#s16-bg"], { opacity: 1 }, 0.2);
+      const AV = 150 / 2600;
+      tl.to("#s16-face", { scale: AV * 0.97, x: 100, y: -740, duration: 5 * F, ease: "expo.out" }, 0.2);
+      tl.to("#s16-face", { scale: AV, duration: 3 * F, ease: "sine.out" }, 0.2 + 5 * F);
+      // La tuile Compas · Nous arrive un peu grande et se pose.
+      tl.fromTo("#s16-nous", { opacity: 0, scale: 1.14, rotation: 2 }, { opacity: 1, scale: 1, rotation: -3, duration: 0.3, ease: "expo.out" }, 0.21);
+      // Caméra : dérive continue + parallaxe du fond.
+      tl.fromTo("#s16-cam", { scale: 1, rotation: -1, transformOrigin: "50% 40%" }, { scale: 1.055, rotation: 1.2, duration: 1.294, ease: "power1.inOut" }, 0.2);
+      tl.fromTo("#s16-bg", { y: 0, scale: 1 }, { y: -36, scale: 1.03, duration: 1.294, ease: "none" }, 0.2);
+
+      // Garamond « une bouteille à la » (19,725) : flou → net, sans translation.
+      tl.fromTo("#s16-gar", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, L(19.725));
+
+      // Appui « Lancer une bouteille » (19,886) : écrasement + halo laiton.
+      const tp = L(19.886);
+      tl.to("#s16-btn", { scale: 0.9, duration: 2 * F, ease: "power2.out" }, tp);
+      tl.to("#s16-btn", { scale: 1, duration: 4 * F, ease: "back.out(3)" }, tp + 2 * F);
+      tl.fromTo("#s16-halo", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.25, duration: 0.25, ease: "power2.out" }, tp);
+
+      // La carte-bouteille naît du bouton puis part en arc à 20,047 (9 images, 360°).
+      // Centre final de la carte (sans rotation) : (700, 672) ; départ : le bouton (300, 514).
+      const C1 = { x: 700, y: 640 }, C0 = { x: 296, y: 514 };
+      const dx0 = C0.x - C1.x, dy0 = C0.y - C1.y;
+      tl.set("#s16-bottle", { opacity: 1, x: dx0, y: dy0, scale: 0.28, rotation: -367, transformOrigin: "50% 50%" }, L(19.96));
+      tl.fromTo("#s16-bottle", { scale: 0.28 }, { scale: 0.36, duration: 0.08, ease: "power2.out", immediateRender: false }, L(19.96));
+      const tL = L(20.047), dur = 9 * F;
+      tl.to("#s16-bottle", { x: 0, duration: dur, ease: "sine.inOut" }, tL);
+      tl.to("#s16-bottle", { y: -330, duration: dur * 0.5, ease: "power2.out" }, tL);
+      tl.to("#s16-bottle", { y: 0, duration: dur * 0.5, ease: "power2.in" }, tL + dur * 0.5);
+      tl.to("#s16-bottle", { rotation: -7, duration: dur, ease: "power1.inOut" }, tL);
+      tl.to("#s16-bottle", { scale: 1.08, duration: dur, ease: "power2.in" }, tL);
+      tl.to("#s16-bottle", { scale: 1, duration: 4 * F, ease: "back.out(2.2)" }, tL + dur);
+      // Traînée : un point laiton par image de vol, à la position du centre de la carte.
+      const trail = document.getElementById("s16-trail");
+      const sine = (p) => -(Math.cos(Math.PI * p) - 1) / 2;
+      for (let i = 1; i <= 8; i++) {
+        const p = i / 9;
+        const x = C1.x + dx0 * (1 - sine(p));
+        const yy = p < 0.5 ? dy0 + (-330 - dy0) * (1 - Math.pow(1 - p * 2, 2)) : -330 + 330 * Math.pow((p - 0.5) * 2, 2);
+        const d = document.createElement("div");
+        d.className = "s16-dot s16-abs";
+        d.id = "s16-dot" + i;
+        d.style.left = (x - 11) + "px";
+        d.style.top = (C1.y + yy - 11) + "px";
+        trail.appendChild(d);
+        tl.set(d, { opacity: 1 }, tL + i * F);
+        tl.to(d, { opacity: 0, scale: 0.4, duration: 6 * F, ease: "power1.in" }, tL + (i + 1) * F);
+      }
+      // « MER. » claque sur le lancer (20,047).
+      slam("#s16-word", "#s16-wordg", tL);
+      // Atterrissage : petite secousse.
+      shake("#s16-shake", tL + dur, 9);
+
+      // Trois candidatures claquent en ressort (double-croches après le lancer).
+      [["#s16-rep1", L(20.217)], ["#s16-rep2", L(20.298)], ["#s16-rep3", L(20.379)]].forEach(([id, t], i) => {
+        tl.set(id, { opacity: 1 }, t);
+        tl.fromTo(id, { x: -160, scale: 1.3, transformOrigin: "0% 50%" }, { x: 0, scale: 0.94, duration: 3 * F, ease: "power3.out", immediateRender: false }, t);
+        tl.to(id, { scale: i === 1 ? 1.03 : 0.97, rotation: i === 1 ? -1 : 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+      });
+      // Raccord avec le plan 17 (20,49) : les avatars quittent leurs pastilles (le plan 17 en reprend des copies au même endroit).
+      tl.set(["#s16-face", "#s16-rep1 img", "#s16-rep2 img", "#s16-rep3 img"], { opacity: 0 }, 1.294);
       tl.set({}, {}, 1.494);
       window.__timelines["s16"] = tl;
     })();

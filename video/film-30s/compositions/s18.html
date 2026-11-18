@@ -1,14 +1,156 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s18-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s18-abs { position:absolute; }
+    #s18-whip { position:absolute; inset:0; background:#07130d; }
+    #s18-cam { position:absolute; inset:0; }
+    #s18-map { position:absolute; left:-1401.84px; top:-402.16px; width:2880px; height:4680px; }
+    #s18-dim { position:absolute; inset:-200px; background:#06120C; opacity:0.25; }
+    #s18-svg { position:absolute; left:0; top:0; }
+    .s18-dot { width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; border:6px solid #FAF8F5; box-shadow:0 0 0 10px rgba(250,248,245,0.18), 0 6px 18px rgba(6,18,12,0.5); }
+    #s18-df { background:#226148; left:0; top:0; }
+    #s18-db { background:#D0A070; left:0; top:0; opacity:0; }
+    #s18-ring { left:830px; top:230px; width:140px; height:140px; border-radius:50%; padding:7px; background:#D0A070; opacity:0; box-shadow:0 12px 30px rgba(6,18,12,0.45); }
+    #s18-ring img { width:126px; height:126px; border-radius:50%; border:5px solid #2a1d22; object-fit:cover; display:block; }
+    #s18-story { position:absolute; inset:0; overflow:hidden; background:#2a1d22; clip-path:circle(0px at 900px 300px); }
+    #s18-ph { position:absolute; left:0; top:-120px; width:1080px; height:2160px; object-fit:cover; }
+    #s18-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(6,18,12,0.5) 0%, rgba(6,18,12,0) 25%, rgba(6,18,12,0) 50%, rgba(6,18,12,0.6) 100%); }
+    .s18-bars { left:60px; top:228px; width:960px; display:flex; gap:12px; }
+    .s18-bars i { flex:1; height:8px; border-radius:8px; background:rgba(255,255,255,0.4); position:relative; overflow:hidden; }
+    .s18-bars i.on { background:#fff; }
+    .s18-bars i b { position:absolute; inset:0; background:#fff; transform-origin:0 50%; transform:scaleX(0); }
+    #s18-who { left:60px; top:262px; height:130px; padding:0 40px 0 12px; gap:22px; border-radius:999px; background:rgba(20,14,16,0.35); border:2px solid rgba(255,255,255,0.3); color:#fff; display:flex; align-items:center; white-space:nowrap; }
+    #s18-who .s18-rg { width:108px; height:108px; border-radius:50%; padding:6px; background:#D0A070; }
+    #s18-who img { width:96px; height:96px; border-radius:50%; border:4px solid #2a1d22; object-fit:cover; display:block; }
+    #s18-who b { font-size:42px; display:block; }
+    #s18-who span { font-size:34px; opacity:0.88; }
+    #s18-tkw { position:absolute; left:90px; top:520px; width:900px; transform:rotate(-3deg); }
+    #s18-tk { padding:40px 44px; border-radius:52px; background:rgba(250,248,245,0.96); box-shadow:0 40px 90px rgba(6,18,12,0.45); opacity:0; }
+    #s18-tk .s18-k { font-size:34px; font-weight:700; letter-spacing:0.14em; color:#5B7F55; text-transform:uppercase; }
+    #s18-tk h3 { white-space:nowrap; font-size:56px; font-weight:800; color:#17402C; margin:12px 0 8px; letter-spacing:-0.02em; }
+    #s18-tk p { font-size:36px; color:#3b4a42; margin-top:8px; display:flex; align-items:center; gap:14px; white-space:nowrap; }
+    #s18-btn { margin-top:28px; height:120px; width:100%; border-radius:999px; display:flex; justify-content:center; align-items:center; background:#17402C; color:#fff; font-size:50px; font-weight:800; }
+    #s18-halo { left:44px; bottom:40px; width:812px; height:120px; border-radius:999px; border:10px solid #D0A070; opacity:0; }
+    .s18-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; font-size:176px; }
+    #s18-word { left:60px; top:1190px; color:#FAF8F5; text-shadow:0 10px 40px rgba(6,18,12,0.5); opacity:0; transform-origin:50% 60%; }
+    #s18-wordg { left:82px; top:1176px; color:#D0A070; opacity:0; transform-origin:50% 60%; }
   </style>
   <div id="root" data-composition-id="s18" data-width="1080" data-height="1920">
-    <div id="s18-t">S18 · à animer</div>
+    <div id="s18-whip">
+      <div id="s18-cam">
+        <img id="s18-map" src="assets/sat/sat-w.jpg" alt="">
+        <div id="s18-dim"></div>
+        <svg id="s18-svg" width="1080" height="1920">
+          <defs><linearGradient id="s18-gb" gradientUnits="userSpaceOnUse" x1="940" y1="300" x2="540" y2="860"><stop offset="0" stop-color="#D0A070" stop-opacity="0"/><stop offset="1" stop-color="#D0A070"/></linearGradient></defs>
+          <polyline id="s18-tf" points="" fill="none" stroke="#3D7A52" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+          <line id="s18-tb" x1="940" y1="300" x2="940" y2="300" stroke="url(#s18-gb)" stroke-width="12" stroke-linecap="round"/>
+        </svg>
+        <div id="s18-df" class="s18-dot s18-abs"></div>
+        <div id="s18-db" class="s18-dot s18-abs"></div>
+      </div>
+      <div id="s18-ring" class="s18-abs"><img src="assets/avatars/a05.jpg" alt=""></div>
+      <div id="s18-story">
+        <img id="s18-ph" src="assets/plates/story-sunrise.jpg" alt="">
+        <div id="s18-shade"></div>
+        <div class="s18-bars s18-abs"><i class="on"></i><i class="on"></i><i><b id="s18-prog"></b></i></div>
+        <div id="s18-who" class="s18-abs"><div class="s18-rg"><img src="assets/avatars/a05.jpg" alt=""></div><div><b>Anna Kovacs</b><span>Groupe « Patagonie 4 » · 1 h</span></div></div>
+        <div id="s18-tkw">
+          <div id="s18-tk">
+            <div class="s18-k">Sortie</div>
+            <h3>Sortie demain 5 h · mirador</h3>
+            <p><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>Mirador Base Las Torres</p>
+            <p><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#5B7F55" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Départ du Refugio Chileno · 2 places</p>
+            <div id="s18-btn">S'inscrire</div>
+            <div id="s18-halo" class="s18-abs"></div>
+          </div>
+        </div>
+        <div id="s18-wordg" class="s18-abs s18-slam">S'INSCRIRE</div>
+        <div id="s18-word" class="s18-abs s18-slam">S'INSCRIRE</div>
+      </div>
+    </div>
   </div>
   <script>
     (function () {
+      // Plan 18 · bible 22,629 → 24,565 ; hôte à 22,429 : local = film − 22,429.
+      const F = 1 / 30;
+      const L = (T) => +(T - 22.429).toFixed(4);
       const tl = gsap.timeline({ paused: true });
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+
+      // ---- Carte partagée avec le plan 19 : satellite ×1,8, Refugio Chileno au point C (540, 860).
+      const K = 1.8, OX = -1401.84, OY = -402.16, C = [540, 860], A0 = [940, 300];
+      const T0 = 24.13, TC = 24.565;
+      const W = [[1078.9,701.2],[1082.4,716.8],[1093.3,727.5],[1105.8,734.1],[1114.1,744.7],[1120.0,779.9],[1113.2,809.0],[1105.8,824.7],[1104.3,869.6],[1095.0,882.2],[1089.3,883.3],[1085.7,888.0],[1084.4,897.3],[1073.4,903.9],[1066.9,917.7],[1033.1,934.8],[1006.2,963.2],[1004.7,969.7],[1001.0,970.8],[997.9,978.0],[986.4,985.6],[979.4,997.4],[965.7,1005.0],[957.0,1013.8],[950.2,1016.3],[921.8,1040.9],[913.9,1045.7],[906.2,1045.2],[901.3,1051.0],[869.4,1055.6],[864.2,1059.1],[855.8,1056.0],[840.0,1057.0]];
+      // trajet du groupe de Tom : de l'index 32 vers le refuge (index 0), en coordonnées écran
+      const P = W.slice().reverse().map(([x, y]) => [x * K + OX, y * K + OY]);
+      const cum = [0];
+      for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+      const LEN = cum[cum.length - 1];
+      const F25 = cum[7] / LEN; // index 25 de la route = 7e point du trajet inversé
+      function at(f) {
+        const d = f * LEN; let i = 1;
+        while (i < cum.length - 1 && cum[i] < d) i++;
+        const u = (d - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
+        return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * u, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * u];
+      }
+      document.getElementById("s18-tf").setAttribute("points", P.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "));
+      const st = { a: 0, T: T0 };
+      const df = document.getElementById("s18-df"), db = document.getElementById("s18-db");
+      const tf = document.getElementById("s18-tf"), tb = document.getElementById("s18-tb");
+      function draw() {
+        const q = Math.min(1, Math.max(0, (st.T - T0) / (TC - T0)));
+        const p = q * q * q; // les deux points accélèrent
+        const f = F25 * st.a + (1 - F25) * p;
+        const pf = at(f);
+        gsap.set(df, { x: pf[0], y: pf[1] });
+        tf.setAttribute("stroke-dashoffset", (1 - Math.max(f, 0.001)).toFixed(4));
+        const bx = A0[0] + (C[0] - A0[0]) * p, by = A0[1] + (C[1] - A0[1]) * p;
+        gsap.set(db, { x: bx, y: by });
+        tb.setAttribute("x2", bx.toFixed(1)); tb.setAttribute("y2", by.toFixed(1));
+      }
+      draw();
+
+      // Entrée : whip pan depuis la gauche (5 images, flou directionnel), le plan se fixe en 2 images.
+      tl.fromTo("#s18-whip", { x: -1080 }, { x: 0, duration: 5 * F, ease: "expo.out" }, 0);
+      tl.fromTo("#s18-whip", { filter: "blur(40px)" }, { filter: "blur(0px)", duration: 7 * F, ease: "power2.out" }, 0);
+      // En route : la caméra recule doucement vers le cadrage de la rencontre ; le groupe de Tom avance.
+      tl.fromTo("#s18-cam", { scale: 1.14, rotation: -2, transformOrigin: "30% 70%" }, { scale: 1, rotation: 0, duration: 1.42, ease: "power2.inOut" }, 0.2);
+      tl.to(st, { a: 1, duration: 0.65, ease: "sine.inOut", onUpdate: draw }, 0.2);
+      tl.fromTo("#s18-dim", { opacity: 0.25 }, { opacity: 0.55, duration: 1.4, ease: "none" }, 0.3);
+
+      // L'anneau de la story d'Anna apparaît (23,113), puis la story surgit plein écran à 23,276.
+      tl.fromTo("#s18-ring", { opacity: 0, scale: 0.2 }, { opacity: 1, scale: 1, duration: 0.16, ease: "back.out(2.6)" }, L(23.113));
+      const tS = L(23.276);
+      tl.to("#s18-ring", { scale: 2.4, opacity: 0, duration: 4 * F, ease: "power2.in" }, tS);
+      tl.to("#s18-story", { clipPath: "circle(2300px at 900px 300px)", duration: 5 * F, ease: "expo.in" }, tS - 2 * F);
+      tl.fromTo("#s18-ph", { scale: 1.2 }, { scale: 1.06, duration: 0.8, ease: "expo.out" }, tS - 2 * F);
+      tl.fromTo("#s18-prog", { scaleX: 0 }, { scaleX: 0.62, duration: 0.8, ease: "none" }, tS);
+      tl.fromTo("#s18-tk", { opacity: 0, y: 260, rotation: -9, scale: 1.08 }, { opacity: 1, y: 0, rotation: 0, scale: 1, duration: 0.3, ease: "expo.out" }, L(23.38));
+      tl.set("#s18-db", { opacity: 1 }, tS);
+
+      // « S'INSCRIRE » claque (23,659), appui sur le bouton (23,917).
+      slam("#s18-word", "#s18-wordg", L(23.659));
+      const tP = L(23.917);
+      tl.to("#s18-btn", { scale: 0.94, duration: 2 * F, ease: "power2.out" }, tP);
+      tl.to("#s18-btn", { scale: 1, duration: 4 * F, ease: "back.out(3)" }, tP + 2 * F);
+      tl.fromTo("#s18-halo", { opacity: 0.9, scale: 1 }, { opacity: 0, scale: 1.14, duration: 0.3, ease: "power2.out" }, tP);
+
+      // La story se referme dans le point laiton (groupe d'Anna) ; le mot sort (3 images).
+      const tC = L(24.043);
+      tl.to("#s18-word", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, tC - 3 * F);
+      tl.to("#s18-story", { clipPath: "circle(0px at 940px 300px)", duration: 5 * F, ease: "power3.in" }, tC);
+      // Les deux points accélèrent l'un vers l'autre (rencontre à 24,565, plan 19).
+      tl.to(st, { T: TC, duration: TC - T0, ease: "none", onUpdate: draw }, L(T0));
+
       tl.set({}, {}, 2.136);
       window.__timelines["s18"] = tl;
     })();

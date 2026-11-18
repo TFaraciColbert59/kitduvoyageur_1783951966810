@@ -1,14 +1,78 @@
 <template>
+  <!-- Plan 02 · Double-tap — film 0,647 → 1,282 (hôte 0,447 ; local = film − 0,447). Coupe sur le temps à 0,647 (local 0,200).
+       Double-tap 0,657 (local 0,210) : cœur laiton, 12 éclats (graine fixe), compteur 1 → 1 284, secousse, poussée 4 %. -->
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s02-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s02-all { position:absolute; inset:0; opacity:0; background:#FAF8F5; }
+    #s02-shake, #s02-cam { position:absolute; inset:0; }
+    #s02-card { position:absolute; left:30px; top:200px; width:1020px; height:1320px; border-radius:70px; overflow:hidden; box-shadow:0 40px 90px rgba(11,31,23,0.3); }
+    #s02-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 42%; display:block; }
+    #s02-shadeb { position:absolute; inset:0; background:linear-gradient(180deg, rgba(6,18,12,0) 50%, rgba(6,18,12,0.55) 100%); }
+    #s02-fx { position:absolute; inset:0; }
+    .s02-shard { position:absolute; left:517px; top:667px; width:46px; height:46px; background:#D0A070; clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%); opacity:0; }
+    .s02-streak { position:absolute; left:540px; top:685px; height:10px; border-radius:10px; background:linear-gradient(90deg, rgba(208,160,112,0), rgba(208,160,112,0.9)); transform-origin:0 50%; opacity:0; }
+    #s02-heartw { position:absolute; left:330px; top:480px; width:420px; height:420px; }
+    #s02-heart { position:absolute; inset:0; opacity:0; filter:drop-shadow(0 20px 40px rgba(6,18,12,0.45)); }
+    #s02-counter { position:absolute; left:90px; top:1130px; width:840px; height:250px; padding:0 50px; gap:34px; display:flex; align-items:center; border-radius:999px; background:rgba(10,22,16,0.66); border:2px solid rgba(255,255,255,0.25); opacity:0; }
+    #s02-num { font-size:200px; font-weight:900; letter-spacing:-0.02em; line-height:0.9; color:#D0A070; font-variant-numeric:tabular-nums; white-space:nowrap; }
   </style>
   <div id="root" data-composition-id="s02" data-width="1080" data-height="1920">
-    <div id="s02-t">S02 · à animer</div>
+    <div id="s02-all"><div id="s02-shake"><div id="s02-cam">
+      <div id="s02-card"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""><div id="s02-shadeb"></div></div>
+      <div id="s02-fx"></div>
+      <div id="s02-heartw"><svg id="s02-heart" viewBox="0 0 24 24"><path fill="#D0A070" stroke="#FAF8F5" stroke-width="0.6" d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></div>
+      <div id="s02-counter"><svg width="120" height="120" viewBox="0 0 24 24" fill="#D0A070" stroke="#D0A070" stroke-width="1.5" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg><span id="s02-num">1</span></div>
+    </div></div></div>
   </div>
   <script>
     (function () {
+      const F = 1 / 30, T0 = 0.2, TAP = 0.21;
       const tl = gsap.timeline({ paused: true });
+      // Éclats : 12 losanges + traînées, trajectoires radiales à graine fixe (pas d'aléatoire libre).
+      function rng(a) { return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+      const r = rng(1284), fx = document.getElementById("s02-fx");
+      const shards = [];
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 + 0.2 + (r() - 0.5) * 0.25, R = 330 + (i % 3) * 70 + r() * 40;
+        const l = document.createElement("div"); l.className = "s02-streak"; l.id = "s02-l" + i; l.style.width = (R - 170) + "px"; fx.appendChild(l);
+        const s = document.createElement("div"); s.className = "s02-shard"; s.id = "s02-s" + i; fx.appendChild(s);
+        shards.push({ a, R, k: 0.7 + (i % 4) * 0.25 });
+      }
+      // Coupe sur le temps 0,647.
+      tl.set("#s02-all", { opacity: 1 }, T0);
+      tl.fromTo("#s02-card", { rotation: -1.2 }, { rotation: -2.2, duration: 0.635, ease: "none" }, T0);
+      // Caméra qui pousse de 4 %.
+      tl.fromTo("#s02-cam", { scale: 1.0, transformOrigin: "540px 760px" }, { scale: 1.04, duration: 0.635, ease: "power1.out" }, T0);
+      tl.fromTo("#s02-card img", { scale: 1.0 }, { scale: 1.05, duration: 0.635, ease: "none" }, T0);
+      // Double-tap 0,657 : le cœur jaillit, puis rejoint la pastille du compteur.
+      tl.set("#s02-heart", { opacity: 1 }, TAP);
+      tl.fromTo("#s02-heartw", { scale: 0.2, rotation: -12 }, { scale: 1.18, rotation: 4, duration: 2 * F, ease: "expo.out", immediateRender: false }, TAP);
+      tl.to("#s02-heartw", { scale: 1, rotation: 0, duration: 4 * F, ease: "sine.inOut" }, TAP + 2 * F);
+      tl.to("#s02-heartw", { scale: 0.26, x: -330, y: 575, rotation: -10, duration: 0.2, ease: "power3.in" }, TAP + 0.26);
+      tl.set("#s02-heart", { opacity: 0 }, TAP + 0.46);
+      shards.forEach((s, i) => {
+        const x = Math.cos(s.a) * s.R, y = Math.sin(s.a) * s.R, deg = s.a * 57.2958;
+        tl.set("#s02-s" + i, { opacity: 1 }, TAP + 1 * F);
+        tl.fromTo("#s02-s" + i, { x: Math.cos(s.a) * 120, y: Math.sin(s.a) * 120, rotation: deg + 45, scale: 0.3 }, { x, y, rotation: deg + 225, scale: s.k, duration: 5 * F, ease: "expo.out", immediateRender: false }, TAP + 1 * F);
+        tl.to("#s02-s" + i, { x: x * 1.35, y: y * 1.35, scale: 0, opacity: 0, duration: 0.22, ease: "power2.in" }, TAP + 6 * F);
+        tl.set("#s02-l" + i, { opacity: 1 }, TAP + 1 * F);
+        tl.fromTo("#s02-l" + i, { x: Math.cos(s.a) * 150, y: Math.sin(s.a) * 150 - 5, rotation: deg, scaleX: 0 }, { scaleX: 1, duration: 4 * F, ease: "expo.out", immediateRender: false }, TAP + 1 * F);
+        tl.to("#s02-l" + i, { opacity: 0, x: Math.cos(s.a) * 260, y: Math.sin(s.a) * 260 - 5, duration: 0.18, ease: "power2.in" }, TAP + 5 * F);
+      });
+      // Secousse 4 images (14 → 6 px).
+      tl.fromTo("#s02-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -9 }, { x: -10, y: 7 }, { x: 6, y: -4 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, TAP);
+      // Compteur ♥ 1 → 1 284 (linéaire sur la valeur, dernier chiffre flou pendant le roulement).
+      tl.set("#s02-counter", { opacity: 1 }, T0);
+      tl.fromTo("#s02-counter", { scale: 0.86, y: 40 }, { scale: 1, y: 0, duration: 5 * F, ease: "expo.out" }, T0);
+      const num = document.getElementById("s02-num"), c = { v: 1 };
+      const fmt = (n) => (n >= 1000 ? Math.floor(n / 1000) + " " + String(n % 1000).padStart(3, "0") : String(n));
+      tl.fromTo(c, { v: 1 }, { v: 1284, duration: 0.34, ease: "power2.out", onUpdate: () => { num.textContent = fmt(Math.round(c.v)); } }, TAP + 2 * F);
+      tl.fromTo("#s02-num", { filter: "blur(3px)" }, { filter: "blur(0px)", duration: 0.34, ease: "power3.in" }, TAP + 2 * F);
+      tl.fromTo("#s02-counter", { scale: 1 }, { scale: 1.06, duration: 2 * F, ease: "power2.out", immediateRender: false }, TAP + 0.36);
+      tl.to("#s02-counter", { scale: 1, duration: 3 * F, ease: "sine.inOut" }, TAP + 0.36 + 2 * F);
+      // Sortie préparée pour le match cut (s03 fait grandir la photo à partir de 1,149) : le compteur part en flou.
+      tl.to("#s02-counter", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 0.835 - 5 * F);
+      tl.to("#s02-shadeb", { opacity: 0, duration: 4 * F, ease: "power2.in" }, 0.835 - 5 * F);
       tl.set({}, {}, 0.835);
       window.__timelines["s02"] = tl;
     })();

@@ -1,15 +1,123 @@
 <template>
+  <!-- Plan 06 · Une phrase — film 5,172 → 7,112 (hôte 4,972 ; local = film − 4,972).
+       Entrée 5,072 → 5,172 : flash laiton puis Forest qui jaillit du « ? » de s05.
+       Blocs : « LE W » 5,172 · « 5 JOURS » 5,819 · « À 3 » 6,452 · « FIN NOVEMBRE » 6,788 ; pastille NVIDIA 6,465 ;
+       appui sur la flèche 6,852 → 6,912 (l'iris de s07 s'ouvre de 6,952 à 7,112, sur la grosse caisse 7,115). -->
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s06-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s06-flash { position:absolute; inset:0; background:#D0A070; clip-path:circle(0px at 862px 644px); }
+    #s06-flood { position:absolute; inset:0; background:#17402C; clip-path:circle(0px at 862px 644px); }
+    #s06-all { position:absolute; inset:0; opacity:0; }
+    #s06-shake { position:absolute; inset:0; }
+    #s06-bg { position:absolute; inset:-80px; background:radial-gradient(80% 50% at 50% 45%, #1d4d35 0%, #17402C 60%, #10301f 100%); }
+    #s06-cam { position:absolute; inset:0; perspective:1400px; perspective-origin:540px 760px; }
+    #s06-stage { position:absolute; inset:0; transform-style:preserve-3d; }
+    #s06-title { position:absolute; left:62px; top:360px; font-size:80px; font-weight:800; color:#FAF8F5; letter-spacing:-0.02em; white-space:nowrap; opacity:0; }
+    #s06-nv { position:absolute; left:520px; top:228px; height:100px; padding:0 36px 0 26px; gap:18px; display:flex; align-items:center; border-radius:999px; background:rgba(6,18,12,0.55); border:2px solid rgba(118,185,0,0.7); box-shadow:0 0 40px rgba(118,185,0,0.35); color:#FAF8F5; font-size:36px; font-weight:600; white-space:nowrap; opacity:0; }
+    #s06-nv img { height:54px; }
+    #s06-barw { position:absolute; left:-420px; top:570px; width:1460px; height:220px; }
+    #s06-bar { position:absolute; inset:0; border-radius:999px; background:#FAF8F5; box-shadow:0 40px 90px rgba(6,18,12,0.5); overflow:hidden; }
+    #s06-strip { position:absolute; left:470px; top:58px; height:110px; white-space:nowrap; font-size:84px; font-weight:600; color:#1f2a24; letter-spacing:-0.01em; line-height:110px; }
+    .s06-blk { position:relative; display:inline-block; opacity:0; }
+    .s06-blk em { font-style:normal; color:#9E7243; font-weight:800; }
+    .s06-caret { position:absolute; right:-14px; top:12px; width:6px; height:90px; background:#17402C; opacity:0; }
+    #s06-gow { position:absolute; right:22px; top:22px; width:176px; height:176px; }
+    #s06-go { position:absolute; inset:0; border-radius:50%; background:#17402C; display:flex; align-items:center; justify-content:center; }
+    #s06-goring { position:absolute; inset:-30px; border-radius:50%; border:8px solid #D0A070; opacity:0; }
+    #s06-chips { position:absolute; left:62px; top:900px; width:960px; display:flex; flex-wrap:wrap; gap:18px; transform:rotate(-6deg); transform-origin:0 0; }
+    .s06-chip { height:82px; padding:0 32px; border-radius:999px; background:rgba(250,248,245,0.12); border:2px solid rgba(250,248,245,0.3); color:#FAF8F5; font-size:38px; font-weight:600; display:inline-flex; align-items:center; gap:12px; white-space:nowrap; opacity:0; }
+    .s06-chip i { font-style:normal; color:rgba(250,248,245,0.6); font-weight:500; }
+    #s06-c4 { background:rgba(208,160,112,0.2); border-color:#D0A070; }
+    .s06-word { position:absolute; left:56px; font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; opacity:0; isolation:isolate; }
+    .s06-ghost { position:absolute; left:24px; top:-14px; filter:blur(3px); opacity:0; z-index:-1; }
+    #s06-w1 { top:1170px; font-size:300px; color:#D0A070; }
+    #s06-w2 { top:1200px; font-size:226px; color:#FAF8F5; }
+    #s06-w3 { top:1170px; font-size:300px; color:#FAF8F5; }
+    #s06-w4 { top:1150px; font-size:171px; color:#D0A070; }
+    #s06-w1 .s06-ghost, #s06-w4 .s06-ghost { color:#FAF8F5; }
+    #s06-w2 .s06-ghost, #s06-w3 .s06-ghost { color:#D0A070; }
   </style>
   <div id="root" data-composition-id="s06" data-width="1080" data-height="1920">
-    <div id="s06-t">S06 · à animer</div>
+    <div id="s06-flash"></div>
+    <div id="s06-flood"></div>
+    <div id="s06-all"><div id="s06-shake">
+      <div id="s06-bg"></div>
+      <div id="s06-cam"><div id="s06-stage">
+        <div id="s06-nv"><img src="assets/logos/nvidia-green.svg" alt="">Je lis ta phrase…</div>
+        <div id="s06-title">Où veux-tu aller ?</div>
+        <div id="s06-barw"><div id="s06-bar">
+          <div id="s06-strip"><span id="s06-b1" class="s06-blk">Le W,<i id="s06-k1" class="s06-caret"></i></span><span id="s06-b2" class="s06-blk">&nbsp;5 jours<i id="s06-k2" class="s06-caret"></i></span><span id="s06-b3" class="s06-blk">&nbsp;à 3,<i id="s06-k3" class="s06-caret"></i></span><span id="s06-b4" class="s06-blk">&nbsp;<em>fin novembre</em><i id="s06-k4" class="s06-caret"></i></span></div>
+          <div id="s06-gow"><div id="s06-goring"></div><div id="s06-go"><svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="#FAF8F5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div></div>
+        </div></div>
+        <div id="s06-chips"><span id="s06-c1" class="s06-chip"><i>Lieu</i> Le W</span><span id="s06-c2" class="s06-chip"><i>Durée</i> 5 jours</span><span id="s06-c3" class="s06-chip"><i>Groupe</i> 3</span><span id="s06-c4" class="s06-chip"><i>Quand</i> fin novembre</span></div>
+      </div></div>
+      <div id="s06-w1" class="s06-word"><span class="s06-ghost">LE W</span>LE W</div>
+      <div id="s06-w2" class="s06-word"><span class="s06-ghost">5 JOURS</span>5 JOURS</div>
+      <div id="s06-w3" class="s06-word"><span class="s06-ghost">À 3</span>À 3</div>
+      <div id="s06-w4" class="s06-word"><span class="s06-ghost">FIN<br>NOVEMBRE</span>FIN<br>NOVEMBRE</div>
+    </div></div>
   </div>
   <script>
     (function () {
+      const F = 1 / 30, T0 = 0.2, END = 2.14;
+      const Q = { x: 862, y: 644 };
+      const B = [0.2, 0.847, 1.48, 1.816];   // 5,172 · 5,819 · 6,452 · 6,788
+      const NV = 1.493, PRESS = 1.88;          // 6,465 · 6,852
       const tl = gsap.timeline({ paused: true });
-      tl.set({}, {}, 2.14);
+      // --- Entrée : flash laiton puis Forest qui sortent du « ? » (zoom-through).
+      tl.fromTo("#s06-flash", { clipPath: "circle(0px at " + Q.x + "px " + Q.y + "px)" }, { clipPath: "circle(2300px at " + Q.x + "px " + Q.y + "px)", duration: 0.1, ease: "expo.in" }, 0.1);
+      tl.fromTo("#s06-flood", { clipPath: "circle(0px at " + Q.x + "px " + Q.y + "px)" }, { clipPath: "circle(2300px at " + Q.x + "px " + Q.y + "px)", duration: 0.067, ease: "expo.in" }, 0.133);
+      tl.set("#s06-all", { opacity: 1 }, T0);
+      // --- Caméra qui avance en continu (origine sur la flèche) + 3D.
+      tl.fromTo("#s06-cam", { scale: 0.96, transformOrigin: "926px 615px" }, { scale: 1.12, duration: END - T0, ease: "none" }, T0);
+      tl.fromTo("#s06-stage", { rotationY: 8, rotationX: 6 }, { rotationY: -6, rotationX: -2, duration: END - T0, ease: "none" }, T0);
+      tl.fromTo("#s06-bg", { x: 30, scale: 1.0 }, { x: -30, scale: 1.06, duration: END, ease: "none" }, 0);
+      // Titre et barre géante qui traverse le cadre en diagonale (−6°).
+      tl.set("#s06-title", { opacity: 1 }, T0);
+      tl.fromTo("#s06-title", { x: -120, filter: "blur(10px)" }, { x: 0, filter: "blur(0px)", duration: 6 * F, ease: "expo.out", immediateRender: false }, T0);
+      tl.fromTo("#s06-barw", { x: 700, rotation: -12 }, { x: 0, rotation: -6, duration: 7 * F, ease: "expo.out" }, T0 - 2 * F);
+      tl.to("#s06-barw", { x: -40, rotation: -5, duration: END - T0 - 5 * F, ease: "none" }, T0 + 5 * F);
+      // --- La phrase par blocs sur les temps ; le texte glisse pour garder le bloc en cours visible.
+      ["#s06-b1", "#s06-b2", "#s06-b3", "#s06-b4"].forEach((sel, i) => {
+        const t = B[i];
+        tl.set(sel, { opacity: 1 }, t);
+        tl.fromTo(sel, { scale: 1.35, y: -20, transformOrigin: "0% 60%" }, { scale: 1, y: 0, duration: 4 * F, ease: "expo.out", immediateRender: false }, t);
+        tl.set("#s06-k" + (i + 1), { opacity: 1 }, t);
+        if (i < 3) tl.set("#s06-k" + (i + 1), { opacity: 0 }, B[i + 1]);
+      });
+      tl.fromTo("#s06-strip", { x: 0 }, { x: -470, duration: 4 * F, ease: "expo.out", immediateRender: false }, B[3]);
+      // Pastilles « Voici ce que j'ai compris », une par bloc (la dernière en laiton).
+      ["#s06-c1", "#s06-c2", "#s06-c3", "#s06-c4"].forEach((sel, i) => {
+        const t = B[i] + 3 * F;
+        tl.set(sel, { opacity: 1 }, t);
+        tl.fromTo(sel, { scale: 0.5, y: 30 }, { scale: 1, y: 0, duration: 0.3, ease: "elastic.out(1, 0.5)", immediateRender: false }, t);
+      });
+      // --- Les mots qui claquent (un seul plein écran à la fois).
+      const W = ["#s06-w1", "#s06-w2", "#s06-w3", "#s06-w4"];
+      W.forEach((sel, i) => {
+        const t = B[i];
+        tl.set(sel, { opacity: 1 }, t);
+        if (i === 2) {
+          // Variante « coup de poing » sur la grosse caisse 6,452.
+          tl.fromTo(sel, { scale: 1.45, y: -140, rotation: -6 }, { scale: 0.93, y: 0, rotation: 0, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        } else {
+          tl.fromTo(sel, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        }
+        tl.to(sel, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        tl.set(sel + " .s06-ghost", { opacity: 0.35 }, t);
+        tl.set(sel + " .s06-ghost", { opacity: 0 }, t + 2 * F);
+        const tout = i < 3 ? B[i + 1] - 2 * F : END - 3 * F;
+        tl.to(sel, { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: i < 3 ? 2 * F : 3 * F, ease: "power3.in" }, tout);
+      });
+      tl.fromTo("#s06-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -8 }, { x: -10, y: 6 }, { x: 6, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, B[2]);
+      // --- Pastille NVIDIA « Je lis ta phrase… » à 6,465.
+      tl.set("#s06-nv", { opacity: 1 }, NV);
+      tl.fromTo("#s06-nv", { scale: 1.3, filter: "brightness(2)" }, { scale: 1, filter: "brightness(1)", duration: 5 * F, ease: "expo.out", immediateRender: false }, NV);
+      // --- Appui sur la flèche 6,852 : écrasement, anneau laiton.
+      tl.to("#s06-gow", { scale: 0.84, duration: 2 * F, ease: "power2.out" }, PRESS);
+      tl.set("#s06-goring", { opacity: 1 }, PRESS);
+      tl.fromTo("#s06-goring", { scale: 0.8 }, { scale: 1.3, opacity: 0, duration: END - PRESS, ease: "expo.out", immediateRender: false }, PRESS);
+      tl.set({}, {}, END);
       window.__timelines["s06"] = tl;
     })();
   </script>

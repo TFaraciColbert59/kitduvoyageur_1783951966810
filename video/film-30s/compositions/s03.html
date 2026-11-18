@@ -1,15 +1,106 @@
 <template>
+  <!-- Plan 03 · Le carnet de Maya — film 1,282 → 2,586 (hôte 1,082 ; local = film − 1,082).
+       Match cut 1,149 → 1,282 : la photo du post grandit (rayon 73 → 0) et devient le fond du carnet.
+       Tuiles par croche : en-tête 1,282 · jours 1,616 · « 5 JOURS » 1,940 · pastille Sac 2,263 ; zoom-through ×3,2 dans « Sac » 2,386 → 2,586. -->
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s03-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s03-zoom, #s03-shake { position:absolute; inset:0; }
+    #s03-pw { position:absolute; inset:0; clip-path:inset(178px 10px 370px 10px round 73px); opacity:0; background:#1b2a33; }
+    #s03-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 40%; display:block; }
+    #s03-vig { position:absolute; inset:0; opacity:0; background:linear-gradient(180deg, rgba(6,18,12,0.15) 0%, rgba(6,18,12,0) 30%, rgba(6,18,12,0.6) 72%, rgba(6,18,12,0.85) 100%); }
+    #s03-cam { position:absolute; inset:0; perspective:1400px; perspective-origin:540px 700px; }
+    #s03-bento { position:absolute; left:60px; top:210px; width:960px; height:950px; transform-style:preserve-3d; }
+    .s03-t { position:absolute; border-radius:48px; overflow:hidden; opacity:0; background:rgba(240,246,250,0.88); border:2px solid rgba(255,255,255,0.9); box-shadow:0 30px 70px rgba(6,18,12,0.35); }
+    #s03-head { left:0; top:0; width:960px; height:420px; }
+    #s03-ring { position:absolute; left:36px; top:34px; width:190px; height:190px; border-radius:50%; border:6px solid #fff; overflow:hidden; box-shadow:0 8px 20px rgba(11,31,23,0.25); }
+    #s03-ring img, .s03-day img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+    .s03-stat { position:absolute; top:60px; text-align:center; width:220px; color:#1f2a24; }
+    .s03-stat b { display:block; white-space:nowrap; font-size:70px; font-weight:800; line-height:1; letter-spacing:-0.02em; }
+    .s03-stat span { font-size:36px; color:#56665D; }
+    #s03-head h2 { position:absolute; left:40px; top:254px; font-size:54px; font-weight:800; color:#17402C; letter-spacing:-0.01em; white-space:nowrap; }
+    #s03-head p { position:absolute; left:40px; top:326px; font-size:36px; color:#56665D; white-space:nowrap; }
+    .s03-day { width:300px; height:320px; top:450px; }
+    .s03-chip { position:absolute; left:20px; top:20px; height:56px; padding:0 20px; border-radius:999px; display:flex; align-items:center; background:#17402C; color:#fff; font-size:34px; font-weight:700; white-space:nowrap; }
+    .s03-cap { position:absolute; left:14px; right:14px; bottom:14px; padding:14px 18px; border-radius:26px; background:rgba(250,248,245,0.9); }
+    .s03-cap b { display:block; font-size:34px; color:#17402C; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #s03-crew { left:0; top:800px; width:960px; height:150px; display:flex; align-items:center; gap:26px; padding:0 34px; overflow:visible; }
+    #s03-crew .s03-av { width:104px; height:104px; border-radius:50%; object-fit:cover; border:4px solid #fff; }
+    #s03-crew .s03-lab { font-size:38px; font-weight:700; color:#17402C; margin-left:10px; white-space:nowrap; }
+    #s03-crew .s03-lab span { display:block; font-size:34px; font-weight:500; color:#56665D; }
+    #s03-sac { position:absolute; right:26px; top:27px; height:96px; padding:0 30px 0 22px; gap:14px; border-radius:999px; display:flex; align-items:center; background:#17402C; color:#FAF8F5; font-size:38px; font-weight:700; white-space:nowrap; box-shadow:0 0 0 0 rgba(208,160,112,0); }
+    .s03-word { position:absolute; font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; opacity:0; isolation:isolate; }
+    .s03-ghost { position:absolute; left:24px; top:-14px; color:#FAF8F5; filter:blur(2px); opacity:0; z-index:-1; }
+    #s03-word { left:62px; top:1300px; font-size:226px; color:#D0A070; }
+    #s03-gar { position:absolute; left:64px; top:1220px; font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; font-size:66px; color:#FAF8F5; white-space:nowrap; opacity:0; }
   </style>
   <div id="root" data-composition-id="s03" data-width="1080" data-height="1920">
-    <div id="s03-t">S03 · à animer</div>
+    <div id="s03-zoom"><div id="s03-shake">
+      <div id="s03-pw"><img id="s03-photo" src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+      <div id="s03-vig"></div>
+      <div id="s03-cam"><div id="s03-bento">
+        <div id="s03-head" class="s03-t">
+          <div id="s03-ring"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+          <div class="s03-stat" style="left:250px"><b>5</b><span>jours</span></div>
+          <div class="s03-stat" style="left:470px"><b>71</b><span>km</span></div>
+          <div class="s03-stat" style="left:690px; width:250px"><b>+2&#8239;900</b><span>m D+</span></div>
+          <h2>Le W · Torres del Paine</h2>
+          <p>Puerto Natales · févr. 2026 · 3 voyageurs</p>
+        </div>
+        <div id="s03-d1" class="s03-t s03-day" style="left:0"><img src="assets/photos/tdp-mirador-base.jpg" alt=""><div class="s03-chip">J1 · 12 févr.</div><div class="s03-cap"><b>Refugio Chileno</b></div></div>
+        <div id="s03-d2" class="s03-t s03-day" style="left:330px"><img src="assets/photos/tdp-cuernos-01.jpg" style="object-position:40% 50%" alt=""><div class="s03-chip">J2 · 13 févr.</div><div class="s03-cap"><b>Los Cuernos</b></div></div>
+        <div id="s03-d3" class="s03-t s03-day" style="left:660px"><img src="assets/photos/tdp-sunrise-szekely.jpg" style="object-position:62% 50%" alt=""><div class="s03-chip">J3 · 14 févr.</div><div class="s03-cap"><b>Paine Grande</b></div></div>
+        <div id="s03-crew" class="s03-t">
+          <img class="s03-av" src="assets/avatars/a01.jpg" alt=""><img class="s03-av" src="assets/avatars/a18.jpg" style="margin-left:-50px" alt=""><img class="s03-av" src="assets/avatars/a06.jpg" style="margin-left:-50px" alt="">
+          <div class="s03-lab">Équipage<span>Maya, Inès, Hugo</span></div>
+          <div id="s03-sac"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#D0A070" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg>Sac · 14</div>
+        </div>
+      </div></div>
+      <div id="s03-gar">le carnet de Maya</div>
+      <div id="s03-word" class="s03-word"><span class="s03-ghost">5 JOURS</span>5 JOURS</div>
+    </div></div>
   </div>
   <script>
     (function () {
+      const F = 1 / 30, T0 = 0.2, END = 1.504;
       const tl = gsap.timeline({ paused: true });
-      tl.set({}, {}, 1.504);
+      // Point visé par le zoom-through (pastille « Sac » à l'écran, en fin de plan).
+      const SAC = { x: 840, y: 1083 };
+      // --- Match cut : la photo du post (carte de s02) grandit jusqu'au plein cadre en 4 images.
+      tl.set("#s03-pw", { opacity: 1 }, 2 * F);
+      tl.fromTo("#s03-photo", { scale: 0.88, y: -77, rotation: -2 }, { scale: 1, y: 0, rotation: 0, duration: T0 - 2 * F, ease: "power2.in" }, 2 * F);
+      tl.fromTo("#s03-pw", { clipPath: "inset(178px 10px 370px 10px round 73px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: T0 - 2 * F, ease: "power2.in" }, 2 * F);
+      // Puis le fond se floute et dérive (×0,6 de parallaxe).
+      tl.to("#s03-photo", { scale: 1.07, y: -20, filter: "blur(3px) brightness(0.8)", duration: 0.3, ease: "power2.out" }, T0);
+      tl.to("#s03-photo", { scale: 1.1, y: -40, duration: END - T0 - 0.3, ease: "none" }, T0 + 0.3);
+      tl.to("#s03-vig", { opacity: 1, duration: 0.25, ease: "power2.out" }, T0);
+      // --- Bento 3D (rotation X 14°, Z −4°) qui dérive en continu.
+      tl.fromTo("#s03-bento", { rotationX: 20, rotationZ: -6, rotationY: 6, y: 40 }, { rotationX: 12, rotationZ: -3, rotationY: -1, y: -30, duration: END - T0, ease: "none" }, T0);
+      tl.fromTo("#s03-cam", { scale: 1, transformOrigin: "540px 760px" }, { scale: 1.05, duration: END - T0, ease: "none" }, T0);
+      function tile(sel, t, zf) {
+        tl.set(sel, { opacity: 1 }, t);
+        tl.fromTo(sel, { z: zf || 260, rotationX: -24, y: 60 }, { z: 0, rotationX: 0, y: 0, duration: 0.3, ease: "expo.out", immediateRender: false }, t);
+      }
+      tile("#s03-head", T0);
+      tile("#s03-d1", 0.534); tile("#s03-d2", 0.534 + 2 * F, 320); tile("#s03-d3", 0.534 + 4 * F, 380);
+      tile("#s03-crew", 0.534 + 3 * F, 300);
+      // --- « 5 JOURS » 1,940 (local 0,858), Garamond en contrepoint.
+      tl.fromTo("#s03-gar", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 5 * F, ease: "power2.out" }, 0.858 - 3 * F);
+      tl.set("#s03-word", { opacity: 1 }, 0.858);
+      tl.fromTo("#s03-word", { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, 0.858);
+      tl.to("#s03-word", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, 0.858 + 3 * F);
+      tl.set("#s03-word .s03-ghost", { opacity: 0.35 }, 0.858);
+      tl.set("#s03-word .s03-ghost", { opacity: 0 }, 0.858 + 2 * F);
+      tl.fromTo("#s03-shake", { x: 0, y: 0 }, { keyframes: [{ x: 12, y: -7 }, { x: -9, y: 6 }, { x: 5, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, 0.858);
+      // Parallaxe du premier plan (×1,4) : le mot et la ligne Garamond montent un peu plus vite.
+      tl.fromTo(["#s03-gar"], { y: 30 }, { y: -50, duration: END - 0.7, ease: "none" }, 0.7);
+      tl.to("#s03-word", { y: -30, duration: 1.181 - 0.858 - 7 * F, ease: "none" }, 0.858 + 7 * F);
+      tl.to(["#s03-word", "#s03-gar"], { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 1.181 - 3 * F);
+      // --- Pastille « Sac » 2,263 (local 1,181) : claque, anneau laiton.
+      tl.fromTo("#s03-sac", { scale: 1, boxShadow: "0 0 0 0px rgba(208,160,112,0)" }, { scale: 1.22, boxShadow: "0 0 0 10px rgba(208,160,112,0.9)", duration: 2 * F, ease: "power2.out", immediateRender: false }, 1.181);
+      tl.to("#s03-sac", { scale: 1.08, duration: 3 * F, ease: "sine.inOut" }, 1.181 + 2 * F);
+      // --- Zoom-through ×3,2 dans « Sac » (6 images, expo.in, flou jusqu'à 18 px).
+      tl.fromTo("#s03-zoom", { scale: 1, filter: "blur(0px)", transformOrigin: SAC.x + "px " + SAC.y + "px" }, { scale: 3.2, filter: "blur(18px)", duration: END - 1.304, ease: "expo.in", immediateRender: false }, 1.304);
+      tl.set({}, {}, END);
       window.__timelines["s03"] = tl;
     })();
   </script>

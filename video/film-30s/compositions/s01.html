@@ -1,14 +1,76 @@
 <template>
+  <!-- Plan 01 · Un post — 0,000 → 0,647 s (film = local). Impact 0,000 : la photo du post à ×2,6 recule dans sa carte ; « UN » 0,000, « POST. » 0,323. -->
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s01-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:#FAF8F5; font-family:"Inter",sans-serif; color:#17402C; }
+    #s01-shake, #s01-cam { position:absolute; inset:0; }
+    #s01-cam { perspective:1400px; perspective-origin:540px 720px; }
+    .s01-post { position:absolute; border-radius:64px; overflow:hidden; box-shadow:0 40px 90px rgba(11,31,23,0.28); }
+    .s01-post img.s01-cover { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+    #s01-ptop { left:110px; top:-330px; width:860px; height:480px; filter:blur(5px); opacity:0.85; }
+    #s01-pbot { left:150px; top:1560px; width:820px; height:600px; filter:blur(5px); opacity:0.85; }
+    #s01-echo { left:70px; top:226px; width:940px; height:990px; filter:blur(14px); opacity:0; }
+    #s01-main { left:70px; top:226px; width:940px; height:990px; }
+    .s01-pill { position:absolute; display:flex; align-items:center; border-radius:999px; white-space:nowrap; }
+    #s01-author { left:36px; top:36px; height:116px; padding:0 40px 0 14px; gap:16px; background:rgba(250,248,245,0.82); border:2px solid rgba(255,255,255,0.9); }
+    #s01-author img { width:88px; height:88px; border-radius:50%; object-fit:cover; }
+    #s01-author b { font-size:42px; color:#17402C; font-weight:700; display:block; line-height:1.05; }
+    #s01-author span { font-size:34px; color:#56665D; }
+    #s01-more { position:absolute; right:36px; top:40px; width:108px; height:108px; border-radius:50%; background:rgba(250,248,245,0.7); display:flex; align-items:center; justify-content:center; }
+    #s01-acts { right:36px; bottom:40px; height:108px; padding:0 40px; gap:34px; background:rgba(60,40,30,0.38); color:#fff; font-size:40px; font-weight:600; border:2px solid rgba(255,255,255,0.35); }
+    #s01-acts span { display:inline-flex; align-items:center; gap:12px; }
+    #s01-carnet { left:36px; bottom:40px; height:108px; padding:0 36px; gap:18px; background:rgba(250,248,245,0.88); color:#17402C; font-size:38px; font-weight:700; }
+    .s01-word { position:absolute; font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; opacity:0; isolation:isolate; }
+    .s01-ghost { position:absolute; left:24px; top:-14px; color:#D0A070; filter:blur(2px); opacity:0; z-index:-1; }
+    #s01-un { left:170px; top:1250px; font-size:300px; color:#17402C; }
+    #s01-post { left:52px; top:1250px; font-size:290px; color:#17402C; }
+    .s01-dot { color:#D0A070; }
   </style>
   <div id="root" data-composition-id="s01" data-width="1080" data-height="1920">
-    <div id="s01-t">S01 · à animer</div>
+    <div id="s01-shake"><div id="s01-cam">
+      <div id="s01-ptop" class="s01-post"><img class="s01-cover" src="assets/app/feed-1.jpg" style="object-position:50% 6%" alt=""></div>
+      <div id="s01-pbot" class="s01-post"><img class="s01-cover" src="assets/app/feed-2.jpg" style="object-position:50% 30%" alt=""></div>
+      <div id="s01-echo" class="s01-post"><img class="s01-cover" src="assets/photos/tdp-amanecer-06.jpg" style="object-position:50% 40%" alt=""></div>
+      <div id="s01-main" class="s01-post">
+        <img class="s01-cover" src="assets/photos/tdp-amanecer-06.jpg" style="object-position:50% 40%" alt="">
+        <div id="s01-author" class="s01-pill"><img src="assets/avatars/a01.jpg" alt=""><div><b>Maya Roussel</b><span>Il y a 2 h</span></div></div>
+        <div id="s01-more"><svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="3" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+        <div id="s01-carnet" class="s01-pill"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>Carnet · Le W</div>
+        <div id="s01-acts" class="s01-pill"><span><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>1</span><span><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>3</span></div>
+      </div>
+      <div id="s01-un" class="s01-word"><span class="s01-ghost">UN</span>UN</div>
+      <div id="s01-post" class="s01-word"><span class="s01-ghost">POST.</span>POST<span class="s01-dot">.</span></div>
+    </div></div>
   </div>
   <script>
     (function () {
+      const F = 1 / 30;
       const tl = gsap.timeline({ paused: true });
+      function slam(sel, t) {
+        const g = sel + " .s01-ghost";
+        tl.set(sel, { opacity: 1 }, t);
+        tl.fromTo(sel, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(sel, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        tl.set(g, { opacity: 0.35 }, t);
+        tl.set(g, { opacity: 0 }, t + 2 * F);
+      }
+      // Image 0 pleine : la photo à ×2,6, inclinée de 8°, recule en 5 images (expo.out, dépassement 0,97).
+      tl.fromTo("#s01-main", { scale: 2.6, rotation: 8, z: 0 }, { scale: 0.97, rotation: 3, duration: 5 * F, ease: "expo.out" }, 0);
+      tl.to("#s01-main", { scale: 1, duration: 3 * F, ease: "sine.inOut" }, 5 * F);
+      tl.to("#s01-main", { rotation: 1.2, y: -24, rotationX: 4, duration: 0.647 - 8 * F, ease: "none" }, 8 * F);
+      // Écho flou qui garde la trace du recul.
+      tl.fromTo("#s01-echo", { scale: 2.9, rotation: 10, opacity: 0.4 }, { scale: 1.12, rotation: 6, opacity: 0.18, duration: 0.3, ease: "expo.out" }, 0);
+      tl.to("#s01-echo", { scale: 1.16, opacity: 0.1, duration: 0.347, ease: "none" }, 0.3);
+      // Parallaxe : posts voisins (×0,6), glissent vers le haut.
+      tl.fromTo("#s01-ptop", { y: 160, rotation: -9 }, { y: -60, rotation: -5, duration: 0.647, ease: "power2.out" }, 0);
+      tl.fromTo("#s01-pbot", { y: 260, rotation: 10 }, { y: -40, rotation: 6, duration: 0.647, ease: "power2.out" }, 0);
+      // Caméra : légère poussée continue.
+      tl.fromTo("#s01-cam", { scale: 1.0 }, { scale: 1.035, duration: 0.647, ease: "none" }, 0);
+      // « UN » 0,000 → sort à 0,256 ; « POST. » 0,323.
+      slam("#s01-un", 0);
+      tl.to("#s01-un", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 2 * F, ease: "power3.in" }, 0.323 - 2 * F);
+      slam("#s01-post", 0.323);
+      // Secousse sur l'impact 0,000.
+      tl.fromTo("#s01-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -8 }, { x: -10, y: 6 }, { x: 6, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none" }, 0);
       tl.set({}, {}, 0.647);
       window.__timelines["s01"] = tl;
     })();

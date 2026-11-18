@@ -1,16 +1,126 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s12-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; background:transparent; }
+    #s12-all { position:absolute; inset:0; opacity:0; }
+    #s12-deep { position:absolute; inset:0; background:#06120C; }
+    #s12-cam { position:absolute; inset:0; transform-origin:540px 1100px; }
+    #s12-groundp { position:absolute; left:-400px; top:860px; width:1880px; height:1800px; transform-origin:50% 0; }
+    #s12-groundp svg { position:absolute; left:0; top:0; width:1880px; height:1800px; overflow:hidden; }
+    #s12-groundp { -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 24%); mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 24%); }
+    #s12-contours { }
+    #s12-trace0 { position:absolute; left:538px; top:885px; width:4px; height:210px; background:linear-gradient(180deg, rgba(208,160,112,0.95), rgba(208,160,112,0)); transform-origin:50% 0; }
+    #s12-ptw { position:absolute; left:0; top:0; width:0; height:0; }
+    #s12-pt { position:absolute; left:-25px; top:-25px; width:50px; height:50px; border-radius:50%; background:#D0A070; box-shadow:0 0 0 18px rgba(208,160,112,0.18), 0 0 90px 20px rgba(208,160,112,0.55); }
+    #s12-halo { position:absolute; left:-150px; top:-150px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(208,160,112,0.55) 0%, rgba(208,160,112,0.12) 40%, rgba(208,160,112,0) 70%); opacity:0.35; }
+    .s12-line { position:absolute; left:60px; font-weight:900; font-size:250px; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; color:#FAF8F5; }
+    #s12-l1 { top:330px; }
+    #s12-l2 { top:540px; }
+    .s12-k { display:inline-block; transform-origin:50% 80%; opacity:0; }
+    .s12-last { color:#D0A070; }
+    #s12-l2g { top:540px; }
+    #s12-l2g .s12-hid { visibility:hidden; }
+    #s12-ghost { display:inline-block; color:#D0A070; filter:blur(4px); opacity:0; transform-origin:0 100%; }
+    #s12-bloom { position:absolute; inset:0; background:radial-gradient(120% 70% at 50% 60%, rgba(208,160,112,0.9), rgba(208,160,112,0.25) 60%, rgba(208,160,112,0) 100%); opacity:0; }
   </style>
-  <div id="root" data-composition-id="s12" data-width="1080" data-height="1920">
-    <div id="s12-t">S12 · à animer</div>
+  <div id="root" data-composition-id="s12" data-width="1080" data-height="1920" data-layout-allow-overlap>
+    <div id="s12-all">
+      <div id="s12-deep"></div>
+      <div id="s12-cam" data-layout-allow-overflow>
+        <div id="s12-groundp" data-layout-ignore>
+          <svg viewBox="0 0 1880 1800">
+            <g id="s12-contours" fill="none" stroke="rgba(91,127,85,0.38)" stroke-width="3">
+              <path d="M0 -1600 C 400 -1680, 700 -1500, 1000 -1580 S 1600 -1680, 1880 -1560"/>
+              <path d="M0 -1340 C 380 -1420, 760 -1240, 1060 -1330 S 1620 -1430, 1880 -1300"/>
+              <path d="M0 -1080 C 420 -1180, 720 -980, 1040 -1090 S 1600 -1180, 1880 -1050"/>
+              <path d="M0 -820 C 400 -920, 740 -720, 1080 -840 S 1620 -920, 1880 -780"/>
+              <path d="M0 -560 C 420 -660, 760 -460, 1060 -580 S 1600 -660, 1880 -520"/>
+              <path d="M0 -300 C 400 -400, 760 -200, 1080 -320 S 1620 -400, 1880 -260"/>
+              <path d="M0 -40 C 380 -120, 700 60, 1000 -20 S 1600 -120, 1880 0"/>
+              <path d="M0 200 C 400 120, 700 300, 1000 220 S 1600 120, 1880 240"/>
+              <path d="M0 420 C 380 340, 760 520, 1060 430 S 1620 330, 1880 460"/>
+              <path d="M0 660 C 420 560, 720 760, 1040 650 S 1600 560, 1880 690"/>
+              <path d="M0 920 C 400 820, 740 1020, 1080 900 S 1620 820, 1880 960"/>
+              <path d="M0 1200 C 420 1100, 760 1300, 1060 1180 S 1600 1100, 1880 1240"/>
+              <path d="M0 1500 C 400 1400, 760 1600, 1080 1480 S 1620 1400, 1880 1540"/>
+            </g>
+            <path id="s12-traceglow" d="M940 1800 C 930 1500, 1010 1300, 960 1050 S 880 600, 990 300 S 1000 80, 960 0" fill="none" stroke="rgba(208,160,112,0.25)" stroke-width="40" stroke-linecap="round"/>
+            <path id="s12-trace" d="M940 1800 C 930 1500, 1010 1300, 960 1050 S 880 600, 990 300 S 1000 80, 960 0" fill="none" stroke="#D0A070" stroke-width="12" stroke-linecap="round"/>
+            <path id="s12-ticks" d="M940 1800 C 930 1500, 1010 1300, 960 1050 S 880 600, 990 300 S 1000 80, 960 0" fill="none" stroke="#FAF8F5" stroke-width="6" stroke-linecap="round" stroke-dasharray="18 150" opacity="0.7"/>
+          </svg>
+        </div>
+        <div id="s12-trace0"></div>
+        <div id="s12-ptw"><div id="s12-halo"></div><div id="s12-pt"></div></div>
+      </div>
+      <div class="s12-line" id="s12-l1"><span class="s12-k">E</span><span class="s12-k">N</span></div>
+      <div class="s12-line" id="s12-l2"><span class="s12-k">R</span><span class="s12-k">O</span><span class="s12-k">U</span><span class="s12-k">T</span><span class="s12-k s12-last" id="s12-e2">E</span></div>
+      <div class="s12-line" id="s12-l2g" data-layout-ignore><span class="s12-hid">ROUT</span><span id="s12-ghost">E</span></div>
+      <div id="s12-bloom"></div>
+    </div>
   </div>
   <script>
     (function () {
+      const ID = "s12";
+      const DUR = 1.493;
+      const F = 1 / 30;
+      const O = 14.024;
+      const L = (T) => +(T - O).toFixed(4);
+      const T_IN = L(14.224);   // le point de s11, sa ligne
+      const T_SWING = L(14.276); // le son reprend (caisse claire) : la caméra bascule derrière la trace
+      const T_L0 = L(14.870);   // E-N-R-O-U-T-E, une lettre par triple-croche (0,0808 s), crescendo
+      const STEP = 0.646545 / 8;
+      const T_LAST = L(15.355);
+      const T_END = DUR;        // 15,517 : flash laiton (porté par s13)
+
       const tl = gsap.timeline({ paused: true });
-      tl.set({}, {}, 1.493);
-      window.__timelines["s12"] = tl;
+      tl.fromTo("#s12-all", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_IN - 0.001);
+
+      // Raccord exact avec la fin de s11 : point en (540, 860), ligne de 210 px, poussée ×1,03 autour du point.
+      tl.fromTo("#s12-ptw", { x: 540, y: 860, scale: 1.03 }, { x: 540, y: 860, scale: 1.03, duration: 0.001 }, 0);
+      tl.fromTo("#s12-trace0", { scaleY: 1.03, opacity: 1 }, { scaleY: 1.03, duration: 0.001 }, 0);
+
+      // Bascule de caméra : le sol se lève en perspective, le point descend dans le tiers bas, la trace naît du point.
+      tl.fromTo("#s12-groundp", { rotationX: 88, transformPerspective: 900, opacity: 0 }, { rotationX: 68, opacity: 1, duration: 0.42, ease: "power4.inOut" }, T_SWING);
+      tl.to("#s12-ptw", { y: 1468, scale: 1.1, duration: 0.42, ease: "power4.inOut" }, T_SWING);
+      tl.to("#s12-trace0", { opacity: 0, scaleY: 0.2, duration: 0.2, ease: "power2.in" }, T_SWING + 0.05);
+      const tr = document.getElementById("s12-trace");
+      const len = tr.getTotalLength();
+      ["#s12-trace", "#s12-traceglow"].forEach((s) => {
+        const el = document.querySelector(s);
+        el.style.strokeDasharray = len + " " + len;
+        tl.fromTo(el, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.55, ease: "power2.out" }, T_SWING + 0.12);
+      });
+      // La caméra accélère : les courbes de niveau défilent de plus en plus vite, les repères glissent sur la trace.
+      tl.fromTo("#s12-contours", { y: 0 }, { y: 1300, duration: T_END - T_SWING, ease: "power2.in" }, T_SWING);
+      tl.fromTo("#s12-ticks", { strokeDashoffset: 0, opacity: 0 }, { strokeDashoffset: -1400, opacity: 0.7, duration: T_END - T_SWING - 0.2, ease: "power2.in" }, T_SWING + 0.2);
+      tl.fromTo("#s12-cam", { scale: 1, rotation: 0 }, { scale: 1.06, rotation: -1.5, duration: T_L0 - T_SWING, ease: "none" }, T_SWING);
+      tl.to("#s12-cam", { scale: 1.22, rotation: 2, duration: T_END - T_L0, ease: "power3.in" }, T_L0);
+
+      // E-N-R-O-U-T-E : chaque lettre claque (1,45 → 0,93 → 1), de plus en plus fort ; la dernière en laiton.
+      const ks = gsap.utils.toArray(".s12-k");
+      ks.forEach((k, i) => {
+        const t = T_L0 + i * STEP;
+        const s0 = 1.45 + i * 0.07;
+        tl.fromTo(k, { opacity: 0 }, { opacity: 1, duration: F, ease: "none" }, t);
+        tl.fromTo(k, { scale: s0, y: -20 - i * 6 }, { scale: 0.93, y: 0, duration: 3 * F, ease: "power2.out" }, t);
+        tl.to(k, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+      });
+      // Fantôme agrandi du dernier E (2 images) + secousse croissante.
+      tl.fromTo("#s12-ghost", { x: -6, y: -14, scale: 1.3, opacity: 0 }, { opacity: 0.4, duration: 0.001, ease: "none" }, T_LAST);
+      tl.to("#s12-ghost", { opacity: 0, scale: 1.4, duration: 2 * F - 0.001, ease: "none" }, T_LAST + 0.001);
+      function shake(sel, t, a) {
+        [[a, -0.5 * a], [-0.6 * a, 0.45 * a], [0.43 * a, -0.3 * a], [-0.15 * a, 0.1 * a], [0, 0]].forEach(([x, y], i) =>
+          tl.to(sel, { x, y, duration: F, ease: "none" }, t + i * F),
+        );
+      }
+      shake("#s12-l2", T_LAST, 14);
+      shake("#s12-l1", T_LAST, 10);
+
+      // Pré-flash : la lumière laiton monte sur les dernières images (le flash plein de 2 images est en tête de s13).
+      tl.fromTo("#s12-bloom", { opacity: 0 }, { opacity: 0.55, duration: T_END - T_LAST - 0.03, ease: "power3.in" }, T_LAST + 0.03);
+      tl.to("#s12-l1, #s12-l2", { filter: "blur(6px)", scale: 1.06, duration: T_END - T_LAST - 0.06, ease: "power3.in" }, T_LAST + 0.06);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines[ID] = tl;
     })();
   </script>
 </template>
