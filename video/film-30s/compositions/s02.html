@@ -69,9 +69,9 @@
       tl.fromTo(c, { v: 1 }, { v: 1284, duration: 0.34, ease: "power2.out", onUpdate: () => { num.textContent = fmt(Math.round(c.v)); } }, TAP + 2 * F);
       tl.fromTo("#s02-num", { filter: "blur(3px)" }, { filter: "blur(0px)", duration: 0.34, ease: "power3.in" }, TAP + 2 * F);
       tl.fromTo("#s02-counter", { scale: 1 }, { scale: 1.06, duration: 2 * F, ease: "power2.out", immediateRender: false }, TAP + 0.36);
-      tl.to("#s02-counter", { scale: 1, duration: 3 * F, ease: "sine.inOut" }, TAP + 0.36 + 2 * F);
+      tl.to("#s02-counter", { scale: 1, duration: 2 * F, ease: "sine.inOut" }, TAP + 0.36 + 2 * F);
       // Sortie préparée pour le match cut (s03 fait grandir la photo à partir de 1,149) : le compteur part en flou.
-      tl.to("#s02-counter", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 0.835 - 5 * F);
+      tl.to("#s02-counter", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, 0.705);
       tl.to("#s02-shadeb", { opacity: 0, duration: 4 * F, ease: "power2.in" }, 0.835 - 5 * F);
       tl.set({}, {}, 0.835);
       window.__timelines["s02"] = tl;

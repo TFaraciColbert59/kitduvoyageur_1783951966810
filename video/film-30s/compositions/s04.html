@@ -5,7 +5,7 @@
        Sortie : whip pan vers le haut 3,816 → 3,879 (s05 arrive par le bas). -->
   <style>
     #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
-    #s04-iris { position:absolute; inset:0; background:#FAF8F5; clip-path:circle(0px at 840px 1083px); }
+    #s04-iris { position:absolute; inset:0; background:#FAF8F5; clip-path:circle(0px at 865px 1078px); }
     #s04-whip, #s04-shake, #s04-dz { position:absolute; inset:0; }
     #s04-all { position:absolute; inset:0; opacity:0; }
     #s04-cam { position:absolute; inset:0; perspective:1400px; perspective-origin:540px 1100px; }
@@ -55,7 +55,7 @@
   <script>
     (function () {
       const F = 1 / 30, T0 = 0.2, TAP = 0.857, BOOM = 1.387, END = 1.493;
-      const SAC = { x: 840, y: 1083 };
+      const SAC = { x: 865, y: 1078 };
       const tl = gsap.timeline({ paused: true });
       // Les 10 objets du kit (noms tirés du moteur), déplacement final, échelle, rotation.
       const items = [["Veste imperméable",-520,-430,1.25,-8],["Frontale",300,-560,1.1,6],["Réchaud",-560,200,1.3,-10],["Gourde",380,240,1.35,8],["Bâtons",-170,-700,0.95,-4],["Doudoune",80,520,1.45,5],["Couverture de survie",-420,-120,0.85,-6],["Trousse de secours",130,-330,0.9,4],["Lunettes cat. 4",-300,420,1.0,-3],["Sac de couchage",420,-120,0.92,7]];
@@ -85,7 +85,7 @@
       tl.fromTo("#s04-ring", { scale: 0.7 }, { scale: 1.25, opacity: 0, duration: 0.36, ease: "expo.out", immediateRender: false }, TAP);
       tl.fromTo("#s04-shake", { x: 0, y: 0 }, { keyframes: [{ x: 8, y: -5 }, { x: -6, y: 4 }, { x: 3, y: -2 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, TAP);
       // Tension avant l'éclatement : le bouton gonfle légèrement.
-      tl.to("#s04-btnw", { scale: 1.08, duration: BOOM - TAP - 0.3, ease: "power2.in" }, TAP + 0.3);
+      tl.to("#s04-btnw", { scale: 1.08, duration: BOOM - TAP - 0.35, ease: "power2.in" }, TAP + 0.35);
       // --- 3,773 : le bouton éclate en 10 objets qui volent vers la caméra.
       tl.to("#s04-btn", { opacity: 0, duration: 2 * F, ease: "none" }, BOOM);
       tl.to("#s04-btnw", { scale: 1.5, duration: 2 * F, ease: "power2.out" }, BOOM);
@@ -99,7 +99,7 @@
       // L'épingle-montagne (pictogramme) traverse le cadre en haut à droite.
       tl.fromTo("#s04-pinw", { x: 1260, y: 230, rotation: -60 }, { x: 470, y: 470, rotation: -30, duration: 0.5, ease: "none" }, 1.13);
       // --- Sortie : whip pan vers le haut (le plan monte et file, flou directionnel).
-      tl.to("#s04-whip", { y: -900, filter: "blur(16px)", duration: END - 1.43, ease: "power3.in" }, 1.43);
+      tl.to("#s04-whip", { y: -900, filter: "blur(16px)", duration: END - 1.447, ease: "power3.in" }, 1.447);
       tl.set({}, {}, END);
       window.__timelines["s04"] = tl;
     })();

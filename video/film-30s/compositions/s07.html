@@ -5,7 +5,7 @@
        le W (tracé OpenStreetMap) se trace 7,920 → 8,360 ; « le W » en Garamond 8,05. Sortie : dézoom brusque (s08). -->
   <style>
     #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
-    #s07-iris { position:absolute; inset:0; background:#04080b; overflow:hidden; clip-path:circle(0px at 926px 615px); }
+    #s07-iris { position:absolute; inset:0; background:#04080b; overflow:hidden; clip-path:circle(0px at 895px 620px); }
     #s07-shake { position:absolute; inset:0; }
     #s07-gw { position:absolute; left:-182px; top:-17px; width:1500px; height:1500px; }
     .s07-g { position:absolute; inset:0; width:1500px; height:1500px; display:block; transform-origin:722px 917px; }
@@ -73,7 +73,7 @@
   <script>
     (function () {
       const F = 1 / 30, T0 = 0.2, BOOM = 0.847, END = 1.493;
-      const GO = { x: 926, y: 615 };            // flèche de s06
+      const GO = { x: 895, y: 620 };            // flèche de s06
       const C = { x: 540, y: 900 };             // Patagonie à l'écran pendant l'explosion
       const tl = gsap.timeline({ paused: true });
       // --- Iris depuis la flèche (5 images).
@@ -99,7 +99,8 @@
         tl.set("#s07-l" + i, { opacity: 1 }, BOOM);
         tl.fromTo("#s07-l" + i, { xPercent: -50, yPercent: -50, x: C.x, y: C.y, scale: 0.2, rotation: 0 }, { x: x, y: y, scale: 1, rotation: rot, duration: 3 * F, ease: "expo.out", immediateRender: false }, BOOM);
         tl.to("#s07-l" + i, { x: x + dx * 0.08, y: y + dy * 0.08, duration: 2 * F, ease: "none" }, BOOM + 3 * F);
-        tl.to("#s07-l" + i, { x: C.x + dx * 2.6, y: C.y + dy * 2.6, scale: 1.5, rotation: rot * 3, filter: "blur(6px)", duration: 3 * F, ease: "power2.in" }, BOOM + 5 * F);
+        const k = 1500 / dist;
+        tl.to("#s07-l" + i, { x: C.x + dx * k, y: C.y + dy * k, scale: 1.5, rotation: rot * 3, filter: "blur(6px)", duration: 3 * F, ease: "power2.in" }, BOOM + 5 * F);
         tl.set("#s07-t" + i, { opacity: 1 }, BOOM);
         tl.fromTo("#s07-t" + i, { rotation: ang * 57.2958, x: Math.cos(ang) * 40, y: Math.sin(ang) * 40 - 8, scaleX: 0 }, { scaleX: 1, duration: 3 * F, ease: "expo.out", immediateRender: false }, BOOM);
         tl.to("#s07-t" + i, { scaleX: 2.4, opacity: 0, duration: 5 * F, ease: "power2.in" }, BOOM + 3 * F);

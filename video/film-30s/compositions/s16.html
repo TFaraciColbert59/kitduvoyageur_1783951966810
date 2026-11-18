@@ -86,9 +86,9 @@
       }
 
       // Entrée (0 → 0,2) : on finit de plonger dans l'avatar de Tom, plein cadre à 19,396.
-      tl.set("#s16-face", { opacity: 0, scale: 0.5, transformOrigin: "50% 50%" }, 0);
-      tl.to("#s16-face", { opacity: 1, duration: 2 * F, ease: "none" }, 0.1);
-      tl.to("#s16-face", { scale: 1, duration: 0.1, ease: "expo.in" }, 0.1);
+      // Le plan 15 plonge lui-même dans l'avatar de Tom : on prend le relais en coupe franche, plein cadre, à 19,396
+      // (pas de fondu : il ferait une double exposition des deux avatars).
+      tl.set("#s16-face", { opacity: 1, scale: 1, transformOrigin: "50% 50%" }, 0.2);
       // 19,396 : le fond Sage existe derrière ; l'avatar recule (5 images, expo.out, dépassement 0,97).
       tl.set(["#s16-bg"], { opacity: 1 }, 0.2);
       const AV = 150 / 2600;
@@ -100,8 +100,8 @@
       tl.fromTo("#s16-cam", { scale: 1, rotation: -1, transformOrigin: "50% 40%" }, { scale: 1.055, rotation: 1.2, duration: 1.294, ease: "power1.inOut" }, 0.2);
       tl.fromTo("#s16-bg", { y: 0, scale: 1 }, { y: -36, scale: 1.03, duration: 1.294, ease: "none" }, 0.2);
 
-      // Garamond « une bouteille à la » (19,725) : flou → net, sans translation.
-      tl.fromTo("#s16-gar", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, L(19.725));
+      // Garamond « une bouteille à la » (19,558) : flou → net, sans translation.
+      tl.fromTo("#s16-gar", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, L(19.558));
 
       // Appui « Lancer une bouteille » (19,886) : écrasement + halo laiton.
       const tp = L(19.886);

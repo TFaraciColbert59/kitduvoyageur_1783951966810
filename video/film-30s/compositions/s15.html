@@ -88,7 +88,9 @@
       // Appui : écrasement 0,9, iris laiton.
       tl.fromTo("#s15-btn", { scale: 1 }, { scale: 0.9, duration: 2 * F, ease: "power2.out" }, T_TAP);
       tl.to("#s15-btn", { scale: 0, opacity: 0, duration: 4 * F, ease: "power3.in" }, T_TAP + 2 * F);
-      tl.fromTo("#s15-iris", { scale: 0.3, opacity: 1 }, { scale: 3.4, opacity: 0, duration: 7 * F, ease: "expo.out" }, T_TAP);
+      tl.fromTo("#s15-iris", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_TAP);
+      tl.fromTo("#s15-iris", { scale: 0.3 }, { scale: 3.4, duration: 7 * F, ease: "expo.out" }, T_TAP);
+      tl.to("#s15-iris", { opacity: 0, duration: 7 * F - 0.001, ease: "power2.in" }, T_TAP + 0.001);
 
       // Le carnet vole dans le fil : bord laiton, rotation −4°, posts voisins qui glissent en parallaxe.
       tl.fromTo("#s15-card", { y: 0, rotation: 0, boxShadow: "0 0 0 0px #D0A070, 0 40px 90px rgba(11,31,23,0.35)" }, { y: -40, rotation: -4, boxShadow: "0 0 0 8px #D0A070, 0 40px 90px rgba(11,31,23,0.35)", duration: 0.3, ease: "expo.out" }, T_FLY);

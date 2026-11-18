@@ -1,14 +1,133 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
-    #s21-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s21-abs { position:absolute; }
+    /* Copie exacte de la dernière image du plan 20 (28,140), figée, puis repliée en aiguille. */
+    #s21-all { position:absolute; inset:0; background:#06120C; opacity:0; }
+    #s21-skyw { position:absolute; inset:0; transform:translate(-40px, 30px); }
+    #s21-sky { position:absolute; inset:-60px; background-image:
+      radial-gradient(1.5px 1.5px at 12% 20%, rgba(250,248,245,0.7), transparent), radial-gradient(1.5px 1.5px at 80% 12%, rgba(250,248,245,0.6), transparent),
+      radial-gradient(1px 1px at 30% 70%, rgba(250,248,245,0.5), transparent), radial-gradient(1.5px 1.5px at 92% 60%, rgba(250,248,245,0.6), transparent),
+      radial-gradient(1px 1px at 6% 88%, rgba(250,248,245,0.5), transparent), radial-gradient(1px 1px at 55% 6%, rgba(250,248,245,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 70% 92%, rgba(250,248,245,0.5), transparent), radial-gradient(1px 1px at 40% 40%, rgba(250,248,245,0.4), transparent); }
+    #s21-glob { position:absolute; left:0; top:0; width:1080px; height:1920px; }
+    #s21-atm { left:10px; top:70px; width:1060px; height:1060px; border-radius:50%; box-shadow:0 0 120px 20px rgba(91,127,85,0.35), inset 0 0 60px rgba(91,127,85,0.25); }
+    #s21-gbase { left:40px; top:100px; width:1000px; height:1000px; transform:rotate(-4deg); }
+    #s21-gbase img { position:absolute; left:0; top:0; width:1000px; height:1000px; }
+    #s21-arcs { position:absolute; left:0; top:0; }
+    #s21-dot { left:292px; top:904px; width:48px; height:48px; border-radius:50%; background:#D0A070; border:6px solid #FAF8F5;
+      box-shadow:0 0 0 12px rgba(208,160,112,0.25), 0 0 40px rgba(208,160,112,0.7); }
+    #s21-shade { position:absolute; left:0; top:960px; width:1080px; height:960px; background:linear-gradient(180deg, rgba(6,18,12,0) 0%, rgba(6,18,12,0.82) 22%, #06120C 60%); }
+    .s21-lab { left:60px; top:1104px; font-size:36px; color:rgba(250,248,245,0.75); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; white-space:nowrap; }
+    #s21-n3 { left:54px; top:1170px; font-size:172px; font-weight:900; letter-spacing:-0.02em; line-height:0.9; font-variant-numeric:tabular-nums; white-space:nowrap; color:#D0A070; }
+    #s21-w3 { left:60px; top:1350px; font-size:110px; font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; color:#FAF8F5; }
+    #s21-w3 em { font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; letter-spacing:0; font-size:0.62em; margin-left:18px; color:rgba(250,248,245,0.88); }
+    #s21-pts, #s21-nd { position:absolute; left:0; top:0; }
   </style>
   <div id="root" data-composition-id="s21" data-width="1080" data-height="1920">
-    <div id="s21-t">S21 · à animer</div>
+    <div id="s21-all">
+      <div id="s21-skyw"><div id="s21-sky"></div></div>
+      <div id="s21-glob">
+        <div id="s21-atm" class="s21-abs"></div>
+        <div id="s21-gbase" class="s21-abs">
+          <img id="s21-earth" src="assets/sat/globe-nuit.png" alt="">
+          <img id="s21-lieux" src="assets/sat/globe-nuit-lieux.png" alt="">
+          <svg id="s21-arcs" width="1000" height="1000" viewBox="0 0 1000 1000">
+            <g fill="none" stroke="#D0A070" stroke-width="3" stroke-linecap="round">
+              <path d="M316 928 C 380 620, 560 330, 713 184" opacity="0.95"/>
+              <path d="M316 928 C 300 700, 260 470, 180 300" opacity="0.6"/>
+              <path d="M713 184 C 760 380, 800 560, 850 760" opacity="0.6"/>
+            </g>
+            <circle cx="713" cy="184" r="8" fill="#FAF8F5"/>
+          </svg>
+          <div id="s21-dot" class="s21-abs"></div>
+        </div>
+      </div>
+      <div id="s21-shade"></div>
+      <div id="s21-lab" class="s21-abs s21-lab">367 747 lieux · 246 pays</div>
+      <div id="s21-n3" class="s21-abs">18 176 400</div>
+      <div id="s21-w3" class="s21-abs">AVENTURES<em>possibles</em></div>
+      <svg id="s21-pts" width="1080" height="1920"></svg>
+      <svg id="s21-nd" width="1080" height="1920">
+        <defs>
+          <linearGradient id="s21-gn" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+          <linearGradient id="s21-gs" x1="0" x2="1"><stop offset="0" stop-color="#3a3a32"/><stop offset="0.5" stop-color="#2a2a24"/><stop offset="0.5" stop-color="#1c1c18"/><stop offset="1" stop-color="#121210"/></linearGradient>
+        </defs>
+        <g id="s21-needle" opacity="0" transform="rotate(-24 540 690)">
+          <path d="M540 300 L590 690 L490 690 Z" fill="url(#s21-gn)"/>
+          <path d="M540 960 L590 690 L490 690 Z" fill="url(#s21-gs)" stroke="#9E7243" stroke-width="3"/>
+          <circle cx="540" cy="690" r="26" fill="#06120C" stroke="#D0A070" stroke-width="8"/>
+        </g>
+      </svg>
+    </div>
   </div>
   <script>
     (function () {
+      // Plan 21 · bible 28,140 → 28,448 (silence) ; hôte à 27,940 : local = film − 27,94.
+      const F = 1 / 30;
       const tl = gsap.timeline({ paused: true });
+      // Le plan 20 joue jusqu'à 28,140 : ce plan reste invisible pendant l'avance de 0,2 s.
+      tl.set("#s21-all", { opacity: 1 }, 0.2);
+      // 28,140 → 28,240 : tout est figé (3 images, seul arrêt du film).
+      const tF = 0.3, tN = 0.49;
+
+      // Le repli (28,240 → 28,430) : le globe s'aplatit et s'éteint en ombre, les mots sont aspirés vers le pivot.
+      const PV = [540, 690];
+      tl.to("#s21-glob", { scaleX: 0.55, opacity: 0.16, transformOrigin: "540px 600px", duration: tN - tF, ease: "power3.in" }, tF);
+      tl.to("#s21-lieux", { opacity: 0, duration: 2 * F, ease: "none" }, tF);
+      tl.to(["#s21-arcs", "#s21-dot"], { opacity: 0, duration: 3 * F, ease: "none" }, tF);
+      tl.to("#s21-shade", { opacity: 0, duration: tN - tF, ease: "power2.in" }, tF);
+      [["#s21-n3", 500, 1240], ["#s21-w3", 360, 1395], ["#s21-lab", 360, 1122]].forEach(([id, cx, cy]) => {
+        tl.to(id, { x: PV[0] - cx, y: PV[1] - cy, scale: 0.12, opacity: 0, duration: 0.13, ease: "expo.in" }, tF + F);
+      });
+
+      // Les points des lieux deviennent des particules qui se replient en aiguille (graine fixe).
+      const N = 340;
+      let seed = 21;
+      const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      const th = -24 * Math.PI / 180, ct = Math.cos(th), sn = Math.sin(th);
+      const parts = [];
+      let h = "";
+      for (let i = 0; i < N; i++) {
+        // origine : un point du globe (disque de rayon 500 centré en 540, 600), plus dense sur les terres de l'ouest et du nord
+        const a = rnd() * Math.PI * 2, r = 470 * Math.sqrt(rnd());
+        const ox = 540 + Math.cos(a) * r, oy = 600 + Math.sin(a) * r;
+        // cible : un point de l'aiguille (moitié nord ou sud), tournée de −24° autour du pivot
+        const north = i % 3 !== 0;
+        const t = rnd(), half = 46 * (1 - t) * (rnd() * 2 - 1);
+        const lx = 540 + half, ly = north ? 690 - t * 380 : 690 + t * 260;
+        const tx = PV[0] + (lx - PV[0]) * ct - (ly - PV[1]) * sn;
+        const ty = PV[1] + (lx - PV[0]) * sn + (ly - PV[1]) * ct;
+        parts.push({ ox, oy, tx, ty, d: rnd() * 0.25, s: 2 + rnd() * 2.5 });
+        h += `<line id="s21-l${i}" stroke="rgba(208,160,112,0.55)" stroke-width="3" stroke-linecap="round" x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy}"/>`;
+        h += `<circle id="s21-c${i}" cx="${ox}" cy="${oy}" r="${parts[i].s.toFixed(1)}" fill="#E8C496"/>`;
+      }
+      const svg = document.getElementById("s21-pts");
+      svg.innerHTML = h;
+      svg.style.opacity = "0";
+      const ls = parts.map((_, i) => document.getElementById("s21-l" + i));
+      const cs = parts.map((_, i) => document.getElementById("s21-c" + i));
+      const pr = { p: 0 };
+      const ease = (k) => k * k * k;
+      function draw() {
+        for (let i = 0; i < N; i++) {
+          const q = parts[i];
+          const k = Math.min(1, Math.max(0, (pr.p - q.d) / (1 - q.d)));
+          const e = ease(k), e0 = ease(Math.max(0, k - 0.12));
+          const x = q.ox + (q.tx - q.ox) * e, y = q.oy + (q.ty - q.oy) * e;
+          const x0 = q.ox + (q.tx - q.ox) * e0, y0 = q.oy + (q.ty - q.oy) * e0;
+          cs[i].setAttribute("cx", x.toFixed(1)); cs[i].setAttribute("cy", y.toFixed(1));
+          ls[i].setAttribute("x1", x0.toFixed(1)); ls[i].setAttribute("y1", y0.toFixed(1));
+          ls[i].setAttribute("x2", x.toFixed(1)); ls[i].setAttribute("y2", y.toFixed(1));
+        }
+      }
+      draw();
+      tl.set("#s21-pts", { opacity: 1 }, tF);
+      tl.to(pr, { p: 1, duration: tN - tF, ease: "none", onUpdate: draw }, tF);
+      // L'aiguille laiton se solidifie sur les particules (elle claquera à 28,448, plan 22).
+      tl.to("#s21-needle", { opacity: 1, duration: 3 * F, ease: "power1.in" }, tN - 3 * F);
+      tl.to("#s21-pts", { opacity: 0.4, duration: 2 * F, ease: "none" }, tN - F);
+
       tl.set({}, {}, 0.508);
       window.__timelines["s21"] = tl;
     })();

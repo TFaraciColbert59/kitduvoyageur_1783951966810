@@ -8,8 +8,8 @@
     #s08-all { position:absolute; inset:0; opacity:0; }
     #s08-shake { position:absolute; inset:0; }
     #s08-bg { position:absolute; inset:-80px; background:radial-gradient(80% 60% at 50% 50%, #1f5038 0%, #17402C 60%, #0f2c1e 100%); }
-    #s08-cam { position:absolute; left:0; top:0; width:1080px; height:1920px; perspective:1400px; perspective-origin:540px 900px; }
-    #s08-grid { position:absolute; left:70px; top:230px; width:940px; height:1260px; transform-style:preserve-3d; }
+    #s08-cam { position:absolute; left:0; top:0; width:1080px; height:1920px; perspective:1400px; perspective-origin:540px 1020px; }
+    #s08-grid { position:absolute; left:70px; top:390px; width:940px; height:1260px; transform-style:preserve-3d; }
     .s08-t { position:absolute; border-radius:48px; background:rgba(250,248,245,0.94); border:2px solid rgba(255,255,255,0.9); box-shadow:0 30px 70px rgba(6,18,12,0.45); padding:34px 38px; color:#1f2a24; overflow:hidden; opacity:0; }
     .s08-k { font-size:34px; font-weight:700; color:#5B7F55; letter-spacing:0.1em; text-transform:uppercase; display:flex; align-items:center; gap:12px; white-space:nowrap; }
     .s08-v { font-size:92px; font-weight:800; letter-spacing:-0.03em; color:#17402C; margin-top:14px; line-height:1; white-space:nowrap; position:relative; }
@@ -20,7 +20,7 @@
     #s08-cap { position:absolute; left:24px; bottom:24px; height:70px; padding:0 26px; border-radius:999px; display:flex; align-items:center; background:rgba(250,248,245,0.94); font-size:36px; font-weight:800; color:#17402C; white-space:nowrap; opacity:0; }
     #s08-km { left:590px; top:0; width:350px; height:250px; }
     #s08-met { left:590px; top:270px; width:350px; height:250px; }
-    #s08-bud { left:-40px; top:550px; width:1020px; height:330px; background:#FAF8F5; box-shadow:0 0 0 6px #D0A070, 0 40px 90px rgba(6,18,12,0.6); }
+    #s08-bud { left:-10px; top:550px; width:960px; height:330px; background:#FAF8F5; box-shadow:0 0 0 6px #D0A070, 0 40px 90px rgba(6,18,12,0.6); }
     #s08-bud .s08-v { font-size:200px; font-weight:900; color:#17402C; margin-top:4px; font-variant-numeric:tabular-nums; isolation:isolate; }
     #s08-eur { color:#D0A070; }
     #s08-bghost { position:absolute; left:24px; top:-14px; color:#D0A070; filter:blur(3px); opacity:0; z-index:-1; }
@@ -58,19 +58,19 @@
       const F = 1 / 30, T0 = 0.2, END = 2.14;
       const tl = gsap.timeline({ paused: true });
       // Caméra : origine 0 0 ; un point p de la grille (repère caméra) va à x + s·p.
-      const MAP = { x: 350, y: 490 }, SAC = { x: 540, y: 1265 };
+      const MAP = { x: 350, y: 650 }, SAC = { x: 540, y: 1425 };
       const S0 = 3.8, S1 = 9.5;
       const camAt = (s, c, tx, ty) => ({ scale: s, x: tx - s * c.x, y: ty - s * c.y });
       // --- Raccord avec s07 (carte identique à ×3,8), puis dézoom brusque ×3,8 → ×1 en 5 images (dépassement 0,97).
       tl.set("#s08-all", { opacity: 1 }, 0.167);
-      tl.fromTo("#s08-cam", Object.assign({ transformOrigin: "0px 0px" }, camAt(S0, MAP, 540, 960)), Object.assign({ duration: 5 * F, ease: "expo.out", immediateRender: false }, camAt(0.97, MAP, 540 + (350 - 540) * 0.97, 960 + (490 - 960) * 0.97)), T0);
+      tl.fromTo("#s08-cam", Object.assign({ transformOrigin: "0px 0px" }, camAt(S0, MAP, 540, 960)), Object.assign({ duration: 5 * F, ease: "expo.out", immediateRender: false }, camAt(0.97, MAP, 540 + (350 - 540) * 0.97, 960 + (650 - 960) * 0.97)), T0);
       tl.set("#s08-cam", Object.assign({ transformOrigin: "0px 0px" }, camAt(S0, MAP, 540, 960)), 0);
       tl.to("#s08-cam", { scale: 1, x: 0, y: 0, duration: 3 * F, ease: "sine.inOut" }, T0 + 5 * F);
       // Survol : légère poussée et descente pendant que la mosaïque balaye en Y.
       tl.to("#s08-cam", { scale: 1.04, x: -540 * 0.04, y: -960 * 0.04 - 30, duration: 1.82 - (T0 + 8 * F), ease: "none" }, T0 + 8 * F);
       tl.fromTo("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0 }, { rotationY: -16, rotationX: 8, rotationZ: -3, duration: 6 * F, ease: "expo.out", immediateRender: false }, T0);
       tl.set("#s08-grid", { rotationY: 0, rotationX: 0, rotationZ: 0 }, 0);
-      tl.to("#s08-grid", { rotationY: 6, rotationX: 4, rotationZ: -1, duration: 1.82 - (T0 + 6 * F), ease: "sine.inOut" }, T0 + 6 * F);
+      tl.to("#s08-grid", { rotationY: 6, rotationX: 4, rotationZ: -1, duration: 1.82 - (T0 + 6 * F), ease: "none" }, T0 + 6 * F);
       // --- Les tuiles claquent, une par croche.
       function clap(sel, t, z) {
         tl.set(sel, { opacity: 1 }, t);

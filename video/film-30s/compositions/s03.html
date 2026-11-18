@@ -27,7 +27,7 @@
     #s03-crew .s03-av { width:104px; height:104px; border-radius:50%; object-fit:cover; border:4px solid #fff; }
     #s03-crew .s03-lab { font-size:38px; font-weight:700; color:#17402C; margin-left:10px; white-space:nowrap; }
     #s03-crew .s03-lab span { display:block; font-size:34px; font-weight:500; color:#56665D; }
-    #s03-sac { position:absolute; right:26px; top:27px; height:96px; padding:0 30px 0 22px; gap:14px; border-radius:999px; display:flex; align-items:center; background:#17402C; color:#FAF8F5; font-size:38px; font-weight:700; white-space:nowrap; box-shadow:0 0 0 0 rgba(208,160,112,0); }
+    #s03-sac { position:absolute; right:80px; top:27px; height:96px; padding:0 30px 0 22px; gap:14px; border-radius:999px; display:flex; align-items:center; background:#17402C; color:#FAF8F5; font-size:38px; font-weight:700; white-space:nowrap; box-shadow:0 0 0 0 rgba(208,160,112,0); }
     .s03-word { position:absolute; font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; opacity:0; isolation:isolate; }
     .s03-ghost { position:absolute; left:24px; top:-14px; color:#FAF8F5; filter:blur(2px); opacity:0; z-index:-1; }
     #s03-word { left:62px; top:1300px; font-size:226px; color:#D0A070; }
@@ -64,13 +64,13 @@
       const F = 1 / 30, T0 = 0.2, END = 1.504;
       const tl = gsap.timeline({ paused: true });
       // Point visé par le zoom-through (pastille « Sac » à l'écran, en fin de plan).
-      const SAC = { x: 840, y: 1083 };
+      const SAC = { x: 865, y: 1078 };
       // --- Match cut : la photo du post (carte de s02) grandit jusqu'au plein cadre en 4 images.
       tl.set("#s03-pw", { opacity: 1 }, 2 * F);
-      tl.fromTo("#s03-photo", { scale: 0.88, y: -77, rotation: -2 }, { scale: 1, y: 0, rotation: 0, duration: T0 - 2 * F, ease: "power2.in" }, 2 * F);
+      tl.fromTo("#s03-photo", { scale: 0.95, y: -77, rotation: -2, filter: "blur(0px) brightness(1)" }, { scale: 1, y: 0, rotation: 0, duration: T0 - 2 * F, ease: "power2.in" }, 2 * F);
       tl.fromTo("#s03-pw", { clipPath: "inset(178px 10px 370px 10px round 73px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: T0 - 2 * F, ease: "power2.in" }, 2 * F);
       // Puis le fond se floute et dérive (×0,6 de parallaxe).
-      tl.to("#s03-photo", { scale: 1.07, y: -20, filter: "blur(3px) brightness(0.8)", duration: 0.3, ease: "power2.out" }, T0);
+      tl.fromTo("#s03-photo", { filter: "blur(0px) brightness(1)" }, { scale: 1.07, y: -20, filter: "blur(3px) brightness(0.8)", duration: 0.3, ease: "power2.out", immediateRender: false }, T0);
       tl.to("#s03-photo", { scale: 1.1, y: -40, duration: END - T0 - 0.3, ease: "none" }, T0 + 0.3);
       tl.to("#s03-vig", { opacity: 1, duration: 0.25, ease: "power2.out" }, T0);
       // --- Bento 3D (rotation X 14°, Z −4°) qui dérive en continu.

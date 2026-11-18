@@ -43,12 +43,14 @@
       <div id="s17-flood"></div>
       <div id="s17-shake">
         <div id="s17-cam">
+          <div id="s17-gw" class="s17-abs" style="left:0; top:0; width:1080px; height:1920px">
           <div id="s17-grp" class="s17-abs"></div>
           <div id="s17-grpt" class="s17-abs"><b>Le W · fin novembre</b><span>Groupe · 4 voyageurs</span></div>
           <img id="s17-a0" class="s17-av s17-abs" src="assets/avatars/a13.jpg" alt="" style="left:80px; top:253px">
           <img id="s17-a1" class="s17-av s17-abs" src="assets/avatars/a10.jpg" alt="" style="left:162px; top:253px">
           <img id="s17-a2" class="s17-av s17-abs" src="assets/avatars/a17.jpg" alt="" style="left:244px; top:253px">
           <img id="s17-a3" class="s17-av s17-abs" src="assets/avatars/a12.jpg" alt="" style="left:326px; top:253px">
+          </div>
           <div id="s17-tile" class="s17-abs">
             <div class="s17-eb">Lignée de kit</div>
             <div class="s17-chain">
@@ -110,6 +112,9 @@
       });
       tl.fromTo("#s17-grp", { opacity: 0, scaleX: 0.4, transformOrigin: "10% 50%" }, { opacity: 1, scaleX: 1, duration: 0.22, ease: "expo.out" }, 0.17);
       tl.fromTo("#s17-grpt", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, L(20.75));
+      // Le groupe soudé prend le centre du cadre, puis remonte à sa place quand la tuile lignée arrive.
+      tl.fromTo("#s17-gw", { x: 0, y: 0, scale: 1, transformOrigin: "525px 311px" }, { x: 15, y: 470, scale: 1.04, duration: 0.4, ease: "power3.out", immediateRender: false }, 0.22);
+      tl.to("#s17-gw", { x: 0, y: 0, scale: 1, duration: 0.2, ease: "power3.inOut" }, L(21.344) - 0.17);
       // Caméra : dérive continue.
       tl.fromTo("#s17-cam", { scale: 1.04, rotation: 0.8, transformOrigin: "50% 45%" }, { scale: 1, rotation: -0.8, duration: 1.75, ease: "power1.inOut" }, 0.2);
 

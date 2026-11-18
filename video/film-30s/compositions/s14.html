@@ -20,7 +20,7 @@
     .s14-chip { display:inline-flex; align-items:center; height:56px; padding:0 20px; border-radius:999px; background:#17402C; color:#fff; font-size:32px; font-weight:700; }
     .s14-day b { font-size:38px; color:#17402C; display:block; white-space:nowrap; }
     .s14-day span.s14-n { font-size:34px; color:#56665D; white-space:nowrap; }
-    .s14-word { position:absolute; left:56px; top:250px; font-weight:900; font-size:282px; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; color:#FAF8F5; text-shadow:0 10px 40px rgba(6,18,12,0.45); transform-origin:30% 60%; }
+    .s14-word { position:absolute; left:56px; top:222px; font-weight:900; font-size:282px; letter-spacing:-0.04em; line-height:1; white-space:nowrap; color:#FAF8F5; text-shadow:0 10px 40px rgba(6,18,12,0.45); transform-origin:30% 60%; }
     .s14-dot { color:#D0A070; }
     #s14-wordg { color:#D0A070; text-shadow:none; filter:blur(3px); opacity:0; }
   </style>
@@ -111,7 +111,7 @@
 
       // J3 : en chute, agrandie et floue (elle se pose à 18,103 sur le carnet, dans s15).
       tl.fromTo("#s14-p3", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, L(17.70));
-      tl.fromTo("#s14-p3", { x: 760, y: -700, scale: 2.4, rotation: 18, filter: "blur(8px)" }, { x: 0, y: 0, scale: 1.2, rotation: -10, filter: "blur(1.5px)", duration: T_J3 - L(17.70), ease: "power2.in" }, L(17.70));
+      tl.fromTo("#s14-p3", { x: 420, y: -620, scale: 2.4, rotation: 18, filter: "blur(8px)" }, { x: 0, y: 0, scale: 1.2, rotation: -10, filter: "blur(1.5px)", duration: T_J3 - L(17.70), ease: "power2.in" }, L(17.70));
 
       // Secousses : chaque photo qui touche la carte.
       function shake(t, a) {

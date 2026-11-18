@@ -9,9 +9,9 @@
     .s13-at { position:absolute; left:0; top:0; width:0; height:0; transform-style:preserve-3d; }
     .s13-up { position:absolute; left:0; top:0; width:0; height:0; transform:rotateX(-46deg); transform-origin:0 0; transform-style:preserve-3d; }
     #s13-me { position:absolute; left:-44px; top:-44px; width:88px; height:88px; border-radius:50%; background:#FAF8F5; border:20px solid #17402C; box-shadow:0 0 0 30px rgba(208,160,112,0.45), 0 0 90px rgba(208,160,112,0.9); }
-    #s13-pin { position:absolute; left:-78px; top:-170px; width:156px; height:156px; }
+    #s13-pin { position:absolute; left:-78px; top:-190px; width:156px; height:156px; transform-style:preserve-3d; }
     #s13-pinb { position:absolute; inset:0; background:#D0A070; border-radius:50% 50% 50% 0; transform:rotate(-45deg); box-shadow:0 16px 30px rgba(6,18,12,0.5); }
-    #s13-pin svg { position:absolute; left:39px; top:36px; }
+    #s13-pini { position:absolute; left:34px; top:30px; width:88px; height:88px; background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M2 24 L10 10 L14 16 L20 6 L30 24 Z' fill='none' stroke='%2317402C' stroke-width='2.4' stroke-linejoin='round'/><path d='M2 24 L30 24' stroke='%2317402C' stroke-width='2.4'/></svg>") center/contain no-repeat; transform:translateZ(2px); }
     #s13-fog { position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,26,18,0.9) 0%, rgba(11,26,18,0) 26%); }
     #s13-glowtop { position:absolute; inset:0; background:radial-gradient(120% 60% at 50% 0%, rgba(208,160,112,0.55), rgba(208,160,112,0) 55%); mix-blend-mode:screen; }
     #s13-ring { position:absolute; left:290px; top:610px; width:500px; height:500px; border-radius:50%; border:26px solid rgba(250,248,245,0.9); box-shadow:0 0 60px rgba(208,160,112,0.9), inset 0 0 60px rgba(208,160,112,0.7); opacity:0; }
@@ -38,7 +38,7 @@
           <div id="s13-plane" data-layout-ignore>
             <img src="assets/sat/sat-w.jpg" alt="" />
             <svg id="s13-svg" viewBox="0 0 1600 2600"></svg>
-            <div class="s13-at" style="left:1078.8px; top:701.2px"><div class="s13-up"><div id="s13-pin"><div id="s13-pinb"></div><svg width="78" height="78" viewBox="0 0 32 32" fill="none"><path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#17402C" stroke-width="2.4" stroke-linejoin="round"/><path d="M2 24 L30 24" stroke="#17402C" stroke-width="2.4"/></svg></div></div></div>
+            <div class="s13-at" style="left:1078.8px; top:701.2px"><div class="s13-up"><div id="s13-pin"><div id="s13-pinb"></div><div id="s13-pini"></div></div></div></div>
             <div class="s13-at" id="s13-mew"><div class="s13-up"><div id="s13-me"></div></div></div>
           </div>
         </div>
@@ -116,7 +116,9 @@
       tl.fromTo("#s13-glowtop", { opacity: 1 }, { opacity: 0.55, duration: 0.6, ease: "power2.out" }, T_BOOM);
 
       // La carte 3D réelle explose en plein cadre (×0,45 → ×1,08, flou 24 → 0), puis rotation Z 8° et ×1,3 sur 16,164.
-      tl.fromTo("#s13-plane", { rotationX: 46, rotationZ: -14, scale: 0.45, filter: "blur(24px)" }, { rotationZ: 0, scale: 1.08, filter: "blur(0px)", duration: 6 * F, ease: "expo.out" }, T_FL);
+      tl.fromTo("#s13-plane", { rotationX: 46, rotationZ: -14, scale: 0.45 }, { rotationZ: 0, scale: 1.08, duration: 6 * F, ease: "expo.out" }, T_FL);
+      tl.fromTo("#s13-world", { filter: "blur(24px)" }, { filter: "blur(0px)", duration: 6 * F, ease: "expo.out" }, T_FL);
+      tl.set("#s13-world", { filter: "none" }, T_FL + 6 * F);
       tl.to("#s13-plane", { scale: 1.12, duration: T_ROT - T_FL - 6 * F, ease: "none" }, T_FL + 6 * F);
       tl.to("#s13-plane", { rotationZ: 8, scale: 1.3, duration: 0.38, ease: "expo.out" }, T_ROT);
       tl.to("#s13-plane", { rotationZ: 9.5, scale: 1.36, duration: DUR - T_ROT - 0.38, ease: "none" }, T_ROT + 0.38);

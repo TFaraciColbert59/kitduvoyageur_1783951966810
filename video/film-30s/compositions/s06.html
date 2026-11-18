@@ -5,8 +5,8 @@
        appui sur la flèche 6,852 → 6,912 (l'iris de s07 s'ouvre de 6,952 à 7,112, sur la grosse caisse 7,115). -->
   <style>
     #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
-    #s06-flash { position:absolute; inset:0; background:#D0A070; clip-path:circle(0px at 862px 644px); }
-    #s06-flood { position:absolute; inset:0; background:#17402C; clip-path:circle(0px at 862px 644px); }
+    #s06-flash { position:absolute; inset:0; background:#D0A070; clip-path:circle(0px at 854px 625px); }
+    #s06-flood { position:absolute; inset:0; background:#17402C; clip-path:circle(0px at 854px 625px); }
     #s06-all { position:absolute; inset:0; opacity:0; }
     #s06-shake { position:absolute; inset:0; }
     #s06-bg { position:absolute; inset:-80px; background:radial-gradient(80% 50% at 50% 45%, #1d4d35 0%, #17402C 60%, #10301f 100%); }
@@ -60,7 +60,7 @@
   <script>
     (function () {
       const F = 1 / 30, T0 = 0.2, END = 2.14;
-      const Q = { x: 862, y: 644 };
+      const Q = { x: 854, y: 625 };
       const B = [0.2, 0.847, 1.48, 1.816];   // 5,172 · 5,819 · 6,452 · 6,788
       const NV = 1.493, PRESS = 1.88;          // 6,465 · 6,852
       const tl = gsap.timeline({ paused: true });
@@ -69,7 +69,7 @@
       tl.fromTo("#s06-flood", { clipPath: "circle(0px at " + Q.x + "px " + Q.y + "px)" }, { clipPath: "circle(2300px at " + Q.x + "px " + Q.y + "px)", duration: 0.067, ease: "expo.in" }, 0.133);
       tl.set("#s06-all", { opacity: 1 }, T0);
       // --- Caméra qui avance en continu (origine sur la flèche) + 3D.
-      tl.fromTo("#s06-cam", { scale: 0.96, transformOrigin: "926px 615px" }, { scale: 1.12, duration: END - T0, ease: "none" }, T0);
+      tl.fromTo("#s06-cam", { scale: 0.96, transformOrigin: "895px 620px" }, { scale: 1.12, duration: END - T0, ease: "none" }, T0);
       tl.fromTo("#s06-stage", { rotationY: 8, rotationX: 6 }, { rotationY: -6, rotationX: -2, duration: END - T0, ease: "none" }, T0);
       tl.fromTo("#s06-bg", { x: 30, scale: 1.0 }, { x: -30, scale: 1.06, duration: END, ease: "none" }, 0);
       // Titre et barre géante qui traverse le cadre en diagonale (−6°).
