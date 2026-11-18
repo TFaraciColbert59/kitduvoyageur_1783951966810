@@ -2304,11 +2304,61 @@
 }
 
 .lkdv-cv2x-carnet-ig-tile {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
   padding: 12px;
+}
+
+.lkdv-cv2x-carnet-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lkdv-cv2x-carnet-bg-img {
+  object-fit: cover;
+  filter: saturate(1.06);
+}
+
+.lkdv-cv2x-carnet-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.84) 55%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+.lkdv-cv2x-carnet-ig-tile > .lkdv-cv2x-tile-link,
+.lkdv-cv2x-carnet-ig-tile > .lkdv-cv2x-tile-foot {
+  position: relative;
+  z-index: 1;
+}
+
+.lkdv-cv2x-kit-trace-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.08);
+  color: #17402c;
+  font: 600 11px/1.2 var(--font-sans);
+  max-width: 100%;
+}
+
+.lkdv-cv2x-kit-trace-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lkdv-cv2x-carnet-ig-tile .lkdv-carnet-card-scroll {
@@ -2330,7 +2380,7 @@
 .lkdv-cv2x-world-map {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: 215px;
   min-height: 205px;
   border-radius: 18px;
   overflow: hidden;
@@ -2457,4 +2507,9 @@
 .lkdv-cv2x-world-filter-menu button.is-active {
   background: rgba(23, 64, 44, 0.12);
   color: #17402c;
+}
+
+.lkdv-cv2-static-slot {
+  padding: 6px 14px 4px;
+  flex-shrink: 0;
 }

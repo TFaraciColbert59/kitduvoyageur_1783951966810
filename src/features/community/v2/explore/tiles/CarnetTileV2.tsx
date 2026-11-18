@@ -85,11 +85,23 @@ export function CarnetTileV2({
 
   return (
     <article
-      className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile${wide ? ' lkdv-cv2-tile--wide' : ''}${week ? ' is-week' : ''}`}
+      className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile${carnet.coverImage ? ' has-cover-bg' : ''}${wide ? ' lkdv-cv2-tile--wide' : ''}${week ? ' is-week' : ''}`}
       data-testid="cv2-tile-carnet"
       data-id={carnet.id}
       {...longPress}
     >
+      {carnet.coverImage ? (
+        <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+          <AppImage
+            src={carnet.coverImage}
+            alt=""
+            fill
+            sizes="320px"
+            className="lkdv-cv2x-carnet-bg-img"
+          />
+          <span className="lkdv-cv2x-carnet-bg-scrim" />
+        </span>
+      ) : null}
       <Link
         className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link"
         href={`/carnets/${carnet.id}`}

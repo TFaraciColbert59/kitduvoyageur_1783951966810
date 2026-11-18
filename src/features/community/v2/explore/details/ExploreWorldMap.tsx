@@ -12,12 +12,20 @@ import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { ExploreTab } from '../../shared/types';
 import { useRouter } from 'next/navigation';
+import {
+  fetchCarnetsPage,
+  fetchClubsPage,
+  fetchEventsPage,
+} from '../../data/communityFeedRpc';
+import { fetchCarnetExtras, routeTraceFromMapPoints } from '../../data/communityDetails';
+import { normalizeRouteTrace, toNumber } from '../../data/communityFeedMappers';
 
 export type WorldMapCriterion = 'popular' | 'recent' | 'verified';
 
 export interface ExploreWorldMapProps {
   kind: ExploreTab;
   query?: string;
+  day?: string | null;
   initialCenter?: [number, number] | null;
 }
 
@@ -35,24 +43,18 @@ interface WorldMapFeature {
 const DEFAULT_CENTER: [number, number] = [2.6, 46.5];
 const DEFAULT_ZOOM = 5.1;
 
-function extractTraceFromMapPoints(raw: unknown): Array<[number, number]> {
-  if (!raw || typeof raw !== 'object') return [];
-  const obj = raw as { trace?: unknown };
-  if (!Array.isArray(obj.trace)) return [];
-  return obj.trace.filter(
-    (pt): pt is [number, number] =>
-      Array.isArray(pt) &&
-      pt.length >= 2 &&
-      typeof pt[0] === 'number' &&
-      typeof pt[1] === 'number' &&
-      Number.isFinite(pt[0]) &&
-      Number.isFinite(pt[1]),
-  );
+function inBounds(
+  lat: number,
+  lng: number,
+  bounds: { west: number; east: number; south: number; north: number },
+): boolean {
+  return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
 }
 
 export function ExploreWorldMap({
   kind,
   query = '',
+  day = null,
   initialCenter = null,
 }: ExploreWorldMapProps) {
   const router = useRouter();
@@ -69,88 +71,84 @@ export function ExploreWorldMap({
   const loadForBounds = useCallback(async () => {
     const map = mapRef.current;
     if (!map) return;
-    let bounds: ReturnType<MapLibreMap['getBounds']>;
+    let b: ReturnType<MapLibreMap['getBounds']>;
     try {
-      bounds = map.getBounds();
+      b = map.getBounds();
     } catch {
       return;
     }
-    const west = bounds.getWest();
-    const east = bounds.getEast();
-    const south = bounds.getSouth();
-    const north = bounds.getNorth();
-    const cleanQ = query.trim();
+    const bounds = {
+      west: b.getWest(),
+      east: b.getEast(),
+      south: b.getSouth(),
+      north: b.getNorth(),
+    };
+    const cleanQ = query.trim().toLowerCase();
 
     setLoading(true);
     try {
-      const supabase = createClient();
       const next: WorldMapFeature[] = [];
 
       if (kind === 'carnets' || kind === 'search') {
-        let q = supabase
-          .from('carnets')
-          .select('id, title, destination, start_lat, start_lng, map_points, likes_count, distance_km, verified_gps, created_at')
-          .eq('visibility', 'public')
-          .not('start_lat', 'is', null)
-          .not('start_lng', 'is', null)
-          .gte('start_lat', south)
-          .lte('start_lat', north)
-          .gte('start_lng', west)
-          .lte('start_lng', east);
-        if (criterion === 'verified') {
-          q = q.eq('verified_gps', true);
-        }
-        if (cleanQ) {
-          q = q.or(`title.ilike.%${cleanQ}%,destination.ilike.%${cleanQ}%`);
-        }
-        q = q.order(criterion === 'recent' ? 'created_at' : 'likes_count', { ascending: false }).limit(24);
-        const { data } = await q;
-        for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-          const lat = Number(row.start_lat);
-          const lng = Number(row.start_lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          const trace = extractTraceFromMapPoints(row.map_points);
-          const km = typeof row.distance_km === 'number' ? `${row.distance_km} km` : '';
+        const res = await fetchCarnetsPage({
+          filter: 'discover',
+          sort: criterion === 'recent' ? 'recent' : 'popular',
+          limit: 40,
+        });
+        const rows = Array.isArray(res.data) ? res.data : [];
+        const extras = await fetchCarnetExtras(rows.map((r) => r.id));
+        for (const row of rows) {
+          const extra = extras[row.id];
+          if (criterion === 'verified' && !extra?.verifiedGps) continue;
+          const trace = extra?.routeTrace ?? undefined;
+          let lat = toNumber(row.lat);
+          let lng = toNumber(row.lng);
+          if ((lat == null || lng == null) && trace && trace.length > 0) {
+            lng = trace[0]![0];
+            lat = trace[0]![1];
+          }
+          if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+          const title = String(row.title ?? 'Carnet');
+          const dest = row.destination ? String(row.destination) : '';
+          if (cleanQ && !title.toLowerCase().includes(cleanQ) && !dest.toLowerCase().includes(cleanQ)) {
+            continue;
+          }
+          const kmVal = toNumber(row.route_distance_km);
+          const km = kmVal != null ? `${Math.round(kmVal)} km` : '';
           next.push({
             id: `carnet:${row.id}`,
-            title: String(row.title ?? 'Carnet'),
-            subtitle: [row.destination ? String(row.destination) : '', km].filter(Boolean).join(' · ') || 'Carnet',
+            title,
+            subtitle: [dest, km].filter(Boolean).join(' · ') || 'Carnet',
             lat,
             lng,
             href: `/carnets/${row.id}`,
-            score: Number(row.likes_count ?? 0) || 0,
-            trace: trace.length >= 2 ? trace : undefined,
+            score: toNumber(row.likes_count) ?? 0,
+            trace: trace && trace.length >= 2 ? trace : undefined,
           });
         }
       }
 
       if (kind === 'clubs' || kind === 'search') {
-        let q = supabase
-          .from('clubs')
-          .select('id, name, location_label, zone_lat, zone_lng, members_count, created_at')
-          .neq('privacy', 'secret')
-          .not('zone_lat', 'is', null)
-          .not('zone_lng', 'is', null)
-          .gte('zone_lat', south)
-          .lte('zone_lat', north)
-          .gte('zone_lng', west)
-          .lte('zone_lng', east);
-        if (cleanQ) {
-          q = q.or(`name.ilike.%${cleanQ}%,location_label.ilike.%${cleanQ}%`);
-        }
-        q = q.order(criterion === 'recent' ? 'created_at' : 'members_count', { ascending: false }).limit(24);
-        const { data } = await q;
-        for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-          const lat = Number(row.zone_lat);
-          const lng = Number(row.zone_lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          const m = Number(row.members_count ?? 0) || 0;
+        const res = await fetchClubsPage({
+          filter: 'discover',
+          sort: criterion === 'recent' ? 'activity' : 'size',
+          limit: 40,
+        });
+        const rows = Array.isArray(res.data) ? res.data : [];
+        for (const row of rows) {
+          const lat = toNumber(row.lat);
+          const lng = toNumber(row.lng);
+          if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+          const title = String(row.name ?? 'Club');
+          const loc = row.location_label ? String(row.location_label) : '';
+          if (cleanQ && !title.toLowerCase().includes(cleanQ) && !loc.toLowerCase().includes(cleanQ)) {
+            continue;
+          }
+          const m = toNumber(row.members_count) ?? 0;
           next.push({
             id: `club:${row.id}`,
-            title: String(row.name ?? 'Club'),
-            subtitle: [row.location_label ? String(row.location_label) : '', `${m} membre${m > 1 ? 's' : ''}`]
-              .filter(Boolean)
-              .join(' · '),
+            title,
+            subtitle: [loc, `${m} membre${m > 1 ? 's' : ''}`].filter(Boolean).join(' · '),
             lat,
             lng,
             href: `/clubs/${row.id}`,
@@ -160,76 +158,153 @@ export function ExploreWorldMap({
       }
 
       if (kind === 'sorties' || kind === 'search') {
-        let q = supabase
-          .from('events')
-          .select('id, title, location, meeting_lat, meeting_lng, current_participants, distance_km, starts_at, created_at')
-          .not('meeting_lat', 'is', null)
-          .not('meeting_lng', 'is', null)
-          .gte('meeting_lat', south)
-          .lte('meeting_lat', north)
-          .gte('meeting_lng', west)
-          .lte('meeting_lng', east);
-        if (cleanQ) {
-          q = q.or(`title.ilike.%${cleanQ}%,location.ilike.%${cleanQ}%`);
+        const res = await fetchEventsPage({
+          filter: 'discover',
+          day: day ?? null,
+          limit: 40,
+        });
+        const rows = Array.isArray(res.data) ? res.data : [];
+        const eventIds = rows.map((r) => r.id).filter(Boolean);
+        const traceByEvent = new Map<string, Array<[number, number]>>();
+        if (eventIds.length > 0) {
+          try {
+            const supabase = createClient();
+            const { data: postRows } = await supabase
+              .from('community_posts')
+              .select('creation_meta, snapshot_payload')
+              .eq('post_type', 'sortie')
+              .order('created_at', { ascending: false })
+              .limit(60);
+            for (const pr of (postRows ?? []) as Array<Record<string, unknown>>) {
+              const meta = (pr.creation_meta ?? pr.snapshot_payload ?? {}) as Record<string, unknown>;
+              const evId = typeof meta.event_id === 'string' ? meta.event_id : null;
+              if (!evId || traceByEvent.has(evId)) continue;
+              const pts = normalizeRouteTrace(
+                meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
+              );
+              if (pts && pts.length >= 2) traceByEvent.set(evId, pts);
+            }
+          } catch {
+            /* repli sans tracé */
+          }
         }
-        q = q
-          .order(criterion === 'recent' ? 'starts_at' : 'current_participants', { ascending: false })
-          .limit(24);
-        const { data } = await q;
-        for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-          const lat = Number(row.meeting_lat);
-          const lng = Number(row.meeting_lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        for (const row of rows) {
+          const trace = traceByEvent.get(row.id);
+          let lat = toNumber(row.lat);
+          let lng = toNumber(row.lng);
+          if ((lat == null || lng == null) && trace && trace.length > 0) {
+            lng = trace[0]![0];
+            lat = trace[0]![1];
+          }
+          if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+          const title = String(row.title ?? 'Sortie');
+          const loc = row.location ? String(row.location) : '';
+          if (cleanQ && !title.toLowerCase().includes(cleanQ) && !loc.toLowerCase().includes(cleanQ)) {
+            continue;
+          }
           next.push({
             id: `sortie:${row.id}`,
-            title: String(row.title ?? 'Sortie'),
-            subtitle: String(row.location ?? 'Sortie'),
+            title,
+            subtitle: loc || 'Sortie',
             lat,
             lng,
             href: `/sorties/${row.id}`,
-            score: Number(row.current_participants ?? 0) || 0,
+            score: toNumber(row.current_participants) ?? 0,
+            trace,
           });
         }
       }
 
       if (kind === 'kits') {
-        let q = supabase
-          .from('community_posts')
-          .select('id, content, place_lat, place_lng, place_label, likes_count, linked_kit_id, creation_meta, created_at')
-          .not('linked_kit_id', 'is', null)
-          .not('place_lat', 'is', null)
-          .not('place_lng', 'is', null)
-          .gte('place_lat', south)
-          .lte('place_lat', north)
-          .gte('place_lng', west)
-          .lte('place_lng', east);
-        q = q.order(criterion === 'recent' ? 'created_at' : 'likes_count', { ascending: false }).limit(24);
-        const { data } = await q;
-        for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-          const lat = Number(row.place_lat);
-          const lng = Number(row.place_lng);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-          const meta = (row.creation_meta ?? {}) as Record<string, unknown>;
-          const kitName = typeof meta.kit_name === 'string' ? meta.kit_name : 'Kit partagé';
-          next.push({
-            id: `kit:${row.linked_kit_id ?? row.id}`,
-            title: kitName,
-            subtitle: String(row.place_label ?? 'Kit matériel'),
-            lat,
-            lng,
-            href: `/communaute?post=${row.id}`,
-            score: Number(row.likes_count ?? 0) || 0,
-          });
+        try {
+          const supabase = createClient();
+          const { data: postRows } = await supabase
+            .from('community_posts')
+            .select('id, linked_kit_id, likes_count, creation_meta, snapshot_payload, created_at')
+            .not('linked_kit_id', 'is', null)
+            .order(criterion === 'recent' ? 'created_at' : 'likes_count', { ascending: false })
+            .limit(40);
+          const carnetIds = new Set<string>();
+          const metaList: Array<{
+            postId: string;
+            kitId: string;
+            title: string;
+            likes: number;
+            lat: number | null;
+            lng: number | null;
+            carnetId: string | null;
+            trace?: Array<[number, number]>;
+          }> = [];
+          for (const row of (postRows ?? []) as Array<Record<string, unknown>>) {
+            const meta = (row.creation_meta ?? row.snapshot_payload ?? {}) as Record<string, unknown>;
+            const lat = toNumber(meta.lat as number | null);
+            const lng = toNumber(meta.lng as number | null);
+            const trace = normalizeRouteTrace(
+              meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
+            ) ?? undefined;
+            const carnetId = typeof meta.carnet_id === 'string' ? meta.carnet_id : null;
+            if (carnetId) carnetIds.add(carnetId);
+            metaList.push({
+              postId: String(row.id),
+              kitId: String(row.linked_kit_id ?? row.id),
+              title: typeof meta.kit_name === 'string' ? meta.kit_name : 'Kit partagé',
+              likes: toNumber(row.likes_count as number | null) ?? 0,
+              lat,
+              lng,
+              carnetId,
+              trace,
+            });
+          }
+          const carnetMap = new Map<string, { lat: number; lng: number; trace?: Array<[number, number]>; label: string }>();
+          if (carnetIds.size > 0) {
+            const { data: carnets } = await supabase
+              .from('carnets')
+              .select('id, title, destination, map_points')
+              .in('id', Array.from(carnetIds));
+            for (const c of (carnets ?? []) as Array<Record<string, unknown>>) {
+              const pts = normalizeRouteTrace(routeTraceFromMapPoints(c.map_points)) ?? undefined;
+              if (pts && pts.length > 0) {
+                carnetMap.set(String(c.id), {
+                  lng: pts[0]![0],
+                  lat: pts[0]![1],
+                  trace: pts.length >= 2 ? pts : undefined,
+                  label: String(c.title ?? c.destination ?? 'Carnet'),
+                });
+              }
+            }
+          }
+          for (const entry of metaList) {
+            const cInfo = entry.carnetId ? carnetMap.get(entry.carnetId) : undefined;
+            const trace = entry.trace ?? cInfo?.trace;
+            const lat = entry.lat ?? cInfo?.lat ?? (trace?.[0]?.[1] ?? null);
+            const lng = entry.lng ?? cInfo?.lng ?? (trace?.[0]?.[0] ?? null);
+            if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+            next.push({
+              id: `kit:${entry.kitId}`,
+              title: entry.title,
+              subtitle: cInfo?.label ?? 'Kit matériel',
+              lat,
+              lng,
+              href: `/communaute?post=${entry.postId}`,
+              score: entry.likes,
+              trace,
+            });
+          }
+        } catch {
+          /* ignore */
         }
       }
 
-      setItems(next);
+      if (criterion === 'popular') {
+        next.sort((a, b) => b.score - a.score);
+      }
+      setItems(next.slice(0, 30));
     } catch {
       /* garde les repères existants */
     } finally {
       setLoading(false);
     }
-  }, [criterion, kind, query]);
+  }, [criterion, day, kind, query]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -257,6 +332,7 @@ export function ExploreWorldMap({
 
     map.on('load', () => {
       try {
+        map.resize();
         map.addSource('cv2x-world-traces', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
@@ -305,7 +381,7 @@ export function ExploreWorldMap({
   useEffect(() => {
     if (!ready) return;
     void loadForBounds();
-  }, [criterion, kind, loadForBounds, query, ready]);
+  }, [criterion, day, kind, loadForBounds, query, ready]);
 
   useEffect(() => {
     const map = mapRef.current;

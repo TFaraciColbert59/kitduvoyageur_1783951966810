@@ -7,13 +7,19 @@ import { KitRectangularPreviewV2 } from '../../create/forms/KitFormV2';
 import type { KitFormValuesV2, KitItemV2 } from '../../create/engine/createSchemasV2';
 import { ExploreEmpty, ExploreError, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
-import { Check, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { normalizeRouteTrace, routeSvgPath } from '../../data/communityFeedMappers';
+import { routeTraceFromMapPoints } from '../../data/communityDetails';
+
+interface KitUsageTrace {
+  label: string;
+  points: Array<[number, number]>;
+}
 
 interface ExploreKitEntry {
   id: string;
   values: Pick<KitFormValuesV2, 'name' | 'model' | 'season' | 'seasons' | 'goal'>;
   items: KitItemV2[];
+  usage?: KitUsageTrace | null;
 }
 
 export interface KitsPaneProps {
@@ -31,8 +37,6 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [importedIds, setImportedIds] = useState<string[]>([]);
-  const [importingId, setImportingId] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const loadPage = useCallback(
@@ -87,6 +91,64 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
             itemsByKit.set(kId, list);
           }
         }
+        let usageByKit = new Map<string, KitUsageTrace>();
+        if (filter === 'mine' && kitIds.length > 0) {
+          const [{ data: eventRows }, { data: postRows }] = await Promise.all([
+            supabase
+              .from('events')
+              .select('id, title, location, kit_id')
+              .in('kit_id', kitIds)
+              .limit(40),
+            supabase
+              .from('community_posts')
+              .select('linked_kit_id, creation_meta, snapshot_payload')
+              .in('linked_kit_id', kitIds)
+              .limit(40),
+          ]);
+          for (const er of (eventRows ?? []) as Array<Record<string, unknown>>) {
+            const kId = String(er.kit_id ?? '');
+            if (!kId || usageByKit.has(kId)) continue;
+            usageByKit.set(kId, {
+              label: String(er.title ?? er.location ?? 'Sortie'),
+              points: [],
+            });
+          }
+          const carnetIds = new Set<string>();
+          const postCarnetByKit = new Map<string, string>();
+          for (const pr of (postRows ?? []) as Array<Record<string, unknown>>) {
+            const kId = String(pr.linked_kit_id ?? '');
+            const meta = (pr.creation_meta ?? pr.snapshot_payload ?? {}) as Record<string, unknown>;
+            const rawTrace = normalizeRouteTrace(
+              meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
+            );
+            if (kId && rawTrace && rawTrace.length >= 2) {
+              usageByKit.set(kId, {
+                label: typeof meta.title === 'string' && meta.title ? meta.title : 'Itinéraire',
+                points: rawTrace,
+              });
+            }
+            const cid = meta.carnet_id;
+            if (kId && typeof cid === 'string' && cid) {
+              carnetIds.add(cid);
+              postCarnetByKit.set(cid, kId);
+            }
+          }
+          if (carnetIds.size > 0) {
+            const { data: carnetRows } = await supabase
+              .from('carnets')
+              .select('id, title, destination, map_points')
+              .in('id', Array.from(carnetIds));
+            for (const cr of (carnetRows ?? []) as Array<Record<string, unknown>>) {
+              const kId = postCarnetByKit.get(String(cr.id ?? ''));
+              if (!kId) continue;
+              const pts = normalizeRouteTrace(routeTraceFromMapPoints(cr.map_points)) ?? [];
+              usageByKit.set(kId, {
+                label: String(cr.title ?? cr.destination ?? 'Carnet'),
+                points: pts,
+              });
+            }
+          }
+        }
         const entries: ExploreKitEntry[] = rows.map((r) => {
           const id = String(r.id);
           return {
@@ -99,6 +161,7 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
               goal: 'leger',
             },
             items: itemsByKit.get(id) ?? [],
+            usage: usageByKit.get(id) ?? null,
           };
         });
         setKits((prev) =>
@@ -174,48 +237,27 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
     );
   }
 
-  const handleImport = async (kitId: string) => {
-    if (!userId) {
-      toast.info('Connecte-toi pour importer un kit.');
-      return;
-    }
-    setImportingId(kitId);
-    try {
-      const res = await fetch('/api/materiel/fork', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kit_id: kitId }),
-      });
-      if (!res.ok) throw new Error('Import impossible');
-      setImportedIds((prev) => [...prev, kitId]);
-      toast.success('Kit importé dans ton matériel.');
-    } catch {
-      toast.error('Impossible d’importer ce kit.');
-    } finally {
-      setImportingId(null);
-    }
-  };
-
   return (
     <div className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
       <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Liste des kits">
         {kits.map((kit) => {
-          const isImported = importedIds.includes(kit.id);
+          const svgPath = kit.usage && kit.usage.points.length >= 2 ? routeSvgPath(kit.usage.points, 56, 20, 2) : null;
           return (
             <div key={kit.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
               <KitRectangularPreviewV2 items={kit.items} values={kit.values} />
-              <div className="lkdv-cv2x-kit-bar">
-                <button
-                  type="button"
-                  className="lkdv-feed-kit-import-pill"
-                  disabled={importingId === kit.id || isImported}
-                  onClick={() => void handleImport(kit.id)}
-                >
-                  {isImported ? <Check size={12} aria-hidden="true" /> : <Download size={12} aria-hidden="true" />}
-                  <span>{isImported ? 'Importé' : importingId === kit.id ? 'Import…' : 'Importer dans mon matériel'}</span>
-                </button>
-              </div>
+              {filter === 'mine' && kit.usage ? (
+                <div className="lkdv-cv2x-kit-bar">
+                  <span className="lkdv-cv2x-kit-trace-pill" title={kit.usage.label}>
+                    {svgPath ? (
+                      <svg width="56" height="20" viewBox="0 0 56 20" aria-hidden="true">
+                        <path d={svgPath} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : null}
+                    <span>Utilisé sur : {kit.usage.label}</span>
+                  </span>
+                </div>
+              ) : null}
             </div>
           );
         })}

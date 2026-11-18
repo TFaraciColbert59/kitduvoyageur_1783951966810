@@ -35,6 +35,7 @@ export interface EventsPaneProps {
   onPeek: (event: EventCardVM, opener: HTMLElement) => void;
   onCreateEvent: () => void;
   onRetryAgenda: () => void;
+  hideAgenda?: boolean;
 }
 
 export interface EffectiveEventState {
@@ -94,6 +95,7 @@ export function EventsPane({
   onPeek,
   onCreateEvent,
   onRetryAgenda,
+  hideAgenda = false,
 }: EventsPaneProps) {
   const scrollRef = usePaneScrollMemory<HTMLDivElement>(`cv2:explore:scroll:sorties:${filter}:${day ?? ''}`);
   const nearBottomRef = usePaneNearBottom<HTMLDivElement>(
@@ -146,7 +148,7 @@ export function EventsPane({
     };
   }, [clubFiltersOpen, clubFormat, clubLoc, clubSport, day, hasClubFilters, racesOnly]);
 
-  const agenda = (
+  const agenda = hideAgenda ? null : (
     <div className="lkdv-cv2x-agenda-block">
       {agendaLoading && Object.keys(agendaCounts).length === 0 ? (
         <div className="lkdv-cv2x-agenda-skeleton" aria-hidden="true">
@@ -168,7 +170,7 @@ export function EventsPane({
   if (filter === 'map') {
     return (
       <div className="lkdv-cv2x-pane lkdv-cv2x-pane--map">
-        <ExploreWorldMap kind="sorties" />
+        <ExploreWorldMap kind="sorties" day={day} />
       </div>
     );
   }

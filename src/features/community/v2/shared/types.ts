@@ -12,11 +12,11 @@ export type TypeKind = 'post' | 'carnet' | 'club' | 'sortie' | 'membre';
 /** Volet du tiroir Explorer (capsule 56 px). */
 export type ExploreTab = 'search' | 'carnets' | 'clubs' | 'sorties' | 'kits';
 
-export type CarnetFilter = 'discover' | 'mine' | 'followed' | 'near' | 'map';
+export type CarnetFilter = 'discover' | 'saved' | 'liked' | 'map';
 export type CarnetSort = 'recent' | 'popular' | 'near' | 'duration';
-export type ClubFilter = 'discover' | 'mine' | 'near' | 'map';
+export type ClubFilter = 'discover' | 'mine' | 'map';
 export type ClubSort = 'activity' | 'near' | 'size';
-export type EventFilter = 'discover' | 'mine' | 'near' | 'map';
+export type EventFilter = 'discover' | 'mine' | 'map';
 export type KitFilter = 'discover' | 'mine' | 'map';
 export type SearchScope = 'all' | 'posts' | 'carnets' | 'clubs' | 'sorties' | 'membres' | 'map';
 

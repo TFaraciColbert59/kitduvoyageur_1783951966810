@@ -34,28 +34,25 @@ export interface MiniFilterItem {
   icon: React.ReactNode;
 }
 
-/** Mini-capsule Carnets : Découvrir, Mes carnets, Suivis, Près de moi, Carte. */
+/** Mini-capsule Carnets : Global, Enregistrés, Likés, Carte. */
 export const CARNET_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
-  { value: 'mine', label: 'Mes carnets', icon: miniIcon('bookmark') },
-  { value: 'followed', label: 'Suivis', icon: miniIcon('heart') },
-  { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
+  { value: 'discover', label: 'Global', icon: miniIcon('globe') },
+  { value: 'saved', label: 'Enregistrés', icon: miniIcon('bookmark') },
+  { value: 'liked', label: 'Likés', icon: miniIcon('heart') },
   { value: 'map', label: 'Carte', icon: miniIcon('map') },
 ];
 
-/** Mini-capsule Clubs : Découvrir, Mes clubs, Près de moi, Carte. */
+/** Mini-capsule Clubs : Global, Nos clubs, Carte. */
 export const CLUB_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
-  { value: 'mine', label: 'Mes clubs', icon: miniIcon('users') },
-  { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
+  { value: 'discover', label: 'Global', icon: miniIcon('globe') },
+  { value: 'mine', label: 'Nos clubs', icon: miniIcon('users') },
   { value: 'map', label: 'Carte', icon: miniIcon('map') },
 ];
 
-/** Mini-capsule Sorties : Découvrir, Mes sorties, Près de moi, Carte. */
+/** Mini-capsule Sorties : Global, Nos sorties, Carte. */
 export const EVENT_FILTER_ITEMS: MiniFilterItem[] = [
-  { value: 'discover', label: 'Découvrir', icon: miniIcon('globe') },
-  { value: 'mine', label: 'Mes sorties', icon: miniIcon('ticket') },
-  { value: 'near', label: 'Près de moi', icon: miniIcon('map-pin') },
+  { value: 'discover', label: 'Global', icon: miniIcon('globe') },
+  { value: 'mine', label: 'Nos sorties', icon: miniIcon('ticket') },
   { value: 'map', label: 'Carte', icon: miniIcon('map') },
 ];
 
@@ -97,8 +94,8 @@ export function filterIndex(items: MiniFilterItem[], value: string | null): numb
   return index < 0 ? 0 : index;
 }
 
-export const CARNET_FILTERS: CarnetFilter[] = ['discover', 'mine', 'followed', 'near', 'map'];
-export const CLUB_FILTERS: ClubFilter[] = ['discover', 'mine', 'near', 'map'];
-export const EVENT_FILTERS: EventFilter[] = ['discover', 'mine', 'near', 'map'];
+export const CARNET_FILTERS: CarnetFilter[] = ['discover', 'saved', 'liked', 'map'];
+export const CLUB_FILTERS: ClubFilter[] = ['discover', 'mine', 'map'];
+export const EVENT_FILTERS: EventFilter[] = ['discover', 'mine', 'map'];
 export const KIT_FILTERS: KitFilter[] = ['discover', 'mine', 'map'];
 export const SEARCH_SCOPES: SearchScope[] = ['all', 'posts', 'carnets', 'clubs', 'sorties', 'membres', 'map'];

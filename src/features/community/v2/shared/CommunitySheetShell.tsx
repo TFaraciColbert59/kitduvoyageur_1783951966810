@@ -111,6 +111,8 @@ export interface CommunitySheetShellProps {
    * plus à l'écran).
    */
   previewSlotRef?: (element: HTMLDivElement | null) => void;
+  /** Contenu statique au-dessus du pager (ex: barre de recherche ou agenda). */
+  staticSlot?: ReactNode;
   /** Plafonne le tiroir à 40% de hauteur en mode Recherche. */
   compactSearch?: boolean;
 }
@@ -154,6 +156,7 @@ export function CommunitySheetShell({
   kind,
   guestNotice = false,
   previewSlotRef,
+  staticSlot = null,
   compactSearch = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
@@ -598,6 +601,7 @@ export function CommunitySheetShell({
 
           {/* FID-056 : emplacement fixe de l'aperçu, au-dessus du pager. */}
           {previewSlotRef && !detail ? <SheetPreviewSlot slotRef={previewSlotRef} /> : null}
+          {staticSlot && !detail ? <div className="lkdv-cv2-static-slot">{staticSlot}</div> : null}
 
           {detail ? (
             <div

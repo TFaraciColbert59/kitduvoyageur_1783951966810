@@ -41,6 +41,7 @@ export interface SearchPaneProps {
   onDeleteRecent: (query: string) => void;
   onPeek: (hit: SearchHitVM, opener: HTMLElement) => void;
   onCreateRequested?: (kind: 'sortie', prefill?: Record<string, unknown>) => void;
+  hideSearchBar?: boolean;
 }
 
 /**
@@ -71,6 +72,7 @@ export function SearchPane({
   onDeleteRecent,
   onPeek,
   onCreateRequested,
+  hideSearchBar = false,
 }: SearchPaneProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -192,37 +194,39 @@ export function SearchPane({
     <div ref={scrollRef} className={`lkdv-cv2x-pane lkdv-cv2x-search-pane${scope === 'map' ? ' lkdv-cv2x-pane--map' : ''}`}>
       {!online ? <ExploreOfflineBanner /> : null}
 
-      <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
-        <ExploreIcon name="search" size={20} />
-        <input
-          ref={inputRef}
-          type="search"
-          inputMode="search"
-          enterKeyHint="search"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          placeholder="Rechercher dans toute la communauté…"
-          aria-label="Rechercher dans toute la communauté"
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          aria-activedescendant={activeIndex >= 0 ? rowIdFor(activeIndex) : undefined}
-          data-cv2-autofocus={initialSearch ? '' : undefined}
-          data-cv2-testid="search-input"
-        />
-        {query ? (
-          <button
-            type="button"
-            className="lkdv-cv2-round lkdv-cv2x-clear"
-            onClick={clearAll}
-            aria-label="Effacer la recherche"
-            data-testid="cv2-search-clear"
-          >
-            <ExploreIcon name="close" size={16} />
-          </button>
-        ) : null}
-      </div>
+      {!hideSearchBar ? (
+        <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
+          <ExploreIcon name="search" size={20} />
+          <input
+            ref={inputRef}
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            placeholder="Rechercher dans toute la communauté…"
+            aria-label="Rechercher dans toute la communauté"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            onKeyDown={onKeyDown}
+            aria-activedescendant={activeIndex >= 0 ? rowIdFor(activeIndex) : undefined}
+            data-cv2-autofocus={initialSearch ? '' : undefined}
+            data-cv2-testid="search-input"
+          />
+          {query ? (
+            <button
+              type="button"
+              className="lkdv-cv2-round lkdv-cv2x-clear"
+              onClick={clearAll}
+              aria-label="Effacer la recherche"
+              data-testid="cv2-search-clear"
+            >
+              <ExploreIcon name="close" size={16} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <p className="lkdv-cv2-sr" role="status" aria-live="polite" aria-atomic="true">
         {liveMessage}
