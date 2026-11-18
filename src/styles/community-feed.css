@@ -2398,3 +2398,39 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+/* ── Commentaires & Partage sur 100% de la hauteur du post, scroll passant sous les boutons ── */
+.lkdv-feed-post .lkdv-post-panel-slot {
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+}
+
+.lkdv-feed-panel-surface > .lkdv-post-panel {
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+  padding-top: 0 !important;
+}
+
+.lkdv-feed-post-top,
+.lkdv-feed-post-close,
+.lkdv-share-top {
+  z-index: 25 !important;
+}
+
+.lkdv-feed-post .lkdv-post-panel-body,
+.lkdv-feed-post .lkdv-share-list,
+.lkdv-post-panel--freedom .lkdv-comments-list {
+  padding-top: 64px !important;
+  padding-bottom: 68px !important;
+}
+
+.lkdv-feed-post .lkdv-share-search,
+.lkdv-post-panel--freedom .lkdv-comments-composer {
+  position: absolute !important;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 25 !important;
+}
