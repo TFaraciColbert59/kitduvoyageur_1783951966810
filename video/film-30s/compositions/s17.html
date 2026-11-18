@@ -1,0 +1,16 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
+    #s17-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+  </style>
+  <div id="root" data-composition-id="s17" data-width="1080" data-height="1920">
+    <div id="s17-t">S17 · à animer</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.set({}, {}, 2.139);
+      window.__timelines["s17"] = tl;
+    })();
+  </script>
+</template>

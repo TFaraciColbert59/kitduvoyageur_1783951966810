@@ -1,0 +1,16 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
+    #s10-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+  </style>
+  <div id="root" data-composition-id="s10" data-width="1080" data-height="1920">
+    <div id="s10-t">S10 · à animer</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.set({}, {}, 0.846);
+      window.__timelines["s10"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,16 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#17402C; font-family:"Inter",sans-serif; }
+    #s18-t { position:absolute; left:80px; top:860px; color:#FAF8F5; font-weight:900; font-size:120px; }
+  </style>
+  <div id="root" data-composition-id="s18" data-width="1080" data-height="1920">
+    <div id="s18-t">S18 · à animer</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.set({}, {}, 2.136);
+      window.__timelines["s18"] = tl;
+    })();
+  </script>
+</template>
