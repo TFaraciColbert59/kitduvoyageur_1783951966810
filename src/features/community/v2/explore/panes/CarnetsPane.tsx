@@ -15,7 +15,7 @@ import {
   ExploreSkeleton,
 } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
-import { ExploreWorldMap } from '../details/ExploreWorldMap';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 
 export interface CarnetsPaneProps {
   feed: CursorFeedResult<CarnetCardVM>;

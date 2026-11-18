@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import ReportSheet from '@/components/social/ReportSheet';
+import dynamic from 'next/dynamic';
 import { PostAuthorPill } from './PostAuthorPill';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
@@ -19,14 +19,36 @@ import {
   isKitPost,
   isSortiePost,
 } from './FeedCreationCards';
-import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
-import { PostSharePanel } from './PostSharePanel';
 import { PostAttachments } from './PostAttachments';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
 import type { PostSource } from './postSource';
 import { SportActivityCard } from '@/components/communaute/g01/SportActivityCard';
 import type { VideoPreferences } from '@/features/community/g01/videoPlayback';
+
+// Perf : commentaires, partage et signalement ne servent qu'à l'ouverture.
+// Hors du JS initial du fil, préchargés au repos (voir `prefetchPostPanels`).
+const loadComments = () =>
+  import('@/features/community/reels/FreedomCommentsDrawer').then((m) => ({ default: m.FreedomCommentsDrawer }));
+const loadShare = () => import('./PostSharePanel').then((m) => ({ default: m.PostSharePanel }));
+const loadReport = () => import('@/components/social/ReportSheet');
+const FreedomCommentsDrawer = dynamic(loadComments, { ssr: false });
+const PostSharePanel = dynamic(loadShare, { ssr: false });
+const ReportSheet = dynamic(loadReport, { ssr: false });
+
+let panelsPrefetched = false;
+/** Précharge les panneaux au repos : la première ouverture reste instantanée. */
+export function prefetchPostPanels() {
+  if (panelsPrefetched || typeof window === 'undefined') return;
+  panelsPrefetched = true;
+  const run = () => {
+    void loadComments().catch(() => {});
+    void loadShare().catch(() => {});
+    void loadReport().catch(() => {});
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 4000 });
+  else window.setTimeout(run, 2500);
+}
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
@@ -108,6 +130,11 @@ export function CommunityFeedPost({
     ? { likes: source.likes, comments: source.comments, shares: source.shares ?? 0 }
     : localCounts;
   const [reportOpen, setReportOpen] = useState(false);
+  // Monté à la première ouverture puis conservé (animation de fermeture intacte).
+  const [reportMounted, setReportMounted] = useState(false);
+  useEffect(() => {
+    if (reportOpen) setReportMounted(true);
+  }, [reportOpen]);
   const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
   const panelScrollRef = useRef(0);
   const panelTriggerRef = useRef<HTMLElement | null>(null);
@@ -631,7 +658,7 @@ export function CommunityFeedPost({
         </div>
       ) : null}
 
-      <ReportSheet
+      {reportOpen || reportMounted ? <ReportSheet
         isOpen={reportOpen}
         onClose={() => setReportOpen(false)}
         contentId={post.id}
@@ -645,7 +672,7 @@ export function CommunityFeedPost({
             toast('Le signalement n’a pas pu être envoyé.', 'error');
           }
         }}
-      />
+      /> : null}
 
       {panel === 'comments' ? (
         <PostGlassPanel side="comments" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
@@ -711,5 +738,8 @@ export function CommunityFeedPost({
     articleEl
   );
 }
+
+/** Mémoïsé : l'ajout d'une page au fil ne re-rend plus les cartes déjà affichées. */
+export const MemoCommunityFeedPost = memo(CommunityFeedPost);
 
 export default CommunityFeedPost;

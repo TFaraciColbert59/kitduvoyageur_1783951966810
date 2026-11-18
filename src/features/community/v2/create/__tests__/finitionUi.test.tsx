@@ -75,8 +75,11 @@ describe('Carnet#20 — onglets de jours complets', () => {
     seedDraft('carnet', { title: 'Tour', destination: 'Écrins', startDate: '2026-12-01', endDate: '2026-12-03', nbJours: 3 }, 2);
     renderKind('carnet');
     const tablist = await screen.findByRole('tablist', { name: 'Jours du carnet' });
-    const tabs = Array.from(tablist.querySelectorAll<HTMLElement>('[role="tab"]'));
-    expect(tabs.length).toBe(3);
+    let tabs: HTMLElement[] = [];
+    await waitFor(() => {
+      tabs = Array.from(tablist.querySelectorAll<HTMLElement>('[role="tab"]'));
+      expect(tabs.length).toBe(3);
+    });
     expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1]);
     const panel = screen.getByTestId('cv2c-day-panel');
     expect(panel.getAttribute('role')).toBe('tabpanel');

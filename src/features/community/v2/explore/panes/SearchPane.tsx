@@ -16,7 +16,7 @@ import { ExploreError, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreS
 import { ExploreIcon } from '../ExploreIcons';
 import { SearchHome } from '../search/SearchHome';
 import { SearchResults, visibleSearchHits, scopeToKind } from '../search/SearchResults';
-import { ExploreWorldMap } from '../details/ExploreWorldMap';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 import { suggestAlternatives, withSuggestedTerm } from '../search/suggest';
 
 export interface SearchPaneProps {

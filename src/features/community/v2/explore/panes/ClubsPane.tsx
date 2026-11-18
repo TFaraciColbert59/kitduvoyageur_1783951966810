@@ -8,7 +8,7 @@ import { formatCountFr } from '../../shared/format';
 import { ClubTileV2 } from '../tiles/ClubTileV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
-import { ExploreWorldMap } from '../details/ExploreWorldMap';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 
 export const CLUB_ACTIVITY_CHIPS: Array<{ value: string | null; label: string }> = [
   { value: null, label: 'Tous' },

@@ -8371,3 +8371,19 @@
   background: #17402c;
   color: #ffffff;
 }
+
+/* Perf : réserve de place pendant le (rare) chargement d'un formulaire non
+   encore préchargé — aucun saut de mise en page. */
+.lkdv-cv2c-form-loading {
+  min-height: 220px;
+  border-radius: 22px;
+  background: linear-gradient(90deg, rgba(255,255,255,.5), rgba(255,255,255,.8), rgba(255,255,255,.5));
+  background-size: 200% 100%;
+  animation: lkdv-cv2c-form-shimmer 1.1s linear infinite;
+}
+@keyframes lkdv-cv2c-form-shimmer {
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-cv2c-form-loading { animation: none; }
+}

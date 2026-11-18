@@ -20,7 +20,12 @@ import {
 } from '../../shared/format';
 import { useEventDetail } from '../../data/useEventDetail';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { PlaceMiniMap } from '../../shared/PlaceMiniMap';
+import dynamic from 'next/dynamic';
+// Perf : MapLibre seulement à l'ouverture d'un détail de sortie.
+const PlaceMiniMap = dynamic(
+  () => import('../../shared/PlaceMiniMap').then((m) => ({ default: m.PlaceMiniMap })),
+  { ssr: false },
+);
 import { ExploreIcon } from '../ExploreIcons';
 import { ExploreError, ExploreSkeleton } from '../ExploreStates';
 import { EventActionButton } from '../tiles/EventTicketV2';

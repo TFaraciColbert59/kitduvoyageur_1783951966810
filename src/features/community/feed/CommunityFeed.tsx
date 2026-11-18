@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCommunityFeed, type FeedPost } from './useCommunityFeed';
-import { CommunityFeedPost } from './CommunityFeedPost';
+import { MemoCommunityFeedPost as CommunityFeedPost, prefetchPostPanels } from './CommunityFeedPost';
+import { useAuth } from '@/contexts/AuthContext';
 import type { CommunityAuthReason } from './usePostInteractions';
 import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
 import { applyFeedPreferences } from '@/features/community/g01/feedPreferences';
@@ -36,7 +37,14 @@ export function CommunityFeed({
   preferencesOpen = false,
   onPreferencesOpenChange,
 }: CommunityFeedProps) {
-  const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(userId);
+  const { loading: authLoading } = useAuth();
+  const { posts, loading, loadingMore, hasMore, error, loadMore, refresh } = useCommunityFeed(
+    userId,
+    !authLoading,
+  );
+  useEffect(() => {
+    if (posts.length > 0) prefetchPostPanels();
+  }, [posts.length]);
   const { preferences, update: updateFeedPreferences, reset: resetFeedPreferences } =
     useFeedPreferences(userId);
   const deepLinkDone = useRef(false);

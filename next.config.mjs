@@ -10,7 +10,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ['192.168.1.34', 'localhost', '127.0.0.1'],
   turbopack: {
     root: '/Users/fr168256/Documents/Codex/2026-11-11/files-pasted-by-the-user-lkdv/work',
   },
@@ -61,6 +60,8 @@ const nextConfig = {
   ],
 
   allowedDevOrigins: [
+    '192.168.1.34',
+    '192.168.1.34:4028',
     '192.168.1.61:4000',
     '192.168.1.61',
     '192.168.1.81:4028',

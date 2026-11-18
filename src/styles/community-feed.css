@@ -63,7 +63,13 @@
   container-type: inline-size;
 }
 
-/* --- Post image ----------------------------------------------------------- */
+/* Perf : les cartes hors écran ne sont ni mises en page ni peintes (le flou
+   « glass » des capsules coûte cher sur iPhone). Désactivé dès qu'un panneau
+   plein cadre est ouvert pour ne jamais rogner un calque fixe. */
+.lkdv-feed-list > :is(.lkdv-feed-post, .lkdv-feed-post-stack):not(:has(.lkdv-feed-panel-surface, [role='dialog'], [data-state='open'])) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
+}
 
 .lkdv-feed-post {
   position: relative;

@@ -6,7 +6,7 @@ import type { KitFilter } from '../../shared/types';
 import { KitRectangularPreviewV2 } from '../../create/forms/KitFormV2';
 import type { KitFormValuesV2, KitItemV2 } from '../../create/engine/createSchemasV2';
 import { ExploreEmpty, ExploreError, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
-import { ExploreWorldMap } from '../details/ExploreWorldMap';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 import { Check, Download } from 'lucide-react';
 import { toast } from 'sonner';
 

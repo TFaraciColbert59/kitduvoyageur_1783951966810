@@ -11,7 +11,7 @@ import { EventTicketV2 } from '../tiles/EventTicketV2';
 import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
 import type { EventView } from '../useExploreState';
-import { ExploreWorldMap } from '../details/ExploreWorldMap';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 
 export interface EventsPaneProps {
   feed: CursorFeedResult<EventCardVM>;

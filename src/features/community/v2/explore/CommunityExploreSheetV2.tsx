@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import type { User } from '@supabase/supabase-js';
 import { CommunitySheetShell, type SheetDetail } from '../shared/CommunitySheetShell';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
@@ -56,7 +57,10 @@ import { activityLabel } from '../data/communityFeedMappers';
 import { CarnetsPane } from './panes/CarnetsPane';
 import { ClubsPane, effectiveClubMembers, effectiveClubStatus } from './panes/ClubsPane';
 import { EventsPane, effectiveEventState } from './panes/EventsPane';
-import { KitsPane } from './panes/KitsPane';
+// Perf : le volet Kits embarque l'aperçu du formulaire Kit ; chargé à la demande.
+const KitsPane = dynamic(() => import('./panes/KitsPane').then((m) => ({ default: m.KitsPane })), {
+  ssr: false,
+});
 import { SearchPane } from './panes/SearchPane';
 import { ClubDetailView } from './details/ClubDetailView';
 import { EventDetailView } from './details/EventDetailView';

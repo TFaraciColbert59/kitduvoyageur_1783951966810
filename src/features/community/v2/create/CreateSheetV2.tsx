@@ -17,12 +17,7 @@ import { createKindConfig, stepAriaLabel } from './engine/steps';
 import type { CreateNavV2 } from './engine/nav';
 import { flushDraftV2, hasDraftContentV2 } from './engine/useDraftV2';
 import { ConfirmDialogV2 } from './ConfirmDialogV2';
-import { PostFormV2 } from './forms/PostFormV2';
-import { StoryFormV2 } from './forms/StoryFormV2';
-import { SortieFormV2 } from './forms/SortieFormV2';
-import { ClubFormV2 } from './forms/ClubFormV2';
-import { KitFormV2 } from './forms/KitFormV2';
-import { CarnetFormV2 } from './forms/CarnetFormV2';
+import dynamic from 'next/dynamic';
 import {
   CreateSheetContext,
   type CreateDetailRequest,
@@ -30,6 +25,37 @@ import {
   type CreateSuccessV2,
 } from './CreateSheetContext';
 import './create-v2.css';
+
+// Perf : chaque formulaire (carte MapLibre, éditeur photo, kit…) est un chunk
+// séparé. Seul le type actif est chargé à l'ouverture ; les autres sont
+// préchargés au repos pour que le changement de type reste instantané.
+const FORM_LOADERS = {
+  post: () => import('./forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
+  story: () => import('./forms/StoryFormV2').then((m) => ({ default: m.StoryFormV2 })),
+  sortie: () => import('./forms/SortieFormV2').then((m) => ({ default: m.SortieFormV2 })),
+  club: () => import('./forms/ClubFormV2').then((m) => ({ default: m.ClubFormV2 })),
+  kit: () => import('./forms/KitFormV2').then((m) => ({ default: m.KitFormV2 })),
+  carnet: () => import('./forms/CarnetFormV2').then((m) => ({ default: m.CarnetFormV2 })),
+} as const;
+const formLoading = () => <div className="lkdv-cv2c-form-loading" aria-busy="true" />;
+const PostFormV2 = dynamic(FORM_LOADERS.post, { ssr: false, loading: formLoading });
+const StoryFormV2 = dynamic(FORM_LOADERS.story, { ssr: false, loading: formLoading });
+const SortieFormV2 = dynamic(FORM_LOADERS.sortie, { ssr: false, loading: formLoading });
+const ClubFormV2 = dynamic(FORM_LOADERS.club, { ssr: false, loading: formLoading });
+const KitFormV2 = dynamic(FORM_LOADERS.kit, { ssr: false, loading: formLoading });
+const CarnetFormV2 = dynamic(FORM_LOADERS.carnet, { ssr: false, loading: formLoading });
+
+let formsPrefetched = false;
+function prefetchAllForms(first?: CreateKindV2) {
+  if (first) void FORM_LOADERS[first]().catch(() => {});
+  if (formsPrefetched || typeof window === 'undefined') return;
+  formsPrefetched = true;
+  const run = () => {
+    for (const load of Object.values(FORM_LOADERS)) void load().catch(() => {});
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 2500 });
+  else window.setTimeout(run, 800);
+}
 
 /**
  * Tiroir Création V2 — coque `/compte` (`CommunitySheetShell`) + moteur unique
@@ -125,6 +151,11 @@ export function CreateSheetV2({
   const activeKind = CREATE_KINDS_V2[kindIndex] ?? 'post';
   const activeNav = navs.get(activeKind) ?? null;
   const config = createKindConfig(activeKind);
+
+  // Perf : le formulaire demandé part tout de suite, les autres au repos.
+  useEffect(() => {
+    prefetchAllForms(initialKind);
+  }, [initialKind]);
 
   // Ouverture : type demandé, préremplissage, remise à zéro des couches.
   useEffect(() => {
