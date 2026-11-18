@@ -530,6 +530,13 @@ export function CommunitySheetShell({
       data-state={state}
       data-cv2-kind={kind}
       data-testid={kind ? `communaute-v2-${kind}` : 'communaute-v2-sheet'}
+      onClick={(e) => {
+        const target = e.target as Node | null;
+        if (!target || !sheetRef.current) return;
+        if (sheetRef.current.contains(target)) return;
+        if (target instanceof Element && target.closest('.lkdv-cv2-island-layer, .lkdv-cv2-peek')) return;
+        onClose();
+      }}
     >
       <div
         className="lkdv-cv2-wrap"

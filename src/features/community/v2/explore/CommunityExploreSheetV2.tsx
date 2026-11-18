@@ -1154,54 +1154,70 @@ export function CommunityExploreSheetV2({
     };
   })();
 
-  const staticSlot =
-    explore.tab === 'search' ? (
-      <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
-        <ExploreIcon name="search" size={20} />
-        <input
-          type="search"
-          inputMode="search"
-          enterKeyHint="search"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          placeholder="Rechercher dans toute la communauté…"
-          aria-label="Rechercher dans toute la communauté"
-          value={explore.searchQuery}
-          onChange={(event) => explore.setSearchQuery(event.target.value)}
-          data-cv2-autofocus={initialSearch ? '' : undefined}
-          data-cv2-testid="search-input"
-        />
-        {explore.searchQuery ? (
-          <button
-            type="button"
-            className="lkdv-cv2-round lkdv-cv2x-clear"
-            onClick={() => explore.setSearchQuery('')}
-            aria-label="Effacer la recherche"
-            data-testid="cv2-search-clear"
-          >
-            <ExploreIcon name="close" size={16} />
-          </button>
-        ) : null}
-      </div>
-    ) : explore.tab === 'sorties' ? (
-      <div className="lkdv-cv2x-agenda-block">
-        {agenda.loading && Object.keys(agenda.counts).length === 0 ? (
-          <div className="lkdv-cv2x-agenda-skeleton" aria-hidden="true">
-            {Array.from({ length: 7 }, (_, index) => (
-              <span key={index} />
-            ))}
-          </div>
-        ) : (
-          <AgendaStrip counts={agenda.counts} value={explore.eventDay} onChange={explore.setEventDay} />
-        )}
-        {agenda.error ? (
-          <button type="button" className="lkdv-cv2x-agenda-retry" onClick={agenda.retry}>
-            Agenda indisponible · Réessayer
-          </button>
-        ) : null}
-      </div>
-    ) : null;
+  const isMapSubtab =
+    (explore.tab === 'search' && activeScope === 'map') ||
+    (explore.tab === 'carnets' && activeCarnetFilter === 'map') ||
+    (explore.tab === 'clubs' && activeClubFilter === 'map') ||
+    (explore.tab === 'sorties' && activeEventFilter === 'map') ||
+    (explore.tab === 'kits' && activeKitFilter === 'map');
+
+  const staticSlot = (
+    <>
+      {!isMapSubtab ? (
+        <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
+          <ExploreIcon name="search" size={20} />
+          <input
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            placeholder="Rechercher dans toute la communauté…"
+            aria-label="Rechercher dans toute la communauté"
+            value={explore.searchQuery}
+            onChange={(event) => {
+              explore.setSearchQuery(event.target.value);
+              if (explore.tab !== 'search' && event.target.value.trim().length > 0) {
+                explore.setTab('search');
+              }
+            }}
+            data-cv2-autofocus={initialSearch ? '' : undefined}
+            data-cv2-testid="search-input"
+          />
+          {explore.searchQuery ? (
+            <button
+              type="button"
+              className="lkdv-cv2-round lkdv-cv2x-clear"
+              onClick={() => explore.setSearchQuery('')}
+              aria-label="Effacer la recherche"
+              data-testid="cv2-search-clear"
+            >
+              <ExploreIcon name="close" size={16} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {explore.tab === 'sorties' ? (
+        <div className="lkdv-cv2x-agenda-block">
+          {agenda.loading && Object.keys(agenda.counts).length === 0 ? (
+            <div className="lkdv-cv2x-agenda-skeleton" aria-hidden="true">
+              {Array.from({ length: 7 }, (_, index) => (
+                <span key={index} />
+              ))}
+            </div>
+          ) : (
+            <AgendaStrip counts={agenda.counts} value={explore.eventDay} onChange={explore.setEventDay} />
+          )}
+          {agenda.error ? (
+            <button type="button" className="lkdv-cv2x-agenda-retry" onClick={agenda.retry}>
+              Agenda indisponible · Réessayer
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
 
   return (
     <CommunitySheetShell

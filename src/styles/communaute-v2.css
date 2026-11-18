@@ -811,16 +811,16 @@ button.lkdv-cv2-tile:active {
 .lkdv-cv2-agenda-day {
   position: relative;
   flex: none;
-  width: 44px;
-  min-height: 56px;
+  width: 36px;
+  min-height: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 4px 0;
+  gap: 0;
+  padding: 2px 0;
   border: 0;
-  border-radius: var(--cv2-radius-tile-sm);
+  border-radius: 10px;
   background: var(--cv2-tile-bg);
   box-shadow: var(--cv2-tile-shadow);
   color: var(--lkv-text-primary);
@@ -834,7 +834,7 @@ button.lkdv-cv2-tile:active {
 }
 
 .lkdv-cv2-agenda-day i {
-  font: 600 10.5px/normal var(--font-sans);
+  font: 600 9px/1.1 var(--font-sans);
   font-style: normal;
   letter-spacing: 0.02em;
   color: var(--lkv-text-secondary);
@@ -842,7 +842,7 @@ button.lkdv-cv2-tile:active {
 }
 
 .lkdv-cv2-agenda-day b {
-  font: 700 15px/normal var(--font-mono);
+  font: 700 12px/1.1 var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 

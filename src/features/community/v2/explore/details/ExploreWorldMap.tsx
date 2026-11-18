@@ -20,20 +20,6 @@ import {
 import { fetchCarnetExtras, routeTraceFromMapPoints } from '../../data/communityDetails';
 import { toNumber } from '../../data/communityFeedMappers';
 
-function extractLngLatTrace(raw: unknown): Array<[number, number]> | undefined {
-  if (!Array.isArray(raw)) return undefined;
-  const pts: Array<[number, number]> = [];
-  for (const entry of raw) {
-    if (!Array.isArray(entry) || entry.length < 2) continue;
-    const lng = toNumber(entry[0] as number | string | null);
-    const lat = toNumber(entry[1] as number | string | null);
-    if (lng == null || lat == null) continue;
-    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
-    pts.push([lng, lat]);
-  }
-  return pts.length >= 2 ? pts : undefined;
-}
-
 export type WorldMapCriterion = 'popular' | 'recent' | 'verified';
 
 export interface ExploreWorldMapProps {
@@ -45,8 +31,10 @@ export interface ExploreWorldMapProps {
 
 interface WorldMapFeature {
   id: string;
+  itemKind: 'carnet' | 'club' | 'sortie' | 'kit';
   title: string;
   subtitle: string;
+  coverImage?: string | null;
   lat: number;
   lng: number;
   href: string;
@@ -57,12 +45,107 @@ interface WorldMapFeature {
 const DEFAULT_CENTER: [number, number] = [2.6, 46.5];
 const DEFAULT_ZOOM = 5.1;
 
+function parsePoint(entry: unknown): [number, number] | null {
+  if (Array.isArray(entry) && entry.length >= 2) {
+    const lng = toNumber(entry[0] as number | string | null);
+    const lat = toNumber(entry[1] as number | string | null);
+    if (lng != null && lat != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      return [lng, lat];
+    }
+    return null;
+  }
+  if (entry && typeof entry === 'object') {
+    const obj = entry as Record<string, unknown>;
+    const lat = toNumber((obj.lat ?? obj.latitude) as number | string | null);
+    const lng = toNumber((obj.lng ?? obj.lon ?? obj.longitude) as number | string | null);
+    if (lat != null && lng != null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      return [lng, lat];
+    }
+  }
+  return null;
+}
+
+function extractLngLatTrace(raw: unknown): Array<[number, number]> | undefined {
+  if (!raw) return undefined;
+  let arr: unknown = raw;
+  if (!Array.isArray(arr) && typeof arr === 'object') {
+    const obj = arr as Record<string, unknown>;
+    if (obj.type === 'Feature' && obj.geometry && typeof obj.geometry === 'object') {
+      arr = (obj.geometry as Record<string, unknown>).coordinates;
+    } else if (obj.type === 'LineString' && Array.isArray(obj.coordinates)) {
+      arr = obj.coordinates;
+    } else if (Array.isArray(obj.trace)) {
+      arr = obj.trace;
+    } else if (Array.isArray(obj.points)) {
+      arr = obj.points;
+    } else if (Array.isArray(obj.coordinates)) {
+      arr = obj.coordinates;
+    } else if (Array.isArray(obj.days)) {
+      const merged: unknown[] = [];
+      for (const day of obj.days as Array<Record<string, unknown>>) {
+        if (!day || typeof day !== 'object') continue;
+        const dPts = day.trace ?? day.points ?? day.coordinates;
+        if (Array.isArray(dPts)) merged.push(...dPts);
+      }
+      arr = merged;
+    }
+  }
+  if (!Array.isArray(arr)) return undefined;
+  const pts: Array<[number, number]> = [];
+  for (const entry of arr) {
+    const pt = parsePoint(entry);
+    if (pt) pts.push(pt);
+  }
+  return pts.length >= 2 ? pts : undefined;
+}
+
 function inBounds(
   lat: number,
   lng: number,
   bounds: { west: number; east: number; south: number; north: number },
+  trace?: Array<[number, number]>,
 ): boolean {
-  return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+  if (lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east) {
+    return true;
+  }
+  if (trace && trace.length > 0) {
+    return trace.some(([tLng, tLat]) => tLat >= bounds.south && tLat <= bounds.north && tLng >= bounds.west && tLng <= bounds.east);
+  }
+  return false;
+}
+
+function ensureTraceLayers(map: MapLibreMap) {
+  if (!map.getSource('cv2x-world-traces')) {
+    map.addSource('cv2x-world-traces', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+  }
+  if (!map.getLayer('cv2x-world-traces-casing')) {
+    map.addLayer({
+      id: 'cv2x-world-traces-casing',
+      type: 'line',
+      source: 'cv2x-world-traces',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.9 },
+    });
+  }
+  if (!map.getLayer('cv2x-world-traces-line')) {
+    map.addLayer({
+      id: 'cv2x-world-traces-line',
+      type: 'line',
+      source: 'cv2x-world-traces',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#17402c', 'line-width': 3.5, 'line-opacity': 0.98 },
+    });
+  }
+}
+
+function ctaLabelFor(itemKind: WorldMapFeature['itemKind']): string {
+  if (itemKind === 'carnet') return 'Voir ce carnet';
+  if (itemKind === 'club') return 'Voir ce club';
+  if (itemKind === 'sortie') return 'Voir cette sortie';
+  return 'Voir ce kit';
 }
 
 export function ExploreWorldMap({
@@ -111,17 +194,29 @@ export function ExploreWorldMap({
         });
         const rows = Array.isArray(res.data) ? res.data : [];
         const ids = rows.map((r) => r.id).filter(Boolean);
-        const [extras, rawMapPointsRes] = await Promise.all([
+        const supabase = createClient();
+        const [extras, rawMapPointsRes, sessionsRes] = await Promise.all([
           fetchCarnetExtras(ids),
           ids.length > 0
-            ? createClient().from('carnets').select('id, map_points').in('id', ids)
+            ? supabase.from('carnets').select('id, map_points').in('id', ids)
+            : Promise.resolve({ data: [] }),
+          ids.length > 0
+            ? supabase.from('hike_sessions').select('carnet_id, route_geojson, track_points').in('carnet_id', ids)
             : Promise.resolve({ data: [] }),
         ]);
         const rawTraceById = new Map<string, Array<[number, number]>>();
         for (const r of (rawMapPointsRes.data ?? []) as Array<{ id?: string; map_points?: unknown }>) {
           if (!r?.id) continue;
-          const pts = extractLngLatTrace(routeTraceFromMapPoints(r.map_points));
+          const pts =
+            extractLngLatTrace(routeTraceFromMapPoints(r.map_points)) ??
+            extractLngLatTrace(r.map_points);
           if (pts) rawTraceById.set(String(r.id), pts);
+        }
+        for (const s of (sessionsRes.data ?? []) as Array<Record<string, unknown>>) {
+          const cid = s.carnet_id ? String(s.carnet_id) : '';
+          if (!cid || rawTraceById.has(cid)) continue;
+          const pts = extractLngLatTrace(s.route_geojson) ?? extractLngLatTrace(s.track_points);
+          if (pts) rawTraceById.set(cid, pts);
         }
         for (const row of rows) {
           const extra = extras[row.id];
@@ -133,7 +228,7 @@ export function ExploreWorldMap({
             lng = trace[0]![0];
             lat = trace[0]![1];
           }
-          if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+          if (lat == null || lng == null || !inBounds(lat, lng, bounds, trace)) continue;
           const title = String(row.title ?? 'Carnet');
           const dest = row.destination ? String(row.destination) : '';
           if (cleanQ && !title.toLowerCase().includes(cleanQ) && !dest.toLowerCase().includes(cleanQ)) {
@@ -143,13 +238,15 @@ export function ExploreWorldMap({
           const km = kmVal != null ? `${Math.round(kmVal)} km` : '';
           next.push({
             id: `carnet:${row.id}`,
+            itemKind: 'carnet',
             title,
             subtitle: [dest, km].filter(Boolean).join(' · ') || 'Carnet',
+            coverImage: row.cover_image ?? null,
             lat,
             lng,
             href: `/carnets/${row.id}`,
             score: toNumber(row.likes_count) ?? 0,
-            trace: trace && trace.length >= 2 ? trace : undefined,
+            trace,
           });
         }
       }
@@ -173,8 +270,10 @@ export function ExploreWorldMap({
           const m = toNumber(row.members_count) ?? 0;
           next.push({
             id: `club:${row.id}`,
+            itemKind: 'club',
             title,
             subtitle: [loc, `${m} membre${m > 1 ? 's' : ''}`].filter(Boolean).join(' · '),
+            coverImage: row.cover_image ?? null,
             lat,
             lng,
             href: `/clubs/${row.id}`,
@@ -197,17 +296,15 @@ export function ExploreWorldMap({
             const supabase = createClient();
             const { data: postRows } = await supabase
               .from('community_posts')
-              .select('creation_meta, snapshot_payload')
-              .eq('post_type', 'sortie')
+              .select('post_type, creation_meta, snapshot_payload')
+              .in('post_type', ['sortie', 'event'])
               .order('created_at', { ascending: false })
-              .limit(60);
+              .limit(80);
             for (const pr of (postRows ?? []) as Array<Record<string, unknown>>) {
               const meta = (pr.creation_meta ?? pr.snapshot_payload ?? {}) as Record<string, unknown>;
               const evId = typeof meta.event_id === 'string' ? meta.event_id : null;
               if (!evId || traceByEvent.has(evId)) continue;
-              const pts = extractLngLatTrace(
-                meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
-              );
+              const pts = extractLngLatTrace(meta.trace ?? meta.route ?? meta.map_points ?? meta.geojson);
               if (pts) traceByEvent.set(evId, pts);
             }
           } catch {
@@ -222,7 +319,7 @@ export function ExploreWorldMap({
             lng = trace[0]![0];
             lat = trace[0]![1];
           }
-          if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+          if (lat == null || lng == null || !inBounds(lat, lng, bounds, trace)) continue;
           const title = String(row.title ?? 'Sortie');
           const loc = row.location ? String(row.location) : '';
           if (cleanQ && !title.toLowerCase().includes(cleanQ) && !loc.toLowerCase().includes(cleanQ)) {
@@ -230,8 +327,10 @@ export function ExploreWorldMap({
           }
           next.push({
             id: `sortie:${row.id}`,
+            itemKind: 'sortie',
             title,
             subtitle: loc || 'Sortie',
+            coverImage: row.cover_image ?? null,
             lat,
             lng,
             href: `/sorties/${row.id}`,
@@ -246,7 +345,7 @@ export function ExploreWorldMap({
           const supabase = createClient();
           const { data: postRows } = await supabase
             .from('community_posts')
-            .select('id, linked_kit_id, likes_count, creation_meta, snapshot_payload, created_at')
+            .select('id, linked_kit_id, likes_count, image_url, creation_meta, snapshot_payload, created_at')
             .not('linked_kit_id', 'is', null)
             .order(criterion === 'recent' ? 'created_at' : 'likes_count', { ascending: false })
             .limit(40);
@@ -255,6 +354,7 @@ export function ExploreWorldMap({
             postId: string;
             kitId: string;
             title: string;
+            coverImage: string | null;
             likes: number;
             lat: number | null;
             lng: number | null;
@@ -265,15 +365,14 @@ export function ExploreWorldMap({
             const meta = (row.creation_meta ?? row.snapshot_payload ?? {}) as Record<string, unknown>;
             const lat = toNumber(meta.lat as number | null);
             const lng = toNumber(meta.lng as number | null);
-            const trace = extractLngLatTrace(
-              meta.trace ?? (meta.map_points as { trace?: unknown } | undefined)?.trace,
-            );
+            const trace = extractLngLatTrace(meta.trace ?? meta.map_points);
             const carnetId = typeof meta.carnet_id === 'string' ? meta.carnet_id : null;
             if (carnetId) carnetIds.add(carnetId);
             metaList.push({
               postId: String(row.id),
               kitId: String(row.linked_kit_id ?? row.id),
               title: typeof meta.kit_name === 'string' ? meta.kit_name : 'Kit partagé',
+              coverImage: typeof row.image_url === 'string' ? row.image_url : null,
               likes: toNumber(row.likes_count as number | null) ?? 0,
               lat,
               lng,
@@ -281,19 +380,22 @@ export function ExploreWorldMap({
               trace,
             });
           }
-          const carnetMap = new Map<string, { lat: number; lng: number; trace?: Array<[number, number]>; label: string }>();
+          const carnetMap = new Map<string, { lat: number; lng: number; coverImage: string | null; trace?: Array<[number, number]>; label: string }>();
           if (carnetIds.size > 0) {
             const { data: carnets } = await supabase
               .from('carnets')
-              .select('id, title, destination, map_points')
+              .select('id, title, destination, cover_image, map_points')
               .in('id', Array.from(carnetIds));
             for (const c of (carnets ?? []) as Array<Record<string, unknown>>) {
-              const pts = extractLngLatTrace(routeTraceFromMapPoints(c.map_points));
+              const pts =
+                extractLngLatTrace(routeTraceFromMapPoints(c.map_points)) ??
+                extractLngLatTrace(c.map_points);
               if (pts && pts.length > 0) {
                 carnetMap.set(String(c.id), {
                   lng: pts[0]![0],
                   lat: pts[0]![1],
-                  trace: pts.length >= 2 ? pts : undefined,
+                  coverImage: typeof c.cover_image === 'string' ? c.cover_image : null,
+                  trace: pts,
                   label: String(c.title ?? c.destination ?? 'Carnet'),
                 });
               }
@@ -304,11 +406,13 @@ export function ExploreWorldMap({
             const trace = entry.trace ?? cInfo?.trace;
             const lat = entry.lat ?? cInfo?.lat ?? (trace?.[0]?.[1] ?? null);
             const lng = entry.lng ?? cInfo?.lng ?? (trace?.[0]?.[0] ?? null);
-            if (lat == null || lng == null || !inBounds(lat, lng, bounds)) continue;
+            if (lat == null || lng == null || !inBounds(lat, lng, bounds, trace)) continue;
             next.push({
               id: `kit:${entry.kitId}`,
+              itemKind: 'kit',
               title: entry.title,
               subtitle: cInfo?.label ?? 'Kit matériel',
+              coverImage: entry.coverImage ?? cInfo?.coverImage ?? null,
               lat,
               lng,
               href: `/communaute?post=${entry.postId}`,
@@ -359,24 +463,7 @@ export function ExploreWorldMap({
     map.on('load', () => {
       try {
         map.resize();
-        map.addSource('cv2x-world-traces', {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-        });
-        map.addLayer({
-          id: 'cv2x-world-traces-casing',
-          type: 'line',
-          source: 'cv2x-world-traces',
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': '#ffffff', 'line-width': 6, 'line-opacity': 0.85 },
-        });
-        map.addLayer({
-          id: 'cv2x-world-traces-line',
-          type: 'line',
-          source: 'cv2x-world-traces',
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: { 'line-color': '#17402c', 'line-width': 3.5, 'line-opacity': 0.95 },
-        });
+        ensureTraceLayers(map);
       } catch {
         /* ignore */
       }
@@ -427,6 +514,7 @@ export function ExploreWorldMap({
       }));
 
     try {
+      ensureTraceLayers(map);
       (map.getSource('cv2x-world-traces') as GeoJSONSource | undefined)?.setData({
         type: 'FeatureCollection',
         features: traceFeatures,
@@ -440,6 +528,15 @@ export function ExploreWorldMap({
       el.type = 'button';
       el.className = 'lkdv-cv2x-world-pin';
       el.setAttribute('aria-label', `${item.title} · ${item.subtitle}`);
+      if (item.coverImage) {
+        const img = document.createElement('img');
+        img.src = item.coverImage;
+        img.alt = '';
+        img.loading = 'lazy';
+        el.appendChild(img);
+      } else {
+        el.textContent = item.title.slice(0, 1).toUpperCase() || '•';
+      }
       el.onclick = (e) => {
         e.stopPropagation();
         setSelected(item);
@@ -471,11 +568,10 @@ export function ExploreWorldMap({
       {selected ? (
         <button
           type="button"
-          className="lkdv-cv2x-world-card"
+          className="lkdv-cv2x-world-cta"
           onClick={() => router.push(selected.href)}
         >
-          <b>{selected.title}</b>
-          <small>{selected.subtitle}</small>
+          {ctaLabelFor(selected.itemKind)}
         </button>
       ) : null}
 

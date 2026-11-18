@@ -2409,20 +2409,45 @@
 }
 
 .lkdv-cv2x-world-pin {
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border-radius: 999px;
   background: #17402c;
   border: 2.5px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.36);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font: 700 11px/1 var(--font-sans);
   cursor: pointer;
 }
 
-.lkdv-cv2x-world-card {
+.lkdv-cv2x-world-pin img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.lkdv-cv2x-world-cta {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
+  right: 8px;
+  bottom: 46px;
   z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 13px;
+  border: 0;
+  border-radius: 999px;
+  background: #17402c;
+  color: #ffffff;
+  font: 700 12px/1 var(--font-sans);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.28);
+  cursor: pointer;
+}
   max-width: calc(100% - 150px);
   display: flex;
   flex-direction: column;
@@ -2512,4 +2537,36 @@
 .lkdv-cv2-static-slot {
   padding: 6px 14px 4px;
   flex-shrink: 0;
+}
+
+/* Réduction de 20% de la hauteur des sorties + pas de scroll vertical dans le drawer */
+.lkdv-cv2-static-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 14px 2px;
+}
+
+.lkdv-cv2x-event {
+  padding: 8px 10px !important;
+  gap: 6px !important;
+  min-height: 0 !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket {
+  padding: 6px 8px !important;
+  gap: 6px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-stub {
+  padding: 4px 6px !important;
+  min-height: 44px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-body {
+  gap: 2px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-foot {
+  padding-top: 4px !important;
 }
