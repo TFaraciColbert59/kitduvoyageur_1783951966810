@@ -25,6 +25,9 @@
     .s17-b1 { background:#E1EBDE; color:#2f6a43; } .s17-b2 { background:#F1EEE8; color:#56665D; }
     #s17-take { margin-top:30px; height:110px; padding:0 44px; gap:18px; border-radius:999px; background:#17402C; color:#fff; font-size:44px; font-weight:700; display:inline-flex; align-items:center; }
     .s17-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; }
+    #s17-w0 { left:60px; top:1170px; color:#17402C; font-size:144px; opacity:0; transform-origin:50% 60%; }
+    #s17-w0 span { color:#D0A070; }
+    #s17-w0g { left:84px; top:1156px; color:#D0A070; font-size:144px; opacity:0; transform-origin:50% 60%; }
     #s17-l1 { left:58px; top:1118px; color:#17402C; font-size:148px; opacity:0; transform-origin:30% 60%; }
     #s17-l2 { left:54px; top:1292px; color:#9E7243; font-size:250px; opacity:0; transform-origin:20% 60%; }
     #s17-l2g { left:80px; top:1278px; color:#17402C; font-size:250px; opacity:0; transform-origin:20% 60%; }
@@ -62,6 +65,8 @@
             <span id="s17-take"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg>Reprendre ce kit</span>
           </div>
         </div>
+        <div id="s17-w0g" class="s17-abs s17-slam">UN GROUPE.</div>
+        <div id="s17-w0" class="s17-abs s17-slam">UN GROUPE<span>.</span></div>
         <div id="s17-l1" class="s17-abs s17-slam">KIT SOUCHE :</div>
         <div id="s17-l2g" class="s17-abs s17-slam">LÉA</div>
         <div id="s17-l2" class="s17-abs s17-slam">LÉA</div>
@@ -110,13 +115,20 @@
           { x: 0, y: 0, scale: 1.14, duration: t1 - t0, ease: "power3.inOut", immediateRender: false }, t0);
         tl.to(el, { scale: 1, duration: 4 * F, ease: "back.out(3)" }, t1);
       });
-      tl.fromTo("#s17-grp", { opacity: 0, scaleX: 0.4, transformOrigin: "10% 50%" }, { opacity: 1, scaleX: 1, duration: 0.22, ease: "expo.out" }, 0.17);
-      tl.fromTo("#s17-grpt", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, L(20.75));
-      // Le groupe soudé prend le centre du cadre, puis remonte à sa place quand la tuile lignée arrive.
-      tl.fromTo("#s17-gw", { x: 0, y: 0, scale: 1, transformOrigin: "525px 311px" }, { x: 15, y: 470, scale: 1.04, duration: 0.4, ease: "power3.out", immediateRender: false }, 0.22);
-      tl.to("#s17-gw", { x: 0, y: 0, scale: 1, duration: 0.2, ease: "power3.inOut" }, L(21.344) - 0.17);
-      // Caméra : dérive continue.
-      tl.fromTo("#s17-cam", { scale: 1.04, rotation: 0.8, transformOrigin: "50% 45%" }, { scale: 1, rotation: -0.8, duration: 1.75, ease: "power1.inOut" }, 0.2);
+      // Le groupe soudé remplit le cadre : les quatre avatars ×2,4 au centre (la caméra pousse),
+      // puis ils remontent former la pastille du groupe juste avant la tuile lignée (21,344).
+      const tBack = L(21.344) - 0.2;
+      tl.fromTo("#s17-gw", { x: 0, y: 0, scale: 1, transformOrigin: "261px 311px" }, { x: 279, y: 489, scale: 2.4, duration: 0.3, ease: "power3.out", immediateRender: false }, 0.04);
+      tl.to("#s17-gw", { x: 0, y: 0, scale: 1, duration: 0.2, ease: "power3.inOut" }, tBack);
+      tl.fromTo("#s17-grp", { opacity: 0, scaleX: 0.4, transformOrigin: "10% 50%" }, { opacity: 1, scaleX: 1, duration: 0.12, ease: "expo.out", immediateRender: false }, tBack + 0.14);
+      tl.fromTo("#s17-grpt", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.12, ease: "power2.out", immediateRender: false }, tBack + 0.16);
+      // « UN GROUPE. » claque sur la mesure 20,690, sort (3 images) avant la tuile lignée.
+      slam("#s17-w0", "#s17-w0g", L(20.69));
+      tl.to("#s17-w0", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, tBack - 3 * F);
+      // Caméra : poussée sur le groupe, retour au cadre large pour la tuile, puis dérive lente.
+      tl.fromTo("#s17-cam", { scale: 1, rotation: 0, transformOrigin: "50% 40%" }, { scale: 1.07, rotation: 0.8, duration: tBack - 0.2, ease: "power1.inOut", immediateRender: false }, 0.2);
+      tl.to("#s17-cam", { scale: 1, rotation: 0, duration: 0.2, ease: "power3.inOut" }, tBack);
+      tl.to("#s17-cam", { scale: 1.025, rotation: -0.6, duration: 2.139 - tBack - 0.2, ease: "none" }, tBack + 0.2);
 
       // 21,344 : la tuile lignée claque (coup de poing : chute + rotation), secousse.
       const tT = L(21.344);

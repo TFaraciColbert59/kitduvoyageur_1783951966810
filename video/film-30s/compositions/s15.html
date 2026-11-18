@@ -3,7 +3,7 @@
     #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; background:transparent; }
     #s15-whip { position:absolute; inset:0; background:#FAF8F5; }
     #s15-shake { position:absolute; inset:0; }
-    #s15-cam { position:absolute; inset:0; transform-origin:705px 1000px; }
+    #s15-cam { position:absolute; inset:0; transform-origin:0 0; }
     .s15-feedp { position:absolute; left:190px; width:700px; height:380px; }
     .s15-feed { position:absolute; inset:0; border-radius:48px; overflow:hidden; opacity:0.35; filter:blur(3px); }
     .s15-feed img { width:100%; height:100%; object-fit:cover; display:block; }
@@ -81,9 +81,17 @@
       tl.fromTo("#s15-j3", { y: -520, scale: 1.9, rotation: 22, filter: "blur(8px)" }, { y: 0, scale: 0.72, rotation: 9, filter: "blur(0px)", duration: T_LAND, ease: "power2.in" }, 0);
 
       // Caméra : poussée vers le bouton « Publier », puis dézoom brusque quand le carnet part dans le fil.
-      tl.fromTo("#s15-cam", { scale: 1, rotation: 0 }, { scale: 1.32, rotation: 2, duration: T_TAP - T_PUSH, ease: "power2.inOut" }, T_PUSH);
-      tl.to("#s15-cam", { scale: 0.96, rotation: 0, duration: 5 * F, ease: "expo.out" }, T_FLY);
-      tl.to("#s15-cam", { scale: 1.0, duration: DUR - T_FLY - 5 * F, ease: "none" }, T_FLY + 5 * F);
+      // Cadrage « édition » : le carnet occupe l'essentiel du cadre dès 18,103 (×1,5, centré), puis la caméra
+      // pousse vers « Publier » (×1,85) pour l'appui. Origine 0 0 : x = Q − s·P (P point du carnet, Q point écran).
+      const frame = (s, px, py, qx, qy) => ({ scale: s, x: +(qx - s * px).toFixed(1), y: +(qy - s * py).toFixed(1) });
+      const C0 = frame(1.5, 540, 770, 540, 960);   // carnet centré
+      const C1 = frame(1.85, 723, 1012, 620, 1200); // bouton « Publier »
+      tl.fromTo("#s15-cam", { ...C0, rotation: 0 }, { ...C0, rotation: 0, duration: 0.001 }, 0);
+      tl.to("#s15-cam", { ...frame(1.56, 540, 770, 540, 960), duration: T_PUSH - 0.001, ease: "none" }, 0.001);
+      tl.to("#s15-cam", { ...C1, rotation: 2, duration: T_TAP - T_PUSH, ease: "power2.inOut" }, T_PUSH);
+      // Dézoom brusque quand le carnet part dans le fil (même cadrage final qu'avant : ×0,96 → ×1).
+      tl.to("#s15-cam", { scale: 0.96, x: 28.2, y: 40, rotation: 0, duration: 5 * F, ease: "expo.out" }, T_FLY);
+      tl.to("#s15-cam", { scale: 1.0, x: 0, y: 0, duration: DUR - T_FLY - 5 * F, ease: "none" }, T_FLY + 5 * F);
 
       // Appui : écrasement 0,9, iris laiton.
       tl.fromTo("#s15-btn", { scale: 1 }, { scale: 0.9, duration: 2 * F, ease: "power2.out" }, T_TAP);
