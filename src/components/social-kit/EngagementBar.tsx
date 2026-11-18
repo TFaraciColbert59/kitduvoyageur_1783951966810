@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, Send } from 'lucide-react';
 import { LikeIcon } from './LikeIcon';
 
@@ -52,8 +52,10 @@ export function EngagementBar({
       role="group"
       aria-label="Actions de la publication"
     >
-      <button
+      <motion.button
         type="button"
+        whileTap={{ scale: 0.86 }}
+        transition={{ type: 'spring', stiffness: 520, damping: 24 }}
         className={liked ? 'on' : ''}
         onClick={(event) => {
           event.stopPropagation();
@@ -62,26 +64,68 @@ export function EngagementBar({
         }}
         aria-label={`Aimer (${likesCount})`}
         aria-pressed={liked}
+        style={{ position: 'relative' }}
       >
+        <AnimatePresence>
+          {pulseKey > 0 && liked ? (
+            <motion.span
+              key={`ring-${pulseKey}`}
+              aria-hidden="true"
+              initial={{ scale: 0.4, opacity: 0.85 }}
+              animate={{ scale: 1.9, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                position: 'absolute',
+                width: 22,
+                height: 22,
+                borderRadius: '999px',
+                border: '2px solid #e11d48',
+                pointerEvents: 'none',
+              }}
+            />
+          ) : null}
+        </AnimatePresence>
         <motion.span
           key={pulseKey}
-          initial={pulseKey > 0 ? { scale: 0.72 } : false}
-          animate={liked ? { scale: [0.72, 1.38, 0.92, 1.08, 1] } : { scale: 1 }}
-          transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+          initial={pulseKey > 0 ? { scale: 0.6, rotate: -12 } : false}
+          animate={liked ? { scale: [0.6, 1.42, 0.9, 1.1, 1], rotate: [0, -10, 6, 0] } : { scale: 1, rotate: 0 }}
+          transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }}
           style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <LikeIcon active={liked} size={18} />
         </motion.span>
-        <span className="lkdv-post-action-count" aria-hidden="true">{formatEngagementCount(likesCount)}</span>
-      </button>
-      <button type="button" onClick={stop(onComment)} aria-label={`Commenter (${commentsCount})`}>
+        <motion.span
+          key={`cnt-${likesCount}`}
+          initial={{ y: -3, opacity: 0.6 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.2 }}
+          className="lkdv-post-action-count"
+          aria-hidden="true"
+        >
+          {formatEngagementCount(likesCount)}
+        </motion.span>
+      </motion.button>
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.88 }}
+        transition={{ type: 'spring', stiffness: 520, damping: 24 }}
+        onClick={stop(onComment)}
+        aria-label={`Commenter (${commentsCount})`}
+      >
         <MessageCircle size={18} aria-hidden="true" />
         <span className="lkdv-post-action-count" aria-hidden="true">{formatEngagementCount(commentsCount)}</span>
-      </button>
-      <button type="button" onClick={stop(onShare)} aria-label={`Partager (${sharesCount})`}>
+      </motion.button>
+      <motion.button
+        type="button"
+        whileTap={{ scale: 0.88 }}
+        transition={{ type: 'spring', stiffness: 520, damping: 24 }}
+        onClick={stop(onShare)}
+        aria-label={`Partager (${sharesCount})`}
+      >
         <Send size={18} aria-hidden="true" />
         <span className="lkdv-post-action-count" aria-hidden="true">{formatEngagementCount(sharesCount)}</span>
-      </button>
+      </motion.button>
     </div>
   );
 }

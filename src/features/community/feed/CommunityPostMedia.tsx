@@ -298,13 +298,25 @@ export function CommunityPostMedia({
                 aria-hidden="true"
                 initial={{ scale: 0.25, opacity: 0, rotate: -14 }}
                 animate={{
-                  scale: [0.25, 1.32, 0.95, 1.08, 1.15],
-                  opacity: [0, 1, 1, 0.85, 0],
-                  rotate: [-14, 8, -4, 0, 0],
+                  scale: [0.25, 1.38, 0.94, 1.1, 1.18],
+                  opacity: [0, 1, 1, 0.9, 0],
+                  rotate: [-14, 10, -5, 0, 0],
                 }}
                 exit={{ opacity: 0, scale: 1.25 }}
                 transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
               >
+                <motion.span
+                  initial={{ scale: 0.5, opacity: 0.9 }}
+                  animate={{ scale: 2.1, opacity: 0 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                    position: 'absolute',
+                    inset: -8,
+                    borderRadius: '999px',
+                    border: '3px solid rgba(255, 255, 255, 0.85)',
+                    pointerEvents: 'none',
+                  }}
+                />
                 <LikeIcon plain size={84} />
               </motion.span>
             ) : null}
