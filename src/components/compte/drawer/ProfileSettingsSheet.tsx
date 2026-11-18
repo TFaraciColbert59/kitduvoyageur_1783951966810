@@ -14,6 +14,9 @@ import {
   toAccountVisibility,
   type ProfileVisibilityEventDetail,
 } from '@/features/compte/data/accountVisibility';
+import { useAuth } from '@/contexts/AuthContext';
+import { useFeedPreferences } from '@/features/community/g01/useFeedPreferences';
+import { FeedPreferencesDrawer } from '@/components/communaute/g01/FeedPreferencesDrawer';
 
 /** Visibilité de l'empreinte réellement exposée par le runtime (`S.vis`). */
 type SignatureVisibility = Visibility | 'communaute';
@@ -295,6 +298,9 @@ export function ProfileSettingsSheet({
   /** Cible en cours d'écriture : les deux boutons restent gelés jusque-là. */
   const [accountPending, setAccountPending] = useState<Visibility | null>(null);
 
+  const { user: authUser } = useAuth();
+  const feedPrefs = useFeedPreferences(authUser?.id);
+  const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
   const titleId = useId();
   const accountReasonId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -1077,6 +1083,22 @@ export function ProfileSettingsSheet({
             ) : null}
           </section>
 
+          <section className="lkdv-settings-section" aria-labelledby={`${titleId}-feed-prefs`}>
+            <h3 id={`${titleId}-feed-prefs`} className="lkdv-settings-h3">
+              Préférences du fil
+            </h3>
+            <p className="lkdv-settings-help">
+              Masque certains sports, auteurs ou ajuste la lecture vidéo dans le fil Communauté.
+            </p>
+            <button
+              type="button"
+              className="lkdv-settings-secondary"
+              onClick={() => setFeedPrefsOpen(true)}
+            >
+              Gérer les préférences du fil
+            </button>
+          </section>
+
           <section
             ref={(node) => {
               sectionRefs.current.signout = node;
@@ -1106,6 +1128,13 @@ export function ProfileSettingsSheet({
           </section>
         </div>
       </section>
+      <FeedPreferencesDrawer
+        open={feedPrefsOpen}
+        onOpenChange={setFeedPrefsOpen}
+        preferences={feedPrefs.preferences}
+        onChange={feedPrefs.update}
+        onReset={feedPrefs.reset}
+      />
     </div>,
     document.body
   );
