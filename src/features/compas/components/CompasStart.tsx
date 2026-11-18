@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { TripInvitationsInbox } from './TripInvitations';
 import type { TripInvitationView } from '../server/invitationActions';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import Icon from '@/components/ui/Icon';
 import { COMPAS_STEPS } from '../engine/compasModel';
+import { clearPendingStartDraft, readPendingStartDraft, savePendingStartDraft } from '../engine/pendingDraft';
 import { understandRequest, type RequestLine, type RequestPrecisions } from '../engine/request';
 import { MAX_TRIP_DAYS } from '../engine/intent';
 import { STEP_LABEL_KEY, activityName } from '../engine/compasI18n';
@@ -66,11 +67,22 @@ export function CompasStart({
   const understood = useMemo(() => understandRequest(text, today, precise, locale), [text, today, precise, locale]);
   const ready = text.trim().length >= 2;
 
+  useEffect(() => {
+    const restored = readPendingStartDraft();
+    if (restored && !text) {
+      setText(restored.text);
+      if (restored.precise) setPrecise(restored.precise);
+      if (signedIn) clearPendingStartDraft();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn]);
+
   // La demande part entière : le voyage est créé à ce moment-là, avec elle ;
   // la préparation (visible) commence dès l'ouverture du Compas.
   const prepare = () => {
     if (!ready || pending) return;
     if (!signedIn) {
+      savePendingStartDraft({ text, precise });
       router.push(`/connexion?next=${encodeURIComponent('/compas')}`);
       return;
     }
@@ -81,6 +93,7 @@ export function CompasStart({
         setError(res.error ?? t('compas.start.createError'));
         return;
       }
+      clearPendingStartDraft();
       // Quitter `?nouvelle=1` : sinon la page réaffiche le Compas vide.
       router.replace('/compas');
       router.refresh();

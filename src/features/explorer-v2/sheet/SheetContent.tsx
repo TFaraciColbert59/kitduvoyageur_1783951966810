@@ -1997,6 +1997,29 @@ function TrailTraceTab({
         >
           Exporter GPX
         </button>
+        <button
+          type="button"
+          className="xp-chip"
+          onClick={() => {
+            const payload = {
+              routeId: String(route.id),
+              title: route.name ?? 'Itinéraire Explorer',
+              sport: activeSport,
+              geojson: route.geojson ?? (positions.length >= 2 ? { type: 'LineString', coordinates: positions } : null),
+              distanceKm: route.distance_km ?? null,
+              attribution: 'Catalogue Explorer LKDV / OpenStreetMap',
+              importedAt: new Date().toISOString(),
+            };
+            try {
+              window.sessionStorage.setItem('lkdv:compas:explorerImport:v1', JSON.stringify(payload));
+            } catch {
+              /* ignore storage errors */
+            }
+            window.location.assign(`/compas?from=explorer&routeId=${encodeURIComponent(String(route.id))}`);
+          }}
+        >
+          Préparer avec ce tracé
+        </button>
       </div>
 
       <XpEyebrow>Effort &amp; rythme personnel</XpEyebrow>
@@ -2928,6 +2951,17 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
     return () => scrollEl.removeEventListener('scroll', onScroll);
   }, [patch, ctx.state.searchScrollTop]);
 
+  // D1.5 : si la recherche a résolu une commune (ex. « Lille » sans GPS), recentrer la carte dessus.
+  const lastResolvedRef = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    const sel = data?.resolvedPlace?.selected;
+    if (!sel || requestedViewport) return;
+    const key = `${data.resolvedPlace?.query}:${sel.lat.toFixed(4)},${sel.lon.toFixed(4)}`;
+    if (lastResolvedRef.current === key) return;
+    lastResolvedRef.current = key;
+    patch({ center: [sel.lon, sel.lat], zoom: 12 });
+  }, [data?.resolvedPlace, requestedViewport, patch]);
+
   // Les résultats affichés correspondent à cette emprise. Une recherche
   // explicite porte sa propre emprise (`data.zone`) ; une recherche autour du
   // centre retient l'emprise visible au moment de la réponse.
@@ -3014,6 +3048,36 @@ function SearchTab({ ctx }: { ctx: SheetContext }) {
           Générer une boucle
         </button>
       </div>
+      {data?.resolvedPlace && data.resolvedPlace.candidates.length > 1 ? (
+        <div className="xp-chiprow" aria-label="Communes homonymes" style={{ marginTop: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--xp-mut)', alignSelf: 'center' }}>
+            Communes :
+          </span>
+          {data.resolvedPlace.candidates.map((cand) => (
+            <button
+              key={`${cand.label}-${cand.lat}-${cand.lon}`}
+              type="button"
+              className="xp-chip"
+              onClick={() =>
+                patch({
+                  center: [cand.lon, cand.lat],
+                  zoom: 12,
+                  searchViewport: {
+                    minLat: cand.lat - 0.09,
+                    maxLat: cand.lat + 0.09,
+                    minLng: cand.lon - 0.14,
+                    maxLng: cand.lon + 0.14,
+                    zoom: 12,
+                  },
+                })
+              }
+            >
+              {cand.label}
+              {cand.detail ? ` (${cand.detail})` : ''}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {query.trim().length < 2 ? (
         <>
           <RouteSuggestions ctx={ctx} />

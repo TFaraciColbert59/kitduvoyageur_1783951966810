@@ -50,9 +50,14 @@ const STEP_IDS = new Set<string>(COMPAS_STEPS.map((s) => s.id));
 export default async function CompasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ nouvelle?: string; etape?: string; v5?: string }>;
+  searchParams: Promise<{ nouvelle?: string; etape?: string; v5?: string; from?: string; routeId?: string }>;
 }) {
-  const { nouvelle, etape, v5 } = await searchParams;
+  const { nouvelle, etape, v5, from, routeId } = await searchParams;
+  if (from === 'explorer') {
+    const { redirect } = await import('next/navigation');
+    const qs = routeId ? `?from=explorer&routeId=${encodeURIComponent(routeId)}` : '?from=explorer';
+    redirect(`/compas/itineraire${qs}`);
+  }
   // L'écran v5 (carte vivante) est celui du Compas ; `?v5=0` rouvre l'écran précédent le temps de la transition.
   const screenV5 = v5 !== '0';
 

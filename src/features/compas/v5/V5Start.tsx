@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import TravellerCard from '@/components/identity/TravellerCard';
 import { useTranslation } from '@/lib/i18n/context';
 import { AiNotice } from '../components/AiNotice';
 import { TripInvitationsInbox } from '../components/TripInvitations';
+import { clearPendingStartDraft, readPendingStartDraft, savePendingStartDraft } from '../engine/pendingDraft';
 import { understandRequest } from '../engine/request';
 import { browserToday } from '../engine/zone';
 import type { TripInvitationView } from '../server/invitationActions';
@@ -42,9 +43,19 @@ export function V5Start({
   const today = useMemo(() => browserToday(), []);
   const ready = text.trim().length >= 2;
 
+  useEffect(() => {
+    const restored = readPendingStartDraft();
+    if (restored && !text) {
+      setText(restored.text);
+      if (signedIn) clearPendingStartDraft();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn]);
+
   const go = () => {
     if (!ready || pending) return;
     if (!signedIn) {
+      savePendingStartDraft({ text });
       router.push(`/connexion?next=${encodeURIComponent('/compas')}`);
       return;
     }
@@ -56,6 +67,7 @@ export function V5Start({
         setError(res.error ?? t('compas.v5.start.createError'));
         return;
       }
+      clearPendingStartDraft();
       router.replace('/compas');
       router.refresh();
     });
