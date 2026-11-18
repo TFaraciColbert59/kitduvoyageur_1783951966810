@@ -2618,3 +2618,136 @@
   max-width: 232px;
   overflow: hidden;
 }
+
+/* ── Barre de recherche à 5px sous la capsule, Sorties compactes + pillule liquid glass, Clubs aperçu création, Carnets décollés des bords, Recherche en cartes horizontales ── */
+.lkdv-cv2-layer[data-cv2-kind="explore"] .lkdv-cv2-head {
+  padding-bottom: 5px !important;
+}
+
+.lkdv-cv2-layer[data-cv2-kind="explore"] .lkdv-cv2-static-slot {
+  padding: 0 14px 4px !important;
+  margin-top: 0 !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-main {
+  min-height: 74px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-stub {
+  min-height: 74px !important;
+}
+
+.lkdv-cv2x-event .lkdv-cv2-ticket-body {
+  padding: 6px 8px !important;
+}
+
+.lkdv-cv2x-event-icon-pill {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(14px) saturate(1.7);
+  backdrop-filter: blur(14px) saturate(1.7);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #17402c;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.lkdv-cv2x-event-icon-pill[data-state="registered"] {
+  background: rgba(23, 64, 44, 0.9);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.lkdv-cv2x-carnet-ig-tile {
+  padding: 16px 18px !important;
+  gap: 10px !important;
+}
+
+.lkdv-cv2x-club-preview-tile {
+  height: 100%;
+}
+
+.lkdv-cv2x-club-crest-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  height: 100%;
+}
+
+.lkdv-cv2x-club-preview-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.lkdv-cv2x-club-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2x-club-preview-meta b {
+  font: 700 14px/1.2 var(--font-sans);
+  color: var(--lkv-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-cv2x-club-preview-meta small {
+  font: 500 11.5px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2x-club-month-badge {
+  font: 700 9.5px/1 var(--font-sans);
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.12);
+  color: #17402c;
+}
+
+.lkdv-cv2x-club-join-compact {
+  align-self: flex-end;
+  min-height: 32px !important;
+  padding: 0 12px !important;
+}
+
+.lkdv-cv2x-search-card {
+  flex: none;
+  width: 248px;
+  min-width: 248px;
+  max-width: 248px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.lkdv-cv2x-search-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

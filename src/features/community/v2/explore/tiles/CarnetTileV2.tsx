@@ -137,7 +137,7 @@ export function CarnetTileV2({
               <span>km</span>
             </div>
             <div className="lkdv-ig-stat">
-              <b>{carnet.elevationGainM != null ? `+${Math.round(carnet.elevationGainM)}` : '+0'}</b>
+              <b>{carnet.elevationGainM != null ? `+${Math.round(carnet.elevationGainM)}` : '—'}</b>
               <span>D+ m</span>
             </div>
           </div>

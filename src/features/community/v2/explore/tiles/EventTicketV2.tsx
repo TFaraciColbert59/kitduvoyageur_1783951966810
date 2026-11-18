@@ -83,11 +83,12 @@ export function EventActionButton({
   return (
     <button
       type="button"
-      className="lkdv-cv2x-join lkdv-cv2x-register"
+      className="lkdv-cv2x-event-icon-pill"
       data-state={status}
       data-tone={action.tone}
       aria-pressed={status === 'registered' || status === 'waitlist'}
       aria-label={action.aria}
+      title={action.label}
       aria-busy={busy || undefined}
       disabled={busy || action.disabled}
       onClick={(clickEvent) => {
@@ -100,14 +101,15 @@ export function EventActionButton({
     >
       {busy ? (
         <i className="lkdv-cv2x-spinner" aria-hidden="true" />
-      ) : action.tone === 'join' ? (
-        <ExploreIcon name="plus" size={15} />
+      ) : status === 'registered' ? (
+        <ExploreIcon name="check" size={14} />
       ) : action.tone === 'waitlist' ? (
-        <ExploreIcon name="clock" size={15} />
+        <ExploreIcon name="clock" size={14} />
       ) : action.tone === 'full' ? (
-        <ExploreIcon name="lock" size={15} />
-      ) : null}
-      <span>{busy ? 'Envoi…' : action.label}</span>
+        <ExploreIcon name="lock" size={14} />
+      ) : (
+        <ExploreIcon name="plus" size={14} />
+      )}
     </button>
   );
 }

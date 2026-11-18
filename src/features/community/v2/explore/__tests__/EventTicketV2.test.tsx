@@ -103,7 +103,7 @@ describe('EventTicketV2 (Sorties#1-6, 19)', () => {
     render(<EventTicketV2 {...props({ event: event({ past: true }), status: 'registered' })} />);
     const past = screen.getByRole('button', { name: /est terminée/ });
     expect(past.hasAttribute('disabled')).toBe(true);
-    expect(past.textContent).toContain('Terminée');
+    expect(past.getAttribute('title')).toContain('Terminée');
   });
 
   it('variante compacte : ligne datée + bouton d’action', () => {

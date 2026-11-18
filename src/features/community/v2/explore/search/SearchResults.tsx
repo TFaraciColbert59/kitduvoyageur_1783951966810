@@ -94,7 +94,7 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
   return (
     <a
       id={rowId}
-      className={`lkdv-cv2x-search-row${active ? ' is-kb' : ''}`}
+      className={`lkdv-cv2-tile lkdv-cv2x-search-card${active ? ' is-kb' : ''}`}
       href={hit.href}
       aria-label={ariaLabel}
       data-testid={`cv2-tile-${hit.kind}`}
@@ -103,7 +103,18 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
       data-index={index}
       {...longPress}
     >
-      <span className="lkdv-cv2x-search-media">{coverFor(hit)}</span>
+      <span className="lkdv-cv2x-search-card-top">
+        <span className="lkdv-cv2x-search-media">{coverFor(hit)}</span>
+        <span className="lkdv-cv2x-search-end">
+          <span className="lkdv-cv2-type" data-type={hit.kind}>
+            <i className="lkdv-cv2x-type-dot" aria-hidden="true" />
+            {label.singular}
+          </span>
+          {hit.distanceKm != null ? (
+            <span className="lkdv-cv2x-search-distance">{formatKm(hit.distanceKm)}</span>
+          ) : null}
+        </span>
+      </span>
       <span className="lkdv-cv2x-search-body">
         <span className="lkdv-cv2x-search-title">
           <HighlightedText text={hit.title} terms={terms} />
@@ -119,16 +130,6 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
           </span>
         ) : null}
       </span>
-      <span className="lkdv-cv2x-search-end">
-        <span className="lkdv-cv2-type" data-type={hit.kind}>
-          <i className="lkdv-cv2x-type-dot" aria-hidden="true" />
-          {label.singular}
-        </span>
-        {hit.distanceKm != null ? (
-          <span className="lkdv-cv2x-search-distance">{formatKm(hit.distanceKm)}</span>
-        ) : null}
-      </span>
-      <ExploreIcon name="chevron-right" size={14} />
     </a>
   );
 }

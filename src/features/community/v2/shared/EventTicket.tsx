@@ -69,8 +69,9 @@ function TicketTopo({
   const startPt = realPoints ? realPoints[0]! : [6, 46 - shift];
   const endPt = realPoints ? realPoints[realPoints.length - 1]! : [94, 12 + wobble];
   return (
-    <span className="lkdv-cv2-ticket-side lkdv-cv2-ticket-topo" aria-hidden="true">
+    <span className="lkdv-cv2-ticket-side lkdv-cv2-ticket-topo lkdv-cv2-ticket-minimap" aria-hidden="true">
       <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid slice" focusable="false">
+        <rect x="0" y="0" width="100" height="60" fill="#eef4ee" />
         <path className="lkdv-cv2-ticket-topo-line" d={`M-8 ${14 + shift} C 18 ${4 + shift}, 58 ${
           30 + shift
         }, 108 ${10 + shift}`} />
@@ -80,9 +81,10 @@ function TicketTopo({
         <path className="lkdv-cv2-ticket-topo-line" d={`M-8 ${52 + shift} C 26 ${40 + shift}, 66 ${
           60 + shift
         }, 108 ${44 + shift}`} />
+        <path d={route} fill="none" stroke="#ffffff" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
         <path className="lkdv-cv2-ticket-route" d={route} />
-        <circle className="lkdv-cv2-ticket-dot" cx={startPt[0]} cy={startPt[1]} r="2.4" />
-        <circle className="lkdv-cv2-ticket-dot lkdv-cv2-ticket-dot--end" cx={endPt[0]} cy={endPt[1]} r="2.4" />
+        <circle className="lkdv-cv2-ticket-dot" cx={startPt[0]} cy={startPt[1]} r="2.8" />
+        <circle className="lkdv-cv2-ticket-dot lkdv-cv2-ticket-dot--end" cx={endPt[0]} cy={endPt[1]} r="2.8" />
       </svg>
     </span>
   );
