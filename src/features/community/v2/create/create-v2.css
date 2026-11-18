@@ -1188,6 +1188,29 @@
   touch-action: none;
 }
 
+.lkdv-cv2c-map.is-scroll-passthrough,
+.lkdv-cv2c-map.is-scroll-passthrough .lkdv-cv2c-map-canvas,
+.lkdv-cv2c-map.is-scroll-passthrough .maplibregl-canvas-container,
+.lkdv-cv2c-map.is-scroll-passthrough canvas {
+  touch-action: pan-y !important;
+}
+
+.lkdv-cv2c-map.is-focused,
+.lkdv-cv2c-map.is-focused .lkdv-cv2c-map-canvas,
+.lkdv-cv2c-map.is-focused .maplibregl-canvas-container,
+.lkdv-cv2c-map.is-focused canvas {
+  touch-action: none !important;
+}
+
+.lkdv-cv2c-map.is-focused {
+  box-shadow: 0 0 0 2px var(--cv2-accent), var(--elevation-1);
+}
+
+.lkdv-cv2c-day-tabs.is-jiggle {
+  padding-top: 7px;
+  padding-bottom: 4px;
+}
+
 .lkdv-cv2c-map-actions {
   position: absolute;
   left: 8px;

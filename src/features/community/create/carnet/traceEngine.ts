@@ -120,24 +120,57 @@ export function pickWaypoints(points: readonly LngLat[], max: number, tolerance:
     tol *= 1.6;
     picked = simplify(clean, tol);
   }
-  if (picked.length <= max) return picked;
-  // Dernier recours : échantillonnage régulier, extrémités gardées.
-  const step = (picked.length - 1) / (max - 1);
-  return Array.from({ length: max }, (_, i) => picked[Math.round(i * step)]);
+  if (picked.length > max) {
+    const step = (picked.length - 1) / (max - 1);
+    picked = Array.from({ length: max }, (_, i) => picked[Math.round(i * step)]);
+  }
+  // Évite deux points intermédiaires trop proches (< 25 m) qui provoquent des demi-tours routeur.
+  if (picked.length > 2) {
+    const spaced: LngLat[] = [picked[0]];
+    for (let i = 1; i < picked.length - 1; i += 1) {
+      if (!near(spaced[spaced.length - 1], picked[i], 25) && !near(picked[i], picked[picked.length - 1], 25)) {
+        spaced.push(picked[i]);
+      }
+    }
+    spaced.push(picked[picked.length - 1]);
+    return spaced;
+  }
+  return picked;
+}
+
+function isHairpinSpike(a: LngLat, b: LngLat, c: LngLat, meters: number): boolean {
+  const dAC = haversineKm(a, c) * 1000;
+  if (dAC > meters) return false;
+  const dAB = haversineKm(a, b) * 1000;
+  const dBC = haversineKm(b, c) * 1000;
+  if (dAB < 4 || dBC < 4) return dAC < 2;
+  // L'épine doit ressortir nettement plus loin que l'écart A-C et repartir en sens inverse.
+  if (dAB <= dAC * 1.4 || dBC <= dAC * 1.4) return false;
+  const cosLat = Math.cos(((a[1] + b[1] + c[1]) / 3) * (Math.PI / 180));
+  const abx = (b[0] - a[0]) * cosLat;
+  const aby = b[1] - a[1];
+  const bcx = (c[0] - b[0]) * cosLat;
+  const bcy = c[1] - b[1];
+  const norm = Math.hypot(abx, aby) * Math.hypot(bcx, bcy);
+  if (norm <= 1e-12) return true;
+  const cos = (abx * bcx + aby * bcy) / norm;
+  return cos < -0.65;
 }
 
 /**
  * Retire les allers-retours (« épines ») que laisse un routeur quand un point
- * de passage tombe à côté du chemin : A → B → A devient A.
+ * de passage tombe à côté du chemin : A → B → A devient A, sans jamais effacer
+ * les sommets successifs d'une route ou d'un sentier.
  */
 export function removeSpurs(points: readonly LngLat[], meters = 18): LngLat[] {
   const out: LngLat[] = [];
   for (const point of points) {
     if (!isValidPoint(point)) continue;
-    if (out.length > 0 && near(out[out.length - 1], point, 2)) continue;
-    // Tant que le nouveau point revient sur l'avant-dernier, le dernier était une pointe.
-    while (out.length >= 2 && near(out[out.length - 2], point, meters)) out.pop();
-    if (out.length > 0 && near(out[out.length - 1], point, 2)) continue;
+    if (out.length > 0 && near(out[out.length - 1], point, 1.5)) continue;
+    while (out.length >= 2 && isHairpinSpike(out[out.length - 2], out[out.length - 1], point, meters)) {
+      out.pop();
+    }
+    if (out.length > 0 && near(out[out.length - 1], point, 1.5)) continue;
     out.push(point);
   }
   return out;

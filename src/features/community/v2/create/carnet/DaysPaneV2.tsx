@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, GripVertical, ImagePlus, Loader2, MapPin, Moon, Plus, Trash2, UserPlus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, GripVertical, ImagePlus, Loader2, MapPin, Minus, Moon, Plus, Trash2, UserPlus, X } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import { toast } from 'sonner';
 import { useFormContext, useFormState } from 'react-hook-form';
 import { createClient } from '@/lib/supabase/client';
@@ -36,7 +37,15 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { moveItemBetweenDays } from '../../shared/traceEditing';
 import { useCarnetNights } from './capabilities';
 import { DAY_PANEL_ID, dayTabId, nextTabIndex, useDaySwipe } from './daySwipe';
-import { carnetDayCountV2, carnetDayDateV2, clampCarnetDaysV2, syncCarnetDaysV2 } from './daySync';
+import {
+  carnetDayCountV2,
+  carnetDayDateV2,
+  carnetEndDateForDaysV2,
+  clampCarnetDaysV2,
+  syncCarnetDaysV2,
+} from './daySync';
+
+const DAY_LONG_PRESS_MS = 380;
 
 const NIGHT_OPTIONS: ReadonlyArray<{ value: CarnetNightV2['type']; label: string }> = [
   { value: 'bivouac', label: 'Bivouac' },
@@ -129,12 +138,16 @@ function MomentEncountersRow({
   useEffect(() => {
     if (!userId) return undefined;
     let active = true;
-    const supabase = createClient();
-    void fetchSubscribersOnlyV2(supabase, userId).then((list) => {
-      if (!active) return;
-      setSubscribers(list);
+    try {
+      const supabase = createClient();
+      void fetchSubscribersOnlyV2(supabase, userId).then((list) => {
+        if (!active) return;
+        setSubscribers(list);
+        setLoaded(true);
+      });
+    } catch {
       setLoaded(true);
-    });
+    }
     return () => {
       active = false;
     };
@@ -693,6 +706,61 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
    * (maquette `syncDays`, HTML L2969 et `onStep` Jours).
    */
   const [mapOpenMomentId, setMapOpenMomentId] = useState<string | null>(null);
+  const [jiggleMode, setJiggleMode] = useState(false);
+  const dayTabsWrapRef = useRef<HTMLDivElement | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    pointerStartRef.current = null;
+  }, []);
+
+  const startLongPress = useCallback(
+    (e: React.PointerEvent) => {
+      if (days.length <= 1) return;
+      clearLongPress();
+      pointerStartRef.current = { x: e.clientX, y: e.clientY };
+      longPressTimerRef.current = setTimeout(() => {
+        setJiggleMode(true);
+        haptic('medium');
+        longPressTimerRef.current = null;
+      }, DAY_LONG_PRESS_MS);
+    },
+    [clearLongPress, days.length, haptic],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!pointerStartRef.current || !longPressTimerRef.current) return;
+      const dx = Math.abs(e.clientX - pointerStartRef.current.x);
+      const dy = Math.abs(e.clientY - pointerStartRef.current.y);
+      if (dx > 8 || dy > 8) {
+        clearLongPress();
+      }
+    },
+    [clearLongPress],
+  );
+
+  useEffect(() => {
+    if (!jiggleMode) return;
+    const onOutsidePointer = (e: PointerEvent) => {
+      if (dayTabsWrapRef.current && !dayTabsWrapRef.current.contains(e.target as Node)) {
+        setJiggleMode(false);
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointer, true);
+    return () => document.removeEventListener('pointerdown', onOutsidePointer, true);
+  }, [jiggleMode]);
+
+  useEffect(() => {
+    if (days.length <= 1 && jiggleMode) {
+      setJiggleMode(false);
+    }
+  }, [days.length, jiggleMode]);
 
   useEffect(() => {
     const current = form.getValues('days') ?? [];
@@ -707,7 +775,46 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
   }, [form, values.startDate]);
 
   const setDayCount = (count: number) => {
-    form.setValue('nbJours', clampCarnetDaysV2(count), { shouldDirty: true });
+    const clamped = clampCarnetDaysV2(count);
+    form.setValue('nbJours', clamped, { shouldDirty: true, shouldValidate: true });
+    const startDate = form.getValues('startDate') ?? '';
+    if (startDate) {
+      form.setValue('endDate', carnetEndDateForDaysV2(startDate, clamped), {
+        shouldDirty: true,
+      });
+    }
+  };
+
+  const applyDaysOrder = (nextRaw: CarnetDayV2[], nextActiveIdx: number) => {
+    const startDate = values.startDate ?? '';
+    const renumbered = nextRaw.map((entry, idx) => ({
+      ...entry,
+      dayNumber: idx + 1,
+      date: startDate ? carnetDayDateV2(startDate, idx) : entry.date,
+    }));
+    setDays(renumbered);
+    setDayCount(renumbered.length);
+    setActive(Math.max(0, Math.min(renumbered.length - 1, nextActiveIdx)));
+  };
+
+  const handleReorderDays = (newOrder: CarnetDayV2[]) => {
+    const activeId = days[clampedActive]?.id;
+    const nextIdx = activeId ? newOrder.findIndex((d) => d.id === activeId) : clampedActive;
+    applyDaysOrder(newOrder, nextIdx >= 0 ? nextIdx : 0);
+    haptic('selection');
+  };
+
+  const removeDayAt = (removeIndex: number) => {
+    if (days.length <= 1) return;
+    const next = days.filter((_, position) => position !== removeIndex);
+    const nextActive =
+      clampedActive >= next.length
+        ? Math.max(0, next.length - 1)
+        : clampedActive > removeIndex
+          ? clampedActive - 1
+          : clampedActive;
+    applyDaysOrder(next, nextActive);
+    haptic('medium');
   };
 
   const updateDay = (index: number, patch: Partial<CarnetDayV2>) => {
@@ -758,8 +865,16 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           {daysMessage}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-day-tabs" data-hscroll>
-        <div
+      <div
+        ref={dayTabsWrapRef}
+        className={`lkdv-cv2c-day-tabs ${jiggleMode ? 'is-jiggle' : ''}`}
+        data-hscroll
+      >
+        <Reorder.Group
+          as="div"
+          axis="x"
+          values={days}
+          onReorder={handleReorderDays}
           className="lkdv-cv2c-day-tablist"
           role="tablist"
           aria-label="Jours du carnet"
@@ -767,24 +882,77 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
           onKeyDown={onTabsKeyDown}
         >
           {days.map((entry, index) => (
-            <button
+            <Reorder.Item
+              as="div"
               key={entry.id}
-              type="button"
-              role="tab"
-              id={dayTabId(entry.id)}
-              aria-selected={index === clampedActive}
-              aria-controls={DAY_PANEL_ID}
-              tabIndex={index === clampedActive ? 0 : -1}
-              className="lkdv-cv2c-day-tab"
-              data-cv2-day-drop={index}
-              data-drop={dropDay === index && drag !== null ? 'true' : undefined}
-              onClick={() => setActive(index)}
+              value={entry}
+              dragListener={jiggleMode}
+              style={{ position: 'relative', display: 'inline-flex' }}
+              animate={
+                jiggleMode
+                  ? {
+                      rotate: [0, -1.6, 1.6, -1.6, 1.6, 0],
+                      transition: { duration: 0.34, repeat: Infinity, ease: 'easeInOut' },
+                    }
+                  : { rotate: 0 }
+              }
+              whileDrag={{ scale: 1.08, zIndex: 20, boxShadow: '0 10px 24px rgba(0,0,0,0.22)' }}
             >
-              J{entry.dayNumber}
-            </button>
+              <button
+                type="button"
+                role="tab"
+                id={dayTabId(entry.id)}
+                aria-selected={index === clampedActive}
+                aria-controls={DAY_PANEL_ID}
+                tabIndex={index === clampedActive ? 0 : -1}
+                className="lkdv-cv2c-day-tab"
+                data-cv2-day-drop={index}
+                data-drop={dropDay === index && drag !== null ? 'true' : undefined}
+                onPointerDown={startLongPress}
+                onPointerMove={handlePointerMove}
+                onPointerUp={clearLongPress}
+                onPointerCancel={clearLongPress}
+                onContextMenu={(e) => {
+                  if (days.length > 1) e.preventDefault();
+                }}
+                onClick={() => {
+                  if (jiggleMode) return;
+                  setActive(index);
+                }}
+              >
+                J{entry.dayNumber}
+              </button>
+              {jiggleMode && days.length > 1 ? (
+                <button
+                  type="button"
+                  className="lkdv-photo-thumb-remove lkdv-photo-thumb-minus"
+                  aria-label={`Supprimer le jour ${entry.dayNumber}`}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeDayAt(index);
+                  }}
+                >
+                  <Minus size={11} strokeWidth={2.75} aria-hidden="true" />
+                </button>
+              ) : null}
+            </Reorder.Item>
           ))}
-        </div>
-        {days.length < 60 ? (
+        </Reorder.Group>
+        {jiggleMode ? (
+          <button
+            type="button"
+            className="lkdv-photo-jiggle-done"
+            onClick={() => {
+              setJiggleMode(false);
+              haptic('light');
+            }}
+            aria-label="Terminer la réorganisation des jours"
+            title="Terminer"
+          >
+            <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+          </button>
+        ) : days.length < 60 ? (
           <button type="button" className="lkdv-cv2c-day-tab-add" aria-label="Ajouter un jour" onClick={addDay}>
             +
           </button>
@@ -834,20 +1002,7 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
                   className="lkdv-cv2c-icon-btn lkdv-cv2c-moment-delete"
                   aria-label="Retirer ce jour"
                   title="Retirer ce jour"
-                  onClick={() => {
-                    const startDate = values.startDate ?? '';
-                    const next = days
-                      .filter((_, position) => position !== clampedActive)
-                      .map((entry, idx) => ({
-                        ...entry,
-                        dayNumber: idx + 1,
-                        date: startDate ? carnetDayDateV2(startDate, idx) : entry.date,
-                      }));
-                    setDays(next);
-                    setDayCount(next.length);
-                    setActive(Math.min(clampedActive, Math.max(0, next.length - 1)));
-                    haptic('selection');
-                  }}
+                  onClick={() => removeDayAt(clampedActive)}
                 >
                   <Trash2 size={14} aria-hidden="true" />
                 </button>

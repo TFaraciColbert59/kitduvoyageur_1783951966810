@@ -151,6 +151,40 @@ function clampRatio(ratio: number, dayCount: number): number {
   return Math.min(1, Math.max(0.05, ratio));
 }
 
+/**
+ * Calcule automatiquement l'heure de fin (`HH:MM`) à partir de l'heure de départ,
+ * de la durée estimée P50/P85 et d'une marge de sécurité cohérente (+15 % + 15 min
+ * de battement pauses/regroupement, arrondi au quart d'heure supérieur).
+ */
+export function computeAutoEndTimeWithMargin(
+  startTime: string | null | undefined,
+  estimate: SortiePerformanceEstimate,
+  nbJours = 1,
+): string | null {
+  if (!startTime || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(startTime)) return null;
+  if (!(estimate.durationHoursP50 > 0)) return null;
+  const [hh, mm] = startTime.split(':').map(Number);
+  const startMinutes = hh * 60 + mm;
+  const days = Math.max(1, Math.round(nbJours || 1));
+  const perDayList = estimate.factors.perDayHoursP50;
+  const baseHours =
+    days > 1
+      ? (perDayList[days - 1] ?? estimate.durationHoursP50 / days)
+      : estimate.durationHoursP50;
+  // Marge cohérente : borne haute P85 + 15 min (ou +15 % + 15 min sur étape multi-jours)
+  const hoursWithMargin =
+    days > 1
+      ? baseHours * 1.15 + 0.25
+      : Math.max(baseHours * 1.15 + 0.25, estimate.durationHoursP85 + 0.2);
+  const durationMinutes = Math.max(30, Math.ceil((hoursWithMargin * 60) / 15) * 15);
+  const rawEndMinutes = startMinutes + durationMinutes;
+  const clampedEndMinutes =
+    days <= 1 ? Math.min(23 * 60 + 45, rawEndMinutes) : rawEndMinutes % (24 * 60);
+  const endH = String(Math.floor(clampedEndMinutes / 60)).padStart(2, '0');
+  const endM = String(clampedEndMinutes % 60).padStart(2, '0');
+  return `${endH}:${endM}`;
+}
+
 function buildTicket(values: SortieFormValuesV2, user: User | null): EventCardVM {
   const startsAt = toStartsAt(values.date, values.startTime);
   return {
@@ -991,8 +1025,9 @@ function SortieBody({
     ],
   );
 
-  // Applique automatiquement la durée estimée et la difficulté recommandée tant que
-  // l'utilisateur ne les a pas personnalisées manuellement.
+  // Applique automatiquement la durée estimée, l'heure de fin (avec marge cohérente)
+  // et la difficulté recommandée tant que l'utilisateur ne les a pas personnalisées manuellement.
+  const lastAutoEndTimeRef = React.useRef<string>('');
   useEffect(() => {
     const hasMetrics = (values.distanceKm ?? 0) > 0 || (values.elevationGainM ?? 0) > 0;
     if (!hasMetrics) return;
@@ -1012,14 +1047,32 @@ function SortieBody({
         });
       }
     }
+    const autoEnd = computeAutoEndTimeWithMargin(
+      values.startTime,
+      estimate,
+      values.nbJours || 1,
+    );
+    if (autoEnd) {
+      const currentEnd = (form.getValues('endTime') ?? '').trim();
+      if (!currentEnd || currentEnd === lastAutoEndTimeRef.current) {
+        lastAutoEndTimeRef.current = autoEnd;
+        if (currentEnd !== autoEnd) {
+          form.setValue('endTime', autoEnd, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+      }
+    }
   }, [
     customDuration,
     customLevel,
-    estimate.formattedDuration,
-    estimate.recommendedLevel,
+    estimate,
     form,
     values.distanceKm,
     values.elevationGainM,
+    values.nbJours,
+    values.startTime,
   ]);
 
   const reapplyAuto = useCallback(() => {
@@ -1037,7 +1090,19 @@ function SortieBody({
         shouldValidate: true,
       });
     }
-  }, [estimate.formattedDuration, estimate.recommendedLevel, form]);
+    const autoEnd = computeAutoEndTimeWithMargin(
+      form.getValues('startTime'),
+      estimate,
+      form.getValues('nbJours') || 1,
+    );
+    if (autoEnd) {
+      lastAutoEndTimeRef.current = autoEnd;
+      form.setValue('endTime', autoEnd, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [estimate, form]);
 
   // Météo du billet (FID-052) : mêmes conditions que le formulaire, appel à la
   // route `/api/weather` existante, aucun nouvel accès réseau.

@@ -1,22 +1,35 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 
 export function useScrollCollapsePreview(active: boolean, disabled = false) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsedState] = useState(false);
+  const collapsedRef = useRef(false);
+  const lockUntilRef = useRef(0);
+  const lastTopRef = useRef(0);
+
+  const setCollapsed = useCallback((value: boolean | ((prev: boolean) => boolean)) => {
+    setCollapsedState((prev) => {
+      const next = typeof value === 'function' ? value(prev) : value;
+      if (next !== prev) {
+        collapsedRef.current = next;
+        lockUntilRef.current = Date.now() + 550;
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (disabled) {
-      setCollapsed(false);
+      collapsedRef.current = false;
+      setCollapsedState(false);
     }
   }, [disabled]);
 
   useEffect(() => {
     if (!active || disabled) return undefined;
-    let expandTimer: number | null = null;
-    let lockUntil = 0;
 
     const onScroll = (event: Event) => {
       const target = event.target as HTMLElement | null;
@@ -30,30 +43,48 @@ export function useScrollCollapsePreview(active: boolean, disabled = false) {
       }
       const now = Date.now();
       const top = target.scrollTop;
+      const prevTop = lastTopRef.current;
+      lastTopRef.current = top;
+
+      if (now < lockUntilRef.current) return;
+
       const overflow = target.scrollHeight - target.clientHeight;
-      if (top > 20 && overflow > 48) {
-        if (expandTimer !== null) {
-          window.clearTimeout(expandTimer);
-          expandTimer = null;
-        }
-        setCollapsed((prev) => {
-          if (!prev) lockUntil = now + 650;
-          return true;
-        });
-      } else if (top <= 4 && now >= lockUntil) {
-        if (expandTimer === null) {
-          expandTimer = window.setTimeout(() => {
-            expandTimer = null;
-            setCollapsed(false);
-          }, 200);
-        }
+      if (!collapsedRef.current && top > 24 && top >= prevTop && overflow > 24) {
+        collapsedRef.current = true;
+        lockUntilRef.current = now + 700;
+        setCollapsedState(true);
+      } else if (collapsedRef.current && top <= 1 && prevTop > 6 && top < prevTop) {
+        collapsedRef.current = false;
+        lockUntilRef.current = now + 500;
+        setCollapsedState(false);
+      }
+    };
+
+    const onPreviewVerticalDrag = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ dy?: number; totalDy?: number; scrollTop?: number }>
+      ).detail;
+      if (!detail) return;
+      const now = Date.now();
+      if (now < lockUntilRef.current) return;
+      const totalDy = detail.totalDy ?? 0;
+      const scrollTop = detail.scrollTop ?? 0;
+      if (!collapsedRef.current && totalDy > 24) {
+        collapsedRef.current = true;
+        lockUntilRef.current = now + 650;
+        setCollapsedState(true);
+      } else if (collapsedRef.current && totalDy < -28 && scrollTop <= 2) {
+        collapsedRef.current = false;
+        lockUntilRef.current = now + 500;
+        setCollapsedState(false);
       }
     };
 
     document.addEventListener('scroll', onScroll, true);
+    document.addEventListener('lkdv-preview-vertical-drag', onPreviewVerticalDrag);
     return () => {
       document.removeEventListener('scroll', onScroll, true);
-      if (expandTimer !== null) window.clearTimeout(expandTimer);
+      document.removeEventListener('lkdv-preview-vertical-drag', onPreviewVerticalDrag);
     };
   }, [active, disabled]);
 
@@ -74,8 +105,8 @@ export interface CollapsibleHeroPreviewProps {
 }
 
 const SMOOTH_TRANSITION = {
-  duration: 0.82,
-  ease: [0.22, 0.61, 0.36, 1] as const,
+  duration: 0.28,
+  ease: [0.22, 1, 0.36, 1] as const,
 };
 
 export function CollapsibleHeroPreview({

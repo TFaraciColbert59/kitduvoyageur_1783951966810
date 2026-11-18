@@ -44,6 +44,7 @@ import { deleteMediaObjectsV2, uploadMediaV2, uploadedObjectsOf } from '../field
 import { SheetPreview } from '../../shared/SheetPreview';
 import type { CreateFormV2Props } from './types';
 import { PostHeroPreview } from '../photo/PostHeroPreview';
+import { useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
 import { PhotoThumbnailStrip } from '../photo/PhotoThumbnailStrip';
 import { PhotoEditorCard } from '../photo/PhotoEditorCard';
 import {
@@ -913,55 +914,11 @@ export function PostFormV2({ active, prefill, prefillNonce, onNavChange, stepHos
   const defaults = useRef(createDefaultsV2('post')).current;
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<PhotoEditorCategory | null>(null);
-  const [previewCollapsed, setPreviewCollapsed] = useState(false);
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(
+    active,
+    activeCategory !== null,
+  );
   const savedModifiersRef = useRef<Record<string, PhotoModifiersV2>>({});
-
-  useEffect(() => {
-    if (activeCategory !== null) {
-      setPreviewCollapsed(false);
-    }
-  }, [activeCategory]);
-
-  useEffect(() => {
-    if (!active || activeCategory !== null) return undefined;
-    let expandTimer: number | null = null;
-    let lockUntil = 0;
-    const onScroll = (event: Event) => {
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      if (
-        !target.classList?.contains('lkdv-cv2-pane') &&
-        !target.classList?.contains('lkdv-lens-pane')
-      ) {
-        return;
-      }
-      const now = Date.now();
-      const top = target.scrollTop;
-      const overflow = target.scrollHeight - target.clientHeight;
-      if (top > 28 && overflow > 120) {
-        if (expandTimer !== null) {
-          window.clearTimeout(expandTimer);
-          expandTimer = null;
-        }
-        setPreviewCollapsed((prev) => {
-          if (!prev) lockUntil = now + 650;
-          return true;
-        });
-      } else if (top <= 4 && now >= lockUntil) {
-        if (expandTimer === null) {
-          expandTimer = window.setTimeout(() => {
-            expandTimer = null;
-            setPreviewCollapsed(false);
-          }, 200);
-        }
-      }
-    };
-    document.addEventListener('scroll', onScroll, true);
-    return () => {
-      document.removeEventListener('scroll', onScroll, true);
-      if (expandTimer !== null) window.clearTimeout(expandTimer);
-    };
-  }, [active, activeCategory]);
 
   return (
     <CreateFormEngineV2<PostFormValuesV2>

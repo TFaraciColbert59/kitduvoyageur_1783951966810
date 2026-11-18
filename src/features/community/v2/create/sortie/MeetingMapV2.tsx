@@ -59,6 +59,30 @@ export function MeetingMapV2({
   });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [mapFocused, setMapFocused] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!mapFocused) return;
+    const onOutsideTouch = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setMapFocused(false);
+      }
+    };
+    document.addEventListener('pointerdown', onOutsideTouch, true);
+    return () => document.removeEventListener('pointerdown', onOutsideTouch, true);
+  }, [mapFocused]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (mapFocused) {
+      applySmoothMapPhysics(map, { lockRotation: true });
+    } else {
+      map.dragPan?.disable?.();
+      map.touchZoomRotate?.disable?.();
+    }
+  }, [mapFocused, ready]);
 
   const resolveAddress = useCallback(async (nextLat: number, nextLng: number) => {
     const cb = onResolveAddressRef.current;
@@ -173,6 +197,8 @@ export function MeetingMapV2({
         markerRef.current = marker;
       }
       commitPosition(nextLat, nextLng);
+      setMapFocused(true);
+      wrapRef.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
     });
     return () => {
       window.clearTimeout(resizeTimer);
@@ -207,13 +233,12 @@ export function MeetingMapV2({
 
   const hasPoint = lat != null && lng != null;
   return (
-    <div className="lkdv-cv2c-meeting-map">
+    <div ref={wrapRef} className="lkdv-cv2c-meeting-map">
       <div
-        className="lkdv-cv2c-map"
-        style={{ height, touchAction: 'none' }}
+        className={`lkdv-cv2c-map ${mapFocused ? 'is-focused' : 'is-scroll-passthrough'}`}
+        style={{ height, touchAction: mapFocused ? 'none' : 'pan-y' }}
         data-hscroll=""
-        data-no-swipe=""
-        data-vaul-no-drag=""
+        {...(mapFocused ? { 'data-no-swipe': '', 'data-vaul-no-drag': '' } : {})}
         data-testid="cv2-meeting-map"
         role="group"
         aria-label={label}
@@ -223,9 +248,8 @@ export function MeetingMapV2({
           className="lkdv-cv2c-map-canvas"
           aria-hidden="true"
           data-hscroll=""
-          data-no-swipe=""
-          data-vaul-no-drag=""
-          style={{ touchAction: 'none' }}
+          {...(mapFocused ? { 'data-no-swipe': '', 'data-vaul-no-drag': '' } : {})}
+          style={{ touchAction: mapFocused ? 'none' : 'pan-y' }}
         />
         {!ready && !failed ? (
           <span className="lkdv-cv2c-map-status">

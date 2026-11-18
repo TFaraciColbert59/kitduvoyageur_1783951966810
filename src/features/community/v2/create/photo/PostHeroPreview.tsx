@@ -91,8 +91,8 @@ export function PostHeroPreview({
     : null;
 
   const smoothTransition = {
-    duration: 0.82,
-    ease: [0.22, 0.61, 0.36, 1] as const,
+    duration: 0.28,
+    ease: [0.22, 1, 0.36, 1] as const,
   };
 
   return (

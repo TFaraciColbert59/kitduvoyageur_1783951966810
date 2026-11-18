@@ -155,6 +155,7 @@ interface AttemptProfile {
   readonly valhallaOptions?: Readonly<Record<string, unknown>>;
   readonly fallbackOnRefusal: boolean;
   readonly toleranceM?: number;
+  readonly snapRadiusM?: number;
 }
 
 function profileForMode(mode: TravelMode, snap = false): AttemptProfile {
@@ -162,8 +163,19 @@ function profileForMode(mode: TravelMode, snap = false): AttemptProfile {
     key: snap ? `${mode}:snap` : mode,
     geoapifyMode: GEOAPIFY_MODE[mode],
     valhallaCosting: VALHALLA_COSTING[mode],
+    ...(snap && mode === 'pieton'
+      ? {
+          valhallaOptions: {
+            use_tracks: 1,
+            use_hills: 0.5,
+            walkway_factor: 0.9,
+            step_penalty: 15,
+            max_hiking_difficulty: 6,
+          },
+        }
+      : {}),
     fallbackOnRefusal: snap,
-    ...(snap ? { toleranceM: SNAP_ARRIVAL_TOLERANCE_M } : {}),
+    ...(snap ? { toleranceM: SNAP_ARRIVAL_TOLERANCE_M, snapRadiusM: 800 } : {}),
   };
 }
 
@@ -391,7 +403,7 @@ async function readRouteCache(
 ): Promise<RouteAttempt | undefined> {
   const memoire = readCache(key) as RouteAttempt | undefined;
   if (memoire !== undefined) return memoire;
-  if (endpoint === null) return undefined;
+  if (endpoint === null || key.includes(':snap:')) return undefined;
 
   const persistee = await readRouteCacheRemote(endpoint, key, sign?.(key) || undefined);
   if (persistee !== undefined) {
@@ -433,7 +445,7 @@ async function writeRouteCache(
   // Seul le serveur, qui vient de mesurer, écrit en base : la route refuse une
   // écriture non signée (audit du 8 octobre : écriture ouverte à tous). Le
   // navigateur garde sa mesure en mémoire et lit toujours la base.
-  if (endpoint === null || !sign) return;
+  if (endpoint === null || !sign || key.includes(':snap:')) return;
   const signature = sign(key);
   if (!signature) return;
   await writeRouteCacheRemote(endpoint, key, mode, value, signature);
@@ -711,7 +723,10 @@ export function normalizeValhallaRouteDetailed(
     const seconds = finite(summary?.time);
     const km = finite(summary?.length);
     if (seconds === null || km === null) return { legs: null, reason: 'provider_unavailable' };
-    if (!(seconds > 0) || km < 0) return { legs: null, reason: 'provider_unavailable' };
+    const allowZeroSeconds = toleranceM > ARRIVAL_TOLERANCE_M;
+    if ((allowZeroSeconds ? seconds < 0 : !(seconds > 0)) || km < 0) {
+      return { legs: null, reason: 'provider_unavailable' };
+    }
     const geometry = decodeValhallaShape(entry?.shape);
     if (geometry.length < 2) return { legs: null, reason: 'provider_unavailable' };
     const from = points[index];
@@ -930,7 +945,11 @@ async function callProvider(
 function valhallaUrl(key: string, profile: AttemptProfile): string {
   const locations = key.split(';').map((pair) => {
     const [lonText, latText] = pair.split(',');
-    return { lon: Number(lonText), lat: Number(latText) };
+    return {
+      lon: Number(lonText),
+      lat: Number(latText),
+      ...(profile.snapRadiusM ? { radius: profile.snapRadiusM } : {}),
+    };
   });
   const body: Record<string, unknown> = {
     locations,

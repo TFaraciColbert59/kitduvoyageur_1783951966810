@@ -10,11 +10,13 @@ import {
 } from '@/components/map/engine/createMapStyle';
 import {
   ArrowLeftRight,
+  Check,
   Download,
   Loader2,
   Magnet,
   Maximize2,
   Minimize2,
+  Minus,
   Move,
   Navigation,
   Pencil,
@@ -27,6 +29,7 @@ import {
   Undo2,
   Upload,
 } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import { toast } from 'sonner';
 import { useFormContext } from 'react-hook-form';
 import {
@@ -55,22 +58,22 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import type { CarnetFormValuesV2 } from '../engine/createSchemasV2';
+import type { CarnetDayV2, CarnetFormValuesV2 } from '../engine/createSchemasV2';
 import { parseGeoJsonTrace, readTraceFile } from './gpx';
-import { syncCarnetDaysV2 } from './daySync';
+import { carnetDayDateV2, carnetEndDateForDaysV2, syncCarnetDaysV2 } from './daySync';
 import { dayTraceColor } from './dayTraceColors';
 
 const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
 const MAX_POINTS = 2000;
 const SAMPLE_PX = 5;
-const CHUNK_PX = 115;
 const WAYPOINT_PX = 14;
 const ROUTE_MAX_POINTS = 8;
-const MIN_ROUTE_M = 15;
-const MAX_DETOUR = 5.5;
-const ROUTE_TIMEOUT_MS = 7500;
+const MIN_ROUTE_M = 12;
+const MAX_DETOUR = 9.0;
+const ROUTE_ATTEMPT_TIMEOUT_MS = 4500;
 const TAP_MAX_PX = 8;
 const ANCHOR_SNAP_PX = 48;
+const DAY_LONG_PRESS_MS = 380;
 
 export interface TraceSegmentV2 {
   id: string;
@@ -264,8 +267,156 @@ export function TracePaneV2({
   const [sessions, setSessions] = useState<SessionOption[] | null>(null);
   const [sessionSearch, setSessionSearch] = useState('');
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [mapFocused, setMapFocused] = useState(false);
+  const [liveDraftKm, setLiveDraftKm] = useState(0);
+  const [dayJiggleMode, setDayJiggleMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const traceRootRef = useRef<HTMLDivElement | null>(null);
+  const mapWrapRef = useRef<HTMLDivElement | null>(null);
+  const dayTabsRef = useRef<HTMLDivElement | null>(null);
+  const dayLongPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dayPointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const { haptic } = useHapticFeedback();
+
+  const centerAndLockMap = useCallback(() => {
+    setMapFocused(true);
+    const targetEl = mapWrapRef.current ?? containerRef.current;
+    if (!targetEl || typeof targetEl.scrollIntoView !== 'function') return;
+    const reduced =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try {
+      targetEl.scrollIntoView({
+        block: 'center',
+        behavior: reduced ? 'auto' : 'smooth',
+      });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const clearDayLongPress = useCallback(() => {
+    if (dayLongPressRef.current) {
+      clearTimeout(dayLongPressRef.current);
+      dayLongPressRef.current = null;
+    }
+    dayPointerStartRef.current = null;
+  }, []);
+
+  const startDayLongPress = useCallback(
+    (e: React.PointerEvent) => {
+      if (ensuredDays.length <= 1) return;
+      clearDayLongPress();
+      dayPointerStartRef.current = { x: e.clientX, y: e.clientY };
+      dayLongPressRef.current = setTimeout(() => {
+        setDayJiggleMode(true);
+        haptic('medium');
+        dayLongPressRef.current = null;
+      }, DAY_LONG_PRESS_MS);
+    },
+    [clearDayLongPress, ensuredDays.length, haptic],
+  );
+
+  const handleDayPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dayPointerStartRef.current || !dayLongPressRef.current) return;
+      const dx = Math.abs(e.clientX - dayPointerStartRef.current.x);
+      const dy = Math.abs(e.clientY - dayPointerStartRef.current.y);
+      if (dx > 8 || dy > 8) {
+        clearDayLongPress();
+      }
+    },
+    [clearDayLongPress],
+  );
+
+  useEffect(() => {
+    if (!dayJiggleMode) return;
+    const onOutsidePointer = (e: PointerEvent) => {
+      if (dayTabsRef.current && !dayTabsRef.current.contains(e.target as Node)) {
+        setDayJiggleMode(false);
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointer, true);
+    return () => document.removeEventListener('pointerdown', onOutsidePointer, true);
+  }, [dayJiggleMode]);
+
+  useEffect(() => {
+    if (ensuredDays.length <= 1 && dayJiggleMode) {
+      setDayJiggleMode(false);
+    }
+  }, [dayJiggleMode, ensuredDays.length]);
+
+  // Sortie du focus carte dès qu'on touche à côté du bloc carte
+  useEffect(() => {
+    if (!mapFocused && !drawing && !editing) return;
+    const onOutsideMapTouch = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (traceRootRef.current && !traceRootRef.current.contains(target)) {
+        setMapFocused(false);
+        setDrawing(false);
+        setEditing(false);
+      }
+    };
+    document.addEventListener('pointerdown', onOutsideMapTouch, true);
+    return () => document.removeEventListener('pointerdown', onOutsideMapTouch, true);
+  }, [drawing, editing, mapFocused]);
+
+  const applyOrderedDays = useCallback(
+    (nextRawDays: CarnetDayV2[], nextSelectedIdx: number) => {
+      const renumbered = nextRawDays.map((d, i) => ({
+        ...d,
+        dayNumber: i + 1,
+        date: carnetDayDateV2(startDate, i),
+      }));
+      const nextCount = Math.max(1, renumbered.length);
+      form.setValue('nbJours', nextCount, { shouldDirty: true, shouldValidate: true });
+      form.setValue('days', renumbered, { shouldDirty: true, shouldValidate: true });
+      if (startDate) {
+        form.setValue('endDate', carnetEndDateForDaysV2(startDate, nextCount), {
+          shouldDirty: true,
+        });
+      }
+      const dayTraces = renumbered
+        .map((d) => (d.trace ?? []) as LngLat[])
+        .filter((pts) => pts.length >= 2);
+      if (dayTraces.length > 0) {
+        const combined = joinSegments(dayTraces, MAX_POINTS);
+        form.setValue('trace', combined, { shouldDirty: true, shouldValidate: true });
+      }
+      setSelectedDayIndex(nextSelectedIdx);
+    },
+    [form, startDate],
+  );
+
+  const handleReorderDays = useCallback(
+    (newOrder: CarnetDayV2[]) => {
+      const activeId = selectedDayIndex >= 0 ? ensuredDays[selectedDayIndex]?.id : null;
+      const nextIdx = activeId ? newOrder.findIndex((d) => d.id === activeId) : -1;
+      applyOrderedDays(newOrder, nextIdx);
+      haptic('selection');
+    },
+    [applyOrderedDays, ensuredDays, haptic, selectedDayIndex],
+  );
+
+  const removeDayAt = useCallback(
+    (removeIdx: number) => {
+      if (ensuredDays.length <= 1) return;
+      const filtered = ensuredDays.filter((_, idx) => idx !== removeIdx);
+      const nextSelected =
+        selectedDayIndex === -1
+          ? -1
+          : selectedDayIndex >= filtered.length
+            ? filtered.length - 1
+            : selectedDayIndex > removeIdx
+              ? selectedDayIndex - 1
+              : selectedDayIndex;
+      applyOrderedDays(filtered, nextSelected);
+      haptic('medium');
+    },
+    [applyOrderedDays, ensuredDays, haptic, selectedDayIndex],
+  );
 
   const fitTraceBounds = useCallback((points: readonly LngLat[]) => {
     const map = mapRef.current;
@@ -650,57 +801,64 @@ export function TracePaneV2({
 
   /** Interroge `/api/route` pour une liste de points de passage et vérifie la cohérence du détour. */
   const requestSnappedWaypoints = useCallback(
-    async (waypoints: readonly LngLat[], signal: AbortSignal): Promise<LngLat[] | null> => {
-      if (waypoints.length < 2) return null;
-      const from = waypoints[0];
-      const to = waypoints[waypoints.length - 1];
-      const encoded = waypoints.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
-      const res = await fetch(`/api/route?points=${encodeURIComponent(encoded)}&mode=pieton&snap=1`, {
-        signal,
-      });
-      if (!res.ok) return null;
-      const payload = (await res.json()) as {
-        geometry?: LngLat[];
-        legs?: Array<{ geometry?: LngLat[] }>;
-      };
-      const rawCoords: LngLat[] = Array.isArray(payload.geometry)
-        ? payload.geometry
-        : Array.isArray(payload.legs)
-          ? payload.legs.flatMap((leg) => (Array.isArray(leg.geometry) ? leg.geometry : []))
-          : [];
-      const cleaned = removeSpurs(rawCoords);
-      if (cleaned.length < 2) return null;
-      const airKm = Math.max(0.02, lengthKm(waypoints));
-      const routedKm = lengthKm(cleaned);
-      const startDriftKm = haversineKm(from, cleaned[0]);
-      const endDriftKm = haversineKm(to, cleaned[cleaned.length - 1]);
-      const maxSnapDriftKm = Math.max(2.5, airKm * 1.4);
-      if (
-        routedKm / airKm <= MAX_DETOUR &&
-        startDriftKm <= maxSnapDriftKm &&
-        endDriftKm <= maxSnapDriftKm
-      ) {
-        return cleaned;
+    async (waypoints: readonly LngLat[], parentSignal?: AbortSignal): Promise<LngLat[] | null> => {
+      if (waypoints.length < 2 || parentSignal?.aborted) return null;
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), ROUTE_ATTEMPT_TIMEOUT_MS);
+      const onParentAbort = () => controller.abort();
+      parentSignal?.addEventListener('abort', onParentAbort, { once: true });
+      try {
+        const from = waypoints[0];
+        const to = waypoints[waypoints.length - 1];
+        const encoded = waypoints.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)}`).join(';');
+        const res = await fetch(`/api/route?points=${encodeURIComponent(encoded)}&mode=pieton&snap=1`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return null;
+        const payload = (await res.json()) as {
+          geometry?: LngLat[];
+          legs?: Array<{ geometry?: LngLat[] }>;
+        };
+        const rawCoords: LngLat[] = Array.isArray(payload.geometry)
+          ? payload.geometry
+          : Array.isArray(payload.legs)
+            ? payload.legs.flatMap((leg) => (Array.isArray(leg.geometry) ? leg.geometry : []))
+            : [];
+        const cleaned = removeSpurs(rawCoords);
+        if (cleaned.length < 2) return null;
+        const airKm = Math.max(0.015, lengthKm(waypoints));
+        const routedKm = lengthKm(cleaned);
+        const startDriftKm = haversineKm(from, cleaned[0]);
+        const endDriftKm = haversineKm(to, cleaned[cleaned.length - 1]);
+        const maxSnapDriftKm = Math.max(3.0, airKm * 1.6);
+        if (
+          routedKm / airKm <= MAX_DETOUR &&
+          startDriftKm <= maxSnapDriftKm &&
+          endDriftKm <= maxSnapDriftKm
+        ) {
+          return cleaned;
+        }
+        return null;
+      } catch {
+        return null;
+      } finally {
+        window.clearTimeout(timer);
+        parentSignal?.removeEventListener('abort', onParentAbort);
       }
-      return null;
     },
     [],
   );
 
   /**
-   * Routage multi-étapes résilient :
-   * 1. Tente avec les points de passage clés simplifiés au zoom courant ;
-   * 2. Si un point intermédiaire du doigt est tombé hors sentier (virage coupé, pente),
-   *    retente avec [départ, milieu, arrivée] puis [départ, arrivée] pour garantir
-   *    l'accrochage au réseau routier/sentier dès que les extrémités sont proches d'un chemin.
+   * Routage multi-étapes résilient (4 niveaux avec timeout indépendant par tentative) :
+   * 1. Points de passage clés simplifiés au zoom courant ;
+   * 2. [départ, milieu, arrivée] ;
+   * 3. [départ, arrivée] direct sur le réseau routier/sentiers ;
+   * 4. Sous-segments par paires si le tracé comporte un virage complexe.
    */
   const fetchSnappedRoute = useCallback(
     async (chunk: readonly LngLat[], signal?: AbortSignal): Promise<LngLat[] | null> => {
       if (chunk.length < 2) return null;
-      const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS);
-      const onExternalAbort = () => controller.abort();
-      signal?.addEventListener('abort', onExternalAbort, { once: true });
       try {
         const tol = pixelTolerance(WAYPOINT_PX);
         const rawWaypoints = pickWaypoints(chunk, ROUTE_MAX_POINTS, tol);
@@ -708,31 +866,41 @@ export function TracePaneV2({
           rawWaypoints.length >= 2 ? rawWaypoints : [chunk[0], chunk[chunk.length - 1]],
           32,
         );
-        const primary = await requestSnappedWaypoints(waypoints, controller.signal);
+        const primary = await requestSnappedWaypoints(waypoints, signal);
         if (primary) return primary;
 
-        if (!controller.signal.aborted && waypoints.length > 3 && chunk.length >= 3) {
+        if (!signal?.aborted && chunk.length >= 3) {
           const mid = chunk[Math.floor(chunk.length / 2)];
-          const threePts = filterSpacedWaypoints([chunk[0], mid, chunk[chunk.length - 1]], 32);
+          const threePts = filterSpacedWaypoints([chunk[0], mid, chunk[chunk.length - 1]], 28);
           if (threePts.length === 3) {
-            const viaMid = await requestSnappedWaypoints(threePts, controller.signal);
+            const viaMid = await requestSnappedWaypoints(threePts, signal);
             if (viaMid) return viaMid;
           }
         }
 
-        if (!controller.signal.aborted && waypoints.length > 2) {
+        if (!signal?.aborted) {
           const direct = await requestSnappedWaypoints(
             [chunk[0], chunk[chunk.length - 1]],
-            controller.signal,
+            signal,
           );
           if (direct) return direct;
+        }
+
+        if (!signal?.aborted && chunk.length >= 4) {
+          const mid = chunk[Math.floor(chunk.length / 2)];
+          const [legA, legB] = await Promise.all([
+            requestSnappedWaypoints([chunk[0], mid], signal),
+            requestSnappedWaypoints([mid, chunk[chunk.length - 1]], signal),
+          ]);
+          if (legA && legB) {
+            return joinLines(legA, legB, 2);
+          }
+          if (legA) return joinLines(legA, [mid, chunk[chunk.length - 1]], 2);
+          if (legB) return joinLines([chunk[0], mid], legB, 2);
         }
         return null;
       } catch {
         return null;
-      } finally {
-        window.clearTimeout(timer);
-        signal?.removeEventListener('abort', onExternalAbort);
       }
     },
     [filterSpacedWaypoints, pixelTolerance, requestSnappedWaypoints],
@@ -1103,16 +1271,18 @@ export function TracePaneV2({
     liveFrameRef.current = requestAnimationFrame(() => {
       liveFrameRef.current = null;
       const source = mapRef.current?.getSource('cv2c-carnet-draft') as GeoJSONSource | undefined;
-      if (!source) return;
       const stroke = drawRef.current;
       if (!stroke) {
-        source.setData(EMPTY_FC as never);
+        source?.setData(EMPTY_FC as never);
+        setLiveDraftKm(0);
         return;
       }
       const tail = stroke.snapped[stroke.snapped.length - 1];
       const pending = tail ? [tail, ...stroke.raw.slice(stroke.pendingFrom)] : stroke.raw;
       const previewPts =
         stroke.snapped.length >= 2 ? joinLines(stroke.snapped, pending, 1) : pending;
+      setLiveDraftKm(previewPts.length >= 2 ? lengthKm(previewPts) : 0);
+      if (!source) return;
       const feat = lineFeature(previewPts);
       source.setData({
         type: 'FeatureCollection',
@@ -1121,11 +1291,71 @@ export function TracePaneV2({
     });
   }, []);
 
-  const finalizeStrokeCommit = useCallback(
-    (stroke: StrokeState) => {
-      if (drawRef.current !== stroke) return;
+  const snapTronconToRoads = useCallback(
+    async (segId: string, gesturePoints: readonly LngLat[], targetKey: string) => {
+      setSnapState('loading');
+      const snapped = await fetchSnappedRoute(gesturePoints);
+      const currentTargetKey = selectedDayIndex >= 0 ? `day-${selectedDayIndex}` : 'global';
+      const existingList =
+        currentTargetKey === targetKey
+          ? tronconsRef.current
+          : (tronconsByTargetRef.current[targetKey] ?? []);
+      const hasSeg = existingList.some((item) => item.id === segId);
+      if (!hasSeg) {
+        setSnapState('idle');
+        return;
+      }
+      if (snapped && snapped.length >= 2) {
+        const updated = existingList.map((item) =>
+          item.id === segId ? { ...item, points: snapped, mode: 'chemin' as const } : item,
+        );
+        tronconsByTargetRef.current[targetKey] = updated;
+        if (currentTargetKey === targetKey) {
+          commitTroncons(updated);
+        }
+        setSnapState('idle');
+      } else {
+        const updated = existingList.map((item) =>
+          item.id === segId ? { ...item, mode: 'libre' as const } : item,
+        );
+        tronconsByTargetRef.current[targetKey] = updated;
+        if (currentTargetKey === targetKey) {
+          commitTroncons(updated);
+        }
+        setSnapState('error');
+      }
+    },
+    [commitTroncons, fetchSnappedRoute, selectedDayIndex],
+  );
+
+  const cancelStroke = useCallback(() => {
+    const stroke = drawRef.current;
+    if (!stroke) return;
+    stroke.inFlight?.abort();
+    drawRef.current = null;
+    setLiveDraftKm(0);
+    renderDraftLive();
+    setSnapState('idle');
+  }, [renderDraftLive]);
+
+  const finishStroke = useCallback(
+    (pointerId?: number) => {
+      const stroke = drawRef.current;
+      if (!stroke || stroke.ended) return;
+      if (pointerId != null && stroke.pointerId !== pointerId) return;
+      stroke.ended = true;
       drawRef.current = null;
+      setLiveDraftKm(0);
       renderDraftLive();
+
+      const existingEnd = traceRef.current[traceRef.current.length - 1];
+      // Si l'utilisateur fait un simple tap (< 8 px) alors qu'un tracé existe déjà,
+      // on relie automatiquement la fin du tracé existant à ce nouveau point de passage !
+      if (stroke.totalPx <= TAP_MAX_PX && existingEnd && !stroke.anchored) {
+        stroke.anchored = true;
+        stroke.snapped = [existingEnd];
+        stroke.pendingFrom = 0;
+      }
 
       // Cas 1 : simple appui/tap sans tracé existant -> pose le point de départ sur la carte
       if (!stroke.anchored && stroke.raw.length === 1 && traceRef.current.length === 0) {
@@ -1136,131 +1366,53 @@ export function TracePaneV2({
         return;
       }
 
-      const tol = pixelTolerance(4);
-      const rawPoints =
-        stroke.snapped.length >= 2
-          ? stroke.snapped
-          : simplify(smooth(stroke.raw, 2), tol);
-      if (rawPoints.length < 2) {
+      const anchorPt = stroke.anchored ? stroke.snapped[0] : null;
+      const gesturePoints: LngLat[] =
+        anchorPt && stroke.raw.length > 0 ? [anchorPt, ...stroke.raw] : [...stroke.raw];
+      if (gesturePoints.length < 2) {
         setSnapState('idle');
         return;
       }
-      const mode: 'chemin' | 'libre' =
-        stroke.routedChunks > 0 || (stroke.magnet && !stroke.free) ? 'chemin' : 'libre';
+
+      const tol = pixelTolerance(3);
+      const initialPoints =
+        gesturePoints.length > 2 ? simplify(smooth(gesturePoints, 2), tol) : gesturePoints;
+      const safeInitial = initialPoints.length >= 2 ? initialPoints : gesturePoints;
+      const segId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `seg-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const shouldSnap = stroke.magnet && lengthKm(gesturePoints) * 1000 >= MIN_ROUTE_M;
       const nextSeg: TraceSegmentV2 = {
-        id:
-          typeof crypto !== 'undefined' && 'randomUUID' in crypto
-            ? crypto.randomUUID()
-            : `seg-${Date.now()}`,
-        points: rawPoints,
-        mode,
+        id: segId,
+        points: safeInitial,
+        mode: shouldSnap ? 'chemin' : 'libre',
       };
-      // Si le premier point était un simple point de départ unique, on le remplace par ce premier vrai tronçon
       const baseTroncons =
         tronconsRef.current.length === 1 && tronconsRef.current[0].points.length < 2
           ? []
           : tronconsRef.current;
       const nextTroncons = [...baseTroncons, nextSeg];
+      const targetKey = selectedDayIndex >= 0 ? `day-${selectedDayIndex}` : 'global';
+      // Validation immédiate (0 ms) pour afficher la trace et la distance sans jamais bloquer le coup de crayon suivant
       commitTroncons(nextTroncons);
-      setSnapState(stroke.magnet && stroke.free && stroke.routedChunks === 0 ? 'error' : 'idle');
       haptic('medium');
-      toast.success(
-        mode === 'chemin'
-          ? `Tronçon ${nextTroncons.length} accroché aux routes et sentiers`
-          : `Tronçon ${nextTroncons.length} libre ajouté`,
-      );
-    },
-    [commitTroncons, haptic, pixelTolerance, renderDraftLive, setTrace],
-  );
 
-  const flushChunk = useCallback(
-    async (stroke: StrokeState): Promise<void> => {
-      if (stroke.inFlight || drawRef.current !== stroke) return;
-      const end = stroke.raw.length;
-      const pending = stroke.raw.slice(stroke.pendingFrom, end);
-
-      if (pending.length > 0) {
-        const from = stroke.snapped[stroke.snapped.length - 1] ?? pending[0];
-        const chunk = [from, ...pending];
-        stroke.pendingPx = 0;
-        let piece: LngLat[] | null = null;
-        let routed = false;
-
-        if (stroke.magnet && lengthKm(chunk) * 1000 >= MIN_ROUTE_M) {
-          const controller = new AbortController();
-          stroke.inFlight = controller;
-          setSnapState('loading');
-          const geometry = await fetchSnappedRoute(chunk, controller.signal);
-          stroke.inFlight = null;
-          if (drawRef.current !== stroke) return;
-          if (geometry && geometry.length >= 2) {
-            piece = geometry;
-            routed = true;
-            stroke.routedChunks += 1;
-          } else {
-            stroke.free = true;
-          }
-        } else if (stroke.magnet && chunk.length >= 2) {
-          piece = chunk;
-        }
-
-        if (!piece) {
-          piece = simplify(smooth(chunk, 2), pixelTolerance(3));
-        }
-
-        if (piece.length >= 2) {
-          stroke.snapped =
-            routed && !stroke.anchored && stroke.snapped.length <= 1
-              ? piece
-              : stroke.snapped.length <= 1
-                ? piece
-                : joinLines(stroke.snapped, piece, 2);
-        }
-        stroke.pendingFrom = end;
-        renderDraftLive();
-        setSnapState(stroke.magnet && stroke.free && stroke.routedChunks === 0 ? 'error' : 'idle');
-      }
-
-      if (drawRef.current !== stroke) return;
-      if (stroke.raw.length > stroke.pendingFrom && (stroke.ended || stroke.pendingPx >= CHUNK_PX)) {
-        await flushChunk(stroke);
-        return;
-      }
-      if (stroke.ended) {
-        finalizeStrokeCommit(stroke);
+      if (shouldSnap) {
+        void snapTronconToRoads(segId, gesturePoints, targetKey);
+      } else {
+        setSnapState('idle');
       }
     },
-    [fetchSnappedRoute, finalizeStrokeCommit, pixelTolerance, renderDraftLive],
-  );
-
-  const cancelStroke = useCallback(() => {
-    const stroke = drawRef.current;
-    if (!stroke) return;
-    stroke.inFlight?.abort();
-    drawRef.current = null;
-    renderDraftLive();
-    setSnapState('idle');
-  }, [renderDraftLive]);
-
-  const finishStroke = useCallback(
-    (pointerId?: number) => {
-      const current = drawRef.current;
-      if (!current || current.ended) return;
-      if (pointerId != null && current.pointerId !== pointerId) return;
-      // Si l'utilisateur fait un simple tap (< 8 px) alors qu'un tracé existe déjà,
-      // on relie automatiquement la fin du tracé existant à ce nouveau point de passage !
-      const existingEnd = traceRef.current[traceRef.current.length - 1];
-      if (current.totalPx <= TAP_MAX_PX && existingEnd && !current.anchored) {
-        current.anchored = true;
-        current.snapped = [existingEnd];
-        current.pendingFrom = 0;
-      }
-      current.ended = true;
-      if (!current.inFlight) {
-        void flushChunk(current);
-      }
-    },
-    [flushChunk],
+    [
+      commitTroncons,
+      haptic,
+      pixelTolerance,
+      renderDraftLive,
+      selectedDayIndex,
+      setTrace,
+      snapTronconToRoads,
+    ],
   );
 
   useEffect(() => {
@@ -1312,7 +1464,9 @@ export function TracePaneV2({
       pinchRef.current = pinchState();
       return;
     }
-    if (drawRef.current) return;
+    if (drawRef.current) {
+      finishStroke(drawRef.current.pointerId);
+    }
     const rect = event.currentTarget.getBoundingClientRect();
     const px: [number, number] = [event.clientX - rect.left, event.clientY - rect.top];
     const point = mapRef.current.unproject(px);
@@ -1378,9 +1532,6 @@ export function TracePaneV2({
     current.totalPx += stepPx;
     current.lastPx = px;
     renderDraftLive();
-    if (current.magnet && !current.inFlight && current.pendingPx >= CHUNK_PX) {
-      void flushChunk(current);
-    }
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -1395,20 +1546,19 @@ export function TracePaneV2({
       } catch {
         /* capture optionnelle */
       }
-      // Si l'utilisateur fait un simple tap (< 8 px) alors qu'un tracé existe déjà,
-      // on relie automatiquement la fin du tracé existant à ce nouveau point de passage !
-      const existingEnd = traceRef.current[traceRef.current.length - 1];
-      if (current.totalPx <= TAP_MAX_PX && existingEnd && !current.anchored) {
-        current.anchored = true;
-        current.snapped = [existingEnd];
-        current.pendingFrom = 0;
-      }
       finishStroke(event.pointerId);
     }
   };
 
   const onMapWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (!drawing || !mapRef.current) return;
+    if (!mapRef.current) return;
+    // Tant que la carte n'est pas en mode dessin et qu'on fait un vrai coup de scroll vertical,
+    // on laisse le drawer défiler et on relâche le focus de la carte.
+    if (!drawing && !event.ctrlKey && Math.abs(event.deltaY) >= 24) {
+      if (mapFocused) setMapFocused(false);
+      return;
+    }
+    if (!drawing && !mapFocused) return;
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
     const nextZoom = Math.max(2, Math.min(18, mapRef.current.getZoom() - event.deltaY * 0.006));
@@ -1418,11 +1568,37 @@ export function TracePaneV2({
     });
   };
 
-  // Pendant le tracé, la carte ne capte pas le geste à un doigt : le doigt dessine.
+  // Bloque le scroll natif iOS du drawer uniquement quand le crayon ou le focus carte est actif.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const isLocked = drawing || editing || mapFocused;
+    if (!isLocked) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (drawing) {
+        e.preventDefault();
+      }
+      e.stopPropagation();
+    };
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => {
+      el.removeEventListener('touchmove', onTouchMove);
+    };
+  }, [drawing, editing, mapFocused]);
+
+  // Tant que le crayon ou un bouton de la carte n'est pas activé, on laisse le scroll du drawer
+  // traverser la carte. Dès qu'on active un bouton de la carte, la carte prend la main.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     if (drawing) {
+      map.dragPan?.disable?.();
+      map.dragRotate?.disable?.();
+      map.doubleClickZoom?.disable?.();
+      map.touchZoomRotate?.disable?.();
+      map.boxZoom?.disable?.();
+      map.touchPitch?.disable?.();
+    } else if (!mapFocused && !editing) {
       map.dragPan?.disable?.();
       map.dragRotate?.disable?.();
       map.doubleClickZoom?.disable?.();
@@ -1434,17 +1610,22 @@ export function TracePaneV2({
       map.boxZoom?.enable?.();
       applySmoothMapPhysics(map, { lockRotation: true });
     }
-  }, [drawing, ready]);
+  }, [drawing, editing, mapFocused, ready]);
 
   // ── Distance, dénivelé, profil ───────────────────────────────────────────
   const km = lengthKm(trace);
+  const displayKm = km + liveDraftKm;
   const fullCarnetTrace = globalTrace.length >= 2 ? globalTrace : trace;
   const totalKm = lengthKm(fullCarnetTrace);
   useEffect(() => {
     const maxKm = mode === 'sortie' ? 500 : 10_000;
     if (fullCarnetTrace.length >= 2) {
       hadTraceRef.current = true;
-      form.setValue('distanceKm', Math.min(maxKm, Math.round(totalKm * 10) / 10), {
+      const roundedKm =
+        totalKm > 0 && totalKm < 1
+          ? Math.max(0.05, Math.round(totalKm * 100) / 100)
+          : Math.round(totalKm * 10) / 10;
+      form.setValue('distanceKm', Math.min(maxKm, roundedKm), {
         shouldDirty: totalKm > 0,
       });
     } else if (hadTraceRef.current || mode === 'carnet') {
@@ -1625,8 +1806,16 @@ export function TracePaneV2({
       .join(' ');
   })();
 
+  const isMapInteractive = drawing || editing || mapFocused;
+  const formattedDistanceLabel =
+    displayKm > 0
+      ? displayKm < 1
+        ? `${Math.max(0.01, displayKm).toFixed(2).replace('.', ',')} km`
+        : `${displayKm.toFixed(1).replace('.', ',')} km`
+      : '—';
+
   return (
-    <div className="lkdv-cv2c-kit">
+    <div ref={traceRootRef} className="lkdv-cv2c-kit">
       {/* FID-051 — les **3 cartes de point de départ** de la maquette
           (HTML L2984-2987 : `Tracer sur la carte`, `Importer un GPX`,
           `Une sortie enregistrée`). Les commandes historiques (Tracer / GPX /
@@ -1645,14 +1834,7 @@ export function TracePaneV2({
               if (mapRef.current && mapRef.current.getZoom() < 11.5) {
                 mapRef.current.easeTo({ zoom: 13, duration: 340 });
               }
-              const reduced =
-                typeof window !== 'undefined' &&
-                typeof window.matchMedia === 'function' &&
-                window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-              containerRef.current?.scrollIntoView?.({
-                block: 'center',
-                behavior: reduced ? 'auto' : 'smooth',
-              });
+              centerAndLockMap();
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
@@ -1668,6 +1850,7 @@ export function TracePaneV2({
             onClick={() => {
               fileInputRef.current?.click();
               haptic('selection');
+              centerAndLockMap();
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
@@ -1683,6 +1866,7 @@ export function TracePaneV2({
             onClick={() => {
               void loadSessions();
               haptic('selection');
+              centerAndLockMap();
             }}
           >
             <span className="lkdv-cv2c-rcard-icon">
@@ -1695,16 +1879,23 @@ export function TracePaneV2({
         </div>
       </div>
 
-      {/* Sélecteur de tracé par jour (interconnecté avec l'étape 3 Jours/Moments) */}
-      <div className="lkdv-cv2c-day-tabs" role="tablist" aria-label="Choisir le tracé par jour">
+      {/* Sélecteur de tracé par jour (interconnecté avec l'étape 3 Jours/Moments + appui long iOS jiggle pour réordonner/supprimer) */}
+      <div
+        ref={dayTabsRef}
+        className={`lkdv-cv2c-day-tabs ${dayJiggleMode ? 'is-jiggle' : ''}`}
+        role="tablist"
+        aria-label="Choisir le tracé par jour"
+      >
         <button
           type="button"
           role="tab"
           aria-selected={selectedDayIndex === -1}
           className={`lkdv-cv2c-day-tab ${selectedDayIndex === -1 ? 'is-active' : ''}`}
           onClick={() => {
+            if (dayJiggleMode) setDayJiggleMode(false);
             setSelectedDayIndex(-1);
             haptic('selection');
+            centerAndLockMap();
             if (mapRef.current && globalTrace.length >= 2) {
               const lngs = globalTrace.map((p) => p[0]);
               const lats = globalTrace.map((p) => p[1]);
@@ -1720,54 +1911,114 @@ export function TracePaneV2({
         >
           Global
         </button>
-        {ensuredDays.map((day, idx) => {
-          const dPts = (day.trace ?? []) as LngLat[];
-          const dKm = lengthKm(dPts);
-          const color = dayTraceColor(idx);
-          const isActive = selectedDayIndex === idx;
-          return (
-            <button
-              key={day.id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              className={`lkdv-cv2c-day-tab ${isActive ? 'is-active' : ''}`}
-              style={
-                isActive
-                  ? {
-                      borderColor: color,
-                      background: `color-mix(in srgb, ${color} 12%, #ffffff)`,
-                      color: '#0f172a',
-                    }
-                  : undefined
-              }
-              onClick={() => {
-                setSelectedDayIndex(idx);
-                haptic('selection');
-                if (mapRef.current && dPts.length >= 2) {
-                  const lngs = dPts.map((p) => p[0]);
-                  const lats = dPts.map((p) => p[1]);
-                  mapRef.current.fitBounds(
-                    [
-                      [Math.min(...lngs), Math.min(...lats)],
-                      [Math.max(...lngs), Math.max(...lats)],
-                    ],
-                    { padding: 48, maxZoom: 14, duration: 360 },
-                  );
+        <Reorder.Group
+          as="div"
+          axis="x"
+          values={ensuredDays}
+          onReorder={handleReorderDays}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          {ensuredDays.map((day, idx) => {
+            const dPts = (day.trace ?? []) as LngLat[];
+            const dKm = lengthKm(dPts);
+            const color = dayTraceColor(idx);
+            const isActive = selectedDayIndex === idx;
+            return (
+              <Reorder.Item
+                as="div"
+                key={day.id}
+                value={day}
+                dragListener={dayJiggleMode}
+                style={{ position: 'relative', display: 'inline-flex' }}
+                animate={
+                  dayJiggleMode
+                    ? {
+                        rotate: [0, -1.6, 1.6, -1.6, 1.6, 0],
+                        transition: { duration: 0.34, repeat: Infinity, ease: 'easeInOut' },
+                      }
+                    : { rotate: 0 }
                 }
-              }}
-            >
-              <span
-                className="lkdv-cv2c-day-dot"
-                style={{ backgroundColor: color }}
-                aria-hidden="true"
-              />
-              J{idx + 1}
-              {dKm > 0.1 ? ` (${dKm.toFixed(1)} km)` : ''}
-            </button>
-          );
-        })}
-        {ensuredDays.length < (mode === 'sortie' ? 30 : 60) ? (
+                whileDrag={{ scale: 1.08, zIndex: 20, boxShadow: '0 10px 24px rgba(0,0,0,0.22)' }}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`lkdv-cv2c-day-tab ${isActive ? 'is-active' : ''}`}
+                  style={
+                    isActive
+                      ? {
+                          borderColor: color,
+                          background: `color-mix(in srgb, ${color} 12%, #ffffff)`,
+                          color: '#0f172a',
+                        }
+                      : undefined
+                  }
+                  onPointerDown={startDayLongPress}
+                  onPointerMove={handleDayPointerMove}
+                  onPointerUp={clearDayLongPress}
+                  onPointerCancel={clearDayLongPress}
+                  onContextMenu={(e) => {
+                    if (ensuredDays.length > 1) e.preventDefault();
+                  }}
+                  onClick={() => {
+                    if (dayJiggleMode) return;
+                    setSelectedDayIndex(idx);
+                    haptic('selection');
+                    centerAndLockMap();
+                    if (mapRef.current && dPts.length >= 2) {
+                      const lngs = dPts.map((p) => p[0]);
+                      const lats = dPts.map((p) => p[1]);
+                      mapRef.current.fitBounds(
+                        [
+                          [Math.min(...lngs), Math.min(...lats)],
+                          [Math.max(...lngs), Math.max(...lats)],
+                        ],
+                        { padding: 48, maxZoom: 14, duration: 360 },
+                      );
+                    }
+                  }}
+                >
+                  <span
+                    className="lkdv-cv2c-day-dot"
+                    style={{ backgroundColor: color }}
+                    aria-hidden="true"
+                  />
+                  J{idx + 1}
+                  {dKm > 0.1 ? ` (${dKm.toFixed(1)} km)` : ''}
+                </button>
+                {dayJiggleMode && ensuredDays.length > 1 ? (
+                  <button
+                    type="button"
+                    className="lkdv-photo-thumb-remove lkdv-photo-thumb-minus"
+                    aria-label={`Supprimer le jour ${idx + 1}`}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeDayAt(idx);
+                    }}
+                  >
+                    <Minus size={11} strokeWidth={2.75} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </Reorder.Item>
+            );
+          })}
+        </Reorder.Group>
+        {dayJiggleMode ? (
+          <button
+            type="button"
+            className="lkdv-photo-jiggle-done"
+            onClick={() => {
+              setDayJiggleMode(false);
+              haptic('light');
+            }}
+            aria-label="Terminer la réorganisation des jours"
+            title="Terminer"
+          >
+            <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+          </button>
+        ) : ensuredDays.length < (mode === 'sortie' ? 30 : 60) ? (
           <button
             type="button"
             className="lkdv-cv2c-day-tab lkdv-cv2c-day-tab--add"
@@ -1778,8 +2029,14 @@ export function TracePaneV2({
               const nextDays = syncCarnetDaysV2(ensuredDays, nextCount, startDate);
               form.setValue('nbJours', nextCount, { shouldDirty: true, shouldValidate: true });
               form.setValue('days', nextDays, { shouldDirty: true, shouldValidate: true });
+              if (startDate) {
+                form.setValue('endDate', carnetEndDateForDaysV2(startDate, nextCount), {
+                  shouldDirty: true,
+                });
+              }
               setSelectedDayIndex(nextCount - 1);
               haptic('selection');
+              centerAndLockMap();
             }}
           >
             <Plus size={12} aria-hidden="true" /> J{ensuredDays.length + 1}
@@ -1788,21 +2045,23 @@ export function TracePaneV2({
       </div>
 
       <div
-        className="lkdv-cv2c-map"
+        ref={mapWrapRef}
+        className={`lkdv-cv2c-map ${isMapInteractive ? 'is-focused' : 'is-scroll-passthrough'}`}
         data-hscroll=""
-        data-no-swipe=""
-        data-vaul-no-drag=""
-        style={expanded ? { height: '54dvh', minHeight: 340 } : { height: 288, minHeight: 288 }}
+        {...(isMapInteractive ? { 'data-no-swipe': '', 'data-vaul-no-drag': '' } : {})}
+        style={{
+          ...(expanded ? { height: '54dvh', minHeight: 340 } : { height: 288, minHeight: 288 }),
+          touchAction: isMapInteractive ? 'none' : 'pan-y',
+        }}
       >
         <div
           ref={containerRef}
           className="lkdv-cv2c-map-canvas"
           aria-label="Carte du tracé du carnet"
           data-hscroll=""
-          data-no-swipe=""
-          data-vaul-no-drag=""
+          {...(isMapInteractive ? { 'data-no-swipe': '', 'data-vaul-no-drag': '' } : {})}
           style={{
-            touchAction: 'none',
+            touchAction: isMapInteractive ? 'none' : 'pan-y',
             minHeight: 288,
             cursor: drawing ? 'crosshair' : undefined,
           }}
@@ -1838,6 +2097,7 @@ export function TracePaneV2({
                   mapRef.current.easeTo({ zoom: 13, duration: 340 });
                 }
               }
+              centerAndLockMap();
               haptic('selection');
             }}
           >
@@ -1851,6 +2111,7 @@ export function TracePaneV2({
             title={magnet ? 'Aimant aux sentiers' : 'Tracé libre'}
             onClick={() => {
               setMagnet((value) => !value);
+              centerAndLockMap();
               haptic('selection');
             }}
           >
@@ -1867,6 +2128,7 @@ export function TracePaneV2({
               setEditing(next);
               if (next) setDrawing(false);
               setSelectedSegment(null);
+              centerAndLockMap();
               haptic('selection');
             }}
           >
@@ -1880,6 +2142,7 @@ export function TracePaneV2({
             title={expanded ? 'Réduire la carte' : 'Agrandir la carte'}
             onClick={() => {
               setExpanded((value) => !value);
+              centerAndLockMap();
               haptic('light');
             }}
           >
@@ -1890,7 +2153,10 @@ export function TracePaneV2({
             className="lkdv-cv2c-map-btn"
             aria-label="Ma position"
             title="Ma position"
-            onClick={() => void centerOnMyPosition()}
+            onClick={() => {
+              centerAndLockMap();
+              void centerOnMyPosition();
+            }}
           >
             <Navigation size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -1900,7 +2166,10 @@ export function TracePaneV2({
             aria-label="Annuler le dernier geste"
             title="Annuler"
             disabled={historyRef.current.past.length === 0}
-            onClick={undo}
+            onClick={() => {
+              centerAndLockMap();
+              undo();
+            }}
           >
             <Undo2 size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -1910,7 +2179,10 @@ export function TracePaneV2({
             aria-label="Rétablir le geste annulé"
             title="Rétablir"
             disabled={historyRef.current.future.length === 0}
-            onClick={redo}
+            onClick={() => {
+              centerAndLockMap();
+              redo();
+            }}
           >
             <Redo2 size={17} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -1924,6 +2196,7 @@ export function TracePaneV2({
                 commitTroncons([]);
                 setSelectedSegment(null);
                 setSnapState('idle');
+                centerAndLockMap();
                 haptic('medium');
               }}
             >
@@ -2108,7 +2381,7 @@ export function TracePaneV2({
       <div className="lkdv-cv2c-metric-row">
         <span className="lkdv-cv2c-metric">
           <span>Distance</span>
-          <b>{km > 0 ? `${km.toFixed(1).replace('.', ',')} km` : '—'}</b>
+          <b>{formattedDistanceLabel}</b>
         </span>
         <span className="lkdv-cv2c-metric">
           <span>Dénivelé</span>

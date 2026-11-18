@@ -75,12 +75,16 @@ export function TravelersPillPickerV2({
   useEffect(() => {
     let active = true;
     if (!userId) return undefined;
-    const supabase = createClient();
-    void fetchSubscribersOnlyV2(supabase, userId).then((list) => {
-      if (!active) return;
-      setSubscribers(list);
+    try {
+      const supabase = createClient();
+      void fetchSubscribersOnlyV2(supabase, userId).then((list) => {
+        if (!active) return;
+        setSubscribers(list);
+        setLoaded(true);
+      });
+    } catch {
       setLoaded(true);
-    });
+    }
     return () => {
       active = false;
     };
