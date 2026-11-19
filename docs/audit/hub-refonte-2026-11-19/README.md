@@ -31,7 +31,7 @@ critères de recette. Les statuts ci-dessous décrivent l’état constaté sur 
 | P00-02 | Bloqué | Le seul projet Supabase accessible est la production. Le worktree hérite d’un lien CLI versionné vers ce projet. Les fichiers de lien ont été retirés de la branche. Le build local utilise une URL de boucle locale et un identifiant factice. Le checkout historique demeure intact. Valider la cible et les identités de recette avant le premier scénario connecté. |
 | P00-03 | En cours | Les logs Vercel de `991244a` confirment un worker tué par SIGKILL avec événement OOM sur 2 cœurs et 8 Go. Rejeu macOS mesuré ci-dessous. Une mesure sur Linux à capacité équivalente reste nécessaire. |
 | P00-04 | En cours | Next utilise la racine du checkout pour les traces et Turbopack. Le Studio est déjà chargé dynamiquement côté client, mais sa donnée est résolue au chargement de la page Hub. Vérifier la marge par trois builds à ressources comparables à Vercel. |
-| P00-05 | En cours | Installation verrouillée sur Node 22.23.3 et npm 11.19.1. Tests Hub/Compas rétablis. Typage global encore en échec. |
+| P00-05 | En cours | Installation verrouillée sur Node 22.23.3 et npm 11.19.1. Tests Hub/Compas rétablis. Typage global vert sur Node 24.22.3. La suite Communauté ciblée signale encore des échecs présents sur la référence. |
 | P00-06 | En cours | Les variables Supabase sont déclarées conjointement pour Production, Preview et Development dans les métadonnées Vercel. La destination effective de Preview reste à confirmer. Matrice par widget et vérification des fournisseurs à poursuivre en recette. |
 | P00-07 | En cours | Le tracer SSR existe déjà (`src/lib/perf/ssrTrace.ts`). Établir la mesure de départ sur les parcours authentifiés en recette. |
 | P00-08 | Bloqué | Le dernier passage de la chaîne de sauvegarde est vert avec le dump et la publication d’artefact ignorés. Aucun artefact associé. La rétention configurée est de 7 jours. Vérifier une sauvegarde exploitable, puis mesurer la restauration sur une copie autorisée. |
@@ -62,6 +62,15 @@ nom de l’application et au titre de l’activité.
   méthodes réellement utilisées. `npm run type-check` a encore signalé 59 diagnostics,
   dans les contrats Carnet et Communauté (création, Explorer, fil et fixtures).
   [CI de référence](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/44497010870).
+- **TypeScript après correction · PASS.** Le merge `ce9d4cf5` avait ramené trois composants
+  Carnet à des contrats incompatibles avec l’écran qui les monte. Leurs versions de
+  `3230f88b` ont été réconciliées avec les changements ultérieurs. Les formulaires, le fil et
+  Explorer utilisent les contrats actuels pour les actions désactivées, les moments et les kits.
+  `npm run type-check` passe sous Node 24.22.3.
+- **Suite Carnet et Communauté · FAIL.** 313 tests passent sur 337 après correction. Sur les
+  mêmes fichiers et la même chaîne locale, la référence avant correction avait 54 échecs.
+  Les 24 échecs restants figurent tous parmi ces 54. Les 30 corrections couvrent surtout le
+  montage, l’édition et les tiroirs du Carnet.
 - **Vitest ciblé · PASS.** 244 fichiers et 4 786 tests réussis après ajout des libellés de
   raccourcis Android dans les cinq locales et vérification des références de `shortcuts.xml`.
   Les assertions lisent les ressources. Le rendu Android reste à tester sur appareil.

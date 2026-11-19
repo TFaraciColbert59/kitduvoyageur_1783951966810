@@ -26,8 +26,8 @@ export interface CommunityPostMediaProps {
   sharesCount: number;
   liked: boolean;
   burst?: number;
-  onLike: () => void;
-  onComment: () => void;
+  onLike?: () => void;
+  onComment?: () => void;
   onShare: () => void;
   /** Désactive les gestes quand un panneau est ouvert. */
   inert?: boolean;
@@ -190,6 +190,7 @@ export function CommunityPostMedia({
   }, [liked]);
 
   const triggerLikeWithAnim = useCallback(() => {
+    if (!onLike) return;
     if (!liked) {
       setLocalBurst((k) => k + 1);
     }
@@ -233,18 +234,20 @@ export function CommunityPostMedia({
       <div className="lkdv-post-media-wrap">
         <div
           className="lkdv-post-media"
-          role="button"
-          tabIndex={inert ? -1 : 0}
-          aria-label={liked ? "Retirer mon j'aime" : "J'aime cette publication"}
-          aria-pressed={liked}
-          aria-disabled={inert || undefined}
+          role={onLike ? 'button' : undefined}
+          tabIndex={onLike && !inert ? 0 : undefined}
+          aria-label={onLike ? (liked ? "Retirer mon j'aime" : "J'aime cette publication") : undefined}
+          aria-pressed={onLike ? liked : undefined}
+          aria-disabled={onLike && inert ? true : undefined}
           inert={inert}
           onClick={(event) => {
+            if (!onLike) return;
             event.stopPropagation();
             if (shouldIgnoreClick?.()) return;
             activateLike();
           }}
           onKeyDown={(event) => {
+            if (!onLike) return;
             if (event.key !== 'Enter' && event.key !== ' ') return;
             event.preventDefault();
             onLike();
@@ -339,7 +342,7 @@ export function CommunityPostMedia({
           commentsCount={commentsCount}
           sharesCount={sharesCount}
           liked={liked}
-          onLike={triggerLikeWithAnim}
+          onLike={onLike ? triggerLikeWithAnim : undefined}
           onComment={onComment}
           onShare={onShare}
         />

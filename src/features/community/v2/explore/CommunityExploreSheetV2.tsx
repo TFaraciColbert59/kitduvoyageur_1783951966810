@@ -53,7 +53,7 @@ import {
   reviewJoinRequest,
   setCarnetLike,
 } from '../data/communityMutations';
-import { activityLabel } from '../data/communityFeedMappers';
+import { activityLabel, eventDateTimeLabel } from '../data/communityFeedMappers';
 import { CarnetsPane } from './panes/CarnetsPane';
 import { ClubsPane, effectiveClubMembers, effectiveClubStatus } from './panes/ClubsPane';
 import { EventsPane, effectiveEventState } from './panes/EventsPane';
@@ -1149,8 +1149,8 @@ export function CommunityExploreSheetV2({
       index: 0,
       title: detail.event.title,
       meta:
-        detail.event.dateLabel && !detail.event.dateLabel.includes('/')
-          ? detail.event.dateLabel
+        detail.event.startsAt || detail.event.eventDate
+          ? eventDateTimeLabel(detail.event)
           : 'Sortie',
       label: 'Sortie',
       onBack: closeDetail,

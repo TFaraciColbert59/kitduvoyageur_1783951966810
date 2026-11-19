@@ -171,11 +171,11 @@ export function computeAutoEndTimeWithMargin(
     days > 1
       ? (perDayList[days - 1] ?? estimate.durationHoursP50 / days)
       : estimate.durationHoursP50;
-  // Marge cohérente : borne haute P85 + 15 min (ou +15 % + 15 min sur étape multi-jours)
+  // Utilise la borne haute P90 pour une sortie sur une journée.
   const hoursWithMargin =
     days > 1
       ? baseHours * 1.15 + 0.25
-      : Math.max(baseHours * 1.15 + 0.25, estimate.durationHoursP85 + 0.2);
+      : Math.max(baseHours * 1.15 + 0.25, estimate.durationHoursP90 + 0.2);
   const durationMinutes = Math.max(30, Math.ceil((hoursWithMargin * 60) / 15) * 15);
   const rawEndMinutes = startMinutes + durationMinutes;
   const clampedEndMinutes =
@@ -862,11 +862,9 @@ function SortieBody({
     }
     let cancelled = false;
     const supabase = createClient();
-    void supabase
-      .from('materiel_kits')
-      .select('total_weight_g')
-      .eq('id', values.kitId)
-      .maybeSingle()
+    void Promise.resolve(
+      supabase.from('materiel_kits').select('total_weight_g').eq('id', values.kitId).maybeSingle(),
+    )
       .then(({ data }) => {
         if (cancelled) return;
         const g = Number((data as { total_weight_g?: unknown } | null)?.total_weight_g ?? 0);

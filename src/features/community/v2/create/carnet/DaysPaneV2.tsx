@@ -42,6 +42,7 @@ import {
   carnetDayDateV2,
   carnetEndDateForDaysV2,
   clampCarnetDaysV2,
+  normalizeCarnetDayV2,
   syncCarnetDaysV2,
 } from './daySync';
 
@@ -592,7 +593,10 @@ export function DaysPaneV2({ user }: { user: { id: string } | null }) {
   const day = days[clampedActive];
 
   const setDays = (next: CarnetDayV2[]) => {
-    form.setValue('days', next, { shouldDirty: true, shouldValidate: true });
+    form.setValue('days', next.map(normalizeCarnetDayV2), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   };
 
   // Carnet#20 — tablist complet : flèches, Home/End, tabindex itinérant,

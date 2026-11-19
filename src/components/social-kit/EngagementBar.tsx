@@ -17,8 +17,8 @@ export interface EngagementBarProps {
   commentsCount: number;
   sharesCount: number;
   liked: boolean;
-  onLike: () => void;
-  onComment: () => void;
+  onLike?: () => void;
+  onComment?: () => void;
   onShare: () => void;
   /** `media` : verre clair sur photo (texte blanc). `ink` : sur fond verre clair (texte encre). */
   tone?: 'media' | 'ink';
@@ -42,9 +42,9 @@ export function EngagementBar({
   className,
 }: EngagementBarProps) {
   const [pulseKey, setPulseKey] = useState(0);
-  const stop = (fn: () => void) => (event: React.MouseEvent) => {
+  const stop = (fn?: () => void) => (event: React.MouseEvent) => {
     event.stopPropagation();
-    fn();
+    fn?.();
   };
   return (
     <div
@@ -57,10 +57,11 @@ export function EngagementBar({
         whileTap={{ scale: 0.86 }}
         transition={{ type: 'spring', stiffness: 520, damping: 24 }}
         className={liked ? 'on' : ''}
+        disabled={!onLike}
         onClick={(event) => {
           event.stopPropagation();
           if (!liked) setPulseKey((k) => k + 1);
-          onLike();
+          onLike?.();
         }}
         aria-label={`Aimer (${likesCount})`}
         aria-pressed={liked}
@@ -111,6 +112,7 @@ export function EngagementBar({
         whileTap={{ scale: 0.88 }}
         transition={{ type: 'spring', stiffness: 520, damping: 24 }}
         onClick={stop(onComment)}
+        disabled={!onComment}
         aria-label={`Commenter (${commentsCount})`}
       >
         <MessageCircle size={18} aria-hidden="true" />

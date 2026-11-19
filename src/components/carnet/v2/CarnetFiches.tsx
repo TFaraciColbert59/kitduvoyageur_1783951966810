@@ -81,12 +81,13 @@ export function EtapeFiche({
   onEdit: () => void;
 }) {
   const route = [etape.from, etape.to].filter(Boolean).join(' → ');
+  const distanceKm = etape.distanceKm?.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
   return (
     <div className="lkdv-fiche" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div className="lkdv-fiche-hero">
         <CarnetArt />
-        {etape.distanceKm != null ? (
-          <span className="ov">{etape.distanceKm.toLocaleString('fr-FR')}{NB}km</span>
+        {distanceKm != null ? (
+          <span className="ov">{distanceKm}{NB}km</span>
         ) : null}
       </div>
       <div className="lkdv-menu2">
@@ -96,7 +97,7 @@ export function EtapeFiche({
           icon={<RouteIcon size={18} />}
           title="Distance"
           sub={`Jour ${etape.dayNumber}`}
-          value={<b>{etape.distanceKm != null ? `${etape.distanceKm.toLocaleString('fr-FR')}${NB}km` : '—'}</b>}
+          value={<b>{distanceKm != null ? `${distanceKm}${NB}km` : '—'}</b>}
         />
         <Row
           icon={<Mountain size={18} />}

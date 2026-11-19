@@ -1,4 +1,6 @@
-import type { CarnetDayV2 } from '../engine/createSchemasV2';
+import type { CarnetDayV2, CarnetFormValuesV2 } from '../engine/createSchemasV2';
+
+type CarnetFormDay = CarnetFormValuesV2['days'][number];
 
 /**
  * Jours du carnet — dérivation et synchronisation **pures** (FID-029/FID-030).
@@ -42,7 +44,7 @@ export function carnetEndDateForDaysV2(startDate: string, days: number): string 
   return carnetDayDateV2(startDate, clampCarnetDaysV2(days) - 1);
 }
 
-function newDay(dayNumber: number, date: string): CarnetDayV2 {
+function newDay(dayNumber: number, date: string): CarnetFormDay {
   return {
     id: crypto.randomUUID(),
     dayNumber,
@@ -50,6 +52,19 @@ function newDay(dayNumber: number, date: string): CarnetDayV2 {
     date,
     night: null,
     moments: [],
+  };
+}
+
+/** Complète les champs absents des moments enregistrés avant leur introduction. */
+export function normalizeCarnetDayV2(day: CarnetDayV2): CarnetFormDay {
+  return {
+    ...day,
+    moments: day.moments.map((moment) => ({
+      ...moment,
+      title: moment.title ?? '',
+      media: moment.media ?? [],
+      encounters: moment.encounters ?? [],
+    })),
   };
 }
 
@@ -61,10 +76,10 @@ export function syncCarnetDaysV2(
   existing: readonly CarnetDayV2[],
   count: number,
   startDate: string,
-): CarnetDayV2[] {
+): CarnetFormDay[] {
   const target = clampCarnetDaysV2(count);
   const next = existing.slice(0, target).map((day, index) => ({
-    ...day,
+    ...normalizeCarnetDayV2(day),
     dayNumber: index + 1,
     date: day.date || carnetDayDateV2(startDate, index),
   }));
