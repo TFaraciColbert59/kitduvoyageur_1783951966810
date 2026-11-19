@@ -10,6 +10,8 @@ critères de recette. Les statuts ci-dessous décrivent l’état constaté sur 
 - Audit initial : `7d7ceabd9aa5a9d6959279b9961582a7466f0cbd`. Les trois commits d’écart portent sur
   l’Explorer de la communauté. `git diff --name-only 7d7ceabd..991244a` ne liste aucune modification
   du Hub, de Compas ou des migrations.
+- Reprise du 19 novembre : branche rebasée sur `788586d18eb9ed4b9afe36410bb65a16c6ddc798`.
+  Les cinq commits ajoutés depuis la mesure initiale ne touchent que le fil Communauté.
 - Production servie sur `koosmoweb.fr` : build READY de `3230f88`, vérifié par
   `vercel inspect koosmoweb.fr --logs`. Le dernier build de `main`, `991244a`, a échoué.
   [Déploiement en échec](https://kitduvoyageur-1783951966810-pgp6vj5d8.vercel.app).
@@ -28,14 +30,14 @@ critères de recette. Les statuts ci-dessous décrivent l’état constaté sur 
 | ID | État | Résultat ou condition de validation |
 | --- | --- | --- |
 | P00-01 | Vérifié | Références Git, Vercel et PostgreSQL établies. Branche isolée créée. Voir les références en tête du dossier. |
-| P00-02 | Bloqué | Le seul projet Supabase accessible est la production. Le worktree hérite d’un lien CLI versionné vers ce projet. Les fichiers de lien ont été retirés de la branche. Le build local utilise une URL de boucle locale et un identifiant factice. Le checkout historique demeure intact. Valider la cible et les identités de recette avant le premier scénario connecté. |
+| P00-02 | En cours | Le seul projet Supabase accessible est la production. Les fichiers de lien CLI ont été retirés de la branche. Le build local utilise une URL de boucle locale et un identifiant factice. La VM Debian dédiée a exécuté le rejeu SQL et pgTAP sur la boucle locale, avec le dépôt monté en lecture seule. La destination Supabase de Preview et la recette connectée complète restent à vérifier. |
 | P00-03 | En cours | Les logs Vercel de `991244a` confirment un worker tué par SIGKILL avec événement OOM sur 2 cœurs et 8 Go. Rejeu macOS mesuré ci-dessous. Une mesure sur Linux à capacité équivalente reste nécessaire. |
-| P00-04 | En cours | Next utilise la racine du checkout pour les traces et Turbopack. Le Studio est déjà chargé dynamiquement côté client, mais sa donnée est résolue au chargement de la page Hub. Vérifier la marge par trois builds à ressources comparables à Vercel. |
+| P00-04 | En cours | Next utilise la racine du checkout pour les traces et Turbopack. Un build local complet a réussi. Le Studio est déjà chargé dynamiquement côté client, mais sa donnée est résolue au chargement de la page Hub. Mesurer la marge par trois builds à ressources comparables à Vercel. |
 | P00-05 | En cours | Installation verrouillée sur Node 22.23.3 et npm 11.19.1. Tests Hub/Compas rétablis. Typage global vert sur Node 24.22.3. La suite Communauté ciblée signale encore des échecs présents sur la référence. |
 | P00-06 | En cours | Les variables Supabase sont déclarées conjointement pour Production, Preview et Development dans les métadonnées Vercel. La destination effective de Preview reste à confirmer. Matrice par widget et vérification des fournisseurs à poursuivre en recette. |
 | P00-07 | En cours | Le tracer SSR existe déjà (`src/lib/perf/ssrTrace.ts`). Établir la mesure de départ sur les parcours authentifiés en recette. |
-| P00-08 | Bloqué | Le dernier passage de la chaîne de sauvegarde est vert avec le dump et la publication d’artefact ignorés. Aucun artefact associé. La rétention configurée est de 7 jours. Vérifier une sauvegarde exploitable, puis mesurer la restauration sur une copie autorisée. |
-| P00-09 | Bloqué | Build de recette, environnement isolé, mesures initiales authentifiées et restauration restent ouverts. |
+| P00-08 | En cours | Sauvegarde et restauration réussies sur la base locale de recette. Le dernier passage de la chaîne distante est vert avec le dump et la publication d’artefact ignorés. Aucun artefact associé. La rétention configurée est de 7 jours. Vérifier une sauvegarde exploitable et mesurer le RPO/RTO de production séparément. |
+| P00-09 | Bloqué | Build complet et restauration locale acquis. Sept assertions de confidentialité SQL et des échecs de la suite Communauté restent ouverts. Il manque la recette authentifiée, la référence de performance et le contrôle de restauration de la sauvegarde distante. |
 
 ### Rejeu initial
 
@@ -79,6 +81,46 @@ nom de l’application et au titre de l’activité.
   L’exécution E2E avec PostgREST et PostgreSQL reste à faire.
 - **Sauvegarde · preuve incomplète.** Le run s’est terminé sans client PostgreSQL, sans dump
   chiffré et sans artefact. [Exécution GitHub](https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810/actions/runs/44506340250).
+
+### Recette PostgreSQL locale
+
+- Lima 2.3.0, Debian 13 aarch64, PostgreSQL 17.12 et PostGIS 3.5.2. La base
+  `lkdv_hub_ci` écoute sur la boucle locale de la VM. Le worktree est monté en lecture seule.
+  Le rejeu utilise un schéma de référence versionné et des données de test, avec les rôles
+  et dépendances simulés par `scripts/db/ci/supabase_shim.sql`.
+- **Rejeu · PASS.** `bash scripts/db/ci/install.sh` a appliqué 310 migrations après la base de
+  référence, avec 467 entrées finales et zéro migration en attente. Quatre correctifs historiques
+  déjà présents ont été annulés proprement et enregistrés conformément au script.
+- **pgTAP · FAIL.** `bash scripts/db/ci/run_pgtap.sh` a exécuté 1 926 assertions dans 115 fichiers.
+  Il reste sept échecs. Six concernent les médias et aperçus des posts à audience restreinte après
+  le retrait du garde SQL dans `20261117103000_communaute_v2_creation_fixes.sql`. Un concerne la
+  lecture brute de `hike_sessions` après l’ajout de deux politiques dans la migration P01.
+  Ces résultats portent sur le schéma local et ses fixtures. Il faut réconcilier les contrats
+  d’accès avec la lecture de traces projetées et les médias privés avant validation.
+- **Restauration locale · PASS.** Un export `pg_dump -Fc` de la base de recette (3,7 Mio)
+  a été restauré dans `lkdv_hub_restore`. Le contrôle retrouve le témoin synthétique,
+  384 tables publiques et 467 entrées du registre dans les deux bases. La planification
+  `pg_cron` a été exclue de la restauration de recette. Temps observés de 0,7 s pour
+  l’export et 2,4 s pour la restauration. La sauvegarde distante et ses délais restent
+  à vérifier.
+- **Build local après rebase · FAIL.** `npm run build` avec Node 24.22.3, lint activé,
+  un plafond de heap de 5 Gio et la VM locale allumée. Les scripts de préparation ont passé.
+  Le worker Next s’est arrêté sur SIGKILL en compilation. Durée mesurée de 231 s,
+  pic de somme RSS de 2 231 504 Kio. Le garde du profileur n’a pas déclenché.
+  Le dépassement mémoire n’a pas été confirmé sur ce rejeu local.
+- **Rejeu VM arrêtée · FAIL.** La compilation a terminé en 61 s. Deux erreurs de lint bloquaient
+  le build. Le script de nettoyage du service worker en développement utilise maintenant
+  `next/script` avec `beforeInteractive`. Le composant Trace garde un ordre stable de hooks,
+  y compris lorsque la trace est invisible. ESLint passe sur les deux fichiers et la suite
+  `outingsPrivacyUi.test.tsx` passe (2 assertions).
+- **Build après correction · PASS.** `npm run build` sous Node 24.22.3, avec lint et typage,
+  Supabase configuré vers la boucle locale, plafond de heap de 5 Gio, `CIRCLE_NODE_TOTAL=2`,
+  cache réutilisé et VM arrêtée. Durée de 164 s et pic de somme RSS de 1 893 120 Kio.
+  Les avertissements de lint existants restent visibles. Ce résultat local ne remplace pas le
+  contrôle sur le runner Vercel.
+- **Smoke HTTP sans session · PASS.** Sur le build servi avec `next start` en local,
+  `/hub` et `/compas` répondent 307 vers `/connexion` avec le chemin de retour attendu.
+  `/kit-studio` et `/connexion` répondent 200. Les parcours authentifiés restent à vérifier.
 
 ## P01 · Constat de registre
 

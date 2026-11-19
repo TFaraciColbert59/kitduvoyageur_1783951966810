@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { cookies, headers } from 'next/headers';
 import localFont from 'next/font/local';
+import Script from 'next/script';
 import '@/styles/tokens.generated.css';
 import '@/styles/tokens.css';
 import '@/styles/tailwind.css';
@@ -263,7 +264,11 @@ export default async function RootLayout({
         {process.env.NODE_ENV !== 'production' && (
           // Dev : script externe same-origin (autorisé par CSP) pour purger tout
           // ancien Service Worker `/sw.js` et `lkdv-static-*` avant les chunks.
-          <script id="service-worker-dev-cleanup" src="/dev-sw-cleanup.js" />
+          <Script
+            id="service-worker-dev-cleanup"
+            src="/dev-sw-cleanup.js"
+            strategy="beforeInteractive"
+          />
         )}
       </head>
       <body
