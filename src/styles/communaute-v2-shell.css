@@ -451,6 +451,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   position: absolute;
   inset: -6px;
 }
+.lkdv-cv2-grab--with-close { height: 37px; }
+.lkdv-cv2-sheet .lkdv-cv2-close {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-end: var(--space-2);
+  z-index: 16;
+}
 .lkdv-cv2-back:active {
   transform: scale(0.94);
 }

@@ -26,6 +26,7 @@ export function toCockpitForecast(payload: WeatherResponse, place: string): Fore
   });
   return {
     temperature: current.temperature_2m,
+    weatherCode: current.weather_code,
     condition: weatherLabel(current.weather_code),
     place,
     observedAt: current.time,

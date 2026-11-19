@@ -30,7 +30,7 @@ function SavedCarnetEditor({ carnet, day, place, kitItems, onChange, onBack }: P
     onMomentAdded: (moment) => onChange({
       ...carnet,
       moments: [{
-        id: moment.id, day, title: moment.caption || moment.place || 'Moment', type: moment.type,
+        id: moment.id, day: moment.dayNumber, time: moment.time, title: moment.caption || moment.place || 'Moment', type: moment.type,
         media: moment.imageUrl, audio: moment.meta?.audioUrl,
       }, ...carnet.moments],
     }),

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import type { FeedPost } from './useCommunityFeed';
 import { timeAgo } from './feed-utils';
@@ -40,12 +40,13 @@ export function IdentityPill({ name, avatarUrl, meta, trust, badge, href, onClic
   onClick?: (element: HTMLButtonElement) => void;
   itemId?: string;
 }) {
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
   const label = `${name}${meta ? ` — ${meta}` : ''}`;
   const body = (
     <>
-      {avatarUrl ? (
+      {avatarUrl && avatarUrl !== failedAvatar ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="lkdv-post-author-av" src={avatarUrl} alt="" />
+        <img className="lkdv-post-author-av" src={avatarUrl} alt="" onError={() => setFailedAvatar(avatarUrl)} />
       ) : (
         <span className="lkdv-post-author-av pmi-author-initial" aria-hidden="true">
           {name.charAt(0).toUpperCase()}

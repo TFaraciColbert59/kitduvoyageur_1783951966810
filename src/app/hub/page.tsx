@@ -59,12 +59,7 @@ export default async function HubPage({
       <HubCockpit
         key={cockpit.key}
         data={cockpit}
-        adventureControl={
-          <>
-            <div className="md:hidden"><AdventureSwitcher variant="mobile" /></div>
-            <div className="hidden md:block"><AdventureSwitcher /></div>
-          </>
-        }
+        adventureControl={<AdventureSwitcher variant="dock" />}
       />
     );
   }

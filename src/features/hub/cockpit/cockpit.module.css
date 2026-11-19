@@ -138,18 +138,128 @@
 .rows > * { justify-self: stretch; }
 .daySteps { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; touch-action: pan-y; padding-block-end: var(--space-1); }
 .daySteps .pill { width: 100%; }
-.tileDay { display: flex; flex: none; }
-.tileDay select {
+.etapes .tileHeader h2 { flex: 0 0 auto; }
+.dayRail {
+  position: relative;
+  display: flex;
+  flex: 1;
   min-width: 0;
-  width: auto;
-  min-height: var(--control-height-sm);
-  padding: 0 var(--space-1);
-  appearance: none;
-  font-weight: 650;
+  gap: 3px;
+  padding: 2px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
 }
-.tile .addMoment { min-height: var(--control-height-sm); }
-.selectDay { display: flex; align-items: center; justify-content: space-between; gap: var(--space-1); font-size: var(--lkv-text-footnote); }
-.selectDay select { width: auto; min-width: 0; min-height: var(--control-height-md); padding: var(--space-1); }
+.dayPill {
+  position: relative;
+  min-inline-size: 29px;
+  min-block-size: 30px;
+  flex: none;
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: var(--lkv-radius-pill);
+  font-size: var(--lkv-text-caption-2);
+  font-weight: 700;
+  scroll-snap-align: center;
+  cursor: pointer;
+}
+.dayPill[aria-pressed='true'] { color: var(--lkv-on-action, white); border-color: transparent; }
+.dayPill > span { position: relative; }
+.dayPill .daySelection {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: var(--lkv-action);
+}
+.dayPill:focus-visible, .hourTick:focus-visible, .momentAddBox:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}
+.budgetBody { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: var(--space-1); }
+.budgetAmount, .weatherValue {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+.budgetAmount .value { font-size: clamp(1.05rem, 4.35vw, var(--lkv-text-title-md)); }
+.budgetAmount small { color: var(--lkv-text-secondary); font-size: var(--lkv-text-caption-2); }
+.weatherValue { align-items: center; }
+.weatherGlyph { display: inline-flex; color: var(--lkv-action); }
+.tile .inlinePill, .pane .inlinePill {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding-inline: var(--space-2);
+  overflow: hidden;
+}
+.tile .inlinePill > strong, .pane .inlinePill > strong {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.inlinePill > span { flex: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tile .rail .inlinePill { min-width: min(76%, 10rem); }
+.carnetBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(36px, 1fr);
+  gap: var(--space-1);
+  min-height: 37px;
+  flex: 1;
+}
+.momentAddBox {
+  display: grid;
+  width: 100%;
+  place-items: center;
+  color: var(--lkv-action);
+  border: 1px dashed var(--lkv-action);
+  border-radius: var(--lkv-radius-concentric);
+  background: transparent;
+  cursor: pointer;
+}
+.momentAddBox svg { stroke-dasharray: 2.5 2; }
+.hourWheel {
+  display: grid;
+  place-items: center stretch;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--lkv-radius-concentric);
+  background: linear-gradient(90deg, var(--lkv-surface-muted), transparent 48%, var(--lkv-surface-muted));
+}
+.hourTrack {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding-inline: max(0px, calc((100% - 34px) / 2));
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  perspective: 180px;
+}
+.hourTrack::after { content: ''; flex: 0 0 0; }
+.hourTick {
+  flex: 0 0 34px;
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  min-height: 36px;
+  color: var(--lkv-text-primary);
+  font-weight: 650;
+  font-size: var(--lkv-text-caption-2);
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+.hourDots { display: flex; align-items: center; justify-content: center; min-height: 6px; gap: 2px; color: var(--lkv-action); }
+.hourDots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.hourDots small { font-size: 8px; line-height: 1; }
 .list { padding: 0; list-style: none; }
 .list li { border-bottom: 1px solid var(--lkv-border-subtle); padding-block: var(--space-2); }
 .bodyCopy { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -185,6 +295,12 @@
   text-align: center;
   font-size: var(--lkv-text-caption);
 }
+.map :global(.leaflet-bottom.leaflet-right),
+.largeMap :global(.leaflet-bottom.leaflet-right) {
+  bottom: var(--space-1) !important;
+  right: var(--space-1) !important;
+  left: auto !important;
+}
 .largeMap :global(.lkdv-hub-step-pin) { display: grid; place-items: center; }
 .largeMap :global(.lkdv-hub-step-pin > span) {
   width: var(--space-4);
@@ -197,7 +313,7 @@
 .kitScene canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .kitScene p { position: absolute; inset-inline: var(--space-2); bottom: var(--space-2); }
 
-.sheetTitle { display: flex; gap: var(--space-2); align-items: center; justify-content: space-between; padding: var(--space-1) var(--space-4); }
+.drawerLayer :global(.lkdv-cv2-detail-nav) { height: 38px; }
 .pane { display: grid; align-content: start; gap: var(--space-3); min-width: 0; }
 .status { display: grid; gap: var(--space-2); align-content: start; }
 .action { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--control-height-md); }
@@ -232,7 +348,7 @@
 @container hub-space (max-height: 18rem) {
   .grid .tile { overflow: hidden; }
   .tileHeader { flex: none; }
-  .tileDay select { min-height: 26px; }
+  .dayPill { min-block-size: 26px; }
 }
 @media (max-width: 24.5rem) {
   .etapes .headingIcon { display: none; }

@@ -246,3 +246,25 @@ Contrôle WebKit local sur six formats, de 320 × 568 à 1280 × 800, dont un é
 en paysage. Les huit cartes restent dans la zone visible avec et sans panneau
 de consentement. Le document ne défile pas. Le détail de la dernière étape et
 le lieu de la prévision restent accessibles dans les tiroirs.
+
+### Navigation du cockpit par jour
+
+Le HUB s’ouvre sur la date locale du téléphone. Les pastilles d’Étapes
+changent le jour de la carte, des étapes, du budget, du carnet et des
+éléments de kit datés. Météo, Paperasse et Groupe portent sur la sortie.
+La carte affiche les repères du jour et la trace lorsque les points
+enregistrés permettent de la délimiter. Le budget reprend les prévisions
+datées. Si seule l’enveloppe du voyage existe, elle est répartie au centime
+et marquée comme estimation dans le tiroir.
+
+La roue du carnet s’appuie sur les heures stockées et les moments du jour.
+L’animation de la pastille active et le relief de la roue suivent les préférences
+de mouvement. Le sélecteur de sortie ouvre le tiroir de Communauté depuis
+une poignée haute de 8 px. Le changement de sortie recharge les données
+via la sélection d’aventure existante.
+
+La vérification WebKit locale couvre le changement de jour, les dépenses
+sur une ligne, le retour du détail d’un moment à son heure, l’ouverture
+de la recherche et le chargement du fond de carte. La recette authentifiée
+avec les profils et le changement de sortie réel reste à valider sur
+l’environnement de recette et sur iPhone physique.

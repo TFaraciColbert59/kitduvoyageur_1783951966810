@@ -8,6 +8,7 @@ import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type { HubAdventureData } from '../server/getHubAdventureData';
 import { buildCockpitReservations } from './booking';
 import { buildCockpit, type CockpitData } from './model';
+import { momentClock } from './day';
 
 export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> {
   const cockpit = buildCockpit(data);
@@ -28,8 +29,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
   const viewer = session.data.user;
   const selectedCarnet = carnets.data;
   const [moments, collaboration] = selectedCarnet ? await Promise.all([
-    supabase.from('carnet_moments').select('id,citation,lieu,jour_numero,image_url,moment_type,moment_meta')
-      .eq('carnet_id', selectedCarnet.id).order('created_at', { ascending: false }).limit(30),
+    readMoments(supabase, selectedCarnet.id),
     viewer && viewer.id !== selectedCarnet.author_id
       ? supabase.rpc('is_carnet_editor', { p_carnet: selectedCarnet.id })
       : null,
@@ -52,6 +52,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
       editable: Boolean(viewer && (viewer.id === selectedCarnet.author_id || collaboration?.data === true)),
       moments: (moments?.data ?? []).map((row) => ({
         id: row.id, title: row.citation || row.lieu || 'Moment', day: row.jour_numero, type: row.moment_type,
+        time: momentClock(row.heure, row.moment_timestamp),
         audio: parseMomentMeta(row.moment_meta)?.audioUrl,
         media: isOwnMediaUrl(row.image_url, 'carnet-media') || isOwnMediaUrl(row.image_url, 'carnet-moments-media') ||
           privateMomentMediaPath(row.image_url, selectedCarnet.id) ? row.image_url : null,
@@ -64,4 +65,24 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
     canCreateCarnet: Boolean(viewer?.id === trip.user_id && !carnets.error),
     kitName: kit?.data?.name,
   };
+}
+
+/** La roue compte les moments de chaque jour, y compris ceux des premières journées. */
+async function readMoments(supabase: Awaited<ReturnType<typeof createClient>>, carnetId: string) {
+  const size = 250;
+  const fetchPage = (start: number) => supabase.from('carnet_moments')
+    .select('id,citation,lieu,jour_numero,heure,moment_timestamp,image_url,moment_type,moment_meta')
+    .eq('carnet_id', carnetId).order('created_at', { ascending: false }).order('id')
+    .range(start, start + size - 1);
+  const first = await fetchPage(0);
+  if (first.error || !first.data) return first;
+  const rows = first.data;
+  let fetched = rows.length;
+  while (fetched === size) {
+    const next = await fetchPage(rows.length);
+    if (next.error || !next.data) return next;
+    fetched = next.data.length;
+    rows.push(...next.data);
+  }
+  return { data: rows, error: null };
 }

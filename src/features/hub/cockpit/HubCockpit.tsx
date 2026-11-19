@@ -2,6 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { LazyMotion, MotionConfig, domMax, m } from 'framer-motion';
+import { normalizeCivilDateString } from '@/features/trips/engine/temporalPhaseEngine';
+import { CarnetClock } from './CarnetClock';
+import { cockpitDayBudget, cockpitDayRoute, currentCockpitDay, momentHour } from './day';
+import { weatherGlyph } from './weatherGlyph';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { IdentityPill } from '@/features/community/feed/PostAuthorPill';
@@ -65,11 +70,11 @@ function Status({ children, action }: { children: ReactNode; action?: ReactNode 
   return <div className={`lkdv-cv2-empty ${styles.status}`}><p>{children}</p>{action}</div>;
 }
 
-function Pill({ title, meta, onClick, itemId }: {
-  title: string; meta?: ReactNode; onClick: (element: HTMLButtonElement) => void; itemId: string;
+function Pill({ title, meta, onClick, itemId, inline = false }: {
+  title: string; meta?: ReactNode; onClick: (element: HTMLButtonElement) => void; itemId: string; inline?: boolean;
 }) {
-  return <button type="button" className={`lkdv-cv2-chip ${styles.pill}`} data-hub-item={itemId}
-    onClick={(event) => onClick(event.currentTarget)}>
+  return <button type="button" className={['lkdv-cv2-chip', styles.pill, inline && styles.inlinePill].filter(Boolean).join(' ')}
+    title={title} data-hub-item={itemId} onClick={(event) => onClick(event.currentTarget)}>
     <strong>{title}</strong>{meta && <span>{meta}</span>}
   </button>;
 }
@@ -85,22 +90,61 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const { isOnline } = useOnlineStatus();
   const [view, setView] = useState<View | null>(null);
   const [lastWidget, setLastWidget] = useState<Widget>('meteo');
-  const [day, setDay] = useState(data.today ?? data.steps[0]?.day ?? 1);
+  const [clock, setClock] = useState<{ date: string; hour: number } | null>(null);
+  const [selection, setSelection] = useState<{ day: number; date: string | undefined } | null>(null);
   const [carnet, setCarnet] = useState(data.carnet);
   const restore = useRef<{ item: string; top: number } | null>(null);
+  const dayRail = useRef<HTMLDivElement>(null);
   const widget = view?.widget ?? lastWidget;
   const weather = useCockpitWeather(data, !fixture && data.trip && isOnline);
   const forecast = weather.forecast;
-  const expenses = data.budget?.expenses ?? [];
+  const today = !fixture && clock ? currentCockpitDay(data.startDate, data.dayCount, clock.date) : data.today ?? 1;
+  const day = selection && selection.date === clock?.date ? selection.day : today;
+  const dailyBudget = data.budget && cockpitDayBudget(data.budget, data.startDate, day, data.dayCount, clock?.date ?? normalizeCivilDateString());
+  const expenses = dailyBudget?.expenses ?? [];
   const reservations = data.reservations ?? [];
-  const daySteps = data.steps.filter((step) => step.day === day);
-  const packed = data.kit.filter((item) => item.packed).length;
+  const daySteps = useMemo(() => data.steps.filter((step) => step.day === day), [data.steps, day]);
+  const dayMap = useMemo(() => ({
+    ...data, steps: daySteps, route: cockpitDayRoute(data.route, daySteps, day, data.dayCount),
+  }), [data, daySteps, day]);
+  const dayNotes = data.notes.filter((note) => note.day === day);
+  const dayMoments = (carnet?.moments ?? []).filter((moment) => moment.day === day)
+    .sort((a, b) => (a.time ?? '24:00').localeCompare(b.time ?? '24:00'));
+  const hour = day === today && !fixture ? clock?.hour ?? 12
+    : dayMoments.reduce((first, moment) => Math.min(first, momentHour(moment.time) ?? 24), 24);
+  const clockHour = hour < 24 ? hour : 12;
+  const dayKit = data.kit.filter((item) => item.day == null || item.day === day);
+  const packed = dayKit.filter((item) => item.packed).length;
   const days = useMemo(() => {
-    const list = new Set([data.today ?? data.steps[0]?.day ?? 1, ...data.steps.map((step) => step.day)]);
-    if (data.dayCount && data.dayCount <= 60) for (let i = 1; i <= data.dayCount; i += 1) list.add(i);
+    const list = new Set([today, ...data.steps.map((step) => step.day)]);
+    if (data.dayCount) for (let i = 1; i <= data.dayCount; i += 1) list.add(i);
     return [...list].sort((a, b) => a - b);
-  }, [data.steps, data.dayCount, data.today]);
+  }, [data.steps, data.dayCount, today]);
 
+  useEffect(() => {
+    function syncClock() {
+      const now = new Date();
+      const date = normalizeCivilDateString();
+      const hour = now.getHours();
+      setClock((prev) => prev?.date === date && prev.hour === hour ? prev : { date, hour });
+    }
+    syncClock();
+    const timer = window.setInterval(syncClock, 60_000);
+    window.addEventListener('pageshow', syncClock);
+    document.addEventListener('visibilitychange', syncClock);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('pageshow', syncClock);
+      document.removeEventListener('visibilitychange', syncClock);
+    };
+  }, []);
+
+  useEffect(() => {
+    const rail = dayRail.current;
+    const active = rail?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!rail || !active) return;
+    rail.scrollLeft = active.offsetLeft - (rail.clientWidth - active.offsetWidth) / 2;
+  }, [day]);
   useEffect(() => {
     const sync = () => {
       const next = readView();
@@ -139,7 +183,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     if (next.detail) url.searchParams.set('detail', next.detail);
     else url.searchParams.delete('detail');
     const depth = Number(window.history.state?.lkdvHubDepth) || 0;
-    if (view?.detail || (view && !next.detail)) {
+    const fromHour = view?.widget === 'carnet' && view.detail?.startsWith('heure-') && next.detail;
+    if ((view?.detail && !fromHour) || (view && !next.detail)) {
       window.history.replaceState(window.history.state, '', url);
     } else {
       window.history.pushState({ ...window.history.state, lkdvHubDepth: depth + 1 }, '', url);
@@ -172,7 +217,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   function stepRows(target: 'carte' | 'etapes') {
     return daySteps.map((step) => (
-      <Pill key={step.id} itemId={step.id} title={step.title} meta={step.time ?? step.place}
+      <Pill key={step.id} itemId={step.id} title={step.title} meta={step.time} inline
         onClick={(element) => go({ widget: target, detail: step.id }, element)} />
     ));
   }
@@ -188,7 +233,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   function budgetRows() {
     return expenses.map((entry) => (
-      <Pill key={entry.id} itemId={entry.id} title={entry.title} meta={money(entry)}
+      <Pill key={entry.id} itemId={entry.id} title={entry.title} meta={money(entry)} inline
         onClick={(element) => go({ widget: 'budget', detail: entry.id }, element)} />
     ));
   }
@@ -207,13 +252,21 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     ));
   }
 
-  function dayPicker(inTile = false) {
-    return <label className={inTile ? styles.tileDay : styles.selectDay}>
-      <span className={inTile ? 'sr-only' : undefined}>Jour</span>
-      <select className="lkdv-cv2-input" aria-label="Jour du voyage" value={day} onChange={(event) => setDay(Number(event.currentTarget.value))}>
-        {days.map((option) => <option key={option} value={option}>J{option}{data.dayCount ? `/${data.dayCount}` : ''}</option>)}
-      </select>
-    </label>;
+  function dayPicker() {
+    return <m.div layoutScroll ref={dayRail} role="group" aria-label="Jour du voyage" className={styles.dayRail}>
+      {days.map((option) => <button key={option} className={styles.dayPill} type="button" aria-label={`Jour ${option}`}
+        aria-current={option === today ? 'date' : undefined} aria-pressed={option === day}
+        onClick={() => setSelection({ day: option, date: clock?.date })}>
+        {option === day && <m.span layoutId={`${id}-day`} className={styles.daySelection} aria-hidden="true"
+          transition={{ type: 'spring', stiffness: 480, damping: 38 }} />}
+        <span>J{option}</span>
+      </button>)}
+    </m.div>;
+  }
+
+  function dayContent(body: ReactNode, className: string, label?: string) {
+    return <m.div key={day} className={className} role={label ? 'group' : undefined} aria-label={label}
+      initial={{ opacity: 0.64 }} animate={{ opacity: 1 }} transition={{ duration: 0.16 }}>{body}</m.div>;
   }
 
   function makeTile(key: Widget, body: ReactNode, control?: ReactNode) {
@@ -222,7 +275,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       <div className={styles.tileHeader}>
         <h2><button className={styles.heading} type="button" aria-haspopup="dialog"
           onClick={(event) => go({ widget: key }, event.currentTarget)}>
-          <Icon className={styles.headingIcon} name={definition.icon} size={16} /><span>{definition.name}</span>
+          {key !== 'meteo' && <Icon className={styles.headingIcon} name={definition.icon} size={16} />}
+          <span>{definition.name}</span>
           <Icon className={styles.chevron} name="chevron-right" size={14} />
         </button></h2>
         {control}
@@ -233,16 +287,29 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   function budgetSummary() {
     if (data.unavailableSections?.includes('expenses')) return <p className={styles.meta}>Dépenses momentanément indisponibles</p>;
-    if (!data.budget) return <p className={styles.meta}>Accès au budget indisponible</p>;
-    if (!data.budget.spent.length) return <p className={styles.meta}>Aucune dépense enregistrée</p>;
-    return <div className={styles.metrics}>{data.budget.spent.map((row) =>
-      <span className={styles.value} key={row.currency}>{money(row)}</span>)}</div>;
+    if (!dailyBudget) return <p className={styles.meta}>Accès au budget indisponible</p>;
+    const currencies = new Set([...dailyBudget.spent, ...dailyBudget.planned].map(({ currency }) => currency));
+    if (!currencies.size) return <p className={styles.meta}>Aucune dépense ce jour</p>;
+    return <div className={styles.metrics}>{Array.from(currencies, (currency) => {
+      const spent = dailyBudget.spent.find((row) => row.currency === currency)?.amount ?? 0;
+      const planned = dailyBudget.planned.find((row) => row.currency === currency);
+      return <span className={styles.budgetAmount} key={currency}>
+        <span className={styles.value}>{money({ amount: spent, currency })}</span>
+        {planned && <small title={dailyBudget.estimate ? 'Budget du jour estimé' : 'Budget prévu du jour'}
+          aria-label={`sur ${money(planned)} prévus${dailyBudget.estimate ? ', estimation' : ''}`}>/{money(planned)}</small>}
+      </span>;
+    })}</div>;
   }
 
   function weatherSummary(inTile = false) {
     if (!forecast) return <p className={styles.meta}>{weather.pending ? 'Recherche des prévisions…' : 'Météo indisponible'}</p>;
     return <>
-      <span className={styles.value}>{number(forecast.temperature)}°</span>
+      <span className={styles.weatherValue}>
+        {forecast.weatherCode != null && <span className={styles.weatherGlyph} role="img" aria-label={forecast.condition}>
+          <Icon name={weatherGlyph(forecast.weatherCode)} size={25} />
+        </span>}
+        <span className={styles.value}>{number(forecast.temperature)}°</span>
+      </span>
       {!inTile && <p className={styles.meta}>{forecast.condition} · {forecast.place ?? 'Destination du voyage'}</p>}
     </>;
   }
@@ -262,18 +329,18 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       case 'budget':
         return <>
           {budgetSummary()}
-          {data.budget?.planned && <p>Budget prévu · {money(data.budget.planned)}</p>}
+          {dailyBudget?.estimate && <p className={styles.meta}>Budget du jour estimé à partir de l’enveloppe du voyage.</p>}
           {expenses.length > 0 && <div className={styles.rows}>{budgetRows()}</div>}
           {!fixture && data.budget && <Action href="/hub/budget">Gérer les dépenses</Action>}
         </>;
       case 'carte':
         return <>
-          <Map data={data} fixture={fixture} onStep={(step) => go({ widget: 'carte', detail: step.id })} />
+          <Map data={dayMap} fixture={fixture} onStep={(step) => go({ widget: 'carte', detail: step.id })} />
           {daySteps.length > 0 && <div className={styles.rows}>{stepRows('carte')}</div>}
-          {!fixture && <Action href="/hub/itineraire">Ouvrir l’itinéraire</Action>}
+          {!fixture && <Action href={"/hub/itineraire?jour=" + day}>Ouvrir l’itinéraire</Action>}
         </>;
       case 'etapes':
-        return <>{dayPicker()}
+        return <>
           {daySteps.length ? <div className={styles.rows}>{stepRows('etapes')}</div> : <Status>{data.unavailableSections?.includes('steps') ? 'Étapes momentanément indisponibles.' : 'Aucune étape prévue pour ce jour.'}</Status>}
           {!fixture && <Action href={`/hub/itineraire?jour=${day}`}>Gérer les étapes</Action>}
         </>;
@@ -283,11 +350,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             data-hub-item="ajouter" onClick={(event) => go({ widget: 'carnet', detail: 'ajouter' }, event.currentTarget)}>
             <Icon name="plus" size={17} /> Ajouter un moment
           </button>
-          {carnet?.moments.length ? <div className={styles.rows}>{carnet.moments.map((entry) =>
-            <Pill key={entry.id} itemId={entry.id} title={entry.title} meta={entry.day && `J${entry.day}`}
-              onClick={(element) => go({ widget: 'carnet', detail: entry.id }, element)} />)}</div>
-            : !data.notes.length && <Status>{data.carnetUnavailable ? 'Carnet momentanément indisponible.' : 'Le carnet est prêt à accueillir le premier moment.'}</Status>}
-          {data.notes.length > 0 && <ul className={styles.list}>{data.notes.map((note) =>
+          {dayMoments.length ? <div className={styles.rows}>{momentRows(dayMoments)}</div>
+            : !dayNotes.length && <Status>{data.carnetUnavailable ? 'Carnet momentanément indisponible.' : 'Aucun moment enregistré ce jour.'}</Status>}
+          {dayNotes.length > 0 && <ul className={styles.list}>{dayNotes.map((note) =>
             <li key={note.id}><strong>{note.title ?? 'Note du voyage'}</strong><p>{note.content}</p></li>)}</ul>}
           {!fixture && <Action href={carnet ? `/carnets/${carnet.id}` : '/hub/journal'}>Ouvrir le carnet</Action>}
         </>;
@@ -295,7 +360,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
         return <>
           {data.kitId && !fixture && <KitScene kitId={data.kitId} />}
           {!data.kitId && <Status action={!fixture && <Action href="/hub/kit-voyage">Choisir le kit du voyage</Action>}>Aucun kit affecté au voyage.</Status>}
-          {!!data.kit.length && <ul className={styles.list}>{data.kit.map((item) =>
+          {!!dayKit.length && <ul className={styles.list}>{dayKit.map((item) =>
             <li key={item.id}><strong>{item.title}{item.amount > 1 && ` × ${item.amount}`}</strong>
               <p className={styles.meta}>{item.packed ? 'Préparé' : 'À préparer'}</p></li>)}</ul>}
           {!fixture && data.kitId && <Action href="/hub/kit-voyage">Gérer le kit</Action>}
@@ -319,6 +384,11 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     }
   }
 
+  function momentRows(entries: typeof dayMoments) {
+    return entries.map((entry) => <Pill key={entry.id} itemId={entry.id} title={entry.title} meta={entry.time} inline
+      onClick={(element) => go({ widget: 'carnet', detail: entry.id }, element)} />);
+  }
+
   function renderDetail(detailId: string): { title: string; content: ReactNode } | null {
     if (widget === 'meteo') {
       const entry = forecast?.days.find((item) => item.date === detailId);
@@ -337,14 +407,16 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     if (widget === 'budget') {
       const entry = expenses.find((item) => item.id === detailId);
       return entry ? { title: entry.title, content: <>
+        <p><strong>{entry.title}</strong></p>
         <p className={styles.value}>{money(entry)}</p>
-        <p>{[dateLabel(entry.date), entry.category, entry.payer].filter(Boolean).join(' · ')}</p>
+        {[entry.category, entry.payer].filter(Boolean).length > 0 && <p>{[entry.category, entry.payer].filter(Boolean).join(' · ')}</p>}
         {!fixture && <Action href="/hub/budget">Gérer les dépenses</Action>}
       </> } : null;
     }
     if (widget === 'carte' || widget === 'etapes') {
       const step = data.steps.find((item) => item.id === detailId);
       return step ? { title: step.title, content: <>
+        <p><strong>{step.title}</strong></p>
         <p>{[`J${step.day}`, step.time, step.place].filter(Boolean).join(' · ')}</p>
         {step.description && <p className={styles.bodyCopy}>{step.description}</p>}
         {step.distance != null && <p>{number(step.distance)} km prévus</p>}
@@ -353,13 +425,21 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       </> } : null;
     }
     if (widget === 'carnet') {
+      const clockMatch = /^heure-([0-9]{1,2})$/.exec(detailId);
+      if (clockMatch) {
+        const label = clockMatch[1].padStart(2, '0') + 'h';
+        const entries = dayMoments.filter((entry) => momentHour(entry.time) === Number(clockMatch[1]));
+        return { title: `Moments de ${label}`, content: entries.length
+          ? <div className={styles.rows}>{momentRows(entries)}</div>
+          : <Status>Aucun moment à {label}.</Status> };
+      }
       if (detailId === 'ajouter') return { title: 'Ajouter un moment', content: fixture
         ? <Status>Connecte-toi à ton voyage pour enregistrer un moment.</Status>
         : <MomentEditor tripId={data.key} day={day} place={daySteps.find((step) => step.place)?.place ?? data.location}
             carnet={carnet} kitItems={data.carnetKitItems ?? []} canCreate={Boolean(data.canCreateCarnet)} onChange={setCarnet} onBack={back} /> };
       const moment = carnet?.moments.find((item) => item.id === detailId);
       return moment ? { title: 'Moment', content: <>
-        <p>{moment.title}</p>{moment.day && <p>Jour {moment.day}</p>}
+        <p>{moment.title}</p>{moment.time && <p>{moment.time}</p>}
         {moment.audio && <audio controls preload="metadata" src={moment.audio} aria-label="Note vocale" />}
         {moment.media && (moment.type === 'video'
           ? <video className={styles.momentMedia} controls playsInline preload="metadata" src={moment.media} aria-label="Vidéo du moment" />
@@ -370,6 +450,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     if (widget === 'paperasse') {
       const entry = reservations.find((item) => item.id === detailId);
       if (entry) return { title: entry.title, content: <>
+        <p><strong>{entry.title}</strong></p>
         <p>{entry.status}</p>
         <p>{entry.due ? `Échéance · ${dateLabel(entry.due)}` : 'Échéance non renseignée'}</p>
         {entry.when && <p>Prévu le {dateLabel(entry.when)}</p>}
@@ -378,6 +459,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       </> };
       const document = data.documents?.find((item) => `doc-${item.id}` === detailId);
       return document ? { title: document.title, content: <>
+        <p><strong>{document.title}</strong></p>
         {document.expiration && <p>Échéance · {dateLabel(document.expiration)}</p>}
         <p>{document.category === 'ticket' ? 'Billet' : document.category === 'booking' ? 'Réservation' : 'Document de voyage'}</p>
         {!fixture && <Action href="/hub/documents">Ouvrir les documents du voyage</Action>}
@@ -395,7 +477,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   const info = view?.detail ? renderDetail(view.detail) : null;
 
-  return <section className={`lkdv-communaute-v2 ${styles.shell}`} data-hub-cockpit aria-labelledby={id}>
+  return <LazyMotion features={domMax}><MotionConfig reducedMotion="user"><section className={`lkdv-communaute-v2 ${styles.shell}`} data-hub-cockpit aria-labelledby={id}>
     <h1 id={id} className="sr-only">{data.title}</h1>
     {!isOnline && <p role="status">Hors connexion</p>}
     {!fixture && !data.trip && <Action href="/compas">Préparer une aventure</Action>}
@@ -406,50 +488,46 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           {forecast?.days.length ? <Rail label="Prochains jours" small>{weatherDays()}</Rail>
             : !fixture && <button type="button" className="lkdv-cv2-chip" disabled={weather.pending} onClick={() => void weather.locate()}>Utiliser ma position</button>}
         </>)}
-        {makeTile('budget', <>
+        {makeTile('budget', dayContent(<>
           {budgetSummary()}
-          {expenses.length > 0 && <Rail label="Dernières dépenses">{budgetRows().slice(0, 12)}</Rail>}
-        </>)}
+          {expenses.length > 0 && <Rail label="Dépenses du jour">{budgetRows().slice(0, 12)}</Rail>}
+        </>, styles.budgetBody))}
         {makeTile('carte', <>
           <button className={styles.mapOpen} type="button" aria-label="Ouvrir la carte" onClick={(event) => go({ widget: 'carte' }, event.currentTarget)}>
-            <Map data={data} fixture={fixture} />
+            <Map data={dayMap} fixture={fixture} />
           </button>
-          {(data.distance != null || data.elevation != null) && <p className={styles.meta}>
-            {[data.distance != null && `${number(data.distance)} km`, data.elevation != null && `+${number(data.elevation)} m`].filter(Boolean).join(' · ')}
-          </p>}
         </>)}
-        {makeTile('etapes', <>
-          {daySteps.length ? <div className={styles.daySteps} role="group" aria-label="Étapes de la journée">{stepRows('etapes')}</div>
-            : <p className={styles.meta}>{data.unavailableSections?.includes('steps') ? 'Étapes indisponibles' : 'Aucune étape prévue'}</p>}
-        </>, dayPicker(true))}
-        {makeTile('carnet', <>
-          <p className={styles.meta}>{carnet?.moments[0]?.title ?? data.notes[0]?.title ?? 'Moments du voyage'}</p>
-          <button className={`lkdv-cv2-chip ${styles.addMoment}`} type="button"
+        {makeTile('etapes', daySteps.length ? dayContent(stepRows('etapes'), styles.daySteps, 'Étapes de la journée')
+          : <p className={styles.meta}>{data.unavailableSections?.includes('steps') ? 'Étapes indisponibles' : 'Aucune étape prévue'}</p>, dayPicker())}
+        {makeTile('carnet', dayContent(<>
+          <CarnetClock focusHour={clockHour} moments={dayMoments}
+            onOpen={(value, element) => go({ widget: 'carnet', detail: `heure-${value}` }, element)} />
+          <button className={styles.momentAddBox} type="button" aria-label="Ajouter un moment"
             data-hub-item="ajouter" onClick={(event) => go({ widget: 'carnet', detail: 'ajouter' }, event.currentTarget)}>
-            <Icon name="plus" size={15} /> Ajouter un moment
+            <Icon name="plus" size={25} />
           </button>
-        </>)}
-        {makeTile('kit', <p className={styles.meta}>{data.kitName ?? (data.kit.length ? `${packed} sur ${data.kit.length} préparés` : 'Aucun kit affecté')}</p>)}
+        </>, styles.carnetBody))}
+        {makeTile('kit', <p className={styles.meta}>{data.kitName && <>{data.kitName}{dayKit.length > 0 && <br />}</>}
+          {dayKit.length ? `${packed}/${dayKit.length} préparés` : !data.kitName && 'Aucun kit affecté'}</p>)}
         {makeTile('paperasse', reservations.length ? <Rail label="À réserver">{reservationRows()}</Rail>
           : <p className={styles.meta}>{data.reservations === null ? 'Réservations indisponibles' : 'Aucune réservation à traiter'}</p>)}
       </>}
       {makeTile('groupe', data.people.length ? <Rail label="Membres actifs">{peopleRows()}</Rail>
         : <p className={styles.meta}>{data.pending > 0 ? `${data.pending} invitation(s) en attente` : 'Aucun membre actif'}</p>)}
     </div></div>}
-    {!fixture && adventureControl && <footer className={styles.footer}>{adventureControl}</footer>}
+    {adventureControl && <footer className={styles.footer}>{adventureControl}</footer>}
     <CommunitySheetShell
       open={view !== null}
       onClose={close}
       initialDetent="large"
       hideCapsule
+      hideDetailTitle
+      showClose
+      className={styles.drawerLayer}
       resetKey={widget}
       label={widgets[widget].name}
       capsule={{ items: [{ id: `hub-${widget}`, label: widgets[widget].name, icon: <Icon name={widgets[widget].icon} size={22} /> }],
         active: 0, onChange: () => undefined }}
-      staticSlot={<div className={styles.sheetTitle}>
-        <h2 className="lkdv-cv2-title">{widgets[widget].name}</h2>
-        <button type="button" className="lkdv-cv2-back" aria-label="Fermer" onClick={close}><Icon name="x" size={18} /></button>
-      </div>}
       panes={[<div key={widget} className={styles.pane}>{renderPane()}</div>]}
       detail={view?.detail ? {
         title: info?.title ?? 'Détail indisponible', index: 0,
@@ -457,5 +535,5 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
         onBack: back,
       } : null}
     />
-  </section>;
+  </section></MotionConfig></LazyMotion>;
 }

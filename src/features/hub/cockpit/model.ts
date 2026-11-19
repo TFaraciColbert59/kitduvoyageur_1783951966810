@@ -4,6 +4,7 @@ import type { TripFull } from '@/features/trips/types/trip.types';
 import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
 import { rainLabel, weatherLabel } from '@/features/materiel/services/getWeather';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
+import { currentCockpitDay } from './day';
 
 export type Coordinate = [longitude: number, latitude: number];
 
@@ -40,15 +41,28 @@ export interface CockpitReservation {
   partnerSlug?: string;
 }
 
+export interface CockpitExpense {
+  id: string;
+  title: string;
+  amount: number;
+  currency: string;
+  date?: string | null;
+  planned?: boolean;
+  category?: string | null;
+  payer?: string | null;
+}
+
 export interface CockpitData {
   key: string;
   title: string;
   location: string | null;
   today: number | null;
   dayCount: number | null;
+  startDate?: string | null;
   weatherPoint?: Coordinate | null;
   weather: {
     temperature: number;
+    weatherCode?: number;
     condition: string;
     place: string | null;
     rain: string | null;
@@ -57,16 +71,15 @@ export interface CockpitData {
     source?: string;
   } | null;
   budget: {
-    spent: { currency: string; amount: number }[];
     planned: { currency: string; amount: number } | null;
-    expenses: { id: string; title: string; amount: number; currency: string; date?: string; category?: string | null; payer?: string | null }[];
+    expenses: CockpitExpense[];
   } | null;
   route: Coordinate[][];
   distance: number | null;
   elevation: number | null;
   steps: CockpitStep[];
   notes: { id: string; title: string | null; content: string; day: number | null }[];
-  kit: { id: string; title: string; amount: number; packed: boolean }[];
+  kit: { id: string; title: string; amount: number; packed: boolean; day?: number | null }[];
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
   people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null }[];
   peopleCount: number | null;
@@ -79,7 +92,7 @@ export interface CockpitData {
   carnetKitItems?: CarnetKitItemRow[];
   canCreateCarnet?: boolean;
   reservations?: CockpitReservation[] | null;
-  carnet?: { id: string; editable: boolean; moments: { id: string; title: string; day: number | null; media?: string | null; audio?: string | null; type?: string | null }[] } | null;
+  carnet?: { id: string; editable: boolean; moments: { id: string; title: string; day: number | null; time?: string | null; media?: string | null; audio?: string | null; type?: string | null }[] } | null;
   kitId?: string | null;
   kitName?: string | null;
 }
@@ -110,6 +123,7 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
   const current = forecast?.current;
   const weather = forecast && current && Number.isFinite(current.tempC) ? {
     temperature: current.tempC,
+    weatherCode: current.weathercode,
     condition: weatherLabel(current.weathercode),
     rain: rainLabel(current.precipPct, current.precipMm),
     place: forecast.locationLabel,
@@ -119,17 +133,15 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     })),
   } : null;
 
-  const amounts = new Map<string, number>();
   const expenses: NonNullable<CockpitData['budget']>['expenses'] = [];
   if (trip?.permissions.canManageBudget) {
     for (const row of trip.expenses.slice().sort((a, b) =>
       (b.expense_date ?? '').localeCompare(a.expense_date ?? '') || b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))) {
-      if (row.is_planned || row.amount == null || !Number.isFinite(Number(row.amount))) continue;
+      if (row.amount == null || !Number.isFinite(Number(row.amount))) continue;
       const amount = Number(row.amount);
-      amounts.set(row.currency, (amounts.get(row.currency) ?? 0) + amount);
       expenses.push({
         id: row.id, title: row.title, amount, currency: row.currency,
-        date: row.expense_date, category: row.category, payer: row.payer?.full_name,
+        date: row.expense_date, planned: row.is_planned, category: row.category, payer: row.payer?.full_name,
       });
     }
   }
@@ -160,26 +172,27 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
       .map(([lng, lat]): Coordinate => [lng, lat]);
   });
 
+  const dayCount = phase?.totalDays ?? steps.at(-1)?.day ?? null;
   return {
     key: trip?.id ?? (adventure.nature === 'collectif' ? adventure.id : 'possession'),
     title: trip?.title ?? data.groupLabel ?? 'Mes aventures',
     location: trip?.destination_name ?? null,
-    today: trip?.status === 'active' ? phase?.dayIndex ?? null : null,
-    dayCount: phase?.totalDays ?? steps.at(-1)?.day ?? null,
+    today: trip ? currentCockpitDay(trip.start_date, dayCount) : null,
+    dayCount,
+    startDate: trip?.start_date,
     weather, route, steps,
     weatherPoint: hiking?.coords ? coordinate(hiking.coords.lon, hiking.coords.lat) :
       hiking?.weather?.point ? coordinate(hiking.weather.point.lon, hiking.weather.point.lat) : steps.find((step) => step.coordinate)?.coordinate,
     distance: hiking?.distanceKm ?? null,
     elevation: hiking?.elevationGainM ?? null,
     budget: trip?.permissions.canManageBudget ? {
-      spent: Array.from(amounts, ([currency, amount]) => ({ amount, currency })),
       planned: trip.estimated_budget == null ? null : { currency: trip.budget_currency, amount: Number(trip.estimated_budget) },
       expenses,
     } : null,
-    notes: (trip?.notes ?? []).slice(0, 8).map(({ id, title, content, day_number }) =>
+    notes: (trip?.notes ?? []).map(({ id, title, content, day_number }) =>
       ({ id, title, content: content.slice(0, 500), day: day_number })),
-    kit: (trip?.items ?? []).map(({ id, item_name, quantity, is_packed }) =>
-      ({ id, title: item_name, amount: quantity, packed: is_packed })),
+    kit: (trip?.items ?? []).map(({ id, item_name, quantity, is_packed, day_number }) =>
+      ({ id, title: item_name, amount: quantity, packed: is_packed, day: day_number })),
     documents: trip?.permissions.canViewDocuments ? trip.documents.map(({ id, title, category, expires_at }) =>
       ({ id, title, category, expiration: expires_at })) : null,
     people: Array.from(people.values()),

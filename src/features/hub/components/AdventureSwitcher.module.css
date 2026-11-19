@@ -1,0 +1,27 @@
+.dock {
+  position: relative;
+  display: grid;
+  width: min(100%, 24rem);
+  height: 10px;
+  place-items: center;
+  margin-inline: auto;
+  cursor: pointer;
+}
+.dock::before {
+  position: absolute;
+  inset: -7px 0;
+  content: '';
+}
+.dock span {
+  display: block;
+  width: 5rem;
+  height: 8px;
+  border-radius: var(--lkv-radius-pill);
+  background: var(--lkv-action);
+  opacity: .72;
+}
+.dock:focus-visible {
+  border-radius: var(--lkv-radius-pill);
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: -2px;
+}

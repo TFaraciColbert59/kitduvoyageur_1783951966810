@@ -11,6 +11,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import Icon from '@/components/ui/Icon';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import { LensPager } from '@/components/ui/drawer/LensPager';
 import { SortMenuButton, type SortOption } from '@/components/ui/drawer/SortMenuButton';
@@ -117,6 +118,8 @@ export interface CommunitySheetShellProps {
   compactSearch?: boolean;
   initialDetent?: 'card' | 'large';
   hideCapsule?: boolean;
+  hideDetailTitle?: boolean;
+  showClose?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -162,6 +165,8 @@ export function CommunitySheetShell({
   compactSearch = false,
   initialDetent = 'card',
   hideCapsule = false,
+  hideDetailTitle = false,
+  showClose = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
@@ -564,7 +569,7 @@ export function CommunitySheetShell({
           onScrollCapture={onSheetScrollCapture}
         >
           <div
-            className="lkdv-cv2-grab"
+            className={cx('lkdv-cv2-grab', showClose && 'lkdv-cv2-grab--with-close')}
             data-cv2-drag
             onPointerDown={onDragStart}
             onPointerMove={onDragMove}
@@ -665,7 +670,7 @@ export function CommunitySheetShell({
                     <path d="M15 5l-7 7 7 7" />
                   </svg>
                 </button>
-                <b className="lkdv-cv2-detail-title">{detail.title}</b>
+                <b className={hideDetailTitle ? 'sr-only' : 'lkdv-cv2-detail-title'}>{detail.title}</b>
                 {detail.meta ? <span className="lkdv-cv2-detail-meta">{detail.meta}</span> : null}
               </div>
               {detailCount > 1 ? (
@@ -825,6 +830,9 @@ export function CommunitySheetShell({
             )
           ) : null}
 
+          {showClose && <button type="button" className="lkdv-cv2-back lkdv-cv2-close" aria-label="Fermer" onClick={onClose}>
+            <Icon name="x" size={18} />
+          </button>}
           {children}
         </div>
       </div>
