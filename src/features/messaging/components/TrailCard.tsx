@@ -20,10 +20,13 @@ const formatDeniv = (m?: number | null): string | null => {
 };
 
 export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
-  const href = `/explorer?trail=${meta.id}`;
+  const href = meta.workspace_id
+    ? `/compas/itineraire?workspaceId=${encodeURIComponent(meta.workspace_id)}${meta.share_token ? `&token=${encodeURIComponent(meta.share_token)}` : ''}`
+    : `/explorer?trail=${meta.id}`;
   const title = meta.name || 'Randonnée LKDV';
   const km = formatKm(meta.distance_km);
   const deniv = formatDeniv(meta.elevation_gain_m);
+  const revLabel = meta.revision_no != null ? `v${meta.revision_no}` : null;
 
   return (
     <Link
@@ -46,13 +49,13 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
       >
         {title}
       </p>
-      {(km || deniv) && (
+      {(km || deniv || revLabel) && (
         <p
           className={`text-[length:var(--lkv-text-caption)] font-medium ${
             isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-text-secondary)]'
           }`}
         >
-          {[km, deniv, meta.region].filter(Boolean).join(' · ')}
+          {[revLabel, km, deniv, meta.region].filter(Boolean).join(' · ')}
         </p>
       )}
     </Link>

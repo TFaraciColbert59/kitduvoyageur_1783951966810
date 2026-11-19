@@ -79,10 +79,14 @@ export function requiredPermissionForOperation(op: RouteOperationInput): RoutePe
     case 'insert_point':
     case 'delete_point':
     case 'reverse_route':
+    case 'set_shape_mode':
     case 'set_section_mode':
     case 'apply_routing_result':
     case 'set_sport_profile':
+    case 'apply_variant':
       return 'route.edit_geometry';
+    case 'add_variant':
+      return 'route.propose';
     case 'split_days':
     case 'move_day_boundary':
     case 'update_stage_note':

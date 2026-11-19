@@ -40,7 +40,7 @@
   },
   "scripts": {
     "dev": "next dev -p 4000",
-    "build": "next build",
+    "build": "NODE_OPTIONS=--max-old-space-size=6144 next build",
     "design:generate": "node scripts/generate-design-bank.mjs",
     "design:check": "node scripts/generate-design-bank.mjs --check",
     "predev": "node scripts/generate-design-bank.mjs && node scripts/atlas/copy-maplibre-worker.mjs",
@@ -49,7 +49,7 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json}\"",
     "serve": "next start",
-    "type-check": "tsc --noEmit",
+    "type-check": "NODE_OPTIONS=--max-old-space-size=6144 tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:local": "playwright test --project=desktop-chromium --grep @local-web",

@@ -3,4 +3,10 @@
 <resources>
     <string name="app_name">Le Kit du Voyageur</string>
     <string name="title_activity_main">Le Kit du Voyageur</string>
+    <string name="shortcut_plan_short">Pianifica</string>
+    <string name="shortcut_plan_long">Pianifica un percorso</string>
+    <string name="shortcut_record_short">Registra</string>
+    <string name="shortcut_record_long">Avvia registrazione GPS</string>
+    <string name="shortcut_offline_short">Offline</string>
+    <string name="shortcut_offline_long">Percorsi e mappe scaricati</string>
 </resources>

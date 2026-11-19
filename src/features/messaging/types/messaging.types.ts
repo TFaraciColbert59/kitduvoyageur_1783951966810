@@ -31,6 +31,9 @@ export interface TrailMessageMeta {
   distance_km?: number | null;
   elevation_gain_m?: number | null;
   region?: string | null;
+  workspace_id?: string | null;
+  revision_no?: number | null;
+  share_token?: string | null;
   geojson?: { type: 'LineString'; coordinates: [number, number][] };
   coordinates?: [number, number][];
 }

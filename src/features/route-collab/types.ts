@@ -152,6 +152,7 @@ export interface CollaborativeRouteSection {
   readonly durationMin: number | null;
   readonly ascentM: number | null;
   readonly descentM: number | null;
+  readonly elevationSamples?: readonly (number | null)[];
   readonly surfaceSegments: readonly SurfaceSegment[];
   readonly routingInputHash: string | null;
   readonly pendingFingerprint?: string | null;
@@ -289,6 +290,29 @@ export interface RouteImpactSummary {
 
 /* ---------- Journal d'Opérations & Concurrence ---------- */
 
+export type RouteShapeMode = 'one_way' | 'loop' | 'out_and_back';
+
+export interface PresenceEntry {
+  readonly userId: string;
+  readonly displayName: string;
+  readonly activeStageId: string | null;
+  readonly selectedEntityId: string | null;
+  readonly softLockEntityId: string | null;
+  readonly softLockExpiresAt: string | null;
+  readonly mode: 'viewing' | 'editing' | 'reviewing';
+  readonly lastSeenAt: string;
+}
+
+export interface ShareLinkConfig {
+  readonly token: string;
+  readonly audience: 'external_viewer' | 'participant';
+  readonly expiresAt: string | null;
+  readonly revokedAt: string | null;
+  readonly hidePrivateStartRadiusM: number;
+  readonly createdBy: string;
+  readonly createdAt: string;
+}
+
 export type RouteOperationInput =
   | {
       readonly type: 'move_point';
@@ -315,6 +339,10 @@ export type RouteOperationInput =
       readonly type: 'reverse_route';
     }
   | {
+      readonly type: 'set_shape_mode';
+      readonly shapeMode: RouteShapeMode;
+    }
+  | {
       readonly type: 'set_section_mode';
       readonly sectionId: string;
       readonly mode: CollaborativeSectionMode;
@@ -329,6 +357,7 @@ export type RouteOperationInput =
       readonly durationMin: number | null;
       readonly ascentM: number | null;
       readonly descentM: number | null;
+      readonly elevationSamples?: readonly (number | null)[];
       readonly surfaceSegments?: readonly SurfaceSegment[];
       readonly provenance: SectionProvenance;
     }
@@ -356,6 +385,14 @@ export type RouteOperationInput =
       readonly type: 'set_sport_profile';
       readonly sport: RouteSport;
       readonly routingOptions: RouteRoutingOptions;
+    }
+  | {
+      readonly type: 'add_variant';
+      readonly variant: RouteVariant;
+    }
+  | {
+      readonly type: 'apply_variant';
+      readonly variantId: string;
     }
   | {
       readonly type: 'revert_to_seq';
@@ -470,12 +507,15 @@ export interface RouteWorkspaceState {
   readonly title: string;
   readonly status: 'draft' | 'review' | 'published' | 'archived';
   readonly sport: RouteSport;
+  readonly shapeMode?: RouteShapeMode;
   readonly routingOptions: RouteRoutingOptions;
   readonly headSeq: number;
   readonly reviewedSeq: number | null;
   readonly publishedRevisionId: string | null;
   readonly publishedRevisionNo: number | null;
   readonly sourceOrigin: RouteSourceOrigin;
+  readonly shareLink?: ShareLinkConfig | null;
+  readonly clubEventId?: string | null;
   readonly points: readonly CollaborativeRoutePoint[];
   readonly sections: readonly CollaborativeRouteSection[];
   readonly stages: readonly CollaborativeStage[];

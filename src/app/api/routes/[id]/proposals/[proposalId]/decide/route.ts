@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { decideWorkspaceProposal } from '@/features/route-collab/serverStore';
-import { getAuthenticatedRouteActor } from '../../_auth';
+import { getAuthenticatedRouteActor } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
 

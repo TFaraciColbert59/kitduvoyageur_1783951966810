@@ -91,7 +91,17 @@ export async function middleware(request: NextRequest) {
     (pathname === '/hub' || pathname.startsWith('/hub/'));
   // Mode hermétique CI visuelle (NEXT_PUBLIC_CI=true)
   const isVisualCi = process.env.NEXT_PUBLIC_CI === 'true';
-  if (isAppRoute(pathname) && !hasSessionCookie(request) && !isLocalHubCamp && !isVisualCi) {
+  // Créateur collaboratif & coquille hors-ligne : gère ses propres contrôles d'accès serveur,
+  // les liens de partage lecture seule (?token=...) et l'ouverture en mode avion.
+  const isRouteCollabSurface =
+    pathname === '/compas/itineraire' || pathname.startsWith('/compas/itineraire/');
+  if (
+    isAppRoute(pathname) &&
+    !hasSessionCookie(request) &&
+    !isLocalHubCamp &&
+    !isVisualCi &&
+    !isRouteCollabSurface
+  ) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/connexion';
     loginUrl.search = '';

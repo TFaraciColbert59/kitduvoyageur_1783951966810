@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RouteCollabWorkspace } from '../components/RouteCollabWorkspace';
 import type { RouteWorkspaceState } from '../types';
 
@@ -14,6 +14,7 @@ function makeUiWorkspace(): RouteWorkspaceState {
     title: 'Boucle Chartreuse 2 jours',
     status: 'draft',
     sport: 'marche',
+    shapeMode: 'one_way',
     routingOptions: {},
     headSeq: 0,
     reviewedSeq: null,
@@ -91,8 +92,8 @@ function makeUiWorkspace(): RouteWorkspaceState {
   };
 }
 
-describe('RouteCollabWorkspace UI — Sans WebGL, Édition, Publication, Pack & Carnet', () => {
-  it('reste pleinement utilisable sans WebGL (mode liste) et couvre le cycle jusqu’au carnet', () => {
+describe('RouteCollabWorkspace UI — Design Explorer (Carte + Pilule 3 points + Tiroir/Sous-tiroirs) & Sans WebGL', () => {
+  it('reste pleinement utilisable sans WebGL (mode liste + tiroir) et couvre le cycle jusqu’au carnet', async () => {
     render(
       <RouteCollabWorkspace
         initialWorkspace={makeUiWorkspace()}
@@ -102,25 +103,31 @@ describe('RouteCollabWorkspace UI — Sans WebGL, Édition, Publication, Pack & 
       />,
     );
 
+    // Sans WebGL : fallback liste visible + tiroir ouvert automatiquement
     expect(screen.getByTestId('list-mode-fallback')).toBeTruthy();
-    expect(screen.getByText(/Mode liste \(WebGL indisponible\)/i)).toBeTruthy();
 
-    // Ajouter un point en vue liste sans WebGL
+    // Ajouter un point depuis l'onglet Tracer du tiroir
     fireEvent.click(screen.getByRole('button', { name: /\+ Ajouter un point/i }));
-    expect(screen.getByText(/Points \(3\)/i)).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/Points \(3\)/i)).toBeTruthy());
 
-    // Publier v1
-    fireEvent.click(screen.getByRole('button', { name: /Publier v1/i }));
-    expect(screen.getByText(/Publiée v1/i)).toBeTruthy();
-
-    // Aller dans Départ, télécharger le pack, démarrer puis terminer vers Carnet
+    // Ouvrir l'onglet Départ -> Publier v1 -> Sous-tiroir Hors ligne, Activité & Carnet
     fireEvent.click(screen.getByRole('tab', { name: 'Départ' }));
+    fireEvent.click(screen.getByRole('button', { name: /Publier v1/i }));
+    await waitFor(() => expect(screen.getAllByText(/Publiée v1/i).length).toBeGreaterThan(0));
+
+    fireEvent.click(screen.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }));
+    expect(screen.getByTestId('subdrawer-offline-carnet')).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: /Télécharger le pack/i }));
-    expect(screen.getByText(/Version 1 vérifiée/i)).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId('pack-manifest-info')).toBeTruthy());
 
     fireEvent.click(screen.getByRole('button', { name: /Démarrer l’activité/i }));
     fireEvent.click(screen.getByRole('button', { name: /Terminer et ouvrir le carnet/i }));
-    expect(screen.getByText(/Bilan Carnet/i)).toBeTruthy();
-    expect(screen.getByText(/Version suivie : v1/i)).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId('carnet-return-card')).toBeTruthy());
+    expect(screen.getByTestId('carnet-return-card').textContent).toContain('v1');
+
+    // Fermer le tiroir -> seule la pilule 3 points reste disponible pour le rouvrir
+    fireEvent.click(screen.getByRole('button', { name: 'Fermer' }));
+    expect(screen.getByTestId('route-drawer-pill')).toBeTruthy();
   });
 });

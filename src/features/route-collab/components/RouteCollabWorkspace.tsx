@@ -1,23 +1,42 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import '@/styles/explorer-v2.css';
+import './routeCollab.css';
+
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ATLAS_TILES } from '@/components/map/engine/createMapStyle';
 import type { RouteSport } from '@/features/adventure-prep/routeProfiles';
+import type { MapBase } from '@/features/compas/engine/mapStyle';
+import { ExplorerSheet, type SheetTab } from '@/features/explorer-v2/sheet/ExplorerSheet';
+import {
+  XpChips,
+  XpEmpty,
+  XpEyebrow,
+  XpMetrics,
+  XpRow,
+  XpRows,
+} from '@/features/explorer-v2/sheet/blocks';
+import type { Detent } from '@/features/explorer-v2/state/types';
+import { XpIcon } from '@/features/explorer-v2/ui/XpIcon';
 import {
   activePoints,
   applyWorkspaceOperation,
   buildElevationProfile,
+  computeRoutingFingerprint,
   exportWorkspaceGpx,
   parseGpxToWorkspaceEntities,
   publishWorkspaceRevision,
   workspaceTotals,
 } from '../engine';
+import { summarizeWorkspaceForHub } from '../integrations';
 import {
   commitVerifiedPack,
   duplicateWorkspaceWithProvenance,
   enqueueOfflineOperation,
   finishActivityToCarnet,
   getActiveActivityLink,
-  getCarnetReturnRecord,
   getLastVerifiedPack,
   listOfflineQueue,
   replayOfflineQueue,
@@ -27,25 +46,119 @@ import {
 } from '../offlinePackStore';
 import { hasRoutePermission } from '../permissions';
 import type {
+  ApplyOperationResult,
   CollaborativeKitItem,
+  CollaborativeRoutePoint,
+  CollaborativeRouteSection,
+  CollaborativeStage,
   DomainConflict,
+  OvernightPlace,
+  PresenceEntry,
   RouteOperationInput,
   RouteOperationRecord,
   RouteProposal,
-  RouteRole,
+  RouteShapeMode,
+  RouteVariant,
   RouteWorkspaceState,
 } from '../types';
-import './routeCollab.css';
+import type { RouteCollabMapProps } from './RouteCollabMap';
 
-export type WorkspaceTab = 'tracer' | 'etapes' | 'analyser' | 'equipe' | 'depart';
+const DynamicRouteMap = dynamic<RouteCollabMapProps>(
+  () => import('./RouteCollabMap').then((m) => m.RouteCollabMap),
+  {
+    ssr: false,
+    loading: () => <div className="xp-map" aria-hidden="true" />,
+  },
+);
+
+export type SubDrawerId =
+  | 'point'
+  | 'section'
+  | 'stage'
+  | 'map-settings'
+  | 'gpx'
+  | 'variants'
+  | 'kit'
+  | 'terrain'
+  | 'proposals'
+  | 'sharing'
+  | 'offline-carnet';
 
 export interface RouteCollabWorkspaceProps {
   initialWorkspace: RouteWorkspaceState;
   currentUserId: string;
   currentUserName: string;
+  /** Si vrai, toutes les mutations/lectures passent par /api/routes/[id]/* pour la vraie coédition multi-sessions. */
+  serverSynced?: boolean;
+  shareToken?: string | null;
   /** Pour les tests ou environnements sans WebGL. */
   forceNoWebGL?: boolean;
+  /** Ouvre le tiroir dès le premier rendu (utile pour tests ou accès direct). */
+  initialSheetOpen?: boolean;
   onWorkspaceChange?: (next: RouteWorkspaceState) => void;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Responsable',
+  co_organizer: 'Coorganisateur',
+  editor: 'Éditeur',
+  contributor: 'Contributeur',
+  participant: 'Participant',
+  external_viewer: 'Lecteur externe',
+};
+
+type OvernightChipValue = 'none' | OvernightPlace['type'];
+
+const OVERNIGHT_LABELS: Record<OvernightChipValue, string> = {
+  none: 'Journée',
+  refuge: 'Refuge',
+  hut: 'Cabane',
+  bivouac: 'Bivouac',
+  camp: 'Camping',
+  gite: 'Gîte',
+  hotel: 'Hôtel',
+};
+
+const SECTION_MODE_LABELS: Record<string, string> = {
+  routed: 'Routé',
+  manual: 'Manuel',
+  imported_preserved: 'Trace importée',
+};
+
+function computeStageMetrics(
+  stage: CollaborativeStage,
+  orderedPts: readonly CollaborativeRoutePoint[],
+  sections: readonly CollaborativeRouteSection[],
+): { distanceKm: number; ascentM: number | null; durationMin: number | null } {
+  const startIdx = orderedPts.findIndex((p) => p.id === stage.startPointId);
+  const endIdx = orderedPts.findIndex((p) => p.id === stage.endPointId);
+  if (startIdx < 0 || endIdx <= startIdx) {
+    return { distanceKm: 0, ascentM: null, durationMin: null };
+  }
+  const pointIds = new Set(orderedPts.slice(startIdx, endIdx + 1).map((p) => p.id));
+  let dist = 0;
+  let asc = 0;
+  let hasAsc = false;
+  let dur = 0;
+  let hasDur = false;
+  for (const s of sections) {
+    if (pointIds.has(s.fromPointId) && pointIds.has(s.toPointId)) {
+      dist += s.distanceKm;
+      if (s.ascentM != null) {
+        asc += s.ascentM;
+        hasAsc = true;
+      }
+      if (s.durationMin != null) {
+        dur += s.durationMin;
+        hasDur = true;
+      }
+    }
+  }
+  return {
+    distanceKm: Number(dist.toFixed(2)),
+    ascentM: hasAsc ? Math.round(asc) : null,
+    durationMin: hasDur ? Math.round(dur) : null,
+  };
 }
 
 function detectWebGL(): boolean {
@@ -65,20 +178,44 @@ export function RouteCollabWorkspace({
   initialWorkspace,
   currentUserId,
   currentUserName,
+  serverSynced = false,
+  shareToken = null,
   forceNoWebGL = false,
+  initialSheetOpen = false,
   onWorkspaceChange,
 }: RouteCollabWorkspaceProps) {
   const [workspace, setWorkspace] = useState<RouteWorkspaceState>(initialWorkspace);
   const [opLog, setOpLog] = useState<readonly RouteOperationRecord[]>([]);
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('tracer');
+  const [presence, setPresence] = useState<readonly PresenceEntry[]>([]);
+
+  // État du tiroir Explorer (pilule 3 points -> tiroir principal -> sous-tiroirs)
+  const [sheetOpen, setSheetOpen] = useState<boolean>(forceNoWebGL || initialSheetOpen);
+  const [detent, setDetent] = useState<Detent>('mid');
+  const [tabIndex, setTabIndex] = useState<number>(0);
+  const [subDrawer, setSubDrawer] = useState<SubDrawerId | null>(null);
+
+  // État carte piloté depuis le tiroir
+  const [mapBase, setMapBase] = useState<MapBase>('topo');
+  const [fitTrigger, setFitTrigger] = useState<number>(0);
+  const [focusCoord, setFocusCoord] = useState<[number, number] | null>(null);
   const [listMode, setListMode] = useState<boolean>(forceNoWebGL);
   const [webglAvailable, setWebglAvailable] = useState<boolean>(!forceNoWebGL);
-  const [online, setOnline] = useState<boolean>(true);
+
+  // Sélections synchronisées Carte <-> Tiroir
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
     initialWorkspace.stages[0]?.id ?? null,
   );
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [hoveredCoord, setHoveredCoord] = useState<[number, number] | null>(null);
+  const [comparedVariantId, setComparedVariantId] = useState<string | null>(null);
+
+  // Réseau, impacts, conflits, formulaires
+  const [online, setOnline] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.navigator.onLine : true,
+  );
   const [lastImpactText, setLastImpactText] = useState<string | null>(null);
+  const [routingBusy, setRoutingBusy] = useState<boolean>(false);
   const [activeConflict, setActiveConflict] = useState<{
     conflict: DomainConflict;
     pendingOp: RouteOperationInput;
@@ -89,17 +226,37 @@ export function RouteCollabWorkspace({
   const [commentBody, setCommentBody] = useState<string>('');
   const [proposalTitle, setProposalTitle] = useState<string>('');
   const [proposalRationale, setProposalRationale] = useState<string>('');
+  const [stageNotesDraft, setStageNotesDraft] = useState<string>('');
   const [carnetRecord, setCarnetRecord] = useState<CarnetReturnRecord | null>(null);
+  const [offlineTick, setOfflineTick] = useState<number>(0);
+
+  const headSeqRef = useRef(workspace.headSeq);
+  headSeqRef.current = workspace.headSeq;
+
+  // Masquer la barre basse globale comme dans ExplorerV2 (écran carte pur)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.dataset.explorerSheetOpen = 'true';
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    return () => {
+      delete document.documentElement.dataset.explorerSheetOpen;
+      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
+    };
+  }, []);
 
   useEffect(() => {
     if (forceNoWebGL) {
       setWebglAvailable(false);
       setListMode(true);
+      setSheetOpen(true);
       return;
     }
     const ok = detectWebGL();
     setWebglAvailable(ok);
-    if (!ok) setListMode(true);
+    if (!ok) {
+      setListMode(true);
+      setSheetOpen(true);
+    }
   }, [forceNoWebGL]);
 
   useEffect(() => {
@@ -115,38 +272,6 @@ export function RouteCollabWorkspace({
     };
   }, []);
 
-  const currentMember = useMemo(
-    () => workspace.members.find((m) => m.userId === currentUserId) ?? null,
-    [workspace.members, currentUserId],
-  );
-  const canEditGeo = hasRoutePermission(currentMember, 'route.edit_geometry');
-  const canEditStages = hasRoutePermission(currentMember, 'route.edit_stages');
-  const canComment = hasRoutePermission(currentMember, 'route.comment');
-  const canPropose = hasRoutePermission(currentMember, 'route.propose');
-  const canReview = hasRoutePermission(currentMember, 'route.review');
-  const canPublish = hasRoutePermission(currentMember, 'route.publish');
-
-  const orderedPoints = useMemo(() => activePoints(workspace), [workspace]);
-  const totals = useMemo(() => workspaceTotals(workspace), [workspace]);
-  const elevation = useMemo(() => buildElevationProfile(workspace), [workspace]);
-  const selectedStage = useMemo(
-    () => workspace.stages.find((s) => s.id === selectedStageId) ?? workspace.stages[0] ?? null,
-    [workspace.stages, selectedStageId],
-  );
-
-  const verifiedPack = useMemo(
-    () => getLastVerifiedPack(currentUserId, workspace.id),
-    [currentUserId, workspace.id, workspace.updatedAt, workspace.publishedRevisionNo],
-  );
-  const offlineQueue = useMemo(
-    () => listOfflineQueue(currentUserId, workspace.id),
-    [currentUserId, workspace.id, workspace.updatedAt, online],
-  );
-  const activeActivity = useMemo(
-    () => getActiveActivityLink(currentUserId),
-    [currentUserId, workspace.updatedAt],
-  );
-
   const commitState = useCallback(
     (next: RouteWorkspaceState) => {
       setWorkspace(next);
@@ -155,21 +280,171 @@ export function RouteCollabWorkspace({
     [onWorkspaceChange],
   );
 
-  const runOperation = useCallback(
-    (operation: RouteOperationInput, expectedVersions?: Record<string, number>) => {
-      const opId = `op-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-      if (!online) {
-        enqueueOfflineOperation(currentUserId, {
-          opId,
-          workspaceId: workspace.id,
-          baseSeq: workspace.headSeq,
-          operation,
-          expectedVersions: expectedVersions ?? {},
-          queuedAt: new Date().toISOString(),
+  // Synchronisation temps réel HTTP + présence multi-sessions
+  useEffect(() => {
+    if (!serverSynced || !online) return;
+    let active = true;
+    const tokenQs = shareToken ? `&token=${encodeURIComponent(shareToken)}` : '';
+
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `/api/routes/${encodeURIComponent(workspace.id)}/changes?after=${headSeqRef.current}${tokenQs}`,
+          { credentials: 'include', cache: 'no-store' },
+        );
+        if (!active) return;
+        if (res.status === 403 || res.status === 401) {
+          setStatusMessage('Votre accès à cet itinéraire a été révoqué ou a expiré.');
+          return;
+        }
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          headSeq: number;
+          workspace: RouteWorkspaceState;
+          presence?: PresenceEntry[];
+        };
+        if (data.presence) setPresence(data.presence);
+        if (
+          data.workspace &&
+          (data.workspace.headSeq !== headSeqRef.current ||
+            data.workspace.updatedAt !== workspace.updatedAt)
+        ) {
+          commitState(data.workspace);
+        }
+      } catch {
+        /* perte réseau gérée proprement */
+      }
+    };
+
+    const timer = window.setInterval(() => void poll(), 1200);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [serverSynced, online, workspace.id, workspace.updatedAt, shareToken, commitState]);
+
+  // Présence légère (étape active + entité sélectionnée)
+  useEffect(() => {
+    if (!serverSynced || !online || shareToken) return;
+    void fetch(`/api/routes/${encodeURIComponent(workspace.id)}/presence`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activeStageId: selectedStageId,
+        selectedEntityId: selectedPointId ?? selectedSectionId,
+        softLockEntityId: selectedPointId,
+        mode: selectedPointId ? 'editing' : 'viewing',
+      }),
+    }).catch(() => undefined);
+  }, [serverSynced, online, shareToken, workspace.id, selectedStageId, selectedPointId, selectedSectionId]);
+
+  const currentMember = useMemo(
+    () => workspace.members.find((m) => m.userId === currentUserId) ?? null,
+    [workspace.members, currentUserId],
+  );
+  const canEditGeo = !shareToken && hasRoutePermission(currentMember, 'route.edit_geometry');
+  const canEditStages = !shareToken && hasRoutePermission(currentMember, 'route.edit_stages');
+  const canComment = !shareToken && hasRoutePermission(currentMember, 'route.comment');
+  const canPropose = !shareToken && hasRoutePermission(currentMember, 'route.propose');
+  const canReview = !shareToken && hasRoutePermission(currentMember, 'route.review');
+  const canPublish = !shareToken && hasRoutePermission(currentMember, 'route.publish');
+  const canManageMembers = !shareToken && hasRoutePermission(currentMember, 'route.manage_members');
+
+  const orderedPoints = useMemo(() => activePoints(workspace), [workspace]);
+  const totals = useMemo(() => workspaceTotals(workspace), [workspace]);
+  const elevation = useMemo(() => buildElevationProfile(workspace), [workspace]);
+  const selectedStage = useMemo(
+    () => workspace.stages.find((s) => s.id === selectedStageId) ?? workspace.stages[0] ?? null,
+    [workspace.stages, selectedStageId],
+  );
+  const selectedPoint = useMemo(
+    () => orderedPoints.find((p) => p.id === selectedPointId) ?? orderedPoints[0] ?? null,
+    [orderedPoints, selectedPointId],
+  );
+  const selectedSection = useMemo(
+    () => workspace.sections.find((s) => s.id === selectedSectionId) ?? workspace.sections[0] ?? null,
+    [workspace.sections, selectedSectionId],
+  );
+  const comparedVariant = useMemo(
+    () => workspace.variants.find((v) => v.id === comparedVariantId) ?? null,
+    [workspace.variants, comparedVariantId],
+  );
+  const flattenedCoords = useMemo(
+    () => workspace.sections.flatMap((s) => s.geometry.coordinates),
+    [workspace.sections],
+  );
+
+  useEffect(() => {
+    setStageNotesDraft(selectedStage?.notes ?? '');
+  }, [selectedStage?.id, selectedStage?.notes]);
+
+  const verifiedPack = useMemo(
+    () => getLastVerifiedPack(currentUserId, workspace.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentUserId, workspace.id, workspace.updatedAt, workspace.publishedRevisionNo, offlineTick],
+  );
+  const offlineQueue = useMemo(
+    () => listOfflineQueue(currentUserId, workspace.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentUserId, workspace.id, workspace.updatedAt, online, offlineTick],
+  );
+  const activeActivity = useMemo(
+    () => getActiveActivityLink(currentUserId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentUserId, workspace.updatedAt, offlineTick],
+  );
+
+  const openSubDrawer = useCallback((id: SubDrawerId) => {
+    setSheetOpen(true);
+    setDetent('mid');
+    setSubDrawer(id);
+  }, []);
+
+  const formatImpact = (imp: {
+    deltaDistanceKm: number;
+    deltaDurationMin: number | null;
+    kitItemsToRevalidate: readonly unknown[];
+    affectedMembers: readonly { displayName: string }[];
+  }): string => {
+    const parts: string[] = [];
+    if (imp.deltaDistanceKm !== 0) {
+      parts.push(`${imp.deltaDistanceKm > 0 ? '+' : ''}${imp.deltaDistanceKm} km`);
+    }
+    if (imp.deltaDurationMin != null && imp.deltaDurationMin !== 0) {
+      parts.push(`${imp.deltaDurationMin > 0 ? '+' : ''}${imp.deltaDurationMin} min`);
+    }
+    if (imp.kitItemsToRevalidate.length > 0) {
+      parts.push(`${imp.kitItemsToRevalidate.length} article(s) du kit à revalider`);
+    }
+    if (imp.affectedMembers.length > 0) {
+      parts.push(`Concernés : ${imp.affectedMembers.map((m) => m.displayName).join(', ')}`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : 'Modification enregistrée.';
+  };
+
+  const executeOperation = useCallback(
+    async (
+      opId: string,
+      baseSeq: number,
+      operation: RouteOperationInput,
+      expectedVersions: Record<string, number>,
+    ): Promise<ApplyOperationResult> => {
+      if (serverSynced) {
+        const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/operations`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ opId, baseSeq, expectedVersions, operation }),
         });
-        setStatusMessage('Hors ligne : modification ajoutée à la file locale persistante.');
-        setWorkspace((prev) => ({ ...prev, updatedAt: new Date().toISOString() }));
-        return;
+        const data = (await res.json()) as ApplyOperationResult & { error?: string };
+        if (res.status === 401 || res.status === 403) {
+          return {
+            status: 'denied',
+            reason: (data as { reason?: string }).reason ?? data.error ?? 'Accès refusé ou révoqué.',
+          };
+        }
+        return data;
       }
 
       const { result, nextOpLog } = applyWorkspaceOperation(
@@ -177,7 +452,7 @@ export function RouteCollabWorkspace({
         opLog,
         {
           opId,
-          baseSeq: workspace.headSeq,
+          baseSeq,
           actorId: currentUserId,
           actorName: currentUserName,
           operation,
@@ -185,60 +460,190 @@ export function RouteCollabWorkspace({
         },
         new Date().toISOString(),
       );
-
       if (result.status === 'accepted') {
         setOpLog(nextOpLog);
-        commitState(result.workspace);
-        const imp = result.impact;
-        const parts: string[] = [];
-        if (imp.deltaDistanceKm !== 0) {
-          parts.push(`${imp.deltaDistanceKm > 0 ? '+' : ''}${imp.deltaDistanceKm} km`);
+      }
+      return result;
+    },
+    [serverSynced, workspace, opLog, currentUserId, currentUserName],
+  );
+
+  const runOperation = useCallback(
+    async (operation: RouteOperationInput, expectedVersions: Record<string, number> = {}) => {
+      const opId = `op-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      if (!online) {
+        enqueueOfflineOperation(currentUserId, {
+          opId,
+          workspaceId: workspace.id,
+          baseSeq: workspace.headSeq,
+          operation,
+          expectedVersions,
+          queuedAt: new Date().toISOString(),
+        });
+        setOfflineTick((v) => v + 1);
+        setStatusMessage('Hors ligne : modification ajoutée à la file locale persistante.');
+        return;
+      }
+
+      try {
+        const result = await executeOperation(opId, workspace.headSeq, operation, expectedVersions);
+        if (result.status === 'accepted') {
+          commitState(result.workspace);
+          setLastImpactText(formatImpact(result.impact));
+        } else if (result.status === 'already_applied') {
+          commitState(result.workspace);
+        } else if (result.status === 'conflict') {
+          setActiveConflict({ conflict: result.conflicts[0], pendingOp: operation });
+          setSheetOpen(true);
+          commitState(result.currentWorkspace);
+        } else if (result.status === 'denied') {
+          setStatusMessage(result.reason);
+        } else if (result.status === 'stale_routing_discarded') {
+          setStatusMessage(result.reason);
         }
-        if (imp.deltaDurationMin != null && imp.deltaDurationMin !== 0) {
-          parts.push(`${imp.deltaDurationMin > 0 ? '+' : ''}${imp.deltaDurationMin} min`);
-        }
-        if (imp.kitItemsToRevalidate.length > 0) {
-          parts.push(`${imp.kitItemsToRevalidate.length} article(s) du kit à revalider`);
-        }
-        if (imp.affectedMembers.length > 0) {
-          parts.push(
-            `Concernés : ${imp.affectedMembers.map((m) => m.displayName).join(', ')}`,
-          );
-        }
-        setLastImpactText(parts.length > 0 ? parts.join(' · ') : 'Modification enregistrée.');
-      } else if (result.status === 'conflict') {
-        setActiveConflict({ conflict: result.conflicts[0], pendingOp: operation });
-        commitState(result.currentWorkspace);
-      } else if (result.status === 'denied') {
-        setStatusMessage(result.reason);
-      } else if (result.status === 'stale_routing_discarded') {
-        setStatusMessage(result.reason);
+      } catch {
+        enqueueOfflineOperation(currentUserId, {
+          opId,
+          workspaceId: workspace.id,
+          baseSeq: workspace.headSeq,
+          operation,
+          expectedVersions,
+          queuedAt: new Date().toISOString(),
+        });
+        setOfflineTick((v) => v + 1);
+        setStatusMessage('Réseau indisponible : opération placée en file locale persistante.');
       }
     },
-    [commitState, currentUserId, currentUserName, online, opLog, workspace],
+    [commitState, currentUserId, executeOperation, online, workspace.headSeq, workspace.id],
   );
+
+  // Recalcul réel via /api/route (Valhalla / Geoapify) + /api/elevation (DEM) avec empreinte d'entrée
+  const handleRealRouteSection = async (sectionId: string) => {
+    const sec = workspace.sections.find((s) => s.id === sectionId);
+    if (!sec) return;
+    const fromPt = orderedPoints.find((p) => p.id === sec.fromPointId);
+    const toPt = orderedPoints.find((p) => p.id === sec.toPointId);
+    if (!fromPt || !toPt) return;
+
+    const fingerprint = computeRoutingFingerprint({
+      from: fromPt,
+      to: toPt,
+      sport: workspace.sport,
+      options: workspace.routingOptions,
+    });
+    setRoutingBusy(true);
+    try {
+      const ptsParam = `${fromPt.lon},${fromPt.lat};${toPt.lon},${toPt.lat}`;
+      const res = await fetch(
+        `/api/route?points=${encodeURIComponent(ptsParam)}&sport=${encodeURIComponent(workspace.sport)}`,
+      );
+      if (!res.ok) {
+        setStatusMessage('Routeur indisponible : passez la section en mode manuel.');
+        return;
+      }
+      const data = (await res.json()) as {
+        status?: string;
+        provider?: string;
+        legs?: Array<{
+          distanceKm?: number;
+          durationMin?: number;
+          geometry?:
+            | Array<[number, number]>
+            | { type: 'LineString'; coordinates: Array<[number, number]> };
+        }>;
+      };
+      const leg = data.legs?.[0];
+      const rawCoords = Array.isArray(leg?.geometry)
+        ? leg.geometry
+        : leg?.geometry && 'coordinates' in leg.geometry
+          ? leg.geometry.coordinates
+          : null;
+      if (data.status !== 'ok' || !rawCoords || rawCoords.length < 2) {
+        setStatusMessage('Aucun chemin routé trouvé — passez en mode manuel si hors réseau.');
+        return;
+      }
+
+      let ascentM = sec.ascentM;
+      let descentM = sec.descentM;
+      let elevationSamples: Array<number | null> | undefined;
+      try {
+        const sampleCount = Math.min(32, rawCoords.length);
+        const sampled: Array<[number, number]> = [];
+        for (let i = 0; i < sampleCount; i += 1) {
+          const idx = Math.round((i / Math.max(1, sampleCount - 1)) * (rawCoords.length - 1));
+          sampled.push(rawCoords[idx]);
+        }
+        const eleParam = sampled.map(([lon, lat]) => `${lon.toFixed(5)},${lat.toFixed(5)}`).join(';');
+        const eleRes = await fetch(`/api/elevation?points=${encodeURIComponent(eleParam)}`);
+        if (eleRes.ok) {
+          const eleJson = (await eleRes.json()) as {
+            status?: string;
+            elevations?: Array<number | null>;
+          };
+          if (
+            eleJson.status === 'ok' &&
+            Array.isArray(eleJson.elevations) &&
+            eleJson.elevations.length >= 2
+          ) {
+            elevationSamples = eleJson.elevations;
+            let up = 0;
+            let down = 0;
+            for (let i = 1; i < eleJson.elevations.length; i += 1) {
+              const a = eleJson.elevations[i - 1];
+              const b = eleJson.elevations[i];
+              if (typeof a === 'number' && typeof b === 'number') {
+                if (b > a) up += b - a;
+                else down += a - b;
+              }
+            }
+            ascentM = Math.round(up);
+            descentM = Math.round(down);
+          }
+        }
+      } catch {
+        /* altitude indisponible : on reste honnête sans inventer */
+      }
+
+      await runOperation({
+        type: 'apply_routing_result',
+        sectionId: sec.id,
+        routingInputHash: fingerprint,
+        geometry: { type: 'LineString', coordinates: rawCoords },
+        distanceKm: Number((leg?.distanceKm ?? sec.distanceKm).toFixed(2)),
+        durationMin: leg?.durationMin != null ? Math.round(leg.durationMin) : sec.durationMin,
+        ascentM,
+        descentM,
+        elevationSamples,
+        provenance: {
+          provider: data.provider ?? 'valhalla',
+          calculatedAt: new Date().toISOString(),
+          profile: workspace.sport,
+          confidence: 'verified',
+        },
+      });
+      setStatusMessage(
+        `Section recalculée via ${data.provider ?? 'routeur'} (${(leg?.distanceKm ?? sec.distanceKm).toFixed(2)} km, ${rawCoords.length} pts${ascentM != null ? `, D+ ${ascentM} m` : ''}).`,
+      );
+    } catch {
+      setStatusMessage(
+        'Échec du routage réseau : la trace précédente est conservée (mode manuel disponible).',
+      );
+    } finally {
+      setRoutingBusy(false);
+    }
+  };
 
   const handleReplayOffline = async () => {
     const res = await replayOfflineQueue(currentUserId, workspace.id, async (queued) => {
-      const { result, nextOpLog } = applyWorkspaceOperation(
-        workspace,
-        opLog,
-        {
-          opId: queued.opId,
-          baseSeq: queued.baseSeq,
-          actorId: currentUserId,
-          actorName: currentUserName,
-          operation: queued.operation,
-          expectedVersions: queued.expectedVersions,
-        },
-        new Date().toISOString(),
-      );
-      if (result.status === 'accepted') {
-        setOpLog(nextOpLog);
-        commitState(result.workspace);
+      const r = await executeOperation(queued.opId, queued.baseSeq, queued.operation, {
+        ...queued.expectedVersions,
+      });
+      if (r.status === 'accepted' || r.status === 'already_applied') {
+        commitState(r.workspace);
       }
-      return result;
+      return r;
     });
+    setOfflineTick((v) => v + 1);
     setStatusMessage(
       `Synchronisation : ${res.appliedCount} appliquée(s), ${res.conflicts.length} conflit(s), ${res.rejected.length} refusée(s).`,
     );
@@ -267,6 +672,7 @@ export function RouteCollabWorkspace({
       headSeq: workspace.headSeq + 1,
       updatedAt: new Date().toISOString(),
     });
+    setFitTrigger((n) => n + 1);
     setStatusMessage(
       keepOriginalGpx
         ? 'GPX importé en mode « garder ma trace » (géométrie et original préservés).'
@@ -284,15 +690,39 @@ export function RouteCollabWorkspace({
     a.download = `${workspace.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}${stageId ? `-${stageId}` : ''}.gpx`;
     a.click();
     URL.revokeObjectURL(url);
+    setStatusMessage(stageId ? `Export GPX de l’étape téléchargé.` : 'Export GPX complet téléchargé.');
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    const summary = `Publication v${(workspace.publishedRevisionNo ?? 0) + 1}`;
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/publish`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expectedHeadSeq: workspace.headSeq, summary }),
+      });
+      const data = (await res.json()) as {
+        status?: string;
+        reason?: string;
+        revision?: { revisionNo: number };
+        workspace?: RouteWorkspaceState;
+      };
+      if (!res.ok || data.status !== 'published' || !data.workspace) {
+        setStatusMessage(data.reason ?? 'Publication bloquée : vérifiez la dernière séquence.');
+        return;
+      }
+      commitState(data.workspace);
+      setStatusMessage(`Version ${data.revision?.revisionNo} publiée et figée.`);
+      return;
+    }
+
     const res = publishWorkspaceRevision({
       workspace,
       actorId: currentUserId,
       actorName: currentUserName,
       expectedHeadSeq: workspace.headSeq,
-      summary: `Publication v${(workspace.publishedRevisionNo ?? 0) + 1}`,
+      summary,
       nowIso: new Date().toISOString(),
     });
     if (res.status === 'blocked') {
@@ -303,7 +733,7 @@ export function RouteCollabWorkspace({
     setStatusMessage(`Version ${res.revision.revisionNo} publiée et figée.`);
   };
 
-  const handleDownloadPack = (simulateInterruption = false) => {
+  const handleDownloadPack = async (simulateInterruption = false) => {
     const latestRev = workspace.revisions[workspace.revisions.length - 1];
     const latestPack = workspace.packs[workspace.packs.length - 1];
     if (!latestRev || !latestPack) {
@@ -312,9 +742,10 @@ export function RouteCollabWorkspace({
     }
     stagePackDownload(currentUserId, latestPack, 1, 2);
     if (simulateInterruption || !online) {
+      setOfflineTick((v) => v + 1);
       setStatusMessage(
         verifiedPack
-          ? `Téléchargement v${latestPack.revisionNo} interrompu — la copie complète v${verifiedPack.revisionNo} reste utilisable hors ligne.`
+          ? `Téléchargement v${latestPack.revisionNo} interrompu — la copie complète v${verifiedPack.manifest.revisionNo} reste utilisable hors ligne.`
           : 'Téléchargement interrompu hors ligne.',
       );
       return;
@@ -329,28 +760,60 @@ export function RouteCollabWorkspace({
       setStatusMessage(committed.reason);
       return;
     }
+    if (serverSynced) {
+      await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/packs`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          downloadedRevisionNo: latestRev.revisionNo,
+          preparedRevisionNo: latestRev.revisionNo,
+          status: 'ready',
+          verifiedLocalAt: committed.pack.verifiedAt,
+        }),
+      }).catch(() => undefined);
+    }
+    setOfflineTick((v) => v + 1);
     setStatusMessage(`Pack v${latestRev.revisionNo} téléchargé et vérifié localement.`);
-    setWorkspace((prev) => ({ ...prev, updatedAt: new Date().toISOString() }));
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async (anchorPointId?: string) => {
     if (!commentBody.trim() || !canComment) return;
-    const targetPt = orderedPoints.find((p) => p.id === selectedPointId) ?? orderedPoints[0];
+    const targetPt =
+      orderedPoints.find((p) => p.id === (anchorPointId ?? selectedPointId)) ?? orderedPoints[0];
     if (!targetPt) return;
+    const anchor = {
+      anchorType: 'point' as const,
+      entityId: targetPt.id,
+      entityVersion: targetPt.entityVersion,
+      originalLat: targetPt.lat,
+      originalLon: targetPt.lon,
+      maxRelocateMeters: 250,
+    };
+
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/comments`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: commentBody.trim(), anchor }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setCommentBody('');
+        setStatusMessage(`Commentaire ancré sur ${targetPt.name ?? targetPt.kind}.`);
+      }
+      return;
+    }
+
     const nextComment = {
       id: `cmt-${Date.now().toString(36)}`,
       workspaceId: workspace.id,
       createdBy: currentUserId,
       authorName: currentUserName,
       body: commentBody.trim(),
-      anchor: {
-        anchorType: 'point' as const,
-        entityId: targetPt.id,
-        entityVersion: targetPt.entityVersion,
-        originalLat: targetPt.lat,
-        originalLon: targetPt.lon,
-        maxRelocateMeters: 250,
-      },
+      anchor,
       baseRevisionNo: workspace.publishedRevisionNo ?? 0,
       status: 'open' as const,
       createdAt: new Date().toISOString(),
@@ -361,11 +824,80 @@ export function RouteCollabWorkspace({
       updatedAt: new Date().toISOString(),
     });
     setCommentBody('');
+    setStatusMessage(`Commentaire ancré sur ${targetPt.name ?? targetPt.kind}.`);
   };
 
-  const handleCreateProposal = () => {
+  const handleRelocateComment = async (commentId: string) => {
+    const targetPt = selectedPoint ?? orderedPoints[0];
+    if (!targetPt) return;
+    const newAnchor = {
+      anchorType: 'point' as const,
+      entityId: targetPt.id,
+      entityVersion: targetPt.entityVersion,
+      originalLat: targetPt.lat,
+      originalLon: targetPt.lon,
+      maxRelocateMeters: 250,
+    };
+    if (serverSynced) {
+      const res = await fetch(
+        `/api/routes/${encodeURIComponent(workspace.id)}/comments/${encodeURIComponent(commentId)}/relocate`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newAnchor }),
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setStatusMessage(`Commentaire repositionné sur ${targetPt.name ?? targetPt.kind}.`);
+      }
+      return;
+    }
+    commitState({
+      ...workspace,
+      comments: workspace.comments.map((c) =>
+        c.id === commentId ? { ...c, anchor: newAnchor, status: 'open' as const } : c,
+      ),
+      updatedAt: new Date().toISOString(),
+    });
+    setStatusMessage(`Commentaire repositionné sur ${targetPt.name ?? targetPt.kind}.`);
+  };
+
+  const handleCreateProposal = async () => {
     if (!proposalTitle.trim() || !canPropose || orderedPoints.length === 0) return;
     const target = orderedPoints[Math.floor(orderedPoints.length / 2)];
+    const operations: RouteOperationInput[] = [
+      {
+        type: 'move_point',
+        pointId: target.id,
+        lat: Number((target.lat + 0.004).toFixed(5)),
+        lon: Number((target.lon + 0.004).toFixed(5)),
+      },
+    ];
+
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/proposals`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: proposalTitle.trim(),
+          rationale: proposalRationale.trim() || 'Variante proposée',
+          operations,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setProposalTitle('');
+        setProposalRationale('');
+        setStatusMessage('Proposition publiée pour relecture.');
+      }
+      return;
+    }
+
     const prop: RouteProposal = {
       id: `prop-${Date.now().toString(36)}`,
       workspaceId: workspace.id,
@@ -375,14 +907,7 @@ export function RouteCollabWorkspace({
       title: proposalTitle.trim(),
       rationale: proposalRationale.trim() || 'Variante proposée',
       scopeEntityIds: [target.id],
-      operations: [
-        {
-          type: 'move_point',
-          pointId: target.id,
-          lat: Number((target.lat + 0.004).toFixed(5)),
-          lon: Number((target.lon + 0.004).toFixed(5)),
-        },
-      ],
+      operations,
       impactPreview: null,
       status: 'open',
       votes: {},
@@ -395,9 +920,154 @@ export function RouteCollabWorkspace({
     });
     setProposalTitle('');
     setProposalRationale('');
+    setStatusMessage('Proposition publiée pour relecture.');
   };
 
-  const handleAssignKitItem = (itemId: string, userId: string | null) => {
+  const handleVoteProposal = async (proposalId: string, vote: 'up' | 'down') => {
+    if (serverSynced) {
+      const res = await fetch(
+        `/api/routes/${encodeURIComponent(workspace.id)}/proposals/${encodeURIComponent(proposalId)}/vote`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vote }),
+        },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+      }
+      return;
+    }
+    commitState({
+      ...workspace,
+      proposals: workspace.proposals.map((p) =>
+        p.id === proposalId ? { ...p, votes: { ...p.votes, [currentUserId]: vote } } : p,
+      ),
+    });
+  };
+
+  const handleDecideProposal = async (proposal: RouteProposal, decision: 'accept' | 'reject') => {
+    if (serverSynced) {
+      const res = await fetch(
+        `/api/routes/${encodeURIComponent(workspace.id)}/proposals/${encodeURIComponent(proposal.id)}/decide`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision, expectedHeadSeq: workspace.headSeq }),
+        },
+      );
+      const data = (await res.json()) as { workspace?: RouteWorkspaceState; error?: string };
+      if (!res.ok) {
+        setStatusMessage(data.error ?? 'Impossible de traiter la proposition.');
+        return;
+      }
+      if (data.workspace) commitState(data.workspace);
+      setStatusMessage(decision === 'accept' ? 'Proposition acceptée et appliquée.' : 'Proposition refusée.');
+      return;
+    }
+
+    if (decision === 'reject') {
+      commitState({
+        ...workspace,
+        proposals: workspace.proposals.map((pr) =>
+          pr.id === proposal.id ? { ...pr, status: 'rejected' } : pr,
+        ),
+      });
+      setStatusMessage('Proposition refusée.');
+      return;
+    }
+
+    let working = workspace;
+    let log = opLog;
+    for (let i = 0; i < proposal.operations.length; i += 1) {
+      const res = applyWorkspaceOperation(
+        working,
+        log,
+        {
+          opId: `prop-${proposal.id}-${i}`,
+          baseSeq: working.headSeq,
+          actorId: currentUserId,
+          actorName: currentUserName,
+          operation: proposal.operations[i],
+        },
+        new Date().toISOString(),
+      );
+      if (res.result.status === 'accepted') {
+        working = res.result.workspace;
+        log = res.nextOpLog;
+      }
+    }
+    setOpLog(log);
+    commitState({
+      ...working,
+      proposals: working.proposals.map((pr) =>
+        pr.id === proposal.id ? { ...pr, status: 'accepted' } : pr,
+      ),
+    });
+    setStatusMessage('Proposition acceptée et appliquée sur la carte.');
+  };
+
+  const handleCreateDetourVariant = async () => {
+    const sec = workspace.sections[0];
+    if (!sec) return;
+    const coords = sec.geometry.coordinates;
+    const start = coords[0];
+    const end = coords[coords.length - 1];
+    const mid: [number, number] = [
+      Number(((start[0] + end[0]) / 2 + 0.012).toFixed(5)),
+      Number(((start[1] + end[1]) / 2 + 0.008).toFixed(5)),
+    ];
+    const variant: RouteVariant = {
+      id: `var-${Date.now().toString(36)}`,
+      baseRevisionNo: workspace.publishedRevisionNo ?? 0,
+      scope: 'section',
+      title: `Détour panorama (+2,1 km)`,
+      replacements: [
+        {
+          sectionId: sec.id,
+          geometry: { type: 'LineString', coordinates: [start, mid, end] },
+          distanceKm: Number((sec.distanceKm + 2.1).toFixed(2)),
+          durationMin: (sec.durationMin ?? 120) + 35,
+          ascentM: sec.ascentM != null ? sec.ascentM + 160 : null,
+          descentM: sec.descentM != null ? sec.descentM + 160 : null,
+          surfaceKnownRatio: 0.75,
+          provenance: {
+            provider: 'variante-compas',
+            calculatedAt: new Date().toISOString(),
+            profile: workspace.sport,
+            confidence: 'estimated',
+          },
+        },
+      ],
+      deltaDistanceKm: 2.1,
+      deltaAscentM: 160,
+      deltaDurationMin: 35,
+      status: 'draft',
+      createdBy: currentUserId,
+      createdAt: new Date().toISOString(),
+    };
+    await runOperation({ type: 'add_variant', variant });
+    setComparedVariantId(variant.id);
+    setStatusMessage('Variante ajoutée et superposée en pointillé indigo sur la carte.');
+  };
+
+  const handleAssignKitItem = async (itemId: string, userId: string | null) => {
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'assign', itemId, assigneeUserId: userId }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+      }
+      return;
+    }
     const member = workspace.members.find((m) => m.userId === userId);
     const nextKit: CollaborativeKitItem[] = workspace.kitItems.map((item) =>
       item.id === itemId
@@ -412,22 +1082,85 @@ export function RouteCollabWorkspace({
     commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
   };
 
-  const handleRevalidateKitItem = (itemId: string) => {
+  const handleRevalidateKitItem = async (itemId: string) => {
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'revalidate', itemId }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+      }
+      return;
+    }
     const nextKit: CollaborativeKitItem[] = workspace.kitItems.map((item) =>
       item.id === itemId ? { ...item, status: 'confirmed', revalidationReason: null } : item,
     );
     commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
   };
 
+  const handleManageShareLink = async (action: 'create' | 'revoke') => {
+    if (!canManageMembers) return;
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'share_link',
+          action,
+          expiresInHours: 48,
+          hidePrivateStartRadiusM: 300,
+        }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setStatusMessage(
+          action === 'create'
+            ? 'Lien lecture seule généré (48 h, zone de départ privée masquée).'
+            : 'Lien de partage révoqué immédiatement.',
+        );
+      }
+      return;
+    }
+    commitState({
+      ...workspace,
+      shareLink:
+        action === 'create'
+          ? {
+              token: `lk-${Date.now().toString(36)}`,
+              audience: 'external_viewer',
+              expiresAt: new Date(Date.now() + 48 * 3600_000).toISOString(),
+              revokedAt: null,
+              hidePrivateStartRadiusM: 300,
+              createdBy: currentUserId,
+              createdAt: new Date().toISOString(),
+            }
+          : workspace.shareLink
+            ? { ...workspace.shareLink, revokedAt: new Date().toISOString() }
+            : null,
+      updatedAt: new Date().toISOString(),
+    });
+    setStatusMessage(
+      action === 'create'
+        ? 'Lien lecture seule généré (48 h, zone de départ privée masquée).'
+        : 'Lien de partage révoqué.',
+    );
+  };
+
   const handleStartActivity = () => {
     const rev = verifiedPack?.revision ?? workspace.revisions[workspace.revisions.length - 1];
     if (!rev) {
-      setStatusMessage('Aucune version publiée ou pack vérifié pour démarrer.');
+      setStatusMessage('Publiez d’abord une version ou téléchargez un pack avant de démarrer.');
       return;
     }
     startActivityFromRevision(currentUserId, rev, new Date().toISOString());
+    setOfflineTick((v) => v + 1);
     setStatusMessage(`Activité démarrée avec la version ${rev.revisionNo} et le snapshot du kit.`);
-    setWorkspace((prev) => ({ ...prev, updatedAt: new Date().toISOString() }));
   };
 
   const handleFinishToCarnet = () => {
@@ -443,6 +1176,7 @@ export function RouteCollabWorkspace({
     });
     if (rec) {
       setCarnetRecord(rec);
+      setOfflineTick((v) => v + 1);
       setStatusMessage(`Carnet enregistré (version suivie v${rec.plannedRevisionNo}).`);
     }
   };
@@ -458,394 +1192,657 @@ export function RouteCollabWorkspace({
     });
     commitState(copy);
     setCarnetRecord(null);
+    setSubDrawer(null);
+    setTabIndex(0);
     setStatusMessage('Nouveau brouillon indépendant créé avec provenance conservée.');
   };
 
-  return (
-    <div className="rcw" data-testid="route-collab-workspace">
-      <header className="rcw-topbar">
-        <div className="rcw-title">
-          <span>{workspace.title}</span>
-          <span className="rcw-badge">
-            {workspace.status === 'published'
-              ? `Publiée v${workspace.publishedRevisionNo}`
-              : `Brouillon · seq ${workspace.headSeq}`}
+  const kitToRevalidateCount = workspace.kitItems.filter(
+    (k) => k.status === 'needs_revalidation',
+  ).length;
+  const openProposalsCount = workspace.proposals.filter((p) => p.status === 'open').length;
+  const orphanCommentsCount = workspace.comments.filter(
+    (c) => c.status === 'needs_relocation',
+  ).length;
+  const totalWarnings = workspace.sections.reduce((acc, s) => acc + s.warnings.length, 0);
+  const manualSectionsCount = workspace.sections.filter((s) => s.mode === 'manual').length;
+  const hubSummary = useMemo(() => summarizeWorkspaceForHub(workspace), [workspace]);
+
+  const elevationStats = useMemo(() => {
+    const valid = elevation.samples
+      .map((s) => s.elevationM)
+      .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+    if (valid.length < 2) {
+      return { hasElevation: false, minEleM: null as number | null, maxEleM: null as number | null };
+    }
+    return {
+      hasElevation: true,
+      minEleM: Math.round(Math.min(...valid)),
+      maxEleM: Math.round(Math.max(...valid)),
+    };
+  }, [elevation]);
+
+  // ── Bannières intégrées AU TIROIR (jamais flottantes sur la carte) ──────────
+  const renderBanners = () => (
+    <>
+      {activeConflict ? (
+        <div className="rcw-conflict" role="alert" data-testid="conflict-modal">
+          <strong>Conflit métier · {activeConflict.conflict.entityLabel}</strong>
+          <span>{activeConflict.conflict.message}</span>
+          <span>
+            Actuel : {activeConflict.conflict.currentSummary} · Votre saisie :{' '}
+            {activeConflict.conflict.yourSummary}
           </span>
-          {!online && <span className="rcw-badge rcw-badge--warn">Hors ligne</span>}
-          {verifiedPack && (
-            <span className="rcw-badge">
-              Pack v{verifiedPack.manifest.revisionNo} prêt
-              {workspace.publishedRevisionNo &&
-              workspace.publishedRevisionNo > verifiedPack.manifest.revisionNo
-                ? ` · v${workspace.publishedRevisionNo} disponible`
-                : ''}
-            </span>
-          )}
-        </div>
-        <div className="rcw-actions">
-          <button
-            type="button"
-            className="rcw-btn"
-            onClick={() => setListMode((v) => !v)}
-            aria-pressed={listMode}
-          >
-            {listMode ? 'Vue carte' : 'Vue liste sans carte'}
-          </button>
-          <button type="button" className="rcw-btn" onClick={() => setOnline((v) => !v)}>
-            {online ? 'Simuler mode avion' : 'Revenir en ligne'}
-          </button>
-          <button type="button" className="rcw-btn" onClick={() => handleDownloadGpx()}>
-            Export GPX complet
-          </button>
-          {canPublish && (
-            <button type="button" className="rcw-btn rcw-btn--primary" onClick={handlePublish}>
-              Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
-            </button>
-          )}
-        </div>
-      </header>
-
-      {lastImpactText && (
-        <div className="rcw-impact-banner" role="status">
-          <strong>Impact :</strong>
-          <span>{lastImpactText}</span>
-        </div>
-      )}
-
-      {statusMessage && (
-        <div className="rcw-impact-banner" role="status">
-          <span>{statusMessage}</span>
-          <button type="button" className="rcw-btn" onClick={() => setStatusMessage(null)}>
-            Fermer
-          </button>
-        </div>
-      )}
-
-      {activeConflict && (
-        <div className="rcw-impact-banner" role="alertdialog" aria-label="Conflit détecté">
-          <div>
-            <strong>Conflit métier :</strong> {activeConflict.conflict.message}
-            <div className="rcw-muted">
-              Votre version : {activeConflict.conflict.yourSummary} · Actuel :{' '}
-              {activeConflict.conflict.currentSummary}
-            </div>
-          </div>
-          <div className="rcw-actions">
-            <button type="button" className="rcw-btn" onClick={() => setActiveConflict(null)}>
+          <div className="rcw-inline-actions">
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() => setActiveConflict(null)}
+            >
               Garder actuel
             </button>
             <button
               type="button"
-              className="rcw-btn rcw-btn--primary"
+              className="xp-primary"
               onClick={() => {
-                const op = activeConflict.pendingOp;
+                const pending = activeConflict.pendingOp;
                 setActiveConflict(null);
-                runOperation(op);
+                void runOperation(pending, {});
               }}
             >
               Appliquer ma version
             </button>
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() => {
+                setActiveConflict(null);
+                void handleCreateDetourVariant();
+                openSubDrawer('variants');
+              }}
+            >
+              Créer une variante
+            </button>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="rcw-grid">
-        {/* Colonne gauche : Arbre de route */}
-        <aside className="rcw-pane" aria-label="Arbre d’itinéraire">
-          <div className="rcw-row">
-            <strong>Route &amp; Étapes</strong>
-            <span className="rcw-muted">
-              {totals.distanceKm} km · {totals.durationMin ?? '—'} min
-            </span>
-          </div>
-          {totals.hasMissingElevation && (
-            <span className="rcw-badge rcw-badge--warn">Altitude absente ou partielle</span>
-          )}
-          <div className="rcw-card">
-            <strong>Étapes ({workspace.stages.length})</strong>
-            {workspace.stages.map((st) => (
-              <div key={st.id} className="rcw-row">
-                <button
-                  type="button"
-                  className="rcw-btn"
-                  aria-pressed={selectedStage?.id === st.id}
-                  onClick={() => setSelectedStageId(st.id)}
-                >
-                  J{st.dayNumber} · {st.title}
-                </button>
-                <button
-                  type="button"
-                  className="rcw-btn"
-                  onClick={() => handleDownloadGpx(st.id)}
-                  aria-label={`Exporter GPX ${st.title}`}
-                >
-                  GPX
-                </button>
-              </div>
-            ))}
-          </div>
+      {lastImpactText ? (
+        <div className="rcw-banner" role="status" data-testid="impact-banner">
+          <span>
+            <strong>Impact · </strong>
+            {lastImpactText}
+          </span>
+          <button
+            type="button"
+            className="xp-chip"
+            onClick={() => setLastImpactText(null)}
+            aria-label="Fermer l'impact"
+          >
+            OK
+          </button>
+        </div>
+      ) : null}
 
-          <div className="rcw-card">
-            <strong>Points ({orderedPoints.length})</strong>
-            {orderedPoints.map((pt, idx) => (
-              <div key={pt.id} className="rcw-row">
-                <button
-                  type="button"
-                  className="rcw-btn"
-                  onClick={() => setSelectedPointId(pt.id)}
-                  aria-pressed={selectedPointId === pt.id}
-                >
-                  {idx + 1}. {pt.name || pt.kind} (v{pt.entityVersion})
-                </button>
-                {canEditGeo && orderedPoints.length > 2 && (
+      {statusMessage ? (
+        <div className="rcw-banner rcw-banner--info" role="status" data-testid="status-message">
+          <span>{statusMessage}</span>
+          <button
+            type="button"
+            className="xp-chip"
+            onClick={() => setStatusMessage(null)}
+            aria-label="Fermer le message"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
+
+  // ── Rendu des 11 Sous-Drawers ───────────────────────────────────────────────
+  const renderSubDrawer = (): { title: string; subtitle: string; body: React.ReactNode } | null => {
+    if (!subDrawer) return null;
+
+    if (subDrawer === 'point') {
+      const pt = selectedPoint;
+      if (!pt) {
+        return {
+          title: 'Détail du point',
+          subtitle: 'Aucun point sélectionné',
+          body: <XpEmpty title="Aucun point" hint="Ajoutez un point sur la carte ou depuis l’onglet Tracer." />,
+        };
+      }
+      const ptComments = workspace.comments.filter((c) => c.anchor.entityId === pt.id);
+      return {
+        title: pt.name || pt.kind,
+        subtitle: `${pt.lat.toFixed(5)}, ${pt.lon.toFixed(5)} · v${pt.entityVersion}${pt.eleM != null ? ` · ${Math.round(pt.eleM)} m` : ''}`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-point">
+            {renderBanners()}
+            <XpMetrics
+              items={[
+                { label: 'Latitude', value: pt.lat.toFixed(4) },
+                { label: 'Longitude', value: pt.lon.toFixed(4) },
+                { label: 'Altitude', value: pt.eleM != null ? `${Math.round(pt.eleM)} m` : 'Inconnue' },
+              ]}
+            />
+            {canEditGeo ? (
+              <>
+                <XpEyebrow>Actions sur ce point</XpEyebrow>
+                <div className="rcw-inline-actions">
                   <button
                     type="button"
-                    className="rcw-btn"
+                    className="xp-primary"
                     onClick={() =>
-                      runOperation(
-                        { type: 'delete_point', pointId: pt.id },
+                      void runOperation(
+                        {
+                          type: 'move_point',
+                          pointId: pt.id,
+                          lat: Number((pt.lat + 0.003).toFixed(5)),
+                          lon: Number((pt.lon + 0.003).toFixed(5)),
+                        },
                         { [pt.id]: pt.entityVersion },
                       )
                     }
-                    aria-label={`Supprimer ${pt.name || pt.id}`}
                   >
-                    ✕
+                    Déplacer (+300 m NE)
                   </button>
-                )}
-              </div>
-            ))}
-            {canEditGeo && (
-              <button
-                type="button"
-                className="rcw-btn"
-                onClick={() => {
-                  const last = orderedPoints[orderedPoints.length - 1];
-                  runOperation({
-                    type: 'insert_point',
-                    pointId: `pt-${Date.now().toString(36)}`,
-                    afterPointId: last?.id ?? null,
-                    lat: (last?.lat ?? 45.0) + 0.01,
-                    lon: (last?.lon ?? 5.5) + 0.01,
-                    name: `Passage ${orderedPoints.length + 1}`,
-                  });
-                }}
-              >
-                + Ajouter un point
-              </button>
-            )}
-          </div>
-        </aside>
+                  {orderedPoints.length > 2 ? (
+                    <button
+                      type="button"
+                      className="xp-secondary"
+                      onClick={() => {
+                        void runOperation(
+                          { type: 'delete_point', pointId: pt.id },
+                          { [pt.id]: pt.entityVersion },
+                        );
+                        setSubDrawer(null);
+                      }}
+                    >
+                      Supprimer ce point
+                    </button>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
 
-        {/* Colonne centre : Carte / Vue liste + Profil altimétrique */}
-        <main className="rcw-center">
-          <div className="rcw-map-box">
-            {listMode || !webglAvailable ? (
-              <div className="rcw-card" data-testid="list-mode-fallback">
-                <strong>
-                  Mode liste {!webglAvailable ? '(WebGL indisponible)' : 'actif'}
-                </strong>
-                <p className="rcw-muted">
-                  Vous pouvez éditer les points, gérer les étapes, comparer les variantes et
-                  consulter les vérifications sans rendu cartographique.
-                </p>
-                {workspace.sections.map((sec, idx) => (
-                  <div key={sec.id} className="rcw-row">
-                    <span>
-                      Section {idx + 1} · {sec.mode} · {sec.distanceKm} km
-                    </span>
-                    {canEditGeo && (
-                      <button
-                        type="button"
-                        className="rcw-btn"
-                        onClick={() =>
-                          runOperation(
-                            {
-                              type: 'set_section_mode',
-                              sectionId: sec.id,
-                              mode: sec.mode === 'manual' ? 'routed' : 'manual',
-                            },
-                            { [sec.id]: sec.entityVersion },
-                          )
-                        }
-                      >
-                        Passer en {sec.mode === 'manual' ? 'routé' : 'manuel'}
-                      </button>
-                    )}
-                  </div>
+            <XpEyebrow>Commentaires ancrés ({ptComments.length})</XpEyebrow>
+            {ptComments.length > 0 ? (
+              <XpRows>
+                {ptComments.map((c) => (
+                  <XpRow
+                    key={c.id}
+                    icon="msg"
+                    tone={c.status === 'needs_relocation' ? 'warn' : 'ink'}
+                    title={`${c.authorName} · ${c.body}`}
+                    sub={`Rév. v${c.baseRevisionNo}`}
+                    badge={{
+                      label: c.status === 'needs_relocation' ? 'À repositionner' : 'Ouvert',
+                      tone: c.status === 'needs_relocation' ? 'warn' : 'good',
+                    }}
+                  />
                 ))}
-              </div>
+              </XpRows>
             ) : (
-              <svg className="rcw-svg-trace" viewBox="0 0 400 180" aria-label="Aperçu du tracé">
-                <polyline
-                  fill="none"
-                  stroke="#1d6b52"
-                  strokeWidth="3"
-                  points={orderedPoints
-                    .map((p, i) => `${30 + i * (340 / Math.max(1, orderedPoints.length - 1))},${90 - (p.lat % 1) * 40}`)
-                    .join(' ')}
-                />
-              </svg>
+              <p className="rcw-sub-note">Aucun commentaire ancré sur ce point.</p>
             )}
-          </div>
 
-          <section className="rcw-elev" aria-label="Profil altimétrique">
-            <div className="rcw-row">
-              <strong>Profil altimétrique</strong>
-              <span className="rcw-muted">
-                Source : {elevation.source} · Manquant : {Math.round(elevation.missingRatio * 100)}%
-              </span>
-            </div>
-          </section>
-        </main>
-
-        {/* Colonne droite : Inspecteur contextuel */}
-        <aside className="rcw-pane rcw-pane--right" aria-label="Inspecteur">
-          {activeTab === 'tracer' && (
-            <>
-              <div className="rcw-card">
-                <strong>Profil sportif &amp; tracé</strong>
-                <select
-                  className="rcw-input"
-                  aria-label="Profil sportif"
-                  value={workspace.sport}
-                  disabled={!canEditGeo}
-                  onChange={(e) =>
-                    runOperation({
-                      type: 'set_sport_profile',
-                      sport: e.target.value as RouteSport,
-                      routingOptions: workspace.routingOptions,
-                    })
-                  }
-                >
-                  <option value="marche">Randonnée / Marche</option>
-                  <option value="route">Vélo route</option>
-                  <option value="gravel">Gravel</option>
-                  <option value="vtt">VTT</option>
-                </select>
-                {canEditGeo && (
-                  <button
-                    type="button"
-                    className="rcw-btn"
-                    onClick={() => runOperation({ type: 'reverse_route' })}
-                  >
-                    Inverser le sens du tracé
-                  </button>
-                )}
-              </div>
-
-              <div className="rcw-card">
-                <strong>Importer un GPX</strong>
-                <textarea
-                  className="rcw-input"
-                  rows={3}
-                  placeholder="Collez un contenu GPX 1.1..."
-                  value={gpxInput}
-                  onChange={(e) => setGpxInput(e.target.value)}
-                />
-                <label className="rcw-row">
-                  <span>Garder ma trace (géométrie préservée)</span>
+            {canComment ? (
+              <div className="xp-form">
+                <label>
+                  Nouveau commentaire sur ce point
                   <input
-                    type="checkbox"
-                    checked={keepOriginalGpx}
-                    onChange={(e) => setKeepOriginalGpx(e.target.checked)}
+                    type="text"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    placeholder="Ex : source à vérifier, refuge complet…"
                   />
                 </label>
                 <button
                   type="button"
-                  className="rcw-btn"
-                  disabled={!canEditGeo || !gpxInput.trim()}
-                  onClick={handleImportGpx}
+                  className="xp-primary"
+                  onClick={() => void handleAddComment(pt.id)}
                 >
-                  Importer le GPX
+                  Ancrer le commentaire
                 </button>
               </div>
-            </>
-          )}
+            ) : null}
+          </div>
+        ),
+      };
+    }
 
-          {activeTab === 'etapes' && selectedStage && (
-            <div className="rcw-card">
-              <strong>
-                J{selectedStage.dayNumber} · {selectedStage.title}
-              </strong>
-              <label className="rcw-muted">
-                Nombre de jours
-                <input
-                  type="number"
-                  min={1}
-                  max={15}
-                  className="rcw-input"
-                  value={workspace.stages.length}
-                  disabled={!canEditStages}
-                  onChange={(e) =>
-                    runOperation({
-                      type: 'split_days',
-                      targetDays: Number(e.target.value) || 1,
-                    })
-                  }
-                />
-              </label>
-              <label className="rcw-muted">
-                Note d’étape
-                <textarea
-                  className="rcw-input"
-                  rows={3}
-                  value={selectedStage.notes}
-                  disabled={!canEditStages}
-                  onChange={(e) =>
-                    runOperation(
-                      { type: 'update_stage_note', stageId: selectedStage.id, notes: e.target.value },
-                      { [selectedStage.id]: selectedStage.entityVersion },
+    if (subDrawer === 'section') {
+      const sec = selectedSection;
+      if (!sec) {
+        return {
+          title: 'Détail du tronçon',
+          subtitle: 'Aucun tronçon sélectionné',
+          body: <XpEmpty title="Aucun tronçon" hint="Ajoutez au moins deux points pour former un tronçon." />,
+        };
+      }
+      return {
+        title: `Tronçon · ${SECTION_MODE_LABELS[sec.mode] ?? sec.mode}`,
+        subtitle: `${sec.distanceKm} km · ${sec.provenance.provider} · v${sec.entityVersion}`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-section">
+            {renderBanners()}
+            <XpMetrics
+              items={[
+                { label: 'Distance', value: `${sec.distanceKm} km` },
+                { label: 'D+', value: sec.ascentM != null ? `${sec.ascentM} m` : 'Inconnu' },
+                { label: 'D−', value: sec.descentM != null ? `${sec.descentM} m` : 'Inconnu' },
+                { label: 'Durée', value: sec.durationMin != null ? `${sec.durationMin} min` : '—' },
+              ]}
+            />
+            <XpEyebrow>Routage & Mode</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="route"
+                tone="good"
+                title="Mode du tronçon"
+                sub={`Provenance : ${sec.provenance.provider} (${sec.provenance.confidence})`}
+                badge={{ label: SECTION_MODE_LABELS[sec.mode] ?? sec.mode, tone: sec.mode === 'manual' ? 'warn' : 'good' }}
+              />
+            </XpRows>
+            {canEditGeo ? (
+              <div className="rcw-inline-actions">
+                <button
+                  type="button"
+                  className="xp-primary"
+                  disabled={routingBusy}
+                  onClick={() => void handleRealRouteSection(sec.id)}
+                >
+                  {routingBusy ? 'Calcul Valhalla + DEM…' : 'Recalculer via routeur'}
+                </button>
+                <button
+                  type="button"
+                  className="xp-secondary"
+                  onClick={() =>
+                    void runOperation(
+                      {
+                        type: 'set_section_mode',
+                        sectionId: sec.id,
+                        mode: sec.mode === 'manual' ? 'routed' : 'manual',
+                      },
+                      { [sec.id]: sec.entityVersion },
                     )
                   }
-                />
-              </label>
-              <div className="rcw-muted">
-                Hébergement :{' '}
-                {selectedStage.overnightPlace
-                  ? `${selectedStage.overnightPlace.name} (${selectedStage.overnightPlace.bookingStatus})`
-                  : 'Non défini'}
+                >
+                  {sec.mode === 'manual' ? 'Repasser en routé' : 'Passer en manuel'}
+                </button>
               </div>
-            </div>
-          )}
+            ) : null}
 
-          {activeTab === 'analyser' && (
-            <>
-              <div className="rcw-card">
-                <strong>Météo &amp; Terrain</strong>
-                {selectedStage?.weatherSlice ? (
-                  <div className="rcw-muted">
-                    {selectedStage.weatherSlice.locationLabel} ·{' '}
-                    {selectedStage.weatherSlice.forecastFor} ·{' '}
-                    {selectedStage.weatherSlice.temperatureC ?? '—'} °C ·{' '}
-                    {selectedStage.weatherSlice.status}
-                  </div>
-                ) : (
-                  <div className="rcw-muted">Météo non déterminée pour ce créneau.</div>
-                )}
-              </div>
-              <div className="rcw-card">
-                <strong>Matériel du départ ({workspace.kitItems.length})</strong>
-                {workspace.kitItems.map((item) => (
-                  <div key={item.id} className="rcw-row">
-                    <div>
-                      <div>
-                        {item.name} ({item.weightGrams ?? '—'} g)
-                      </div>
-                      <div className="rcw-muted">
-                        {item.status === 'needs_revalidation'
-                          ? `À revoir : ${item.revalidationReason}`
-                          : item.assigneeName
-                            ? `Porté par ${item.assigneeName}`
-                            : 'Personnel'}
+            {sec.warnings.length > 0 ? (
+              <>
+                <XpEyebrow>Alertes sur ce tronçon</XpEyebrow>
+                <XpRows>
+                  {sec.warnings.map((w, i) => (
+                    <XpRow key={i} icon="alert" tone="warn" title={w} />
+                  ))}
+                </XpRows>
+              </>
+            ) : null}
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'stage') {
+      const st = selectedStage;
+      if (!st) {
+        return {
+          title: 'Détail d’étape',
+          subtitle: 'Aucune étape',
+          body: <XpEmpty title="Aucune étape définie" />,
+        };
+      }
+      const metrics = computeStageMetrics(st, orderedPoints, workspace.sections);
+      const endPt = orderedPoints.find((p) => p.id === st.endPointId) ?? orderedPoints[orderedPoints.length - 1];
+      const currentOvernight: OvernightChipValue = st.overnightPlace?.type ?? 'none';
+      return {
+        title: `Jour ${st.dayNumber} · ${st.title}`,
+        subtitle: `${metrics.distanceKm} km · ${OVERNIGHT_LABELS[currentOvernight]}`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-stage">
+            {renderBanners()}
+            <XpMetrics
+              items={[
+                { label: 'Distance', value: `${metrics.distanceKm} km` },
+                { label: 'D+', value: metrics.ascentM != null ? `${metrics.ascentM} m` : 'Inconnu' },
+                { label: 'Durée', value: metrics.durationMin != null ? `${metrics.durationMin} min` : '—' },
+              ]}
+            />
+
+            <XpEyebrow>Hébergement / Nuitée (Impact Graph)</XpEyebrow>
+            <XpChips
+              ariaLabel="Type de nuitée"
+              value={currentOvernight}
+              items={[
+                { id: 'none', label: 'Journée' },
+                { id: 'refuge', label: 'Refuge' },
+                { id: 'bivouac', label: 'Bivouac' },
+                { id: 'gite', label: 'Gîte' },
+              ]}
+              onChange={(kind) => {
+                if (!canEditStages) return;
+                const typed = kind as OvernightChipValue;
+                void runOperation(
+                  {
+                    type: 'set_overnight',
+                    stageId: st.id,
+                    overnightPlace:
+                      typed === 'none'
+                        ? null
+                        : {
+                            id: `stay-${st.id}-${typed}`,
+                            name:
+                              typed === 'bivouac'
+                                ? 'Bivouac du col'
+                                : typed === 'refuge'
+                                  ? 'Refuge gardé'
+                                  : 'Gîte d’étape',
+                            type: typed,
+                            lat: endPt?.lat ?? 45.05,
+                            lon: endPt?.lon ?? 5.51,
+                            bookingStatus: 'planned',
+                            provenance: 'Saisie organisateur',
+                            lastVerifiedAt: new Date().toISOString(),
+                          },
+                  },
+                  { [st.id]: st.entityVersion },
+                );
+              }}
+            />
+
+            {canEditStages && orderedPoints.length >= 3 ? (
+              <>
+                <XpEyebrow>Déplacer la fin d’étape</XpEyebrow>
+                <select
+                  className="rcw-select"
+                  aria-label="Point de fin d’étape"
+                  value={st.endPointId}
+                  onChange={(e) =>
+                    void runOperation(
+                      { type: 'move_day_boundary', stageId: st.id, newEndPointId: e.target.value },
+                      { [st.id]: st.entityVersion },
+                    )
+                  }
+                >
+                  {orderedPoints.slice(1).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name || p.kind}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : null}
+
+            <XpEyebrow>Notes de journée</XpEyebrow>
+            <textarea
+              className="rcw-textarea"
+              rows={3}
+              value={stageNotesDraft}
+              onChange={(e) => setStageNotesDraft(e.target.value)}
+              placeholder="Ravitaillement, horaire refuge, passage délicat…"
+              disabled={!canEditStages}
+            />
+            <div className="rcw-inline-actions">
+              {canEditStages ? (
+                <button
+                  type="button"
+                  className="xp-primary"
+                  onClick={() =>
+                    void runOperation(
+                      { type: 'update_stage_note', stageId: st.id, notes: stageNotesDraft },
+                      { [st.id]: st.entityVersion },
+                    )
+                  }
+                >
+                  Enregistrer la note
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => handleDownloadGpx(st.id)}
+              >
+                Exporter GPX Jour {st.dayNumber}
+              </button>
+            </div>
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'map-settings') {
+      const tileInfo = ATLAS_TILES[mapBase];
+      return {
+        title: 'Carte & Affichage',
+        subtitle: tileInfo.short,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-map-settings">
+            {renderBanners()}
+            <XpEyebrow>Fond de carte</XpEyebrow>
+            <XpChips
+              ariaLabel="Fond de carte"
+              value={mapBase}
+              items={[
+                { id: 'osm', label: 'Plan OSM' },
+                { id: 'topo', label: 'Relief Topo' },
+                { id: 'satellite', label: 'Satellite' },
+              ]}
+              onChange={(id) => setMapBase(id as MapBase)}
+            />
+            <p className="rcw-sub-note">
+              Source active : {tileInfo.short} · Fonds autorisés hors ligne : OpenStreetMap & OpenTopoMap.
+            </p>
+            <XpEyebrow>Actions carte</XpEyebrow>
+            <XpRows>
+              <XpRow
+                icon="target"
+                tone="good"
+                title="Recentrer sur l’itinéraire"
+                sub="Ajuste le cadrage sur tous les points et variantes"
+                onClick={() => {
+                  setFitTrigger((n) => n + 1);
+                  setStatusMessage('Carte recentrée sur l’itinéraire.');
+                }}
+              />
+              <XpRow
+                icon="list"
+                tone={listMode ? 'warn' : 'ink'}
+                title={listMode ? 'Revenir à la vue carte' : 'Activer la vue liste sans carte'}
+                sub={
+                  webglAvailable
+                    ? 'Permet d’éditer points, étapes et contrôles sans carte'
+                    : 'WebGL indisponible : mode liste actif automatiquement'
+                }
+                badge={{ label: listMode ? 'Actif' : 'Carte', tone: listMode ? 'warn' : 'good' }}
+                onClick={() => setListMode((v) => !v)}
+              />
+            </XpRows>
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'gpx') {
+      return {
+        title: 'Importer / Exporter GPX',
+        subtitle: `Provenance : ${workspace.sourceOrigin.kind}`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-gpx">
+            {renderBanners()}
+            <XpEyebrow>Exporter</XpEyebrow>
+            <div className="rcw-inline-actions">
+              <button type="button" className="xp-primary" onClick={() => handleDownloadGpx()}>
+                Exporter GPX complet
+              </button>
+            </div>
+            {workspace.stages.length > 0 ? (
+              <XpRows>
+                {workspace.stages.map((st) => {
+                  const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
+                  return (
+                    <XpRow
+                      key={st.id}
+                      icon="down"
+                      tone="water"
+                      title={`Exporter Jour ${st.dayNumber} · ${st.title}`}
+                      sub={`${stM.distanceKm} km`}
+                      onClick={() => handleDownloadGpx(st.id)}
+                    />
+                  );
+                })}
+              </XpRows>
+            ) : null}
+
+            <XpEyebrow>Importer un GPX</XpEyebrow>
+            <label className="rcw-check-row">
+              <input
+                type="checkbox"
+                checked={keepOriginalGpx}
+                onChange={(e) => setKeepOriginalGpx(e.target.checked)}
+              />
+              <span>Garder ma trace (géométrie importée + XML original conservés)</span>
+            </label>
+            <textarea
+              className="rcw-textarea"
+              rows={4}
+              value={gpxInput}
+              onChange={(e) => setGpxInput(e.target.value)}
+              placeholder="Collez un fichier GPX 1.1 (<gpx>…</gpx>)"
+              aria-label="Contenu GPX à importer"
+            />
+            <button
+              type="button"
+              className="xp-primary"
+              disabled={!canEditGeo || !gpxInput.trim()}
+              onClick={handleImportGpx}
+            >
+              Importer ce GPX sur la carte
+            </button>
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'variants') {
+      return {
+        title: 'Variantes & Comparateur',
+        subtitle: `${workspace.variants.length} variante(s) enregistrée(s)`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-variants">
+            {renderBanners()}
+            {canEditGeo ? (
+              <button
+                type="button"
+                className="xp-primary"
+                onClick={() => void handleCreateDetourVariant()}
+              >
+                + Comparer un détour (+2,1 km)
+              </button>
+            ) : null}
+            {workspace.variants.length === 0 ? (
+              <XpEmpty
+                title="Aucune variante"
+                hint="Créez un détour pour comparer distance, dénivelé, durée et surface connue sur la carte."
+              />
+            ) : (
+              <XpRows>
+                {workspace.variants.map((v) => {
+                  const active = comparedVariantId === v.id;
+                  const knownPct = Math.round((v.replacements[0]?.surfaceKnownRatio ?? 0) * 100);
+                  return (
+                    <div key={v.id} className="rcw-stack">
+                      <XpRow
+                        icon="route"
+                        tone={active ? 'warn' : 'ink'}
+                        title={v.title}
+                        sub={`Δ ${v.deltaDistanceKm > 0 ? '+' : ''}${v.deltaDistanceKm} km · Δ D+ ${v.deltaAscentM ?? '?'} m · Δ ${v.deltaDurationMin ?? '?'} min · Surface connue ${knownPct}%`}
+                        badge={{ label: active ? 'Sur carte' : v.status, tone: active ? 'warn' : 'muted' }}
+                        onClick={() => setComparedVariantId(active ? null : v.id)}
+                      />
+                      <div className="rcw-inline-actions">
+                        <button
+                          type="button"
+                          className="xp-secondary"
+                          onClick={() => setComparedVariantId(active ? null : v.id)}
+                        >
+                          {active ? 'Masquer sur carte' : 'Superposer sur carte'}
+                        </button>
+                        {canEditGeo ? (
+                          <button
+                            type="button"
+                            className="xp-primary"
+                            onClick={() => void runOperation({ type: 'apply_variant', variantId: v.id })}
+                          >
+                            Appliquer
+                          </button>
+                        ) : null}
                       </div>
                     </div>
-                    {item.shared && (
+                  );
+                })}
+              </XpRows>
+            )}
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'kit') {
+      return {
+        title: 'Sac & Matériel',
+        subtitle:
+          kitToRevalidateCount > 0
+            ? `${kitToRevalidateCount} article(s) à revalider`
+            : 'Toutes les vérifications sont à jour',
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-kit">
+            {renderBanners()}
+            <XpEyebrow>Matériel personnel & commun</XpEyebrow>
+            <XpRows>
+              {workspace.kitItems.map((item) => (
+                <div key={item.id} className="rcw-stack" data-testid={`kit-item-${item.id}`}>
+                  <XpRow
+                    icon={item.shared ? 'users' : 'pack'}
+                    tone={item.status === 'needs_revalidation' ? 'warn' : 'good'}
+                    title={`${item.name} (${item.shared ? 'Commun' : 'Personnel'})`}
+                    sub={
+                      item.revalidationReason
+                        ? item.revalidationReason
+                        : item.assigneeName
+                          ? `Porté par ${item.assigneeName}`
+                          : 'Non attribué'
+                    }
+                    badge={{
+                      label:
+                        item.status === 'needs_revalidation'
+                          ? 'À revalider'
+                          : item.status === 'confirmed'
+                            ? 'Confirmé'
+                            : 'À attribuer',
+                      tone:
+                        item.status === 'needs_revalidation'
+                          ? 'warn'
+                          : item.status === 'confirmed'
+                            ? 'good'
+                            : 'muted',
+                    }}
+                  />
+                  <div className="rcw-inline-actions">
+                    {item.shared ? (
                       <select
+                        className="rcw-select"
                         aria-label={`Attribuer ${item.name}`}
-                        className="rcw-input"
-                        style={{ width: 120 }}
                         value={item.assigneeUserId ?? ''}
-                        onChange={(e) => handleAssignKitItem(item.id, e.target.value || null)}
+                        onChange={(e) =>
+                          void handleAssignKitItem(item.id, e.target.value || null)
+                        }
                       >
                         <option value="">Non attribué</option>
                         {workspace.members.map((m) => (
@@ -854,222 +1851,1136 @@ export function RouteCollabWorkspace({
                           </option>
                         ))}
                       </select>
-                    )}
-                    {item.status === 'needs_revalidation' && (
+                    ) : null}
+                    {item.status === 'needs_revalidation' ? (
                       <button
                         type="button"
-                        className="rcw-btn"
-                        onClick={() => handleRevalidateKitItem(item.id)}
+                        className="xp-primary"
+                        onClick={() => void handleRevalidateKitItem(item.id)}
                       >
                         Confirmer
                       </button>
-                    )}
+                    ) : null}
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                </div>
+              ))}
+            </XpRows>
+          </div>
+        ),
+      };
+    }
 
-          {activeTab === 'equipe' && (
-            <>
-              <div className="rcw-card">
-                <strong>Membres ({workspace.members.length})</strong>
-                {workspace.members.map((m) => (
-                  <div key={m.userId} className="rcw-row">
-                    <span>{m.displayName}</span>
-                    <span className="rcw-badge">{m.revokedAt ? 'Révoqué' : m.role}</span>
-                  </div>
+    if (subDrawer === 'terrain') {
+      const st = selectedStage;
+      return {
+        title: 'Météo, Eau & Terrain',
+        subtitle: st ? `Jour ${st.dayNumber} · ${st.title}` : 'Informations terrain',
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-terrain">
+            {renderBanners()}
+            <XpEyebrow>Météo datée par lieu et créneau</XpEyebrow>
+            {st?.weatherSlice ? (
+              <XpRows>
+                <XpRow
+                  icon="cloud"
+                  tone={st.weatherSlice.status === 'stale' ? 'warn' : 'water'}
+                  title={`${st.weatherSlice.locationLabel} · ${st.weatherSlice.forecastFor}`}
+                  sub={`${st.weatherSlice.provider ?? 'Fournisseur inconnu'}${st.weatherSlice.fetchedAt ? ` · relevé ${st.weatherSlice.fetchedAt.slice(0, 10)}` : ''}${st.weatherSlice.windKph != null ? ` · vent ${st.weatherSlice.windKph} km/h` : ''}`}
+                  badge={{
+                    label:
+                      st.weatherSlice.temperatureC != null
+                        ? `${st.weatherSlice.temperatureC}°C`
+                        : st.weatherSlice.status,
+                    tone: st.weatherSlice.status === 'fresh' ? 'good' : 'warn',
+                  }}
+                />
+              </XpRows>
+            ) : (
+              <XpEmpty
+                title="Météo non chargée"
+                hint="Aucune donnée météo disponible pour cette étape — valeur affichée comme inconnue."
+              />
+            )}
+
+            <XpEyebrow>Points d’eau & potabilité</XpEyebrow>
+            {st && st.waterObservations.length > 0 ? (
+              <XpRows>
+                {st.waterObservations.map((w) => (
+                  <XpRow
+                    key={w.id}
+                    icon="drop"
+                    tone={w.status === 'dry' ? 'bad' : w.status === 'unknown' ? 'warn' : 'water'}
+                    title={w.name}
+                    sub={`Potabilité : ${w.potableClaim === 'yes' ? 'Potable' : w.potableClaim === 'no' ? 'Non potable' : 'Non garantie'}${w.observedAt ? ` · observé le ${w.observedAt.slice(0, 10)}` : ' · date inconnue'}`}
+                    badge={{
+                      label: w.status === 'flowing' ? 'Coule' : w.status === 'dry' ? 'À sec' : 'Inconnu',
+                      tone: w.status === 'flowing' ? 'good' : w.status === 'dry' ? 'bad' : 'warn',
+                    }}
+                  />
                 ))}
-              </div>
-              <div className="rcw-card">
-                <strong>Propositions ({workspace.proposals.length})</strong>
-                {workspace.proposals.map((p) => (
-                  <div key={p.id} className="rcw-row">
-                    <div>
-                      <div>{p.title}</div>
-                      <div className="rcw-muted">
-                        {p.authorName} · {p.status}
-                      </div>
-                    </div>
-                    {canReview && p.status === 'open' && (
+              </XpRows>
+            ) : (
+              <p className="rcw-sub-note">Eau : inconnue sur cette étape (prévoir autonomie complète).</p>
+            )}
+
+            <XpEyebrow>Accès, refuges & dangers terrain</XpEyebrow>
+            {st && st.hazards.length > 0 ? (
+              <XpRows>
+                {st.hazards.map((h) => (
+                  <XpRow
+                    key={h.id}
+                    icon="alert"
+                    tone="warn"
+                    title={h.title}
+                    sub={`${h.source} · observé le ${h.observedAt.slice(0, 10)}${h.expiresAt ? ` · expire le ${h.expiresAt.slice(0, 10)}` : ''}`}
+                    badge={{ label: h.severitySource, tone: 'warn' }}
+                  />
+                ))}
+              </XpRows>
+            ) : (
+              <p className="rcw-sub-note">
+                Aucun danger terrain daté. Vérifiez l’ouverture des refuges et arrêtés locaux avant départ.
+              </p>
+            )}
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'proposals') {
+      return {
+        title: 'Commentaires & Propositions',
+        subtitle: `${workspace.comments.length} commentaire(s) · ${openProposalsCount} proposition(s) ouverte(s)`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-proposals">
+            {renderBanners()}
+            <XpEyebrow>Commentaires ancrés ({workspace.comments.length})</XpEyebrow>
+            {workspace.comments.length === 0 ? (
+              <p className="rcw-sub-note">Aucun commentaire pour l’instant.</p>
+            ) : (
+              <XpRows>
+                {workspace.comments.map((c) => (
+                  <div key={c.id} className="rcw-stack">
+                    <XpRow
+                      icon="msg"
+                      tone={c.status === 'needs_relocation' ? 'warn' : 'ink'}
+                      title={`${c.authorName} · ${c.body}`}
+                      sub={`Ancré sur ${c.anchor.anchorType} (${c.anchor.entityId})`}
+                      badge={{
+                        label: c.status === 'needs_relocation' ? 'À repositionner' : 'Actif',
+                        tone: c.status === 'needs_relocation' ? 'warn' : 'good',
+                      }}
+                    />
+                    {c.status === 'needs_relocation' && canComment ? (
                       <button
                         type="button"
-                        className="rcw-btn rcw-btn--primary"
-                        onClick={() => {
-                          let working = workspace;
-                          let log = opLog;
-                          for (let i = 0; i < p.operations.length; i += 1) {
-                            const res = applyWorkspaceOperation(
-                              working,
-                              log,
-                              {
-                                opId: `prop-${p.id}-${i}`,
-                                baseSeq: working.headSeq,
-                                actorId: currentUserId,
-                                actorName: currentUserName,
-                                operation: p.operations[i],
-                              },
-                              new Date().toISOString(),
-                            );
-                            if (res.result.status === 'accepted') {
-                              working = res.result.workspace;
-                              log = res.nextOpLog;
-                            }
-                          }
-                          setOpLog(log);
-                          commitState({
-                            ...working,
-                            proposals: working.proposals.map((pr) =>
-                              pr.id === p.id ? { ...pr, status: 'accepted' } : pr,
-                            ),
-                          });
-                        }}
+                        className="xp-secondary"
+                        onClick={() => void handleRelocateComment(c.id)}
                       >
-                        Accepter
+                        Repositionner sur le point sélectionné
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 ))}
-                {canPropose && (
-                  <>
-                    <input
-                      className="rcw-input"
-                      placeholder="Titre de la proposition (ex. Détour refuge)"
-                      value={proposalTitle}
-                      onChange={(e) => setProposalTitle(e.target.value)}
-                    />
-                    <input
-                      className="rcw-input"
-                      placeholder="Motif"
-                      value={proposalRationale}
-                      onChange={(e) => setProposalRationale(e.target.value)}
-                    />
-                    <button type="button" className="rcw-btn" onClick={handleCreateProposal}>
-                      Proposer un détour
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="rcw-card">
-                <strong>Commentaires ancrés ({workspace.comments.length})</strong>
-                {workspace.comments.map((c) => (
-                  <div key={c.id} className="rcw-muted">
-                    <strong>{c.authorName} :</strong> {c.body}{' '}
-                    {c.status === 'needs_relocation' && (
-                      <span className="rcw-badge rcw-badge--warn">À relocaliser</span>
-                    )}
-                  </div>
-                ))}
-                {canComment && (
-                  <div className="rcw-row">
-                    <input
-                      className="rcw-input"
-                      placeholder="Ajouter un commentaire ancré..."
-                      value={commentBody}
-                      onChange={(e) => setCommentBody(e.target.value)}
-                    />
-                    <button type="button" className="rcw-btn" onClick={handleAddComment}>
-                      Envoyer
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+              </XpRows>
+            )}
 
-          {activeTab === 'depart' && (
-            <>
-              <div className="rcw-card">
-                <strong>Pack hors ligne</strong>
-                <div className="rcw-muted">
-                  Sur cet appareil :{' '}
-                  {verifiedPack ? `Version ${verifiedPack.manifest.revisionNo} vérifiée` : 'Aucun'}
+            {canComment ? (
+              <div className="xp-form">
+                <label>
+                  Commenter le point actif ({selectedPoint?.name ?? 'Départ'})
+                  <input
+                    type="text"
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    placeholder="Commentaire ancré au point…"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="xp-primary"
+                  onClick={() => void handleAddComment()}
+                >
+                  Ajouter un commentaire
+                </button>
+              </div>
+            ) : null}
+
+            <XpEyebrow>Propositions de changement ({workspace.proposals.length})</XpEyebrow>
+            {workspace.proposals.map((p) => {
+              const upVotes = Object.values(p.votes).filter((v) => v === 'up').length;
+              const downVotes = Object.values(p.votes).filter((v) => v === 'down').length;
+              return (
+                <div key={p.id} className="rcw-stack" data-testid={`proposal-${p.id}`}>
+                  <XpRow
+                    icon="spark"
+                    tone={p.status === 'accepted' ? 'good' : p.status === 'rejected' ? 'bad' : 'warn'}
+                    title={`${p.title} (${p.authorName})`}
+                    sub={`Motif : ${p.rationale} · Base seq ${p.baseSeq} · Votes +${upVotes}/-${downVotes}`}
+                    badge={{
+                      label:
+                        p.status === 'open'
+                          ? 'Ouverte'
+                          : p.status === 'accepted'
+                            ? 'Acceptée'
+                            : 'Refusée',
+                      tone: p.status === 'accepted' ? 'good' : p.status === 'rejected' ? 'bad' : 'warn',
+                    }}
+                  />
+                  {p.status === 'open' ? (
+                    <div className="rcw-inline-actions">
+                      <button
+                        type="button"
+                        className="xp-secondary"
+                        onClick={() => void handleVoteProposal(p.id, 'up')}
+                      >
+                        Pour (+1)
+                      </button>
+                      {canReview ? (
+                        <>
+                          <button
+                            type="button"
+                            className="xp-primary"
+                            onClick={() => void handleDecideProposal(p, 'accept')}
+                          >
+                            Accepter
+                          </button>
+                          <button
+                            type="button"
+                            className="xp-secondary"
+                            onClick={() => void handleDecideProposal(p, 'reject')}
+                          >
+                            Refuser
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="rcw-actions">
+              );
+            })}
+
+            {canPropose ? (
+              <div className="xp-form">
+                <label>
+                  Titre de proposition
+                  <input
+                    type="text"
+                    value={proposalTitle}
+                    onChange={(e) => setProposalTitle(e.target.value)}
+                    placeholder="Ex : Passer par la crête"
+                  />
+                </label>
+                <label>
+                  Motif (aperçu avant/après)
+                  <input
+                    type="text"
+                    value={proposalRationale}
+                    onChange={(e) => setProposalRationale(e.target.value)}
+                    placeholder="Moins boueux après pluie…"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="xp-primary"
+                  onClick={() => void handleCreateProposal()}
+                >
+                  Proposer un changement
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ),
+      };
+    }
+
+    if (subDrawer === 'sharing') {
+      const activeShareUrl =
+        workspace.shareLink && !workspace.shareLink.revokedAt
+          ? `/compas/itineraire?workspaceId=${encodeURIComponent(workspace.id)}&token=${encodeURIComponent(workspace.shareLink.token)}`
+          : null;
+      return {
+        title: 'Membres, Droits & Partage',
+        subtitle: `${workspace.members.length} membre(s) · ${presence.length} en ligne`,
+        body: (
+          <div className="rcw-stack" data-testid="subdrawer-sharing">
+            {renderBanners()}
+            <XpEyebrow>Membres & rôles</XpEyebrow>
+            <XpRows>
+              {workspace.members.map((m) => {
+                const onlineEntry = presence.find((pr) => pr.userId === m.userId);
+                return (
+                  <XpRow
+                    key={m.userId}
+                    icon="users"
+                    tone={onlineEntry ? 'good' : 'ink'}
+                    title={m.displayName}
+                    sub={
+                      onlineEntry
+                        ? `En ligne · ${onlineEntry.mode === 'editing' ? 'Édition en cours' : 'Consultation'}`
+                        : ROLE_LABELS[m.role] ?? m.role
+                    }
+                    badge={{
+                      label: ROLE_LABELS[m.role] ?? m.role,
+                      tone: m.role === 'owner' ? 'good' : 'muted',
+                    }}
+                  />
+                );
+              })}
+            </XpRows>
+
+            <XpEyebrow>Lien lecture seule révocable</XpEyebrow>
+            {activeShareUrl ? (
+              <>
+                <div className="rcw-code-box" data-testid="share-link-url">
+                  {activeShareUrl}
+                </div>
+                <p className="rcw-sub-note">
+                  Zone de départ privée masquée ({workspace.shareLink?.hidePrivateStartRadiusM ?? 300} m).
+                </p>
+                <div className="rcw-inline-actions">
                   <button
                     type="button"
-                    className="rcw-btn rcw-btn--primary"
-                    onClick={() => handleDownloadPack(false)}
+                    className="xp-secondary"
+                    onClick={() => {
+                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        void navigator.clipboard.writeText(
+                          `${window.location.origin}${activeShareUrl}`,
+                        );
+                        setStatusMessage('Lien copié dans le presse-papiers.');
+                      }
+                    }}
                   >
-                    Télécharger le pack
+                    Copier le lien
                   </button>
-                  <button
-                    type="button"
-                    className="rcw-btn"
-                    onClick={() => handleDownloadPack(true)}
-                  >
-                    Simuler coupure pack
-                  </button>
-                </div>
-                {offlineQueue.length > 0 && (
-                  <div className="rcw-row">
-                    <span className="rcw-badge rcw-badge--warn">
-                      {offlineQueue.length} opération(s) en attente
-                    </span>
+                  {canManageMembers ? (
                     <button
                       type="button"
-                      className="rcw-btn"
-                      disabled={!online}
-                      onClick={handleReplayOffline}
+                      className="xp-secondary"
+                      onClick={() => void handleManageShareLink('revoke')}
                     >
-                      Synchroniser
+                      Révoquer le lien
                     </button>
-                  </div>
-                )}
-              </div>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <p className="rcw-sub-note">Aucun lien de partage actif.</p>
+            )}
+            {canManageMembers ? (
+              <button
+                type="button"
+                className="xp-primary"
+                onClick={() => void handleManageShareLink('create')}
+              >
+                Générer un lien lecture seule (48 h)
+              </button>
+            ) : null}
+          </div>
+        ),
+      };
+    }
 
-              <div className="rcw-card">
-                <strong>Sortie &amp; Carnet</strong>
-                {!activeActivity ? (
-                  <button type="button" className="rcw-btn rcw-btn--primary" onClick={handleStartActivity}>
-                    Démarrer l’activité avec cette version
-                  </button>
-                ) : (
-                  <button type="button" className="rcw-btn rcw-btn--primary" onClick={handleFinishToCarnet}>
-                    Terminer et ouvrir le carnet
-                  </button>
-                )}
-                {carnetRecord && (
-                  <div className="rcw-card">
-                    <strong>Bilan Carnet</strong>
-                    <div className="rcw-muted">
-                      Version suivie : v{carnetRecord.plannedRevisionNo} · Distance :{' '}
-                      {carnetRecord.recordedDistanceKm} km · Kit figé :{' '}
-                      {carnetRecord.kitSnapshot.length} article(s)
-                    </div>
-                    <button type="button" className="rcw-btn" onClick={handleDuplicateFromCarnet}>
-                      Reprendre cette sortie
-                    </button>
-                  </div>
-                )}
-              </div>
+    // subDrawer === 'offline-carnet'
+    return {
+      title: 'Hors ligne, Activité & Carnet',
+      subtitle: verifiedPack
+        ? `Pack v${verifiedPack.manifest.revisionNo} vérifié · ${online ? 'En ligne' : 'Mode avion'}`
+        : online
+          ? 'Aucun pack local · En ligne'
+          : 'Mode avion',
+      body: (
+        <div className="rcw-stack" data-testid="subdrawer-offline-carnet">
+          {renderBanners()}
+
+          <XpEyebrow>Publication & Pack de départ</XpEyebrow>
+          <XpMetrics
+            items={[
+              {
+                label: 'Publiée',
+                value: workspace.publishedRevisionNo ? `v${workspace.publishedRevisionNo}` : 'Aucune',
+              },
+              {
+                label: 'Sur appareil',
+                value: verifiedPack ? `v${verifiedPack.manifest.revisionNo}` : 'Aucun',
+              },
+              { label: 'File locale', value: `${offlineQueue.length} op` },
+            ]}
+          />
+          {verifiedPack ? (
+            <div className="rcw-code-box" data-testid="pack-manifest-info">
+              Manifeste v{verifiedPack.manifest.revisionNo} ·{' '}
+              {(verifiedPack.manifest.estimatedBytes / 1024).toFixed(1)} Ko · Checksum{' '}
+              {verifiedPack.manifest.checksum.slice(0, 10)} · Vérifié le{' '}
+              {verifiedPack.verifiedAt.slice(0, 19).replace('T', ' ')}
+              <br />
+              Inclus : {verifiedPack.manifest.includedItems.join(', ')}
+              {verifiedPack.manifest.unavailableItems.length > 0
+                ? ` · Indisponibles : ${verifiedPack.manifest.unavailableItems.join(', ')}`
+                : ''}
+            </div>
+          ) : null}
+
+          <div className="rcw-inline-actions">
+            {canPublish ? (
+              <button type="button" className="xp-primary" onClick={() => void handlePublish()}>
+                Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="xp-primary"
+              onClick={() => void handleDownloadPack(false)}
+            >
+              Télécharger le pack
+            </button>
+          </div>
+          <div className="rcw-inline-actions">
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() => void handleDownloadPack(true)}
+            >
+              Simuler coupure pack
+            </button>
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() => setOnline((v) => !v)}
+            >
+              {online ? 'Simuler mode avion' : 'Revenir en ligne'}
+            </button>
+          </div>
+
+          {offlineQueue.length > 0 ? (
+            <>
+              <XpEyebrow>Opérations locales en attente ({offlineQueue.length})</XpEyebrow>
+              <XpRows>
+                {offlineQueue.map((q) => (
+                  <XpRow
+                    key={q.opId}
+                    icon="clock"
+                    tone="warn"
+                    title={q.operation.type}
+                    sub={`Base seq ${q.baseSeq} · ${q.queuedAt.slice(11, 19)}`}
+                    badge={{ label: 'En attente', tone: 'warn' }}
+                  />
+                ))}
+              </XpRows>
+              <button
+                type="button"
+                className="xp-primary"
+                disabled={!online}
+                onClick={() => void handleReplayOffline()}
+              >
+                Synchroniser ({offlineQueue.length})
+              </button>
             </>
-          )}
-        </aside>
-      </div>
+          ) : null}
 
-      <nav className="rcw-tabs" role="tablist" aria-label="Vues de préparation">
-        {(
-          [
-            ['tracer', 'Tracer'],
-            ['etapes', 'Étapes'],
-            ['analyser', 'Analyser'],
-            ['equipe', 'Équipe'],
-            ['depart', 'Départ'],
-          ] as Array<[WorkspaceTab, string]>
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            className="rcw-tab"
-            aria-selected={activeTab === id}
-            onClick={() => setActiveTab(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+          <XpEyebrow>Activité & Carnet de retour</XpEyebrow>
+          {activeActivity ? (
+            <div className="rcw-stack" data-testid="active-activity-card">
+              <XpRow
+                icon="play"
+                tone="good"
+                title={`Activité en cours · Plan v${activeActivity.revisionNo}`}
+                sub={`Snapshot du kit : ${activeActivity.kitSnapshot.length} article(s) figés`}
+                badge={{ label: 'Active', tone: 'good' }}
+              />
+              {workspace.publishedRevisionNo &&
+              workspace.publishedRevisionNo > activeActivity.revisionNo ? (
+                <p className="rcw-sub-note">
+                  Une version v{workspace.publishedRevisionNo} existe : changer de route en séance demande une action explicite.
+                </p>
+              ) : null}
+              <button
+                type="button"
+                className="xp-primary"
+                onClick={handleFinishToCarnet}
+              >
+                Terminer et ouvrir le carnet
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="xp-primary"
+              onClick={handleStartActivity}
+            >
+              Démarrer l’activité
+            </button>
+          )}
+
+          {carnetRecord ? (
+            <div className="rcw-stack" data-testid="carnet-return-card">
+              <XpEyebrow>Bilan Carnet (immuable)</XpEyebrow>
+              <XpMetrics
+                items={[
+                  { label: 'Plan suivi', value: `v${carnetRecord.plannedRevisionNo}` },
+                  { label: 'Distance', value: `${carnetRecord.recordedDistanceKm} km` },
+                  { label: 'Kit emporté', value: `${carnetRecord.kitSnapshot.length} art.` },
+                ]}
+              />
+              <button
+                type="button"
+                className="xp-primary"
+                onClick={handleDuplicateFromCarnet}
+              >
+                Reprendre cette sortie
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ),
+    };
+  };
+
+  // ── Les 5 onglets du Drawer Principal (`ExplorerSheet`) ─────────────────────
+  const mainTabs: SheetTab[] = [
+    {
+      id: 'tracer',
+      label: 'Tracer',
+      icon: 'route',
+      render: () => (
+        <div className="rcw-stack" data-testid="tab-panel-tracer">
+          {renderBanners()}
+          <XpMetrics
+            items={[
+              { label: 'Distance', value: `${totals.distanceKm} km` },
+              { label: 'D+', value: totals.ascentM != null ? `${totals.ascentM} m` : '—' },
+              { label: 'D−', value: totals.descentM != null ? `${totals.descentM} m` : '—' },
+              { label: 'Durée', value: totals.durationMin != null ? `${totals.durationMin} min` : '—' },
+            ]}
+          />
+
+          <XpEyebrow>Profil & Forme du tracé</XpEyebrow>
+          <XpChips
+            ariaLabel="Profil de routage"
+            value={workspace.sport}
+            items={[
+              { id: 'marche', label: 'Randonnée' },
+              { id: 'velo', label: 'Vélo' },
+            ]}
+            onChange={(id) => {
+              if (!canEditGeo) return;
+              void runOperation({
+                type: 'set_sport_profile',
+                sport: id as RouteSport,
+                routingOptions: workspace.routingOptions,
+              });
+            }}
+          />
+          <XpChips
+            ariaLabel="Forme de l’itinéraire"
+            value={workspace.shapeMode ?? 'one_way'}
+            items={[
+              { id: 'one_way', label: 'Aller' },
+              { id: 'loop', label: 'Boucle' },
+              { id: 'out_and_back', label: 'Aller-retour' },
+            ]}
+            onChange={(id) => {
+              if (!canEditGeo) return;
+              void runOperation({ type: 'set_shape_mode', shapeMode: id as RouteShapeMode });
+            }}
+          />
+
+          {canEditGeo ? (
+            <div className="rcw-inline-actions">
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => void runOperation({ type: 'reverse_route' })}
+              >
+                Inverser le sens
+              </button>
+              {workspace.headSeq > 0 ? (
+                <button
+                  type="button"
+                  className="xp-secondary"
+                  onClick={() =>
+                    void runOperation({
+                      type: 'revert_to_seq',
+                      targetSeq: Math.max(0, workspace.headSeq - 1),
+                      reason: 'Restauration révision précédente',
+                    })
+                  }
+                >
+                  Restaurer seq {Math.max(0, workspace.headSeq - 1)}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          <XpEyebrow>Points ({orderedPoints.length}) · toucher un point synchronise la carte</XpEyebrow>
+          <XpRows>
+            {orderedPoints.map((pt, idx) => (
+              <XpRow
+                key={pt.id}
+                icon="pin"
+                tone={selectedPointId === pt.id ? 'warn' : 'ink'}
+                title={`${idx + 1}. ${pt.name || pt.kind}`}
+                sub={`${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)}${pt.eleM != null ? ` · ${Math.round(pt.eleM)} m` : ''}`}
+                badge={{ label: `v${pt.entityVersion}`, tone: selectedPointId === pt.id ? 'warn' : 'muted' }}
+                trailing={<XpIcon name="chevr" size={15} />}
+                onClick={() => {
+                  setSelectedPointId(pt.id);
+                  setFocusCoord([pt.lon, pt.lat]);
+                  setHoveredCoord([pt.lon, pt.lat]);
+                  openSubDrawer('point');
+                }}
+              />
+            ))}
+          </XpRows>
+          {canEditGeo ? (
+            <button
+              type="button"
+              className="xp-primary"
+              onClick={() => {
+                const last = orderedPoints[orderedPoints.length - 1];
+                void runOperation({
+                  type: 'insert_point',
+                  pointId: `pt-${Date.now().toString(36)}`,
+                  afterPointId: last?.id ?? null,
+                  lat: Number(((last?.lat ?? 45.05) + 0.01).toFixed(5)),
+                  lon: Number(((last?.lon ?? 5.51) + 0.01).toFixed(5)),
+                  name: `Passage ${orderedPoints.length + 1}`,
+                });
+              }}
+            >
+              + Ajouter un point
+            </button>
+          ) : null}
+
+          <XpEyebrow>Tronçons ({workspace.sections.length})</XpEyebrow>
+          <XpRows>
+            {workspace.sections.map((sec, i) => (
+              <XpRow
+                key={sec.id}
+                icon="route"
+                tone={sec.mode === 'manual' ? 'warn' : 'good'}
+                title={`Tronçon ${i + 1} · ${sec.distanceKm} km`}
+                sub={`${SECTION_MODE_LABELS[sec.mode] ?? sec.mode} · ${sec.provenance.provider}${sec.ascentM != null ? ` · D+ ${sec.ascentM} m` : ''}`}
+                badge={{ label: SECTION_MODE_LABELS[sec.mode] ?? sec.mode, tone: sec.mode === 'manual' ? 'warn' : 'good' }}
+                trailing={<XpIcon name="chevr" size={15} />}
+                onClick={() => {
+                  setSelectedSectionId(sec.id);
+                  openSubDrawer('section');
+                }}
+              />
+            ))}
+          </XpRows>
+
+          <XpEyebrow>Outils & Sous-tiroirs</XpEyebrow>
+          <XpRows>
+            <XpRow
+              icon="layers"
+              tone="water"
+              title="Carte & Affichage"
+              sub={`Fond ${ATLAS_TILES[mapBase].short} · Recentrer · Vue liste`}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('map-settings')}
+            />
+            <XpRow
+              icon="down"
+              tone="ink"
+              title="Importer / Exporter GPX"
+              sub={`Garder ma trace · Export complet ou par étape`}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('gpx')}
+            />
+            <XpRow
+              icon="spark"
+              tone="warn"
+              title="Variantes & Comparateur"
+              sub={`${workspace.variants.length} variante(s) à superposer sur la carte`}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('variants')}
+            />
+          </XpRows>
+        </div>
+      ),
+    },
+    {
+      id: 'etapes',
+      label: 'Étapes',
+      icon: 'flag',
+      render: () => (
+        <div className="rcw-stack" data-testid="tab-panel-etapes">
+          {renderBanners()}
+          <XpEyebrow>Journées & Nuitées ({workspace.stages.length})</XpEyebrow>
+          <XpRows>
+            {workspace.stages.map((st) => {
+              const kind: OvernightChipValue = st.overnightPlace?.type ?? 'none';
+              const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
+              return (
+                <XpRow
+                  key={st.id}
+                  icon={kind === 'bivouac' ? 'tent' : kind === 'refuge' ? 'house' : 'flag'}
+                  tone={selectedStageId === st.id ? 'warn' : 'good'}
+                  title={`Jour ${st.dayNumber} · ${st.title}`}
+                  sub={`${stM.distanceKm} km${stM.ascentM != null ? ` · D+ ${stM.ascentM} m` : ''} · ${st.overnightPlace?.name ?? OVERNIGHT_LABELS[kind]}`}
+                  badge={{ label: OVERNIGHT_LABELS[kind], tone: kind === 'bivouac' ? 'warn' : 'good' }}
+                  trailing={<XpIcon name="chevr" size={15} />}
+                  onClick={() => {
+                    setSelectedStageId(st.id);
+                    openSubDrawer('stage');
+                  }}
+                />
+              );
+            })}
+          </XpRows>
+
+          {canEditStages ? (
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() =>
+                void runOperation({
+                  type: 'split_days',
+                  targetDays: Math.min(orderedPoints.length - 1, workspace.stages.length + 1),
+                })
+              }
+            >
+              + Découper en {Math.min(Math.max(2, orderedPoints.length - 1), workspace.stages.length + 1)} journées
+            </button>
+          ) : null}
+
+          <XpEyebrow>Sac & Vérifications liées</XpEyebrow>
+          <XpRows>
+            <XpRow
+              icon="pack"
+              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
+              title="Sac & Matériel du groupe"
+              sub={`${workspace.kitItems.length} article(s) · Attribution & revalidation sélective`}
+              badge={
+                kitToRevalidateCount > 0
+                  ? { label: `${kitToRevalidateCount} à revalider`, tone: 'warn' }
+                  : { label: 'OK', tone: 'good' }
+              }
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('kit')}
+            />
+          </XpRows>
+        </div>
+      ),
+    },
+    {
+      id: 'analyser',
+      label: 'Analyser',
+      icon: 'pulse',
+      render: () => (
+        <div className="rcw-stack" data-testid="tab-panel-analyser">
+          {renderBanners()}
+          <XpEyebrow>Profil altimétrique synchronisé avec la carte</XpEyebrow>
+          <div className="xp-profile" data-testid="elevation-profile">
+            {elevationStats.hasElevation && elevation.samples.length >= 2 ? (
+              <>
+                <svg
+                  className="rcw-elev-svg"
+                  viewBox="0 0 100 40"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label="Profil altimétrique synchronisé avec la carte"
+                  onMouseMove={(ev) => {
+                    const rect = ev.currentTarget.getBoundingClientRect();
+                    const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+                    const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
+                    if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
+                  }}
+                  onMouseLeave={() => setHoveredCoord(null)}
+                >
+                  <polyline
+                    fill="none"
+                    stroke="#17402c"
+                    strokeWidth="1.8"
+                    points={elevation.samples
+                      .map((s, idx) => {
+                        const x = (idx / Math.max(1, elevation.samples.length - 1)) * 100;
+                        const min = elevationStats.minEleM ?? 0;
+                        const span = Math.max(1, (elevationStats.maxEleM ?? 100) - min);
+                        const y = 36 - (((s.elevationM ?? min) - min) / span) * 32;
+                        return `${x.toFixed(1)},${y.toFixed(1)}`;
+                      })
+                      .join(' ')}
+                  />
+                </svg>
+                <div className="xp-profile-legend">
+                  <span>Min {elevationStats.minEleM} m</span>
+                  <span>Max {elevationStats.maxEleM} m</span>
+                  <span>D+ {totals.ascentM ?? '—'} m</span>
+                </div>
+              </>
+            ) : (
+              <div className="xp-profile-empty">Altitude indisponible sur ce tracé</div>
+            )}
+          </div>
+
+          <XpEyebrow>Qualité & Données terrain</XpEyebrow>
+          <XpMetrics
+            items={[
+              { label: 'Sections', value: `${workspace.sections.length}` },
+              { label: 'Manuelles', value: `${manualSectionsCount}` },
+              { label: 'Alertes', value: `${totalWarnings}` },
+            ]}
+          />
+
+          <XpRows>
+            <XpRow
+              icon="cloud"
+              tone="water"
+              title="Météo, Eau & Terrain"
+              sub="Créneau horaire, date d’observation, inconnues affichées"
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('terrain')}
+            />
+            <XpRow
+              icon="spark"
+              tone="warn"
+              title="Variantes & Comparateur"
+              sub="Comparer km, D+, durée, surface connue et provenance"
+              badge={{ label: `${workspace.variants.length}`, tone: 'muted' }}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('variants')}
+            />
+            <XpRow
+              icon="down"
+              tone="ink"
+              title="Importer / Exporter GPX"
+              sub="GPX 1.1 complet ou par étape · Garder ma trace"
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('gpx')}
+            />
+          </XpRows>
+        </div>
+      ),
+    },
+    {
+      id: 'equipe',
+      label: 'Équipe',
+      icon: 'users',
+      render: () => (
+        <div className="rcw-stack" data-testid="tab-panel-equipe">
+          {renderBanners()}
+          <XpEyebrow>Coédition & Présence ({presence.length} actif(s))</XpEyebrow>
+          {presence.length > 0 ? (
+            <XpRows>
+              {presence.map((pr) => (
+                <XpRow
+                  key={pr.userId}
+                  icon="users"
+                  tone="good"
+                  title={pr.displayName}
+                  sub={
+                    pr.activeStageId
+                      ? `Sur étape ${pr.activeStageId} · ${pr.mode === 'editing' ? 'Édition' : 'Lecture'}`
+                      : pr.mode === 'editing'
+                        ? 'Édition en cours'
+                        : 'En ligne'
+                  }
+                  badge={{ label: 'En direct', tone: 'good' }}
+                />
+              ))}
+            </XpRows>
+          ) : (
+            <p className="rcw-sub-note">
+              Vous travaillez sur la séquence {workspace.headSeq} ({ROLE_LABELS[currentMember?.role ?? ''] ?? 'Accès partagé'}).
+            </p>
+          )}
+
+          <XpEyebrow>Collaboration & Droits</XpEyebrow>
+          <XpRows>
+            <XpRow
+              icon="msg"
+              tone={orphanCommentsCount > 0 ? 'warn' : 'ink'}
+              title="Commentaires & Propositions"
+              sub={`${workspace.comments.length} commentaire(s) · ${openProposalsCount} proposition(s) ouverte(s)`}
+              badge={
+                orphanCommentsCount > 0
+                  ? { label: `${orphanCommentsCount} à repositionner`, tone: 'warn' }
+                  : { label: `${openProposalsCount}`, tone: 'muted' }
+              }
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('proposals')}
+            />
+            <XpRow
+              icon="share"
+              tone="water"
+              title="Membres, Droits & Partage"
+              sub={`${workspace.members.length} membre(s) · Lien révocable lecture seule`}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('sharing')}
+            />
+            <XpRow
+              icon="pack"
+              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
+              title="Matériel commun & Attribution"
+              sub="Attribuer le matériel partagé aux participants"
+              badge={
+                kitToRevalidateCount > 0
+                  ? { label: `${kitToRevalidateCount} à revoir`, tone: 'warn' }
+                  : { label: 'OK', tone: 'good' }
+              }
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('kit')}
+            />
+          </XpRows>
+
+          <XpEyebrow>Hub, Club & Messagerie</XpEyebrow>
+          <div className="rcw-code-box">
+            <strong>Carte partagée : {hubSummary.title}</strong>
+            <br />
+            {hubSummary.totalDistanceKm} km · {hubSummary.stagesCount} étape(s) ·{' '}
+            {hubSummary.publishedRevisionNo
+              ? `Version v${hubSummary.publishedRevisionNo}`
+              : 'Brouillon'}{' '}
+            · <Link href={hubSummary.href}>Ouvrir le lien versionné</Link>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'depart',
+      label: 'Départ',
+      icon: 'pack',
+      render: () => (
+        <div className="rcw-stack" data-testid="tab-panel-depart">
+          {renderBanners()}
+          <XpMetrics
+            items={[
+              {
+                label: 'Statut',
+                value: workspace.publishedRevisionNo
+                  ? `Publiée v${workspace.publishedRevisionNo}`
+                  : `Seq ${workspace.headSeq}`,
+              },
+              {
+                label: 'Pack local',
+                value: verifiedPack ? `v${verifiedPack.manifest.revisionNo}` : 'Aucun',
+              },
+              { label: 'Réseau', value: online ? 'En ligne' : 'Avion' },
+            ]}
+          />
+
+          <div className="rcw-inline-actions">
+            {canPublish ? (
+              <button type="button" className="xp-primary" onClick={() => void handlePublish()}>
+                Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="xp-secondary"
+              onClick={() => void handleDownloadPack(false)}
+            >
+              Télécharger le pack
+            </button>
+          </div>
+
+          <XpEyebrow>Préparation & Retour</XpEyebrow>
+          <XpRows>
+            <XpRow
+              icon="offline"
+              tone={!online || offlineQueue.length > 0 ? 'warn' : 'good'}
+              title="Hors ligne, Activité & Carnet"
+              sub="Manifeste pack, coupure réseau, file locale, départ & bilan carnet"
+              badge={
+                verifiedPack
+                  ? { label: `Pack v${verifiedPack.manifest.revisionNo}`, tone: 'good' }
+                  : { label: 'À préparer', tone: 'muted' }
+              }
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('offline-carnet')}
+            />
+            <XpRow
+              icon="pack"
+              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
+              title="Checklist du sac"
+              sub={
+                kitToRevalidateCount > 0
+                  ? `${kitToRevalidateCount} article(s) à revalider avant départ`
+                  : 'Kit vérifié et prêt pour le départ'
+              }
+              badge={{
+                label: kitToRevalidateCount > 0 ? `${kitToRevalidateCount} à revoir` : 'Prêt',
+                tone: kitToRevalidateCount > 0 ? 'warn' : 'good',
+              }}
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('kit')}
+            />
+            <XpRow
+              icon="map"
+              tone="ink"
+              title="Carte & Mode liste"
+              sub="Changer de fond (OSM / Relief / Satellite) ou passer sans carte"
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('map-settings')}
+            />
+          </XpRows>
+        </div>
+      ),
+    },
+  ];
+
+  const activeSubDrawer = renderSubDrawer();
+  const sheetSubtitle = [
+    `${totals.distanceKm} km`,
+    totals.ascentM != null ? `D+ ${totals.ascentM} m` : null,
+    workspace.publishedRevisionNo
+      ? `Publiée v${workspace.publishedRevisionNo}`
+      : `Brouillon · seq ${workspace.headSeq}`,
+    !online ? 'Hors ligne' : null,
+    verifiedPack ? `Pack v${verifiedPack.manifest.revisionNo}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <div
+      className="xp-root rcw-explorer-root"
+      data-theme="light"
+      data-sheet-open={sheetOpen ? 'true' : 'false'}
+      data-testid="route-collab-workspace"
+      data-head-seq={workspace.headSeq}
+    >
+      {/* ÉLÉMENT 1 : CARTE PLEIN ÉCRAN (ou surface liste accessible sans WebGL) — ZERO bouton flottant */}
+      {!listMode && webglAvailable ? (
+        <DynamicRouteMap
+          points={orderedPoints}
+          sections={workspace.sections}
+          base={mapBase}
+          fitTrigger={fitTrigger}
+          focusCoord={focusCoord}
+          comparedVariant={comparedVariant}
+          hoveredCoord={hoveredCoord}
+          selectedPointId={selectedPointId}
+          selectedSectionId={selectedSectionId}
+          canEdit={canEditGeo}
+          onMapClickAddPoint={(lat, lon) => {
+            const last = orderedPoints[orderedPoints.length - 1];
+            const newId = `pt-${Date.now().toString(36)}`;
+            void runOperation({
+              type: 'insert_point',
+              pointId: newId,
+              afterPointId: last?.id ?? null,
+              lat,
+              lon,
+              name: `Passage ${orderedPoints.length + 1}`,
+            });
+            setSelectedPointId(newId);
+            setFocusCoord([lon, lat]);
+          }}
+          onSelectPoint={(pointId) => {
+            const pt = orderedPoints.find((p) => p.id === pointId);
+            setSelectedPointId(pointId);
+            setSelectedSectionId(null);
+            if (pt) {
+              setFocusCoord([pt.lon, pt.lat]);
+              setHoveredCoord([pt.lon, pt.lat]);
+            }
+            openSubDrawer('point');
+          }}
+          onSelectSection={(sectionId) => {
+            setSelectedSectionId(sectionId);
+            setSelectedPointId(null);
+            openSubDrawer('section');
+          }}
+          onMapError={(reason) => {
+            setWebglAvailable(false);
+            setListMode(true);
+            setSheetOpen(true);
+            setStatusMessage(`Mode liste activé automatiquement (${reason}).`);
+          }}
+        />
+      ) : (
+        <div
+          className="rcw-list-surface"
+          data-testid="list-mode-fallback"
+          role="region"
+          aria-label="Vue liste accessible sans carte"
+        >
+          <div className="rcw-list-surface-inner">
+            <XpEyebrow>
+              Mode liste sans carte · {workspace.title} ({totals.distanceKm} km)
+            </XpEyebrow>
+            <XpRows>
+              {orderedPoints.map((pt, idx) => (
+                <XpRow
+                  key={pt.id}
+                  icon="pin"
+                  tone={selectedPointId === pt.id ? 'warn' : 'ink'}
+                  title={`${idx + 1}. ${pt.name || pt.kind}`}
+                  sub={`${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)}`}
+                  onClick={() => {
+                    setSelectedPointId(pt.id);
+                    openSubDrawer('point');
+                  }}
+                />
+              ))}
+            </XpRows>
+            <XpRows>
+              {workspace.stages.map((st) => {
+                const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
+                return (
+                  <XpRow
+                    key={st.id}
+                    icon="flag"
+                    tone="good"
+                    title={`Jour ${st.dayNumber} · ${st.title}`}
+                    sub={`${stM.distanceKm} km · ${st.overnightPlace?.name ?? 'Journée'}`}
+                    onClick={() => {
+                      setSelectedStageId(st.id);
+                      openSubDrawer('stage');
+                    }}
+                  />
+                );
+              })}
+            </XpRows>
+          </div>
+        </div>
+      )}
+
+      {/* ÉLÉMENT 2 : TIROIR EXPLORER (ou pilule 3 petits points en bas lorsque fermé) */}
+      {sheetOpen ? (
+        <ExplorerSheet
+          title={activeSubDrawer ? activeSubDrawer.title : workspace.title}
+          subtitle={activeSubDrawer ? activeSubDrawer.subtitle : sheetSubtitle}
+          tabs={activeSubDrawer ? undefined : mainTabs}
+          tab={tabIndex}
+          onTab={(idx) => setTabIndex(idx)}
+          detent={detent}
+          onDetent={(d) => setDetent(d)}
+          onBack={activeSubDrawer ? () => setSubDrawer(null) : undefined}
+          onClose={() => {
+            setSubDrawer(null);
+            setSheetOpen(false);
+          }}
+          bottomInset={0}
+          labelledBy="rcw-sheet-title"
+          tabsBottom={false}
+        >
+          {activeSubDrawer ? activeSubDrawer.body : null}
+        </ExplorerSheet>
+      ) : (
+        <button
+          type="button"
+          className="xp-sheet-pill-launcher"
+          data-testid="route-drawer-pill"
+          aria-label="Ouvrir le tiroir d’itinéraire"
+          onClick={() => {
+            setSheetOpen(true);
+            setDetent('mid');
+          }}
+        >
+          <span className="xp-pill-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+      )}
     </div>
   );
 }
+
+export default RouteCollabWorkspace;

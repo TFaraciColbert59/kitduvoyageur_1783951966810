@@ -146,6 +146,7 @@ export function buildElevationProfile(workspace: RouteWorkspaceState): Elevation
   const samples: Array<{ distanceM: number; elevationM: number | null }> = [];
   let cumM = 0;
   let missingCount = 0;
+  let usedTerrainSamples = false;
   const pts = activePoints(workspace);
   const pointById = new Map(pts.map((p) => [p.id, p]));
 
@@ -153,6 +154,8 @@ export function buildElevationProfile(workspace: RouteWorkspaceState): Elevation
     const fromPt = pointById.get(sec.fromPointId);
     const toPt = pointById.get(sec.toPointId);
     const coords = sec.geometry.coordinates;
+    const secEle = sec.elevationSamples;
+    if (secEle && secEle.length >= 2) usedTerrainSamples = true;
     for (let i = 0; i < coords.length; i += 1) {
       if (i > 0) {
         cumM += haversineKm(
@@ -161,8 +164,17 @@ export function buildElevationProfile(workspace: RouteWorkspaceState): Elevation
         ) * 1000;
       }
       let ele: number | null = null;
-      if (i === 0 && fromPt?.eleM != null) ele = fromPt.eleM;
-      else if (i === coords.length - 1 && toPt?.eleM != null) ele = toPt.eleM;
+      if (secEle && secEle.length >= 2) {
+        const mappedIdx = Math.min(
+          secEle.length - 1,
+          Math.round((i / Math.max(1, coords.length - 1)) * (secEle.length - 1)),
+        );
+        ele = secEle[mappedIdx] ?? null;
+      } else if (i === 0 && fromPt?.eleM != null) {
+        ele = fromPt.eleM;
+      } else if (i === coords.length - 1 && toPt?.eleM != null) {
+        ele = toPt.eleM;
+      }
       if (ele == null) missingCount += 1;
       samples.push({ distanceM: Math.round(cumM), elevationM: ele });
     }
@@ -170,7 +182,11 @@ export function buildElevationProfile(workspace: RouteWorkspaceState): Elevation
 
   return {
     samples,
-    source: workspace.sourceOrigin.kind === 'gpx_import' ? 'GPX / points' : 'points de passage',
+    source: usedTerrainSamples
+      ? 'Terrain Tiles (DEM)'
+      : workspace.sourceOrigin.kind === 'gpx_import'
+        ? 'GPX / points'
+        : 'points de passage',
     computedAt: workspace.updatedAt,
     missingRatio: samples.length > 0 ? Number((missingCount / samples.length).toFixed(2)) : 1,
   };
@@ -568,7 +584,9 @@ export function applyWorkspaceOperation(
   let nextPoints = workspace.points.slice();
   let nextSections = workspace.sections.slice();
   let nextStages = workspace.stages.slice();
+  let nextVariants = workspace.variants.slice();
   let nextSport = workspace.sport;
+  let nextShapeMode = workspace.shapeMode ?? 'one_way';
   let nextOptions = workspace.routingOptions;
 
   const op = command.operation;
@@ -713,6 +731,7 @@ export function applyWorkspaceOperation(
               durationMin: op.durationMin,
               ascentM: op.ascentM,
               descentM: op.descentM,
+              elevationSamples: op.elevationSamples ?? s.elevationSamples,
               surfaceSegments: op.surfaceSegments ?? s.surfaceSegments,
               routingInputHash: op.routingInputHash,
               pendingFingerprint: null,
@@ -794,14 +813,130 @@ export function applyWorkspaceOperation(
       break;
     }
 
+    case 'set_shape_mode': {
+      nextShapeMode = op.shapeMode;
+      const ordered = activePoints(workspace);
+      if (ordered.length >= 2) {
+        if (op.shapeMode === 'loop') {
+          const first = ordered[0];
+          const last = ordered[ordered.length - 1];
+          const dist = haversineKm({ lat: first.lat, lon: first.lon }, { lat: last.lat, lon: last.lon });
+          if (dist > 0.05) {
+            const closingPt: CollaborativeRoutePoint = {
+              id: `pt-loop-close-${nextSeq}`,
+              workspaceId: workspace.id,
+              kind: 'finish',
+              orderKey: orderKeyBetween(last.orderKey, null),
+              lat: first.lat,
+              lon: first.lon,
+              eleM: first.eleM,
+              name: `${first.name || 'Départ'} (boucle)`,
+              entityVersion: 1,
+            };
+            nextPoints.push(closingPt);
+            const reordered = activePoints({ ...workspace, points: nextPoints });
+            nextSections = rebuildSectionsFromPoints(
+              workspace.id,
+              reordered,
+              nextSections,
+              nextSport,
+              nextOptions,
+            );
+          }
+        } else if (op.shapeMode === 'out_and_back') {
+          const returnPts = ordered.slice(0, -1).reverse();
+          let prevKey = ordered[ordered.length - 1].orderKey;
+          for (let i = 0; i < returnPts.length; i += 1) {
+            const src = returnPts[i];
+            const k = orderKeyBetween(prevKey, null);
+            prevKey = k;
+            nextPoints.push({
+              id: `pt-ret-${nextSeq}-${i}`,
+              workspaceId: workspace.id,
+              kind: i === returnPts.length - 1 ? 'finish' : 'via',
+              orderKey: k,
+              lat: src.lat,
+              lon: src.lon,
+              eleM: src.eleM,
+              name: src.name ? `${src.name} (retour)` : null,
+              entityVersion: 1,
+            });
+          }
+          const reordered = activePoints({ ...workspace, points: nextPoints });
+          nextSections = rebuildSectionsFromPoints(
+            workspace.id,
+            reordered,
+            nextSections,
+            nextSport,
+            nextOptions,
+          );
+        }
+      }
+      break;
+    }
+
+    case 'add_variant': {
+      // Jusqu'à 3 variantes comparables par portée dans le premier périmètre
+      nextVariants = [...nextVariants.filter((v) => v.id !== op.variant.id), op.variant].slice(-6);
+      break;
+    }
+
+    case 'apply_variant': {
+      const variant = nextVariants.find((v) => v.id === op.variantId);
+      if (variant) {
+        const repBySec = new Map(variant.replacements.map((r) => [r.sectionId, r]));
+        nextSections = nextSections.map((sec) => {
+          const rep = repBySec.get(sec.id);
+          if (!rep) return sec;
+          return {
+            ...sec,
+            geometry: rep.geometry,
+            distanceKm: rep.distanceKm,
+            durationMin: rep.durationMin,
+            ascentM: rep.ascentM,
+            descentM: rep.descentM,
+            provenance: rep.provenance,
+            entityVersion: sec.entityVersion + 1,
+          };
+        });
+        nextVariants = nextVariants.map((v) =>
+          v.id === op.variantId ? { ...v, status: 'accepted' } : v,
+        );
+      }
+      break;
+    }
+
     case 'set_sport_profile': {
       nextSport = op.sport;
       nextOptions = op.routingOptions;
+      const ordered = activePoints(workspace);
+      nextSections = nextSections.map((s) => {
+        if (s.mode !== 'routed') return s;
+        const fromPt = ordered.find((p) => p.id === s.fromPointId);
+        const toPt = ordered.find((p) => p.id === s.toPointId);
+        if (!fromPt || !toPt) return s;
+        return {
+          ...s,
+          routingInputHash: computeRoutingFingerprint({
+            from: fromPt,
+            to: toPt,
+            sport: nextSport,
+            options: nextOptions,
+          }),
+          entityVersion: s.entityVersion + 1,
+        };
+      });
       break;
     }
 
     case 'revert_to_seq': {
-      // L'annulation crée une nouvelle opération dans l'historique sans effacer le passé.
+      // Restaure depuis une révision publiée/cible en créant une nouvelle séquence (jamais d'effacement de l'historique).
+      const targetRev = workspace.revisions.find((r) => r.basedOnSeq === op.targetSeq || r.revisionNo === op.targetSeq);
+      if (targetRev) {
+        nextPoints = targetRev.points.map((p) => ({ ...p, entityVersion: p.entityVersion + 1 }));
+        nextSections = targetRev.sections.map((s) => ({ ...s, entityVersion: s.entityVersion + 1 }));
+        nextStages = targetRev.stages.map((st) => ({ ...st, entityVersion: st.entityVersion + 1 }));
+      }
       break;
     }
   }
@@ -810,11 +945,13 @@ export function applyWorkspaceOperation(
   const candidateWorkspace: RouteWorkspaceState = {
     ...workspace,
     sport: nextSport,
+    shapeMode: nextShapeMode,
     routingOptions: nextOptions,
     headSeq: nextSeq,
     points: nextPoints,
     sections: nextSections,
     stages: nextStages,
+    variants: nextVariants,
     comments: nextComments,
     updatedAt: nowIso,
   };

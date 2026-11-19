@@ -131,7 +131,10 @@ export function V5Start({
             </p>
           )}
           {aiOn && <AiNotice variant="run" withPrivacyLink />}
-          <p className="v5-fine">{t('compas.v5.start.fine')}</p>
+          <p className="v5-fine">
+            {t('compas.v5.start.fine')}{' '}
+            <Link href="/compas/itineraire">Créateur d’itinéraire collaboratif &amp; GPX →</Link>
+          </p>
         </section>
         {askTraveller && <TravellerCard mode="collect" className="v5-start-card v5-cs" />}
       </div>

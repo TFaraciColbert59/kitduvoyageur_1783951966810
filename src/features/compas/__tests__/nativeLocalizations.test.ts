@@ -86,7 +86,16 @@ describe('Android : values-fr et values-en', () => {
     .sort();
 
   it('seuls les textes visibles sont traduits ; identifiants et schéma d’URL non traduisibles', () => {
-    expect(visible).toEqual(['app_name', 'title_activity_main']);
+    expect(visible).toEqual([
+      'app_name',
+      'shortcut_offline_long',
+      'shortcut_offline_short',
+      'shortcut_plan_long',
+      'shortcut_plan_short',
+      'shortcut_record_long',
+      'shortcut_record_short',
+      'title_activity_main',
+    ]);
     expect(base.package_name.translatable).toBe(false);
     expect(base.custom_url_scheme.translatable).toBe(false);
     expect(Object.keys(fr).sort()).toEqual(visible);
@@ -96,9 +105,14 @@ describe('Android : values-fr et values-en', () => {
   it('valeurs par défaut inchangées ; français identique ; le nom (une marque) reste le même en anglais', () => {
     expect(base.app_name.value).toBe('Le Kit du Voyageur');
     expect(base.package_name.value).toBe('com.lekitduvoyageur.app');
+    const brandKeys = new Set(['app_name', 'title_activity_main']);
     for (const k of visible) {
       expect(fr[k].value).toBe(base[k].value);
-      expect(en[k].value).toBe(base[k].value);
+      if (brandKeys.has(k)) {
+        expect(en[k].value).toBe(base[k].value);
+      } else {
+        expect(en[k].value.trim().length).toBeGreaterThan(0);
+      }
     }
   });
 });
@@ -172,11 +186,18 @@ describe('Android : values-es, values-de et values-it', () => {
   const visible = Object.keys(base)
     .filter((k) => base[k].translatable)
     .sort();
+  const brandKeys = new Set(['app_name', 'title_activity_main']);
   for (const lang of Object.keys(NEW_NATIVE)) {
     it(`${lang} : seuls les textes visibles, identiques (le nom est une marque)`, () => {
       const strings = androidStrings(`android/app/src/main/res/values-${lang}/strings.xml`);
       expect(Object.keys(strings).sort()).toEqual(visible);
-      for (const k of visible) expect(strings[k].value).toBe(base[k].value);
+      for (const k of visible) {
+        if (brandKeys.has(k)) {
+          expect(strings[k].value).toBe(base[k].value);
+        } else {
+          expect(strings[k].value.trim().length).toBeGreaterThan(0);
+        }
+      }
     });
   }
 });

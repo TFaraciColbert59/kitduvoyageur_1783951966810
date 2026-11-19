@@ -44,6 +44,7 @@ const PUBLIC_NAV_PATHS = new Set([
   '/contact',
   '/hors-ligne',
   '/offline.html',
+  '/compas/itineraire/offline',
 ]);
 const PUBLIC_NAV_PREFIXES = [
   '/guides/',

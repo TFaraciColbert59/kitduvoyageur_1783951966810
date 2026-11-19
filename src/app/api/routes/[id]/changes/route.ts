@@ -10,10 +10,11 @@ export async function GET(
 ) {
   const { id } = await params;
   const actor = await getAuthenticatedRouteActor();
+  const shareToken = request.nextUrl.searchParams.get('token');
   const afterRaw = Number(request.nextUrl.searchParams.get('after') ?? '0');
   const afterSeq = Number.isFinite(afterRaw) && afterRaw >= 0 ? Math.floor(afterRaw) : 0;
 
-  const res = getWorkspaceChangesAfter(id, actor?.userId ?? null, afterSeq);
+  const res = getWorkspaceChangesAfter(id, actor?.userId ?? null, afterSeq, shareToken);
   if (!res.ok) {
     return NextResponse.json({ error: res.error }, { status: res.status });
   }

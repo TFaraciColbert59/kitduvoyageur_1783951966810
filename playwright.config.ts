@@ -51,6 +51,8 @@ export default defineConfig({
     'tests/e2e/communaute-v2*.spec.ts',
     // Explorer v2 (08_TESTS.md) : specs dédiées, taguées @explorer-v2.
     'tests/explorer-v2/*.e2e.spec.ts',
+    // Créateur d'itinéraires collaboratif « 20/10 » : coédition multi-sessions, routage, hors-ligne.
+    'tests/e2e/route-collab-20-10.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

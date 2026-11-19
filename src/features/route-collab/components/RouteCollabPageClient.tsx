@@ -2,7 +2,53 @@
 
 import React, { useMemo } from 'react';
 import { RouteCollabWorkspace } from './RouteCollabWorkspace';
+import { getLastVerifiedPack } from '../offlinePackStore';
 import type { RouteWorkspaceState } from '../types';
+
+function buildWorkspaceFromVerifiedPack(
+  userId: string,
+  userName: string,
+  workspaceId: string,
+): RouteWorkspaceState | null {
+  const pack = getLastVerifiedPack(userId, workspaceId);
+  if (!pack) return null;
+  const rev = pack.revision;
+  return {
+    id: rev.workspaceId,
+    tripId: `offline-${rev.workspaceId}`,
+    title: rev.summary || `Itinéraire hors ligne v${rev.revisionNo}`,
+    status: 'published',
+    sport: 'marche',
+    shapeMode: 'one_way',
+    routingOptions: {},
+    headSeq: rev.basedOnSeq,
+    reviewedSeq: rev.basedOnSeq,
+    publishedRevisionId: rev.id,
+    publishedRevisionNo: rev.revisionNo,
+    sourceOrigin: { kind: 'blank', importedAt: rev.createdAt },
+    points: rev.points,
+    sections: rev.sections,
+    stages: rev.stages,
+    variants: [],
+    proposals: [],
+    comments: [],
+    kitItems: rev.kitSnapshot,
+    members: [{ userId, displayName: userName, role: 'participant' }],
+    revisions: [rev],
+    packs: [pack.manifest],
+    participantPacks: [
+      {
+        userId,
+        displayName: userName,
+        preparedRevisionNo: rev.revisionNo,
+        downloadedRevisionNo: rev.revisionNo,
+        verifiedLocalAt: pack.verifiedAt,
+        status: 'ready',
+      },
+    ],
+    updatedAt: pack.verifiedAt,
+  };
+}
 
 function buildDefaultWorkspace(userId: string, userName: string): RouteWorkspaceState {
   const nowIso = new Date().toISOString();
@@ -50,6 +96,7 @@ function buildDefaultWorkspace(userId: string, userName: string): RouteWorkspace
     title,
     status: 'draft',
     sport: 'marche',
+    shapeMode: 'one_way',
     routingOptions: {},
     headSeq: 0,
     reviewedSeq: null,
@@ -237,19 +284,50 @@ function buildDefaultWorkspace(userId: string, userName: string): RouteWorkspace
 export function RouteCollabPageClient({
   userId,
   userName,
+  serverWorkspace = null,
+  requestedWorkspaceId = null,
+  shareToken = null,
+  accessDeniedMessage = null,
 }: {
   userId: string;
   userName: string;
+  serverWorkspace?: RouteWorkspaceState | null;
+  requestedWorkspaceId?: string | null;
+  shareToken?: string | null;
+  accessDeniedMessage?: string | null;
 }) {
-  const initialWorkspace = useMemo(
-    () => buildDefaultWorkspace(userId, userName),
-    [userId, userName],
-  );
+  const resolved = useMemo(() => {
+    if (serverWorkspace) {
+      return { workspace: serverWorkspace, serverSynced: true };
+    }
+    if (requestedWorkspaceId) {
+      const offline = buildWorkspaceFromVerifiedPack(userId, userName, requestedWorkspaceId);
+      if (offline) return { workspace: offline, serverSynced: true };
+      if (accessDeniedMessage) return { workspace: null, serverSynced: false };
+    }
+    return { workspace: buildDefaultWorkspace(userId, userName), serverSynced: false };
+  }, [serverWorkspace, requestedWorkspaceId, userId, userName, accessDeniedMessage]);
+
+  if (!resolved.workspace) {
+    return (
+      <div className="xp-root rcw-empty-screen" data-theme="light" data-testid="route-collab-denied">
+        <div className="rcw-empty-card">
+          <strong>Accès refusé</strong>
+          <p className="rcw-sub-note">
+            {accessDeniedMessage ?? 'Vous n’avez pas accès à cet itinéraire.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <RouteCollabWorkspace
-      initialWorkspace={initialWorkspace}
+      initialWorkspace={resolved.workspace}
       currentUserId={userId}
       currentUserName={userName}
+      serverSynced={resolved.serverSynced}
+      shareToken={shareToken}
     />
   );
 }
