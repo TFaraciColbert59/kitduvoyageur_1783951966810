@@ -2535,6 +2535,17 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   transform: scale(0.96);
 }
 
+/* Même blur givré sur le panneau commentaires que sur le panneau partager */
+html body .lkdv-feed-post .lkdv-post-panel--freedom,
+html body .lkdv-feed-post .lkdv-post-panel {
+  -webkit-backdrop-filter: blur(32px) saturate(1.8) !important;
+  backdrop-filter: blur(32px) saturate(1.8) !important;
+}
+
+html body .lkdv-feed-post .lkdv-post-panel--freedom {
+  background: linear-gradient(180deg, rgba(252, 251, 248, 0.72), rgba(252, 251, 248, 0.56)) !important;
+}
+
 .lkdv-feed-post--sortie .lkdv-feed-sortie-engage .lkdv-post-media-glass {
   position: static !important;
   margin-left: auto;
