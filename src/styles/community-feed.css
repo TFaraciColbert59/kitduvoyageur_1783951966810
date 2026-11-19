@@ -2483,21 +2483,13 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   margin-left: auto;
 }
 
-/* ── Posts texte pur : carte blanche épurée style X/Twitter + troncature 5 lignes « plus… » ── */
+/* ── Posts texte pur : texture verre d'origine, texte blanc, 5 lignes max + « afficher plus… » ── */
 .lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) {
-  background: #ffffff !important;
-  background-image: none !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  box-shadow:
-    0 2px 14px rgba(15, 23, 42, 0.06),
-    inset 0 0 0 0.5px rgba(15, 23, 42, 0.08) !important;
-  border-radius: 22px !important;
   aspect-ratio: auto !important;
   height: auto !important;
-  min-height: 132px !important;
+  min-height: 140px !important;
   max-height: none !important;
-  padding: 62px 18px 60px !important;
+  padding: 62px 18px 66px !important;
   overflow: hidden !important;
 }
 
@@ -2519,10 +2511,6 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   bottom: 12px !important;
 }
 
-.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet)::after {
-  display: none !important;
-}
-
 .lkdv-feed-text-wrap {
   display: flex;
   flex-direction: column;
@@ -2531,27 +2519,33 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 
 .lkdv-feed-post--text .lkdv-feed-post-text {
-  font: 400 15.5px/1.48 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
-  color: #0f172a;
+  font: 500 15.5px/1.48 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(10, 20, 14, 0.28);
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
   max-height: none !important;
-  overflow: visible;
 }
 
 .lkdv-feed-post--text .lkdv-feed-post-text.is-clamped {
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 5 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.lkdv-feed-post--text .lkdv-feed-post-text.is-expanded {
+  display: block !important;
+  overflow: visible !important;
 }
 
 .lkdv-feed-text-more {
   border: 0;
   background: none;
-  padding: 4px 0 0;
-  color: #536471;
-  font: 600 14px/1.2 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  padding: 6px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font: 600 13.5px/1.2 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  text-shadow: 0 1px 2px rgba(10, 20, 14, 0.25);
   cursor: pointer;
 }

@@ -545,7 +545,7 @@ export function CommunityFeedPost({
                   setTextExpanded(true);
                 }}
               >
-                plus…
+                afficher plus…
               </button>
             ) : null}
           </div>
