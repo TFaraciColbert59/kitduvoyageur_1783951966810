@@ -242,6 +242,7 @@ export function FeedKitPostCard({
   onComment?: () => void;
   onShare: () => void;
 }) {
+  const router = useRouter();
   const { toast } = useToast();
   const meta = (post.creation_meta ?? {}) as CreationMetaRecord;
   const kitId =
@@ -316,9 +317,9 @@ export function FeedKitPostCard({
 
   const handleForkKit = async (event: React.MouseEvent) => {
     event.stopPropagation();
-    if (!kitId || importing || imported) return;
+    if (!kitId || importing) return;
     if (!userId) {
-      toast('Connectez-vous pour importer un kit.', 'info');
+      toast('Connectez-vous pour reprendre ce kit.', 'info');
       return;
     }
     setImporting(true);
@@ -329,10 +330,13 @@ export function FeedKitPostCard({
         body: JSON.stringify({ kit_id: kitId }),
       });
       if (!res.ok) throw new Error('Import impossible');
+      const payload = (await res.json().catch(() => null)) as { kit?: { id?: string } } | null;
+      const forkedId = payload?.kit?.id;
       setImported(true);
-      toast('Kit importé dans votre matériel.', 'success');
+      toast('Kit repris — ouverture du Kit Studio…', 'success');
+      router.push(forkedId ? `/kit-studio?kit=${encodeURIComponent(forkedId)}` : '/kit-studio');
     } catch {
-      toast('Import du kit impossible.', 'error');
+      toast('Impossible de reprendre ce kit.', 'error');
     } finally {
       setImporting(false);
     }
@@ -343,18 +347,6 @@ export function FeedKitPostCard({
       <KitRectangularPreviewV2 items={kitItems} values={kitValues} />
       {showEngagement ? (
         <div className="lkdv-feed-creation-actions">
-          {kitId ? (
-            <button
-              type="button"
-              className="lkdv-feed-kit-import-pill"
-              onClick={(e) => void handleForkKit(e)}
-              disabled={importing || imported}
-              aria-label="Importer ce kit dans mon matériel"
-            >
-              {imported ? <Check size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
-              <span>{imported ? 'Importé' : importing ? 'Import…' : 'Importer'}</span>
-            </button>
-          ) : null}
           <EngagementBar
             tone="ink"
             likesCount={likesCount}
@@ -365,6 +357,18 @@ export function FeedKitPostCard({
             onComment={onComment ?? (() => undefined)}
             onShare={onShare}
           />
+          {kitId ? (
+            <button
+              type="button"
+              className="lkdv-feed-kit-import-pill"
+              onClick={(e) => void handleForkKit(e)}
+              disabled={importing}
+              aria-label="Reprendre ce kit dans le Kit Studio"
+            >
+              {imported ? <Check size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+              <span>{importing ? 'Ouverture…' : 'Reprendre ce kit'}</span>
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

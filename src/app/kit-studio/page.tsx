@@ -26,9 +26,11 @@ const NEXT_PATH = '/kit-studio';
 export default async function KitStudioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ debug?: string | string[] }>;
+  searchParams: Promise<{ debug?: string | string[]; kit?: string | string[] }>;
 }) {
   const params = await searchParams;
+  const rawKit = Array.isArray(params.kit) ? params.kit[0] : params.kit;
+  const requestedKitId = typeof rawKit === 'string' && rawKit.trim() ? rawKit.trim() : undefined;
   const state = await resolveStudioPageState({
     debug: params.debug,
     next: NEXT_PATH,
@@ -41,7 +43,7 @@ export default async function KitStudioPage({
     },
     getData: async (userId) => {
       const supabase = await createClient();
-      return getStudioData(userId, undefined, supabase);
+      return getStudioData(userId, requestedKitId, supabase);
     },
   });
 
