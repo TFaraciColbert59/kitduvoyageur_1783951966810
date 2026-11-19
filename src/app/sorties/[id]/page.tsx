@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
 import { resolveEventAdventure } from '@/features/hub/server/resolveEventAdventure';
 import type { EventAdventureRef } from '@/features/hub/context/eventAdventureRef';
-import { discoverTrips } from '@/features/trips/server/discoverTrips';
+import { listOwnedTripLinkChoices } from '@/features/trips/server/discoverTrips';
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
 import EventHubLink from './EventHubLink';
 import './event-detail.css';
@@ -69,7 +69,7 @@ export default async function SortiePage({ params, searchParams }: {
 
   const eventRef: EventAdventureRef = { kind: isClubEventOnly ? 'club_event' : 'community_event', id };
   const canLink = Boolean(user && user.id === event.organizer_id && event.status !== 'cancelled');
-  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }, linked, ownTrips] =
+  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }, linked, ownChoices] =
     await Promise.all([
       organizerId
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
@@ -88,7 +88,7 @@ export default async function SortiePage({ params, searchParams }: {
             .maybeSingle()
         : Promise.resolve({ data: null }),
       user ? resolveEventAdventure(eventRef) : null,
-      canLink && user ? discoverTrips(user.id) : null,
+      canLink && user ? listOwnedTripLinkChoices(user.id) : null,
     ]);
 
   const participantsRaw = (participantRows ?? []) as Row[];
@@ -202,9 +202,7 @@ export default async function SortiePage({ params, searchParams }: {
       : null,
   };
 
-  const choices = ownTrips?.trips
-    .filter((trip) => trip.affiliation === 'owner')
-    .map(({ id: tripId, title }) => ({ id: tripId, title: title || 'Aventure sans titre' })) ?? [];
+  const choices = ownChoices ?? [];
   const linkedChoice = linked ? { id: linked.id, title: linked.title } : null;
   if (canLink && linkedChoice && !choices.some((trip) => trip.id === linkedChoice.id)) {
     choices.unshift(linkedChoice);

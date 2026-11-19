@@ -427,9 +427,16 @@ applicatifs ciblés passent. Le script de retour supprime les liaisons
 et conserve les voyages, événements et inscriptions. Exécuter ce retour
 avant celui de la migration des RSVP historiques.
 
-La référence des activités libres, l’annulation des événements de
-club par l’organisateur et la recette Auth de la fiche jusqu’au HUB
-sur iPhone restent à vérifier ou à réaliser. Le sélecteur de liaison
-reprend les voyages disponibles dans la découverte actuelle. Le lien
-d’une fiche déjà associée reste modifiable si son voyage a quitté le
-sélecteur depuis.
+La recette connectée a utilisé une base PostgreSQL neuve, Supabase Auth
+et PostgREST. WebKit au format iPhone a confirmé la connexion par le
+formulaire de l’application, la liaison depuis la fiche du club, puis
+l’inscription et l’ouverture du HUB avec deux étapes issues de la base.
+Le retrait de l’inscription retire le bouton d’accès. Des tuiles distantes
+ont été chargées au-dessus de ces coordonnées. La fiche organisation
+propose aussi les voyages terminés appartenant à l’organisateur.
+
+L’aperçu avec données de test a été ouvert dans Safari sur l’iPhone
+de Tony. Le serveur local a reçu sa demande et répondu HTTP 200.
+La recette authentifiée s’est déroulée dans WebKit sur le Mac. La référence
+des activités libres, l’annulation des événements de club par l’organisateur
+et le parcours Auth sur iPhone physique restent ouverts.

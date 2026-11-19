@@ -38,6 +38,22 @@ async function readPages<Row>(page: (start: number) => PromiseLike<{
   }
 }
 
+/** Les organisateurs peuvent aussi relier une fiche historique à un voyage terminé. */
+export async function listOwnedTripLinkChoices(userId: string) {
+  const client = await createClient();
+  const { rows, error } = await readPages<Pick<TripChoiceRow, 'id' | 'title'>>((start) => client
+    .from('trips')
+    .select('id, title')
+    .eq('user_id', userId)
+    .neq('status', 'cancelled')
+    .not('slug', 'is', null)
+    .order('start_date', { ascending: false, nullsFirst: false })
+    .order('id')
+    .range(start, start + PAGE_SIZE - 1));
+  if (error) console.error('[LKDV] listOwnedTripLinkChoices', error.code);
+  return rows.map(({ id, title }) => ({ id, title: title || 'Aventure sans titre' }));
+}
+
 /** Source partagée par Compas et HUB. La session de l'appelant contrôle les deux lectures. */
 export const discoverTrips = cache(async (userId: string) => {
   const client = await createClient();
