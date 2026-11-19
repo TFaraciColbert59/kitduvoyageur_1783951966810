@@ -88,7 +88,7 @@ export function CompasTripPicker({
                 <b>{trip.title}</b>
                 <span>
                   {dates(trip, t, locale)}
-                  {trip.role === 'collaborator' ? ` · ${t('compas.picker.shared')}` : ''}
+                  {trip.role !== 'owner' ? ` · ${t('compas.picker.shared')}` : ''}
                 </span>
               </span>
               <span className="cp-row__end">

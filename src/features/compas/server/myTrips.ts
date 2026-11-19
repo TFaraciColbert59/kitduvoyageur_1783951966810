@@ -10,7 +10,7 @@ export interface CompasTripChoice {
   title: string;
   startDate: string | null;
   endDate: string | null;
-  role: 'owner' | 'collaborator';
+  role: 'owner' | 'collaborator' | 'participant';
 }
 
 export async function listCompasTrips(): Promise<CompasTripChoice[]> {
@@ -25,6 +25,6 @@ export async function listCompasTrips(): Promise<CompasTripChoice[]> {
     title: row.title?.trim() || 'Voyage sans titre',
     startDate: row.start_date,
     endDate: row.end_date,
-    role: row.user_id === user.id ? 'owner' : 'collaborator',
+    role: row.affiliation,
   }));
 }

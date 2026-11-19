@@ -86,6 +86,7 @@ export interface CockpitData {
   pending: number;
   trip: boolean;
   collective: boolean;
+  confirmedParticipant?: boolean;
   canEdit?: boolean;
   unavailableSections?: TripFull['unavailableSections'];
   carnetUnavailable?: boolean;
@@ -148,6 +149,10 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
 
   const people = new Map<string, CockpitData['people'][number]>();
   if (trip) people.set(trip.user_id, { id: trip.user_id, name: null, role: 'Responsable' });
+  if (trip?.confirmed_participant) {
+    const { userId } = trip.confirmed_participant;
+    people.set(userId, { id: userId, name: null, role: 'Participant' });
+  }
   for (const member of trip?.collaborators ?? []) {
     const role = member.user_id === trip?.user_id || member.role === 'owner' ? 'Responsable' : 'Collaborateur';
     people.set(member.user_id, {
@@ -196,7 +201,8 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     documents: trip?.permissions.canViewDocuments ? trip.documents.map(({ id, title, category, expires_at }) =>
       ({ id, title, category, expiration: expires_at })) : null,
     people: Array.from(people.values()),
-    peopleCount: trip || group ? Math.max(people.size, group?.memberCount ?? 0) : null,
+    peopleCount: (trip || group) && !trip?.confirmed_participant ? Math.max(people.size, group?.memberCount ?? 0) : null,
+    confirmedParticipant: Boolean(trip?.confirmed_participant),
     pending: group?.pendingInvites ?? data.pendingInvites,
     trip: Boolean(trip),
     collective: adventure.nature === 'collectif',

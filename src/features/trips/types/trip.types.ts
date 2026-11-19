@@ -276,6 +276,8 @@ export interface TripWithDetails extends Trip {
 }
 
 export interface TripFull extends Trip {
+  /** Présence confirmée issue du registre, sans droit d’édition. */
+  confirmed_participant?: { userId: string; role: string };
   collaborators: TripCollaborator[];
   steps: TripStep[];
   items: TripItem[];

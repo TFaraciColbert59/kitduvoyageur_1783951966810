@@ -10,6 +10,7 @@ import type { HubAdventureInput, HubSectionId } from '../engine/hubProfileEngine
 import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from '../engine/activityTypes';
 import type { TripFull } from '@/features/trips/types/trip.types';
 import { discoverTrips } from '@/features/trips/server/discoverTrips';
+import { getConfirmedTripOverview } from '@/features/trips/server/getConfirmedTripOverview';
 import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 import type { AffiliateCategory, AffiliateLink } from '@/features/affiliation/types/affiliate.types';
@@ -591,11 +592,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     // dépendent tous deux de user.id mais sont indépendants entre eux.
     const [lists, trip] = await Promise.all([
       traceStage('lists', () => loadLists(user?.id)),
-      traceStage('trip.full', () =>
-        getTripBySlug(adventure.slug, user?.id).catch(() => null),
-      ),
+      traceStage('trip.full', async () => {
+        const full = await getTripBySlug(adventure.slug, user?.id).catch(() => null);
+        return full ?? (user ? await getConfirmedTripOverview(adventure.slug) : null);
+      }),
     ]);
-    if (trip) {
+    if (trip && trip.id === adventure.id) {
       const activityType = deriveActivityType(trip.primary_activity);
       // Météo/parcours dès qu'une étape est géolocalisée — pas seulement
       // en activité « randonnée » (tout voyage outdoor mérite la météo).

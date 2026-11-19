@@ -357,6 +357,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           {!fixture && <Action href={carnet ? `/carnets/${carnet.id}` : '/hub/journal'}>Ouvrir le carnet</Action>}
         </>;
       case 'kit':
+        if (data.confirmedParticipant) return <Status>Le kit du voyage est réservé à l’équipe de préparation.</Status>;
         return <>
           {data.kitId && !fixture && <KitScene kitId={data.kitId} />}
           {!data.kitId && <Status action={!fixture && <Action href="/hub/kit-voyage">Choisir le kit du voyage</Action>}>Aucun kit affecté au voyage.</Status>}
@@ -508,7 +509,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           </button>
         </>, styles.carnetBody))}
         {makeTile('kit', <p className={styles.meta}>{data.kitName && <>{data.kitName}{dayKit.length > 0 && <br />}</>}
-          {dayKit.length ? `${packed}/${dayKit.length} préparés` : !data.kitName && 'Aucun kit affecté'}</p>)}
+          {dayKit.length ? `${packed}/${dayKit.length} préparés` : !data.kitName && (data.confirmedParticipant ? 'Accès réservé' : 'Aucun kit affecté')}</p>)}
         {makeTile('paperasse', reservations.length ? <Rail label="À réserver">{reservationRows()}</Rail>
           : <p className={styles.meta}>{data.reservations === null ? 'Réservations indisponibles' : 'Aucune réservation à traiter'}</p>)}
       </>}

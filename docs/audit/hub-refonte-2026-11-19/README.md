@@ -287,9 +287,10 @@ Résultat pour le compte invité :
 - Sortie publique tierce, sortie passée, sortie annulée et invitation sans
   confirmation exclues de la liste.
 - 22 sorties du même jour réparties en pages de 20 puis 2 sans perte ni doublon.
-- La politique en place refuse la lecture d’une sortie privée à un participant
-  sans collaboration. L’inscription de club reste à relier à sa sortie
-  canonique avec P02-11. P02-02 reste donc en cours.
+- Le premier passage a confirmé que la lecture directe d’une sortie privée
+  reste réservée au propriétaire et aux collaborateurs. Le lot ci-dessous
+  raccorde les participants confirmés par une projection dédiée.
+  P02-02 reste en cours jusqu’au rattachement des inscriptions aux sorties.
 
 Le test `src/features/hub/__tests__/adventure-discovery.test.tsx` vérifie la
 consommation de la liste serveur par le sélecteur. Typage et ESLint ciblé
@@ -302,7 +303,34 @@ le worktree et la base locale de recette.
 
 Les 187 identifiants des deux documents fournis correspondent exactement.
 La copie `LKDV_Audit_Implementation_Hub_Suivi.xlsx` conserve les 11 onglets, les formules, le tableau Excel
-et la validation des statuts. Les 48 lignes annotées indiquent la preuve
-acquise ou la condition qui reste à vérifier. Les 139 autres conservent le
+et la validation des statuts. Les 50 lignes annotées indiquent la preuve
+acquise ou la condition qui reste à vérifier. Les 137 autres conservent le
 statut initial. Les seules lignes clôturées dans cette passe sont P00-01 et
 P01-02. Les gates des dix phases restent à vérifier avec leurs dépendances.
+
+### P02-02 / P02-08 · Consultation par le participant confirmé
+
+La migration `20261119191915_confirmed_private_trip_overview.sql` expose
+les sorties privées du participant confirmé et leurs étapes en lecture seule.
+Elle s’appuie sur la participation de la session, avec une projection contrôlée
+dans un schéma hors de l’API. Le lecteur du HUB et de Compas utilise cette
+projection quand la lecture directe ne donne pas accès au voyage. La sélection
+vérifie le trip.id de l’aventure. Les données de partage, les montants du
+budget, les documents, les notes et les hébergements privés restent exclus.
+Le registre des collaborateurs et les politiques sur les tables existantes
+sont conservés. Une révocation invalide la projection dès la requête suivante.
+
+- PostgREST 14.4 et PostgreSQL 17.12 sur la base locale isolée. Requêtes POST
+  de liste et de détail, étapes enregistrées et refus du tiers confirmés.
+- 117 suites pgTAP et 1 946 assertions réussies, dont 14 sur la projection.
+  Lint ciblé, typage et 4 801 tests Vitest passent.
+- Retour arrière SQL exécuté sur la copie locale. Le script est dans
+  `supabase/migrations_down/20261119191915_confirmed_private_trip_overview.down.sql`.
+- L’analyse généralisée Supabase Advisors n’a pas pu se connecter au cluster
+  local via son socket Unix. Les droits de l’API, le refus de l’accès direct
+  et la liste des champs retournés sont testés dans la nouvelle suite pgTAP.
+
+P02-02 attend le rattachement des inscriptions de club et de communauté.
+P02-08 attend la réconciliation des écritures de joinActivity, des invitations
+et de l’historique. La recette Supabase Auth dans le navigateur reste à
+faire pour l’ouverture de la sortie depuis le sélecteur.
