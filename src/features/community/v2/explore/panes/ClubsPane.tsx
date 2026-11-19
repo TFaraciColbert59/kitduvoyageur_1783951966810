@@ -186,7 +186,7 @@ export function ClubsPane({
         {feed.items.map((club) => {
           const status = effectiveClubStatus(club, overrides);
           return (
-            <div key={club.id} className="lkdv-cv2x-hrail-item" role="listitem">
+            <div key={club.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
               <ClubTileV2
                 club={club}
                 status={status}

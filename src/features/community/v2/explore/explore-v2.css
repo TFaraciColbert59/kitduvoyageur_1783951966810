@@ -2657,6 +2657,15 @@
   height: 100%;
 }
 
+.lkdv-cv2x-club-ig-tile .lkdv-cv2x-club-lock {
+  position: static;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 5px;
+  width: 18px;
+  height: 18px;
+}
+
 .lkdv-cv2x-event-icon-pill {
   width: 30px;
   height: 30px;
