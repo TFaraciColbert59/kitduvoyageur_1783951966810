@@ -2,12 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { activityLabel } from '../../data/communityFeedMappers';
 import type { ClubCardVM, MemberStatus } from '../../shared/types';
-import { formatCountFr, formatRelativeTime } from '../../shared/format';
+import { formatCountFr } from '../../shared/format';
 import { ExploreIcon } from '../ExploreIcons';
 import { useLongPress } from '../useLongPress';
 
@@ -85,61 +84,118 @@ export function ClubTileV2({
     .filter(Boolean)
     .join(', ');
 
+  const metaParts = [
+    activityLabel(club.category),
+    club.zoneLabel || null,
+  ].filter(Boolean);
+
   return (
     <article
-      className={`lkdv-cv2c-club-preview lkdv-cv2x-club-preview-tile${month ? ' lkdv-cv2-tile--wide is-month' : ''}`}
+      className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-club-ig-tile${club.coverImage ? ' has-cover-bg' : ''}${month ? ' lkdv-cv2-tile--wide is-month' : ''}`}
       data-testid="cv2-tile-club"
       data-id={club.id}
       {...longPress}
     >
-      <div className="lkdv-cv2-card lkdv-cv2c-crest-row lkdv-cv2x-club-crest-card">
-        <Link
-          className="lkdv-cv2x-club-preview-link"
-          href={`/clubs/${club.slug}`}
-          aria-label={tileAria}
-          onClick={(event) => {
-            event.preventDefault();
-            onOpen(club, event.currentTarget);
-          }}
-        >
-          {club.coverImage ? (
-            <span className="lkdv-cv2c-club-avatar">
-              <AppImage src={club.coverImage} alt="" width={44} height={44} className="lkdv-cv2x-avatar-img" />
+      {club.coverImage ? (
+        <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+          <AppImage
+            src={club.coverImage}
+            alt=""
+            fill
+            sizes="320px"
+            className="lkdv-cv2x-carnet-bg-img"
+          />
+          <span className="lkdv-cv2x-carnet-bg-scrim" />
+        </span>
+      ) : null}
+
+      <Link
+        className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link"
+        href={`/clubs/${club.slug}`}
+        aria-label={tileAria}
+        onClick={(event) => {
+          event.preventDefault();
+          onOpen(club, event.currentTarget);
+        }}
+      >
+        <div className="lkdv-ig-header">
+          <div className="lkdv-ig-avi-wrap">
+            <span className="lkdv-ig-avi">
+              {club.coverImage ? (
+                <AppImage
+                  src={club.coverImage}
+                  alt=""
+                  fill
+                  sizes="66px"
+                  className="lkdv-cv2x-cover-img"
+                />
+              ) : (
+                <ClubCrest
+                  name={club.name}
+                  activity={club.category}
+                  seed={club.crestSeed}
+                  size={62}
+                />
+              )}
             </span>
-          ) : (
-            <ClubCrest
-              name={club.name}
-              activity={club.category}
-              seed={club.crestSeed}
-              size={44}
-            />
-          )}
-          <span className="lkdv-cv2x-club-preview-meta">
-            <b>
-              {club.name}
-              {club.privacy === 'closed' ? (
-                <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
-                  <ExploreIcon name="lock" size={12} />
-                </span>
-              ) : null}
-              {month ? <span className="lkdv-cv2x-club-month-badge">Club du mois</span> : null}
-            </b>
-            <small>
-              {[
-                activityLabel(club.category),
-                club.zoneLabel,
-                formatCountFr(membersCount, 'membre'),
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </small>
-            <small>
-              <ShieldCheck size={10} aria-hidden="true" />{' '}
-              {club.privacy === 'closed' ? 'Sur validation' : 'Ouvert'}
-              {club.friendsTotal > 0 ? ` · ${club.friendsTotal === 1 ? '1 ami' : `${club.friendsTotal} amis`}` : ''}
-            </small>
+          </div>
+
+          <div className="lkdv-ig-stats" role="group" aria-label="Statistiques du club">
+            <div className="lkdv-ig-stat">
+              <b>{membersCount}</b>
+              <span>{membersCount > 1 ? 'membres' : 'membre'}</span>
+            </div>
+            <div className="lkdv-ig-stat">
+              <b>{club.eventsThisMonth}</b>
+              <span>{club.eventsThisMonth > 1 ? 'sorties' : 'sortie'}</span>
+            </div>
+            <div className="lkdv-ig-stat">
+              <b>{club.privacy === 'closed' ? 'Privé' : 'Ouvert'}</b>
+              <span>accès</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="lkdv-ig-bio">
+          <span className="lkdv-ig-name lkdv-cv2x-carnet-title">
+            {club.name}
+            {club.privacy === 'closed' ? (
+              <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
+                {' '}
+                <ExploreIcon name="lock" size={12} />
+              </span>
+            ) : null}
+            {month ? <span className="lkdv-cv2x-club-month-badge">Club du mois</span> : null}
           </span>
-        </Link>
+          {metaParts.length > 0 ? (
+            <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{metaParts.join(' · ')}</span>
+          ) : null}
+        </div>
+      </Link>
+
+      <div className="lkdv-cv2x-tile-foot">
+        <span className="lkdv-cv2-avatars" aria-hidden="true">
+          {club.friends.slice(0, 3).map((friend) => (
+            <span key={friend.id || friend.name} className="lkdv-cv2-avatar">
+              {friend.avatarUrl ? (
+                <AppImage
+                  src={friend.avatarUrl}
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="lkdv-cv2x-avatar-img"
+                />
+              ) : (
+                friend.initials.slice(0, 1)
+              )}
+            </span>
+          ))}
+          {club.friendsTotal > club.friends.length ? (
+            <span className="lkdv-cv2-avatar lkdv-cv2-avatar--more">
+              +{club.friendsTotal - club.friends.length}
+            </span>
+          ) : null}
+        </span>
 
         <button
           type="button"

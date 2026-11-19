@@ -2641,6 +2641,22 @@
   padding: 6px 8px !important;
 }
 
+.lkdv-cv2x-hrail-item--wide .lkdv-cv2x-event {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lkdv-cv2x-hrail-item--wide .lkdv-cv2x-event .lkdv-cv2-ticket,
+.lkdv-cv2x-hrail-item--wide .lkdv-cv2x-event .lkdv-cv2-ticket-main {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.lkdv-cv2x-hrail-item--wide .lkdv-cv2x-event .lkdv-cv2-ticket-stub {
+  height: 100%;
+}
+
 .lkdv-cv2x-event-icon-pill {
   width: 30px;
   height: 30px;
