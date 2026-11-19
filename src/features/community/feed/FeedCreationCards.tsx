@@ -194,13 +194,15 @@ export function FeedSortiePostCard({
 
   return (
     <div className="lkdv-feed-creation-card lkdv-feed-creation-card--sortie" data-testid="feed-sortie-card">
-      <EventTicket
-        event={eventVM}
-        variant="tile"
-        showCapacity={false}
-        onOpen={openSortie}
-        href={`/sorties/${encodeURIComponent(eventVM.id)}`}
-      />
+      <div className="lkdv-cv2x-event" data-level={eventVM.level ?? undefined}>
+        <EventTicket
+          event={eventVM}
+          variant="tile"
+          showCapacity={false}
+          onOpen={openSortie}
+          href={`/sorties/${encodeURIComponent(eventVM.id)}`}
+        />
+      </div>
       {showEngagement ? (
         <div className="lkdv-feed-sortie-engage">
           <EngagementBar

@@ -2554,6 +2554,42 @@ html body .lkdv-feed-post .lkdv-post-panel--freedom {
   margin-left: auto;
 }
 
+/* Ticket Sortie dans le fil : même coque .lkdv-cv2x-event et encoches visibles que dans Explorer */
+.lkdv-feed-post--sortie .lkdv-cv2x-event {
+  position: relative;
+  overflow: hidden;
+  padding: 6px 8px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2x-event .lkdv-cv2-ticket {
+  padding: 6px 8px;
+  gap: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2x-event .lkdv-cv2-ticket-main {
+  min-height: 74px;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2x-event .lkdv-cv2-ticket-stub {
+  min-height: 74px;
+  padding: 4px 6px;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2x-event .lkdv-cv2-ticket-notch {
+  background: #f5f6f4;
+  z-index: 2;
+}
+
+.lkdv-feed-post--sortie .lkdv-cv2x-event .lkdv-cv2-ticket-body {
+  padding: 6px 8px;
+  gap: 2px;
+}
+
 /* ── Posts texte pur : texture verre d'origine, texte blanc, 5 lignes max + « afficher plus… » ── */
 .lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club) {
   aspect-ratio: auto !important;
