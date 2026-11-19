@@ -12,6 +12,7 @@ import {
   Layers,
   LocateFixed,
   PenLine,
+  Plus,
   Redo2,
   RefreshCw,
   Trash2,
@@ -241,6 +242,14 @@ export function RouteCollabWorkspace({
   const [knowledgeSources, setKnowledgeSources] = useState<string[]>([]);
   const [focusedPoiId, setFocusedPoiId] = useState<string | null>(null);
   const [poiFilter, setPoiFilter] = useState<'all' | RoutePoiCategory>('all');
+  const [analyserSection, setAnalyserSection] = useState<'terrain' | 'milieu' | 'chemin'>('terrain');
+  const [overlayDetail, setOverlayDetail] = useState<
+    | { kind: 'day'; stageId: string; precision: 1 | 2 | 3 }
+    | { kind: 'point'; pointId: string; stageId?: string; precision: 1 | 2 | 3 }
+    | { kind: 'poi'; poi: RouteCorridorPoi; stageId?: string; precision: 1 | 2 }
+    | { kind: 'kit'; stageId?: string; precision: 1 | 2 }
+    | null
+  >(null);
 
   // Sélections synchronisées Carte <-> Tiroir
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
@@ -2563,16 +2572,7 @@ export function RouteCollabWorkspace({
       render: () => (
         <div className="rcw-stack" data-testid="tab-panel-tracer">
           {renderBanners()}
-          <XpMetrics
-            items={[
-              { label: 'Distance', value: `${totals.distanceKm} km` },
-              { label: 'D+', value: totals.ascentM != null ? `${totals.ascentM} m` : '—' },
-              { label: 'D−', value: totals.descentM != null ? `${totals.descentM} m` : '—' },
-              { label: 'Durée', value: totals.durationMin != null ? `${totals.durationMin} min` : '—' },
-            ]}
-          />
 
-          <XpEyebrow>Importer depuis votre historique & vos enregistrés</XpEyebrow>
           <div className="rcw-import-grid">
             <button
               type="button"
@@ -2617,13 +2617,13 @@ export function RouteCollabWorkspace({
           {historyOpen ? (
             <div className="rcw-stat-card" data-testid="history-import-list">
               <div className="rcw-bar-head">
-                <span>Tracés disponibles (Sorties, Carnets, Randonnées)</span>
+                <span>Tracés disponibles</span>
                 <button type="button" className="xp-chip" onClick={() => setHistoryOpen(false)}>
                   Fermer
                 </button>
               </div>
               {historyLoading ? (
-                <p className="rcw-sub-note">Chargement de votre historique…</p>
+                <p className="rcw-sub-note">Chargement…</p>
               ) : !historyItems || historyItems.length === 0 ? (
                 <p className="rcw-sub-note">
                   Aucune sortie GPS ou randonnée enregistrée trouvée pour ce compte.
@@ -2646,11 +2646,12 @@ export function RouteCollabWorkspace({
             </div>
           ) : null}
 
-          <XpEyebrow>Outils de dessin & d’édition sur la carte</XpEyebrow>
-          <div className="rcw-tool-bar" role="group" aria-label="Outils de tracé">
+          <div className="rcw-icon-toolbar" role="toolbar" aria-label="Outils de tracé et d’édition">
             <button
               type="button"
-              className="rcw-tool-btn"
+              className="rcw-icon-tool"
+              aria-label={drawingMode ? 'Terminer le tracé' : 'Tracer sur la carte'}
+              title={drawingMode ? 'Terminer le tracé' : 'Tracer sur la carte'}
               aria-pressed={drawingMode}
               disabled={!canEditGeo}
               onClick={() => {
@@ -2663,12 +2664,13 @@ export function RouteCollabWorkspace({
                 }
               }}
             >
-              <PenLine size={14} aria-hidden="true" />
-              {drawingMode ? 'Terminer' : 'Tracer'}
+              <PenLine size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
-              className="rcw-tool-btn"
+              className="rcw-icon-tool"
+              aria-label="Éditer les points sur la carte"
+              title="Éditer les points sur la carte"
               aria-pressed={editingMode}
               disabled={!canEditGeo}
               onClick={() => {
@@ -2680,98 +2682,79 @@ export function RouteCollabWorkspace({
                 }
               }}
             >
-              <Grip size={14} aria-hidden="true" />
-              Éditer
+              <Grip size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
-              className="rcw-tool-btn"
+              className="rcw-icon-tool"
+              aria-label="Ma position"
+              title="Ma position"
               onClick={() => void handleCenterMyPosition()}
             >
-              <LocateFixed size={14} aria-hidden="true" />
-              Ma position
+              <LocateFixed size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
-              className="rcw-tool-btn"
+              className="rcw-icon-tool"
               aria-label="Annuler le dernier geste"
+              title="Annuler"
               disabled={undoStack.length === 0}
               onClick={handleUndo}
             >
-              <Undo2 size={14} aria-hidden="true" />
-              Annuler
+              <Undo2 size={16} aria-hidden="true" />
             </button>
             <button
               type="button"
-              className="rcw-tool-btn"
+              className="rcw-icon-tool"
               aria-label="Rétablir le geste annulé"
+              title="Rétablir"
               disabled={redoStack.length === 0}
               onClick={handleRedo}
             >
-              <Redo2 size={14} aria-hidden="true" />
-              Rétablir
+              <Redo2 size={16} aria-hidden="true" />
             </button>
             {canEditGeo ? (
               <>
                 <button
                   type="button"
-                  className="rcw-tool-btn"
+                  className="rcw-icon-tool"
+                  aria-label="Retirer le dernier point"
+                  title="Retirer le dernier point"
                   onClick={handleRemoveLastSegment}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
-                  Retirer dernier
+                  <Trash2 size={16} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
-                  className="rcw-tool-btn"
+                  className="rcw-icon-tool"
+                  aria-label="Effacer le tracé"
+                  title="Effacer le tracé"
                   onClick={handleClearTrack}
                 >
-                  <Trash2 size={14} aria-hidden="true" />
-                  Effacer
+                  <XpIcon name="x" size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="rcw-icon-tool rcw-icon-tool--primary"
+                  aria-label="Ajouter un point"
+                  title="Ajouter un point"
+                  onClick={() => {
+                    const last = orderedPoints[orderedPoints.length - 1];
+                    void runOperation({
+                      type: 'insert_point',
+                      pointId: `pt-${Date.now().toString(36)}`,
+                      afterPointId: last?.id ?? null,
+                      lat: Number(((last?.lat ?? 45.05) + 0.01).toFixed(5)),
+                      lon: Number(((last?.lon ?? 5.51) + 0.01).toFixed(5)),
+                      name: `Passage ${orderedPoints.length + 1}`,
+                    });
+                  }}
+                >
+                  <Plus size={16} aria-hidden="true" />
                 </button>
               </>
             ) : null}
           </div>
-
-          {canEditGeo ? (
-            <button
-              type="button"
-              className="xp-primary"
-              onClick={() => {
-                const last = orderedPoints[orderedPoints.length - 1];
-                void runOperation({
-                  type: 'insert_point',
-                  pointId: `pt-${Date.now().toString(36)}`,
-                  afterPointId: last?.id ?? null,
-                  lat: Number(((last?.lat ?? 45.05) + 0.01).toFixed(5)),
-                  lon: Number(((last?.lon ?? 5.51) + 0.01).toFixed(5)),
-                  name: `Passage ${orderedPoints.length + 1}`,
-                });
-              }}
-            >
-              + Ajouter un point
-            </button>
-          ) : null}
-
-          <XpEyebrow>Variantes & Export GPX</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="spark"
-              tone="warn"
-              title="Variantes & Comparateur"
-              sub={`${workspace.variants.length} variante(s) à superposer sur la carte`}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('variants')}
-            />
-            <XpRow
-              icon="down"
-              tone="ink"
-              title="Importer / Exporter GPX"
-              sub="Coller un GPX · Garder ma trace · Export complet ou par étape"
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('gpx')}
-            />
-          </XpRows>
         </div>
       ),
     },
@@ -2779,65 +2762,155 @@ export function RouteCollabWorkspace({
       id: 'etapes',
       label: 'Étapes',
       icon: 'flag',
-      render: () => (
-        <div className="rcw-stack" data-testid="tab-panel-etapes">
-          {renderBanners()}
-          <XpEyebrow>Journées & Nuitées ({workspace.stages.length})</XpEyebrow>
-          <XpRows>
+      render: () => {
+        const isMultiDay = workspace.stages.length > 1;
+        return (
+          <div className="rcw-stack" data-testid="tab-panel-etapes">
+            {renderBanners()}
             {workspace.stages.map((st) => {
               const kind: OvernightChipValue = st.overnightPlace?.type ?? 'none';
               const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
+              const sIdx = orderedPoints.findIndex((p) => p.id === st.startPointId);
+              const eIdx = orderedPoints.findIndex((p) => p.id === st.endPointId);
+              const stagePoints =
+                sIdx >= 0 && eIdx >= sIdx ? orderedPoints.slice(sIdx, eIdx + 1) : orderedPoints;
+              const stageMoments = knowledgePois.slice(0, 4);
               return (
-                <XpRow
-                  key={st.id}
-                  icon={kind === 'bivouac' ? 'tent' : kind === 'refuge' ? 'house' : 'flag'}
-                  tone={selectedStageId === st.id ? 'warn' : 'good'}
-                  title={`Jour ${st.dayNumber} · ${st.title}`}
-                  sub={`${stM.distanceKm} km${stM.ascentM != null ? ` · D+ ${stM.ascentM} m` : ''} · ${st.overnightPlace?.name ?? OVERNIGHT_LABELS[kind]}`}
-                  badge={{ label: OVERNIGHT_LABELS[kind], tone: kind === 'bivouac' ? 'warn' : 'good' }}
-                  trailing={<XpIcon name="chevr" size={15} />}
-                  onClick={() => {
-                    setSelectedStageId(st.id);
-                    openSubDrawer('stage');
-                  }}
-                />
+                <div key={st.id} className="rcw-day-card" data-testid={`day-category-${st.id}`}>
+                  <button
+                    type="button"
+                    className="rcw-day-head"
+                    onClick={() => {
+                      setSelectedStageId(st.id);
+                      setOverlayDetail({ kind: 'day', stageId: st.id, precision: 2 });
+                    }}
+                  >
+                    <span className="xp-row-text">
+                      <span className="xp-row-title">
+                        {isMultiDay ? `Jour ${st.dayNumber} · ${st.title}` : st.title}
+                      </span>
+                      <span className="xp-row-sub">
+                        {stM.distanceKm} km{stM.ascentM != null ? ` · +${stM.ascentM} m` : ''} ·{' '}
+                        {st.overnightPlace?.name ?? OVERNIGHT_LABELS[kind]}
+                      </span>
+                    </span>
+                    <span className="xp-badge" data-tone={kind === 'bivouac' ? 'warn' : 'good'}>
+                      {OVERNIGHT_LABELS[kind]}
+                    </span>
+                  </button>
+
+                  <div className="rcw-cat-group">
+                    <span className="rcw-cat-label">Points sur le parcours</span>
+                    <div className="rcw-subpill-row">
+                      {stagePoints.map((pt) => (
+                        <button
+                          key={pt.id}
+                          type="button"
+                          className="rcw-subpill"
+                          onClick={() => {
+                            setSelectedPointId(pt.id);
+                            setFocusCoord([pt.lon, pt.lat]);
+                            setOverlayDetail({
+                              kind: 'point',
+                              pointId: pt.id,
+                              stageId: st.id,
+                              precision: 2,
+                            });
+                          }}
+                        >
+                          <XpIcon name="pin" size={12} />
+                          <span>{pt.name || pt.kind}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    <span className="rcw-cat-label">Moments à vivre & lieux intéressants</span>
+                    <div className="rcw-subpill-row">
+                      {stageMoments.length > 0 ? (
+                        stageMoments.map((poi) => (
+                          <button
+                            key={poi.id}
+                            type="button"
+                            className="rcw-subpill"
+                            onClick={() => {
+                              setFocusedPoiId(poi.id);
+                              setFocusCoord([poi.lon, poi.lat]);
+                              setOverlayDetail({
+                                kind: 'poi',
+                                poi,
+                                stageId: st.id,
+                                precision: 2,
+                              });
+                            }}
+                          >
+                            <XpIcon name="spark" size={12} />
+                            <span>{poi.name}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <button
+                          type="button"
+                          className="rcw-subpill"
+                          onClick={() => {
+                            setTabIndex(2);
+                            setAnalyserSection('chemin');
+                          }}
+                        >
+                          <XpIcon name="spark" size={12} />
+                          <span>Découvrir les repères</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <span className="rcw-cat-label">Détails</span>
+                    <div className="rcw-subpill-row">
+                      <button
+                        type="button"
+                        className="rcw-subpill"
+                        onClick={() => {
+                          setSelectedStageId(st.id);
+                          setOverlayDetail({ kind: 'day', stageId: st.id, precision: 3 });
+                        }}
+                      >
+                        <XpIcon name="tent" size={12} />
+                        <span>Nuitée & Notes</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="rcw-subpill"
+                        onClick={() =>
+                          setOverlayDetail({ kind: 'kit', stageId: st.id, precision: 2 })
+                        }
+                      >
+                        <XpIcon name="pack" size={12} />
+                        <span>
+                          Sac lié
+                          {kitToRevalidateCount > 0 ? ` (${kitToRevalidateCount})` : ''}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               );
             })}
-          </XpRows>
 
-          {canEditStages ? (
-            <button
-              type="button"
-              className="xp-secondary"
-              onClick={() =>
-                void runOperation({
-                  type: 'split_days',
-                  targetDays: Math.min(orderedPoints.length - 1, workspace.stages.length + 1),
-                })
-              }
-            >
-              + Découper en {Math.min(Math.max(2, orderedPoints.length - 1), workspace.stages.length + 1)} journées
-            </button>
-          ) : null}
-
-          <XpEyebrow>Sac & Vérifications liées</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="pack"
-              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
-              title="Sac & Matériel du groupe"
-              sub={`${workspace.kitItems.length} article(s) · Attribution & revalidation sélective`}
-              badge={
-                kitToRevalidateCount > 0
-                  ? { label: `${kitToRevalidateCount} à revalider`, tone: 'warn' }
-                  : { label: 'OK', tone: 'good' }
-              }
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('kit')}
-            />
-          </XpRows>
-        </div>
-      ),
+            {canEditStages ? (
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() =>
+                  void runOperation({
+                    type: 'split_days',
+                    targetDays: Math.min(orderedPoints.length - 1, workspace.stages.length + 1),
+                  })
+                }
+              >
+                + Découper en {Math.min(Math.max(2, orderedPoints.length - 1), workspace.stages.length + 1)} journées
+              </button>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       id: 'analyser',
@@ -2846,245 +2919,261 @@ export function RouteCollabWorkspace({
       render: () => (
         <div className="rcw-stack" data-testid="tab-panel-analyser">
           {renderBanners()}
-          <XpEyebrow>Profil altimétrique synchronisé avec la carte</XpEyebrow>
-          <div className="xp-profile" data-testid="elevation-profile">
-            {elevationStats.hasElevation && elevation.samples.length >= 2 ? (
-              <>
-                <svg
-                  className="rcw-elev-svg"
-                  viewBox="0 0 100 40"
-                  preserveAspectRatio="none"
-                  role="img"
-                  aria-label="Profil altimétrique synchronisé avec la carte"
-                  onMouseMove={(ev) => {
-                    const rect = ev.currentTarget.getBoundingClientRect();
-                    const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
-                    const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
-                    if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
-                  }}
-                  onMouseLeave={() => setHoveredCoord(null)}
-                >
-                  <polyline
-                    fill="none"
-                    stroke="#17402c"
-                    strokeWidth="1.8"
-                    points={elevation.samples
-                      .map((s, idx) => {
-                        const x = (idx / Math.max(1, elevation.samples.length - 1)) * 100;
-                        const min = elevationStats.minEleM ?? 0;
-                        const span = Math.max(1, (elevationStats.maxEleM ?? 100) - min);
-                        const y = 36 - (((s.elevationM ?? min) - min) / span) * 32;
-                        return `${x.toFixed(1)},${y.toFixed(1)}`;
-                      })
-                      .join(' ')}
-                  />
-                </svg>
-                <div className="xp-profile-legend">
-                  <span>Min {elevationStats.minEleM} m</span>
-                  <span>Moy {terrainStats.avgAltitudeM ?? '—'} m</span>
-                  <span>Max {elevationStats.maxEleM} m</span>
-                </div>
-              </>
-            ) : (
-              <div className="xp-profile-empty">Altitude indisponible sur ce tracé</div>
-            )}
-          </div>
-
-          <XpEyebrow>Statistiques techniques du terrain</XpEyebrow>
-          <XpMetrics
-            items={[
-              { label: 'Effort IBP', value: terrainStats.ibpEstimate != null ? `${terrainStats.ibpEstimate}` : '—' },
-              { label: 'Pente + max', value: terrainStats.maxClimbSlopePct != null ? `${terrainStats.maxClimbSlopePct}%` : '—' },
-              { label: 'Pente − max', value: terrainStats.maxDescentSlopePct != null ? `${terrainStats.maxDescentSlopePct}%` : '—' },
-              { label: 'Énergie', value: terrainStats.estimatedCaloriesKcal != null ? `${terrainStats.estimatedCaloriesKcal} kcal` : '—' },
-            ]}
-          />
-          <XpMetrics
-            items={[
-              { label: 'Niveau', value: terrainStats.effortLevel },
-              { label: 'Vitesse moy.', value: terrainStats.avgSpeedKmh != null ? `${terrainStats.avgSpeedKmh} km/h` : '—' },
-              { label: 'Alertes', value: `${totalWarnings} · ${manualSectionsCount} man.` },
-            ]}
-          />
-
-          {terrainStats.slopeBuckets.hasSlopeData ? (
-            <div className="rcw-stat-card" data-testid="slope-distribution-card">
-              <strong style={{ fontSize: 12.5 }}>Répartition des pentes</strong>
-              {[
-                { label: 'Plat / faux-plat (< 5 %)', pct: terrainStats.slopeBuckets.flatPct, tone: 'good' },
-                { label: 'Modéré (5–10 %)', pct: terrainStats.slopeBuckets.moderatePct, tone: 'water' },
-                { label: 'Soutenu (10–15 %)', pct: terrainStats.slopeBuckets.sustainedPct, tone: 'warn' },
-                { label: 'Raide (> 15 %)', pct: terrainStats.slopeBuckets.steepPct, tone: 'bad' },
-              ].map((b) => (
-                <div key={b.label} className="rcw-bar-row">
-                  <div className="rcw-bar-head">
-                    <span>{b.label}</span>
-                    <span>{b.pct} %</span>
-                  </div>
-                  <div className="rcw-bar-track">
-                    <div className={`rcw-bar-fill rcw-bar-fill--${b.tone}`} style={{ width: `${b.pct}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="rcw-stat-card" data-testid="surface-breakdown-card">
-            <strong style={{ fontSize: 12.5 }}>Nature des sols & surfaces</strong>
-            {terrainStats.surfaces.map((s) => (
-              <div key={s.key} className="rcw-bar-row">
-                <div className="rcw-bar-head">
-                  <span>{s.label}</span>
-                  <span>{s.pct} %</span>
-                </div>
-                <div className="rcw-bar-track">
-                  <div className="rcw-bar-fill" style={{ width: `${s.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <XpEyebrow>Environnement, Astronomie & Météo en direct</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="mtn"
-              tone="good"
-              title={terrainStats.ecologicalZone}
-              sub={`Lever ${terrainStats.sunriseLocal} · Coucher ${terrainStats.sunsetLocal} (${terrainStats.daylightLabel})`}
-            />
-            {liveWeather ? (
-              <XpRow
-                icon="cloud"
-                tone="water"
-                title={`${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C (ressenti ${liveWeather.windChillC ?? '—'}°C)`}
-                sub={`Vent ${liveWeather.windKph ?? '—'} km/h · Humidité ${liveWeather.humidityPct ?? '—'} % · ${liveWeather.source}`}
-                badge={{ label: 'Direct', tone: 'good' }}
-              />
-            ) : (
-              <XpRow
-                icon="cloud"
-                tone="muted"
-                title={knowledgeLoading ? 'Chargement météo MET Norway…' : 'Météo locale non chargée'}
-                sub="Appuyez sur Actualiser pour interroger MET Norway"
-              />
-            )}
-          </XpRows>
-
-          {liveWeather && liveWeather.hourlyPreview.length > 0 ? (
-            <div className="rcw-hourly-strip" aria-label="Prévisions horaires">
-              {liveWeather.hourlyPreview.map((h) => (
-                <div key={h.time} className="rcw-hourly-cell">
-                  <span>{h.time}</span>
-                  <strong>{h.tempC != null ? `${h.tempC}°` : '—'}</strong>
-                  <span>{h.rainProbPct != null ? `${h.rainProbPct}%` : `${h.windKph ?? '—'} km/h`}</span>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="rcw-bar-head" style={{ marginTop: 4 }}>
-            <XpEyebrow>Banque d’information sur le chemin ({knowledgePois.length})</XpEyebrow>
-            <button
-              type="button"
-              className="xp-chip"
-              disabled={knowledgeLoading}
-              onClick={() => void refreshKnowledgeBank()}
-            >
-              <RefreshCw size={12} style={{ display: 'inline', marginRight: 4 }} />
-              {knowledgeLoading ? 'Analyse…' : 'Actualiser'}
-            </button>
-          </div>
-
           <XpChips
-            ariaLabel="Filtrer les informations du parcours"
-            value={poiFilter}
+            ariaLabel="Vue d’analyse"
+            value={analyserSection}
             items={[
-              { id: 'all', label: `Tout (${knowledgePois.length})` },
-              { id: 'water', label: `Eau (${poiCounts.water})` },
-              { id: 'shelter', label: `Refuges (${poiCounts.shelter})` },
-              { id: 'summit', label: `Sommets (${poiCounts.summit})` },
-              { id: 'food_lodging', label: `Ravit. (${poiCounts.food_lodging})` },
-              { id: 'access', label: `Accès (${poiCounts.access})` },
+              { id: 'terrain', label: 'Terrain' },
+              { id: 'milieu', label: 'Milieu & Météo' },
+              { id: 'chemin', label: `Sur le chemin (${knowledgePois.length})` },
             ]}
-            onChange={(id) => setPoiFilter(id as 'all' | RoutePoiCategory)}
+            onChange={(id) => setAnalyserSection(id as 'terrain' | 'milieu' | 'chemin')}
           />
 
-          {knowledgeLoading && knowledgePois.length === 0 ? (
-            <XpEmpty title="Analyse du corridor en cours…" hint="Interrogation Base LKDV, OpenStreetMap, Overpass et MET Norway." />
-          ) : filteredKnowledgePois.length === 0 ? (
-            <XpEmpty
-              title="Aucun repère recensé dans cette catégorie"
-              hint="Aucune donnée retournée dans le corridor (~6 km) — prévoyez votre autonomie."
-            />
-          ) : (
-            <XpRows>
-              {filteredKnowledgePois.slice(0, 30).map((poi) => (
-                <XpRow
-                  key={poi.id}
-                  icon={
-                    poi.category === 'water'
-                      ? 'drop'
-                      : poi.category === 'shelter'
-                        ? 'tent'
-                        : poi.category === 'summit'
-                          ? 'mtn'
-                          : poi.category === 'food_lodging'
-                            ? 'house'
-                            : 'pin'
-                  }
-                  tone={
-                    focusedPoiId === poi.id
-                      ? 'warn'
-                      : poi.category === 'water'
-                        ? 'water'
-                        : poi.category === 'shelter'
-                          ? 'good'
-                          : 'ink'
-                  }
-                  title={poi.name}
-                  sub={`${poi.rawCategory}${poi.altitudeM != null ? ` · ${Math.round(poi.altitudeM)} m` : ''}${poi.details ? ` · ${poi.details}` : ''} · ${poi.source}`}
-                  badge={{
-                    label:
-                      poi.distanceToTrackM < 1000
-                        ? `${poi.distanceToTrackM} m`
-                        : `${(poi.distanceToTrackM / 1000).toFixed(1)} km`,
-                    tone: poi.distanceToTrackM <= 500 ? 'good' : 'muted',
-                  }}
-                  onClick={() => {
-                    setFocusedPoiId(poi.id);
-                    setFocusCoord([poi.lon, poi.lat]);
-                    setStatusMessage(`${poi.name} centré sur la carte (${poi.distanceToTrackM} m du tracé).`);
-                  }}
-                />
-              ))}
-            </XpRows>
-          )}
+          {analyserSection === 'terrain' ? (
+            <>
+              <div className="xp-profile" data-testid="elevation-profile">
+                {elevationStats.hasElevation && elevation.samples.length >= 2 ? (
+                  <>
+                    <svg
+                      className="rcw-elev-svg"
+                      viewBox="0 0 100 40"
+                      preserveAspectRatio="none"
+                      role="img"
+                      aria-label="Profil altimétrique synchronisé avec la carte"
+                      onMouseMove={(ev) => {
+                        const rect = ev.currentTarget.getBoundingClientRect();
+                        const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+                        const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
+                        if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
+                      }}
+                      onMouseLeave={() => setHoveredCoord(null)}
+                    >
+                      <polyline
+                        fill="none"
+                        stroke="#17402c"
+                        strokeWidth="1.8"
+                        points={elevation.samples
+                          .map((s, idx) => {
+                            const x = (idx / Math.max(1, elevation.samples.length - 1)) * 100;
+                            const min = elevationStats.minEleM ?? 0;
+                            const span = Math.max(1, (elevationStats.maxEleM ?? 100) - min);
+                            const y = 36 - (((s.elevationM ?? min) - min) / span) * 32;
+                            return `${x.toFixed(1)},${y.toFixed(1)}`;
+                          })
+                          .join(' ')}
+                      />
+                    </svg>
+                    <div className="xp-profile-legend">
+                      <span>Min {elevationStats.minEleM} m</span>
+                      <span>Moy {terrainStats.avgAltitudeM ?? '—'} m</span>
+                      <span>Max {elevationStats.maxEleM} m</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="xp-profile-empty">Altitude indisponible sur ce tracé</div>
+                )}
+              </div>
 
-          {knowledgeSources.length > 0 ? (
-            <p className="rcw-sub-note">
-              Sources interrogées : {knowledgeSources.join(' · ')}.
-            </p>
+              <XpMetrics
+                items={[
+                  { label: 'Effort IBP', value: terrainStats.ibpEstimate != null ? `${terrainStats.ibpEstimate}` : '—' },
+                  { label: 'Niveau', value: terrainStats.effortLevel },
+                  { label: 'Pente +', value: terrainStats.maxClimbSlopePct != null ? `${terrainStats.maxClimbSlopePct}%` : '—' },
+                  { label: 'Énergie', value: terrainStats.estimatedCaloriesKcal != null ? `${terrainStats.estimatedCaloriesKcal} kcal` : '—' },
+                ]}
+              />
+
+              {terrainStats.slopeBuckets.hasSlopeData ? (
+                <div className="rcw-stat-card" data-testid="slope-distribution-card">
+                  <div className="rcw-bar-head">
+                    <strong>Pentes</strong>
+                    <span className="rcw-sub-note">
+                      Moy. {terrainStats.avgSpeedKmh ?? '—'} km/h · Descente max {terrainStats.maxDescentSlopePct ?? '—'}%
+                    </span>
+                  </div>
+                  {[
+                    { label: '< 5 %', pct: terrainStats.slopeBuckets.flatPct, tone: 'good' },
+                    { label: '5–10 %', pct: terrainStats.slopeBuckets.moderatePct, tone: 'water' },
+                    { label: '10–15 %', pct: terrainStats.slopeBuckets.sustainedPct, tone: 'warn' },
+                    { label: '> 15 %', pct: terrainStats.slopeBuckets.steepPct, tone: 'bad' },
+                  ]
+                    .filter((b) => b.pct > 0)
+                    .map((b) => (
+                      <div key={b.label} className="rcw-bar-row">
+                        <div className="rcw-bar-head">
+                          <span>{b.label}</span>
+                          <span>{b.pct} %</span>
+                        </div>
+                        <div className="rcw-bar-track">
+                          <div className={`rcw-bar-fill rcw-bar-fill--${b.tone}`} style={{ width: `${b.pct}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : null}
+
+              <div className="rcw-stat-card" data-testid="surface-breakdown-card">
+                <div className="rcw-bar-head">
+                  <strong>Sols & surfaces</strong>
+                  <span className="rcw-sub-note">
+                    {workspace.sections.length} tronçon(s) · {totalWarnings} alerte(s)
+                  </span>
+                </div>
+                {terrainStats.surfaces.map((s) => (
+                  <div key={s.key} className="rcw-bar-row">
+                    <div className="rcw-bar-head">
+                      <span>{s.label}</span>
+                      <span>{s.pct} %</span>
+                    </div>
+                    <div className="rcw-bar-track">
+                      <div className="rcw-bar-fill" style={{ width: `${s.pct}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <XpRows>
+                <XpRow
+                  icon="spark"
+                  tone="warn"
+                  title="Variantes & Comparateur"
+                  sub="Comparer un détour sur la carte"
+                  badge={{ label: `${workspace.variants.length}`, tone: 'muted' }}
+                  trailing={<XpIcon name="chevr" size={15} />}
+                  onClick={() => openSubDrawer('variants')}
+                />
+              </XpRows>
+            </>
           ) : null}
 
-          <XpRows>
-            <XpRow
-              icon="cloud"
-              tone="water"
-              title="Observations terrain & dangers datés"
-              sub="Créneau horaire, potabilité, arrêtés et inconnues"
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('terrain')}
-            />
-            <XpRow
-              icon="spark"
-              tone="warn"
-              title="Variantes & Comparateur"
-              sub="Comparer km, D+, durée, surface connue et provenance"
-              badge={{ label: `${workspace.variants.length}`, tone: 'muted' }}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('variants')}
-            />
-          </XpRows>
+          {analyserSection === 'milieu' ? (
+            <>
+              <XpRows>
+                <XpRow
+                  icon="mtn"
+                  tone="good"
+                  title={terrainStats.ecologicalZone}
+                  sub={`Soleil : ${terrainStats.sunriseLocal} → ${terrainStats.sunsetLocal} (${terrainStats.daylightLabel})`}
+                />
+                {liveWeather ? (
+                  <XpRow
+                    icon="cloud"
+                    tone="water"
+                    title={`${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C (ressenti ${liveWeather.windChillC ?? '—'}°C)`}
+                    sub={`Vent ${liveWeather.windKph ?? '—'} km/h · Humidité ${liveWeather.humidityPct ?? '—'} % · ${liveWeather.source}`}
+                    badge={{ label: 'Direct', tone: 'good' }}
+                  />
+                ) : (
+                  <XpRow
+                    icon="cloud"
+                    tone="muted"
+                    title={knowledgeLoading ? 'Chargement météo…' : 'Météo indisponible'}
+                    sub="Appuyez sur Actualiser"
+                  />
+                )}
+              </XpRows>
+
+              {liveWeather && liveWeather.hourlyPreview.length > 0 ? (
+                <div className="rcw-hourly-strip" aria-label="Prévisions horaires">
+                  {liveWeather.hourlyPreview.map((h) => (
+                    <div key={h.time} className="rcw-hourly-cell">
+                      <span>{h.time}</span>
+                      <strong>{h.tempC != null ? `${h.tempC}°` : '—'}</strong>
+                      <span>{h.rainProbPct != null ? `${h.rainProbPct}%` : `${h.windKph ?? '—'} km/h`}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <XpRows>
+                <XpRow
+                  icon="alert"
+                  tone="warn"
+                  title="Observations terrain, eau & dangers"
+                  sub="Potabilité, arrêtés, dates de vérification"
+                  trailing={<XpIcon name="chevr" size={15} />}
+                  onClick={() => openSubDrawer('terrain')}
+                />
+              </XpRows>
+            </>
+          ) : null}
+
+          {analyserSection === 'chemin' ? (
+            <>
+              <div className="rcw-bar-head">
+                <XpChips
+                  ariaLabel="Filtrer les repères"
+                  value={poiFilter}
+                  items={[
+                    { id: 'all', label: `Tout (${knowledgePois.length})` },
+                    { id: 'water', label: `Eau (${poiCounts.water})` },
+                    { id: 'shelter', label: `Refuges (${poiCounts.shelter})` },
+                    { id: 'summit', label: `Sommets (${poiCounts.summit})` },
+                    { id: 'food_lodging', label: `Ravit. (${poiCounts.food_lodging})` },
+                    { id: 'access', label: `Accès (${poiCounts.access})` },
+                  ]}
+                  onChange={(id) => setPoiFilter(id as 'all' | RoutePoiCategory)}
+                />
+                <button
+                  type="button"
+                  className="xp-chip"
+                  aria-label="Actualiser la banque d’informations"
+                  disabled={knowledgeLoading}
+                  onClick={() => void refreshKnowledgeBank()}
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </div>
+
+              {knowledgeLoading && knowledgePois.length === 0 ? (
+                <XpEmpty title="Analyse en cours…" hint="Interrogation Base LKDV, OpenStreetMap et MET Norway." />
+              ) : filteredKnowledgePois.length === 0 ? (
+                <XpEmpty
+                  title="Aucun repère dans cette catégorie"
+                  hint="Aucune donnée recensée sur ce corridor — prévoyez votre autonomie."
+                />
+              ) : (
+                <XpRows>
+                  {filteredKnowledgePois.slice(0, 30).map((poi) => (
+                    <XpRow
+                      key={poi.id}
+                      icon={
+                        poi.category === 'water'
+                          ? 'drop'
+                          : poi.category === 'shelter'
+                            ? 'tent'
+                            : poi.category === 'summit'
+                              ? 'mtn'
+                              : poi.category === 'food_lodging'
+                                ? 'house'
+                                : 'pin'
+                      }
+                      tone={focusedPoiId === poi.id ? 'warn' : poi.category === 'water' ? 'water' : 'good'}
+                      title={poi.name}
+                      sub={`${poi.rawCategory}${poi.altitudeM != null ? ` · ${Math.round(poi.altitudeM)} m` : ''} · ${poi.source}`}
+                      badge={{
+                        label:
+                          poi.distanceToTrackM < 1000
+                            ? `${poi.distanceToTrackM} m`
+                            : `${(poi.distanceToTrackM / 1000).toFixed(1)} km`,
+                        tone: poi.distanceToTrackM <= 500 ? 'good' : 'muted',
+                      }}
+                      onClick={() => {
+                        setFocusedPoiId(poi.id);
+                        setFocusCoord([poi.lon, poi.lat]);
+                        setStatusMessage(`${poi.name} centré sur la carte (${poi.distanceToTrackM} m).`);
+                      }}
+                    />
+                  ))}
+                </XpRows>
+              )}
+
+              {knowledgeSources.length > 0 ? (
+                <p className="rcw-sub-note">Sources : {knowledgeSources.join(' · ')}.</p>
+              ) : null}
+            </>
+          ) : null}
         </div>
       ),
     },
@@ -3248,17 +3337,6 @@ export function RouteCollabWorkspace({
   ];
 
   const activeSubDrawer = renderSubDrawer();
-  const sheetSubtitle = [
-    `${totals.distanceKm} km`,
-    totals.ascentM != null ? `D+ ${totals.ascentM} m` : null,
-    workspace.publishedRevisionNo
-      ? `Publiée v${workspace.publishedRevisionNo}`
-      : `Brouillon · seq ${workspace.headSeq}`,
-    !online ? 'Hors ligne' : null,
-    verifiedPack ? `Pack v${verifiedPack.manifest.revisionNo}` : null,
-  ]
-    .filter(Boolean)
-    .join(' · ');
 
   return (
     <div
@@ -3376,67 +3454,74 @@ export function RouteCollabWorkspace({
         </div>
       )}
 
-      {/* BANDEAU IMPACT & STATUT TOUT EN HAUT DE L'ÉCRAN (hors des tiroirs) */}
-      {(lastImpactText || statusMessage || drawingMode || editingMode) ? (
-        <div className="rcw-top-stack">
-          {drawingMode ? (
-            <div className="rcw-top-toast rcw-top-toast--mode" role="status">
-              <span>Mode tracé actif · dessinez directement sur la carte</span>
-              <button
-                type="button"
-                className="xp-chip"
-                onClick={() => {
-                  setDrawingMode(false);
-                  setSheetOpen(true);
-                }}
-              >
-                Terminer
-              </button>
-            </div>
-          ) : null}
-          {editingMode ? (
-            <div className="rcw-top-toast rcw-top-toast--mode" role="status">
-              <span>Mode édition actif · glissez les repères numérotés</span>
-              <button
-                type="button"
-                className="xp-chip"
-                onClick={() => setEditingMode(false)}
-              >
-                Terminer
-              </button>
-            </div>
-          ) : null}
-          {lastImpactText ? (
-            <div className="rcw-top-toast rcw-top-toast--impact" role="status" data-testid="impact-banner">
-              <span>
-                <strong>Impact · </strong>
-                {lastImpactText}
-              </span>
-              <button
-                type="button"
-                className="xp-chip"
-                onClick={() => setLastImpactText(null)}
-                aria-label="Fermer l'impact"
-              >
-                OK
-              </button>
-            </div>
-          ) : null}
-          {statusMessage ? (
-            <div className="rcw-top-toast" role="status" data-testid="status-message">
-              <span>{statusMessage}</span>
-              <button
-                type="button"
-                className="xp-chip"
-                onClick={() => setStatusMessage(null)}
-                aria-label="Fermer le message"
-              >
-                ✕
-              </button>
-            </div>
-          ) : null}
+      {/* PILULE TÉLÉMÉTRIE ÉPURÉE + IMPACT / STATUT TOUT EN HAUT AU CENTRE DE L'ÉCRAN */}
+      <div className="rcw-top-stack">
+        <div className="rcw-top-telemetry-pill" data-testid="top-telemetry-pill">
+          <span>{totals.distanceKm} km</span>
+          <span className="rcw-top-telemetry-sep">·</span>
+          <span>D+ {totals.ascentM != null ? `${totals.ascentM} m` : '—'}</span>
+          <span className="rcw-top-telemetry-sep">·</span>
+          <span>D− {totals.descentM != null ? `${totals.descentM} m` : '—'}</span>
+          <span className="rcw-top-telemetry-sep">·</span>
+          <span>{totals.durationMin != null ? `${totals.durationMin} min` : '—'}</span>
         </div>
-      ) : null}
+        {drawingMode ? (
+          <div className="rcw-top-toast rcw-top-toast--mode" role="status">
+            <span>Mode tracé actif · dessinez directement sur la carte</span>
+            <button
+              type="button"
+              className="xp-chip"
+              onClick={() => {
+                setDrawingMode(false);
+                setSheetOpen(true);
+              }}
+            >
+              Terminer
+            </button>
+          </div>
+        ) : null}
+        {editingMode ? (
+          <div className="rcw-top-toast rcw-top-toast--mode" role="status">
+            <span>Mode édition actif · glissez les repères numérotés</span>
+            <button
+              type="button"
+              className="xp-chip"
+              onClick={() => setEditingMode(false)}
+            >
+              Terminer
+            </button>
+          </div>
+        ) : null}
+        {lastImpactText ? (
+          <div className="rcw-top-toast rcw-top-toast--impact" role="status" data-testid="impact-banner">
+            <span>
+              <strong>Impact · </strong>
+              {lastImpactText}
+            </span>
+            <button
+              type="button"
+              className="xp-chip"
+              onClick={() => setLastImpactText(null)}
+              aria-label="Fermer l'impact"
+            >
+              OK
+            </button>
+          </div>
+        ) : null}
+        {statusMessage ? (
+          <div className="rcw-top-toast" role="status" data-testid="status-message">
+            <span>{statusMessage}</span>
+            <button
+              type="button"
+              className="xp-chip"
+              onClick={() => setStatusMessage(null)}
+              aria-label="Fermer le message"
+            >
+              ✕
+            </button>
+          </div>
+        ) : null}
+      </div>
 
       {/* CARTE & AFFICHAGE EN HAUT À DROITE DE LA CARTE */}
       <div className="rcw-map-topright">
@@ -3494,8 +3579,8 @@ export function RouteCollabWorkspace({
       {/* ÉLÉMENT 2 : TIROIR EXPLORER (ou pilule 3 petits points en bas lorsque fermé) */}
       {sheetOpen ? (
         <ExplorerSheet
-          title={activeSubDrawer ? activeSubDrawer.title : workspace.title}
-          subtitle={activeSubDrawer ? activeSubDrawer.subtitle : sheetSubtitle}
+          title={activeSubDrawer ? activeSubDrawer.title : ''}
+          subtitle={activeSubDrawer ? activeSubDrawer.subtitle : null}
           tabs={activeSubDrawer ? undefined : mainTabs}
           tab={tabIndex}
           onTab={(idx) => setTabIndex(idx)}
@@ -3530,6 +3615,363 @@ export function RouteCollabWorkspace({
           </span>
         </button>
       )}
+
+      {/* TIROIR SUPERPOSÉ HIÉRARCHIQUE (Étapes -> Catégories -> Sous-catégories avec +/- précision) */}
+      {overlayDetail ? (
+        <div className="rcw-overlay-sheet" data-testid="overlay-detail-drawer">
+          {(() => {
+            if (overlayDetail.kind === 'day') {
+              const st = workspace.stages.find((s) => s.id === overlayDetail.stageId);
+              if (!st) return null;
+              const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
+              const currentOvernight: OvernightChipValue = st.overnightPlace?.type ?? 'none';
+              const endPt = orderedPoints.find((p) => p.id === st.endPointId);
+              return (
+                <ExplorerSheet
+                  title={`Jour ${st.dayNumber} · ${st.title}`}
+                  subtitle={`${stM.distanceKm} km · Précision ${overlayDetail.precision}/3`}
+                  tab={0}
+                  onTab={() => undefined}
+                  detent="mid"
+                  onDetent={() => undefined}
+                  onBack={() => setOverlayDetail(null)}
+                  onClose={() => setOverlayDetail(null)}
+                  bottomInset={0}
+                >
+                  <div className="rcw-stack">
+                    <div className="rcw-precision-bar">
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        disabled={overlayDetail.precision <= 1}
+                        onClick={() =>
+                          setOverlayDetail({
+                            ...overlayDetail,
+                            precision: Math.max(1, overlayDetail.precision - 1) as 1 | 2 | 3,
+                          })
+                        }
+                      >
+                        − Moins de précision
+                      </button>
+                      <span>{overlayDetail.precision === 1 ? 'Vue globale' : overlayDetail.precision === 2 ? 'Catégories' : 'Détails complets'}</span>
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        disabled={overlayDetail.precision >= 3}
+                        onClick={() =>
+                          setOverlayDetail({
+                            ...overlayDetail,
+                            precision: Math.min(3, overlayDetail.precision + 1) as 1 | 2 | 3,
+                          })
+                        }
+                      >
+                        + Plus de précision
+                      </button>
+                    </div>
+                    <XpMetrics
+                      items={[
+                        { label: 'Distance', value: `${stM.distanceKm} km` },
+                        { label: 'D+', value: stM.ascentM != null ? `${stM.ascentM} m` : '—' },
+                        { label: 'Durée', value: stM.durationMin != null ? `${stM.durationMin} min` : '—' },
+                      ]}
+                    />
+                    {overlayDetail.precision >= 2 ? (
+                      <>
+                        <XpEyebrow>Nuitée & Hébergement</XpEyebrow>
+                        <XpChips
+                          ariaLabel="Type de nuitée"
+                          value={currentOvernight}
+                          items={[
+                            { id: 'none', label: 'Journée' },
+                            { id: 'refuge', label: 'Refuge' },
+                            { id: 'bivouac', label: 'Bivouac' },
+                            { id: 'gite', label: 'Gîte' },
+                          ]}
+                          onChange={(kind) => {
+                            if (!canEditStages) return;
+                            const typed = kind as OvernightChipValue;
+                            void runOperation(
+                              {
+                                type: 'set_overnight',
+                                stageId: st.id,
+                                overnightPlace:
+                                  typed === 'none'
+                                    ? null
+                                    : {
+                                        id: `stay-${st.id}-${typed}`,
+                                        name: typed === 'bivouac' ? 'Bivouac du col' : typed === 'refuge' ? 'Refuge gardé' : 'Gîte d’étape',
+                                        type: typed,
+                                        lat: endPt?.lat ?? 45.05,
+                                        lon: endPt?.lon ?? 5.51,
+                                        bookingStatus: 'planned',
+                                        provenance: 'Saisie organisateur',
+                                        lastVerifiedAt: new Date().toISOString(),
+                                      },
+                              },
+                              { [st.id]: st.entityVersion },
+                            );
+                          }}
+                        />
+                      </>
+                    ) : null}
+                    {overlayDetail.precision >= 3 ? (
+                      <>
+                        <XpEyebrow>Notes & Export de l’étape</XpEyebrow>
+                        <textarea
+                          className="rcw-textarea"
+                          rows={3}
+                          value={stageNotesDraft}
+                          onChange={(e) => setStageNotesDraft(e.target.value)}
+                          placeholder="Ravitaillement, horaire refuge…"
+                          disabled={!canEditStages}
+                        />
+                        <div className="rcw-inline-actions">
+                          {canEditStages ? (
+                            <button
+                              type="button"
+                              className="xp-primary"
+                              onClick={() =>
+                                void runOperation(
+                                  { type: 'update_stage_note', stageId: st.id, notes: stageNotesDraft },
+                                  { [st.id]: st.entityVersion },
+                                )
+                              }
+                            >
+                              Enregistrer
+                            </button>
+                          ) : null}
+                          <button type="button" className="xp-secondary" onClick={() => handleDownloadGpx(st.id)}>
+                            GPX Jour {st.dayNumber}
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                </ExplorerSheet>
+              );
+            }
+
+            if (overlayDetail.kind === 'point') {
+              const pt = orderedPoints.find((p) => p.id === overlayDetail.pointId);
+              if (!pt) return null;
+              return (
+                <ExplorerSheet
+                  title={pt.name || pt.kind}
+                  subtitle={`${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)} · Précision ${overlayDetail.precision}/3`}
+                  tab={0}
+                  onTab={() => undefined}
+                  detent="mid"
+                  onDetent={() => undefined}
+                  onBack={() => setOverlayDetail(null)}
+                  onClose={() => setOverlayDetail(null)}
+                  bottomInset={0}
+                >
+                  <div className="rcw-stack">
+                    <div className="rcw-precision-bar">
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        onClick={() =>
+                          overlayDetail.precision <= 1 && overlayDetail.stageId
+                            ? setOverlayDetail({ kind: 'day', stageId: overlayDetail.stageId, precision: 2 })
+                            : setOverlayDetail({
+                                ...overlayDetail,
+                                precision: Math.max(1, overlayDetail.precision - 1) as 1 | 2 | 3,
+                              })
+                        }
+                      >
+                        − {overlayDetail.precision <= 1 && overlayDetail.stageId ? 'Remonter au jour' : 'Moins de précision'}
+                      </button>
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        disabled={overlayDetail.precision >= 3}
+                        onClick={() =>
+                          setOverlayDetail({
+                            ...overlayDetail,
+                            precision: Math.min(3, overlayDetail.precision + 1) as 1 | 2 | 3,
+                          })
+                        }
+                      >
+                        + Plus de précision
+                      </button>
+                    </div>
+                    <XpMetrics
+                      items={[
+                        { label: 'Latitude', value: pt.lat.toFixed(4) },
+                        { label: 'Longitude', value: pt.lon.toFixed(4) },
+                        { label: 'Altitude', value: pt.eleM != null ? `${Math.round(pt.eleM)} m` : '—' },
+                      ]}
+                    />
+                    {overlayDetail.precision >= 2 && canEditGeo ? (
+                      <div className="rcw-inline-actions">
+                        <button
+                          type="button"
+                          className="xp-primary"
+                          onClick={() =>
+                            void runOperation(
+                              {
+                                type: 'move_point',
+                                pointId: pt.id,
+                                lat: Number((pt.lat + 0.003).toFixed(5)),
+                                lon: Number((pt.lon + 0.003).toFixed(5)),
+                              },
+                              { [pt.id]: pt.entityVersion },
+                            )
+                          }
+                        >
+                          Déplacer (+300 m)
+                        </button>
+                        {orderedPoints.length > 2 ? (
+                          <button
+                            type="button"
+                            className="xp-secondary"
+                            onClick={() => {
+                              void runOperation({ type: 'delete_point', pointId: pt.id }, { [pt.id]: pt.entityVersion });
+                              setOverlayDetail(null);
+                            }}
+                          >
+                            Supprimer
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {overlayDetail.precision >= 3 && canComment ? (
+                      <div className="xp-form">
+                        <label>
+                          Note / commentaire sur ce point
+                          <input
+                            type="text"
+                            value={commentBody}
+                            onChange={(e) => setCommentBody(e.target.value)}
+                            placeholder="Source, passage, abri…"
+                          />
+                        </label>
+                        <button type="button" className="xp-primary" onClick={() => void handleAddComment(pt.id)}>
+                          Ancrer le commentaire
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </ExplorerSheet>
+              );
+            }
+
+            if (overlayDetail.kind === 'poi') {
+              const { poi } = overlayDetail;
+              return (
+                <ExplorerSheet
+                  title={poi.name}
+                  subtitle={`${poi.rawCategory} · ${poi.distanceToTrackM} m du tracé`}
+                  tab={0}
+                  onTab={() => undefined}
+                  detent="mid"
+                  onDetent={() => undefined}
+                  onBack={() => setOverlayDetail(null)}
+                  onClose={() => setOverlayDetail(null)}
+                  bottomInset={0}
+                >
+                  <div className="rcw-stack">
+                    <div className="rcw-precision-bar">
+                      {overlayDetail.stageId ? (
+                        <button
+                          type="button"
+                          className="xp-chip"
+                          onClick={() =>
+                            setOverlayDetail({ kind: 'day', stageId: overlayDetail.stageId!, precision: 2 })
+                          }
+                        >
+                          − Remonter au jour
+                        </button>
+                      ) : <span />}
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        onClick={() =>
+                          setOverlayDetail({
+                            ...overlayDetail,
+                            precision: overlayDetail.precision === 1 ? 2 : 1,
+                          })
+                        }
+                      >
+                        {overlayDetail.precision === 1 ? '+ Plus de précision' : '− Vue simple'}
+                      </button>
+                    </div>
+                    <XpMetrics
+                      items={[
+                        { label: 'Distance trace', value: `${poi.distanceToTrackM} m` },
+                        { label: 'Altitude', value: poi.altitudeM != null ? `${Math.round(poi.altitudeM)} m` : '—' },
+                        { label: 'Source', value: poi.source },
+                      ]}
+                    />
+                    {overlayDetail.precision >= 2 && poi.details ? (
+                      <p className="rcw-sub-note">{poi.details}</p>
+                    ) : null}
+                  </div>
+                </ExplorerSheet>
+              );
+            }
+
+            return (
+              <ExplorerSheet
+                title="Sac & Matériel lié"
+                subtitle={`${workspace.kitItems.length} article(s)`}
+                tab={0}
+                onTab={() => undefined}
+                detent="mid"
+                onDetent={() => undefined}
+                onBack={() => setOverlayDetail(null)}
+                onClose={() => setOverlayDetail(null)}
+                bottomInset={0}
+              >
+                <div className="rcw-stack">
+                  <div className="rcw-precision-bar">
+                    {overlayDetail.stageId ? (
+                      <button
+                        type="button"
+                        className="xp-chip"
+                        onClick={() =>
+                          setOverlayDetail({ kind: 'day', stageId: overlayDetail.stageId!, precision: 2 })
+                        }
+                      >
+                        − Remonter au jour
+                      </button>
+                    ) : <span />}
+                    <button
+                      type="button"
+                      className="xp-chip"
+                      onClick={() => {
+                        setOverlayDetail(null);
+                        openSubDrawer('kit');
+                      }}
+                    >
+                      + Gérer tout le sac
+                    </button>
+                  </div>
+                  <XpRows>
+                    {workspace.kitItems.map((item) => (
+                      <XpRow
+                        key={item.id}
+                        icon={item.shared ? 'users' : 'pack'}
+                        tone={item.status === 'needs_revalidation' ? 'warn' : 'good'}
+                        title={item.name}
+                        sub={item.revalidationReason ?? (item.assigneeName ? `Porté par ${item.assigneeName}` : 'Non attribué')}
+                        badge={{
+                          label: item.status === 'needs_revalidation' ? 'À revalider' : 'OK',
+                          tone: item.status === 'needs_revalidation' ? 'warn' : 'good',
+                        }}
+                        onClick={() =>
+                          item.status === 'needs_revalidation' ? void handleRevalidateKitItem(item.id) : undefined
+                        }
+                      />
+                    ))}
+                  </XpRows>
+                </div>
+              </ExplorerSheet>
+            );
+          })()}
+        </div>
+      ) : null}
     </div>
   );
 }

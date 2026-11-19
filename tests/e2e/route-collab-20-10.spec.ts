@@ -185,13 +185,13 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
       await pill.click();
     }
 
-    // Changement de nuit (Refuge -> Bivouac) via Onglet Étapes -> Sous-drawer Détail d'étape => Impact Graph
+    // Changement de nuit (Refuge -> Bivouac) via Onglet Étapes -> Drawer superposé Jour 1 => Impact Graph en haut d'écran
     await alicePage.getByRole('tab', { name: 'Étapes' }).click();
-    await alicePage.getByRole('button', { name: /Jour 1/i }).click();
-    await expect(alicePage.getByTestId('subdrawer-stage')).toBeVisible();
-    await alicePage.getByRole('button', { name: 'Bivouac', exact: true }).click();
+    await alicePage.getByTestId('day-category-stage-1').locator('.rcw-day-head').click();
+    await expect(alicePage.getByTestId('overlay-detail-drawer')).toBeVisible();
+    await alicePage.getByTestId('overlay-detail-drawer').getByRole('button', { name: 'Bivouac', exact: true }).click();
     await expect(alicePage.getByTestId('impact-banner')).toContainText('article(s) du kit à revalider');
-    await alicePage.getByRole('button', { name: 'Retour' }).click();
+    await alicePage.getByTestId('overlay-detail-drawer').getByRole('button', { name: 'Retour' }).click();
 
     // Comparer un détour via Onglet Analyser -> Banque d'info + Sous-drawer Variantes
     await alicePage.getByRole('tab', { name: 'Analyser' }).click();
@@ -299,7 +299,7 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
     // Reconnexion + mutation hors ligne -> file locale -> replay
     await page2.getByRole('button', { name: 'Retour' }).click();
     await page2.getByRole('tab', { name: 'Tracer' }).click();
-    await page2.getByRole('button', { name: /\+ Ajouter un point/i }).click();
+    await page2.getByRole('button', { name: /Ajouter un point/i }).click();
 
     await page2.getByRole('tab', { name: 'Départ' }).click();
     await page2.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }).click();
