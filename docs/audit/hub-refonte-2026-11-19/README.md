@@ -163,6 +163,10 @@ renvoie une erreur métier. La lecture privée de médias pour ces audiences res
   Étapes garde le jour et permet de consulter le détail d’un point. Une aventure en solo
   et une aventure collective ont des états séparés. Les comptes sans voyage trouvent l’accès
   Compas et le choix d’aventure, sans grille de huit cartes vides.
+- Le cockpit emploie les mêmes primitives que le reste de LKDV, dont `Card`, `Badge`,
+  `Metric`, `Icon` et `Sheet`. Le fond et le verre proviennent du thème de l’application.
+  Le tracé Canvas utilise les couleurs de la banque de design. Le CSS du cockpit règle
+  principalement la grille et les espacements.
 - Les tiroirs s’ouvrent à 90 % de la hauteur visible. La vérification Chromium au format iPhone
   couvre les huit tiroirs, le lien direct, le retour, le jour, le brouillon photo, les groupes de
   trois et l’absence de débordement horizontal. Rendu de la version compacte vérifié dans Safari
@@ -175,8 +179,12 @@ renvoie une erreur métier. La lecture privée de médias pour ces audiences res
   authentifiée, la persistance des brouillons, le hors-ligne complet, la progression du groupe
   et les tests terrain sur appareil physique restent ouverts.
 - La compilation de l’aperçu autonome, ESLint ciblé et 19 tests Vitest ciblés passent.
-  Le build Next complet de cette livraison a été interrompu par le garde disque du profileur.
-  Il doit être rejoué avec l’espace nécessaire.
+  Après l’alignement sur LKDV, le typage du dépôt et les 42 assertions des suites du tiroir
+  et des tokens passent. Dans WebKit au format iPhone, l’aperçu du réseau local a passé
+  l’ouverture des huit tiroirs, le retour au bon élément, le lien direct et l’absence
+  de débordement du libellé Paperasse.
+  Le premier build Next complet de cette livraison a été interrompu par le garde disque
+  du profileur.
 
 ## Ordre d’implémentation
 

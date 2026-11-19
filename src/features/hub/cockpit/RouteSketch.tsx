@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { maplibreTokens } from '@/design/tokens.generated';
 import type { Coordinate } from './model';
 
 export function RouteSketch({ lines, pins }: { lines: Coordinate[][]; pins: Coordinate[] }) {
@@ -51,10 +52,10 @@ export function RouteSketch({ lines, pins }: { lines: Coordinate[][]; pins: Coor
           else ctx.lineTo(x, y);
         });
         ctx.lineWidth = 7;
-        ctx.strokeStyle = '#fbfaf6';
+        ctx.strokeStyle = maplibreTokens.haloColor;
         ctx.stroke();
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#2d6b4a';
+        ctx.strokeStyle = maplibreTokens.routeTrackPrimary;
         ctx.stroke();
       }
 
@@ -62,9 +63,9 @@ export function RouteSketch({ lines, pins }: { lines: Coordinate[][]; pins: Coor
         const { x, y } = position(point);
         ctx.beginPath();
         ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#17402c';
+        ctx.fillStyle = maplibreTokens.routeTrackActive;
         ctx.fill();
-        ctx.strokeStyle = '#fbfaf6';
+        ctx.strokeStyle = maplibreTokens.haloColor;
         ctx.lineWidth = 2;
         ctx.stroke();
       });

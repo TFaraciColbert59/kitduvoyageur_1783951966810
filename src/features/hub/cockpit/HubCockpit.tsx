@@ -1,27 +1,28 @@
 'use client';
 
-import * as Dialog from '@radix-ui/react-dialog';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import {
-  ArrowRight, ArrowUpRight, Backpack, BookOpen, Camera, Check, ChevronLeft,
-  ChevronRight, CloudSun, Compass, FolderClosed, Footprints, Mountain, Navigation2,
-  Users, Wallet, WifiOff, X,
-} from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import Icon from '@/components/ui/Icon';
+import { IconButton } from '@/components/ui/IconButton';
+import { Metric } from '@/components/ui/Metric';
+import { Sheet } from '@/components/ui/Sheet';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { CockpitData, CockpitStep } from './model';
 import { RouteSketch } from './RouteSketch';
 import styles from './cockpit.module.css';
 
 const widgets = {
-  meteo: { name: 'Météo', icon: CloudSun },
-  budget: { name: 'Budget', icon: Wallet },
-  carte: { name: 'Carte', icon: Navigation2 },
-  etapes: { name: 'Étapes', icon: Footprints },
-  carnet: { name: 'Carnet', icon: BookOpen },
-  kit: { name: 'Kit', icon: Backpack },
-  paperasse: { name: 'Paperasse', icon: FolderClosed },
-  groupe: { name: 'Groupe', icon: Users },
+  meteo: { name: 'Météo', icon: 'cloud-sun' },
+  budget: { name: 'Budget', icon: 'wallet' },
+  carte: { name: 'Carte', icon: 'map' },
+  etapes: { name: 'Étapes', icon: 'footprints' },
+  carnet: { name: 'Carnet', icon: 'book-open' },
+  kit: { name: 'Kit', icon: 'backpack' },
+  paperasse: { name: 'Paperasse', icon: 'folder' },
+  groupe: { name: 'Groupe', icon: 'users' },
 };
 
 type Widget = keyof typeof widgets;
@@ -43,11 +44,11 @@ const dateLabel = (date: string) => {
 };
 
 function Action({ href, children }: { href: string; children: ReactNode }) {
-  return <Link className={styles.action} href={href}>{children}<ArrowRight size={17} aria-hidden /></Link>;
+  return <Link className={`glass-capsule-btn primary ${styles.action}`} href={href}>{children}<Icon name="arrow-right" size={17} /></Link>;
 }
 
 function Empty({ children }: { children: ReactNode }) {
-  return <p className={styles.empty}>{children}</p>;
+  return <p className={`glass-sub-card ${styles.empty}`}>{children}</p>;
 }
 
 function StepRows({ steps, onStep }: { steps: CockpitStep[]; onStep: (step: CockpitStep) => void }) {
@@ -56,10 +57,10 @@ function StepRows({ steps, onStep }: { steps: CockpitStep[]; onStep: (step: Cock
     <ol className={styles.timeline}>
       {steps.map((step) => (
         <li key={step.id}>
-          <button type="button" onClick={() => onStep(step)}>
+          <button type="button" data-step={step.id} onClick={() => onStep(step)}>
             <time>{step.time ?? '—'}</time>
             <span><strong>{step.title}</strong>{step.place && <small>{step.place}</small>}</span>
-            <ChevronRight size={17} aria-hidden />
+            <Icon name="chevron-right" size={17} />
           </button>
         </li>
       ))}
@@ -71,13 +72,14 @@ export function HubCockpit({
   data, fixture = false, adventureControl,
 }: { data: CockpitData; fixture?: boolean; adventureControl?: ReactNode }) {
   const { isOnline } = useOnlineStatus();
+  const cockpitId = useId();
   const [active, setActive] = useState<Widget | null>(null);
   const [selectedStep, setSelectedStep] = useState<CockpitStep | null>(null);
   const [day, setDay] = useState(data.today ?? data.steps[0]?.day ?? 1);
   const [photo, setPhoto] = useState<PhotoDraft | null>(null);
   const [photoError, setPhotoError] = useState('');
-  const trigger = useRef<HTMLButtonElement | null>(null);
-  const detailBack = useRef<HTMLButtonElement | null>(null);
+  const trigger = useRef<HTMLDivElement | null>(null);
+  const detailBack = useRef<HTMLDivElement | null>(null);
   const scrollPane = useRef<HTMLDivElement | null>(null);
   const priorScroll = useRef(0);
 
@@ -98,7 +100,7 @@ export function HubCockpit({
   useEffect(() => {
     if (selectedStep) {
       if (scrollPane.current) scrollPane.current.scrollTop = 0;
-      detailBack.current?.focus();
+      detailBack.current?.querySelector('button')?.focus();
     }
   }, [selectedStep]);
 
@@ -118,8 +120,8 @@ export function HubCockpit({
     amounts.length > 1 ? `${amounts.length} devises` : 'Aucune dépense';
   const groupPages = Array.from({ length: Math.ceil(data.people.length / 3) }, (_, index) => data.people.slice(index * 3, index * 3 + 3));
 
-  function open(widget: Widget, button: HTMLButtonElement) {
-    trigger.current = button;
+  function open(widget: Widget, card: HTMLDivElement) {
+    trigger.current = card;
     const url = new URL(window.location.href);
     url.searchParams.set('widget', widget);
     window.history.pushState({ ...window.history.state, lkdvHubWidget: true }, '', url);
@@ -145,11 +147,13 @@ export function HubCockpit({
   }
 
   function backToSteps() {
+    const stepId = selectedStep?.id;
     setSelectedStep(null);
     requestAnimationFrame(() => {
       if (scrollPane.current) {
         scrollPane.current.scrollTop = priorScroll.current;
-        scrollPane.current.querySelector<HTMLButtonElement>('li button')?.focus({ preventScroll: true });
+        Array.from(scrollPane.current.querySelectorAll<HTMLButtonElement>('button[data-step]'))
+          .find((button) => button.dataset.step === stepId)?.focus({ preventScroll: true });
       }
     });
   }
@@ -170,19 +174,22 @@ export function HubCockpit({
   }
 
   function tile(widget: Widget, children: ReactNode, className = '') {
-    const { icon: Icon, name } = widgets[widget];
+    const { icon, name } = widgets[widget];
+    const summaryId = `${cockpitId}-${widget}`;
     return (
-      <button
-        type="button"
+      <Card
+        variant="interactive"
         className={`${styles.tile} ${className}`}
         onClick={(event) => open(widget, event.currentTarget)}
+        aria-label={name}
+        aria-describedby={summaryId}
         aria-haspopup="dialog"
       >
         <span className={styles.tileLabel}>
-          <Icon size={19} aria-hidden /> {name} <ArrowUpRight className={styles.arrow} size={16} aria-hidden />
+          <Icon name={icon} size={18} /> {name}
         </span>
-        {children}
-      </button>
+        <div id={summaryId} className={styles.tileContent}>{children}</div>
+      </Card>
     );
   }
 
@@ -197,7 +204,7 @@ export function HubCockpit({
         {data.people.length > 0 && (
           <div className={styles.rail} aria-label="Participants par groupes de trois" tabIndex={0}>
             {groupPages.map((people, index) => (
-              <ul className={styles.crewPage} key={people[0].id} aria-label={`Participants ${index + 1} sur ${groupPages.length}`}>
+              <ul className={`glass-sub-card ${styles.crewPage}`} key={people[0].id} aria-label={`Participants ${index + 1} sur ${groupPages.length}`}>
                 {people.map((person) => (
                   <li key={person.id}><span className={styles.avatar} aria-hidden>{person.name?.slice(0, 1) ?? '•'}</span>
                     <span><strong>{person.name ?? 'Participant'}</strong><small>{person.role}</small></span>
@@ -218,7 +225,7 @@ export function HubCockpit({
     switch (widget) {
       case 'meteo':
         return data.weather ? <>
-          <div className={styles.metric}>{number(data.weather.temperature)}°<span>{data.weather.condition}</span></div>
+          <div className={styles.metric}><Metric value={`${number(data.weather.temperature)}°`} /><span>{data.weather.condition}</span></div>
           {data.weather.place && <p className={styles.annotation}>{data.weather.place}</p>}
           {data.weather.rain && <p>Précipitations annoncées · {data.weather.rain}</p>}
           <ul className={styles.list}>{data.weather.days.map((forecast) => (
@@ -230,7 +237,7 @@ export function HubCockpit({
       case 'budget':
         return data.budget ? <>
           {amounts.length ? amounts.map((amount) => (
-            <div className={styles.metric} key={amount.currency}>{money(amount)}<span>Dépensé</span></div>
+            <div className={styles.metric} key={amount.currency}><Metric value={money(amount)} /><span>Dépensé</span></div>
           )) : <Empty>Aucune dépense enregistrée.</Empty>}
           {data.budget.planned && <p>Budget prévu · {money(data.budget.planned)}</p>}
           <ul className={styles.list}>{data.budget.expenses.map((expense) => (
@@ -258,7 +265,7 @@ export function HubCockpit({
         </>;
         return <>
           <label className={styles.selectDay}>Jour du voyage
-            <select value={day} onChange={(event) => setDay(Number(event.target.value))}>
+            <select className="glass-input" value={day} onChange={(event) => setDay(Number(event.target.value))}>
               {days.map((option) => <option key={option} value={option}>Jour {option}</option>)}
             </select>
           </label>
@@ -267,19 +274,19 @@ export function HubCockpit({
         </>;
       case 'carnet':
         return <>
-          {data.trip && <label className={styles.photoButton}><Camera size={19} aria-hidden /> Ajouter une photo
+          {data.trip && <label className={`glass-capsule-btn primary ${styles.photoButton}`}><Icon name="camera" size={19} /> Ajouter une photo
             <input type="file" accept="image/*,.heic,.heif" capture="environment" onChange={(event) => {
               addPhoto(event.currentTarget.files?.[0]);
               event.currentTarget.value = '';
             }} />
           </label>}
           {photoError && <p role="alert">{photoError}</p>}
-          {photo && <article className={styles.photoDraft}>
+          {photo && <article className={`glass-sub-card ${styles.photoDraft}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photo.url} alt="Photo du brouillon" />
             <h3>Brouillon dans cet onglet</h3>
             <p>{[photo.date, photo.day ? `Jour ${photo.day}` : null, photo.place].filter(Boolean).join(' · ')}</p>
-            <button type="button" onClick={() => setPhoto(null)}>Retirer la photo</button>
+            <Button variant="ghost" className="justify-self-start" onClick={() => setPhoto(null)}>Retirer la photo</Button>
           </article>}
           {data.notes.length === 0 && <Empty>Aucune note dans le carnet.</Empty>}
           <ul className={styles.list}>{data.notes.map((note) => (
@@ -290,10 +297,10 @@ export function HubCockpit({
       case 'kit':
         return <>
           {data.kit.length ? <>
-            <div className={styles.metric}>{kitPacked}/{data.kit.length}<span>Articles préparés</span></div>
+            <div className={styles.metric}><Metric value={`${kitPacked}/${data.kit.length}`} /><span>Articles préparés</span></div>
             <ul className={styles.list}>{data.kit.map((item) => (
               <li key={item.id}><strong>{item.title}{item.amount > 1 ? ` × ${item.amount}` : ''}</strong>
-                <span className={styles.itemStatus}>{item.packed ? <><Check aria-hidden size={16} /> Préparé</> : 'À préparer'}</span>
+                <Badge tone={item.packed ? 'sage' : 'stone'}>{item.packed ? 'Préparé' : 'À préparer'}</Badge>
               </li>
             ))}</ul>
           </> : <Empty>Aucun article de kit renseigné pour cette aventure.</Empty>}
@@ -316,32 +323,34 @@ export function HubCockpit({
   }
 
   return (
-    <main className={styles.shell}>
-      <h1 className={styles.screenReader}>{data.title}</h1>
-      {!isOnline && <p className={styles.offline} role="status"><WifiOff size={16} aria-hidden /> Hors connexion</p>}
+    <section className={styles.shell} aria-labelledby={`${cockpitId}-title`}>
+      <h1 className="sr-only" id={`${cockpitId}-title`}>{data.title}</h1>
+      {!isOnline && <p className={styles.offline} role="status"><Icon name="wifi-off" size={16} /> Hors connexion</p>}
       {!fixture && !data.trip && <Action href="/compas">Préparer une aventure</Action>}
       {(data.trip || data.collective) && <div className={styles.grid} aria-label="Tableau de bord du voyage">
         {data.trip && <>
         {tile('meteo', <>
-          <span className={styles.value}>{data.weather ? `${number(data.weather.temperature)}°` : '—'}</span>
+          {data.weather && <Metric value={`${number(data.weather.temperature)}°`} className={styles.value} />}
           {describe(data.weather?.condition ?? null, 'Prévisions indisponibles')}
         </>, styles.weather)}
         {tile('budget', <>
-          <span className={`${styles.value} ${styles.budgetValue}`}>{amountLabel}</span>
-          {describe(data.budget && amounts.length ? 'Dépensé' : null, data.budget ? 'Dépenses du voyage' : 'Données indisponibles')}
+          {amounts.length === 1 ? <>
+            <Metric value={amountLabel} className={`${styles.value} ${styles.budgetValue}`} />
+            <span className={styles.tileDetail}>Dépensé</span>
+          </> : <span className={styles.tileDetail}>{amountLabel}</span>}
         </>, styles.budget)}
         {tile('carte', <>
           <span className={styles.map}>
-            {data.route.length || pins.length ? <RouteSketch lines={data.route} pins={pins} /> : <Compass size={42} aria-hidden />}
+            {data.route.length || pins.length ? <RouteSketch lines={data.route} pins={pins} /> : <Icon name="compass" size={34} />}
           </span>
           <span className={styles.mapFacts}>
-            {data.distance != null && <span><Navigation2 size={14} aria-hidden />{number(data.distance)} km</span>}
-            {data.elevation != null && <span><Mountain size={15} aria-hidden />+{number(data.elevation)} m</span>}
+            {data.distance != null && <span><Icon name="route" size={14} />{number(data.distance)} km</span>}
+            {data.elevation != null && <span><Icon name="mountain" size={15} />+{number(data.elevation)} m</span>}
             {data.distance == null && data.elevation == null && <span>{data.route.length ? 'Tracé prévu' : pins.length ? 'Repères des étapes' : 'Aucun tracé'}</span>}
           </span>
         </>, styles.mapTile)}
         {tile('etapes', <>
-          <span className={styles.tileDetail}>{`Jour ${day}`}{data.dayCount ? ` sur ${data.dayCount}` : ''}</span>
+          <Badge tone="sage" className={styles.dayBadge}>{`J${day}`}{data.dayCount ? `/${data.dayCount}` : ''}</Badge>
           {!daySteps.length && <span className={styles.tileDetail}>Aucune étape prévue</span>}
           <span className={styles.miniSteps}>
             {daySteps.slice(0, 3).map((step) => (
@@ -367,29 +376,27 @@ export function HubCockpit({
 
       {!fixture && <footer className={styles.footer}>
         {adventureControl}
-        <Link href="/kit-studio"><Backpack size={17} aria-hidden /> Kit Studio</Link>
-        {data.trip && <Link href="/hub/securite">Sécurité <ChevronRight size={15} aria-hidden /></Link>}
+        <Link className="glass-capsule-btn" href="/kit-studio"><Icon name="backpack" size={17} /> Kit Studio</Link>
+        {data.trip && <Link className="glass-capsule-btn" href="/hub/securite">Sécurité <Icon name="chevron-right" size={15} /></Link>}
       </footer>}
 
-      <Dialog.Root open={active !== null} onOpenChange={(value) => { if (!value) close(); }}>
-        <Dialog.Portal>
-          <Dialog.Overlay className={styles.overlay} />
-          <Dialog.Content
-            className={styles.sheet}
-            aria-describedby={undefined}
-            onCloseAutoFocus={(event) => { if (trigger.current) { event.preventDefault(); trigger.current.focus(); } }}
-            onEscapeKeyDown={(event) => { if (selectedStep) { event.preventDefault(); backToSteps(); } }}
-          >
-            <div className={styles.handle} aria-hidden />
-            <div className={styles.sheetHeader}>
-              {selectedStep && <button type="button" ref={detailBack} onClick={backToSteps} aria-label="Retour aux étapes"><ChevronLeft size={22} /></button>}
-              <Dialog.Title>{active ? widgets[active].name : 'Détail du voyage'}</Dialog.Title>
-              <Dialog.Close aria-label="Fermer"><X size={20} /></Dialog.Close>
-            </div>
-            <div className={styles.sheetBody} ref={scrollPane}>{active && renderDrawer(active)}</div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    </main>
+      <Sheet
+        open={active !== null}
+        onOpenChange={(value) => { if (!value) close(); }}
+        title={active ? widgets[active].name : undefined}
+        detent="large"
+        dragToDismiss
+        panelClassName={styles.panel}
+        contentClassName={styles.sheetBody}
+        contentRef={scrollPane}
+        headerLeading={selectedStep && <div ref={detailBack}><IconButton aria-label="Retour aux étapes" onClick={backToSteps}>
+          <Icon name="chevron-left" size={22} />
+        </IconButton></div>}
+        onCloseAutoFocus={(event) => { if (trigger.current) { event.preventDefault(); trigger.current.focus(); } }}
+        onEscapeKeyDown={(event) => { if (selectedStep) { event.preventDefault(); backToSteps(); } }}
+      >
+        {active && renderDrawer(active)}
+      </Sheet>
+    </section>
   );
 }
