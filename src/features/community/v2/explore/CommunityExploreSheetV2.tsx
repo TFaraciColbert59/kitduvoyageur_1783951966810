@@ -34,8 +34,6 @@ import {
   EXPLORE_TAB_ORDER,
   KIT_FILTER_ITEMS,
   KIT_FILTERS,
-  SEARCH_SCOPE_ITEMS,
-  SEARCH_SCOPES,
   filterIndex,
 } from './ExploreCapsule';
 import { useExploreState } from './useExploreState';
@@ -855,7 +853,6 @@ export function CommunityExploreSheetV2({
   };
 
   const voletActive = (tab: ExploreTab): boolean => open && explore.tab === tab;
-  const activeScope = explore.searchScope;
   const activeCarnetFilter = CARNET_FILTERS.includes(explore.carnetFilter) ? explore.carnetFilter : 'discover';
   const activeClubFilter = CLUB_FILTERS.includes(explore.clubFilter) ? explore.clubFilter : 'discover';
   const activeEventFilter = EVENT_FILTERS.includes(explore.eventFilter) ? explore.eventFilter : 'discover';
@@ -863,7 +860,7 @@ export function CommunityExploreSheetV2({
 
   const activeFilterIndex =
     explore.tab === 'search'
-      ? filterIndex(SEARCH_SCOPE_ITEMS, activeScope)
+      ? 0
       : explore.tab === 'carnets'
         ? filterIndex(CARNET_FILTER_ITEMS, activeCarnetFilter)
         : explore.tab === 'clubs'
@@ -872,42 +869,40 @@ export function CommunityExploreSheetV2({
             ? filterIndex(EVENT_FILTER_ITEMS, activeEventFilter)
             : filterIndex(KIT_FILTER_ITEMS, activeKitFilter);
 
+  const memberSearchPane = (
+    <FilterSlot key="membres" active={voletActive('search')}>
+      <SearchPane
+        active={voletActive('search')}
+        open={open}
+        initialSearch={initialSearch && voletActive('search')}
+        query={explore.searchQuery}
+        scope="membres"
+        context={explore.searchContext}
+        showMap={false}
+        near={nearMe.point}
+        nearState={nearMe.state}
+        online={isOnline}
+        recents={searchRecents}
+        onQueryChange={explore.setSearchQuery}
+        onScopeChange={explore.setSearchScope}
+        onToggleContext={explore.toggleSearchContext}
+        onClearContext={explore.clearSearchContext}
+        onShowMapChange={explore.setSearchMap}
+        onRequestGeo={() => void nearMe.request()}
+        onPushRecent={pushRecentSearch}
+        onDeleteRecent={deleteRecentSearch}
+        onPeek={openSearchPeek}
+        onCreateRequested={
+          onCreateRequested ? (kind, prefill) => onCreateRequested(kind, prefill) : undefined
+        }
+        hideSearchBar
+      />
+    </FilterSlot>
+  );
+
   // ── Une pane par filtre (LensPager de la mini-capsule, `00-MISSION § 3`) ──
   const filterPages: React.ReactNode[][] = [
-    SEARCH_SCOPE_ITEMS.map((item, index) => {
-      const scope = item.value as SearchScope;
-      const paneActive = voletActive('search') && index === activeFilterIndex;
-      return (
-        <FilterSlot key={item.value} active={paneActive}>
-          <SearchPane
-            active={paneActive}
-            open={open}
-            initialSearch={initialSearch && paneActive}
-            query={explore.searchQuery}
-            scope={scope}
-            context={explore.searchContext}
-            showMap={explore.searchMap}
-            near={nearMe.point}
-            nearState={nearMe.state}
-            online={isOnline}
-            recents={searchRecents}
-            onQueryChange={explore.setSearchQuery}
-            onScopeChange={explore.setSearchScope}
-            onToggleContext={explore.toggleSearchContext}
-            onClearContext={explore.clearSearchContext}
-            onShowMapChange={explore.setSearchMap}
-            onRequestGeo={() => void nearMe.request()}
-            onPushRecent={pushRecentSearch}
-            onDeleteRecent={deleteRecentSearch}
-            onPeek={openSearchPeek}
-            onCreateRequested={
-              onCreateRequested ? (kind, prefill) => onCreateRequested(kind, prefill) : undefined
-            }
-            hideSearchBar
-          />
-        </FilterSlot>
-      );
-    }),
+    [memberSearchPane],
     CARNET_FILTERS.map((filterValue, index) => {
       const paneActive = voletActive('carnets') && index === activeFilterIndex;
       return (
@@ -1012,13 +1007,7 @@ export function CommunityExploreSheetV2({
 
   const mini = (() => {
     if (explore.tab === 'search') {
-      return {
-        items: SEARCH_SCOPE_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
-        active: filterIndex(SEARCH_SCOPE_ITEMS, activeScope),
-        onChange: (index: number) => explore.setSearchScope(SEARCH_SCOPES[index] ?? 'all'),
-        label: 'Filtres des résultats',
-        pages: filterPages,
-      };
+      return undefined;
     }
     if (explore.tab === 'carnets') {
       return {
@@ -1092,7 +1081,9 @@ export function CommunityExploreSheetV2({
   // Compatibilité coque : quand `mini.pages` est fourni, la coque n'utilise pas
   // `panes` (le LensPager suit la mini-capsule). On garde un tableau de la
   // bonne longueur pour les chemins de repli.
-  const panes: React.ReactNode[] = EXPLORE_TAB_ORDER.map(() => null);
+  const panes: React.ReactNode[] = EXPLORE_TAB_ORDER.map((tab) =>
+    tab === 'search' ? memberSearchPane : null,
+  );
 
   const detailProp: SheetDetail | null = (() => {
     if (!detail) return null;
@@ -1158,7 +1149,6 @@ export function CommunityExploreSheetV2({
   })();
 
   const isMapSubtab =
-    (explore.tab === 'search' && activeScope === 'map') ||
     (explore.tab === 'carnets' && activeCarnetFilter === 'map') ||
     (explore.tab === 'clubs' && activeClubFilter === 'map') ||
     (explore.tab === 'sorties' && activeEventFilter === 'map') ||
