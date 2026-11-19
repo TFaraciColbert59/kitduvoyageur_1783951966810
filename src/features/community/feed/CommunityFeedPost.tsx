@@ -442,6 +442,7 @@ export function CommunityFeedPost({
       {isCarnet ? (
         <FeedCarnetPostCard
           post={post}
+          userId={user?.id}
           likesCount={counts.likes}
           commentsCount={counts.comments}
           sharesCount={counts.shares}

@@ -9,6 +9,7 @@ import { EventTicket } from '@/features/community/v2/shared/EventTicket';
 import { ClubCrest } from '@/features/community/v2/shared/ClubCrest';
 import type { EventCardVM } from '@/features/community/v2/shared/types';
 import { activityLabel, normalizeRouteTrace } from '@/features/community/v2/data/communityFeedMappers';
+import { setCarnetLike } from '@/features/community/v2/data/communityMutations';
 import { KitRectangularPreviewV2 } from '@/features/community/v2/create/forms/KitFormV2';
 import type { KitFormValuesV2, KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import { EngagementBar } from '@/components/social-kit';
@@ -372,6 +373,7 @@ export function FeedKitPostCard({
 
 export function FeedCarnetPostCard({
   post,
+  userId,
   likesCount,
   commentsCount,
   sharesCount,
@@ -382,6 +384,7 @@ export function FeedCarnetPostCard({
   onShare,
 }: {
   post: FeedPost;
+  userId?: string;
   likesCount: number;
   commentsCount: number;
   sharesCount: number;
@@ -415,20 +418,33 @@ export function FeedCarnetPostCard({
     coverImage:
       (typeof meta.carnet_cover === 'string' && meta.carnet_cover) || post.image_url || null,
   }));
+  const [carnetLiked, setCarnetLiked] = useState<boolean | null>(null);
+  const [carnetLikesCount, setCarnetLikesCount] = useState<number | null>(null);
+  const [carnetCommentsCount, setCarnetCommentsCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!carnetId) return;
     let alive = true;
     try {
       const supabase = createClient();
-      void supabase
-        .from('carnets')
-        .select('title, destination, days_count, distance_km, elevation_gain_m, cover_image')
-        .eq('id', carnetId)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!alive || !data) return;
-          const row = data as Record<string, unknown>;
+      void Promise.all([
+        supabase
+          .from('carnets')
+          .select('title, destination, days_count, distance_km, elevation_gain_m, cover_image')
+          .eq('id', carnetId)
+          .maybeSingle(),
+        supabase
+          .from('carnet_likes')
+          .select('user_id')
+          .eq('carnet_id', carnetId),
+        supabase
+          .from('carnet_comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('carnet_id', carnetId),
+      ]).then(([carnetRes, likesRes, commentsRes]) => {
+        if (!alive) return;
+        const row = carnetRes.data as Record<string, unknown> | null;
+        if (row) {
           setCarnet((prev) => ({
             title: String(row.title ?? prev.title),
             destination: typeof row.destination === 'string' ? row.destination : prev.destination,
@@ -441,14 +457,41 @@ export function FeedCarnetPostCard({
                 ? row.cover_image
                 : prev.coverImage,
           }));
-        });
+        }
+        const likeRows = (likesRes.data ?? []) as Array<{ user_id?: string }>;
+        setCarnetLikesCount(likeRows.length);
+        if (userId) {
+          setCarnetLiked(likeRows.some((r) => r.user_id === userId));
+        }
+        if (typeof commentsRes.count === 'number') {
+          setCarnetCommentsCount(commentsRes.count);
+        }
+      });
     } catch {
       /* fallback déjà en place */
     }
     return () => {
       alive = false;
     };
-  }, [carnetId]);
+  }, [carnetId, userId]);
+
+  const effectiveLiked = carnetLiked ?? liked;
+  const effectiveLikesCount =
+    carnetLikesCount !== null ? Math.max(carnetLikesCount, likesCount) : likesCount;
+  const effectiveCommentsCount =
+    carnetCommentsCount !== null ? Math.max(carnetCommentsCount, commentsCount) : commentsCount;
+
+  const handleSyncedLike = () => {
+    const nextLiked = !effectiveLiked;
+    setCarnetLiked(nextLiked);
+    setCarnetLikesCount((prev) =>
+      Math.max(0, (prev ?? effectiveLikesCount) + (nextLiked ? 1 : -1)),
+    );
+    if (carnetId && userId) {
+      void setCarnetLike(carnetId, nextLiked, userId);
+    }
+    onLike?.();
+  };
 
   return (
     <div className="lkdv-feed-creation-card" data-testid="feed-carnet-card">
@@ -516,11 +559,11 @@ export function FeedCarnetPostCard({
         <div className="lkdv-feed-creation-actions">
           <EngagementBar
             tone="ink"
-            likesCount={likesCount}
-            commentsCount={commentsCount}
+            likesCount={effectiveLikesCount}
+            commentsCount={effectiveCommentsCount}
             sharesCount={sharesCount}
-            liked={liked}
-            onLike={onLike ?? (() => undefined)}
+            liked={effectiveLiked}
+            onLike={onLike ? handleSyncedLike : () => undefined}
             onComment={onComment ?? (() => undefined)}
             onShare={onShare}
           />
