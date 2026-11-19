@@ -6,6 +6,7 @@ import './routeCollab.css';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Download,
   Grip,
@@ -313,6 +314,18 @@ export function RouteCollabWorkspace({
   workspaceRef.current = workspace;
   const opLogRef = useRef(opLog);
   opLogRef.current = opLog;
+
+  useEffect(() => {
+    if (!statusMessage) return;
+    const timer = window.setTimeout(() => setStatusMessage(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [statusMessage]);
+
+  useEffect(() => {
+    if (!lastImpactText) return;
+    const timer = window.setTimeout(() => setLastImpactText(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [lastImpactText]);
 
   useEffect(() => {
     if (forceNoWebGL) {
@@ -3721,73 +3734,115 @@ export function RouteCollabWorkspace({
         </div>
       )}
 
-      {/* PILULE TÉLÉMÉTRIE ÉPURÉE + IMPACT / STATUT TOUT EN HAUT AU CENTRE DE L'ÉCRAN */}
+      {/* PILULE TÉLÉMÉTRIE / NOTIFICATIONS ÉPHÉMÈRES (2 s, Framer Motion) EN TOP ÉCRAN */}
       <div className="rcw-top-stack">
-        <div className="rcw-top-telemetry-pill" data-testid="top-telemetry-pill">
-          <span>{totals.distanceKm} km</span>
-          <span className="rcw-top-telemetry-sep">·</span>
-          <span>D+ {totals.ascentM != null ? `${totals.ascentM} m` : '—'}</span>
-          <span className="rcw-top-telemetry-sep">·</span>
-          <span>D− {totals.descentM != null ? `${totals.descentM} m` : '—'}</span>
-          <span className="rcw-top-telemetry-sep">·</span>
-          <span>{totals.durationMin != null ? `${totals.durationMin} min` : '—'}</span>
-        </div>
-        {drawingMode ? (
-          <div className="rcw-top-toast rcw-top-toast--mode" role="status">
-            <span>Mode tracé actif · dessinez directement sur la carte</span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => {
-                setDrawingMode(false);
-                setSheetOpen(true);
-              }}
+        <AnimatePresence mode="wait" initial={false}>
+          {statusMessage ? (
+            <motion.div
+              key="top-status"
+              className="rcw-top-toast"
+              role="status"
+              data-testid="status-message"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              Terminer
-            </button>
-          </div>
-        ) : null}
-        {editingMode ? (
-          <div className="rcw-top-toast rcw-top-toast--mode" role="status">
-            <span>Mode édition actif · glissez les repères numérotés</span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => setEditingMode(false)}
+              <span>{statusMessage}</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setStatusMessage(null)}
+                aria-label="Fermer le message"
+              >
+                ✕
+              </button>
+            </motion.div>
+          ) : lastImpactText ? (
+            <motion.div
+              key="top-impact"
+              className="rcw-top-toast rcw-top-toast--impact"
+              role="status"
+              data-testid="impact-banner"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              Terminer
-            </button>
-          </div>
-        ) : null}
-        {lastImpactText ? (
-          <div className="rcw-top-toast rcw-top-toast--impact" role="status" data-testid="impact-banner">
-            <span>
-              <strong>Impact · </strong>
-              {lastImpactText}
-            </span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => setLastImpactText(null)}
-              aria-label="Fermer l'impact"
+              <span>
+                <strong>Impact · </strong>
+                {lastImpactText}
+              </span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setLastImpactText(null)}
+                aria-label="Fermer l'impact"
+              >
+                ✕
+              </button>
+            </motion.div>
+          ) : drawingMode ? (
+            <motion.div
+              key="top-draw"
+              className="rcw-top-toast rcw-top-toast--mode"
+              role="status"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              OK
-            </button>
-          </div>
-        ) : null}
-        {statusMessage ? (
-          <div className="rcw-top-toast" role="status" data-testid="status-message">
-            <span>{statusMessage}</span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => setStatusMessage(null)}
-              aria-label="Fermer le message"
+              <span>Mode tracé actif · dessinez directement sur la carte</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => {
+                  setDrawingMode(false);
+                  setSheetOpen(true);
+                }}
+              >
+                Terminer
+              </button>
+            </motion.div>
+          ) : editingMode ? (
+            <motion.div
+              key="top-edit"
+              className="rcw-top-toast rcw-top-toast--mode"
+              role="status"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             >
-              ✕
-            </button>
-          </div>
-        ) : null}
+              <span>Mode édition actif · glissez les repères numérotés</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setEditingMode(false)}
+              >
+                Terminer
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="top-telemetry"
+              className="rcw-top-telemetry-pill"
+              data-testid="top-telemetry-pill"
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <span>{totals.distanceKm} km</span>
+              <span className="rcw-top-telemetry-sep">·</span>
+              <span>D+ {totals.ascentM != null ? `${totals.ascentM} m` : '—'}</span>
+              <span className="rcw-top-telemetry-sep">·</span>
+              <span>D− {totals.descentM != null ? `${totals.descentM} m` : '—'}</span>
+              <span className="rcw-top-telemetry-sep">·</span>
+              <span>{totals.durationMin != null ? `${totals.durationMin} min` : '—'}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* CARTE & AFFICHAGE EN HAUT À DROITE DE LA CARTE */}
