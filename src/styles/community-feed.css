@@ -1368,7 +1368,6 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 
 /* Passe finale : carte 406×541, panneaux translucides sur l'image. */
 .lkdv-feed-post { aspect-ratio: 406 / 541; border-radius: 24px; }
-.lkdv-feed-post:has(.lkdv-post-panel) { height: 541px; }
 .lkdv-feed-post-top .lkdv-post-author {
   min-height: 44px;
   padding: 4px 10px 4px 4px;
@@ -2451,7 +2450,7 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   border-radius: 26px !important;
   aspect-ratio: auto !important;
   min-height: 0 !important;
-  height: auto !important;
+  height: auto;
   overflow: hidden !important;
   padding: 12px !important;
 }

@@ -180,6 +180,7 @@ export function CommunityFeedPost({
   const textBodyRef = useRef<HTMLParagraphElement | null>(null);
   const [textExpanded, setTextExpanded] = useState(false);
   const [textClamped, setTextClamped] = useState(false);
+  const [lockedPanelHeight, setLockedPanelHeight] = useState<number | null>(null);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
   const sourceMedia = source?.media ?? null;
@@ -243,12 +244,18 @@ export function CommunityFeedPost({
   }, [embedded]);
 
   const openPanel = (next: 'comments' | 'share') => {
+    const rectHeight = articleRef.current?.getBoundingClientRect().height ?? 0;
+    if (rectHeight > 0) setLockedPanelHeight(Math.round(rectHeight));
     panelScrollRef.current = window.scrollY;
     panelTriggerRef.current = document.activeElement as HTMLElement | null;
     setMenuOpen(false);
     setPanel(next);
     centerPost();
   };
+
+  useEffect(() => {
+    if (!panel) setLockedPanelHeight(null);
+  }, [panel]);
 
   /* Recentrer le post dans la vue à l'ouverture des commentaires ou du partage */
   useEffect(() => {
@@ -421,6 +428,9 @@ export function CommunityFeedPost({
         touchAction: onDismissGesture && !panel ? 'none' : 'pan-y',
         ...(mediaRatio
           ? { aspectRatio: String(Math.min(1, Math.max(406 / 541, mediaRatio))) }
+          : null),
+        ...(panel && lockedPanelHeight
+          ? { height: `${lockedPanelHeight}px`, minHeight: `${lockedPanelHeight}px` }
           : null),
       }}
       /* Trois volets côte à côte : partage ← photo → messages. Depuis la photo,
