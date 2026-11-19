@@ -2435,22 +2435,24 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   z-index: 25 !important;
 }
 
-/* ── Suppression du fond et des espaces vides sur les posts ticket/sortie, kit et carnet sans média ── */
+/* ── Fond verre propre et compact (zéro espace vide inutile) sur les posts ticket/sortie, kit et carnet sans média ── */
 .lkdv-feed-post--sortie,
 .lkdv-feed-post--kit,
 .lkdv-feed-post--sport,
 .lkdv-feed-post--text.lkdv-feed-post--carnet {
-  background: transparent !important;
+  background: rgba(255, 255, 255, 0.74) !important;
   background-image: none !important;
-  box-shadow: none !important;
-  border: 0 !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.6) !important;
+  backdrop-filter: blur(22px) saturate(1.6) !important;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.88),
+    0 10px 26px rgba(23, 43, 36, 0.14) !important;
+  border-radius: 26px !important;
   aspect-ratio: auto !important;
   min-height: 0 !important;
   height: auto !important;
-  overflow: visible !important;
-  padding: 0 !important;
+  overflow: hidden !important;
+  padding: 12px !important;
 }
 
 .lkdv-feed-post--sortie > .lkdv-feed-post-top,
@@ -2468,8 +2470,8 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-feed-post--kit > .pmi-more-pill,
 .lkdv-feed-post--sport > .pmi-more-pill,
 .lkdv-feed-post--text.lkdv-feed-post--carnet > .pmi-more-pill {
-  top: 0 !important;
-  right: 0 !important;
+  top: 12px !important;
+  right: 12px !important;
 }
 
 .lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie,
