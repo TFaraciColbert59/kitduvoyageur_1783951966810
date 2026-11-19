@@ -1442,11 +1442,11 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   box-shadow: 0 1px 6px rgba(255, 255, 255, 0.4);
 }
 
-/* Le SlotShell occupe la feuille, sans déborder. */
+/* Le SlotShell occupe la feuille, sans déborder, avec les mêmes marges que /communaute. */
 .lkdv-carnet-drawer > .lkdv-slot-shell {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 4px 14px 48px;
+  padding: 6px 14px 48px !important;
 }
 
 @keyframes lkdv-sheet-push {
