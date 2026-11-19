@@ -2457,14 +2457,23 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 
 .lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie,
-.lkdv-feed-post--kit .lkdv-feed-creation-card {
+.lkdv-feed-post--kit .lkdv-feed-creation-card,
+.lkdv-feed-post--carnet .lkdv-feed-creation-card,
+.lkdv-feed-post--club .lkdv-feed-creation-card {
   padding: 50px 0 0 !important;
   gap: 8px !important;
   min-height: 0 !important;
   background: transparent !important;
 }
 
-.lkdv-feed-post--kit .lkdv-feed-creation-actions {
+.lkdv-feed-post--carnet .lkdv-carnet-card,
+.lkdv-feed-post--club .lkdv-carnet-card {
+  min-height: 148px !important;
+}
+
+.lkdv-feed-post--kit .lkdv-feed-creation-actions,
+.lkdv-feed-post--carnet .lkdv-feed-creation-actions,
+.lkdv-feed-post--club .lkdv-feed-creation-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -2474,7 +2483,11 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 
 .lkdv-feed-post--kit .lkdv-feed-creation-actions .lkdv-engage-bar,
-.lkdv-feed-post--kit .lkdv-feed-creation-actions .lkdv-post-media-glass {
+.lkdv-feed-post--kit .lkdv-feed-creation-actions .lkdv-post-media-glass,
+.lkdv-feed-post--carnet .lkdv-feed-creation-actions .lkdv-engage-bar,
+.lkdv-feed-post--carnet .lkdv-feed-creation-actions .lkdv-post-media-glass,
+.lkdv-feed-post--club .lkdv-feed-creation-actions .lkdv-engage-bar,
+.lkdv-feed-post--club .lkdv-feed-creation-actions .lkdv-post-media-glass {
   position: static !important;
   margin-left: auto;
 }
