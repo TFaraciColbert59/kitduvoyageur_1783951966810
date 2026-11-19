@@ -2674,15 +2674,46 @@
 
 .lkdv-cv2x-member-ig-tile {
   flex: none;
-  width: min(300px, 80vw);
-  min-width: min(300px, 80vw);
+  width: min(326px, 84vw);
+  min-width: min(326px, 84vw);
   text-decoration: none;
   color: inherit;
 }
 
-.lkdv-cv2x-member-ig-tile .lkdv-carnet-card-scroll,
-.lkdv-cv2x-member-ig-tile .lkdv-ig-bio {
+.lkdv-cv2x-member-ig-tile .lkdv-carnet-card-scroll {
   display: block;
+}
+
+.lkdv-cv2x-member-ig-tile .lkdv-ig-bio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lkdv-cv2x-member-ig-tile .lkdv-ig-name,
+.lkdv-cv2x-member-ig-tile .lkdv-ig-handle-sub {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-cv2x-member-cta {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+  font: 700 11.5px/1 var(--font-sans);
+}
+
+.lkdv-cv2x-hrail .lkdv-cv2-group-head {
+  padding-left: 2px;
 }
 
 .lkdv-cv2x-event-icon-pill {

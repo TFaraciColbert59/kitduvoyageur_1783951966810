@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppImage from '@/components/ui/AppImage';
+import { createClient } from '@/lib/supabase/client';
 import type { SearchHitVM, SearchScope, TypeKind } from '../../shared/types';
 import { formatDateStamp, formatKm, initialsFromName } from '../../shared/format';
 import { SEARCH_KIND_LABELS, groupSearchHits } from '../../data/communityFeedMappers';
@@ -9,6 +10,55 @@ import { ClubCrest } from '../../shared/ClubCrest';
 import { ExploreIcon } from '../ExploreIcons';
 import { useLongPress } from '../useLongPress';
 import { HighlightedText } from './HighlightedText';
+
+interface MemberStats {
+  posts: number;
+  followers: number;
+  following: number;
+}
+
+function useMemberStats(memberIds: string[]): Record<string, MemberStats> {
+  const [stats, setStats] = useState<Record<string, MemberStats>>({});
+  const key = memberIds.join(',');
+
+  useEffect(() => {
+    if (!key) return;
+    let cancelled = false;
+    const ids = key.split(',').filter(Boolean);
+    const supabase = createClient();
+
+    void Promise.all([
+      supabase.from('community_posts').select('author_id').in('author_id', ids),
+      supabase.from('user_follows').select('following_id').in('following_id', ids),
+      supabase.from('user_follows').select('follower_id').in('follower_id', ids),
+    ])
+      .then(([postsRes, followersRes, followingRes]) => {
+        if (cancelled) return;
+        const map: Record<string, MemberStats> = {};
+        for (const id of ids) map[id] = { posts: 0, followers: 0, following: 0 };
+        for (const row of postsRes.data ?? []) {
+          const id = (row as { author_id?: string }).author_id;
+          if (id && map[id]) map[id].posts += 1;
+        }
+        for (const row of followersRes.data ?? []) {
+          const id = (row as { following_id?: string }).following_id;
+          if (id && map[id]) map[id].followers += 1;
+        }
+        for (const row of followingRes.data ?? []) {
+          const id = (row as { follower_id?: string }).follower_id;
+          if (id && map[id]) map[id].following += 1;
+        }
+        setStats(map);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  return stats;
+}
 
 /** Nombre de résultats affichés par groupe avant « Voir tout ». */
 export const SEARCH_GROUP_PREVIEW = 3;
@@ -78,11 +128,12 @@ export interface SearchResultRowProps {
   index: number;
   active: boolean;
   rowId: string;
+  memberStats?: MemberStats;
   onPeek?: (hit: SearchHitVM, opener: HTMLElement) => void;
 }
 
 /** Ligne de résultat : un seul lien, libellé complet, appui long → Peek. */
-export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: SearchResultRowProps) {
+export function SearchResultRow({ hit, terms, index, active, rowId, memberStats, onPeek }: SearchResultRowProps) {
   const longPress = useLongPress({
     onLongPress: (element) => onPeek?.(hit, element),
     enabled: Boolean(onPeek),
@@ -93,6 +144,15 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
     .join(' : ');
 
   if (hit.kind === 'membre') {
+    const postsCount = memberStats ? memberStats.posts : '—';
+    const followersCount = memberStats ? memberStats.followers : '—';
+    const followingCount = memberStats ? memberStats.following : '—';
+    const subtitleText = hit.subtitle
+      ? hit.subtitle.startsWith('@') || hit.subtitle.includes('·')
+        ? hit.subtitle
+        : `@${hit.subtitle}`
+      : '';
+
     return (
       <a
         id={rowId}
@@ -124,18 +184,18 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
                 )}
               </span>
             </span>
-            <span className="lkdv-ig-stats" role="group" aria-label="Profil voyageur">
+            <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
               <span className="lkdv-ig-stat">
-                <b>{hit.distanceKm != null ? Math.round(hit.distanceKm) : '—'}</b>
-                <span>{hit.distanceKm != null ? 'km' : 'distance'}</span>
+                <b>{postsCount}</b>
+                <span>publications</span>
               </span>
               <span className="lkdv-ig-stat">
-                <b>Membre</b>
-                <span>profil</span>
+                <b>{followersCount}</b>
+                <span>followers</span>
               </span>
               <span className="lkdv-ig-stat">
-                <b>Voir</b>
-                <span>compte</span>
+                <b>{followingCount}</b>
+                <span>suivi(e)s</span>
               </span>
             </span>
           </span>
@@ -143,12 +203,18 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
             <span className="lkdv-ig-name lkdv-cv2x-carnet-title">
               <HighlightedText text={hit.title} terms={terms} />
             </span>
-            {hit.subtitle ? (
+            {subtitleText ? (
               <span className="lkdv-ig-handle-sub lkdv-cv2-meta">
-                <HighlightedText text={hit.subtitle} terms={terms} />
+                <HighlightedText text={subtitleText} terms={terms} />
               </span>
             ) : null}
           </span>
+        </span>
+        <span className="lkdv-cv2x-tile-foot">
+          <span className="lkdv-cv2-meta">
+            {hit.distanceKm != null ? `à ${formatKm(hit.distanceKm)}` : 'Voyageur'}
+          </span>
+          <span className="lkdv-cv2x-member-cta">Voir le profil</span>
         </span>
       </a>
     );
@@ -221,6 +287,11 @@ export function SearchResults({
   onSeeAll,
   onPeek,
 }: SearchResultsProps) {
+  const memberIds = useMemo(
+    () => results.filter((hit) => hit.kind === 'membre').map((hit) => hit.id),
+    [results],
+  );
+  const memberStats = useMemberStats(memberIds);
   let cursor = 0;
   const kind = scopeToKind(scope);
   if (kind) {
@@ -245,6 +316,7 @@ export function SearchResults({
                 index={index}
                 active={activeIndex === index}
                 rowId={rowIdFor(index)}
+                memberStats={hit.kind === 'membre' ? memberStats[hit.id] : undefined}
                 onPeek={onPeek}
               />
             );
@@ -289,6 +361,7 @@ export function SearchResults({
                     index={index}
                     active={activeIndex === index}
                     rowId={rowIdFor(index)}
+                    memberStats={hit.kind === 'membre' ? memberStats[hit.id] : undefined}
                     onPeek={onPeek}
                   />
                 );
