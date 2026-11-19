@@ -858,59 +858,91 @@ export default function StoriesViewer({
           </div>
         )}
 
-        {/* Dock de réponse privée (phase 05) — messagerie canonique. La saisie
-            met la lecture en pause ; l'envoi ne quitte pas le visionneur. */}
-        {(canReply || user.id !== myUserId) ? (
-          <div className="lkdv-story-dock">
-            {canReply ? (
-              <div className="lkdv-story-composer-wrap">
-                <PostReplyComposer
-                  value={replyText}
-                  onChange={setReplyText}
-                  onSend={() => void sendReply()}
-                  placeholder="Envoyer un message…"
-                  inputLabel={`Répondre à ${user.name}`}
-                  ariaLabel="Envoyer la réponse"
-                  sendIcon="arrow-right"
-                  busy={replySending}
-                  maxLength={500}
-                  onFocus={() => setReplyFocused(true)}
-                  onBlur={() => setReplyFocused(false)}
-                />
-              </div>
-            ) : null}
+        {/* Dock d'actions en bas de la story — réponse + like/partage pour les
+            stories d'autrui, vues/partage/supprimer pour sa propre story. */}
+        <div className="lkdv-story-dock">
+          {canReply ? (
+            <div className="lkdv-story-composer-wrap">
+              <PostReplyComposer
+                value={replyText}
+                onChange={setReplyText}
+                onSend={() => void sendReply()}
+                placeholder="Envoyer un message…"
+                inputLabel={`Répondre à ${user.name}`}
+                ariaLabel="Envoyer la réponse"
+                sendIcon="arrow-right"
+                busy={replySending}
+                maxLength={500}
+                onFocus={() => setReplyFocused(true)}
+                onBlur={() => setReplyFocused(false)}
+              />
+            </div>
+          ) : null}
 
+          <div
+            className="lkdv-story-actions"
+            role="group"
+            aria-label="Actions de la story"
+            style={!canReply ? { marginLeft: 'auto' } : undefined}
+          >
             {user.id !== myUserId ? (
-              <div className="lkdv-story-actions" role="group" aria-label="Actions de la story">
-                <button
-                  type="button"
-                  className={liked ? 'on' : ''}
-                  aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
-                  aria-pressed={liked}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (!liked) setLikePulse((value) => value + 1);
-                    if (slide.storyId) onToggleLike?.(slide, liked);
-                  }}
-                >
-                  <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Partager la story"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void shareStory();
-                  }}
-                >
-                  <Icon name="share2" size={16} color="#17402C" />
-                </button>
-              </div>
+              <button
+                type="button"
+                className={liked ? 'on' : ''}
+                aria-label={liked ? "Retirer mon j'aime" : 'Aimer cette story'}
+                aria-pressed={liked}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  if (!liked) setLikePulse((value) => value + 1);
+                  if (slide.storyId) onToggleLike?.(slide, liked);
+                }}
+              >
+                <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
+              </button>
+            ) : null}
+            {user.id === myUserId && slide.storyId && onShowViews ? (
+              <button
+                type="button"
+                aria-label="Voir les vues"
+                title="Voir les vues"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onShowViews(slide);
+                }}
+              >
+                <Icon name="eye" size={16} color="#17402C" />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              aria-label="Partager la story"
+              title="Partager"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                void shareStory();
+              }}
+            >
+              <Icon name="share2" size={16} color="#17402C" />
+            </button>
+            {user.id === myUserId && slide.storyId && onDelete ? (
+              <button
+                type="button"
+                aria-label="Retirer ma story"
+                title="Retirer ma story"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete(slide);
+                }}
+              >
+                <Icon name="trash2" size={16} color="#B42318" />
+              </button>
             ) : null}
           </div>
-        ) : null}
+        </div>
 
 
       </div>
