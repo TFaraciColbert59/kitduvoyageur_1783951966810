@@ -917,7 +917,7 @@ export function CommunityExploreSheetV2({
             filter={filterValue}
             sort={explore.carnetSort}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || carnetsNear != null}
+            nearPointKnown
             online={isOnline}
             likeBusyId={busyIdFor('like:')}
             onLike={(carnet) => void handleCarnetLike(carnet)}
@@ -946,14 +946,17 @@ export function CommunityExploreSheetV2({
             sort={explore.clubSort}
             activity={explore.clubActivity}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || clubsNear != null}
+            nearPointKnown
             online={isOnline}
             overrides={clubOverrides}
             busyClubId={busyIdFor('club:')}
             onActivityChange={explore.setClubActivity}
             onFilterChange={explore.setClubFilter}
             onRequestGeo={() => void nearMe.request()}
-            onOpen={(club, opener) => openClubDetail(club, opener)}
+            onOpen={(club) => {
+              onClose();
+              router.push(`/clubs/${encodeURIComponent(club.slug)}`);
+            }}
             onJoin={(club) => void handleClubJoin(club)}
             onPeek={(club, opener) => openClubPeek(club, opener)}
             onCreateClub={() => onCreateRequested?.('club')}
@@ -974,7 +977,7 @@ export function CommunityExploreSheetV2({
             agendaLoading={agenda.loading}
             agendaError={agenda.error}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || eventsNear != null}
+            nearPointKnown
             online={isOnline}
             overrides={eventOverrides}
             busyEventId={busyIdFor('event:')}

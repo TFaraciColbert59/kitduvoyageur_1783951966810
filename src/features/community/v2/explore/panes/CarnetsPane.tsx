@@ -97,31 +97,31 @@ export function CarnetsPane({
   }
 
   if (!feed.loading && feed.items.length === 0) {
-    if (filter === 'mine') {
+    if (filter === 'saved') {
       return (
         <div ref={scrollRef} className="lkdv-cv2x-pane">
           <ExploreEmpty
-            icon="book"
-            title="Aucun carnet pour l’instant"
-            description="Raconte ton premier voyage : trace, jours, moments et photos au même endroit."
+            icon="bookmark"
+            title="Aucun carnet enregistré"
+            description="Enregistre les carnets qui t’inspirent pour les retrouver ici."
           >
-            <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateCarnet}>
-              Créer mon premier carnet
+            <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onDiscover}>
+              Explorer Global
             </button>
           </ExploreEmpty>
         </div>
       );
     }
-    if (filter === 'followed') {
+    if (filter === 'liked') {
       return (
         <div ref={scrollRef} className="lkdv-cv2x-pane">
           <ExploreEmpty
-            icon="book"
-            title="Rien ici pour l’instant"
-            description="Suis des voyageurs pour retrouver leurs carnets au même endroit."
+            icon="heart"
+            title="Aucun carnet liké"
+            description="Aime les carnets de la communauté pour les garder sous la main."
           >
             <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onDiscover}>
-              Découvrir
+              Explorer Global
             </button>
           </ExploreEmpty>
         </div>
@@ -131,13 +131,9 @@ export function CarnetsPane({
       <div ref={scrollRef} className="lkdv-cv2x-pane">
         <ExploreEmpty
           icon="book"
-          illustration={filter === 'discover' ? 'mountain' : undefined}
-          title={filter === 'near' ? 'Aucun carnet près de toi' : 'Aucun carnet à découvrir'}
-          description={
-            filter === 'near'
-              ? 'Aucun carnet n’a de point de départ dans les 100 km. Élargis ta recherche ou explore les carnets de la communauté.'
-              : 'Raconte ton premier voyage : trace, jours, moments et photos au même endroit.'
-          }
+          illustration="mountain"
+          title="Aucun carnet à découvrir"
+          description="Raconte ton premier voyage : trace, jours, moments et photos au même endroit."
         >
           <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateCarnet}>
             Créer mon premier carnet

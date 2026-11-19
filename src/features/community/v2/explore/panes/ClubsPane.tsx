@@ -126,8 +126,8 @@ export function ClubsPane({
           {chips}
           <ExploreEmpty
             icon="users"
-            title="Aucun club pour l’instant"
-            description="Rejoins un club près de chez toi ou crée le tien en quelques étapes."
+            title="Aucun club rejoint"
+            description="Rejoins un club existant ou crée le tien pour organiser des sorties."
           >
             <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateClub}>
               Créer un club

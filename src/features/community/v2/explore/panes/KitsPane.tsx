@@ -231,7 +231,11 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
         <ExploreEmpty
           icon="backpack"
           title={filter === 'mine' ? 'Aucun kit créé' : 'Aucun kit partagé'}
-          description="Compose ton sac en couches et partage ton kit avec la communauté."
+          description={
+            filter === 'mine'
+              ? 'Compose ton premier kit matériel pour le retrouver ici avec son tracé.'
+              : 'Partage ton sac et ton équipement pour inspirer la communauté.'
+          }
         >
           <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateKit}>
             Créer un kit

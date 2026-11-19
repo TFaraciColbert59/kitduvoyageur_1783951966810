@@ -203,19 +203,20 @@ export function EventsPane({
   }
 
   if (!feed.loading && feed.items.length === 0) {
-    const dayLabel = day ? 'ce jour-là' : filter === 'mine' ? 'dans tes sorties' : 'pour l’instant';
+    const emptyTitle = day
+      ? 'Aucune sortie ce jour-là'
+      : filter === 'mine'
+        ? 'Aucune sortie prévue'
+        : 'Aucune sortie ouverte';
+    const emptyDesc = day
+      ? 'Choisis un autre jour dans le calendrier ou retire le filtre.'
+      : filter === 'mine'
+        ? 'Inscris-toi à une sortie ou organise la tienne pour partir en groupe.'
+        : 'Organise la prochaine sortie et invite la communauté.';
     return (
       <div ref={scrollRef} className="lkdv-cv2x-pane">
         {agenda}
-        <ExploreEmpty
-          icon="calendar"
-          title={day ? 'Aucune sortie ce jour-là' : 'Aucune sortie'}
-          description={
-            day
-              ? 'Choisis un autre jour dans la bande ou retire le filtre.'
-              : `Aucune sortie ${dayLabel}. Organise la prochaine et invite ta cordée.`
-          }
-        >
+        <ExploreEmpty icon="calendar" title={emptyTitle} description={emptyDesc}>
           {day ? (
             <button
               type="button"
