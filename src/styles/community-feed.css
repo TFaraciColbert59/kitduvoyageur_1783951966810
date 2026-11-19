@@ -2482,3 +2482,54 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   position: static !important;
   margin-left: auto;
 }
+
+/* ── Posts texte pur : carte blanche épurée style X/Twitter + troncature 5 lignes « plus… » ── */
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) {
+  background: #ffffff !important;
+  background-image: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    0 2px 14px rgba(15, 23, 42, 0.06),
+    inset 0 0 0 0.5px rgba(15, 23, 42, 0.08) !important;
+  border-radius: 22px !important;
+  padding: 62px 18px 54px !important;
+  max-height: none !important;
+}
+
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet)::after {
+  display: none !important;
+}
+
+.lkdv-feed-text-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.lkdv-feed-post--text .lkdv-feed-post-text {
+  font: 400 15.5px/1.48 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  color: #0f172a;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: none !important;
+  overflow: visible;
+}
+
+.lkdv-feed-post--text .lkdv-feed-post-text.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lkdv-feed-text-more {
+  border: 0;
+  background: none;
+  padding: 4px 0 0;
+  color: #536471;
+  font: 600 14px/1.2 var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  cursor: pointer;
+}

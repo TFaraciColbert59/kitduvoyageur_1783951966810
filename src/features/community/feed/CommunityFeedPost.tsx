@@ -140,6 +140,9 @@ export function CommunityFeedPost({
   const panelTriggerRef = useRef<HTMLElement | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const textBodyRef = useRef<HTMLParagraphElement | null>(null);
+  const [textExpanded, setTextExpanded] = useState(false);
+  const [textClamped, setTextClamped] = useState(false);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
   const sourceMedia = source?.media ?? null;
@@ -155,6 +158,17 @@ export function CommunityFeedPost({
       typeof post.creation_meta === 'object' &&
       typeof (post.creation_meta as { carnet_id?: unknown }).carnet_id === 'string',
   );
+  const isPlainTextPost = !hasMedia && !post.sportCard && !isSortie && !isKit;
+
+  useEffect(() => {
+    if (!isPlainTextPost || textExpanded) return;
+    const el = textBodyRef.current;
+    if (!el) return;
+    const check = () => setTextClamped(el.scrollHeight > el.clientHeight + 2);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [isPlainTextPost, post.content, textExpanded]);
   const optionsId = `feed-options-${post.id}`;
 
   /** Appui sur une action du menu : le bouton « pop », le menu se replie, puis l'action part. */
@@ -515,7 +529,26 @@ export function CommunityFeedPost({
         />
       ) : (
         <>
-          <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
+          <div className="lkdv-feed-text-wrap">
+            <p
+              ref={textBodyRef}
+              className={`lkdv-feed-post-text${textExpanded ? ' is-expanded' : ' is-clamped'}`}
+            >
+              {post.content || 'Publication'}
+            </p>
+            {textClamped && !textExpanded ? (
+              <button
+                type="button"
+                className="lkdv-feed-text-more"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setTextExpanded(true);
+                }}
+              >
+                plus…
+              </button>
+            ) : null}
+          </div>
           {panel ? null : (
             <EngagementBar
               tone="ink"
