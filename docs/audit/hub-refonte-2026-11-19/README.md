@@ -268,3 +268,41 @@ sur une ligne, le retour du détail d’un moment à son heure, l’ouverture
 de la recherche et le chargement du fond de carte. La recette authentifiée
 avec les profils et le changement de sortie réel reste à valider sur
 l’environnement de recette et sur iPhone physique.
+
+### P02-02 · Découverte des sorties
+
+Compas, le rail du HUB et le sélecteur de sorties partagent la même requête.
+Elle retient les sorties actives ou à venir liées au compte connecté par
+propriété, collaboration ou participation confirmée visible sous RLS. Elle
+filtre les sorties terminées, passées et annulées. Les pages sont ordonnées
+par date puis identifiant et le retour au cache du compte est conservé en cas
+d’erreur de lecture du sélecteur.
+
+Recette sur un PostgreSQL 17.12 isolé, restauré depuis la base locale de
+recette en excluant pg_cron, via PostgREST 14.4 et des identités synthétiques.
+Résultat pour le compte invité :
+
+- Sortie propre, sortie privée partagée et sortie publique avec participation
+  confirmée visibles. Une sortie avec deux affiliations apparaît une fois.
+- Sortie publique tierce, sortie passée, sortie annulée et invitation sans
+  confirmation exclues de la liste.
+- 22 sorties du même jour réparties en pages de 20 puis 2 sans perte ni doublon.
+- La politique en place refuse la lecture d’une sortie privée à un participant
+  sans collaboration. L’inscription de club reste à relier à sa sortie
+  canonique avec P02-11. P02-02 reste donc en cours.
+
+Le test `src/features/hub/__tests__/adventure-discovery.test.tsx` vérifie la
+consommation de la liste serveur par le sélecteur. Typage et ESLint ciblé
+passants. La suite ciblée HUB, Compas et versions SQL passe sur 249 fichiers
+et 4 799 tests. Le parcours Supabase Auth de
+bout en bout reste à vérifier. Les modifications et essais du lot portent sur
+le worktree et la base locale de recette.
+
+### P09-14 · Classeur de suivi
+
+Les 187 identifiants des deux documents fournis correspondent exactement.
+La copie `LKDV_Audit_Implementation_Hub_Suivi.xlsx` conserve les 11 onglets, les formules, le tableau Excel
+et la validation des statuts. Les 48 lignes annotées indiquent la preuve
+acquise ou la condition qui reste à vérifier. Les 139 autres conservent le
+statut initial. Les seules lignes clôturées dans cette passe sont P00-01 et
+P01-02. Les gates des dix phases restent à vérifier avec leurs dépendances.

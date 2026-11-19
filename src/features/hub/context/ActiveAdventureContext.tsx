@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect, useMemo } from 'react';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
 import { useAuth } from '@/contexts/AuthContext';
+import type { HubUserTripLite } from '../server/getHubAdventureData';
 import type { ActiveAdventureData } from './adventureSchema';
 import { setActiveAdventureAction, clearActiveAdventureAction } from './activeAdventureServer';
 import {
@@ -20,9 +21,8 @@ import {
 
 /**
  * H2.2 — Contexte d'aventure active du hub (généralisation d'ActiveTripContext).
- * Union des 3 natures : possession (singleton local), sortie (via le contexte
- * Y existant — jamais re-fetché), collectif (groupes servis par
- * /api/hub/adventures, cache localStorage). Mémoire de section par aventure :
+ * Sorties, groupes et compteurs proviennent de /api/hub/adventures.
+ * Le cache est isolé par utilisateur. Mémoire de section par aventure :
  * le hub réinitialise sur la bonne dernière section et survit au rechargement.
  */
 
@@ -34,7 +34,7 @@ export interface ActiveAdventureContextValue {
   clearActiveAdventure: () => Promise<boolean>;
   isCurrentAdventure: (key: string) => boolean;
   isPending: boolean;
-  /** Listes groupées par nature (jamais restreintes — §2.3). */
+  /** Listes groupées par nature, issues des affiliations de la session. */
   groups: AdventureGroups;
   reloadAdventures: () => Promise<void>;
   /** Suggestion IA déterministe (jamais restrictive — §H5). */
@@ -69,12 +69,14 @@ export interface ActiveAdventureProviderProps {
 }
 
 interface AdventuresCache {
+  trips: Pick<HubUserTripLite, 'id' | 'slug' | 'title' | 'status' | 'primary_activity' | 'start_date'>[];
   groups: GroupLite[];
   possession: PossessionSummary;
   pendingInvites: number;
 }
 
 const EMPTY_CACHE: AdventuresCache = {
+  trips: [],
   groups: [],
   possession: { itemsCount: 0, loansCount: 0, alertsCount: 0 },
   pendingInvites: 0,
@@ -176,8 +178,10 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
         const res = await fetch('/api/hub/adventures', { cache: 'no-store' });
         if (!res.ok) throw new Error('Adventures unavailable');
         const data = await res.json();
+        if (data?.error || data?.tripsUnavailable) throw new Error('Adventures unavailable');
         if (!mountedRef.current) return;
         const next: AdventuresCache = {
+          trips: Array.isArray(data?.trips) ? data.trips : [],
           groups: Array.isArray(data?.groups) ? data.groups : [],
           possession: {
             itemsCount: Number(data?.possession?.items ?? 0),
@@ -205,6 +209,7 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
           if (cached) {
             const parsed = JSON.parse(cached);
             setCache({
+              trips: Array.isArray(parsed?.trips) ? parsed.trips : [],
               groups: Array.isArray(parsed?.groups) ? parsed.groups : [],
               possession: {
                 itemsCount: Number(parsed?.possession?.itemsCount ?? 0),
@@ -224,24 +229,19 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
 
   useEffect(() => {
     if (!userId || initialSelectionResolved.current || initialAdventure?.nature !== 'sortie') return;
-    if (userTrips.some((trip) => trip.id === initialAdventure.id)) {
+    if (cache.trips.some((trip) => trip.id === initialAdventure.id) || userTrips.some((trip) => trip.id === initialAdventure.id)) {
       setActiveAdventureState((current) => current ?? initialAdventure);
       initialSelectionResolved.current = true;
     }
-  }, [userId, userTrips, initialAdventure]);
+  }, [userId, userTrips, cache.trips, initialAdventure]);
 
   useEffect(() => {
     reloadAdventures();
   }, [reloadAdventures]);
 
   const groups: AdventureGroups = useMemo(
-    () =>
-      groupAdventures(
-        userTrips.map((t) => ({ id: t.id, slug: t.slug, title: t.title, status: t.status, primary_activity: t.primary_activity })),
-        cache.groups,
-        cache.possession,
-      ),
-    [userTrips, cache],
+    () => groupAdventures(cache.trips, cache.groups, cache.possession),
+    [cache],
   );
 
   // Suggestion IA déterministe (règles pures, mêmes entrées → même sortie).
@@ -249,14 +249,14 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
     () =>
       suggestActiveAdventure(
         {
-          trips: userTrips.map((t) => ({ id: t.id, slug: t.slug, title: t.title, start_date: t.start_date ?? null })),
+          trips: cache.trips,
           groups: cache.groups.map((g) => ({ id: g.id, name: g.name, member_count: g.member_count })),
           possession: cache.possession,
           pendingInvites: cache.pendingInvites,
         },
         new Date(),
       ),
-    [userTrips, cache],
+    [cache],
   );
 
   const activeAdventureRef = React.useRef<ActiveAdventureData | null>(null);
