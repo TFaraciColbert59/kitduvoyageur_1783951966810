@@ -2466,6 +2466,15 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   background: transparent !important;
 }
 
+.lkdv-feed-post:has(.lkdv-post-context-pill) .lkdv-feed-creation-card,
+.lkdv-feed-post:has(.lkdv-post-context-pill) .lkdv-feed-creation-card--sortie {
+  padding-top: 78px !important;
+}
+
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club):has(.lkdv-post-context-pill) {
+  padding-top: 86px !important;
+}
+
 .lkdv-feed-post--carnet .lkdv-carnet-card,
 .lkdv-feed-post--club .lkdv-carnet-card {
   min-height: 148px !important;
