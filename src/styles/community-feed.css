@@ -2493,8 +2493,30 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
     0 2px 14px rgba(15, 23, 42, 0.06),
     inset 0 0 0 0.5px rgba(15, 23, 42, 0.08) !important;
   border-radius: 22px !important;
-  padding: 62px 18px 54px !important;
+  aspect-ratio: auto !important;
+  height: auto !important;
+  min-height: 132px !important;
   max-height: none !important;
+  padding: 62px 18px 60px !important;
+  overflow: hidden !important;
+}
+
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .lkdv-feed-post-top {
+  position: absolute !important;
+  top: 12px !important;
+  left: 12px !important;
+}
+
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .pmi-more-pill {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+}
+
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .lkdv-post-media-glass {
+  position: absolute !important;
+  right: 12px !important;
+  bottom: 12px !important;
 }
 
 .lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet)::after {
