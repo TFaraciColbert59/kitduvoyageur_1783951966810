@@ -9,6 +9,25 @@ export type RoutePoiCategory =
   | 'access'
   | 'other';
 
+export interface NearbyLkdvRoute {
+  readonly id: string;
+  readonly name: string;
+  readonly distanceKm: number | null;
+  readonly ascentM: number | null;
+  readonly difficulty: string | null;
+  readonly source: string;
+}
+
+export interface StageSmartRecommendation {
+  readonly id: string;
+  readonly kind: 'water' | 'shelter' | 'highlight' | 'route' | 'pacing';
+  readonly title: string;
+  readonly reason: string;
+  readonly distanceM?: number;
+  readonly poi?: RouteCorridorPoi;
+  readonly suggestedOvernightType?: 'refuge' | 'bivouac' | 'gite';
+}
+
 export interface RouteCorridorPoi {
   readonly id: string;
   readonly name: string;
@@ -368,6 +387,8 @@ export async function fetchRouteKnowledgeBank(
 ): Promise<{
   pois: RouteCorridorPoi[];
   weather: LiveWeatherInfo | null;
+  nearbyRoutes: NearbyLkdvRoute[];
+  placeLabel: string | null;
   sources: string[];
 }> {
   const stats = computeTechnicalTerrainStats(workspace);
@@ -379,16 +400,31 @@ export async function fetchRouteKnowledgeBank(
   const maxLon = Math.min(179, stats.bbox.maxLon + pad);
 
   const bboxQs = `min_lat=${minLat.toFixed(4)}&max_lat=${maxLat.toFixed(4)}&min_lng=${minLon.toFixed(4)}&max_lng=${maxLon.toFixed(4)}`;
+  const isCycling = workspace.sport === 'vtt' || workspace.sport === 'gravel' || workspace.sport === 'route';
 
-  const [weatherRes, dbPoisRes, osmPoisRes, amenitiesRes] = await Promise.allSettled([
-    fetch(`/api/weather/point?lat=${stats.centerLat.toFixed(3)}&lon=${stats.centerLon.toFixed(3)}`, { signal }),
-    fetch(`/api/pois?${bboxQs}&zoom=13&limit=60`, { signal }),
-    fetch(
-      `/api/explorer/osm/pois?${bboxQs}&categories=refuge,shelter,water,summit,viewpoint,camp,parking,transit&limit=60`,
-      { signal },
-    ),
-    fetch(`/api/amenities?${bboxQs}`, { signal }),
-  ]);
+  const [weatherRes, dbPoisRes, osmPoisRes, amenitiesRes, placeRes, suggestionsRes, bikePoisRes] =
+    await Promise.allSettled([
+      fetch(`/api/weather/point?lat=${stats.centerLat.toFixed(3)}&lon=${stats.centerLon.toFixed(3)}`, { signal }),
+      fetch(`/api/pois?${bboxQs}&zoom=13&limit=60`, { signal }),
+      fetch(
+        `/api/explorer/osm/pois?${bboxQs}&categories=refuge,shelter,water,summit,viewpoint,camp,parking,transit&limit=60`,
+        { signal },
+      ),
+      fetch(`/api/amenities?${bboxQs}`, { signal }),
+      fetch(`/api/explorer/v2/place?lat=${stats.centerLat.toFixed(4)}&lng=${stats.centerLon.toFixed(4)}&zoom=11`, {
+        signal,
+      }),
+      fetch(
+        `/api/explorer/v2/suggestions?lat=${stats.centerLat.toFixed(4)}&lng=${stats.centerLon.toFixed(4)}&sport=hiking&limit=6`,
+        { signal },
+      ),
+      isCycling
+        ? fetch(
+            `/api/explorer/v2/bike-pois?minLat=${minLat.toFixed(4)}&maxLat=${maxLat.toFixed(4)}&minLon=${minLon.toFixed(4)}&maxLon=${maxLon.toFixed(4)}`,
+            { signal },
+          )
+        : Promise.resolve(null),
+    ]);
 
   const sources: string[] = [];
   let weather: LiveWeatherInfo | null = null;
@@ -566,6 +602,198 @@ export async function fetchRouteKnowledgeBank(
     }
   }
 
+  const nearbyRoutes: NearbyLkdvRoute[] = [];
+  let placeLabel: string | null = null;
+
+  if (placeRes.status === 'fulfilled' && placeRes.value.ok) {
+    try {
+      const pl = (await placeRes.value.json()) as {
+        place?: { placeName?: string | null; regionName?: string | null } | null;
+        pois?: Array<{ id: string; kind: string; subtype: string; name: string; lat: number; lon: number; ele_m: number | null; potable: boolean | null }>;
+        routes?: Array<{ id: number | string; name?: string | null; distance_km?: number | null; network?: string | null }>;
+      };
+      const name = pl.place?.placeName || pl.place?.regionName || null;
+      if (name) placeLabel = name;
+      if (Array.isArray(pl.pois) && pl.pois.length > 0) {
+        sources.push('Explorer LKDV');
+        for (const p of pl.pois) {
+          addPoi({
+            id: `xp-${p.id}`,
+            name: p.name || p.subtype || 'Repère LKDV',
+            category: mapRawCategory(`${p.kind} ${p.subtype}`),
+            rawCategory: p.subtype || p.kind || 'poi',
+            lat: p.lat,
+            lon: p.lon,
+            altitudeM: p.ele_m ?? null,
+            distanceToTrackM: minDistanceToTrackM(p.lat, p.lon, track),
+            details: p.potable === true ? 'Eau potable confirmée' : p.potable === false ? 'Eau non potable' : null,
+            source: 'Explorer LKDV',
+          });
+        }
+      }
+      if (Array.isArray(pl.routes)) {
+        for (const r of pl.routes.slice(0, 4)) {
+          if (!r.name) continue;
+          nearbyRoutes.push({
+            id: `pl-rt-${r.id}`,
+            name: r.name,
+            distanceKm: r.distance_km ?? null,
+            ascentM: null,
+            difficulty: r.network ?? null,
+            source: 'Explorer LKDV',
+          });
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (suggestionsRes.status === 'fulfilled' && suggestionsRes.value.ok) {
+    try {
+      const sg = (await suggestionsRes.value.json()) as {
+        routes?: Array<{ id: string | number; name?: string; distanceKm?: number | null; ascentM?: number | null; difficulty?: string | null }>;
+      };
+      if (Array.isArray(sg.routes)) {
+        for (const r of sg.routes.slice(0, 4)) {
+          if (!r.name || nearbyRoutes.some((n) => n.name === r.name)) continue;
+          nearbyRoutes.push({
+            id: `sg-${r.id}`,
+            name: r.name,
+            distanceKm: r.distanceKm ?? null,
+            ascentM: r.ascentM ?? null,
+            difficulty: r.difficulty ?? null,
+            source: 'Suggestions LKDV',
+          });
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (bikePoisRes.status === 'fulfilled' && bikePoisRes.value && bikePoisRes.value.ok) {
+    try {
+      const bp = (await bikePoisRes.value.json()) as {
+        items?: Array<{ id: string; category: string; name: string; lat: number; lon: number; openingHours?: string | null }>;
+      };
+      if (Array.isArray(bp.items) && bp.items.length > 0) {
+        sources.push('Services Vélo OSM');
+        for (const item of bp.items) {
+          addPoi({
+            id: item.id,
+            name: item.name,
+            category: 'access',
+            rawCategory: item.category,
+            lat: item.lat,
+            lon: item.lon,
+            altitudeM: null,
+            distanceToTrackM: minDistanceToTrackM(item.lat, item.lon, track),
+            details: item.openingHours ?? null,
+            source: 'Services Vélo',
+          });
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   const pois = Array.from(seen.values()).sort((a, b) => a.distanceToTrackM - b.distanceToTrackM);
-  return { pois, weather, sources: Array.from(new Set(sources)) };
+  return { pois, weather, nearbyRoutes, placeLabel, sources: Array.from(new Set(sources)) };
+}
+
+/**
+ * Génère des recommandations intelligentes par étape à partir des POI LKDV/OSM,
+ * des suggestions d'itinéraires voisins et des métriques du jour.
+ */
+export function computeSmartStageRecommendations(params: {
+  stagePoints: ReadonlyArray<{ lat: number; lon: number }>;
+  pois: readonly RouteCorridorPoi[];
+  nearbyRoutes: readonly NearbyLkdvRoute[];
+  distanceKm: number;
+  ascentM: number | null;
+  overnightType: string;
+}): StageSmartRecommendation[] {
+  const { stagePoints, pois, nearbyRoutes, distanceKm, ascentM, overnightType } = params;
+  const recs: StageSmartRecommendation[] = [];
+  if (stagePoints.length === 0) return recs;
+
+  const endPt = stagePoints[stagePoints.length - 1];
+  const stageTrack: Array<[number, number]> = stagePoints.map((p) => [p.lon, p.lat]);
+
+  const withStageDist = pois.map((poi) => ({
+    poi,
+    stageDistM: minDistanceToTrackM(poi.lat, poi.lon, stageTrack),
+    endDistM: Math.round(haversineKm({ lat: endPt.lat, lon: endPt.lon }, { lat: poi.lat, lon: poi.lon }) * 1000),
+  }));
+
+  const bestWater = withStageDist
+    .filter((x) => x.poi.category === 'water')
+    .sort((a, b) => a.stageDistM - b.stageDistM)[0];
+  if (bestWater) {
+    recs.push({
+      id: `rec-water-${bestWater.poi.id}`,
+      kind: 'water',
+      title: bestWater.poi.name,
+      reason: `Eau à ${bestWater.stageDistM} m du tracé${bestWater.poi.details ? ` · ${bestWater.poi.details}` : ''}`,
+      distanceM: bestWater.stageDistM,
+      poi: bestWater.poi,
+    });
+  }
+
+  const bestShelter = withStageDist
+    .filter((x) => x.poi.category === 'shelter' || (x.poi.category === 'food_lodging' && x.endDistM < 4500))
+    .sort((a, b) => a.endDistM - b.endDistM)[0];
+  if (bestShelter) {
+    const raw = bestShelter.poi.rawCategory.toLowerCase();
+    const suggestedOvernightType: 'refuge' | 'bivouac' | 'gite' =
+      raw.includes('camp') || raw.includes('bivouac')
+        ? 'bivouac'
+        : raw.includes('gite') || raw.includes('hotel') || bestShelter.poi.category === 'food_lodging'
+          ? 'gite'
+          : 'refuge';
+    recs.push({
+      id: `rec-shelter-${bestShelter.poi.id}`,
+      kind: 'shelter',
+      title: bestShelter.poi.name,
+      reason: `Nuitée proche fin d’étape (${bestShelter.endDistM} m)`,
+      distanceM: bestShelter.endDistM,
+      poi: bestShelter.poi,
+      suggestedOvernightType,
+    });
+  } else if (overnightType === 'none' && distanceKm > 18) {
+    recs.push({
+      id: 'rec-pacing-split',
+      kind: 'pacing',
+      title: 'Étape longue (> 18 km)',
+      reason: `${distanceKm} km${ascentM ? ` · +${ascentM} m` : ''} : envisagez de scinder ou d’ajouter une nuitée.`,
+    });
+  }
+
+  const bestHighlight = withStageDist
+    .filter((x) => x.poi.category === 'summit')
+    .sort((a, b) => a.stageDistM - b.stageDistM)[0];
+  if (bestHighlight) {
+    recs.push({
+      id: `rec-high-${bestHighlight.poi.id}`,
+      kind: 'highlight',
+      title: bestHighlight.poi.name,
+      reason: `${bestHighlight.poi.altitudeM ? `${Math.round(bestHighlight.poi.altitudeM)} m · ` : ''}à ${bestHighlight.stageDistM} m`,
+      distanceM: bestHighlight.stageDistM,
+      poi: bestHighlight.poi,
+    });
+  }
+
+  if (nearbyRoutes[0]) {
+    const r = nearbyRoutes[0];
+    recs.push({
+      id: `rec-route-${r.id}`,
+      kind: 'route',
+      title: r.name,
+      reason: `${r.distanceKm != null ? `${r.distanceKm} km · ` : ''}${r.source}`,
+    });
+  }
+
+  return recs;
 }

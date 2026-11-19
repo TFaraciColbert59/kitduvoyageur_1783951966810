@@ -254,7 +254,7 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
 
     // Publier v1 et télécharger Pack v1 dans Sous-tiroir Hors ligne, Activité & Carnet
     await page1.getByRole('tab', { name: 'Départ' }).click();
-    await page1.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }).click();
+    await page1.getByRole('button', { name: /Activité & Carnet/i }).click();
     await page1.getByRole('button', { name: /Publier v1/i }).click();
     await expect(page1.getByTestId('status-message')).toContainText('Version 1 publiée');
 
@@ -287,7 +287,7 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
     await ctx2.setOffline(true);
 
     await page2.getByRole('tab', { name: 'Départ' }).click();
-    await page2.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }).click();
+    await page2.getByRole('button', { name: /Activité & Carnet/i }).click();
     await expect(page2.getByTestId('pack-manifest-info')).toContainText('Manifeste v1');
 
     // En mode avion : démarrer l'activité sur v1, terminer vers le Carnet
@@ -302,7 +302,7 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
     await page2.getByRole('button', { name: /Ajouter un point/i }).click();
 
     await page2.getByRole('tab', { name: 'Départ' }).click();
-    await page2.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }).click();
+    await page2.getByRole('button', { name: /Activité & Carnet/i }).click();
     await expect(page2.getByRole('button', { name: /Synchroniser \(1\)/i })).toBeVisible();
 
     await ctx2.setOffline(false);

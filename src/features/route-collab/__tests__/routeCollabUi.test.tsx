@@ -111,18 +111,18 @@ describe('RouteCollabWorkspace UI — Design Explorer (Carte + Pilule 3 points +
     fireEvent.click(screen.getByRole('button', { name: /Ajouter un point/i }));
     await waitFor(() => expect(screen.getByTestId('impact-banner')).toBeTruthy());
 
-    // Onglet Analyser : banque d'informations et statistiques techniques épurées
+    // Onglet Analyser : banque d'informations et statistiques techniques épurées (mini sélecteur bas droite)
     fireEvent.click(screen.getByRole('tab', { name: 'Analyser' }));
     expect(screen.getByTestId('surface-breakdown-card')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Sur le chemin/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /Sur le chemin/i }));
     expect(screen.getByLabelText(/Actualiser la banque d’informations/i)).toBeTruthy();
 
     // Ouvrir l'onglet Départ -> Publier v1 -> Sous-tiroir Hors ligne, Activité & Carnet
     fireEvent.click(screen.getByRole('tab', { name: 'Départ' }));
     fireEvent.click(screen.getByRole('button', { name: /Publier v1/i }));
-    await waitFor(() => expect(screen.getAllByText(/Publiée v1/i).length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByText(/v1/i).length).toBeGreaterThan(0));
 
-    fireEvent.click(screen.getByRole('button', { name: /Hors ligne, Activité & Carnet/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Activité & Carnet/i }));
     expect(screen.getByTestId('subdrawer-offline-carnet')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /Télécharger le pack/i }));

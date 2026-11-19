@@ -48,12 +48,23 @@ import {
 } from '../engine';
 import { summarizeWorkspaceForHub } from '../integrations';
 import {
+  computeSmartStageRecommendations,
   computeTechnicalTerrainStats,
   fetchRouteKnowledgeBank,
   type LiveWeatherInfo,
+  type NearbyLkdvRoute,
   type RouteCorridorPoi,
   type RoutePoiCategory,
 } from '../routeAnalysis';
+import {
+  EffortRadialGauge,
+  ElevationAreaChart,
+  ReadinessRadialRing,
+  SlopeStackedVisual,
+  SunDaylightArc,
+  SurfaceStackedVisual,
+  WeatherForecastChart,
+} from './RouteAnalysisVisuals';
 import {
   commitVerifiedPack,
   duplicateWorkspaceWithProvenance,
@@ -235,14 +246,30 @@ export function RouteCollabWorkspace({
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [historyItems, setHistoryItems] = useState<ImportableTrackEntry[] | null>(null);
 
-  // Banque d'informations & statistiques techniques (onglet Analyser)
+  // Banque d'informations & statistiques techniques (onglet Analyser & Étapes)
   const [knowledgeLoading, setKnowledgeLoading] = useState<boolean>(false);
   const [knowledgePois, setKnowledgePois] = useState<RouteCorridorPoi[]>([]);
   const [liveWeather, setLiveWeather] = useState<LiveWeatherInfo | null>(null);
+  const [nearbyRoutes, setNearbyRoutes] = useState<NearbyLkdvRoute[]>([]);
+  const [placeLabel, setPlaceLabel] = useState<string | null>(null);
   const [knowledgeSources, setKnowledgeSources] = useState<string[]>([]);
   const [focusedPoiId, setFocusedPoiId] = useState<string | null>(null);
   const [poiFilter, setPoiFilter] = useState<'all' | RoutePoiCategory>('all');
   const [analyserSection, setAnalyserSection] = useState<'terrain' | 'milieu' | 'chemin'>('terrain');
+
+  // Équipe : recherche membres LKDV & invitation rapide
+  const [userSearchQuery, setUserSearchQuery] = useState<string>('');
+  const [userSearchResults, setUserSearchResults] = useState<
+    Array<{ id: string; full_name: string | null; location: string | null; trust_score: number | null }>
+  >([]);
+  const [userSearchLoading, setUserSearchLoading] = useState<boolean>(false);
+
+  // Départ : vérifications manuelles complémentaires
+  const [departChecks, setDepartChecks] = useState<{
+    track: boolean;
+    weather: boolean;
+    safety: boolean;
+  }>({ track: true, weather: false, safety: false });
   const [overlayDetail, setOverlayDetail] = useState<
     | { kind: 'day'; stageId: string; precision: 1 | 2 | 3 }
     | { kind: 'point'; pointId: string; stageId?: string; precision: 1 | 2 | 3 }
@@ -1307,6 +1334,8 @@ export function RouteCollabWorkspace({
       const data = await fetchRouteKnowledgeBank(workspace);
       setKnowledgePois(data.pois);
       setLiveWeather(data.weather);
+      setNearbyRoutes(data.nearbyRoutes);
+      setPlaceLabel(data.placeLabel);
       setKnowledgeSources(data.sources);
     } finally {
       setKnowledgeLoading(false);
@@ -1314,11 +1343,150 @@ export function RouteCollabWorkspace({
   }, [workspace]);
 
   useEffect(() => {
-    if (sheetOpen && tabIndex === 2 && knowledgePois.length === 0 && !liveWeather && !knowledgeLoading) {
+    if (
+      sheetOpen &&
+      (tabIndex === 1 || tabIndex === 2 || tabIndex === 4) &&
+      knowledgePois.length === 0 &&
+      !liveWeather &&
+      !knowledgeLoading
+    ) {
       void refreshKnowledgeBank();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetOpen, tabIndex]);
+
+  const handleSplitIntoDays = async (targetDays: number) => {
+    const safeDays = Math.max(1, Math.min(20, Math.round(targetDays)));
+    if (orderedPoints.length < 2) {
+      setStatusMessage('Ajoutez au moins 2 points pour découper en journées.');
+      return;
+    }
+    if (safeDays > orderedPoints.length - 1) {
+      // Insère automatiquement des points de coupure intermédiaires le long de la géométrie
+      const needed = safeDays - (orderedPoints.length - 1);
+      const track =
+        flattenedCoords.length >= 2
+          ? flattenedCoords
+          : orderedPoints.map((p) => [p.lon, p.lat] as [number, number]);
+      let afterId = orderedPoints[0].id;
+      for (let i = 1; i <= needed; i += 1) {
+        const ratio = i / (needed + 1);
+        const coordIdx = Math.min(
+          track.length - 1,
+          Math.max(0, Math.floor(ratio * (track.length - 1))),
+        );
+        const [lon, lat] = track[coordIdx];
+        const ptId = `pt-split-${Date.now().toString(36)}-${i}`;
+        await runOperation({
+          type: 'insert_point',
+          pointId: ptId,
+          afterPointId: afterId,
+          lat,
+          lon,
+          name: `Étape ${i + 1}`,
+        });
+        afterId = ptId;
+      }
+    }
+    await runOperation({ type: 'split_days', targetDays: safeDays });
+    setStatusMessage(`Itinéraire modulé en ${safeDays} journée(s).`);
+  };
+
+  const handleSearchLkdvUsers = async (query: string) => {
+    setUserSearchQuery(query);
+    if (query.trim().length < 2) {
+      setUserSearchResults([]);
+      return;
+    }
+    setUserSearchLoading(true);
+    try {
+      const res = await fetch(
+        `/api/users/search?scope=all&q=${encodeURIComponent(query.trim())}&limit=8`,
+        { credentials: 'include' },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as {
+          users?: Array<{
+            id: string;
+            full_name: string | null;
+            location: string | null;
+            trust_score: number | null;
+          }>;
+        };
+        setUserSearchResults(Array.isArray(data.users) ? data.users : []);
+      } else {
+        setUserSearchResults([]);
+      }
+    } catch {
+      setUserSearchResults([]);
+    } finally {
+      setUserSearchLoading(false);
+    }
+  };
+
+  const handleMemberRoleAction = async (
+    userId: string,
+    role: 'co_organizer' | 'editor' | 'contributor' | 'participant',
+    displayName?: string,
+  ) => {
+    if (!canManageMembers) return;
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'role', userId, role, displayName }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setStatusMessage(`Droits mis à jour (${ROLE_LABELS[role] ?? role}).`);
+      }
+      return;
+    }
+    const existing = workspace.members.find((m) => m.userId === userId);
+    const nextMembers = existing
+      ? workspace.members.map((m) =>
+          m.userId === userId ? { ...m, role, revokedAt: null } : m,
+        )
+      : [
+          ...workspace.members,
+          {
+            userId,
+            displayName: displayName || userId,
+            role,
+            revokedAt: null,
+          },
+        ];
+    commitState({ ...workspace, members: nextMembers, updatedAt: new Date().toISOString() });
+    setStatusMessage(`${displayName || userId} ajouté(e) en tant que ${ROLE_LABELS[role] ?? role}.`);
+  };
+
+  const handleRevokeMember = async (userId: string) => {
+    if (!canManageMembers) return;
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'revoke', userId }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+        setStatusMessage('Accès révoqué.');
+      }
+      return;
+    }
+    commitState({
+      ...workspace,
+      members: workspace.members.map((m) =>
+        m.userId === userId ? { ...m, revokedAt: new Date().toISOString() } : m,
+      ),
+      updatedAt: new Date().toISOString(),
+    });
+    setStatusMessage('Accès révoqué.');
+  };
 
   const applyImportedCoordinates = useCallback(
     (
@@ -2767,6 +2935,44 @@ export function RouteCollabWorkspace({
         return (
           <div className="rcw-stack" data-testid="tab-panel-etapes">
             {renderBanners()}
+
+            {canEditStages ? (
+              <div className="rcw-splitter-bar" data-testid="day-splitter-bar">
+                <span className="rcw-splitter-label">
+                  {workspace.stages.length} jour{workspace.stages.length > 1 ? 's' : ''}
+                </span>
+                <div className="rcw-splitter-pills">
+                  {[1, 2, 3, 4, 5].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      className={`rcw-split-pill${workspace.stages.length === d ? ' is-active' : ''}`}
+                      onClick={() => void handleSplitIntoDays(d)}
+                    >
+                      {d}j
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="rcw-split-pill"
+                    aria-label="Retirer une journée"
+                    disabled={workspace.stages.length <= 1}
+                    onClick={() => void handleSplitIntoDays(workspace.stages.length - 1)}
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    className="rcw-split-pill"
+                    aria-label="Ajouter une journée"
+                    onClick={() => void handleSplitIntoDays(workspace.stages.length + 1)}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             {workspace.stages.map((st) => {
               const kind: OvernightChipValue = st.overnightPlace?.type ?? 'none';
               const stM = computeStageMetrics(st, orderedPoints, workspace.sections);
@@ -2775,6 +2981,14 @@ export function RouteCollabWorkspace({
               const stagePoints =
                 sIdx >= 0 && eIdx >= sIdx ? orderedPoints.slice(sIdx, eIdx + 1) : orderedPoints;
               const stageMoments = knowledgePois.slice(0, 4);
+              const smartRecs = computeSmartStageRecommendations({
+                stagePoints,
+                pois: knowledgePois,
+                nearbyRoutes,
+                distanceKm: stM.distanceKm,
+                ascentM: stM.ascentM,
+                overnightType: kind === 'none' ? 'none' : kind,
+              });
               return (
                 <div key={st.id} className="rcw-day-card" data-testid={`day-category-${st.id}`}>
                   <button
@@ -2798,6 +3012,95 @@ export function RouteCollabWorkspace({
                       {OVERNIGHT_LABELS[kind]}
                     </span>
                   </button>
+
+                  {canEditStages ? (
+                    <div className="rcw-subpill-row">
+                      {(['none', 'refuge', 'bivouac', 'gite'] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          type="button"
+                          className={`rcw-mini-chip${kind === opt ? ' is-active' : ''}`}
+                          onClick={() => {
+                            const endPt = stagePoints[stagePoints.length - 1] ?? orderedPoints[orderedPoints.length - 1];
+                            void runOperation({
+                              type: 'set_overnight',
+                              stageId: st.id,
+                              overnightPlace:
+                                opt === 'none'
+                                  ? null
+                                  : {
+                                      id: `ovn-${st.id}-${opt}`,
+                                      type: opt,
+                                      name: `${OVERNIGHT_LABELS[opt]} J${st.dayNumber}`,
+                                      lat: endPt?.lat ?? 45.05,
+                                      lon: endPt?.lon ?? 5.51,
+                                      bookingStatus: 'planned',
+                                      provenance: 'manuel',
+                                      lastVerifiedAt: new Date().toISOString(),
+                                    },
+                            });
+                          }}
+                        >
+                          {OVERNIGHT_LABELS[opt]}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {smartRecs.length > 0 ? (
+                    <div className="rcw-cat-group">
+                      <span className="rcw-cat-label">Recommandations LKDV</span>
+                      <div className="rcw-rec-list">
+                        {smartRecs.slice(0, 3).map((rec) => (
+                          <div key={rec.id} className="rcw-rec-chip">
+                            <button
+                              type="button"
+                              className="rcw-rec-main"
+                              onClick={() => {
+                                if (rec.poi) {
+                                  setFocusedPoiId(rec.poi.id);
+                                  setFocusCoord([rec.poi.lon, rec.poi.lat]);
+                                  setOverlayDetail({
+                                    kind: 'poi',
+                                    poi: rec.poi,
+                                    stageId: st.id,
+                                    precision: 2,
+                                  });
+                                }
+                              }}
+                            >
+                              <strong>{rec.title}</strong>
+                              <span>{rec.reason}</span>
+                            </button>
+                            {rec.suggestedOvernightType && canEditStages ? (
+                              <button
+                                type="button"
+                                className="rcw-rec-apply"
+                                onClick={() =>
+                                  void runOperation({
+                                    type: 'set_overnight',
+                                    stageId: st.id,
+                                    overnightPlace: {
+                                      id: rec.poi?.id ?? `ovn-${st.id}`,
+                                      type: rec.suggestedOvernightType!,
+                                      name: rec.title,
+                                      lat: rec.poi?.lat ?? stagePoints[stagePoints.length - 1]?.lat ?? 45.05,
+                                      lon: rec.poi?.lon ?? stagePoints[stagePoints.length - 1]?.lon ?? 5.51,
+                                      bookingStatus: 'planned',
+                                      provenance: rec.poi?.source ?? 'LKDV',
+                                      lastVerifiedAt: new Date().toISOString(),
+                                    },
+                                  })
+                                }
+                              >
+                                Choisir
+                              </button>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="rcw-cat-group">
                     <span className="rcw-cat-label">Points sur le parcours</span>
@@ -2852,12 +3155,11 @@ export function RouteCollabWorkspace({
                           type="button"
                           className="rcw-subpill"
                           onClick={() => {
-                            setTabIndex(2);
-                            setAnalyserSection('chemin');
+                            void refreshKnowledgeBank();
                           }}
                         >
                           <XpIcon name="spark" size={12} />
-                          <span>Découvrir les repères</span>
+                          <span>{knowledgeLoading ? 'Recherche LKDV…' : 'Charger les repères'}</span>
                         </button>
                       )}
                     </div>
@@ -2893,21 +3195,6 @@ export function RouteCollabWorkspace({
                 </div>
               );
             })}
-
-            {canEditStages ? (
-              <button
-                type="button"
-                className="xp-secondary"
-                onClick={() =>
-                  void runOperation({
-                    type: 'split_days',
-                    targetDays: Math.min(orderedPoints.length - 1, workspace.stages.length + 1),
-                  })
-                }
-              >
-                + Découper en {Math.min(Math.max(2, orderedPoints.length - 1), workspace.stages.length + 1)} journées
-              </button>
-            ) : null}
           </div>
         );
       },
@@ -2919,119 +3206,33 @@ export function RouteCollabWorkspace({
       render: () => (
         <div className="rcw-stack" data-testid="tab-panel-analyser">
           {renderBanners()}
-          <XpChips
-            ariaLabel="Vue d’analyse"
-            value={analyserSection}
-            items={[
-              { id: 'terrain', label: 'Terrain' },
-              { id: 'milieu', label: 'Milieu & Météo' },
-              { id: 'chemin', label: `Sur le chemin (${knowledgePois.length})` },
-            ]}
-            onChange={(id) => setAnalyserSection(id as 'terrain' | 'milieu' | 'chemin')}
-          />
 
           {analyserSection === 'terrain' ? (
             <>
-              <div className="xp-profile" data-testid="elevation-profile">
-                {elevationStats.hasElevation && elevation.samples.length >= 2 ? (
-                  <>
-                    <svg
-                      className="rcw-elev-svg"
-                      viewBox="0 0 100 40"
-                      preserveAspectRatio="none"
-                      role="img"
-                      aria-label="Profil altimétrique synchronisé avec la carte"
-                      onMouseMove={(ev) => {
-                        const rect = ev.currentTarget.getBoundingClientRect();
-                        const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
-                        const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
-                        if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
-                      }}
-                      onMouseLeave={() => setHoveredCoord(null)}
-                    >
-                      <polyline
-                        fill="none"
-                        stroke="#17402c"
-                        strokeWidth="1.8"
-                        points={elevation.samples
-                          .map((s, idx) => {
-                            const x = (idx / Math.max(1, elevation.samples.length - 1)) * 100;
-                            const min = elevationStats.minEleM ?? 0;
-                            const span = Math.max(1, (elevationStats.maxEleM ?? 100) - min);
-                            const y = 36 - (((s.elevationM ?? min) - min) / span) * 32;
-                            return `${x.toFixed(1)},${y.toFixed(1)}`;
-                          })
-                          .join(' ')}
-                      />
-                    </svg>
-                    <div className="xp-profile-legend">
-                      <span>Min {elevationStats.minEleM} m</span>
-                      <span>Moy {terrainStats.avgAltitudeM ?? '—'} m</span>
-                      <span>Max {elevationStats.maxEleM} m</span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="xp-profile-empty">Altitude indisponible sur ce tracé</div>
-                )}
-              </div>
-
-              <XpMetrics
-                items={[
-                  { label: 'Effort IBP', value: terrainStats.ibpEstimate != null ? `${terrainStats.ibpEstimate}` : '—' },
-                  { label: 'Niveau', value: terrainStats.effortLevel },
-                  { label: 'Pente +', value: terrainStats.maxClimbSlopePct != null ? `${terrainStats.maxClimbSlopePct}%` : '—' },
-                  { label: 'Énergie', value: terrainStats.estimatedCaloriesKcal != null ? `${terrainStats.estimatedCaloriesKcal} kcal` : '—' },
-                ]}
+              <ElevationAreaChart
+                samples={elevation.samples}
+                minEleM={elevationStats.minEleM}
+                avgEleM={terrainStats.avgAltitudeM}
+                maxEleM={elevationStats.maxEleM}
+                onHoverRatio={(ratio) => {
+                  if (ratio == null || flattenedCoords.length === 0) {
+                    setHoveredCoord(null);
+                    return;
+                  }
+                  const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
+                  if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
+                }}
               />
 
-              {terrainStats.slopeBuckets.hasSlopeData ? (
-                <div className="rcw-stat-card" data-testid="slope-distribution-card">
-                  <div className="rcw-bar-head">
-                    <strong>Pentes</strong>
-                    <span className="rcw-sub-note">
-                      Moy. {terrainStats.avgSpeedKmh ?? '—'} km/h · Descente max {terrainStats.maxDescentSlopePct ?? '—'}%
-                    </span>
-                  </div>
-                  {[
-                    { label: '< 5 %', pct: terrainStats.slopeBuckets.flatPct, tone: 'good' },
-                    { label: '5–10 %', pct: terrainStats.slopeBuckets.moderatePct, tone: 'water' },
-                    { label: '10–15 %', pct: terrainStats.slopeBuckets.sustainedPct, tone: 'warn' },
-                    { label: '> 15 %', pct: terrainStats.slopeBuckets.steepPct, tone: 'bad' },
-                  ]
-                    .filter((b) => b.pct > 0)
-                    .map((b) => (
-                      <div key={b.label} className="rcw-bar-row">
-                        <div className="rcw-bar-head">
-                          <span>{b.label}</span>
-                          <span>{b.pct} %</span>
-                        </div>
-                        <div className="rcw-bar-track">
-                          <div className={`rcw-bar-fill rcw-bar-fill--${b.tone}`} style={{ width: `${b.pct}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ) : null}
+              <EffortRadialGauge stats={terrainStats} />
 
-              <div className="rcw-stat-card" data-testid="surface-breakdown-card">
-                <div className="rcw-bar-head">
-                  <strong>Sols & surfaces</strong>
-                  <span className="rcw-sub-note">
-                    {workspace.sections.length} tronçon(s) · {totalWarnings} alerte(s)
-                  </span>
-                </div>
-                {terrainStats.surfaces.map((s) => (
-                  <div key={s.key} className="rcw-bar-row">
-                    <div className="rcw-bar-head">
-                      <span>{s.label}</span>
-                      <span>{s.pct} %</span>
-                    </div>
-                    <div className="rcw-bar-track">
-                      <div className="rcw-bar-fill" style={{ width: `${s.pct}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <SlopeStackedVisual stats={terrainStats} />
+
+              <SurfaceStackedVisual
+                stats={terrainStats}
+                sectionsCount={workspace.sections.length}
+                warningsCount={totalWarnings}
+              />
 
               <XpRows>
                 <XpRow
@@ -3049,41 +3250,12 @@ export function RouteCollabWorkspace({
 
           {analyserSection === 'milieu' ? (
             <>
-              <XpRows>
-                <XpRow
-                  icon="mtn"
-                  tone="good"
-                  title={terrainStats.ecologicalZone}
-                  sub={`Soleil : ${terrainStats.sunriseLocal} → ${terrainStats.sunsetLocal} (${terrainStats.daylightLabel})`}
-                />
-                {liveWeather ? (
-                  <XpRow
-                    icon="cloud"
-                    tone="water"
-                    title={`${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C (ressenti ${liveWeather.windChillC ?? '—'}°C)`}
-                    sub={`Vent ${liveWeather.windKph ?? '—'} km/h · Humidité ${liveWeather.humidityPct ?? '—'} % · ${liveWeather.source}`}
-                    badge={{ label: 'Direct', tone: 'good' }}
-                  />
-                ) : (
-                  <XpRow
-                    icon="cloud"
-                    tone="muted"
-                    title={knowledgeLoading ? 'Chargement météo…' : 'Météo indisponible'}
-                    sub="Appuyez sur Actualiser"
-                  />
-                )}
-              </XpRows>
+              <SunDaylightArc stats={terrainStats} />
 
-              {liveWeather && liveWeather.hourlyPreview.length > 0 ? (
-                <div className="rcw-hourly-strip" aria-label="Prévisions horaires">
-                  {liveWeather.hourlyPreview.map((h) => (
-                    <div key={h.time} className="rcw-hourly-cell">
-                      <span>{h.time}</span>
-                      <strong>{h.tempC != null ? `${h.tempC}°` : '—'}</strong>
-                      <span>{h.rainProbPct != null ? `${h.rainProbPct}%` : `${h.windKph ?? '—'} km/h`}</span>
-                    </div>
-                  ))}
-                </div>
+              <WeatherForecastChart weather={liveWeather} loading={knowledgeLoading} />
+
+              {placeLabel ? (
+                <div className="rcw-sub-note">Secteur : {placeLabel}</div>
               ) : null}
 
               <XpRows>
@@ -3162,7 +3334,7 @@ export function RouteCollabWorkspace({
                       onClick={() => {
                         setFocusedPoiId(poi.id);
                         setFocusCoord([poi.lon, poi.lat]);
-                        setStatusMessage(`${poi.name} centré sur la carte (${poi.distanceToTrackM} m).`);
+                        setOverlayDetail({ kind: 'poi', poi, precision: 2 });
                       }}
                     />
                   ))}
@@ -3181,158 +3353,361 @@ export function RouteCollabWorkspace({
       id: 'equipe',
       label: 'Équipe',
       icon: 'users',
-      render: () => (
-        <div className="rcw-stack" data-testid="tab-panel-equipe">
-          {renderBanners()}
-          <XpEyebrow>Coédition & Présence ({presence.length} actif(s))</XpEyebrow>
-          {presence.length > 0 ? (
-            <XpRows>
-              {presence.map((pr) => (
-                <XpRow
-                  key={pr.userId}
-                  icon="users"
-                  tone="good"
-                  title={pr.displayName}
-                  sub={
-                    pr.activeStageId
-                      ? `Sur étape ${pr.activeStageId} · ${pr.mode === 'editing' ? 'Édition' : 'Lecture'}`
-                      : pr.mode === 'editing'
-                        ? 'Édition en cours'
-                        : 'En ligne'
-                  }
-                  badge={{ label: 'En direct', tone: 'good' }}
+      render: () => {
+        const activeMembers = workspace.members.filter((m) => !m.revokedAt);
+        const sharedKit = workspace.kitItems;
+        return (
+          <div className="rcw-stack" data-testid="tab-panel-equipe">
+            {renderBanners()}
+
+            {/* Présence en direct */}
+            <div className="rcw-visual-card">
+              <div className="rcw-visual-head">
+                <span className="rcw-visual-title">
+                  Coédition ({presence.length > 0 ? `${presence.length} en ligne` : `${activeMembers.length} membre(s)`})
+                </span>
+                <span className="rcw-mini-pill">Seq {workspace.headSeq}</span>
+              </div>
+              <div className="rcw-avatar-strip">
+                {(presence.length > 0 ? presence : activeMembers).map((entry) => {
+                  const name = 'displayName' in entry ? entry.displayName : 'Membre';
+                  const initials = name
+                    .split(/\s+/)
+                    .slice(0, 2)
+                    .map((w) => w[0]?.toUpperCase() ?? '')
+                    .join('');
+                  const isLive = presence.some((p) => p.userId === entry.userId);
+                  return (
+                    <div key={entry.userId} className="rcw-avatar-pill" title={name}>
+                      <span className="rcw-avatar-circle">
+                        {initials || 'M'}
+                        <i className={`rcw-dot ${isLive ? 'is-live' : ''}`} />
+                      </span>
+                      <span className="rcw-avatar-name">{name.split(' ')[0]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Membres & Droits + Recherche LKDV */}
+            <div className="rcw-visual-card">
+              <div className="rcw-visual-head">
+                <span className="rcw-visual-title">Membres & Droits ({activeMembers.length})</span>
+                <button
+                  type="button"
+                  className="rcw-mini-chip"
+                  onClick={() => openSubDrawer('sharing')}
+                >
+                  Partage & Lien
+                </button>
+              </div>
+
+              {canManageMembers ? (
+                <div className="rcw-search-row">
+                  <input
+                    type="search"
+                    className="rcw-input"
+                    placeholder="Inviter un membre LKDV (nom)…"
+                    value={userSearchQuery}
+                    onChange={(e) => void handleSearchLkdvUsers(e.target.value)}
+                  />
+                </div>
+              ) : null}
+
+              {userSearchLoading ? (
+                <p className="rcw-sub-note">Recherche en cours…</p>
+              ) : userSearchResults.length > 0 ? (
+                <div className="rcw-rec-list">
+                  {userSearchResults.map((u) => {
+                    const already = activeMembers.some((m) => m.userId === u.id);
+                    return (
+                      <div key={u.id} className="rcw-rec-chip">
+                        <div className="rcw-rec-main">
+                          <strong>{u.full_name || 'Voyageur LKDV'}</strong>
+                          <span>{u.location || 'Communauté LKDV'}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="rcw-rec-apply"
+                          disabled={already}
+                          onClick={() =>
+                            void handleMemberRoleAction(u.id, 'editor', u.full_name || 'Voyageur LKDV')
+                          }
+                        >
+                          {already ? 'Membre' : '+ Éditeur'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              <div className="rcw-member-list">
+                {activeMembers.map((m) => (
+                  <div key={m.userId} className="rcw-member-row">
+                    <div className="rcw-member-info">
+                      <strong>{m.displayName}</strong>
+                      <span>{ROLE_LABELS[m.role] ?? m.role}</span>
+                    </div>
+                    {canManageMembers && m.role !== 'owner' && m.userId !== currentUserId ? (
+                      <div className="rcw-member-actions">
+                        <select
+                          aria-label={`Rôle de ${m.displayName}`}
+                          className="rcw-select-sm"
+                          value={m.role}
+                          onChange={(e) =>
+                            void handleMemberRoleAction(
+                              m.userId,
+                              e.target.value as 'co_organizer' | 'editor' | 'contributor' | 'participant',
+                              m.displayName,
+                            )
+                          }
+                        >
+                          <option value="co_organizer">Coorganisateur</option>
+                          <option value="editor">Éditeur</option>
+                          <option value="contributor">Contributeur</option>
+                          <option value="participant">Participant</option>
+                        </select>
+                        <button
+                          type="button"
+                          className="rcw-split-pill"
+                          aria-label={`Révoquer ${m.displayName}`}
+                          onClick={() => void handleRevokeMember(m.userId)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="xp-badge" data-tone={m.role === 'owner' ? 'good' : 'muted'}>
+                        {ROLE_LABELS[m.role] ?? m.role}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Matériel commun & Attribution */}
+            <div className="rcw-visual-card">
+              <div className="rcw-visual-head">
+                <span className="rcw-visual-title">Matériel commun ({sharedKit.length})</span>
+                <button
+                  type="button"
+                  className="rcw-mini-chip"
+                  onClick={() => openSubDrawer('kit')}
+                >
+                  Gérer tout
+                </button>
+              </div>
+              {sharedKit.length === 0 ? (
+                <p className="rcw-sub-note">Aucun article partagé pour l’instant.</p>
+              ) : (
+                <div className="rcw-member-list">
+                  {sharedKit.slice(0, 4).map((item) => (
+                    <div key={item.id} className="rcw-member-row">
+                      <div className="rcw-member-info">
+                        <strong>{item.name}</strong>
+                        <span>
+                          {item.assigneeName ? `Porté par ${item.assigneeName}` : 'Non attribué'}
+                        </span>
+                      </div>
+                      {item.status === 'needs_revalidation' ? (
+                        <button
+                          type="button"
+                          className="rcw-rec-apply"
+                          onClick={() => void handleRevalidateKitItem(item.id)}
+                        >
+                          Revalider
+                        </button>
+                      ) : !item.assigneeUserId ? (
+                        <button
+                          type="button"
+                          className="rcw-mini-chip"
+                          onClick={() => void handleAssignKitItem(item.id, currentUserId)}
+                        >
+                          Je prends
+                        </button>
+                      ) : (
+                        <span className="xp-badge" data-tone="good">
+                          OK
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Commentaire rapide + Propositions + Hub */}
+            <div className="rcw-visual-card">
+              <div className="rcw-visual-head">
+                <span className="rcw-visual-title">
+                  Discussion ({workspace.comments.length}) · Propositions ({openProposalsCount})
+                </span>
+                <button
+                  type="button"
+                  className="rcw-mini-chip"
+                  onClick={() => openSubDrawer('proposals')}
+                >
+                  Voir tout
+                </button>
+              </div>
+              <div className="rcw-search-row">
+                <input
+                  type="text"
+                  className="rcw-input"
+                  placeholder="Note rapide pour le groupe…"
+                  value={commentBody}
+                  onChange={(e) => setCommentBody(e.target.value)}
                 />
-              ))}
-            </XpRows>
-          ) : (
-            <p className="rcw-sub-note">
-              Vous travaillez sur la séquence {workspace.headSeq} ({ROLE_LABELS[currentMember?.role ?? ''] ?? 'Accès partagé'}).
-            </p>
-          )}
-
-          <XpEyebrow>Collaboration & Droits</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="msg"
-              tone={orphanCommentsCount > 0 ? 'warn' : 'ink'}
-              title="Commentaires & Propositions"
-              sub={`${workspace.comments.length} commentaire(s) · ${openProposalsCount} proposition(s) ouverte(s)`}
-              badge={
-                orphanCommentsCount > 0
-                  ? { label: `${orphanCommentsCount} à repositionner`, tone: 'warn' }
-                  : { label: `${openProposalsCount}`, tone: 'muted' }
-              }
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('proposals')}
-            />
-            <XpRow
-              icon="share"
-              tone="water"
-              title="Membres, Droits & Partage"
-              sub={`${workspace.members.length} membre(s) · Lien révocable lecture seule`}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('sharing')}
-            />
-            <XpRow
-              icon="pack"
-              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
-              title="Matériel commun & Attribution"
-              sub="Attribuer le matériel partagé aux participants"
-              badge={
-                kitToRevalidateCount > 0
-                  ? { label: `${kitToRevalidateCount} à revoir`, tone: 'warn' }
-                  : { label: 'OK', tone: 'good' }
-              }
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('kit')}
-            />
-          </XpRows>
-
-          <XpEyebrow>Hub, Club & Messagerie</XpEyebrow>
-          <div className="rcw-code-box">
-            <strong>Carte partagée : {hubSummary.title}</strong>
-            <br />
-            {hubSummary.totalDistanceKm} km · {hubSummary.stagesCount} étape(s) ·{' '}
-            {hubSummary.publishedRevisionNo
-              ? `Version v${hubSummary.publishedRevisionNo}`
-              : 'Brouillon'}{' '}
-            · <Link href={hubSummary.href}>Ouvrir le lien versionné</Link>
+                <button
+                  type="button"
+                  className="rcw-rec-apply"
+                  disabled={!commentBody.trim()}
+                  onClick={() => void handleAddComment()}
+                >
+                  Envoyer
+                </button>
+              </div>
+              <div className="rcw-sub-note">
+                Hub : <Link href={hubSummary.href}>{hubSummary.title}</Link> ({hubSummary.totalDistanceKm} km)
+              </div>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       id: 'depart',
       label: 'Départ',
       icon: 'pack',
-      render: () => (
-        <div className="rcw-stack" data-testid="tab-panel-depart">
-          {renderBanners()}
-          <XpMetrics
-            items={[
-              {
-                label: 'Statut',
-                value: workspace.publishedRevisionNo
-                  ? `Publiée v${workspace.publishedRevisionNo}`
-                  : `Seq ${workspace.headSeq}`,
-              },
-              {
-                label: 'Pack local',
-                value: verifiedPack ? `v${verifiedPack.manifest.revisionNo}` : 'Aucun',
-              },
-              { label: 'Réseau', value: online ? 'En ligne' : 'Avion' },
-            ]}
-          />
+      render: () => {
+        const hasTrack = orderedPoints.length >= 2;
+        const hasPack = Boolean(verifiedPack);
+        const kitReady = kitToRevalidateCount === 0;
+        const weatherReady = Boolean(liveWeather) || departChecks.weather;
+        const checks = [
+          hasTrack && departChecks.track,
+          hasPack,
+          kitReady,
+          weatherReady,
+          departChecks.safety,
+        ];
+        const scorePct = Math.round((checks.filter(Boolean).length / checks.length) * 100);
+        return (
+          <div className="rcw-stack" data-testid="tab-panel-depart">
+            {renderBanners()}
 
-          <div className="rcw-inline-actions">
-            {canPublish ? (
-              <button type="button" className="xp-primary" onClick={() => void handlePublish()}>
-                Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
+            <ReadinessRadialRing
+              scorePct={scorePct}
+              label={
+                scorePct >= 80
+                  ? 'Prêt pour le départ'
+                  : scorePct >= 50
+                    ? 'Préparation avancée'
+                    : 'Préparation à finaliser'
+              }
+              sublabel={`${totals.distanceKm} km · ${workspace.stages.length} étape(s) · ${
+                workspace.publishedRevisionNo
+                  ? `Version v${workspace.publishedRevisionNo}`
+                  : `Brouillon seq ${workspace.headSeq}`
+              }`}
+            />
+
+            {/* Checklist interactive avant départ */}
+            <div className="rcw-visual-card">
+              <div className="rcw-visual-head">
+                <span className="rcw-visual-title">Checklist avant départ</span>
+                <span className="rcw-mini-pill">{online ? 'En ligne' : 'Mode avion'}</span>
+              </div>
+              <XpRows>
+                <XpRow
+                  icon="flag"
+                  tone={hasTrack && departChecks.track ? 'good' : 'warn'}
+                  title="Tracé & étapes validés"
+                  sub={`${orderedPoints.length} point(s) · ${totalWarnings} alerte(s)`}
+                  badge={{ label: departChecks.track ? 'Validé' : 'À vérifier', tone: departChecks.track ? 'good' : 'warn' }}
+                  onClick={() => setDepartChecks((c) => ({ ...c, track: !c.track }))}
+                />
+                <XpRow
+                  icon="offline"
+                  tone={hasPack ? 'good' : 'warn'}
+                  title="Pack hors-ligne embarqué"
+                  sub={
+                    verifiedPack
+                      ? `Pack v${verifiedPack.manifest.revisionNo} vérifié sur cet appareil`
+                      : 'Téléchargez le pack pour l’accès sans réseau'
+                  }
+                  badge={{ label: verifiedPack ? `v${verifiedPack.manifest.revisionNo}` : 'Absent', tone: verifiedPack ? 'good' : 'warn' }}
+                  onClick={() => openSubDrawer('offline-carnet')}
+                />
+                <XpRow
+                  icon="pack"
+                  tone={kitReady ? 'good' : 'warn'}
+                  title="Sac & matériel vérifiés"
+                  sub={
+                    kitReady
+                      ? `${workspace.kitItems.length} article(s) confirmé(s)`
+                      : `${kitToRevalidateCount} article(s) à revalider`
+                  }
+                  badge={{ label: kitReady ? 'Prêt' : `${kitToRevalidateCount} à revoir`, tone: kitReady ? 'good' : 'warn' }}
+                  onClick={() => openSubDrawer('kit')}
+                />
+                <XpRow
+                  icon="cloud"
+                  tone={weatherReady ? 'good' : 'muted'}
+                  title="Météo & sécurité au départ"
+                  sub={
+                    liveWeather
+                      ? `${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C · Vent ${liveWeather.windKph ?? '—'} km/h`
+                      : 'Vérifier les conditions avant de partir'
+                  }
+                  badge={{ label: weatherReady ? 'Vérifié' : 'À voir', tone: weatherReady ? 'good' : 'muted' }}
+                  onClick={() => setDepartChecks((c) => ({ ...c, weather: !c.weather }))}
+                />
+                <XpRow
+                  icon="alert"
+                  tone={departChecks.safety ? 'good' : 'muted'}
+                  title="Batterie, secours & trace partagée"
+                  sub="Téléphone chargé, lien Hub partagé"
+                  badge={{ label: departChecks.safety ? 'OK' : 'Cocher', tone: departChecks.safety ? 'good' : 'muted' }}
+                  onClick={() => setDepartChecks((c) => ({ ...c, safety: !c.safety }))}
+                />
+              </XpRows>
+            </div>
+
+            <div className="rcw-inline-actions">
+              {canPublish ? (
+                <button type="button" className="xp-primary" onClick={() => void handlePublish()}>
+                  Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => void handleDownloadPack(false)}
+              >
+                Pack hors ligne
               </button>
-            ) : null}
-            <button
-              type="button"
-              className="xp-secondary"
-              onClick={() => void handleDownloadPack(false)}
-            >
-              Télécharger le pack
-            </button>
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => handleDownloadGpx()}
+              >
+                Export GPX
+              </button>
+              <button
+                type="button"
+                className="xp-secondary"
+                onClick={() => openSubDrawer('offline-carnet')}
+              >
+                Activité & Carnet
+              </button>
+            </div>
           </div>
-
-          <XpEyebrow>Préparation & Retour</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="offline"
-              tone={!online || offlineQueue.length > 0 ? 'warn' : 'good'}
-              title="Hors ligne, Activité & Carnet"
-              sub="Manifeste pack, coupure réseau, file locale, départ & bilan carnet"
-              badge={
-                verifiedPack
-                  ? { label: `Pack v${verifiedPack.manifest.revisionNo}`, tone: 'good' }
-                  : { label: 'À préparer', tone: 'muted' }
-              }
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('offline-carnet')}
-            />
-            <XpRow
-              icon="pack"
-              tone={kitToRevalidateCount > 0 ? 'warn' : 'good'}
-              title="Checklist du sac"
-              sub={
-                kitToRevalidateCount > 0
-                  ? `${kitToRevalidateCount} article(s) à revalider avant départ`
-                  : 'Kit vérifié et prêt pour le départ'
-              }
-              badge={{
-                label: kitToRevalidateCount > 0 ? `${kitToRevalidateCount} à revoir` : 'Prêt',
-                tone: kitToRevalidateCount > 0 ? 'warn' : 'good',
-              }}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('kit')}
-            />
-          </XpRows>
-        </div>
-      ),
+        );
+      },
     },
   ];
 
@@ -3594,6 +3969,20 @@ export function RouteCollabWorkspace({
           bottomInset={0}
           labelledBy="rcw-sheet-title"
           tabsBottom={false}
+          mini={
+            !activeSubDrawer && tabIndex === 2
+              ? {
+                  items: [
+                    { id: 'terrain', label: 'Terrain', icon: 'mtn' },
+                    { id: 'milieu', label: 'Milieu & Météo', icon: 'cloud' },
+                    { id: 'chemin', label: `Sur le chemin (${knowledgePois.length})`, icon: 'pin' },
+                  ],
+                  value: analyserSection === 'terrain' ? 0 : analyserSection === 'milieu' ? 1 : 2,
+                  onChange: (idx) =>
+                    setAnalyserSection(idx === 0 ? 'terrain' : idx === 1 ? 'milieu' : 'chemin'),
+                }
+              : null
+          }
         >
           {activeSubDrawer ? activeSubDrawer.body : null}
         </ExplorerSheet>
