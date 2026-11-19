@@ -118,7 +118,9 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
   const eventDate = isoDate(startsAt) ?? isoDate(event.event_date) ?? '';
   const endsAt = asString(event.ends_at);
   const maxParticipants = asNumber(event.max_participants) ?? 0;
-  const currentParticipants = participants.filter((p) => p.status === 'confirmed').length || (asNumber(event.current_participants) ?? 0);
+  const currentParticipants = isClubEventOnly
+    ? asNumber(event.participants_count) ?? 0
+    : participants.filter((p) => p.status === 'confirmed').length || (asNumber(event.current_participants) ?? 0);
   const startsAtMs = startsAt ? Date.parse(startsAt) : eventDate ? Date.parse(`${eventDate}T23:59:59+01:00`) : NaN;
   const past = Number.isFinite(startsAtMs) ? startsAtMs < Date.now() : false;
   const status = asString(event.status);

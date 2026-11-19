@@ -62,8 +62,7 @@ SELECT is((SELECT count(*) FROM public.club_event_registrations WHERE event_id =
   0::bigint, 'Le RSVP futur reste dans le registre historique');
 SELECT is((SELECT status FROM public.club_event_registrations_effective WHERE event_id = '84ca902a-16af-4463-a0ad-30432ff5c002'),
   'registered', 'Le membre voit son RSVP futur depuis la vue');
-INSERT INTO public.club_event_registrations (event_id, user_id, status)
-VALUES ('84ca902a-16af-4463-a0ad-30432ff5c002', '84ca902a-16af-4463-a0ad-30432ff5a002', 'cancelled');
+SELECT public.transact_club_event_registration('84ca902a-16af-4463-a0ad-30432ff5c002', false);
 SELECT is((SELECT status FROM public.club_event_registrations_effective WHERE event_id = '84ca902a-16af-4463-a0ad-30432ff5c002'),
   'cancelled', 'La désinscription explicite masque le RSVP futur');
 SELECT set_config('request.jwt.claim.sub', '84ca902a-16af-4463-a0ad-30432ff5a004', true);

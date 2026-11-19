@@ -205,8 +205,8 @@ export default function EventDetailClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: previous === 'none' ? 'register' : 'cancel' }),
         });
-        const payload = await response.json() as { data?: { status?: string }; message?: string };
-        if (!response.ok) throw new Error(payload.message ?? 'Inscription indisponible.');
+        const payload = await response.json() as { data?: { status?: string }; error?: string; message?: string };
+        if (!response.ok) throw new Error(payload.error === 'CAPACITY_FULL' ? 'Cette sortie est complète.' : payload.message ?? 'Inscription indisponible.');
         next = 'none';
         if (previous === 'none') {
           const confirmedStatus = payload.data?.status;

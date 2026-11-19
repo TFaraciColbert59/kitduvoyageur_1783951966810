@@ -184,64 +184,42 @@ describe('ClubDrawer — RSVP persisté', () => {
     expect(screen.getByRole('button', { name: 'Non' }).getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('enregistre « Je participe » avec un état optimiste', async () => {
-    fetchMock.mockResolvedValueOnce(
-      response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: true })
-    );
+  it('affiche la place confirmée après la réponse du registre', async () => {
+    fetchMock.mockResolvedValueOnce(response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: true, registrationStatus: 'registered' }));
     renderClub();
-
     const participate = screen.getByRole('button', { name: 'Je participe' });
-    expect(participate.getAttribute('aria-pressed')).toBe('false');
 
     fireEvent.click(participate);
 
-    expect(
-      screen.getByRole('button', { name: 'Je participe' }).getAttribute('aria-pressed')
-    ).toBe('true');
+    expect(participate.getAttribute('aria-pressed')).toBe('false');
+    await waitFor(() => expect(participate.getAttribute('aria-pressed')).toBe('true'));
     expect(screen.getByRole('status').textContent).toContain('Ta réponse');
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(requestBody()).toEqual({
-      action: 'rsvp',
-      clubId: CLUB_ID,
-      eventId: EVENT_ID,
-      attending: true,
-    });
+    expect(requestBody()).toEqual({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID, attending: true });
   });
 
-  it('enregistre « Non » comme participation retirée', async () => {
-    fetchMock.mockResolvedValueOnce(
-      response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: false })
-    );
+  it('affiche le statut de liste d’attente renvoyé par le registre', async () => {
+    fetchMock.mockResolvedValueOnce(response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: false, registrationStatus: 'waitlist' }));
     renderClub();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Non' }));
-
-    expect(screen.getByRole('button', { name: 'Non' }).getAttribute('aria-pressed')).toBe('true');
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(requestBody()).toEqual({
-      action: 'rsvp',
-      clubId: CLUB_ID,
-      eventId: EVENT_ID,
-      attending: false,
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Je participe' }));
+    expect(await screen.findByText('Liste d’attente')).toBeTruthy();
   });
 
-  it('annule le RSVP optimiste si le serveur échoue', async () => {
+  it('enregistre « Non » comme inscription retirée', async () => {
+    fetchMock.mockResolvedValueOnce(response({ clubId: CLUB_ID, eventId: EVENT_ID, attending: false, registrationStatus: 'cancelled' }));
+    renderClub();
+    const decline = screen.getByRole('button', { name: 'Non' });
+    fireEvent.click(decline);
+    await waitFor(() => expect(decline.getAttribute('aria-pressed')).toBe('true'));
+    expect(requestBody()).toEqual({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID, attending: false });
+  });
+
+  it('conserve la réponse précédente si le serveur échoue', async () => {
     fetchMock.mockRejectedValueOnce(new TypeError('network'));
     renderClub();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Je participe' }));
-    expect(
-      screen.getByRole('button', { name: 'Je participe' }).getAttribute('aria-pressed')
-    ).toBe('true');
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: 'Je participe' }).getAttribute('aria-pressed')
-      ).toBe('false')
-    );
-    expect(screen.getByRole('status').textContent).toContain("n'a pas abouti");
+    const participate = screen.getByRole('button', { name: 'Je participe' });
+    fireEvent.click(participate);
+    await screen.findByText(/n’a pas abouti|n'a pas abouti/);
+    expect(participate.getAttribute('aria-pressed')).toBe('false');
   });
 });
 

@@ -145,6 +145,12 @@ export async function GET(
         : allRegistrations.filter((registration) => registration.userId === user?.id);
     }
 
+    for (const event of visible) {
+      if (event.registeredCount == null) continue;
+      const counts = eventCounts[event.id] ?? { registered: 0, waitlist: 0 };
+      eventCounts[event.id] = { ...counts, registered: event.registeredCount };
+    }
+
     // Fail-closed supplémentaire : la recherche applique déjà canViewClubEvent,
     // mais on revalide chaque ligne avant de la sérialiser.
     const safe = visible.filter((event) =>

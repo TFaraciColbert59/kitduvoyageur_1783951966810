@@ -5,10 +5,8 @@ import { createClient } from '@/lib/supabase/server';
 import {
   buildEventFlyer,
   canViewClubEvent,
-  cancelEventRegistration,
   computeEventAttendanceStats,
   publishEventRouteRevision,
-  registerForClubEvent,
   syncParticipantRouteRevision,
   updateEventOrganization,
   type Club,
@@ -37,6 +35,7 @@ import {
 import {
   mapClubRow,
   mapEventRow,
+  mapRegistrationRow,
   mapRouteSnapshot,
   mapRouteSyncRow,
   type Row,
@@ -147,7 +146,7 @@ export async function GET(
     const registrations = user ? await loadEventRegistrations(supabase, eventId) : [];
     const manager = isManager(bundle);
     const eventCounts = {
-      registered: registrations.filter((registration) => registration.status === 'registered').length,
+      registered: event.registeredCount ?? registrations.filter((registration) => registration.status === 'registered').length,
       waitlist: registrations.filter((registration) => registration.status === 'waitlist').length,
     };
     const visibleRegistrations = manager
@@ -220,7 +219,7 @@ export async function POST(
     const nowIso = new Date().toISOString();
     const action = parsed.data;
 
-    if (!canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members)) {
+    if (action.action !== 'cancel' && !canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members)) {
       return errorJson('not_found', 404);
     }
 
@@ -240,63 +239,23 @@ export async function POST(
       return respondClubResult(flyer);
     }
 
-    const registrations = await loadEventRegistrations(supabase, eventId);
-
-    if (action.action === 'register') {
-      if (Date.parse(event.startsAt) <= Date.now()) return errorJson('invalid_state', 409);
-      const result = registerForClubEvent({
-        event,
-        club: bundle.club,
-        userId: user.id,
-        memberships: bundle.members,
-        registrations,
-        paceGroupId: action.paceGroupId ?? null,
-        nowIso,
+    if (action.action === 'register' || action.action === 'cancel') {
+      const attending = action.action === 'register';
+      const { data, error } = await supabase.rpc('transact_club_event_registration', {
+        p_event_id: eventId,
+        p_attending: attending,
+        p_pace_group_id: attending ? action.paceGroupId ?? null : null,
       });
-      if (!result.ok) return respondClubResult(result);
-
-      const { error } = await supabase.from('club_event_registrations').upsert(
-        {
-          event_id: eventId,
-          user_id: user.id,
-          status: result.data.registration.status,
-          pace_group_id: result.data.registration.paceGroupId,
-          registered_at: nowIso,
-          updated_at: nowIso,
-        },
-        { onConflict: 'event_id,user_id' },
-      );
-      if (error) return dbFailure('POST register', error);
-      return json({ data: result.data.registration }, 201);
+      if (error?.code === '23514') return errorJson('CAPACITY_FULL', 409);
+      if (error?.code === '22023') return errorJson('invalid_body', 400);
+      if (error) return dbFailure('POST registration', error);
+      const transaction = data as { registration: Row | null; promoted_user_id?: string | null };
+      const registration = transaction.registration ? mapRegistrationRow(transaction.registration) : null;
+      if (attending) return json({ data: registration }, 201);
+      return json({ data: { registrations: registration ? [registration] : [], promotedUserId: transaction.promoted_user_id ?? null } });
     }
 
-    if (action.action === 'cancel') {
-      const result = cancelEventRegistration({ event, userId: user.id, registrations, nowIso });
-      if (!result.ok) return respondClubResult(result);
-
-      const cancelled = result.data.registrations.find((row) => row.eventId === eventId && row.userId === user.id);
-      if (!cancelled) return errorJson('not_found', 404);
-      // Un RSVP historique actif peut être visible sans ligne dans le nouveau registre.
-      // La désinscription devient alors une ligne explicite qui prime sur cet RSVP.
-      const { error } = await supabase.from('club_event_registrations').upsert({
-        event_id: eventId,
-        user_id: user.id,
-        status: 'cancelled',
-        registered_at: cancelled.registeredAt,
-        updated_at: nowIso,
-      }, { onConflict: 'event_id,user_id' });
-      if (error) return dbFailure('POST cancel', error);
-
-      if (result.data.promotedUserId) {
-        const { error: promoteError } = await supabase
-          .from('club_event_registrations')
-          .update({ status: 'registered', updated_at: nowIso })
-          .eq('event_id', eventId)
-          .eq('user_id', result.data.promotedUserId);
-        if (promoteError) return dbFailure('POST cancel promote', promoteError);
-      }
-      return json({ data: result.data });
-    }
+    const registrations = await loadEventRegistrations(supabase, eventId);
 
     if (action.action === 'publish_route') {
       const published = publishEventRouteRevision({

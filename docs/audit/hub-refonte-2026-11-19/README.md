@@ -303,8 +303,8 @@ le worktree et la base locale de recette.
 
 Les 187 identifiants des deux documents fournis correspondent exactement.
 La copie `LKDV_Audit_Implementation_Hub_Suivi.xlsx` conserve les 11 onglets, les formules, le tableau Excel
-et la validation des statuts. Les 51 lignes annotées indiquent la preuve
-acquise ou la condition qui reste à vérifier. Les 136 autres conservent le
+et la validation des statuts. Les 52 lignes annotées indiquent la preuve
+acquise ou la condition qui reste à vérifier. Les 135 autres conservent le
 statut initial. Les seules lignes clôturées dans cette passe sont P00-01 et
 P01-02. Les gates des dix phases restent à vérifier avec leurs dépendances.
 
@@ -367,7 +367,37 @@ en arrière, rétablir d’abord l’application, puis exécuter le script SQL
 de retour. Il retire les copies intactes et conserve les inscriptions
 modifiées ainsi que les RSVP sources.
 
-P02-11 attend encore le lien entre l’événement et l’aventure. Le profil
-Compte et les invitations utilisent encore des écritures distinctes. La
-garantie de capacité et de promotion FIFO exige une opération commune et
-atomique.
+P02-11 attend encore le lien entre l’événement et l’aventure. Le lot suivant
+raccorde les parcours Compte, fiche et invitation à la même transaction.
+
+
+### P02-11 / P09-03 · Dernière place et liste d’attente
+
+La fiche du club, le profil Compte et l’invitation de sortie passent par la
+même transaction PostgreSQL. Le verrou porte sur la sortie. Le calcul des
+places inclut les inscriptions actuelles et les RSVP hérités encore en vigueur.
+La confirmation, l’attente, le retrait et la promotion FIFO sont persistés
+dans ce registre. Une répétition renvoie le statut enregistré. Le compteur
+d’utilisation du lien est écrit dans la même transaction et aucune place
+n’est confirmée à l’écran avant la réponse du serveur.
+
+**Recette locale.** Le script
+`scripts/db/ci/verify_club_event_concurrency.sh` attend deux sessions PostgreSQL
+distinctes et vérifie que la seconde attend sur le verrou de la première.
+Pour une seule place, la première inscription est confirmée et la seconde
+est placée en attente. Le retrait promeut cette dernière et le compteur
+final reste à un. 19 assertions pgTAP ciblent la transaction, dont l’attente
+FIFO, le refus d’un lien sans place, l’usage unique d’une invitation répétée et
+la fermeture des écritures directes. Au total, 119 suites et 1 980 assertions
+PostgreSQL passent, ainsi que 98 tests applicatifs ciblés et le typage.
+
+Le retour arrière a été exercé dans une transaction locale. Il retire le RPC,
+rétablit les écritures et recalcule le compteur historique. Il conserve les
+inscriptions modernes. L’ancien profil lit son propre registre après rollback
+et les nouvelles lignes du registre moderne y restent invisibles jusqu’au
+rétablissement de l’application actuelle. Coordonner le déploiement SQL et
+applicatif, car les anciens clients écrivent directement dans les tables.
+
+Restent ouverts le lien à l’aventure canonique, l’annulation de la sortie par
+l’organisateur et la recette Auth sur appareil. P09-03 conserve aussi les
+scénarios de départ, révision, dépense, kit, reprise hors ligne et notification.

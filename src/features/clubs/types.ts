@@ -208,6 +208,7 @@ export interface ClubEvent {
   /** Visibilité propre de l'événement (bornée par celle du club). */
   visibility: P01Visibility;
   maxParticipants: number | null;
+  registeredCount?: number | null;
   waitlistEnabled: boolean;
   paceGroups: readonly PaceGroup[];
   /** Lien d'inscription externe/interne pour les courses (S5.16). */

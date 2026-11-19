@@ -157,6 +157,7 @@ export function mapEventRow(row: Row): ClubEvent {
     lng: asNumber(row.lng),
     visibility: mapEventVisibility(row.visibility),
     maxParticipants: maxParticipants !== null && maxParticipants > 0 ? maxParticipants : null,
+    registeredCount: asNumber(row.participants_count),
     waitlistEnabled: asBoolean(row.waitlist_enabled, true),
     paceGroups: mapPaceGroups(row.pace_groups),
     registrationUrl: asString(row.registration_url),

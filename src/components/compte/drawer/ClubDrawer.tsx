@@ -29,12 +29,7 @@ function initialMembershipStatus(
   return club.joined ? 'active' : null;
 }
 
-/**
- * Le schéma `club_event_participants` ne stocke que la présence
- * (`event_id`, `user_id`, `joined_at`) : il n'existe pas de colonne pour un
- * « peut-être ». On n'affiche donc que deux réponses persistables, plutôt que
- * de simuler une réponse que la base ne saurait pas restituer.
- */
+// Les deux réponses du registre correspondent à une tentative d'inscription ou à un retrait.
 const RSVP_OPTIONS: ReadonlyArray<{ value: ClubRsvp; label: string; phrase: string }> = [
   { value: 'yes', label: 'Je participe', phrase: 'je participe' },
   { value: 'no', label: 'Non', phrase: 'non' },
@@ -47,8 +42,7 @@ type DrawerRecommendedKit = NonNullable<Club['recommendedKits']>[number] & {
   weight?: number | null;
 };
 
-/** `attending` est fourni par le bootstrap, pas encore par le type de carte. */
-type DrawerNextEvent = ClubNextEvent & { attending?: boolean };
+type DrawerNextEvent = ClubNextEvent & { attending?: boolean; registrationStatus?: 'registered' | 'waitlist' | 'cancelled' | null };
 
 const FOCUSABLE =
   'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -72,9 +66,7 @@ export function eventAttendance(event?: ClubNextEvent | null): string | null {
  * Drawer club : en-tête, rôle, membres actifs, prochain événement avec RSVP,
  * sujets récents, kits recommandés, actions et règles de sécurité.
  *
- * Les actions Rejoindre/Quitter et RSVP sont optimistes : l'état bascule
- * immédiatement, puis revient à sa valeur précédente avec un message visible
- * si `POST /api/compte/clubs` refuse ou échoue. Aucun succès n'est simulé.
+ * Le RSVP affiche le statut confirmé par la transaction côté serveur.
  */
 export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   const titleId = React.useId();
@@ -91,17 +83,21 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
 
   const membershipStatusFromClub = initialMembershipStatus(club);
   const event = club.nextEvent ? (club.nextEvent as DrawerNextEvent) : null;
-  const initialRsvp: ClubRsvp | null = event?.attending === true ? 'yes' : null;
+  const initiallyWaiting = event?.registrationStatus === 'waitlist';
+  const initialRsvp: ClubRsvp | null = event?.attending === true || initiallyWaiting
+    ? 'yes' : event?.registrationStatus === 'cancelled' ? 'no' : null;
   const [membershipStatus, setMembershipStatus] = React.useState<ClubMembershipStatus | null>(
     membershipStatusFromClub
   );
   const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(initialRsvp);
+  const [waiting, setWaiting] = React.useState(initiallyWaiting);
   const [notice, setNotice] = React.useState('');
   const [noticeIsError, setNoticeIsError] = React.useState(false);
 
   React.useEffect(() => {
     setMembershipStatus(membershipStatusFromClub);
     setRsvp(initialRsvp);
+    setWaiting(initiallyWaiting);
     setNotice('');
     setNoticeIsError(false);
   }, [
@@ -110,6 +106,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
     club.membershipStatus,
     club.nextEvent?.id,
     initialRsvp,
+    initiallyWaiting,
     membershipStatusFromClub,
   ]);
 
@@ -253,11 +250,6 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
     }
     if (rsvpBusyRef.current) return;
     rsvpBusyRef.current = true;
-    const previous = rsvp;
-
-    // Optimiste : la réponse choisie est affichée avant la confirmation.
-    setRsvp(choice);
-    showNotice(`Ta réponse : ${phrase}.`);
 
     try {
       const response = await fetch('/api/compte/clubs', {
@@ -267,15 +259,16 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           action: 'rsvp',
           clubId: club.id,
           eventId: event.id,
-          // `club_event_participants` ne stocke que la présence : « Non »
-          // retire la participation de l'appelant.
           attending: choice === 'yes',
         }),
       });
       if (!response.ok) throw new Error('request_failed');
-      showNotice(`Ta réponse : ${phrase}.`);
+      const result = await response.json() as { registrationStatus?: string | null };
+      const enteredWaitlist = result.registrationStatus === 'waitlist';
+      setRsvp(choice);
+      setWaiting(enteredWaitlist);
+      showNotice(enteredWaitlist ? 'Tu es sur liste d’attente.' : `Ta réponse : ${phrase}.`);
     } catch {
-      setRsvp(previous);
       showError("Ta réponse n'a pas abouti. Réessaie.");
     } finally {
       rsvpBusyRef.current = false;
@@ -382,7 +375,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
                     {[eventDate, eventLocation].filter(Boolean).join(' · ')}
                   </p>
                 </div>
-                {attendance ? <span className="lkdv-club-attendance">{attendance}</span> : null}
+                {waiting || attendance ? <span className="lkdv-club-attendance">{waiting ? 'Liste d’attente' : attendance}</span> : null}
               </div>
 
               {membershipStatus === 'active' ? (

@@ -74,6 +74,22 @@ export async function POST(
     const invite = await loadInvite(supabase, token);
     if (!invite) return errorJson('not_found', 404);
 
+    if (invite.kind === 'event') {
+      const { data, error } = await supabase.rpc('transact_club_event_registration', {
+        p_event_id: invite.targetId,
+        p_attending: true,
+        p_invite_token: token,
+      });
+      if (error?.code === '23514') return errorJson('CAPACITY_FULL', 409);
+      if (error) return dbFailure('POST redeem event', error);
+      const result = data as { registration?: { status: string }; uses_count?: number | null };
+      return json({ data: {
+        ...invite,
+        usesCount: result.uses_count ?? invite.usesCount,
+        registrationStatus: result.registration?.status,
+      } });
+    }
+
     const { context: viewerContext, memberships } = await loadViewerContext(supabase, user.id);
     const nowIso = new Date().toISOString();
     const redeemed = redeemInviteLink({
@@ -101,22 +117,6 @@ export async function POST(
         { onConflict: 'club_id,user_id' },
       );
       if (memberError) return dbFailure('POST redeem membership', memberError);
-    }
-
-    if (invite.kind === 'event') {
-      const { error: registrationError } = await supabase.from('club_event_registrations').upsert(
-        {
-          event_id: invite.targetId,
-          user_id: user.id,
-          status: 'registered',
-          invite_id: invite.id,
-          invited_by_user_id: invite.createdBy,
-          registered_at: nowIso,
-          updated_at: nowIso,
-        },
-        { onConflict: 'event_id,user_id' },
-      );
-      if (registrationError) return dbFailure('POST redeem event', registrationError);
     }
 
     return json({ data: redeemed.data });

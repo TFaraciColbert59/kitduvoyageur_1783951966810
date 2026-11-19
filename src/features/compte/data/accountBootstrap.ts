@@ -406,6 +406,7 @@ export type ClubEventRow = {
 export type ClubEventParticipantRow = {
   event_id: string;
   user_id?: string | null;
+  status?: 'registered' | 'waitlist' | 'cancelled';
 };
 
 export type ClubNextEvent = {
@@ -417,8 +418,8 @@ export type ClubNextEvent = {
   max_participants: number;
   participants: number;
   max: number;
-  /** Présence de l'appelant (`club_event_participants`), false sans ligne. */
   attending: boolean;
+  registrationStatus?: ClubEventParticipantRow['status'] | null;
 };
 
 export type ClubTopic = {
@@ -1542,8 +1543,8 @@ export function mapClubs(
 ) {
   const clubById = new Map(clubs.map((club) => [club.id, club]));
   const now = Date.now();
-  const attendingEventIds = new Set(
-    attendances.map((attendance) => attendance.event_id).filter(Boolean)
+  const eventRegistrations = new Map(
+    attendances.map((registration) => [registration.event_id, registration.status ?? 'registered'] as const)
   );
   const nextEventByClub = new Map<string, ClubNextEvent>();
   const topicsByClub = new Map<string, ClubTopic[]>();
@@ -1611,7 +1612,8 @@ export function mapClubs(
       max_participants: max,
       participants,
       max,
-      attending: Boolean(eventId) && attendingEventIds.has(eventId),
+      attending: eventRegistrations.get(eventId) === 'registered',
+      registrationStatus: eventRegistrations.get(eventId) ?? null,
     });
   }
 
@@ -2276,13 +2278,12 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             .limit(1000)
         )
       : Promise.resolve([] as GeoMassifRow[]),
-    // Présence de l'appelant aux prochains événements de ses clubs. La table
-    // est vide pour un utilisateur sans RSVP : `attending` reste alors false.
+    // Inscription effective de l'appelant, y compris la liste d'attente.
     clubEventIds.length
       ? safeRows<ClubEventParticipantRow>(
           supabase
-            .from('club_event_participants')
-            .select('event_id,user_id')
+            .from('club_event_registrations_effective')
+            .select('event_id,user_id,status')
             .in('event_id', clubEventIds)
             .eq('user_id', user.id)
         )
