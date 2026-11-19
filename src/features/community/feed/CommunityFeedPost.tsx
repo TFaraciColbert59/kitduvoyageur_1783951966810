@@ -536,7 +536,7 @@ export function CommunityFeedPost({
             >
               {post.content || 'Publication'}
             </p>
-            {textClamped || textExpanded ? (
+            {!panel && (textClamped || textExpanded) ? (
               <button
                 type="button"
                 className="lkdv-feed-text-more"
