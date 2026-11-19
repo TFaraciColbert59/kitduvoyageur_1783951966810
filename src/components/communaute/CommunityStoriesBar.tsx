@@ -71,20 +71,43 @@ function probeVideo(file: File): Promise<number | null> {
   });
 }
 
-/** Composition jsonb v1 → overlays typés du visionneur (texte uniquement). */
+/** Composition jsonb v1/v2 → overlays typés du visionneur (textes, stickers, liens). */
 function parseTextOverlays(composition: unknown): StoryOverlay[] | undefined {
   if (!Array.isArray(composition)) return undefined;
-  const overlays = composition
-    .filter(
-      (o): o is { type: string; text: string } =>
-        Boolean(
-          o &&
-            typeof o === 'object' &&
-            (o as { type?: unknown }).type === 'text' &&
-            typeof (o as { text?: unknown }).text === 'string'
-        )
-    )
-    .map((o) => ({ type: 'text' as const, text: o.text.slice(0, 120) }));
+  const overlays: StoryOverlay[] = [];
+  for (const raw of composition) {
+    if (!raw || typeof raw !== 'object') continue;
+    const item = raw as Record<string, unknown>;
+    if (item.type === 'text' && typeof item.text === 'string' && item.text.trim()) {
+      overlays.push({
+        type: 'text',
+        text: item.text.slice(0, 120),
+        ...(typeof item.x === 'number' ? { x: item.x } : {}),
+        ...(typeof item.y === 'number' ? { y: item.y } : {}),
+        ...(typeof item.scale === 'number' ? { scale: item.scale } : {}),
+        ...(typeof item.rotation === 'number' ? { rotation: item.rotation } : {}),
+        ...(item.style === 'clair' || item.style === 'encre' || item.style === 'sauge'
+          ? { style: item.style }
+          : {}),
+      });
+    } else if (
+      item.type === 'sticker' &&
+      (item.kind === 'lieu' || item.kind === 'altitude' || item.kind === 'meteo' || item.kind === 'distance')
+    ) {
+      overlays.push({
+        type: 'sticker',
+        kind: item.kind,
+        ...(typeof item.label === 'string' ? { label: item.label } : {}),
+        ...(typeof item.value === 'number' ? { value: item.value } : {}),
+      });
+    } else if (item.type === 'link' && typeof item.url === 'string' && item.url) {
+      overlays.push({
+        type: 'link',
+        url: item.url,
+        ...(typeof item.label === 'string' ? { label: item.label } : {}),
+      });
+    }
+  }
   return overlays.length > 0 ? overlays : undefined;
 }
 

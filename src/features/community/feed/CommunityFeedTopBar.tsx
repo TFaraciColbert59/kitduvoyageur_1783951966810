@@ -10,6 +10,7 @@ export interface CommunityFeedTopBarProps {
   onCreate: () => void;
   onOpenSection: (id: SectionTabId) => void;
   onSearch: () => void;
+  onNotifications?: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export function CommunityFeedTopBar({
   onCreate,
   onOpenSection,
   onSearch,
+  onNotifications,
 }: CommunityFeedTopBarProps) {
   return (
     <>
@@ -42,7 +44,7 @@ export function CommunityFeedTopBar({
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
           <Icon name="search" size={17} aria-hidden="true" />
         </button>
-        <NotificationBell userId={user?.id} />
+        <NotificationBell userId={user?.id} onClick={onNotifications} />
       </div>
     </>
   );

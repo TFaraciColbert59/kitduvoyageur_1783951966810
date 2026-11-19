@@ -10,13 +10,31 @@ import { SHEET_EXIT_MS } from '@/design/motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { CloudSun, Compass, Link2, MapPin, Mountain } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 
-export interface StoryOverlay {
-  type: 'text';
-  text: string;
-}
+export type StoryOverlay =
+  | {
+      type: 'text';
+      text: string;
+      x?: number;
+      y?: number;
+      scale?: number;
+      rotation?: number;
+      style?: 'clair' | 'encre' | 'sauge';
+    }
+  | {
+      type: 'sticker';
+      kind: 'lieu' | 'altitude' | 'meteo' | 'distance';
+      label?: string;
+      value?: number;
+    }
+  | {
+      type: 'link';
+      url: string;
+      label?: string;
+    };
 
 export interface StorySlide {
   image: string;
@@ -581,12 +599,107 @@ export default function StoriesViewer({
           aria-hidden="true"
         />
 
-        {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
-            la navigation tactile reste prioritaire. */}
+        {/* Overlays texte positionnés (Création V2) */}
+        {slide.overlays
+          ?.filter(
+            (o): o is Extract<StoryOverlay, { type: 'text' }> =>
+              o.type === 'text' && Boolean(o.text) && typeof o.x === 'number' && typeof o.y === 'number',
+          )
+          .map((overlay, i) => {
+            const toneClass =
+              overlay.style === 'encre'
+                ? 'bg-[#172B24]/88 text-white'
+                : overlay.style === 'sauge'
+                  ? 'bg-[#3D7A52]/88 text-white'
+                  : 'bg-white/90 text-[#172B24]';
+            return (
+              <span
+                key={`pos-overlay-${userIndex}-${slideIndex}-${i}`}
+                className={`pointer-events-none absolute z-[var(--z-sticky)] max-w-[78%] rounded-[14px] px-3.5 py-1.5 text-center text-[15px] font-bold leading-snug shadow-lg backdrop-blur-md ${toneClass}`}
+                style={{
+                  left: `${Math.round((overlay.x ?? 0.5) * 100)}%`,
+                  top: `${Math.round((overlay.y ?? 0.5) * 100)}%`,
+                  transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
+                }}
+              >
+                {overlay.text}
+              </span>
+            );
+          })}
+
+        {/* Overlays texte legacy (v1) + stickers & liens (Création V2) */}
         {slide.overlays && slide.overlays.length > 0 && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-[max(var(--space-12),calc(var(--safe-bottom)+var(--space-12)))] z-[var(--z-sticky)] flex flex-col items-center gap-[var(--space-1)] px-[var(--space-4)]">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[max(var(--space-12),calc(var(--safe-bottom)+var(--space-12)))] z-[var(--z-sticky)] flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)]">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {slide.overlays.map((overlay, i) => {
+                if (overlay.type === 'sticker') {
+                  if (overlay.kind === 'lieu' && overlay.label) {
+                    return (
+                      <span
+                        key={`st-lieu-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <MapPin size={11} aria-hidden="true" />
+                        {overlay.label}
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'meteo' && overlay.label) {
+                    return (
+                      <span
+                        key={`st-meteo-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <CloudSun size={11} aria-hidden="true" />
+                        {overlay.label}
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'altitude' && overlay.value != null) {
+                    return (
+                      <span
+                        key={`st-alt-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <Mountain size={11} aria-hidden="true" />
+                        {overlay.value} m
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'distance' && overlay.value != null) {
+                    return (
+                      <span
+                        key={`st-dist-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <Compass size={11} aria-hidden="true" />
+                        {overlay.value} km
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+                if (overlay.type === 'link' && overlay.url) {
+                  return (
+                    <a
+                      key={`st-link-${userIndex}-${slideIndex}-${i}`}
+                      href={overlay.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#172B24] shadow-sm backdrop-blur-md"
+                    >
+                      <Link2 size={11} aria-hidden="true" />
+                      {overlay.label || 'Lien'}
+                    </a>
+                  );
+                }
+                return null;
+              })}
+            </div>
             {slide.overlays.map((overlay, i) =>
-              overlay.type === 'text' && overlay.text ? (
+              overlay.type === 'text' && overlay.text && (typeof overlay.x !== 'number' || typeof overlay.y !== 'number') ? (
                 <span
                   key={`overlay-${userIndex}-${slideIndex}-${i}`}
                   className="max-w-full rounded-[var(--lkv-radius-md)] bg-black/45 px-[var(--space-3)] py-[var(--space-1)] text-center text-[length:var(--lkv-text-body-sm)] font-semibold text-white backdrop-blur-sm"

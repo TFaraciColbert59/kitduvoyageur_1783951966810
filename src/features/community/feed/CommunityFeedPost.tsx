@@ -536,16 +536,16 @@ export function CommunityFeedPost({
             >
               {post.content || 'Publication'}
             </p>
-            {textClamped && !textExpanded ? (
+            {textClamped || textExpanded ? (
               <button
                 type="button"
                 className="lkdv-feed-text-more"
                 onClick={(event) => {
                   event.stopPropagation();
-                  setTextExpanded(true);
+                  setTextExpanded((v) => !v);
                 }}
               >
-                afficher plus…
+                {textExpanded ? 'afficher moins' : 'afficher plus…'}
               </button>
             ) : null}
           </div>
