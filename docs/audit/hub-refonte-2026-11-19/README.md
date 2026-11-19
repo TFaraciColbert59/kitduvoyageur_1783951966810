@@ -398,9 +398,9 @@ et les nouvelles lignes du registre moderne y restent invisibles jusqu’au
 rétablissement de l’application actuelle. Coordonner le déploiement SQL et
 applicatif, car les anciens clients écrivent directement dans les tables.
 
-Restent ouverts le lien à l’aventure canonique, l’annulation de la sortie par
-l’organisateur et la recette Auth sur appareil. P09-03 conserve aussi les
-scénarios de départ, révision, dépense, kit, reprise hors ligne et notification.
+Les sections suivantes couvrent le lien à l’aventure et l’annulation.
+P09-03 conserve la recette sur appareil et les scénarios de départ,
+révision, dépense, kit, reprise hors ligne et notification.
 
 ### P02-01 / P02-02 / P02-11 · Relier une sortie à une aventure existante
 
@@ -465,8 +465,20 @@ la fermeture du lien d’invitation et le retrait du voyage de la liste
 du HUB. Elle a aussi ouvert une fiche de club historique. Les 126
 tests applicatifs ciblés passent.
 
-Le retour SQL a été exercé dans la recette avant l’enregistrement
-d’une annulation. Le script exige une transaction et refuse de retirer
-le mécanisme après une annulation enregistrée. P02-11 est vérifié dans
+Les lectures de Compte et de la recherche utilisent la nouvelle colonne.
+Appliquer la migration avant l’application. Le retour SQL a été exercé
+avant et après une annulation. Le retour s’exécute en transaction et
+l’essai avec une annulation enregistrée a refusé de retirer le mécanisme. P02-11 est vérifié dans
 la recette locale. P09-03 garde les parcours connectés sur l’iPhone
 physique ainsi que les autres scénarios de bout en bout.
+
+### P07-01 / P07-02 · Position et prévisions dans WebKit mobile
+
+Sur le HUB connecté à la recette, WebKit a fourni une position simulée
+différente du point enregistré du voyage. Le bouton du tiroir Météo a
+déclenché une requête météo avec les coordonnées du navigateur, arrondies
+au centième de degré. La réponse de MET Norway contenait une température
+et dix jours de prévision. Le tiroir a affiché « Ma position ». À 390 px,
+la rangée du widget laisse voir environ 3,5 pastilles et défile
+horizontalement jusqu’aux jours suivants. Le GPS de l’iPhone physique et
+la parité avec Compas restent à vérifier.
