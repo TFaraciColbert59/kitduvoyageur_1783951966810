@@ -6,9 +6,22 @@ import './routeCollab.css';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Download,
+  Grip,
+  Layers,
+  LocateFixed,
+  PenLine,
+  Redo2,
+  RefreshCw,
+  Trash2,
+  Undo2,
+  Upload,
+} from 'lucide-react';
+import type { ImportableTrackEntry } from '@/app/api/routes/history/route';
 import { ATLAS_TILES } from '@/components/map/engine/createMapStyle';
-import type { RouteSport } from '@/features/adventure-prep/routeProfiles';
 import type { MapBase } from '@/features/compas/engine/mapStyle';
+import { readTraceFile } from '@/features/community/v2/create/carnet/gpx';
 import { ExplorerSheet, type SheetTab } from '@/features/explorer-v2/sheet/ExplorerSheet';
 import {
   XpChips,
@@ -20,6 +33,8 @@ import {
 } from '@/features/explorer-v2/sheet/blocks';
 import type { Detent } from '@/features/explorer-v2/state/types';
 import { XpIcon } from '@/features/explorer-v2/ui/XpIcon';
+import { getCurrentGeoPosition } from '@/lib/native/geolocation';
+import { haversineKm } from '@/features/adventure-prep/engine/routing';
 import {
   activePoints,
   applyWorkspaceOperation,
@@ -31,6 +46,13 @@ import {
   workspaceTotals,
 } from '../engine';
 import { summarizeWorkspaceForHub } from '../integrations';
+import {
+  computeTechnicalTerrainStats,
+  fetchRouteKnowledgeBank,
+  type LiveWeatherInfo,
+  type RouteCorridorPoi,
+  type RoutePoiCategory,
+} from '../routeAnalysis';
 import {
   commitVerifiedPack,
   duplicateWorkspaceWithProvenance,
@@ -57,7 +79,6 @@ import type {
   RouteOperationInput,
   RouteOperationRecord,
   RouteProposal,
-  RouteShapeMode,
   RouteVariant,
   RouteWorkspaceState,
 } from '../types';
@@ -75,7 +96,6 @@ export type SubDrawerId =
   | 'point'
   | 'section'
   | 'stage'
-  | 'map-settings'
   | 'gpx'
   | 'variants'
   | 'kit'
@@ -194,12 +214,33 @@ export function RouteCollabWorkspace({
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [subDrawer, setSubDrawer] = useState<SubDrawerId | null>(null);
 
-  // État carte piloté depuis le tiroir
+  // État carte piloté en haut à droite de la carte (hors tiroirs)
   const [mapBase, setMapBase] = useState<MapBase>('topo');
+  const [mapMenuOpen, setMapMenuOpen] = useState<boolean>(false);
   const [fitTrigger, setFitTrigger] = useState<number>(0);
   const [focusCoord, setFocusCoord] = useState<[number, number] | null>(null);
   const [listMode, setListMode] = useState<boolean>(forceNoWebGL);
   const [webglAvailable, setWebglAvailable] = useState<boolean>(!forceNoWebGL);
+
+  // Outils de dessin & d'édition sur carte (identiques à la création Communauté)
+  const [drawingMode, setDrawingMode] = useState<boolean>(false);
+  const [editingMode, setEditingMode] = useState<boolean>(false);
+  const [undoStack, setUndoStack] = useState<RouteWorkspaceState[]>([]);
+  const [redoStack, setRedoStack] = useState<RouteWorkspaceState[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Import depuis Historique (sorties, carnets, randonnées enregistrées)
+  const [historyOpen, setHistoryOpen] = useState<boolean>(false);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
+  const [historyItems, setHistoryItems] = useState<ImportableTrackEntry[] | null>(null);
+
+  // Banque d'informations & statistiques techniques (onglet Analyser)
+  const [knowledgeLoading, setKnowledgeLoading] = useState<boolean>(false);
+  const [knowledgePois, setKnowledgePois] = useState<RouteCorridorPoi[]>([]);
+  const [liveWeather, setLiveWeather] = useState<LiveWeatherInfo | null>(null);
+  const [knowledgeSources, setKnowledgeSources] = useState<string[]>([]);
+  const [focusedPoiId, setFocusedPoiId] = useState<string | null>(null);
+  const [poiFilter, setPoiFilter] = useState<'all' | RoutePoiCategory>('all');
 
   // Sélections synchronisées Carte <-> Tiroir
   const [selectedStageId, setSelectedStageId] = useState<string | null>(
@@ -273,12 +314,40 @@ export function RouteCollabWorkspace({
   }, []);
 
   const commitState = useCallback(
-    (next: RouteWorkspaceState) => {
+    (next: RouteWorkspaceState, recordUndo = true) => {
+      if (recordUndo) {
+        setUndoStack((prev) => [...prev.slice(-49), workspace]);
+        setRedoStack([]);
+      }
       setWorkspace(next);
       onWorkspaceChange?.(next);
     },
-    [onWorkspaceChange],
+    [onWorkspaceChange, workspace],
   );
+
+  const handleUndo = useCallback(() => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const previous = prev[prev.length - 1];
+      setRedoStack((r) => [...r, workspace]);
+      setWorkspace(previous);
+      onWorkspaceChange?.(previous);
+      setStatusMessage('Dernière action annulée.');
+      return prev.slice(0, -1);
+    });
+  }, [onWorkspaceChange, workspace]);
+
+  const handleRedo = useCallback(() => {
+    setRedoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const next = prev[prev.length - 1];
+      setUndoStack((u) => [...u, workspace]);
+      setWorkspace(next);
+      onWorkspaceChange?.(next);
+      setStatusMessage('Action rétablie.');
+      return prev.slice(0, -1);
+    });
+  }, [onWorkspaceChange, workspace]);
 
   // Synchronisation temps réel HTTP + présence multi-sessions
   useEffect(() => {
@@ -1207,6 +1276,7 @@ export function RouteCollabWorkspace({
   const totalWarnings = workspace.sections.reduce((acc, s) => acc + s.warnings.length, 0);
   const manualSectionsCount = workspace.sections.filter((s) => s.mode === 'manual').length;
   const hubSummary = useMemo(() => summarizeWorkspaceForHub(workspace), [workspace]);
+  const terrainStats = useMemo(() => computeTechnicalTerrainStats(workspace), [workspace]);
 
   const elevationStats = useMemo(() => {
     const valid = elevation.samples
@@ -1222,7 +1292,220 @@ export function RouteCollabWorkspace({
     };
   }, [elevation]);
 
-  // ── Bannières intégrées AU TIROIR (jamais flottantes sur la carte) ──────────
+  const refreshKnowledgeBank = useCallback(async () => {
+    setKnowledgeLoading(true);
+    try {
+      const data = await fetchRouteKnowledgeBank(workspace);
+      setKnowledgePois(data.pois);
+      setLiveWeather(data.weather);
+      setKnowledgeSources(data.sources);
+    } finally {
+      setKnowledgeLoading(false);
+    }
+  }, [workspace]);
+
+  useEffect(() => {
+    if (sheetOpen && tabIndex === 2 && knowledgePois.length === 0 && !liveWeather && !knowledgeLoading) {
+      void refreshKnowledgeBank();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheetOpen, tabIndex]);
+
+  const applyImportedCoordinates = useCallback(
+    (
+      coords: readonly [number, number][],
+      title: string,
+      mode: 'manual' | 'imported_preserved',
+      providerLabel: string,
+    ) => {
+      if (coords.length < 2) return;
+      const nowIso = new Date().toISOString();
+      let distKm = 0;
+      for (let i = 1; i < coords.length; i += 1) {
+        distKm += haversineKm(
+          { lat: coords[i - 1][1], lon: coords[i - 1][0] },
+          { lat: coords[i][1], lon: coords[i][0] },
+        );
+      }
+      const startPt: CollaborativeRoutePoint = {
+        id: `pt-start-${Date.now().toString(36)}`,
+        workspaceId: workspace.id,
+        kind: 'start',
+        orderKey: 'A',
+        lat: coords[0][1],
+        lon: coords[0][0],
+        name: 'Départ',
+        entityVersion: 1,
+      };
+      const endPt: CollaborativeRoutePoint = {
+        id: `pt-end-${Date.now().toString(36)}`,
+        workspaceId: workspace.id,
+        kind: 'finish',
+        orderKey: 'Z',
+        lat: coords[coords.length - 1][1],
+        lon: coords[coords.length - 1][0],
+        name: 'Arrivée',
+        entityVersion: 1,
+      };
+      const isCycling = workspace.sport === 'vtt' || workspace.sport === 'gravel' || workspace.sport === 'route';
+      const sec: CollaborativeRouteSection = {
+        id: `sec-${Date.now().toString(36)}`,
+        workspaceId: workspace.id,
+        fromPointId: startPt.id,
+        toPointId: endPt.id,
+        mode,
+        geometry: { type: 'LineString', coordinates: [...coords] },
+        distanceKm: Number(distKm.toFixed(2)),
+        durationMin: Math.round((distKm / (isCycling ? 16 : 4.2)) * 60),
+        ascentM: null,
+        descentM: null,
+        surfaceSegments: [],
+        routingInputHash: null,
+        provenance: {
+          provider: providerLabel,
+          calculatedAt: nowIso,
+          profile: workspace.sport,
+          confidence: 'estimated',
+        },
+        warnings: [],
+        entityVersion: 1,
+      };
+      commitState({
+        ...workspace,
+        title: workspace.title === 'Nouvel itinéraire collaboratif' ? title : workspace.title,
+        points: [startPt, endPt],
+        sections: [sec],
+        headSeq: workspace.headSeq + 1,
+        updatedAt: nowIso,
+      });
+      setFitTrigger((n) => n + 1);
+      setKnowledgePois([]);
+    },
+    [commitState, workspace],
+  );
+
+  const handleFreehandDrawComplete = useCallback(
+    (coords: readonly [number, number][]) => {
+      applyImportedCoordinates(coords, workspace.title, 'manual', 'trace-manuelle');
+      setDrawingMode(false);
+      setSheetOpen(true);
+      setStatusMessage(`Tracé dessiné (${coords.length} points).`);
+    },
+    [applyImportedCoordinates, workspace.title],
+  );
+
+  const handleDragPoint = useCallback(
+    (pointId: string, lat: number, lon: number) => {
+      const pt = orderedPoints.find((p) => p.id === pointId);
+      if (!pt) return;
+      void runOperation(
+        { type: 'move_point', pointId, lat, lon },
+        { [pointId]: pt.entityVersion },
+      );
+    },
+    [orderedPoints, runOperation],
+  );
+
+  const handleCenterMyPosition = async () => {
+    try {
+      const pos = await getCurrentGeoPosition({ enableHighAccuracy: true, timeout: 10_000 });
+      setFocusCoord([pos.longitude, pos.latitude]);
+      setStatusMessage(`Carte centrée sur votre position (${pos.latitude.toFixed(4)}, ${pos.longitude.toFixed(4)}).`);
+    } catch {
+      setStatusMessage('Position GPS indisponible sur cet appareil.');
+    }
+  };
+
+  const handleLoadHistory = async () => {
+    setHistoryOpen((v) => !v);
+    if (historyItems !== null) return;
+    setHistoryLoading(true);
+    try {
+      const res = await fetch('/api/routes/history', { credentials: 'include' });
+      if (res.ok) {
+        const data = (await res.json()) as { items?: ImportableTrackEntry[] };
+        setHistoryItems(Array.isArray(data.items) ? data.items : []);
+      } else {
+        setHistoryItems([]);
+      }
+    } catch {
+      setHistoryItems([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleImportHistoryEntry = (entry: ImportableTrackEntry) => {
+    applyImportedCoordinates(entry.coordinates, entry.title, 'imported_preserved', `import-${entry.kind}`);
+    setHistoryOpen(false);
+    setStatusMessage(`Tracé « ${entry.title} » importé (${entry.coordinates.length} pts).`);
+  };
+
+  const handleFileImport = async (file: File | null | undefined) => {
+    if (!file) return;
+    try {
+      const pts = await readTraceFile(file);
+      if (pts.length < 2) {
+        setStatusMessage('Fichier invalide ou contenant moins de 2 points.');
+        return;
+      }
+      applyImportedCoordinates(
+        pts,
+        file.name.replace(/\.(gpx|geojson|json)$/i, ''),
+        'imported_preserved',
+        'import-gpx',
+      );
+      setStatusMessage(`Fichier ${file.name} importé (${pts.length} pts).`);
+    } catch {
+      setStatusMessage('Impossible de lire ce fichier GPX/GeoJSON.');
+    }
+  };
+
+  const handleRemoveLastSegment = () => {
+    if (orderedPoints.length <= 2) {
+      setStatusMessage('Un itinéraire nécessite au moins 2 points (utilisez Effacer pour repartir à zéro).');
+      return;
+    }
+    const last = orderedPoints[orderedPoints.length - 1];
+    void runOperation({ type: 'delete_point', pointId: last.id }, { [last.id]: last.entityVersion });
+  };
+
+  const handleClearTrack = () => {
+    const first = orderedPoints[0];
+    const baseLat = first?.lat ?? 45.052;
+    const baseLon = first?.lon ?? 5.512;
+    commitState({
+      ...workspace,
+      points: [
+        {
+          id: `pt-start-${Date.now().toString(36)}`,
+          workspaceId: workspace.id,
+          kind: 'start',
+          orderKey: 'A',
+          lat: baseLat,
+          lon: baseLon,
+          name: 'Départ',
+          entityVersion: 1,
+        },
+        {
+          id: `pt-end-${Date.now().toString(36)}`,
+          workspaceId: workspace.id,
+          kind: 'finish',
+          orderKey: 'Z',
+          lat: Number((baseLat + 0.005).toFixed(5)),
+          lon: Number((baseLon + 0.005).toFixed(5)),
+          name: 'Arrivée',
+          entityVersion: 1,
+        },
+      ],
+      sections: [],
+      headSeq: workspace.headSeq + 1,
+      updatedAt: new Date().toISOString(),
+    });
+    setStatusMessage('Tracé effacé. Dessinez sur la carte ou ajoutez des points.');
+  };
+
+  // ── Conflit métier affiché dans le tiroir (impact & statut sont en haut d'écran) ──
   const renderBanners = () => (
     <>
       {activeConflict ? (
@@ -1264,37 +1547,6 @@ export function RouteCollabWorkspace({
               Créer une variante
             </button>
           </div>
-        </div>
-      ) : null}
-
-      {lastImpactText ? (
-        <div className="rcw-banner" role="status" data-testid="impact-banner">
-          <span>
-            <strong>Impact · </strong>
-            {lastImpactText}
-          </span>
-          <button
-            type="button"
-            className="xp-chip"
-            onClick={() => setLastImpactText(null)}
-            aria-label="Fermer l'impact"
-          >
-            OK
-          </button>
-        </div>
-      ) : null}
-
-      {statusMessage ? (
-        <div className="rcw-banner rcw-banner--info" role="status" data-testid="status-message">
-          <span>{statusMessage}</span>
-          <button
-            type="button"
-            className="xp-chip"
-            onClick={() => setStatusMessage(null)}
-            aria-label="Fermer le message"
-          >
-            ✕
-          </button>
         </div>
       ) : null}
     </>
@@ -1612,58 +1864,6 @@ export function RouteCollabWorkspace({
                 Exporter GPX Jour {st.dayNumber}
               </button>
             </div>
-          </div>
-        ),
-      };
-    }
-
-    if (subDrawer === 'map-settings') {
-      const tileInfo = ATLAS_TILES[mapBase];
-      return {
-        title: 'Carte & Affichage',
-        subtitle: tileInfo.short,
-        body: (
-          <div className="rcw-stack" data-testid="subdrawer-map-settings">
-            {renderBanners()}
-            <XpEyebrow>Fond de carte</XpEyebrow>
-            <XpChips
-              ariaLabel="Fond de carte"
-              value={mapBase}
-              items={[
-                { id: 'osm', label: 'Plan OSM' },
-                { id: 'topo', label: 'Relief Topo' },
-                { id: 'satellite', label: 'Satellite' },
-              ]}
-              onChange={(id) => setMapBase(id as MapBase)}
-            />
-            <p className="rcw-sub-note">
-              Source active : {tileInfo.short} · Fonds autorisés hors ligne : OpenStreetMap & OpenTopoMap.
-            </p>
-            <XpEyebrow>Actions carte</XpEyebrow>
-            <XpRows>
-              <XpRow
-                icon="target"
-                tone="good"
-                title="Recentrer sur l’itinéraire"
-                sub="Ajuste le cadrage sur tous les points et variantes"
-                onClick={() => {
-                  setFitTrigger((n) => n + 1);
-                  setStatusMessage('Carte recentrée sur l’itinéraire.');
-                }}
-              />
-              <XpRow
-                icon="list"
-                tone={listMode ? 'warn' : 'ink'}
-                title={listMode ? 'Revenir à la vue carte' : 'Activer la vue liste sans carte'}
-                sub={
-                  webglAvailable
-                    ? 'Permet d’éditer points, étapes et contrôles sans carte'
-                    : 'WebGL indisponible : mode liste actif automatiquement'
-                }
-                badge={{ label: listMode ? 'Actif' : 'Carte', tone: listMode ? 'warn' : 'good' }}
-                onClick={() => setListMode((v) => !v)}
-              />
-            </XpRows>
           </div>
         ),
       };
@@ -2337,6 +2537,24 @@ export function RouteCollabWorkspace({
   };
 
   // ── Les 5 onglets du Drawer Principal (`ExplorerSheet`) ─────────────────────
+  const poiCounts = useMemo(() => {
+    const counts: Record<RoutePoiCategory, number> = {
+      water: 0,
+      shelter: 0,
+      summit: 0,
+      food_lodging: 0,
+      access: 0,
+      other: 0,
+    };
+    for (const p of knowledgePois) counts[p.category] += 1;
+    return counts;
+  }, [knowledgePois]);
+
+  const filteredKnowledgePois = useMemo(
+    () => (poiFilter === 'all' ? knowledgePois : knowledgePois.filter((p) => p.category === poiFilter)),
+    [knowledgePois, poiFilter],
+  );
+
   const mainTabs: SheetTab[] = [
     {
       id: 'tracer',
@@ -2354,84 +2572,167 @@ export function RouteCollabWorkspace({
             ]}
           />
 
-          <XpEyebrow>Profil & Forme du tracé</XpEyebrow>
-          <XpChips
-            ariaLabel="Profil de routage"
-            value={workspace.sport}
-            items={[
-              { id: 'marche', label: 'Randonnée' },
-              { id: 'velo', label: 'Vélo' },
-            ]}
-            onChange={(id) => {
-              if (!canEditGeo) return;
-              void runOperation({
-                type: 'set_sport_profile',
-                sport: id as RouteSport,
-                routingOptions: workspace.routingOptions,
-              });
-            }}
-          />
-          <XpChips
-            ariaLabel="Forme de l’itinéraire"
-            value={workspace.shapeMode ?? 'one_way'}
-            items={[
-              { id: 'one_way', label: 'Aller' },
-              { id: 'loop', label: 'Boucle' },
-              { id: 'out_and_back', label: 'Aller-retour' },
-            ]}
-            onChange={(id) => {
-              if (!canEditGeo) return;
-              void runOperation({ type: 'set_shape_mode', shapeMode: id as RouteShapeMode });
+          <XpEyebrow>Importer depuis votre historique & vos enregistrés</XpEyebrow>
+          <div className="rcw-import-grid">
+            <button
+              type="button"
+              className="rcw-import-card"
+              onClick={() => void handleLoadHistory()}
+              aria-expanded={historyOpen}
+            >
+              <span className="xp-row-ico" data-tone="good" aria-hidden="true">
+                <Download size={15} />
+              </span>
+              <span className="rcw-import-card-text">
+                <strong>Sorties, Carnets & Randos</strong>
+                <span>Historique & enregistrés</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              className="rcw-import-card"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="xp-row-ico" data-tone="water" aria-hidden="true">
+                <Upload size={15} />
+              </span>
+              <span className="rcw-import-card-text">
+                <strong>Importer un GPX</strong>
+                <span>Fichier .gpx ou GeoJSON</span>
+              </span>
+            </button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".gpx,application/gpx+xml,application/geo+json,application/json"
+            className="xp-visually-hidden"
+            aria-label="Importer un fichier GPX ou GeoJSON"
+            onChange={(e) => {
+              void handleFileImport(e.target.files?.[0]);
+              e.target.value = '';
             }}
           />
 
-          {canEditGeo ? (
-            <div className="rcw-inline-actions">
-              <button
-                type="button"
-                className="xp-secondary"
-                onClick={() => void runOperation({ type: 'reverse_route' })}
-              >
-                Inverser le sens
-              </button>
-              {workspace.headSeq > 0 ? (
-                <button
-                  type="button"
-                  className="xp-secondary"
-                  onClick={() =>
-                    void runOperation({
-                      type: 'revert_to_seq',
-                      targetSeq: Math.max(0, workspace.headSeq - 1),
-                      reason: 'Restauration révision précédente',
-                    })
-                  }
-                >
-                  Restaurer seq {Math.max(0, workspace.headSeq - 1)}
+          {historyOpen ? (
+            <div className="rcw-stat-card" data-testid="history-import-list">
+              <div className="rcw-bar-head">
+                <span>Tracés disponibles (Sorties, Carnets, Randonnées)</span>
+                <button type="button" className="xp-chip" onClick={() => setHistoryOpen(false)}>
+                  Fermer
                 </button>
-              ) : null}
+              </div>
+              {historyLoading ? (
+                <p className="rcw-sub-note">Chargement de votre historique…</p>
+              ) : !historyItems || historyItems.length === 0 ? (
+                <p className="rcw-sub-note">
+                  Aucune sortie GPS ou randonnée enregistrée trouvée pour ce compte.
+                </p>
+              ) : (
+                <XpRows>
+                  {historyItems.map((entry) => (
+                    <XpRow
+                      key={entry.id}
+                      icon={entry.kind === 'carnet' ? 'book' : entry.kind === 'sortie' ? 'run' : 'route'}
+                      tone={entry.kind === 'sortie' ? 'good' : entry.kind === 'carnet' ? 'water' : 'ink'}
+                      title={entry.title}
+                      sub={`${entry.subtitle}${entry.distanceKm != null ? ` · ${entry.distanceKm} km` : ''}${entry.ascentM != null ? ` · D+ ${entry.ascentM} m` : ''}`}
+                      badge={{ label: entry.kind, tone: 'muted' }}
+                      onClick={() => handleImportHistoryEntry(entry)}
+                    />
+                  ))}
+                </XpRows>
+              )}
             </div>
           ) : null}
 
-          <XpEyebrow>Points ({orderedPoints.length}) · toucher un point synchronise la carte</XpEyebrow>
-          <XpRows>
-            {orderedPoints.map((pt, idx) => (
-              <XpRow
-                key={pt.id}
-                icon="pin"
-                tone={selectedPointId === pt.id ? 'warn' : 'ink'}
-                title={`${idx + 1}. ${pt.name || pt.kind}`}
-                sub={`${pt.lat.toFixed(4)}, ${pt.lon.toFixed(4)}${pt.eleM != null ? ` · ${Math.round(pt.eleM)} m` : ''}`}
-                badge={{ label: `v${pt.entityVersion}`, tone: selectedPointId === pt.id ? 'warn' : 'muted' }}
-                trailing={<XpIcon name="chevr" size={15} />}
-                onClick={() => {
-                  setSelectedPointId(pt.id);
-                  setFocusCoord([pt.lon, pt.lat]);
-                  setHoveredCoord([pt.lon, pt.lat]);
-                  openSubDrawer('point');
-                }}
-              />
-            ))}
-          </XpRows>
+          <XpEyebrow>Outils de dessin & d’édition sur la carte</XpEyebrow>
+          <div className="rcw-tool-bar" role="group" aria-label="Outils de tracé">
+            <button
+              type="button"
+              className="rcw-tool-btn"
+              aria-pressed={drawingMode}
+              disabled={!canEditGeo}
+              onClick={() => {
+                const next = !drawingMode;
+                setDrawingMode(next);
+                if (next) {
+                  setEditingMode(false);
+                  setSheetOpen(false);
+                  setStatusMessage('Dessinez votre tracé directement sur la carte.');
+                }
+              }}
+            >
+              <PenLine size={14} aria-hidden="true" />
+              {drawingMode ? 'Terminer' : 'Tracer'}
+            </button>
+            <button
+              type="button"
+              className="rcw-tool-btn"
+              aria-pressed={editingMode}
+              disabled={!canEditGeo}
+              onClick={() => {
+                const next = !editingMode;
+                setEditingMode(next);
+                if (next) {
+                  setDrawingMode(false);
+                  setStatusMessage('Glissez les repères numérotés directement sur la carte.');
+                }
+              }}
+            >
+              <Grip size={14} aria-hidden="true" />
+              Éditer
+            </button>
+            <button
+              type="button"
+              className="rcw-tool-btn"
+              onClick={() => void handleCenterMyPosition()}
+            >
+              <LocateFixed size={14} aria-hidden="true" />
+              Ma position
+            </button>
+            <button
+              type="button"
+              className="rcw-tool-btn"
+              aria-label="Annuler le dernier geste"
+              disabled={undoStack.length === 0}
+              onClick={handleUndo}
+            >
+              <Undo2 size={14} aria-hidden="true" />
+              Annuler
+            </button>
+            <button
+              type="button"
+              className="rcw-tool-btn"
+              aria-label="Rétablir le geste annulé"
+              disabled={redoStack.length === 0}
+              onClick={handleRedo}
+            >
+              <Redo2 size={14} aria-hidden="true" />
+              Rétablir
+            </button>
+            {canEditGeo ? (
+              <>
+                <button
+                  type="button"
+                  className="rcw-tool-btn"
+                  onClick={handleRemoveLastSegment}
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                  Retirer dernier
+                </button>
+                <button
+                  type="button"
+                  className="rcw-tool-btn"
+                  onClick={handleClearTrack}
+                >
+                  <Trash2 size={14} aria-hidden="true" />
+                  Effacer
+                </button>
+              </>
+            ) : null}
+          </div>
+
           {canEditGeo ? (
             <button
               type="button"
@@ -2452,43 +2753,8 @@ export function RouteCollabWorkspace({
             </button>
           ) : null}
 
-          <XpEyebrow>Tronçons ({workspace.sections.length})</XpEyebrow>
+          <XpEyebrow>Variantes & Export GPX</XpEyebrow>
           <XpRows>
-            {workspace.sections.map((sec, i) => (
-              <XpRow
-                key={sec.id}
-                icon="route"
-                tone={sec.mode === 'manual' ? 'warn' : 'good'}
-                title={`Tronçon ${i + 1} · ${sec.distanceKm} km`}
-                sub={`${SECTION_MODE_LABELS[sec.mode] ?? sec.mode} · ${sec.provenance.provider}${sec.ascentM != null ? ` · D+ ${sec.ascentM} m` : ''}`}
-                badge={{ label: SECTION_MODE_LABELS[sec.mode] ?? sec.mode, tone: sec.mode === 'manual' ? 'warn' : 'good' }}
-                trailing={<XpIcon name="chevr" size={15} />}
-                onClick={() => {
-                  setSelectedSectionId(sec.id);
-                  openSubDrawer('section');
-                }}
-              />
-            ))}
-          </XpRows>
-
-          <XpEyebrow>Outils & Sous-tiroirs</XpEyebrow>
-          <XpRows>
-            <XpRow
-              icon="layers"
-              tone="water"
-              title="Carte & Affichage"
-              sub={`Fond ${ATLAS_TILES[mapBase].short} · Recentrer · Vue liste`}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('map-settings')}
-            />
-            <XpRow
-              icon="down"
-              tone="ink"
-              title="Importer / Exporter GPX"
-              sub={`Garder ma trace · Export complet ou par étape`}
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('gpx')}
-            />
             <XpRow
               icon="spark"
               tone="warn"
@@ -2496,6 +2762,14 @@ export function RouteCollabWorkspace({
               sub={`${workspace.variants.length} variante(s) à superposer sur la carte`}
               trailing={<XpIcon name="chevr" size={15} />}
               onClick={() => openSubDrawer('variants')}
+            />
+            <XpRow
+              icon="down"
+              tone="ink"
+              title="Importer / Exporter GPX"
+              sub="Coller un GPX · Garder ma trace · Export complet ou par étape"
+              trailing={<XpIcon name="chevr" size={15} />}
+              onClick={() => openSubDrawer('gpx')}
             />
           </XpRows>
         </div>
@@ -2607,8 +2881,8 @@ export function RouteCollabWorkspace({
                 </svg>
                 <div className="xp-profile-legend">
                   <span>Min {elevationStats.minEleM} m</span>
+                  <span>Moy {terrainStats.avgAltitudeM ?? '—'} m</span>
                   <span>Max {elevationStats.maxEleM} m</span>
-                  <span>D+ {totals.ascentM ?? '—'} m</span>
                 </div>
               </>
             ) : (
@@ -2616,21 +2890,188 @@ export function RouteCollabWorkspace({
             )}
           </div>
 
-          <XpEyebrow>Qualité & Données terrain</XpEyebrow>
+          <XpEyebrow>Statistiques techniques du terrain</XpEyebrow>
           <XpMetrics
             items={[
-              { label: 'Sections', value: `${workspace.sections.length}` },
-              { label: 'Manuelles', value: `${manualSectionsCount}` },
-              { label: 'Alertes', value: `${totalWarnings}` },
+              { label: 'Effort IBP', value: terrainStats.ibpEstimate != null ? `${terrainStats.ibpEstimate}` : '—' },
+              { label: 'Pente + max', value: terrainStats.maxClimbSlopePct != null ? `${terrainStats.maxClimbSlopePct}%` : '—' },
+              { label: 'Pente − max', value: terrainStats.maxDescentSlopePct != null ? `${terrainStats.maxDescentSlopePct}%` : '—' },
+              { label: 'Énergie', value: terrainStats.estimatedCaloriesKcal != null ? `${terrainStats.estimatedCaloriesKcal} kcal` : '—' },
             ]}
           />
+          <XpMetrics
+            items={[
+              { label: 'Niveau', value: terrainStats.effortLevel },
+              { label: 'Vitesse moy.', value: terrainStats.avgSpeedKmh != null ? `${terrainStats.avgSpeedKmh} km/h` : '—' },
+              { label: 'Alertes', value: `${totalWarnings} · ${manualSectionsCount} man.` },
+            ]}
+          />
+
+          {terrainStats.slopeBuckets.hasSlopeData ? (
+            <div className="rcw-stat-card" data-testid="slope-distribution-card">
+              <strong style={{ fontSize: 12.5 }}>Répartition des pentes</strong>
+              {[
+                { label: 'Plat / faux-plat (< 5 %)', pct: terrainStats.slopeBuckets.flatPct, tone: 'good' },
+                { label: 'Modéré (5–10 %)', pct: terrainStats.slopeBuckets.moderatePct, tone: 'water' },
+                { label: 'Soutenu (10–15 %)', pct: terrainStats.slopeBuckets.sustainedPct, tone: 'warn' },
+                { label: 'Raide (> 15 %)', pct: terrainStats.slopeBuckets.steepPct, tone: 'bad' },
+              ].map((b) => (
+                <div key={b.label} className="rcw-bar-row">
+                  <div className="rcw-bar-head">
+                    <span>{b.label}</span>
+                    <span>{b.pct} %</span>
+                  </div>
+                  <div className="rcw-bar-track">
+                    <div className={`rcw-bar-fill rcw-bar-fill--${b.tone}`} style={{ width: `${b.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="rcw-stat-card" data-testid="surface-breakdown-card">
+            <strong style={{ fontSize: 12.5 }}>Nature des sols & surfaces</strong>
+            {terrainStats.surfaces.map((s) => (
+              <div key={s.key} className="rcw-bar-row">
+                <div className="rcw-bar-head">
+                  <span>{s.label}</span>
+                  <span>{s.pct} %</span>
+                </div>
+                <div className="rcw-bar-track">
+                  <div className="rcw-bar-fill" style={{ width: `${s.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <XpEyebrow>Environnement, Astronomie & Météo en direct</XpEyebrow>
+          <XpRows>
+            <XpRow
+              icon="mtn"
+              tone="good"
+              title={terrainStats.ecologicalZone}
+              sub={`Lever ${terrainStats.sunriseLocal} · Coucher ${terrainStats.sunsetLocal} (${terrainStats.daylightLabel})`}
+            />
+            {liveWeather ? (
+              <XpRow
+                icon="cloud"
+                tone="water"
+                title={`${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C (ressenti ${liveWeather.windChillC ?? '—'}°C)`}
+                sub={`Vent ${liveWeather.windKph ?? '—'} km/h · Humidité ${liveWeather.humidityPct ?? '—'} % · ${liveWeather.source}`}
+                badge={{ label: 'Direct', tone: 'good' }}
+              />
+            ) : (
+              <XpRow
+                icon="cloud"
+                tone="muted"
+                title={knowledgeLoading ? 'Chargement météo MET Norway…' : 'Météo locale non chargée'}
+                sub="Appuyez sur Actualiser pour interroger MET Norway"
+              />
+            )}
+          </XpRows>
+
+          {liveWeather && liveWeather.hourlyPreview.length > 0 ? (
+            <div className="rcw-hourly-strip" aria-label="Prévisions horaires">
+              {liveWeather.hourlyPreview.map((h) => (
+                <div key={h.time} className="rcw-hourly-cell">
+                  <span>{h.time}</span>
+                  <strong>{h.tempC != null ? `${h.tempC}°` : '—'}</strong>
+                  <span>{h.rainProbPct != null ? `${h.rainProbPct}%` : `${h.windKph ?? '—'} km/h`}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="rcw-bar-head" style={{ marginTop: 4 }}>
+            <XpEyebrow>Banque d’information sur le chemin ({knowledgePois.length})</XpEyebrow>
+            <button
+              type="button"
+              className="xp-chip"
+              disabled={knowledgeLoading}
+              onClick={() => void refreshKnowledgeBank()}
+            >
+              <RefreshCw size={12} style={{ display: 'inline', marginRight: 4 }} />
+              {knowledgeLoading ? 'Analyse…' : 'Actualiser'}
+            </button>
+          </div>
+
+          <XpChips
+            ariaLabel="Filtrer les informations du parcours"
+            value={poiFilter}
+            items={[
+              { id: 'all', label: `Tout (${knowledgePois.length})` },
+              { id: 'water', label: `Eau (${poiCounts.water})` },
+              { id: 'shelter', label: `Refuges (${poiCounts.shelter})` },
+              { id: 'summit', label: `Sommets (${poiCounts.summit})` },
+              { id: 'food_lodging', label: `Ravit. (${poiCounts.food_lodging})` },
+              { id: 'access', label: `Accès (${poiCounts.access})` },
+            ]}
+            onChange={(id) => setPoiFilter(id as 'all' | RoutePoiCategory)}
+          />
+
+          {knowledgeLoading && knowledgePois.length === 0 ? (
+            <XpEmpty title="Analyse du corridor en cours…" hint="Interrogation Base LKDV, OpenStreetMap, Overpass et MET Norway." />
+          ) : filteredKnowledgePois.length === 0 ? (
+            <XpEmpty
+              title="Aucun repère recensé dans cette catégorie"
+              hint="Aucune donnée retournée dans le corridor (~6 km) — prévoyez votre autonomie."
+            />
+          ) : (
+            <XpRows>
+              {filteredKnowledgePois.slice(0, 30).map((poi) => (
+                <XpRow
+                  key={poi.id}
+                  icon={
+                    poi.category === 'water'
+                      ? 'drop'
+                      : poi.category === 'shelter'
+                        ? 'tent'
+                        : poi.category === 'summit'
+                          ? 'mtn'
+                          : poi.category === 'food_lodging'
+                            ? 'house'
+                            : 'pin'
+                  }
+                  tone={
+                    focusedPoiId === poi.id
+                      ? 'warn'
+                      : poi.category === 'water'
+                        ? 'water'
+                        : poi.category === 'shelter'
+                          ? 'good'
+                          : 'ink'
+                  }
+                  title={poi.name}
+                  sub={`${poi.rawCategory}${poi.altitudeM != null ? ` · ${Math.round(poi.altitudeM)} m` : ''}${poi.details ? ` · ${poi.details}` : ''} · ${poi.source}`}
+                  badge={{
+                    label:
+                      poi.distanceToTrackM < 1000
+                        ? `${poi.distanceToTrackM} m`
+                        : `${(poi.distanceToTrackM / 1000).toFixed(1)} km`,
+                    tone: poi.distanceToTrackM <= 500 ? 'good' : 'muted',
+                  }}
+                  onClick={() => {
+                    setFocusedPoiId(poi.id);
+                    setFocusCoord([poi.lon, poi.lat]);
+                    setStatusMessage(`${poi.name} centré sur la carte (${poi.distanceToTrackM} m du tracé).`);
+                  }}
+                />
+              ))}
+            </XpRows>
+          )}
+
+          {knowledgeSources.length > 0 ? (
+            <p className="rcw-sub-note">
+              Sources interrogées : {knowledgeSources.join(' · ')}.
+            </p>
+          ) : null}
 
           <XpRows>
             <XpRow
               icon="cloud"
               tone="water"
-              title="Météo, Eau & Terrain"
-              sub="Créneau horaire, date d’observation, inconnues affichées"
+              title="Observations terrain & dangers datés"
+              sub="Créneau horaire, potabilité, arrêtés et inconnues"
               trailing={<XpIcon name="chevr" size={15} />}
               onClick={() => openSubDrawer('terrain')}
             />
@@ -2642,14 +3083,6 @@ export function RouteCollabWorkspace({
               badge={{ label: `${workspace.variants.length}`, tone: 'muted' }}
               trailing={<XpIcon name="chevr" size={15} />}
               onClick={() => openSubDrawer('variants')}
-            />
-            <XpRow
-              icon="down"
-              tone="ink"
-              title="Importer / Exporter GPX"
-              sub="GPX 1.1 complet ou par étape · Garder ma trace"
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('gpx')}
             />
           </XpRows>
         </div>
@@ -2808,14 +3241,6 @@ export function RouteCollabWorkspace({
               trailing={<XpIcon name="chevr" size={15} />}
               onClick={() => openSubDrawer('kit')}
             />
-            <XpRow
-              icon="map"
-              tone="ink"
-              title="Carte & Mode liste"
-              sub="Changer de fond (OSM / Relief / Satellite) ou passer sans carte"
-              trailing={<XpIcon name="chevr" size={15} />}
-              onClick={() => openSubDrawer('map-settings')}
-            />
           </XpRows>
         </div>
       ),
@@ -2843,7 +3268,7 @@ export function RouteCollabWorkspace({
       data-testid="route-collab-workspace"
       data-head-seq={workspace.headSeq}
     >
-      {/* ÉLÉMENT 1 : CARTE PLEIN ÉCRAN (ou surface liste accessible sans WebGL) — ZERO bouton flottant */}
+      {/* ÉLÉMENT 1 : CARTE PLEIN ÉCRAN (ou surface liste accessible sans WebGL) */}
       {!listMode && webglAvailable ? (
         <DynamicRouteMap
           points={orderedPoints}
@@ -2855,7 +3280,11 @@ export function RouteCollabWorkspace({
           hoveredCoord={hoveredCoord}
           selectedPointId={selectedPointId}
           selectedSectionId={selectedSectionId}
+          analysisPois={knowledgePois}
+          focusedPoiId={focusedPoiId}
           canEdit={canEditGeo}
+          drawingMode={drawingMode}
+          editingMode={editingMode}
           onMapClickAddPoint={(lat, lon) => {
             const last = orderedPoints[orderedPoints.length - 1];
             const newId = `pt-${Date.now().toString(36)}`;
@@ -2870,6 +3299,8 @@ export function RouteCollabWorkspace({
             setSelectedPointId(newId);
             setFocusCoord([lon, lat]);
           }}
+          onFreehandDrawComplete={handleFreehandDrawComplete}
+          onDragPoint={handleDragPoint}
           onSelectPoint={(pointId) => {
             const pt = orderedPoints.find((p) => p.id === pointId);
             setSelectedPointId(pointId);
@@ -2884,6 +3315,11 @@ export function RouteCollabWorkspace({
             setSelectedSectionId(sectionId);
             setSelectedPointId(null);
             openSubDrawer('section');
+          }}
+          onSelectPoi={(poi) => {
+            setFocusedPoiId(poi.id);
+            setFocusCoord([poi.lon, poi.lat]);
+            setStatusMessage(`${poi.name} (${poi.rawCategory} · ${poi.distanceToTrackM} m du tracé).`);
           }}
           onMapError={(reason) => {
             setWebglAvailable(false);
@@ -2939,6 +3375,121 @@ export function RouteCollabWorkspace({
           </div>
         </div>
       )}
+
+      {/* BANDEAU IMPACT & STATUT TOUT EN HAUT DE L'ÉCRAN (hors des tiroirs) */}
+      {(lastImpactText || statusMessage || drawingMode || editingMode) ? (
+        <div className="rcw-top-stack">
+          {drawingMode ? (
+            <div className="rcw-top-toast rcw-top-toast--mode" role="status">
+              <span>Mode tracé actif · dessinez directement sur la carte</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => {
+                  setDrawingMode(false);
+                  setSheetOpen(true);
+                }}
+              >
+                Terminer
+              </button>
+            </div>
+          ) : null}
+          {editingMode ? (
+            <div className="rcw-top-toast rcw-top-toast--mode" role="status">
+              <span>Mode édition actif · glissez les repères numérotés</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setEditingMode(false)}
+              >
+                Terminer
+              </button>
+            </div>
+          ) : null}
+          {lastImpactText ? (
+            <div className="rcw-top-toast rcw-top-toast--impact" role="status" data-testid="impact-banner">
+              <span>
+                <strong>Impact · </strong>
+                {lastImpactText}
+              </span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setLastImpactText(null)}
+                aria-label="Fermer l'impact"
+              >
+                OK
+              </button>
+            </div>
+          ) : null}
+          {statusMessage ? (
+            <div className="rcw-top-toast" role="status" data-testid="status-message">
+              <span>{statusMessage}</span>
+              <button
+                type="button"
+                className="xp-chip"
+                onClick={() => setStatusMessage(null)}
+                aria-label="Fermer le message"
+              >
+                ✕
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* CARTE & AFFICHAGE EN HAUT À DROITE DE LA CARTE */}
+      <div className="rcw-map-topright">
+        <button
+          type="button"
+          className="xp-icon-btn"
+          data-testid="map-settings-trigger"
+          aria-label="Carte et affichage"
+          aria-expanded={mapMenuOpen}
+          onClick={() => setMapMenuOpen((v) => !v)}
+        >
+          <Layers size={18} aria-hidden="true" />
+        </button>
+        {mapMenuOpen ? (
+          <div className="rcw-map-popover" data-testid="map-settings-popover" role="dialog" aria-label="Carte et affichage">
+            <XpEyebrow>Fond de carte</XpEyebrow>
+            <XpChips
+              ariaLabel="Fond de carte"
+              value={mapBase}
+              items={[
+                { id: 'osm', label: 'Plan OSM' },
+                { id: 'topo', label: 'Relief' },
+                { id: 'satellite', label: 'Satellite' },
+              ]}
+              onChange={(id) => setMapBase(id as MapBase)}
+            />
+            <p className="rcw-sub-note">{ATLAS_TILES[mapBase].short}</p>
+            <button
+              type="button"
+              className="xp-secondary"
+              style={{ marginBottom: 0 }}
+              onClick={() => {
+                setFitTrigger((n) => n + 1);
+                setMapMenuOpen(false);
+                setStatusMessage('Carte recentrée sur l’itinéraire.');
+              }}
+            >
+              Recentrer sur l’itinéraire
+            </button>
+            <button
+              type="button"
+              className="xp-secondary"
+              style={{ marginBottom: 0 }}
+              onClick={() => {
+                setListMode((v) => !v);
+                setMapMenuOpen(false);
+              }}
+            >
+              {listMode ? 'Revenir à la vue carte' : 'Mode liste sans carte'}
+            </button>
+          </div>
+        ) : null}
+      </div>
 
       {/* ÉLÉMENT 2 : TIROIR EXPLORER (ou pilule 3 petits points en bas lorsque fermé) */}
       {sheetOpen ? (

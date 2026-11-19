@@ -106,9 +106,14 @@ describe('RouteCollabWorkspace UI — Design Explorer (Carte + Pilule 3 points +
     // Sans WebGL : fallback liste visible + tiroir ouvert automatiquement
     expect(screen.getByTestId('list-mode-fallback')).toBeTruthy();
 
-    // Ajouter un point depuis l'onglet Tracer du tiroir
+    // Ajouter un point depuis l'onglet Tracer du tiroir -> impact affiché en haut de l'écran
     fireEvent.click(screen.getByRole('button', { name: /\+ Ajouter un point/i }));
-    await waitFor(() => expect(screen.getByText(/Points \(3\)/i)).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('impact-banner')).toBeTruthy());
+
+    // Onglet Analyser : banque d'informations et statistiques techniques
+    fireEvent.click(screen.getByRole('tab', { name: 'Analyser' }));
+    expect(screen.getByTestId('surface-breakdown-card')).toBeTruthy();
+    expect(screen.getByText(/Banque d’information sur le chemin/i)).toBeTruthy();
 
     // Ouvrir l'onglet Départ -> Publier v1 -> Sous-tiroir Hors ligne, Activité & Carnet
     fireEvent.click(screen.getByRole('tab', { name: 'Départ' }));

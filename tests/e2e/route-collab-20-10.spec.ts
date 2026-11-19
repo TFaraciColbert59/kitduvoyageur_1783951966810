@@ -115,11 +115,12 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
     await expect(minaWs).toBeVisible();
     await dismissCookieBanner(alicePage);
 
-    // Design Explorer strict : lorsque le tiroir est fermé, UNIQUEMENT la carte + la pilule 3 points (1 seul bouton à l'écran)
+    // Design Explorer strict : lorsque le tiroir est fermé, UNIQUEMENT la pilule 3 points en bas + bouton Carte & Affichage en haut à droite
     const pill = aliceWs.getByTestId('route-drawer-pill');
     if (await pill.isVisible()) {
       const visibleButtons = await aliceWs.locator('button:visible').count();
-      expect(visibleButtons).toBe(1);
+      expect(visibleButtons).toBe(2);
+      await expect(aliceWs.getByTestId('map-settings-trigger')).toBeVisible();
     }
 
     // Absence de débordement horizontal sur mobile 390px
@@ -192,8 +193,9 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
     await expect(alicePage.getByTestId('impact-banner')).toContainText('article(s) du kit à revalider');
     await alicePage.getByRole('button', { name: 'Retour' }).click();
 
-    // Comparer un détour via Onglet Analyser -> Sous-drawer Variantes
+    // Comparer un détour via Onglet Analyser -> Banque d'info + Sous-drawer Variantes
     await alicePage.getByRole('tab', { name: 'Analyser' }).click();
+    await expect(alicePage.getByTestId('surface-breakdown-card')).toBeVisible();
     await alicePage.getByRole('button', { name: /Variantes & Comparateur/i }).click();
     await alicePage.getByRole('button', { name: /\+ Comparer un détour/i }).click();
     await expect(alicePage.getByText(/Détour panorama/i)).toBeVisible();

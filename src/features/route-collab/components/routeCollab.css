@@ -1,5 +1,4 @@
-/* Styles complémentaires au design Explorer v2 pour le créateur d'itinéraire collaboratif.
-   La structure (carte plein écran + pilule 3 points + ExplorerSheet) vient 100 % de explorer-v2.css. */
+/* Styles complémentaires au design Explorer v2 pour le créateur d'itinéraire collaboratif. */
 
 .rcw-explorer-root .xp-sheet-pill-launcher {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 22px + var(--cookie-banner-h, 0px));
@@ -9,12 +8,262 @@
   padding-bottom: calc(36px + var(--cookie-banner-h, 0px));
 }
 
-/* Surface liste accessible lorsque WebGL est indisponible ou que l'utilisateur active le mode liste */
+/* ── Bandeau d'impact & statut TOUT EN HAUT DE L'ÉCRAN (hors des tiroirs) ── */
+.rcw-top-stack {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 12px;
+  right: 64px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.rcw-top-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 560px;
+  padding: 9px 12px;
+  border-radius: 18px;
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(22px) saturate(1.8);
+  backdrop-filter: blur(22px) saturate(1.8);
+  box-shadow: var(--xp-bar-shadow);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--xp-txt);
+}
+
+.rcw-top-toast--impact {
+  background: linear-gradient(180deg, rgba(255, 250, 236, 0.92), rgba(250, 241, 214, 0.88));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 0.5px rgba(185, 138, 46, 0.4),
+    0 8px 22px rgba(23, 43, 36, 0.14);
+}
+
+.rcw-top-toast--mode {
+  background: linear-gradient(180deg, rgba(23, 64, 44, 0.92), rgba(23, 64, 44, 0.86));
+  color: #ffffff;
+}
+
+.rcw-top-toast--mode .xp-chip {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* ── Contrôle Carte & Affichage en haut à droite de la carte ─────────────── */
+.rcw-map-topright {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 12px;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.rcw-map-popover {
+  width: 248px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--xp-sheet-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  box-shadow: var(--xp-bar-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Poignées de déplacement direct sur la carte (mode Éditer) ───────────── */
+.rcw-drag-handle {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #17402c;
+  color: #ffffff;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 3px 10px rgba(23, 43, 36, 0.35);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: grab;
+  user-select: none;
+}
+.rcw-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+/* ── Outils de dessin & d'import (alignés sur TracePaneV2 Communauté) ────── */
+.rcw-tool-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rcw-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--xp-txt);
+}
+
+.rcw-tool-btn[aria-pressed='true'] {
+  background: var(--xp-inkbtn);
+  box-shadow: var(--xp-inkbtn-shadow);
+  color: #ffffff;
+}
+
+.rcw-tool-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.rcw-import-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rcw-import-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  text-align: left;
+}
+
+.rcw-import-card-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rcw-import-card-text strong {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--xp-txt);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rcw-import-card-text span {
+  font-size: 11px;
+  color: var(--xp-mut);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Barres statistiques techniques (pentes & surfaces dans Analyser) ────── */
+.rcw-stat-card {
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: var(--xp-block);
+  box-shadow: var(--xp-block-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rcw-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rcw-bar-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--xp-txt);
+}
+
+.rcw-bar-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.1);
+  overflow: hidden;
+}
+
+.rcw-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--xp-ink);
+}
+
+.rcw-bar-fill--good {
+  background: var(--xp-good);
+}
+
+.rcw-bar-fill--water {
+  background: var(--xp-teal);
+}
+
+.rcw-bar-fill--warn {
+  background: var(--xp-warn);
+}
+
+.rcw-bar-fill--bad {
+  background: var(--xp-bad);
+}
+
+.rcw-hourly-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(62px, 1fr);
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.rcw-hourly-cell {
+  padding: 7px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.58);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.rcw-hourly-cell strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Surface liste accessible lorsque WebGL est indisponible ou mode liste actif */
 .rcw-list-surface {
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 20px) 16px 120px;
+  padding: calc(env(safe-area-inset-top, 0px) + 64px) 16px 120px;
   background: var(--xp-map-bg);
   color: var(--xp-txt);
 }
@@ -31,26 +280,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.rcw-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 12px;
-  margin-bottom: 8px;
-  border-radius: 14px;
-  background: rgba(185, 138, 46, 0.14);
-  box-shadow: inset 0 0 0 0.5px rgba(185, 138, 46, 0.34);
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--xp-txt);
-}
-
-.rcw-banner--info {
-  background: rgba(23, 64, 44, 0.08);
-  box-shadow: inset 0 0 0 0.5px rgba(23, 64, 44, 0.18);
 }
 
 .rcw-conflict {
