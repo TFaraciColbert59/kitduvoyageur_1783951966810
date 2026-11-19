@@ -10,15 +10,22 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  Backpack,
+  CheckCircle2,
+  CloudSun,
+  Compass,
   Flame,
   Gauge,
   Mountain,
+  Route,
+  ShieldCheck,
   Sun,
   Sunrise,
   Sunset,
   Wind,
   Droplets,
   Thermometer,
+  WifiOff,
 } from 'lucide-react';
 import type { LiveWeatherInfo, TechnicalTerrainStats } from '../routeAnalysis';
 
@@ -469,6 +476,183 @@ export function ReadinessRadialRing({
         <strong>{label}</strong>
         <span>{sublabel}</span>
       </div>
+    </div>
+  );
+}
+
+
+export function RouteShapeMiniStrip({
+  coords,
+  pointsCount,
+  sectionsCount,
+  shapeLabel,
+}: {
+  coords: ReadonlyArray<readonly [number, number]>;
+  pointsCount: number;
+  sectionsCount: number;
+  shapeLabel: string;
+}) {
+  const pathPoints = useMemo(() => {
+    if (coords.length < 2) return null;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const [x, y] of coords) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    const spanX = Math.max(0.0001, maxX - minX);
+    const spanY = Math.max(0.0001, maxY - minY);
+    const step = Math.max(1, Math.floor(coords.length / 40));
+    const sampled: string[] = [];
+    for (let i = 0; i < coords.length; i += step) {
+      const [x, y] = coords[i];
+      const px = 4 + ((x - minX) / spanX) * 68;
+      const py = 26 - ((y - minY) / spanY) * 22;
+      sampled.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+    }
+    const last = coords[coords.length - 1];
+    sampled.push(
+      `${(4 + ((last[0] - minX) / spanX) * 68).toFixed(1)},${(26 - ((last[1] - minY) / spanY) * 22).toFixed(1)}`,
+    );
+    return sampled.join(' ');
+  }, [coords]);
+
+  return (
+    <div className="rcw-visual-card rcw-trace-mini-strip">
+      <div className="rcw-trace-svg-box">
+        {pathPoints ? (
+          <svg viewBox="0 0 76 30" className="rcw-trace-mini-svg" aria-hidden="true">
+            <polyline
+              fill="none"
+              stroke="#17402c"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={pathPoints}
+            />
+          </svg>
+        ) : (
+          <Route size={18} color="#6c796f" aria-hidden="true" />
+        )}
+      </div>
+      <div className="rcw-pill-cluster">
+        <span className="rcw-mini-pill rcw-mini-pill--strong">{shapeLabel}</span>
+        <span className="rcw-mini-pill">{pointsCount} pts</span>
+        <span className="rcw-mini-pill">{sectionsCount} tronçon{sectionsCount > 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  );
+}
+
+export function StageShareBar({
+  stageDistanceKm,
+  totalDistanceKm,
+}: {
+  stageDistanceKm: number;
+  totalDistanceKm: number;
+}) {
+  const pct =
+    totalDistanceKm > 0
+      ? Math.max(6, Math.min(100, Math.round((stageDistanceKm / totalDistanceKm) * 100)))
+      : 100;
+  return (
+    <div className="rcw-stage-share" aria-label={`${pct}% du parcours total`}>
+      <div className="rcw-bar-track">
+        <div className="rcw-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span>{pct}%</span>
+    </div>
+  );
+}
+
+export function KitProgressVisual({
+  confirmed,
+  reval,
+  unassigned,
+}: {
+  confirmed: number;
+  reval: number;
+  unassigned: number;
+}) {
+  const total = confirmed + reval + unassigned;
+  if (total === 0) return null;
+  const pctOk = Math.round((confirmed / total) * 100);
+  const pctWarn = Math.round((reval / total) * 100);
+  const pctIdle = Math.max(0, 100 - pctOk - pctWarn);
+
+  return (
+    <div className="rcw-kit-progress">
+      <div className="rcw-stacked-bar" role="img" aria-label={`${confirmed}/${total} confirmés`}>
+        {pctOk > 0 ? <div className="rcw-stacked-seg" style={{ width: `${pctOk}%`, background: '#1d7a47' }} /> : null}
+        {pctWarn > 0 ? <div className="rcw-stacked-seg" style={{ width: `${pctWarn}%`, background: '#d97706' }} /> : null}
+        {pctIdle > 0 ? <div className="rcw-stacked-seg" style={{ width: `${pctIdle}%`, background: '#cbd5e1' }} /> : null}
+      </div>
+      <div className="rcw-swatch-legend">
+        <span className="rcw-swatch-item">
+          <i style={{ background: '#1d7a47' }} />
+          <strong>{confirmed}</strong> OK
+        </span>
+        {reval > 0 ? (
+          <span className="rcw-swatch-item">
+            <i style={{ background: '#d97706' }} />
+            <strong>{reval}</strong> à revoir
+          </span>
+        ) : null}
+        {unassigned > 0 ? (
+          <span className="rcw-swatch-item">
+            <i style={{ background: '#cbd5e1' }} />
+            <strong>{unassigned}</strong> libre
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export interface DepartureTileItem {
+  id: string;
+  label: string;
+  value: string;
+  ok: boolean;
+  icon: 'track' | 'pack' | 'kit' | 'weather' | 'safety';
+  onClick: () => void;
+}
+
+export function DepartureTilesGrid({ items }: { items: readonly DepartureTileItem[] }) {
+  const renderIcon = (icon: DepartureTileItem['icon'], ok: boolean) => {
+    const color = ok ? '#1d7a47' : '#d97706';
+    if (icon === 'track') return <Compass size={16} color={color} aria-hidden="true" />;
+    if (icon === 'pack') return <WifiOff size={16} color={color} aria-hidden="true" />;
+    if (icon === 'kit') return <Backpack size={16} color={color} aria-hidden="true" />;
+    if (icon === 'weather') return <CloudSun size={16} color={color} aria-hidden="true" />;
+    return <ShieldCheck size={16} color={color} aria-hidden="true" />;
+  };
+
+  return (
+    <div className="rcw-depart-grid">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className={`rcw-depart-tile${item.ok ? ' is-ok' : ' is-warn'}`}
+          onClick={item.onClick}
+        >
+          <div className="rcw-depart-tile-top">
+            {renderIcon(item.icon, item.ok)}
+            <CheckCircle2
+              size={14}
+              color={item.ok ? '#1d7a47' : 'rgba(16,40,26,0.2)'}
+              aria-hidden="true"
+            />
+          </div>
+          <strong>{item.label}</strong>
+          <span>{item.value}</span>
+        </button>
+      ))}
     </div>
   );
 }

@@ -58,10 +58,14 @@ import {
   type RoutePoiCategory,
 } from '../routeAnalysis';
 import {
+  DepartureTilesGrid,
   EffortRadialGauge,
   ElevationAreaChart,
+  KitProgressVisual,
   ReadinessRadialRing,
+  RouteShapeMiniStrip,
   SlopeStackedVisual,
+  StageShareBar,
   SunDaylightArc,
   SurfaceStackedVisual,
   WeatherForecastChart,
@@ -2938,6 +2942,19 @@ export function RouteCollabWorkspace({
               </>
             ) : null}
           </div>
+
+          <RouteShapeMiniStrip
+            coords={flattenedCoords}
+            pointsCount={orderedPoints.length}
+            sectionsCount={workspace.sections.length}
+            shapeLabel={
+              workspace.shapeMode === 'loop'
+                ? 'Boucle'
+                : workspace.shapeMode === 'out_and_back'
+                  ? 'Aller-retour'
+                  : 'Aller simple'
+            }
+          />
         </div>
       ),
     },
@@ -3027,6 +3044,13 @@ export function RouteCollabWorkspace({
                       {OVERNIGHT_LABELS[kind]}
                     </span>
                   </button>
+
+                  {isMultiDay ? (
+                    <StageShareBar
+                      stageDistanceKm={stM.distanceKm}
+                      totalDistanceKm={totals.distanceKm}
+                    />
+                  ) : null}
 
                   {smartRecs.length > 0 ? (
                     <div className="rcw-cat-group">
@@ -3408,7 +3432,13 @@ export function RouteCollabWorkspace({
               {sharedKit.length === 0 ? (
                 <p className="rcw-sub-note">Aucun article partagé pour l’instant.</p>
               ) : (
-                <div className="rcw-member-list">
+                <>
+                  <KitProgressVisual
+                    confirmed={sharedKit.filter((i) => i.status === 'confirmed').length}
+                    reval={sharedKit.filter((i) => i.status === 'needs_revalidation').length}
+                    unassigned={sharedKit.filter((i) => !i.assigneeUserId && i.status !== 'needs_revalidation').length}
+                  />
+                  <div className="rcw-member-list">
                   {sharedKit.slice(0, 4).map((item) => (
                     <div key={item.id} className="rcw-member-row">
                       <div className="rcw-member-info">
@@ -3440,7 +3470,8 @@ export function RouteCollabWorkspace({
                       )}
                     </div>
                   ))}
-                </div>
+                  </div>
+                </>
               )}
             </div>
 
@@ -3520,67 +3551,49 @@ export function RouteCollabWorkspace({
               }`}
             />
 
-            {/* Checklist interactive avant départ */}
-            <div className="rcw-visual-card">
-              <div className="rcw-visual-head">
-                <span className="rcw-visual-title">Checklist avant départ</span>
-                <span className="rcw-mini-pill">{online ? 'En ligne' : 'Mode avion'}</span>
-              </div>
-              <XpRows>
-                <XpRow
-                  icon="flag"
-                  tone={hasTrack && departChecks.track ? 'good' : 'warn'}
-                  title="Tracé & étapes validés"
-                  sub={`${orderedPoints.length} point(s) · ${totalWarnings} alerte(s)`}
-                  badge={{ label: departChecks.track ? 'Validé' : 'À vérifier', tone: departChecks.track ? 'good' : 'warn' }}
-                  onClick={() => setDepartChecks((c) => ({ ...c, track: !c.track }))}
-                />
-                <XpRow
-                  icon="offline"
-                  tone={hasPack ? 'good' : 'warn'}
-                  title="Pack hors-ligne embarqué"
-                  sub={
-                    verifiedPack
-                      ? `Pack v${verifiedPack.manifest.revisionNo} vérifié sur cet appareil`
-                      : 'Téléchargez le pack pour l’accès sans réseau'
-                  }
-                  badge={{ label: verifiedPack ? `v${verifiedPack.manifest.revisionNo}` : 'Absent', tone: verifiedPack ? 'good' : 'warn' }}
-                  onClick={() => openSubDrawer('offline-carnet')}
-                />
-                <XpRow
-                  icon="pack"
-                  tone={kitReady ? 'good' : 'warn'}
-                  title="Sac & matériel vérifiés"
-                  sub={
-                    kitReady
-                      ? `${workspace.kitItems.length} article(s) confirmé(s)`
-                      : `${kitToRevalidateCount} article(s) à revalider`
-                  }
-                  badge={{ label: kitReady ? 'Prêt' : `${kitToRevalidateCount} à revoir`, tone: kitReady ? 'good' : 'warn' }}
-                  onClick={() => openSubDrawer('kit')}
-                />
-                <XpRow
-                  icon="cloud"
-                  tone={weatherReady ? 'good' : 'muted'}
-                  title="Météo & sécurité au départ"
-                  sub={
-                    liveWeather
-                      ? `${liveWeather.conditionLabel} · ${liveWeather.temperatureC ?? '—'}°C · Vent ${liveWeather.windKph ?? '—'} km/h`
-                      : 'Vérifier les conditions avant de partir'
-                  }
-                  badge={{ label: weatherReady ? 'Vérifié' : 'À voir', tone: weatherReady ? 'good' : 'muted' }}
-                  onClick={() => setDepartChecks((c) => ({ ...c, weather: !c.weather }))}
-                />
-                <XpRow
-                  icon="alert"
-                  tone={departChecks.safety ? 'good' : 'muted'}
-                  title="Batterie, secours & trace partagée"
-                  sub="Téléphone chargé, lien Hub partagé"
-                  badge={{ label: departChecks.safety ? 'OK' : 'Cocher', tone: departChecks.safety ? 'good' : 'muted' }}
-                  onClick={() => setDepartChecks((c) => ({ ...c, safety: !c.safety }))}
-                />
-              </XpRows>
-            </div>
+            <DepartureTilesGrid
+              items={[
+                {
+                  id: 'track',
+                  label: 'Tracé',
+                  value: `${orderedPoints.length} pts · ${totalWarnings} alerte(s)`,
+                  ok: hasTrack && departChecks.track,
+                  icon: 'track',
+                  onClick: () => setDepartChecks((c) => ({ ...c, track: !c.track })),
+                },
+                {
+                  id: 'pack',
+                  label: 'Pack local',
+                  value: verifiedPack ? `Pack v${verifiedPack.manifest.revisionNo}` : 'À télécharger',
+                  ok: hasPack,
+                  icon: 'pack',
+                  onClick: () => openSubDrawer('offline-carnet'),
+                },
+                {
+                  id: 'kit',
+                  label: 'Sac & Matériel',
+                  value: kitReady
+                    ? `${workspace.kitItems.length} article(s) OK`
+                    : `${kitToRevalidateCount} à revoir`,
+                  ok: kitReady,
+                  icon: 'kit',
+                  onClick: () => openSubDrawer('kit'),
+                },
+                {
+                  id: 'weather',
+                  label: 'Météo & Secours',
+                  value: liveWeather
+                    ? `${liveWeather.temperatureC ?? '—'}°C · ${liveWeather.windKph ?? '—'} km/h`
+                    : departChecks.weather
+                      ? 'Vérifié'
+                      : 'À vérifier',
+                  ok: weatherReady && departChecks.safety,
+                  icon: 'weather',
+                  onClick: () =>
+                    setDepartChecks((c) => ({ ...c, weather: true, safety: !c.safety })),
+                },
+              ]}
+            />
 
             <div className="rcw-inline-actions">
               {canPublish ? (

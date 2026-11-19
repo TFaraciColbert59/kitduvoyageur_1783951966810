@@ -1107,3 +1107,95 @@
   border-color: #17402c;
   box-shadow: 0 0 0 2px rgba(23, 64, 44, 0.12);
 }
+
+
+/* ── Extension visuelle aux onglets Tracer, Étapes, Équipe & Départ ── */
+.rcw-trace-mini-strip {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.rcw-trace-svg-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 82px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(23, 64, 44, 0.06);
+  flex-shrink: 0;
+}
+
+.rcw-trace-mini-svg {
+  width: 76px;
+  height: 30px;
+}
+
+.rcw-stage-share {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--xp-mut);
+}
+
+.rcw-stage-share .rcw-bar-track {
+  flex: 1;
+}
+
+.rcw-kit-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rcw-depart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rcw-depart-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 11px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(16, 40, 26, 0.09);
+  background: rgba(255, 255, 255, 0.84);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease;
+}
+
+.rcw-depart-tile:hover {
+  transform: translateY(-1px);
+  border-color: rgba(23, 64, 44, 0.25);
+}
+
+.rcw-depart-tile.is-ok {
+  border-color: rgba(29, 122, 71, 0.22);
+}
+
+.rcw-depart-tile-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.rcw-depart-tile strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--xp-ink);
+}
+
+.rcw-depart-tile span {
+  font-size: 11px;
+  color: var(--xp-mut);
+}
