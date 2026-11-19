@@ -150,6 +150,11 @@ export function CommunityFeedPost({
   const hasMedia = Boolean(media);
   const isSortie = !hasMedia && !post.sportCard && isSortiePost(post);
   const isKit = !hasMedia && !post.sportCard && !isSortie && isKitPost(post);
+  const isCarnet = Boolean(
+    post.creation_meta &&
+      typeof post.creation_meta === 'object' &&
+      typeof (post.creation_meta as { carnet_id?: unknown }).carnet_id === 'string',
+  );
   const optionsId = `feed-options-${post.id}`;
 
   /** Appui sur une action du menu : le bouton « pop », le menu se replie, puis l'action part. */
@@ -360,7 +365,7 @@ export function CommunityFeedPost({
     <article
       ref={articleRef}
       id={`feed-post-${post.id}`}
-      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${isSortie ? ' lkdv-feed-post--sortie' : ''}${isKit ? ' lkdv-feed-post--kit' : ''}${panel ? ' has-panel' : ''}`}
+      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${isSortie ? ' lkdv-feed-post--sortie' : ''}${isKit ? ' lkdv-feed-post--kit' : ''}${isCarnet ? ' lkdv-feed-post--carnet' : ''}${post.sportCard ? ' lkdv-feed-post--sport' : ''}${panel ? ' has-panel' : ''}`}
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{

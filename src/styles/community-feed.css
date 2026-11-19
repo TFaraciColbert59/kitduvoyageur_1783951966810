@@ -2434,3 +2434,68 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   bottom: 10px;
   z-index: 25 !important;
 }
+
+/* ── Suppression du fond et des espaces vides sur les posts ticket/sortie, kit et carnet sans média ── */
+.lkdv-feed-post--sortie,
+.lkdv-feed-post--kit,
+.lkdv-feed-post--sport,
+.lkdv-feed-post--text.lkdv-feed-post--carnet {
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  aspect-ratio: auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.lkdv-feed-post--sortie > .lkdv-feed-post-top,
+.lkdv-feed-post--kit > .lkdv-feed-post-top,
+.lkdv-feed-post--sport > .lkdv-feed-post-top,
+.lkdv-feed-post--text.lkdv-feed-post--carnet > .lkdv-feed-post-top {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  padding: 0 0 8px !important;
+}
+
+.lkdv-feed-post--sortie > .pmi-more-pill,
+.lkdv-feed-post--kit > .pmi-more-pill,
+.lkdv-feed-post--sport > .pmi-more-pill,
+.lkdv-feed-post--text.lkdv-feed-post--carnet > .pmi-more-pill {
+  top: 0 !important;
+  right: 0 !important;
+}
+
+.lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie,
+.lkdv-feed-post--kit .lkdv-feed-creation-card {
+  padding: 0 !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+
+.lkdv-feed-post--kit .lkdv-feed-creation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.lkdv-feed-post--kit .lkdv-feed-creation-actions .lkdv-engage-bar,
+.lkdv-feed-post--kit .lkdv-feed-creation-actions .lkdv-post-media-glass {
+  position: static !important;
+  margin-left: auto;
+}
+
+.lkdv-feed-post--sortie .lkdv-feed-sortie-engage .lkdv-post-media-glass {
+  position: static !important;
+  margin-left: auto;
+}
