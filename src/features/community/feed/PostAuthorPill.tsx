@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { BookOpen, Users } from 'lucide-react';
 import type { FeedPost } from './useCommunityFeed';
 import { timeAgo } from './feed-utils';
 
@@ -56,17 +57,53 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
     </>
   );
 
-  if (onClick) {
-    return (
-      <button type="button" className="lkdv-post-author" aria-label={label} onClick={onClick}>
-        {body}
-      </button>
-    );
-  }
-  return (
+  const contextLink = post.clubContext
+    ? {
+        href: `/clubs/${post.clubContext.slug}`,
+        label: post.clubContext.name,
+        kind: 'club' as const,
+      }
+    : post.carnetContext
+      ? {
+          href: `/carnets/${post.carnetContext.id}`,
+          label: post.carnetContext.title,
+          kind: 'carnet' as const,
+        }
+      : null;
+
+  const pillEl = onClick ? (
+    <button type="button" className="lkdv-post-author" aria-label={label} onClick={onClick}>
+      {body}
+    </button>
+  ) : (
     <Link href={href} className="lkdv-post-author" aria-label={label}>
       {body}
     </Link>
+  );
+
+  if (!contextLink) return pillEl;
+
+  return (
+    <div className="lkdv-post-author-stack">
+      {pillEl}
+      <Link
+        href={contextLink.href}
+        className="lkdv-post-context-pill"
+        onClick={(event) => event.stopPropagation()}
+        aria-label={
+          contextLink.kind === 'club'
+            ? `Ouvrir le club ${contextLink.label}`
+            : `Ouvrir le carnet ${contextLink.label}`
+        }
+      >
+        {contextLink.kind === 'club' ? (
+          <Users size={11} aria-hidden="true" />
+        ) : (
+          <BookOpen size={11} aria-hidden="true" />
+        )}
+        <span>{contextLink.label}</span>
+      </Link>
+    </div>
   );
 }
 

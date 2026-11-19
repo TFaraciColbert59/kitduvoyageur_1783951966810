@@ -40,6 +40,9 @@ export interface FeedPost {
   author?: FeedAuthor;
   audience?: string | null;
   club_id?: string | null;
+  linked_carnet_id?: string | null;
+  clubContext?: { id: string; name: string; slug: string } | null;
+  carnetContext?: { id: string; title: string } | null;
   creation_meta?: unknown;
   sportCard?: SportActivityCardVM | null;
   user_liked?: boolean;
@@ -72,6 +75,7 @@ const FEED_COLUMNS = [
   'snapshot_payload',
   'audience',
   'club_id',
+  'linked_carnet_id',
   'creation_meta',
   'soundtrack_url',
   'soundtrack_title',
@@ -274,6 +278,43 @@ export function useCommunityFeed(userId?: string, authReady = true) {
           if (b.blocked_id === userId && b.blocker_id) blockedAuthorIds.add(b.blocker_id);
         }
 
+        const clubIdSet = new Set<string>();
+        const carnetIdSet = new Set<string>();
+        for (const row of rows) {
+          if (typeof row.club_id === 'string' && row.club_id) clubIdSet.add(row.club_id);
+          const metaCarnet =
+            row.creation_meta &&
+            typeof row.creation_meta === 'object' &&
+            typeof (row.creation_meta as { carnet_id?: unknown }).carnet_id === 'string'
+              ? ((row.creation_meta as { carnet_id: string }).carnet_id)
+              : null;
+          const cid = (typeof row.linked_carnet_id === 'string' && row.linked_carnet_id) || metaCarnet;
+          if (cid) carnetIdSet.add(cid);
+        }
+        const [clubMetaRes, carnetMetaRes] = await Promise.all([
+          clubIdSet.size > 0
+            ? supabase
+                .from('clubs')
+                .select('id, name, slug')
+                .in('id', Array.from(clubIdSet))
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [] as Array<{ id: string; name: string; slug: string }> }),
+          carnetIdSet.size > 0
+            ? supabase
+                .from('carnets')
+                .select('id, title')
+                .in('id', Array.from(carnetIdSet))
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [] as Array<{ id: string; title: string }> }),
+        ]);
+        if (requestId !== requestIdRef.current) return;
+        const clubsById = new Map(
+          ((clubMetaRes.data ?? []) as Array<{ id: string; name: string; slug: string }>).map((c) => [c.id, c]),
+        );
+        const carnetsById = new Map(
+          ((carnetMetaRes.data ?? []) as Array<{ id: string; title: string }>).map((c) => [c.id, c]),
+        );
+
         const enriched: FeedPost[] = [];
         for (const row of rows) {
           const profile = row.author_id ? profiles[row.author_id] : undefined;
@@ -324,10 +365,21 @@ export function useCommunityFeed(userId?: string, authReady = true) {
             if (!sportCard) continue;
           }
 
+          const metaCarnetId =
+            row.creation_meta &&
+            typeof row.creation_meta === 'object' &&
+            typeof (row.creation_meta as { carnet_id?: unknown }).carnet_id === 'string'
+              ? ((row.creation_meta as { carnet_id: string }).carnet_id)
+              : null;
+          const resolvedCarnetId =
+            (typeof row.linked_carnet_id === 'string' && row.linked_carnet_id) || metaCarnetId;
+
           enriched.push({
             ...row,
             author: authorObj,
             sportCard,
+            clubContext: typeof row.club_id === 'string' ? (clubsById.get(row.club_id) ?? null) : null,
+            carnetContext: resolvedCarnetId ? (carnetsById.get(resolvedCarnetId) ?? null) : null,
             user_liked: liked.has(row.id),
             user_saved: saved.has(row.id),
           });

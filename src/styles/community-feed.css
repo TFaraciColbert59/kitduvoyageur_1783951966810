@@ -2457,10 +2457,16 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 
 .lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie,
-.lkdv-feed-post--kit .lkdv-feed-creation-card,
+.lkdv-feed-post--kit .lkdv-feed-creation-card {
+  padding: 50px 0 0 !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+
 .lkdv-feed-post--carnet .lkdv-feed-creation-card,
 .lkdv-feed-post--club .lkdv-feed-creation-card {
-  padding: 50px 0 0 !important;
+  padding: 72px 0 0 !important;
   gap: 8px !important;
   min-height: 0 !important;
   background: transparent !important;
@@ -2490,6 +2496,43 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-feed-post--club .lkdv-feed-creation-actions .lkdv-post-media-glass {
   position: static !important;
   margin-left: auto;
+}
+
+.lkdv-post-author-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  max-width: calc(100% - 54px);
+}
+
+.lkdv-post-context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 0.5px rgba(23, 43, 36, 0.1), 0 4px 10px rgba(10, 20, 14, 0.12);
+  color: #17402c;
+  font: 650 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.lkdv-post-context-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-post-context-pill:active {
+  transform: scale(0.96);
 }
 
 .lkdv-feed-post--sortie .lkdv-feed-sortie-engage .lkdv-post-media-glass {
