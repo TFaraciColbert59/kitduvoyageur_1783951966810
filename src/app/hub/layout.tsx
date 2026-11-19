@@ -32,11 +32,11 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
 
 async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
   const [flags, data] = await Promise.all([
-    currentFeatureFlags(),
+    process.env.LKDV_HUB_LAYOUT === 'legacy' ? currentFeatureFlags() : null,
     traceStage('layout.adventure', () => getHubAdventureData()),
   ]);
 
-  if (flags.hub_camp_v1) {
+  if (!flags || flags.hub_camp_v1) {
     return (
       <TripAffiliateProvider
         value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}

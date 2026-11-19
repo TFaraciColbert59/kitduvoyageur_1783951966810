@@ -37,7 +37,7 @@ critères de recette. Les statuts ci-dessous décrivent l’état constaté sur 
 | P00-06 | En cours | Les variables Supabase sont déclarées conjointement pour Production, Preview et Development dans les métadonnées Vercel. La destination effective de Preview reste à confirmer. Matrice par widget et vérification des fournisseurs à poursuivre en recette. |
 | P00-07 | En cours | Le tracer SSR existe déjà (`src/lib/perf/ssrTrace.ts`). Établir la mesure de départ sur les parcours authentifiés en recette. |
 | P00-08 | En cours | Sauvegarde et restauration réussies sur la base locale de recette. Le dernier passage de la chaîne distante est vert avec le dump et la publication d’artefact ignorés. Aucun artefact associé. La rétention configurée est de 7 jours. Vérifier une sauvegarde exploitable et mesurer le RPO/RTO de production séparément. |
-| P00-09 | Bloqué | Build complet et restauration locale acquis. Sept assertions de confidentialité SQL et des échecs de la suite Communauté restent ouverts. Il manque la recette authentifiée, la référence de performance et le contrôle de restauration de la sauvegarde distante. |
+| P00-09 | En cours | Build et restauration locale acquis. Les 1 926 assertions pgTAP passent après rétablissement des gardes de confidentialité. La recette authentifiée, les échecs historiques de la suite Communauté, la référence de performance et le contrôle de restauration de la sauvegarde distante restent ouverts. |
 
 ### Rejeu initial
 
@@ -139,6 +139,44 @@ et conserve l’ordre G01 puis P01. Le diff Git indique un renommage à 100 %. L
 alignées, neuf correspondances par nom à une autre version, 65 fichiers sans correspondance
 et 27 entrées du registre sans correspondance. Ce résultat classe des versions et des noms.
 La comparaison des définitions et le rejeu en recette restent ouverts.
+
+### Confidentialité vérifiée en recette
+
+La migration additive `20261119142048_restore_hub_privacy_guards.sql` a été appliquée
+uniquement à `lkdv_hub_ci` dans la VM. Les politiques de lecture des lignes GPS brutes
+restent limitées au propriétaire et aux participants. Les autres lecteurs passent par
+le partage projeté du carnet. Le garde rétabli refuse les médias et aperçus publics
+sur les audiences restreintes. Le formulaire présente la même contrainte et le RPC
+renvoie une erreur métier. La lecture privée de médias pour ces audiences reste à raccorder.
+
+**pgTAP PASS.** Les 115 fichiers et 1 926 assertions passent. Les rôles `anon`,
+`authenticated` et `service_role` n’ont pas le droit d’appeler directement le RPC interne.
+
+## P06–P07 · Cockpit et aperçu iPhone
+
+- `/hub` utilise le nouveau cockpit par défaut. Les widgets lisent la projection du chargeur
+  `getHubAdventureData`, commun à Compas. Les actions de gestion ouvrent les sections
+  existantes du voyage. Kit Studio a une entrée distincte. La variable serveur
+  `LKDV_HUB_LAYOUT=legacy` permet de rétablir l’ancien affichage au redémarrage.
+- Le bloc de présentation a été retiré à la demande de Tony. Les widgets Météo et Budget
+  sont en tête. Le sélecteur d’aventure est accessible depuis le bas de l’écran réel.
+  Étapes garde le jour et permet de consulter le détail d’un point. Une aventure en solo
+  et une aventure collective ont des états séparés. Les comptes sans voyage trouvent l’accès
+  Compas et le choix d’aventure, sans grille de huit cartes vides.
+- Les tiroirs s’ouvrent à 90 % de la hauteur visible. La vérification Chromium au format iPhone
+  couvre les huit tiroirs, le lien direct, le retour, le jour, le brouillon photo, les groupes de
+  trois et l’absence de débordement horizontal. Rendu de la version compacte vérifié dans Safari
+  sur simulateur iPhone 18 Pro. L’iPhone physique connu est indisponible pour une installation.
+- La route `/recette-hub` nécessite `LKDV_HUB_RECETTE=1`. Le même composant React alimente
+  une page autonome servie depuis le Mac sur le réseau local. Le voyage de recette est fictif.
+  L’aperçu, le QR code et la capture Safari se trouvent dans le dossier de livraison iPhone.
+- La carte du cockpit affiche le tracé enregistré et les repères, avec un lien vers la carte
+  interactive du voyage réel. Le brouillon photo est conservé dans l’onglet. La recette
+  authentifiée, la persistance des brouillons, le hors-ligne complet, la progression du groupe
+  et les tests terrain sur appareil physique restent ouverts.
+- La compilation de l’aperçu autonome, ESLint ciblé et 19 tests Vitest ciblés passent.
+  Le build Next complet de cette livraison a été interrompu par le garde disque du profileur.
+  Il doit être rejoué avec l’espace nécessaire.
 
 ## Ordre d’implémentation
 
