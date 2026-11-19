@@ -288,6 +288,7 @@ export interface TripFull extends Trip {
   member_profiles?: TripMemberProfile[];
   user_role?: TripRole | null;
   permissions: TripPermissions;
+  unavailableSections?: ('collaborators' | 'steps' | 'items' | 'expenses' | 'documents' | 'notes')[];
 }
 
 /** Snapshot `trip_member_profiles` : données de préparation par membre. */

@@ -1,0 +1,67 @@
+import 'server-only';
+
+import { listBookings, type BookingStore } from '@/features/booking/server/bookingPersistence';
+import { isOwnMediaUrl, parseMomentMeta } from '@/features/carnet/detail/momentTypes';
+import { privateMomentMediaPath } from '@/features/carnet/detail/privateMomentMedia';
+import { createClient } from '@/lib/supabase/server';
+import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
+import type { HubAdventureData } from '../server/getHubAdventureData';
+import { buildCockpitReservations } from './booking';
+import { buildCockpit, type CockpitData } from './model';
+
+export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> {
+  const cockpit = buildCockpit(data);
+  const { trip } = data;
+  if (!trip) return cockpit;
+
+  const supabase = await createClient();
+  const [session, profiles, bookings, carnets, kit] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchPublicProfilesWith(supabase, cockpit.people.map(({ id }) => id)),
+    trip.permissions.canEdit
+      ? listBookings(supabase as unknown as BookingStore, trip.id)
+      : null,
+    supabase.from('carnets').select('id,author_id').eq('trip_id', trip.id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    trip.kit_id ? supabase.from('materiel_kits').select('name').eq('id', trip.kit_id).eq('is_trashed', false).maybeSingle() : null,
+  ]);
+  const viewer = session.data.user;
+  const selectedCarnet = carnets.data;
+  const [moments, collaboration] = selectedCarnet ? await Promise.all([
+    supabase.from('carnet_moments').select('id,citation,lieu,jour_numero,image_url,moment_type,moment_meta')
+      .eq('carnet_id', selectedCarnet.id).order('created_at', { ascending: false }).limit(30),
+    viewer && viewer.id !== selectedCarnet.author_id
+      ? supabase.rpc('is_carnet_editor', { p_carnet: selectedCarnet.id })
+      : null,
+  ]) : [null, null];
+
+  return {
+    ...cockpit,
+    people: cockpit.people.map((person) => {
+      const profile = profiles[person.id];
+      return {
+        ...person,
+        name: profile?.full_name ?? profile?.handle ?? person.name,
+        avatar: profile?.avatar_url ?? person.avatar,
+        handle: profile?.handle ?? person.handle,
+      };
+    }),
+    reservations: bookings && !bookings.error ? buildCockpitReservations(data, bookings.data ?? []) : null,
+    carnet: selectedCarnet ? {
+      id: selectedCarnet.id,
+      editable: Boolean(viewer && (viewer.id === selectedCarnet.author_id || collaboration?.data === true)),
+      moments: (moments?.data ?? []).map((row) => ({
+        id: row.id, title: row.citation || row.lieu || 'Moment', day: row.jour_numero, type: row.moment_type,
+        audio: parseMomentMeta(row.moment_meta)?.audioUrl,
+        media: isOwnMediaUrl(row.image_url, 'carnet-media') || isOwnMediaUrl(row.image_url, 'carnet-moments-media') ||
+          privateMomentMediaPath(row.image_url, selectedCarnet.id) ? row.image_url : null,
+      })),
+    } : null,
+    carnetUnavailable: Boolean(carnets.error || moments?.error),
+    carnetKitItems: trip.items.map((item) => ({
+      id: item.id, name: item.item_name, detail: item.notes ?? null, weightG: item.weight_grams, color: null,
+    })),
+    canCreateCarnet: Boolean(viewer?.id === trip.user_id && !carnets.error),
+    kitName: kit?.data?.name,
+  };
+}

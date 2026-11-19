@@ -115,6 +115,8 @@ export interface CommunitySheetShellProps {
   staticSlot?: ReactNode;
   /** Plafonne le tiroir à 40% de hauteur en mode Recherche. */
   compactSearch?: boolean;
+  initialDetent?: 'card' | 'large';
+  hideCapsule?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -158,13 +160,15 @@ export function CommunitySheetShell({
   previewSlotRef,
   staticSlot = null,
   compactSearch = false,
+  initialDetent = 'card',
+  hideCapsule = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
   const [state, setState] = useState<'opening' | 'open' | 'closing'>('opening');
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [detent, setDetent] = useState<'card' | 'large'>('card');
+  const [detent, setDetent] = useState<'card' | 'large'>(initialDetent);
   const [scrolled, setScrolled] = useState(false);
   const [edgeBackX, setEdgeBackX] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -195,6 +199,7 @@ export function CommunitySheetShell({
   // ── Ouverture / sortie animée ─────────────────────────────────────────────
   useEffect(() => {
     if (open) {
+      setDetent(initialDetent);
       openerRef.current = (document.activeElement as HTMLElement | null) ?? null;
       setMounted(true);
       setState('opening');
@@ -242,7 +247,7 @@ export function CommunitySheetShell({
     };
     // `mounted` est volontairement hors dépendances : sinon la sortie se relance.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, reducedMotion]);
+  }, [open, reducedMotion, initialDetent]);
 
   // Un changement de nature (Explorer <-> Création) remonte la position de drag.
   useEffect(() => {
@@ -514,7 +519,7 @@ export function CommunitySheetShell({
   const paneId = (id: string) => `cv2-pane-${id}`;
   const detailPages = detail?.pages ?? [];
   const detailCount = detailPages.length;
-  const showCapsule = !detail;
+  const showCapsule = !detail && !hideCapsule;
   // Le LensPager suit les filtres/étapes (mini-capsule) quand `mini.pages` est
   // fourni ; sinon il conserve le glisser entre volets (compatibilité).
   const filterPages = mini?.pages?.[capsule.active] ?? null;

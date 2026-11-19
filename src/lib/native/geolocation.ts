@@ -15,7 +15,10 @@ export interface GeoCoordinates {
 /**
  * Recupere la position GPS actuelle (Natif Capacitor ou Web navigator.geolocation)
  */
-export async function getCurrentGeoPosition(options?: PositionOptions): Promise<GeoCoordinates> {
+export async function getCurrentGeoPosition(
+  options?: PositionOptions,
+  allowIpFallback = true,
+): Promise<GeoCoordinates> {
   const defaultOpts: PositionOptions = {
     enableHighAccuracy: true,
     timeout: 10000,
@@ -83,6 +86,7 @@ export async function getCurrentGeoPosition(options?: PositionOptions): Promise<
       return await browserPos({ enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
     } catch {
       if (
+        !allowIpFallback ||
         typeof navigator === "undefined" ||
         !("geolocation" in navigator) ||
         process.env.NODE_ENV === "test"

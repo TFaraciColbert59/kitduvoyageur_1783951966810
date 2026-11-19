@@ -1,3 +1,5 @@
+import '@/styles/communaute-v2.css';
+import '@/styles/communaute-v2-shell.css';
 import { Suspense } from 'react';
 import { getHubAdventureData, buildHubCounts, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { getAdventureIntelligence } from '@/features/hub/server/getAdventureIntelligence';

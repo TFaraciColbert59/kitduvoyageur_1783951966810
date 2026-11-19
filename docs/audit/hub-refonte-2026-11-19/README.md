@@ -203,3 +203,33 @@ renvoie une erreur métier. La lecture privée de médias pour ces audiences res
 4. **P08–P09 · Parcours complet.** Tester départ, activité, arrivée et retour, en ligne et hors ligne.
    Couvrir les voyages de 2 h à 30 j, les rôles, la concurrence et les appareils réels. Remplir la
    preuve par ID après chaque vérification. Préparer la livraison réversible après les cinq passes.
+
+## Reprise de la référence Communauté
+
+Le cockpit réutilise le tiroir Explorer et Création de Communauté, sa feuille de style
+et sa pastille d’identité. Les huit widgets ouvrent un contenu propre. Le détail d’une
+étape est commun à la carte et à la liste de la journée. La carte utilise le fond
+Leaflet de l’itinéraire. Les tronçons gardent leur séparation et les repères sont
+sélectionnables. La météo affiche le point utilisé et interroge MET Norway via la route
+existante avec les coordonnées GPS du visiteur, après autorisation.
+
+Les dépenses sont ordonnées par date réelle. Les échéances de réservation ne sont
+affichées que lorsqu’elles sont renseignées. Une étape qui suggère un hébergement
+ou un billet sans réservation enregistrée apparaît « À vérifier ». Les profils, le
+carnet, les dépenses, les documents et le kit affecté sont lus sous la session du
+voyage. La scène Kits se charge à la demande et requiert une configuration enregistrée
+pour le kit concerné. L’ajout de moment réutilise le formulaire Carnet. La nouvelle
+migration crée un seau privé et applique les droits du carnet aux médias du HUB.
+
+- **WebKit mobile · PASS.** Huit tiroirs et leurs détails, vrai fond de carte, repère
+  vers étape, cinq étapes défilantes, liens directs et 3,5 jours visibles dans la rangée.
+  Parcours d’interface réalisé sur la route locale `/recette-hub`, avec données de test.
+- **Météo · PASS.** La route locale `/api/weather/point` a renvoyé des prévisions
+  de MET Norway pour un point public. La position d’un iPhone reste à vérifier.
+- **PostgreSQL local · PASS.** 116 suites et 1 932 assertions. Le propriétaire peut
+  déposer et lire son média. Un autre utilisateur et le visiteur sont refusés.
+- **Typage et tests ciblés · PASS.** 45 assertions. La suite de fondations Communauté
+  signale un écart préexistant dans les couleurs de `DynamicIsland`.
+- Le schéma hébergé expose les relations utilisées. Le projet Supabase accessible
+  ne présente que `main`. Il reste à tester le parcours connecté complet, l’envoi
+  du média et le rendu du kit affecté dans un environnement de recette authentifié.

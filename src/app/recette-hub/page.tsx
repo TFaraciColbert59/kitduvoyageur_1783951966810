@@ -1,3 +1,5 @@
+import '@/styles/communaute-v2.css';
+import '@/styles/communaute-v2-shell.css';
 import { notFound } from 'next/navigation';
 import { HubCockpit } from '@/features/hub/cockpit/HubCockpit';
 import { cockpitFixture } from '@/features/hub/cockpit/fixture';

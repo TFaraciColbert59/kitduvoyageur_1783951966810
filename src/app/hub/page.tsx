@@ -18,7 +18,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getStudioData } from '@/features/kit-studio/server/getStudioData';
 import { resolveStudioPageState } from '@/features/kit-studio/server/studioMode';
-import { buildCockpit } from '@/features/hub/cockpit/model';
+import { loadCockpit } from '@/features/hub/cockpit/loadCockpit';
 import { HubCockpit } from '@/features/hub/cockpit/HubCockpit';
 import { AdventureSwitcher } from '@/features/hub/components/AdventureSwitcher';
 
@@ -54,7 +54,7 @@ export default async function HubPage({
     }
     if (data.trip && phase === 'recount') return <PhaseRecountView trip={data.trip} />;
 
-    const cockpit = buildCockpit(data);
+    const cockpit = await loadCockpit(data);
     return (
       <HubCockpit
         key={cockpit.key}

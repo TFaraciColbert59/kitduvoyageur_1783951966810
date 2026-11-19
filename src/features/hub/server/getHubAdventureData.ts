@@ -107,6 +107,7 @@ export interface HubHikingContext {
     current: { tempC: number; weathercode: number; precipPct: number | null; precipMm?: number | null };
     days: WeatherDay[];
     locationLabel: string | null;
+    point?: { lat: number; lon: number };
   } | null;
 }
 
@@ -526,6 +527,7 @@ async function loadHikingContext(
         current: forecast.current,
         days: forecast.days,
         locationLabel: forecast.location.label || null,
+        point: { lat: forecast.location.latitude, lon: forecast.location.longitude },
       };
     }
   } catch (err) {

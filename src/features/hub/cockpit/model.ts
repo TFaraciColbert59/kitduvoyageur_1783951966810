@@ -1,5 +1,7 @@
 import { routeLines } from '@/features/explorer-v2/geo/track';
 import type { HubAdventureData } from '../server/getHubAdventureData';
+import type { TripFull } from '@/features/trips/types/trip.types';
+import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
 import { rainLabel, weatherLabel } from '@/features/materiel/services/getWeather';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
 
@@ -17,23 +19,47 @@ export interface CockpitStep {
   coordinate: Coordinate | null;
 }
 
+export interface CockpitWeatherDay {
+  date: string;
+  day: string;
+  low: number | null;
+  high: number | null;
+  condition: string | null;
+  wind?: number | null;
+  rain?: number | null;
+  hours?: { time: string; temperature: number | null; wind: number | null; rain: number | null }[];
+}
+
+export interface CockpitReservation {
+  id: string;
+  title: string;
+  status: 'À réserver' | 'En attente' | 'À vérifier';
+  due: string | null;
+  when?: string | null;
+  stepId?: string;
+  partnerSlug?: string;
+}
+
 export interface CockpitData {
   key: string;
   title: string;
   location: string | null;
   today: number | null;
   dayCount: number | null;
+  weatherPoint?: Coordinate | null;
   weather: {
     temperature: number;
     condition: string;
     place: string | null;
     rain: string | null;
-    days: { date: string; day: string; low: number; high: number; condition: string }[];
+    days: CockpitWeatherDay[];
+    observedAt?: string;
+    source?: string;
   } | null;
   budget: {
     spent: { currency: string; amount: number }[];
     planned: { currency: string; amount: number } | null;
-    expenses: { id: string; title: string; amount: number; currency: string }[];
+    expenses: { id: string; title: string; amount: number; currency: string; date?: string; category?: string | null; payer?: string | null }[];
   } | null;
   route: Coordinate[][];
   distance: number | null;
@@ -42,11 +68,20 @@ export interface CockpitData {
   notes: { id: string; title: string | null; content: string; day: number | null }[];
   kit: { id: string; title: string; amount: number; packed: boolean }[];
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
-  people: { id: string; name: string | null; role: string }[];
+  people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null }[];
   peopleCount: number | null;
   pending: number;
   trip: boolean;
   collective: boolean;
+  canEdit?: boolean;
+  unavailableSections?: TripFull['unavailableSections'];
+  carnetUnavailable?: boolean;
+  carnetKitItems?: CarnetKitItemRow[];
+  canCreateCarnet?: boolean;
+  reservations?: CockpitReservation[] | null;
+  carnet?: { id: string; editable: boolean; moments: { id: string; title: string; day: number | null; media?: string | null; audio?: string | null; type?: string | null }[] } | null;
+  kitId?: string | null;
+  kitName?: string | null;
 }
 
 function coordinate(lng: number | null, lat: number | null): Coordinate | null {
@@ -87,11 +122,15 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
   const amounts = new Map<string, number>();
   const expenses: NonNullable<CockpitData['budget']>['expenses'] = [];
   if (trip?.permissions.canManageBudget) {
-    for (const row of trip.expenses) {
-      if (row.is_planned || !Number.isFinite(Number(row.amount))) continue;
+    for (const row of trip.expenses.slice().sort((a, b) =>
+      (b.expense_date ?? '').localeCompare(a.expense_date ?? '') || b.created_at.localeCompare(a.created_at) || a.id.localeCompare(b.id))) {
+      if (row.is_planned || row.amount == null || !Number.isFinite(Number(row.amount))) continue;
       const amount = Number(row.amount);
       amounts.set(row.currency, (amounts.get(row.currency) ?? 0) + amount);
-      if (expenses.length < 8) expenses.push({ id: row.id, title: row.title, amount, currency: row.currency });
+      expenses.push({
+        id: row.id, title: row.title, amount, currency: row.currency,
+        date: row.expense_date, category: row.category, payer: row.payer?.full_name,
+      });
     }
   }
 
@@ -99,12 +138,18 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
   if (trip) people.set(trip.user_id, { id: trip.user_id, name: null, role: 'Responsable' });
   for (const member of trip?.collaborators ?? []) {
     const role = member.user_id === trip?.user_id || member.role === 'owner' ? 'Responsable' : 'Collaborateur';
-    people.set(member.user_id, { id: member.user_id, name: member.profile?.full_name ?? member.profile?.username ?? null, role });
+    people.set(member.user_id, {
+      id: member.user_id, name: member.profile?.full_name ?? member.profile?.username ?? null, role,
+      avatar: member.profile?.avatar_url, handle: member.profile?.username,
+    });
   }
   for (const member of group?.members ?? []) {
-    if (member.status !== 'active' && !people.has(member.userId)) continue;
+    if (member.status !== 'active') continue;
     const saved = people.get(member.userId);
-    people.set(member.userId, { id: member.userId, name: member.fullName ?? saved?.name ?? null, role: saved?.role ?? 'Participant' });
+    people.set(member.userId, {
+      id: member.userId, name: member.fullName ?? saved?.name ?? null, role: saved?.role ?? 'Participant',
+      avatar: member.avatarUrl ?? saved?.avatar, handle: saved?.handle,
+    });
   }
 
   // Les créations de parcours et Compas utilisent les mêmes coordonnées enregistrées.
@@ -122,6 +167,8 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     today: trip?.status === 'active' ? phase?.dayIndex ?? null : null,
     dayCount: phase?.totalDays ?? steps.at(-1)?.day ?? null,
     weather, route, steps,
+    weatherPoint: hiking?.coords ? coordinate(hiking.coords.lon, hiking.coords.lat) :
+      hiking?.weather?.point ? coordinate(hiking.weather.point.lon, hiking.weather.point.lat) : steps.find((step) => step.coordinate)?.coordinate,
     distance: hiking?.distanceKm ?? null,
     elevation: hiking?.elevationGainM ?? null,
     budget: trip?.permissions.canManageBudget ? {
@@ -140,5 +187,8 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     pending: group?.pendingInvites ?? data.pendingInvites,
     trip: Boolean(trip),
     collective: adventure.nature === 'collectif',
+    canEdit: trip?.permissions.canEdit,
+    unavailableSections: trip?.unavailableSections,
+    kitId: trip?.kit_id,
   };
 }
