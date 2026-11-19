@@ -1449,6 +1449,18 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   padding: 6px 14px 48px !important;
 }
 
+.lkdv-carnet-drawer .lkdv-slot-topnav .lkdv-capsule {
+  height: 56px !important;
+  padding: 4px !important;
+}
+
+.lkdv-carnet-drawer .lkdv-slot-topnav .lkdv-capsule .sel-lens {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / var(--n, 5)) !important;
+}
+
 @keyframes lkdv-sheet-push {
   from {
     transform: translateX(100%);
