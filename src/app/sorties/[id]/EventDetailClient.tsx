@@ -62,6 +62,7 @@ export interface EventDetailData {
     status: 'confirmed' | 'waitlist';
   }>;
   myStatus: 'none' | 'registered' | 'waitlist';
+  registrationClubId?: string | null;
   club: { id: string; slug: string | null; name: string } | null;
   kit: { id: string; name: string; totalWeightG: number | null } | null;
 }
@@ -113,6 +114,7 @@ export default function EventDetailClient({
 
   const refreshGroupPerformance = useCallback(
     async (syncDb = false) => {
+      if (event.registrationClubId) return;
       if ((event.distanceKm ?? 0) <= 0 && (event.elevationGainM ?? 0) <= 0) return;
       try {
         const res = await fetch(
@@ -133,7 +135,7 @@ export default function EventDetailClient({
         /* ignore */
       }
     },
-    [event.distanceKm, event.elevationGainM, event.id],
+    [event.distanceKm, event.elevationGainM, event.id, event.registrationClubId],
   );
 
   useEffect(() => {
@@ -144,7 +146,7 @@ export default function EventDetailClient({
   const meeting = coords(event);
   const spotsLeft = Math.max(0, event.maxParticipants - event.currentParticipants);
   const full = event.maxParticipants > 0 && spotsLeft === 0;
-  const registrationClosed = event.past || event.cancelled;
+  const registrationClosed = event.past || event.cancelled || event.registrationClubId === null;
 
   const participants = useMemo(
     () => event.participants.filter((participant) => participant.status === 'confirmed'),
@@ -190,20 +192,37 @@ export default function EventDetailClient({
     setBusy(true);
     setError(null);
     setNotice(null);
-    const supabase = createClient();
     const previous = status;
-    // Optimiste : l'état bascule avant la réponse, retour arrière si échec.
-    setStatus(previous === 'none' ? (full && event.waitlistEnabled ? 'waitlist' : 'registered') : 'none');
+    // Le flux des sorties de communauté conserve sa mise à jour optimiste.
+    if (!event.registrationClubId) {
+      setStatus(previous === 'none' ? (full && event.waitlistEnabled ? 'waitlist' : 'registered') : 'none');
+    }
     try {
-      const rpc = previous === 'none' ? 'join_event' : 'leave_event';
-      const { data, error: rpcError } = await supabase.rpc(rpc, { p_event_id: event.id });
-      if (rpcError) throw rpcError;
-      const payload = (data ?? {}) as { registered?: boolean; status?: string; waitlisted?: boolean };
-      const next: 'none' | 'registered' | 'waitlist' = payload.registered
-        ? payload.waitlisted || payload.status === 'waitlist'
-          ? 'waitlist'
-          : 'registered'
-        : 'none';
+      let next: EventDetailData['myStatus'];
+      if (event.registrationClubId) {
+        const response = await fetch('/api/clubs/' + encodeURIComponent(event.registrationClubId) + '/events/' + encodeURIComponent(event.id), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: previous === 'none' ? 'register' : 'cancel' }),
+        });
+        const payload = await response.json() as { data?: { status?: string }; message?: string };
+        if (!response.ok) throw new Error(payload.message ?? 'Inscription indisponible.');
+        next = 'none';
+        if (previous === 'none') {
+          const confirmedStatus = payload.data?.status;
+          if (confirmedStatus !== 'registered' && confirmedStatus !== 'waitlist') {
+            throw new Error('Statut d’inscription indisponible.');
+          }
+          next = confirmedStatus;
+        }
+        router.refresh();
+      } else {
+        const rpc = previous === 'none' ? 'join_event' : 'leave_event';
+        const { data, error: rpcError } = await createClient().rpc(rpc, { p_event_id: event.id });
+        if (rpcError) throw rpcError;
+        const payload = (data ?? {}) as { registered?: boolean; status?: string; waitlisted?: boolean };
+        next = payload.registered ? payload.waitlisted || payload.status === 'waitlist' ? 'waitlist' : 'registered' : 'none';
+      }
       setStatus(next);
       void refreshGroupPerformance(true);
       haptic(next === 'none' ? 'selection' : 'success');
@@ -211,7 +230,7 @@ export default function EventDetailClient({
         next === 'none'
           ? 'Inscription annulée.'
           : next === 'waitlist'
-            ? 'Liste d’attente : tu es prévenu dès qu’une place se libère.'
+            ? 'Tu es sur liste d’attente.'
             : 'Inscription confirmée.',
       );
     } catch (err) {
@@ -233,7 +252,9 @@ export default function EventDetailClient({
     }
   };
 
-  const registrationLabel = event.cancelled
+  const registrationLabel = event.registrationClubId === null
+    ? 'Inscription indisponible'
+    : event.cancelled
     ? 'Sortie annulée'
     : event.past
       ? 'Sortie passée'

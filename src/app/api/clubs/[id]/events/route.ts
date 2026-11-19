@@ -108,9 +108,9 @@ export async function GET(
 
     let registrations: EventRegistration[] = [];
     const eventCounts: Record<string, { registered: number; waitlist: number }> = {};
-    if (visible.length > 0) {
+    if (user && visible.length > 0) {
       const { data, error } = await supabase
-        .from('club_event_registrations')
+        .from('club_event_registrations_effective')
         .select('*')
         .in(
           'event_id',

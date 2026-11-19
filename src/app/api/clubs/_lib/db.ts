@@ -176,7 +176,7 @@ export async function loadEventRegistrations(
   eventId: string,
 ): Promise<EventRegistration[]> {
   const { data, error } = await supabase
-    .from('club_event_registrations')
+    .from('club_event_registrations_effective')
     .select('*')
     .eq('event_id', eventId)
     .limit(1000);

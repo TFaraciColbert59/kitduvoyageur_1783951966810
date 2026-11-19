@@ -303,8 +303,8 @@ le worktree et la base locale de recette.
 
 Les 187 identifiants des deux documents fournis correspondent exactement.
 La copie `LKDV_Audit_Implementation_Hub_Suivi.xlsx` conserve les 11 onglets, les formules, le tableau Excel
-et la validation des statuts. Les 50 lignes annotées indiquent la preuve
-acquise ou la condition qui reste à vérifier. Les 137 autres conservent le
+et la validation des statuts. Les 51 lignes annotées indiquent la preuve
+acquise ou la condition qui reste à vérifier. Les 136 autres conservent le
 statut initial. Les seules lignes clôturées dans cette passe sont P00-01 et
 P01-02. Les gates des dix phases restent à vérifier avec leurs dépendances.
 
@@ -334,3 +334,40 @@ P02-02 attend le rattachement des inscriptions de club et de communauté.
 P02-08 attend la réconciliation des écritures de joinActivity, des invitations
 et de l’historique. La recette Supabase Auth dans le navigateur reste à
 faire pour l’ouverture de la sortie depuis le sélecteur.
+
+### P02-11 · RSVP historiques de club
+
+Les anciennes lignes de `club_event_participants` correspondent à des
+réponses affirmatives du parcours Compte. Leur horodatage est porté par
+`joined_at` sur le schéma de référence et par `created_at` sur le schéma
+initial. Les deux formes sont acceptées. Une ligne sans date vérifiable
+reste dans son registre source.
+
+La migration `20261119193057_import_legacy_club_event_rsvp.sql` importe
+les RSVP datés lorsque tous les horaires connus de la sortie sont passés.
+Les autres restent lus dans leur registre historique au travers de la vue
+de compatibilité. Une ligne du registre moderne prime toujours sur le RSVP,
+y compris lorsque son statut est `cancelled`. Aucun enregistrement de
+présence ni rapprochement avec un événement communautaire n’est déduit.
+
+La liste de club et la fiche de sortie lisent cette vue sous les droits
+de la session. Le membre voit son inscription et le gestionnaire peut
+lire celles de son club. La fiche utilise l’API du club pour les sorties
+de club et le RPC communautaire pour celles issues du registre communautaire.
+Une annulation depuis la fiche de club est enregistrée explicitement,
+même tant que le RSVP initial réside dans l’ancien registre.
+
+**Recette locale.** Les 15 nouvelles assertions vérifient l’idempotence,
+le statut et la date repris, la priorité d’une annulation, les permissions
+de lecture et le retour arrière. La suite SQL complète passe avec
+118 fichiers et 1 961 assertions. Les 13 tests applicatifs ciblés et le
+typage passent. L’aperçu du HUB sur le réseau local répond 200.
+L’ordre de livraison est la migration puis l’application. Pour revenir
+en arrière, rétablir d’abord l’application, puis exécuter le script SQL
+de retour. Il retire les copies intactes et conserve les inscriptions
+modifiées ainsi que les RSVP sources.
+
+P02-11 attend encore le lien entre l’événement et l’aventure. Le profil
+Compte et les invitations utilisent encore des écritures distinctes. La
+garantie de capacité et de promotion FIFO exige une opération commune et
+atomique.

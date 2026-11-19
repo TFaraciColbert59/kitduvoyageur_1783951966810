@@ -46,9 +46,10 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
   }
 
   const supabase = await createClient();
-  const [{ data: eventRow, error }, { data: clubEventRow }] = await Promise.all([
+  const [{ data: eventRow, error }, { data: clubEventRow }, { data: { user } }] = await Promise.all([
     supabase.from('events').select('*').eq('id', id).maybeSingle(),
     supabase.from('club_events').select('*').eq('id', id).maybeSingle(),
+    supabase.auth.getUser(),
   ]);
   if ((error && !clubEventRow) || (!eventRow && !clubEventRow)) notFound();
 
@@ -65,7 +66,9 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
         : Promise.resolve({ data: null }),
       isClubEventOnly
-        ? supabase.from('club_event_registrations').select('*').eq('event_id', id)
+        ? user
+          ? supabase.from('club_event_registrations_effective').select('*').eq('event_id', id).neq('status', 'cancelled')
+          : Promise.resolve({ data: [] })
         : supabase.from('event_participants').select('*').eq('event_id', id),
       clubId ? supabase.from('clubs').select('id,slug,name').eq('id', clubId).maybeSingle() : Promise.resolve({ data: null }),
       kitId
@@ -92,9 +95,6 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     if (profileId) profilesById.set(profileId, profile);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   let myStatus: 'none' | 'registered' | 'waitlist' = 'none';
   if (user?.id) {
     const mine = participantsRaw.find((row) => asString(row.user_id) === user.id);
@@ -172,6 +172,7 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
         : null,
     participants,
     myStatus,
+    registrationClubId: isClubEventOnly ? clubId : undefined,
     club: clubRow
       ? {
           id: asString((clubRow as Row).id) ?? '',

@@ -144,7 +144,7 @@ export async function GET(
       return errorJson('not_found', 404);
     }
 
-    const registrations = await loadEventRegistrations(supabase, eventId);
+    const registrations = user ? await loadEventRegistrations(supabase, eventId) : [];
     const manager = isManager(bundle);
     const eventCounts = {
       registered: registrations.filter((registration) => registration.status === 'registered').length,
@@ -243,6 +243,7 @@ export async function POST(
     const registrations = await loadEventRegistrations(supabase, eventId);
 
     if (action.action === 'register') {
+      if (Date.parse(event.startsAt) <= Date.now()) return errorJson('invalid_state', 409);
       const result = registerForClubEvent({
         event,
         club: bundle.club,
@@ -273,11 +274,17 @@ export async function POST(
       const result = cancelEventRegistration({ event, userId: user.id, registrations, nowIso });
       if (!result.ok) return respondClubResult(result);
 
-      const { error } = await supabase
-        .from('club_event_registrations')
-        .update({ status: 'cancelled', updated_at: nowIso })
-        .eq('event_id', eventId)
-        .eq('user_id', user.id);
+      const cancelled = result.data.registrations.find((row) => row.eventId === eventId && row.userId === user.id);
+      if (!cancelled) return errorJson('not_found', 404);
+      // Un RSVP historique actif peut être visible sans ligne dans le nouveau registre.
+      // La désinscription devient alors une ligne explicite qui prime sur cet RSVP.
+      const { error } = await supabase.from('club_event_registrations').upsert({
+        event_id: eventId,
+        user_id: user.id,
+        status: 'cancelled',
+        registered_at: cancelled.registeredAt,
+        updated_at: nowIso,
+      }, { onConflict: 'event_id,user_id' });
       if (error) return dbFailure('POST cancel', error);
 
       if (result.data.promotedUserId) {
