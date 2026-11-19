@@ -207,21 +207,26 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     ));
   }
 
-  function dayPicker() {
-    return <label className={styles.selectDay}>Jour
+  function dayPicker(inTile = false) {
+    return <label className={inTile ? styles.tileDay : styles.selectDay}>
+      <span className={inTile ? 'sr-only' : undefined}>Jour</span>
       <select className="lkdv-cv2-input" aria-label="Jour du voyage" value={day} onChange={(event) => setDay(Number(event.currentTarget.value))}>
         {days.map((option) => <option key={option} value={option}>J{option}{data.dayCount ? `/${data.dayCount}` : ''}</option>)}
       </select>
     </label>;
   }
 
-  function makeTile(key: Widget, body: ReactNode) {
+  function makeTile(key: Widget, body: ReactNode, control?: ReactNode) {
     const definition = widgets[key];
-    return <section className={`lkdv-cv2-card ${styles.tile} ${styles[key]}`}>
-      <h2><button className={styles.heading} type="button" aria-haspopup="dialog"
-        onClick={(event) => go({ widget: key }, event.currentTarget)}>
-        <Icon name={definition.icon} size={18} /><span>{definition.name}</span><Icon className={styles.chevron} name="chevron-right" size={15} />
-      </button></h2>
+    return <section className={`lkdv-cv2-card ${styles.tile} ${styles[key] ?? ''}`}>
+      <div className={styles.tileHeader}>
+        <h2><button className={styles.heading} type="button" aria-haspopup="dialog"
+          onClick={(event) => go({ widget: key }, event.currentTarget)}>
+          <Icon className={styles.headingIcon} name={definition.icon} size={16} /><span>{definition.name}</span>
+          <Icon className={styles.chevron} name="chevron-right" size={14} />
+        </button></h2>
+        {control}
+      </div>
       {body}
     </section>;
   }
@@ -234,11 +239,11 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       <span className={styles.value} key={row.currency}>{money(row)}</span>)}</div>;
   }
 
-  function weatherSummary() {
+  function weatherSummary(inTile = false) {
     if (!forecast) return <p className={styles.meta}>{weather.pending ? 'Recherche des prévisions…' : 'Météo indisponible'}</p>;
     return <>
       <span className={styles.value}>{number(forecast.temperature)}°</span>
-      <p className={styles.meta}>{forecast.condition} · {forecast.place ?? 'Destination du voyage'}</p>
+      {!inTile && <p className={styles.meta}>{forecast.condition} · {forecast.place ?? 'Destination du voyage'}</p>}
     </>;
   }
 
@@ -309,6 +314,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           {data.people.length ? <div className={styles.rows}>{peopleRows()}</div> : <Status>Aucun membre actif à afficher.</Status>}
           {data.pending > 0 && <p>{data.pending} invitation{data.pending > 1 ? 's' : ''} en attente</p>}
           {!fixture && <Action href="/hub/groupe">Gérer le groupe</Action>}
+          {!fixture && data.trip && <Action href="/hub/securite">Sécurité</Action>}
         </>;
     }
   }
@@ -389,14 +395,14 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   const info = view?.detail ? renderDetail(view.detail) : null;
 
-  return <section className={`lkdv-communaute-v2 ${styles.shell}`} aria-labelledby={id}>
+  return <section className={`lkdv-communaute-v2 ${styles.shell}`} data-hub-cockpit aria-labelledby={id}>
     <h1 id={id} className="sr-only">{data.title}</h1>
     {!isOnline && <p role="status">Hors connexion</p>}
     {!fixture && !data.trip && <Action href="/compas">Préparer une aventure</Action>}
-    {(data.trip || data.collective) && <div className={styles.grid}>
+    {(data.trip || data.collective) && <div className={styles.gridSpace}><div className={styles.grid} data-trip={data.trip}>
       {data.trip && <>
         {makeTile('meteo', <>
-          {weatherSummary()}
+          {weatherSummary(true)}
           {forecast?.days.length ? <Rail label="Prochains jours" small>{weatherDays()}</Rail>
             : !fixture && <button type="button" className="lkdv-cv2-chip" disabled={weather.pending} onClick={() => void weather.locate()}>Utiliser ma position</button>}
         </>)}
@@ -412,10 +418,10 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             {[data.distance != null && `${number(data.distance)} km`, data.elevation != null && `+${number(data.elevation)} m`].filter(Boolean).join(' · ')}
           </p>}
         </>)}
-        {makeTile('etapes', <>{dayPicker()}
+        {makeTile('etapes', <>
           {daySteps.length ? <div className={styles.daySteps} role="group" aria-label="Étapes de la journée">{stepRows('etapes')}</div>
             : <p className={styles.meta}>{data.unavailableSections?.includes('steps') ? 'Étapes indisponibles' : 'Aucune étape prévue'}</p>}
-        </>)}
+        </>, dayPicker(true))}
         {makeTile('carnet', <>
           <p className={styles.meta}>{carnet?.moments[0]?.title ?? data.notes[0]?.title ?? 'Moments du voyage'}</p>
           <button className={`lkdv-cv2-chip ${styles.addMoment}`} type="button"
@@ -429,10 +435,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       </>}
       {makeTile('groupe', data.people.length ? <Rail label="Membres actifs">{peopleRows()}</Rail>
         : <p className={styles.meta}>{data.pending > 0 ? `${data.pending} invitation(s) en attente` : 'Aucun membre actif'}</p>)}
-    </div>}
-    {!fixture && <footer className={styles.footer}>{adventureControl}
-      {data.trip && <Action href="/hub/securite">Sécurité</Action>}
-    </footer>}
+    </div></div>}
+    {!fixture && adventureControl && <footer className={styles.footer}>{adventureControl}</footer>}
     <CommunitySheetShell
       open={view !== null}
       onClose={close}

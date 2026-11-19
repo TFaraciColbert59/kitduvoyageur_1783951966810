@@ -233,3 +233,16 @@ migration crée un seau privé et applique les droits du carnet aux médias du H
 - Le schéma hébergé expose les relations utilisées. Le projet Supabase accessible
   ne présente que `main`. Il reste à tester le parcours connecté complet, l’envoi
   du média et le rendu du kit affecté dans un environnement de recette authentifié.
+
+### Tableau de bord sur écran fixe
+
+Le tableau de bord réserve la place de la barre du bas, des zones sûres et du
+panneau de consentement. Les huit widgets tiennent dans la hauteur disponible.
+La liste Étapes et les rangées de pastilles gardent leur propre zone de défilement.
+La tuile Météo affiche les températures et les prévisions. Le lieu et les conditions
+sont consultables dans le tiroir. Le lien Sécurité est accessible depuis Groupe.
+
+Contrôle WebKit local sur six formats, de 320 × 568 à 1280 × 800, dont un écran
+en paysage. Les huit cartes restent dans la zone visible avec et sans panneau
+de consentement. Le document ne défile pas. Le détail de la dernière étape et
+le lieu de la prévision restent accessibles dans les tiroirs.
