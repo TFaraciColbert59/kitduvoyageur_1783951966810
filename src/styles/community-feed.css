@@ -1400,7 +1400,15 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
   padding-top: 54px;
   box-sizing: border-box;
 }
-.lkdv-feed-options-rail { top: 58px; }
+.lkdv-feed-options-rail { top: 54px; gap: 5px; }
+.lkdv-feed-options-rail button {
+  width: 32px;
+  height: 32px;
+}
+.lkdv-feed-options-rail button svg {
+  width: 15px;
+  height: 15px;
+}
 .lkdv-share-mini button { flex: 1 1 0; }
 
 /* Le drawer Compte remplit 100% de la surface disponible dans son drawer avec 2px de marge */
@@ -1429,7 +1437,15 @@ body:has(.lkdv-drawer-layer) .lkdv-feed-shell .tb { z-index: 95; }
 .lkdv-feed-post-top .lkdv-post-author-av { width: 32px; height: 32px; }
 .lkdv-feed-post-top .lkdv-post-author-line b { font-size: 12.5px; }
 .lkdv-feed-post-top .lkdv-post-author-meta { font-size: 10.5px; }
-.lkdv-feed-options-rail { top: 58px; }
+.lkdv-feed-options-rail { top: 54px; gap: 5px; }
+.lkdv-feed-options-rail button {
+  width: 32px;
+  height: 32px;
+}
+.lkdv-feed-options-rail button svg {
+  width: 15px;
+  height: 15px;
+}
 
 /* ===== Stories : pas de bottom bar, options en rail, like en pillule ===== */
 body:has([role="dialog"][aria-label^="Story de"]) .tb { display: none !important; }
