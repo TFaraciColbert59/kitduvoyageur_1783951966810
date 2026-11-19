@@ -222,7 +222,7 @@ export function RouteCollabWorkspace({
 
   // État du tiroir Explorer (pilule 3 points -> tiroir principal -> sous-tiroirs)
   const [sheetOpen, setSheetOpen] = useState<boolean>(forceNoWebGL || initialSheetOpen);
-  const [detent, setDetent] = useState<Detent>('mid');
+  const [detent, setDetent] = useState<Detent>('low');
   const [tabIndex, setTabIndex] = useState<number>(0);
   const [subDrawer, setSubDrawer] = useState<SubDrawerId | null>(null);
 
@@ -309,17 +309,10 @@ export function RouteCollabWorkspace({
 
   const headSeqRef = useRef(workspace.headSeq);
   headSeqRef.current = workspace.headSeq;
-
-  // Masquer la barre basse globale comme dans ExplorerV2 (écran carte pur)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    document.documentElement.dataset.explorerSheetOpen = 'true';
-    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
-    return () => {
-      delete document.documentElement.dataset.explorerSheetOpen;
-      window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
-    };
-  }, []);
+  const workspaceRef = useRef(workspace);
+  workspaceRef.current = workspace;
+  const opLogRef = useRef(opLog);
+  opLogRef.current = opLog;
 
   useEffect(() => {
     if (forceNoWebGL) {
@@ -352,13 +345,15 @@ export function RouteCollabWorkspace({
   const commitState = useCallback(
     (next: RouteWorkspaceState, recordUndo = true) => {
       if (recordUndo) {
-        setUndoStack((prev) => [...prev.slice(-49), workspace]);
+        setUndoStack((prev) => [...prev.slice(-49), workspaceRef.current]);
         setRedoStack([]);
       }
+      workspaceRef.current = next;
+      headSeqRef.current = next.headSeq;
       setWorkspace(next);
       onWorkspaceChange?.(next);
     },
-    [onWorkspaceChange, workspace],
+    [onWorkspaceChange],
   );
 
   const handleUndo = useCallback(() => {
@@ -535,8 +530,9 @@ export function RouteCollabWorkspace({
       operation: RouteOperationInput,
       expectedVersions: Record<string, number>,
     ): Promise<ApplyOperationResult> => {
+      const currentWs = workspaceRef.current;
       if (serverSynced) {
-        const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/operations`, {
+        const res = await fetch(`/api/routes/${encodeURIComponent(currentWs.id)}/operations`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -553,8 +549,8 @@ export function RouteCollabWorkspace({
       }
 
       const { result, nextOpLog } = applyWorkspaceOperation(
-        workspace,
-        opLog,
+        currentWs,
+        opLogRef.current,
         {
           opId,
           baseSeq,
@@ -566,21 +562,23 @@ export function RouteCollabWorkspace({
         new Date().toISOString(),
       );
       if (result.status === 'accepted') {
+        opLogRef.current = nextOpLog;
         setOpLog(nextOpLog);
       }
       return result;
     },
-    [serverSynced, workspace, opLog, currentUserId, currentUserName],
+    [serverSynced, currentUserId, currentUserName],
   );
 
   const runOperation = useCallback(
     async (operation: RouteOperationInput, expectedVersions: Record<string, number> = {}) => {
+      const currentWs = workspaceRef.current;
       const opId = `op-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       if (!online) {
         enqueueOfflineOperation(currentUserId, {
           opId,
-          workspaceId: workspace.id,
-          baseSeq: workspace.headSeq,
+          workspaceId: currentWs.id,
+          baseSeq: currentWs.headSeq,
           operation,
           expectedVersions,
           queuedAt: new Date().toISOString(),
@@ -591,7 +589,7 @@ export function RouteCollabWorkspace({
       }
 
       try {
-        const result = await executeOperation(opId, workspace.headSeq, operation, expectedVersions);
+        const result = await executeOperation(opId, currentWs.headSeq, operation, expectedVersions);
         if (result.status === 'accepted') {
           commitState(result.workspace);
           setLastImpactText(formatImpact(result.impact));
@@ -609,8 +607,8 @@ export function RouteCollabWorkspace({
       } catch {
         enqueueOfflineOperation(currentUserId, {
           opId,
-          workspaceId: workspace.id,
-          baseSeq: workspace.headSeq,
+          workspaceId: currentWs.id,
+          baseSeq: currentWs.headSeq,
           operation,
           expectedVersions,
           queuedAt: new Date().toISOString(),
@@ -1357,25 +1355,29 @@ export function RouteCollabWorkspace({
 
   const handleSplitIntoDays = async (targetDays: number) => {
     const safeDays = Math.max(1, Math.min(20, Math.round(targetDays)));
-    if (orderedPoints.length < 2) {
+    const pts = activePoints(workspaceRef.current);
+    if (pts.length < 2) {
       setStatusMessage('Ajoutez au moins 2 points pour découper en journées.');
       return;
     }
-    if (safeDays > orderedPoints.length - 1) {
-      // Insère automatiquement des points de coupure intermédiaires le long de la géométrie
-      const needed = safeDays - (orderedPoints.length - 1);
+    if (safeDays > pts.length - 1) {
+      const needed = safeDays - (pts.length - 1);
       const track =
         flattenedCoords.length >= 2
           ? flattenedCoords
-          : orderedPoints.map((p) => [p.lon, p.lat] as [number, number]);
-      let afterId = orderedPoints[0].id;
+          : pts.map((p) => [p.lon, p.lat] as [number, number]);
+      const start = track[0];
+      const end = track[track.length - 1];
+      let afterId = pts[0].id;
       for (let i = 1; i <= needed; i += 1) {
         const ratio = i / (needed + 1);
-        const coordIdx = Math.min(
-          track.length - 1,
-          Math.max(0, Math.floor(ratio * (track.length - 1))),
-        );
-        const [lon, lat] = track[coordIdx];
+        const [lon, lat] =
+          track.length > safeDays
+            ? track[Math.min(track.length - 1, Math.max(0, Math.floor(ratio * (track.length - 1))))]
+            : [
+                Number((start[0] + (end[0] - start[0]) * ratio).toFixed(5)),
+                Number((start[1] + (end[1] - start[1]) * ratio).toFixed(5)),
+              ];
         const ptId = `pt-split-${Date.now().toString(36)}-${i}`;
         await runOperation({
           type: 'insert_point',
@@ -3013,40 +3015,6 @@ export function RouteCollabWorkspace({
                     </span>
                   </button>
 
-                  {canEditStages ? (
-                    <div className="rcw-subpill-row">
-                      {(['none', 'refuge', 'bivouac', 'gite'] as const).map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          className={`rcw-mini-chip${kind === opt ? ' is-active' : ''}`}
-                          onClick={() => {
-                            const endPt = stagePoints[stagePoints.length - 1] ?? orderedPoints[orderedPoints.length - 1];
-                            void runOperation({
-                              type: 'set_overnight',
-                              stageId: st.id,
-                              overnightPlace:
-                                opt === 'none'
-                                  ? null
-                                  : {
-                                      id: `ovn-${st.id}-${opt}`,
-                                      type: opt,
-                                      name: `${OVERNIGHT_LABELS[opt]} J${st.dayNumber}`,
-                                      lat: endPt?.lat ?? 45.05,
-                                      lon: endPt?.lon ?? 5.51,
-                                      bookingStatus: 'planned',
-                                      provenance: 'manuel',
-                                      lastVerifiedAt: new Date().toISOString(),
-                                    },
-                            });
-                          }}
-                        >
-                          {OVERNIGHT_LABELS[opt]}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-
                   {smartRecs.length > 0 ? (
                     <div className="rcw-cat-group">
                       <span className="rcw-cat-label">Recommandations LKDV</span>
@@ -3102,96 +3070,20 @@ export function RouteCollabWorkspace({
                     </div>
                   ) : null}
 
-                  <div className="rcw-cat-group">
-                    <span className="rcw-cat-label">Points sur le parcours</span>
-                    <div className="rcw-subpill-row">
-                      {stagePoints.map((pt) => (
-                        <button
-                          key={pt.id}
-                          type="button"
-                          className="rcw-subpill"
-                          onClick={() => {
-                            setSelectedPointId(pt.id);
-                            setFocusCoord([pt.lon, pt.lat]);
-                            setOverlayDetail({
-                              kind: 'point',
-                              pointId: pt.id,
-                              stageId: st.id,
-                              precision: 2,
-                            });
-                          }}
-                        >
-                          <XpIcon name="pin" size={12} />
-                          <span>{pt.name || pt.kind}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <span className="rcw-cat-label">Moments à vivre & lieux intéressants</span>
-                    <div className="rcw-subpill-row">
-                      {stageMoments.length > 0 ? (
-                        stageMoments.map((poi) => (
-                          <button
-                            key={poi.id}
-                            type="button"
-                            className="rcw-subpill"
-                            onClick={() => {
-                              setFocusedPoiId(poi.id);
-                              setFocusCoord([poi.lon, poi.lat]);
-                              setOverlayDetail({
-                                kind: 'poi',
-                                poi,
-                                stageId: st.id,
-                                precision: 2,
-                              });
-                            }}
-                          >
-                            <XpIcon name="spark" size={12} />
-                            <span>{poi.name}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <button
-                          type="button"
-                          className="rcw-subpill"
-                          onClick={() => {
-                            void refreshKnowledgeBank();
-                          }}
-                        >
-                          <XpIcon name="spark" size={12} />
-                          <span>{knowledgeLoading ? 'Recherche LKDV…' : 'Charger les repères'}</span>
-                        </button>
-                      )}
-                    </div>
-
-                    <span className="rcw-cat-label">Détails</span>
-                    <div className="rcw-subpill-row">
-                      <button
-                        type="button"
-                        className="rcw-subpill"
-                        onClick={() => {
-                          setSelectedStageId(st.id);
-                          setOverlayDetail({ kind: 'day', stageId: st.id, precision: 3 });
-                        }}
-                      >
-                        <XpIcon name="tent" size={12} />
-                        <span>Nuitée & Notes</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="rcw-subpill"
-                        onClick={() =>
-                          setOverlayDetail({ kind: 'kit', stageId: st.id, precision: 2 })
-                        }
-                      >
-                        <XpIcon name="pack" size={12} />
-                        <span>
-                          Sac lié
-                          {kitToRevalidateCount > 0 ? ` (${kitToRevalidateCount})` : ''}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-moment-empty rcw-moment-add-compact"
+                    onClick={() => {
+                      setSelectedStageId(st.id);
+                      setOverlayDetail({ kind: 'day', stageId: st.id, precision: 3 });
+                    }}
+                    aria-label="Ajouter un moment ou une étape"
+                  >
+                    <span className="lkdv-cv2c-moment-empty-icon">
+                      <Plus size={18} aria-hidden="true" />
+                    </span>
+                    <span>Ajouter un moment</span>
+                  </button>
                 </div>
               );
             })}
@@ -3962,11 +3854,15 @@ export function RouteCollabWorkspace({
           detent={detent}
           onDetent={(d) => setDetent(d)}
           onBack={activeSubDrawer ? () => setSubDrawer(null) : undefined}
-          onClose={() => {
-            setSubDrawer(null);
-            setSheetOpen(false);
-          }}
-          bottomInset={0}
+          onClose={
+            activeSubDrawer
+              ? () => {
+                  setSubDrawer(null);
+                  setSheetOpen(false);
+                }
+              : undefined
+          }
+          bottomInset={64}
           labelledBy="rcw-sheet-title"
           tabsBottom={false}
           mini={
@@ -3994,7 +3890,7 @@ export function RouteCollabWorkspace({
           aria-label="Ouvrir le tiroir d’itinéraire"
           onClick={() => {
             setSheetOpen(true);
-            setDetent('mid');
+            setDetent('low');
           }}
         >
           <span className="xp-pill-dots" aria-hidden="true">

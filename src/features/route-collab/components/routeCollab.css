@@ -1029,3 +1029,81 @@
   color: var(--xp-mut);
   margin-top: 2px;
 }
+
+
+/* ── Sélecteur d'onglets : icônes uniquement même sur l'onglet actif ── */
+.rcw-explorer-root .xp-tab .xp-tab-label,
+.rcw-explorer-root .xp-tab[aria-selected='true'] .xp-tab-label {
+  display: none !important;
+}
+
+/* ── Tiroir sans croix ni en-tête vide : contenu remonté + bottombar visible ── */
+.rcw-explorer-root .xp-sheet-head:has(.xp-sheet-title:empty):not(:has(button)) {
+  display: none;
+}
+
+.rcw-explorer-root .xp-sheet {
+  bottom: 64px !important;
+}
+
+.rcw-explorer-root .xp-sheet-pill-launcher {
+  bottom: 78px !important;
+}
+
+/* ── Composant "Ajouter un moment" identique à Communauté, hauteur réduite ── */
+.rcw-moment-add-compact.lkdv-cv2c-moment-empty,
+.rcw-moment-add-compact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
+  padding: 10px 14px;
+  border: 1.5px dashed rgba(16, 40, 26, 0.22);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--xp-mut);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.rcw-moment-add-compact:hover {
+  border-color: #17402c;
+  color: #17402c;
+  background: rgba(23, 64, 44, 0.04);
+}
+
+.rcw-moment-add-compact .lkdv-cv2c-moment-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+}
+
+/* ── Champs de saisie Équipe & formulaires ── */
+.rcw-input {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  border: 1px solid rgba(16, 40, 26, 0.14);
+  border-radius: 12px;
+  padding: 8px 11px;
+  font-size: 13px;
+  line-height: 1.3;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--xp-ink);
+  outline: none;
+}
+
+.rcw-input:focus {
+  border-color: #17402c;
+  box-shadow: 0 0 0 2px rgba(23, 64, 44, 0.12);
+}
