@@ -231,7 +231,8 @@
   color: var(--lkv-on-primary);
   box-shadow: var(--elevation-2);
 }
-.lkdv-event-primary:disabled {
+.lkdv-event-primary:disabled,
+.lkdv-event-secondary:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -241,7 +242,7 @@
   box-shadow: var(--elevation-2);
 }
 .lkdv-event-primary:active:not(:disabled),
-.lkdv-event-secondary:active {
+.lkdv-event-secondary:active:not(:disabled) {
   transform: scale(0.96);
 }
 

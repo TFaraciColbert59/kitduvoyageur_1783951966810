@@ -75,7 +75,8 @@ SELECT is((SELECT count(*) FROM public.club_event_registrations_effective WHERE 
 RESET ROLE;
 UPDATE public.club_event_registrations SET status = 'cancelled', updated_at = now()
 WHERE event_id = '84ca902a-16af-4463-a0ad-30432ff5c003';
--- Le rapprochement des événements lit cette vue. Revenir sur cette migration d'abord.
+-- Revenir sur les migrations qui dépendent de la vue avant de la retirer.
+\ir ../../migrations_down/20261119202544_cancel_club_event.down.sql
 \ir ../../migrations_down/20261119195142_link_events_to_canonical_trips.down.sql
 \ir ../../migrations_down/20261119193057_import_legacy_club_event_rsvp.down.sql
 SELECT is((SELECT count(*) FROM public.club_event_registrations WHERE event_id = '84ca902a-16af-4463-a0ad-30432ff5c001'),

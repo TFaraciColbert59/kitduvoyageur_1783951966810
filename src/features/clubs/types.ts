@@ -201,6 +201,7 @@ export interface ClubEvent {
   format: EventFormat;
   startsAt: string;
   endsAt: string | null;
+  cancelledAt?: string | null;
   locationLabel: string;
   meetingPoint: string | null;
   lat?: number | null;

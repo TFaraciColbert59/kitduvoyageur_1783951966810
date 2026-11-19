@@ -246,10 +246,12 @@ export async function POST(
         p_attending: attending,
         p_pace_group_id: attending ? action.paceGroupId ?? null : null,
       });
+      if (error?.details === 'club_event_cancelled') return errorJson('event_cancelled', 409);
       if (error?.code === '23514') return errorJson('CAPACITY_FULL', 409);
       if (error?.code === '22023') return errorJson('invalid_body', 400);
       if (error) return dbFailure('POST registration', error);
-      const transaction = data as { registration: Row | null; promoted_user_id?: string | null };
+      const transaction = data as { registration: Row | null; promoted_user_id?: string | null; event_cancelled?: boolean };
+      if (transaction.event_cancelled) return errorJson('event_cancelled', 409);
       const registration = transaction.registration ? mapRegistrationRow(transaction.registration) : null;
       if (attending) return json({ data: registration }, 201);
       return json({ data: { registrations: registration ? [registration] : [], promotedUserId: transaction.promoted_user_id ?? null } });

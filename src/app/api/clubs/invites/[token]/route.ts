@@ -80,6 +80,7 @@ export async function POST(
         p_attending: true,
         p_invite_token: token,
       });
+      if (error?.details === 'club_event_cancelled') return errorJson('event_cancelled', 409);
       if (error?.code === '23514') return errorJson('CAPACITY_FULL', 409);
       if (error) return dbFailure('POST redeem event', error);
       const result = data as { registration?: { status: string }; uses_count?: number | null };

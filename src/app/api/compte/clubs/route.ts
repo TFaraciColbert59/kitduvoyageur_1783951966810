@@ -302,8 +302,13 @@ export async function POST(request: NextRequest) {
           p_event_id: body.eventId,
           p_attending: attending,
         });
+        if (registrationError?.details === 'club_event_cancelled') return json({ error: 'event_cancelled' }, 409);
         if (registrationError) return failure(registrationError);
-        const result = data as { registration?: { status: 'registered' | 'waitlist' | 'cancelled' } | null };
+        const result = data as {
+          registration?: { status: 'registered' | 'waitlist' | 'cancelled' } | null;
+          event_cancelled?: boolean;
+        };
+        if (result.event_cancelled) return json({ error: 'event_cancelled' }, 409);
         const registrationStatus = result.registration?.status ?? null;
 
         return json({

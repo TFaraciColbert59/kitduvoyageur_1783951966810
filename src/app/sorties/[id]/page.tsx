@@ -68,7 +68,9 @@ export default async function SortiePage({ params, searchParams }: {
   const kitId = asString(event.kit_id);
 
   const eventRef: EventAdventureRef = { kind: isClubEventOnly ? 'club_event' : 'community_event', id };
-  const canLink = Boolean(user && user.id === event.organizer_id && event.status !== 'cancelled');
+  const cancelled = event.status === 'cancelled' || (isClubEventOnly && Boolean(asString(event.cancelled_at)));
+  const isOrganizer = Boolean(user && user.id === event.organizer_id);
+  const canLink = isOrganizer && !cancelled;
   const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }, linked, ownChoices] =
     await Promise.all([
       organizerId
@@ -134,7 +136,7 @@ export default async function SortiePage({ params, searchParams }: {
     : participants.filter((p) => p.status === 'confirmed').length || (asNumber(event.current_participants) ?? 0);
   const startsAtMs = startsAt ? Date.parse(startsAt) : eventDate ? Date.parse(`${eventDate}T23:59:59+01:00`) : NaN;
   const past = Number.isFinite(startsAtMs) ? startsAtMs < Date.now() : false;
-  const status = asString(event.status);
+  const status = cancelled ? 'cancelled' : asString(event.status);
 
   const organizerProfile = organizerRow as Row | null;
   const coverImage = asString(event.cover_image);
@@ -165,7 +167,8 @@ export default async function SortiePage({ params, searchParams }: {
     waitlistEnabled: Boolean(event.waitlist_enabled),
     status: status ?? null,
     past: past || status === 'past',
-    cancelled: status === 'cancelled',
+    cancelled,
+    canCancelClubEvent: isClubEventOnly && isOrganizer && !cancelled,
     recurrence: (asString(event.recurrence) as EventDetailData['recurrence']) ?? null,
     registrationUrl: getValidatedRaceRegistrationUrl(
       asString(event.registration_url),
@@ -210,6 +213,7 @@ export default async function SortiePage({ params, searchParams }: {
 
   return (
     <EventDetailClient
+      key={eventRef.kind + '/' + id}
       event={data}
       signedIn={Boolean(user)}
       hubLink={linkedChoice || choices.length > 0

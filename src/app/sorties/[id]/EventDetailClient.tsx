@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { lkvConfirm } from '@/components/ui/dialogs';
+import { cancelClubEventAction } from './cancelClubEventAction';
 import HeaderBackButton from '@/components/ui/HeaderBackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -48,6 +50,7 @@ export interface EventDetailData {
   status: string | null;
   past: boolean;
   cancelled: boolean;
+  canCancelClubEvent?: boolean;
   recurrence: 'weekly' | 'monthly' | null;
   registrationUrl?: string | null;
   format?: string | null;
@@ -109,6 +112,8 @@ export default function EventDetailClient({
   const { haptic } = useHapticFeedback();
   const [status, setStatus] = useState(event.myStatus);
   const [busy, setBusy] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelledLocally, setCancelledLocally] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [groupEstimate, setGroupEstimate] = useState<SortiePerformanceEstimate | null>(null);
@@ -148,7 +153,8 @@ export default function EventDetailClient({
   const meeting = coords(event);
   const spotsLeft = Math.max(0, event.maxParticipants - event.currentParticipants);
   const full = event.maxParticipants > 0 && spotsLeft === 0;
-  const registrationClosed = event.past || event.cancelled || event.registrationClubId === null;
+  const cancelled = event.cancelled || cancelledLocally;
+  const registrationClosed = event.past || cancelled || event.registrationClubId === null;
 
   const participants = useMemo(
     () => event.participants.filter((participant) => participant.status === 'confirmed'),
@@ -208,6 +214,11 @@ export default function EventDetailClient({
           body: JSON.stringify({ action: previous === 'none' ? 'register' : 'cancel' }),
         });
         const payload = await response.json() as { data?: { status?: string }; error?: string; message?: string };
+        if (payload.error === 'event_cancelled') {
+          setCancelledLocally(true);
+          router.refresh();
+          return;
+        }
         if (!response.ok) throw new Error(payload.error === 'CAPACITY_FULL' ? 'Cette sortie est complète.' : payload.message ?? 'Inscription indisponible.');
         next = 'none';
         if (previous === 'none') {
@@ -254,10 +265,40 @@ export default function EventDetailClient({
     }
   };
 
+  async function cancelOuting() {
+    if (!event.canCancelClubEvent || cancelled || busy || cancelling) return;
+    setCancelling(true);
+    try {
+      const confirmed = await lkvConfirm({
+        title: 'Annuler la sortie ?',
+        message: 'Les inscriptions et les invitations seront fermées.',
+        confirmLabel: 'Annuler la sortie',
+        cancelLabel: 'Garder la sortie',
+        variant: 'destructive',
+      });
+      if (!confirmed) return;
+
+      setError(null);
+      setNotice(null);
+      const result = await cancelClubEventAction(event.id);
+      if (!result.cancelledAt) {
+        setError(result.error ?? 'Impossible d’annuler la sortie. Réessaie.');
+        haptic('error');
+        return;
+      }
+      setCancelledLocally(true);
+      haptic('success');
+      router.refresh();
+    } catch {
+      setError('Impossible d’annuler la sortie. Réessaie.');
+      haptic('error');
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   const registrationLabel = event.registrationClubId === null
     ? 'Inscription indisponible'
-    : event.cancelled
-    ? 'Sortie annulée'
     : event.past
       ? 'Sortie passée'
       : status === 'registered'
@@ -303,63 +344,75 @@ export default function EventDetailClient({
       </header>
 
       <section className="lkdv-event-card" aria-label="Place et inscription">
-        <div className="lkdv-event-capacity">
-          <div className="lkdv-event-capacity-head">
-            <b>
-              {event.maxParticipants > 0
-                ? `${event.currentParticipants} / ${event.maxParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`
-                : `${event.currentParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`}
-            </b>
-            {event.maxParticipants > 0 ? (
-              <span>{full ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}</span>
-            ) : null}
-          </div>
-          {event.maxParticipants > 0 ? (
-            <div
-              className="lkdv-event-gauge"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={event.maxParticipants}
-              aria-valuenow={event.currentParticipants}
-              aria-label={`${event.currentParticipants} inscrit(s) sur ${event.maxParticipants}`}
-            >
-              <i
-                style={{
-                  width: `${Math.min(100, Math.round((event.currentParticipants / event.maxParticipants) * 100))}%`,
-                }}
-              />
+        {cancelled ? (
+          <p className="lkdv-event-notice" role="status">Sortie annulée</p>
+        ) : (
+          <>
+            <div className="lkdv-event-capacity">
+              <div className="lkdv-event-capacity-head">
+                <b>
+                  {event.maxParticipants > 0
+                    ? `${event.currentParticipants} / ${event.maxParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`
+                    : `${event.currentParticipants} inscrit${event.currentParticipants > 1 ? 's' : ''}`}
+                </b>
+                {event.maxParticipants > 0 ? (
+                  <span>{full ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}</span>
+                ) : null}
+              </div>
+              {event.maxParticipants > 0 ? (
+                <div
+                  className="lkdv-event-gauge"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={event.maxParticipants}
+                  aria-valuenow={event.currentParticipants}
+                  aria-label={`${event.currentParticipants} inscrit(s) sur ${event.maxParticipants}`}
+                >
+                  <i
+                    style={{
+                      width: `${Math.min(100, Math.round((event.currentParticipants / event.maxParticipants) * 100))}%`,
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-        <div className="lkdv-event-actions">
-          <button
-            type="button"
-            className="lkdv-event-primary"
-            onClick={() => void toggleRegistration()}
-            disabled={busy || registrationClosed || (full && !event.waitlistEnabled && status === 'none')}
-            aria-busy={busy}
-          >
-            {busy ? 'Envoi…' : registrationLabel}
-          </button>
-          <button type="button" className="lkdv-event-secondary" onClick={downloadIcs}>
-            Ajouter au calendrier
-          </button>
-          {getValidatedRaceRegistrationUrl(event.registrationUrl) ? (
-            <a
-              href={getValidatedRaceRegistrationUrl(event.registrationUrl)!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="lkdv-event-secondary"
-            >
-              S’inscrire sur la page officielle
-            </a>
-          ) : null}
-        </div>
-        {waitlisted.length > 0 ? (
-          <p className="lkdv-event-note">
-            {waitlisted.length} personne{waitlisted.length > 1 ? 's' : ''} sur liste d’attente.
-          </p>
-        ) : null}
+            <div className="lkdv-event-actions">
+              <button
+                type="button"
+                className="lkdv-event-primary"
+                onClick={() => void toggleRegistration()}
+                disabled={busy || cancelling || registrationClosed || (full && !event.waitlistEnabled && status === 'none')}
+                aria-busy={busy}
+              >
+                {busy ? 'Envoi…' : registrationLabel}
+              </button>
+              <button type="button" className="lkdv-event-secondary" onClick={downloadIcs}>
+                Ajouter au calendrier
+              </button>
+              {getValidatedRaceRegistrationUrl(event.registrationUrl) ? (
+                <a
+                  href={getValidatedRaceRegistrationUrl(event.registrationUrl)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="lkdv-event-secondary"
+                >
+                  S’inscrire sur la page officielle
+                </a>
+              ) : null}
+            </div>
+            {waitlisted.length > 0 ? (
+              <p className="lkdv-event-note">
+                {waitlisted.length} personne{waitlisted.length > 1 ? 's' : ''} sur liste d’attente.
+              </p>
+            ) : null}
+            {event.canCancelClubEvent && (
+              <button type="button" className="lkdv-event-secondary" onClick={() => void cancelOuting()}
+                disabled={busy || cancelling} aria-busy={cancelling}>
+                Annuler la sortie
+              </button>
+            )}
+          </>
+        )}
         {error ? (
           <p className="lkdv-event-error" role="alert">
             {error}
@@ -372,7 +425,7 @@ export default function EventDetailClient({
         ) : null}
       </section>
 
-      {hubLink}
+      {!cancelled && hubLink}
 
       <section className="lkdv-event-meta" aria-label="Détails de la sortie">
         {event.level ? (
@@ -452,35 +505,37 @@ export default function EventDetailClient({
         </section>
       ) : null}
 
-      <section className="lkdv-event-card lkdv-event-section" aria-label="Participants">
-        <h2 className="lkdv-event-h2">
-          Participants
-          <span className="lkdv-event-count">
-            {formatCountFr(event.participants.length, 'inscrit')}
-          </span>
-        </h2>
-        {participants.length > 0 ? (
-          <ul className="lkdv-event-participants">
-            {participants.slice(0, 12).map((participant) => (
-              <li key={participant.id}>
-                <a href={`/profil/${participant.handle ?? participant.id}`}>
-                  <span className="lkdv-event-avatar" aria-hidden="true">
-                    {participant.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={participant.avatarUrl} alt="" />
-                    ) : (
-                      initialsFromName(participant.name)
-                    )}
-                  </span>
-                  <span className="lkdv-event-participant-name">{participant.name}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="lkdv-event-muted">Aucun inscrit pour le moment.</p>
-        )}
-      </section>
+      {!cancelled && (
+        <section className="lkdv-event-card lkdv-event-section" aria-label="Participants">
+          <h2 className="lkdv-event-h2">
+            Participants
+            <span className="lkdv-event-count">
+              {formatCountFr(event.participants.length, 'inscrit')}
+            </span>
+          </h2>
+          {participants.length > 0 ? (
+            <ul className="lkdv-event-participants">
+              {participants.slice(0, 12).map((participant) => (
+                <li key={participant.id}>
+                  <a href={`/profil/${participant.handle ?? participant.id}`}>
+                    <span className="lkdv-event-avatar" aria-hidden="true">
+                      {participant.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={participant.avatarUrl} alt="" />
+                      ) : (
+                        initialsFromName(participant.name)
+                      )}
+                    </span>
+                    <span className="lkdv-event-participant-name">{participant.name}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="lkdv-event-muted">Aucun inscrit pour le moment.</p>
+          )}
+        </section>
+      )}
 
       {event.safetyNotes || event.safetyChecklist.length > 0 ? (
         <section className="lkdv-event-card lkdv-event-section" aria-label="Sécurité">

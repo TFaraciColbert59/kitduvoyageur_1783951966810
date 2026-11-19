@@ -438,5 +438,35 @@ propose aussi les voyages terminés appartenant à l’organisateur.
 L’aperçu avec données de test a été ouvert dans Safari sur l’iPhone
 de Tony. Le serveur local a reçu sa demande et répondu HTTP 200.
 La recette authentifiée s’est déroulée dans WebKit sur le Mac. La référence
-des activités libres, l’annulation des événements de club par l’organisateur
-et le parcours Auth sur iPhone physique restent ouverts.
+des activités libres et le parcours Auth sur iPhone physique restent ouverts.
+
+### P02-11 / P09-03 · Annulation d’une sortie par l’organisateur
+
+L’organisateur confirme l’annulation depuis la fiche de club, accessible
+depuis le Compte. PostgreSQL enregistre l’auteur et l’horodatage, ferme
+les places et révoque les invitations dans une même transaction. La fiche
+reste accessible avec l’état « Sortie annulée ». Le registre conserve
+les RSVP d’origine, y compris les inscriptions en attente et les RSVP
+hérités. La vue des inscriptions expose l’annulation aux lecteurs admis.
+
+La sortie cesse de donner accès à l’itinéraire dans le HUB et Compas.
+Un droit obtenu directement sur le voyage ou par un autre événement
+reste applicable. La tentative d’inscription depuis une fiche ou
+un drawer déjà ouvert reçoit l’état d’annulation. La recherche et
+les prochains événements de Compte excluent cette sortie.
+
+**Preuves locales.** 121 suites PostgreSQL, soit 2 030 assertions,
+dont 25 sur l’annulation. Une vérification à deux connexions a observé
+l’inscription attendre le verrou pris par l’annulation, puis l’a vue
+refusée après validation de la transaction. La recette WebKit au
+format iPhone a utilisé trois comptes Supabase Auth. Elle a vérifié
+la confirmation et son abandon, la dernière place, la liste d’attente,
+la fermeture du lien d’invitation et le retrait du voyage de la liste
+du HUB. Elle a aussi ouvert une fiche de club historique. Les 126
+tests applicatifs ciblés passent.
+
+Le retour SQL a été exercé dans la recette avant l’enregistrement
+d’une annulation. Le script exige une transaction et refuse de retirer
+le mécanisme après une annulation enregistrée. P02-11 est vérifié dans
+la recette locale. P09-03 garde les parcours connectés sur l’iPhone
+physique ainsi que les autres scénarios de bout en bout.

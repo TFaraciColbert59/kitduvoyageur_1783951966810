@@ -2069,6 +2069,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
             supabase
               .from('club_events')
               .select('id,club_id,title,event_date,location,participants_count,max_participants')
+              .is('cancelled_at', null)
               .in('club_id', clubIds)
               .gte('event_date', new Date().toISOString())
               .order('event_date', { ascending: true })

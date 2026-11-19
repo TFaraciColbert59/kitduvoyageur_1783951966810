@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { LogOut, Send, Share2, UserPlus } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { Club, ClubNextEvent } from './cards/ClubCard';
@@ -91,6 +92,8 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   );
   const [rsvp, setRsvp] = React.useState<ClubRsvp | null>(initialRsvp);
   const [waiting, setWaiting] = React.useState(initiallyWaiting);
+  const [cancelledEventId, setCancelledEventId] = React.useState<string | null>(null);
+  const eventCancelled = Boolean(event && cancelledEventId === event.id);
   const [notice, setNotice] = React.useState('');
   const [noticeIsError, setNoticeIsError] = React.useState(false);
 
@@ -243,7 +246,7 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
   };
 
   const chooseRsvp = async (choice: ClubRsvp, phrase: string) => {
-    if (membershipStatus !== 'active') return;
+    if (membershipStatus !== 'active' || eventCancelled) return;
     if (!event?.id) {
       showError("Cet événement n'est pas encore synchronisé.");
       return;
@@ -262,8 +265,15 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
           attending: choice === 'yes',
         }),
       });
+      const result = await response.json() as { registrationStatus?: string | null; error?: string };
+      if (result.error === 'event_cancelled') {
+        setCancelledEventId(event.id);
+        setRsvp(null);
+        setWaiting(false);
+        setNotice('');
+        return;
+      }
       if (!response.ok) throw new Error('request_failed');
-      const result = await response.json() as { registrationStatus?: string | null };
       const enteredWaitlist = result.registrationStatus === 'waitlist';
       setRsvp(choice);
       setWaiting(enteredWaitlist);
@@ -370,15 +380,25 @@ export function ClubDrawer({ club, onClose }: ClubDrawerProps) {
             <article className="lkdv-club-event">
               <div className="lkdv-club-event-head">
                 <div className="lkdv-club-event-txt">
-                  <h5 className="lkdv-club-event-title">{eventTitle}</h5>
+                  <h5 className="lkdv-club-event-title">
+                    {event?.id ? (
+                      <Link href={`/sorties/${encodeURIComponent(event.id)}?source=club`} prefetch={false}>
+                        {eventTitle}
+                      </Link>
+                    ) : eventTitle}
+                  </h5>
                   <p className="lkdv-club-event-meta">
                     {[eventDate, eventLocation].filter(Boolean).join(' · ')}
                   </p>
                 </div>
-                {waiting || attendance ? <span className="lkdv-club-attendance">{waiting ? 'Liste d’attente' : attendance}</span> : null}
+                {eventCancelled || waiting || attendance ? (
+                  <span className="lkdv-club-attendance" role={eventCancelled ? 'status' : undefined}>
+                    {eventCancelled ? 'Sortie annulée' : waiting ? 'Liste d’attente' : attendance}
+                  </span>
+                ) : null}
               </div>
 
-              {membershipStatus === 'active' ? (
+              {eventCancelled ? null : membershipStatus === 'active' ? (
                 <div className="lkdv-rsvp" role="group" aria-label={`RSVP pour ${eventTitle}`}>
                   {RSVP_OPTIONS.map((option) => (
                     <button

@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
     const { data: eventRows, error: eventError } = await supabase
       .from('club_events')
       .select('*')
+      .is('cancelled_at', null)
       .in(
         'club_id',
         clubs.map((club) => club.id),

@@ -254,7 +254,7 @@ export function ClubDetailView({
                 return (
                   <article key={event.id} className="lkdv-cv2x-mini-event-row">
                     <Link
-                      href={`/sorties/${event.id}?source=club`}
+                      href={`/sorties/${event.id}`}
                       className="lkdv-cv2x-mini-event"
                       onClick={(clickEvent) => {
                         if (!onOpenEvent) return;

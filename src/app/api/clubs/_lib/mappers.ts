@@ -151,6 +151,7 @@ export function mapEventRow(row: Row): ClubEvent {
     format: mapEventFormat(row.format),
     startsAt,
     endsAt: asString(row.ends_at) ? iso(row.ends_at) : null,
+    cancelledAt: asString(row.cancelled_at),
     locationLabel: asString(row.location) ?? 'Lieu à préciser',
     meetingPoint: asString(row.meeting_point),
     lat: asNumber(row.lat),
