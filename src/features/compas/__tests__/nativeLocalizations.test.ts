@@ -45,6 +45,13 @@ function androidStrings(rel: string): Record<string, { value: string; translatab
 }
 
 const FRENCH_WORDS = /\b(ta|ton|tes|position|jamais|voyage|trajet|départ|sans|elle|est|accord)\b/i;
+const ANDROID_BRAND_KEYS = ['app_name', 'title_activity_main'];
+const ANDROID_SHORTCUT_KEYS = Array.from(
+  read('android/app/src/main/res/xml/shortcuts.xml').matchAll(
+    /android:shortcut(?:Short|Long)Label="@string\/([^"]+)"/g,
+  ),
+  (match) => match[1],
+);
 
 describe('iOS : InfoPlist.strings en français et en anglais', () => {
   const fr = parseStrings(read('ios/App/App/fr.lproj/InfoPlist.strings'));
@@ -86,7 +93,8 @@ describe('Android : values-fr et values-en', () => {
     .sort();
 
   it('seuls les textes visibles sont traduits ; identifiants et schéma d’URL non traduisibles', () => {
-    expect(visible).toEqual(['app_name', 'title_activity_main']);
+    expect(ANDROID_SHORTCUT_KEYS).toHaveLength(6);
+    expect(visible).toEqual([...ANDROID_BRAND_KEYS, ...ANDROID_SHORTCUT_KEYS].sort());
     expect(base.package_name.translatable).toBe(false);
     expect(base.custom_url_scheme.translatable).toBe(false);
     expect(Object.keys(fr).sort()).toEqual(visible);
@@ -98,7 +106,13 @@ describe('Android : values-fr et values-en', () => {
     expect(base.package_name.value).toBe('com.lekitduvoyageur.app');
     for (const k of visible) {
       expect(fr[k].value).toBe(base[k].value);
+      expect(en[k].value).toBeTruthy();
+    }
+    for (const k of ANDROID_BRAND_KEYS) {
       expect(en[k].value).toBe(base[k].value);
+    }
+    for (const k of ANDROID_SHORTCUT_KEYS) {
+      expect(en[k].value).not.toBe(base[k].value);
     }
   });
 });
@@ -173,10 +187,12 @@ describe('Android : values-es, values-de et values-it', () => {
     .filter((k) => base[k].translatable)
     .sort();
   for (const lang of Object.keys(NEW_NATIVE)) {
-    it(`${lang} : seuls les textes visibles, identiques (le nom est une marque)`, () => {
+    it(`${lang} : textes visibles présents, marque inchangée et raccourcis traduits`, () => {
       const strings = androidStrings(`android/app/src/main/res/values-${lang}/strings.xml`);
       expect(Object.keys(strings).sort()).toEqual(visible);
-      for (const k of visible) expect(strings[k].value).toBe(base[k].value);
+      for (const k of visible) expect(strings[k].value).toBeTruthy();
+      for (const k of ANDROID_BRAND_KEYS) expect(strings[k].value).toBe(base[k].value);
+      for (const k of ANDROID_SHORTCUT_KEYS) expect(strings[k].value).not.toBe(base[k].value);
     });
   }
 });

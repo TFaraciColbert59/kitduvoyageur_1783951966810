@@ -1,3 +1,5 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { imageHosts } from './image-hosts.config.mjs';
 import { buildRedirects } from './route-redirects.config.mjs';
 import { cspHeader } from './csp.config.mjs';
@@ -7,11 +9,13 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
   openAnalyzer: false,
 });
+const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingRoot: projectRoot,
   turbopack: {
-    root: '/Users/fr168256/Documents/Codex/2026-11-11/files-pasted-by-the-user-lkdv/work',
+    root: projectRoot,
   },
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,

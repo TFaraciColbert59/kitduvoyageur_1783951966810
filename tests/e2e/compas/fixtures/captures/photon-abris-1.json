@@ -1,0 +1,401 @@
+{
+  "source": "https://photon.komoot.io/api/?limit=50&lang=fr&include=osm.tourism.alpine_hut,osm.tourism.wilderness_hut&bbox=4.8562,44.5844,5.4294,44.9898",
+  "capturedAt": "2026-10-13T00:40:46.946Z",
+  "host": "photon.komoot.io",
+  "path": "/api/",
+  "query": {
+    "bbox": "4.8562,44.5844,5.4294,44.9898",
+    "include": "osm.tourism.alpine_hut,osm.tourism.wilderness_hut",
+    "limit": "50"
+  },
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 13920936779,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane",
+          "street": "Chemin de Justin",
+          "city": "Die",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26150",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3608806,
+            44.7324516
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 79027053,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane forestière du Lauset",
+          "street": "Route forestière du Lauzet",
+          "city": "Vassieux-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.353813,
+            44.8541825,
+            5.3539003,
+            44.854129
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3538566,
+            44.8541557
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 79027476,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Baraque forestière de la plaine des 3 frères",
+          "street": "Route de l'Echauda",
+          "city": "Vassieux-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.3661045,
+            44.8435497,
+            5.3662045,
+            44.8434779
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3661545,
+            44.8435138
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 971696183,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Baraque de Crobache",
+          "street": "Route du Col de Carri",
+          "city": "La Chapelle-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.3604258,
+            44.9351866,
+            5.3605356,
+            44.9350907
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3604821,
+            44.9351412
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 1833075359,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "housenumber": "10880",
+          "name": "Hostel Quartier Libre",
+          "street": "Route de la Forêt de Lente",
+          "city": "Bouvante",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26190",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3333859,
+            44.9766104
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 470800009,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Au Bout du Monde",
+          "street": "Chemin du Bout du Monde",
+          "district": "Font d'Urle",
+          "city": "Bouvante",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26190",
+          "countrycode": "FR",
+          "extent": [
+            5.3200211,
+            44.8991686,
+            5.3202025,
+            44.8989181
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3201116,
+            44.8990165
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 1000814895,
+          "osm_key": "tourism",
+          "osm_value": "alpine_hut",
+          "type": "house",
+          "name": "Gîte des Liottards",
+          "street": "Route des Liotards",
+          "district": "Les Liotards",
+          "city": "Saint-Agnan-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.4212344,
+            44.8701616
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "N",
+          "osm_id": 5554434748,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Cabane de Clos Hubert",
+          "street": "Chemin des Noyers",
+          "district": "Les Martins",
+          "city": "Marignac-en-Diois",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26150",
+          "countrycode": "FR"
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3311465,
+            44.8190773
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 331477800,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge du Col de Vassieux",
+          "street": "Route forestière du Lauzet",
+          "city": "Vassieux-en-Vercors",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26420",
+          "countrycode": "FR",
+          "extent": [
+            5.354132,
+            44.8321971,
+            5.3542191,
+            44.8321414
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.3541754,
+            44.8321681
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 261898636,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge de Tubanet",
+          "street": "Chemin du Brame du Cerf",
+          "city": "Omblèze",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26400",
+          "countrycode": "FR",
+          "extent": [
+            5.2770961,
+            44.8885341,
+            5.2772268,
+            44.8883751
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.2771583,
+            44.888468
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 261898818,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge ferme d'Ambel",
+          "street": "Vire ouest du roc de Toulau",
+          "city": "Omblèze",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26400",
+          "countrycode": "FR",
+          "extent": [
+            5.2460143,
+            44.8842737,
+            5.2461831,
+            44.8841857
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.2460968,
+            44.8842191
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 331473343,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge Gardiol",
+          "district": "Bouvante",
+          "city": "Bouvante",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26190",
+          "countrycode": "FR",
+          "extent": [
+            5.2539116,
+            44.8928831,
+            5.2540581,
+            44.8927963
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.2539849,
+            44.8928397
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "osm_type": "W",
+          "osm_id": 259368076,
+          "osm_key": "tourism",
+          "osm_value": "wilderness_hut",
+          "type": "house",
+          "name": "Refuge des Girards",
+          "street": "bord de crête",
+          "city": "Saou",
+          "county": "Drôme",
+          "state": "Auvergne-Rhône-Alpes",
+          "country": "France",
+          "postcode": "26400",
+          "countrycode": "FR",
+          "extent": [
+            5.1793096,
+            44.6465337,
+            5.179511,
+            44.6463755
+          ]
+        },
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.1794103,
+            44.6464546
+          ]
+        }
+      }
+    ]
+  }
+}
