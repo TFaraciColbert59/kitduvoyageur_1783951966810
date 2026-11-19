@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { BookOpen, Users } from 'lucide-react';
 import type { FeedPost } from './useCommunityFeed';
-import { isCarnetPost, isClubPost } from './FeedCreationCards';
 import { timeAgo } from './feed-utils';
 
 /**
@@ -58,22 +57,19 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
     </>
   );
 
-  const isCreationCard = isCarnetPost(post) || isClubPost(post);
-  const contextLink = isCreationCard
-    ? null
-    : post.clubContext
+  const contextLink = post.clubContext
+    ? {
+        href: `/clubs/${post.clubContext.slug}`,
+        label: post.clubContext.name,
+        kind: 'club' as const,
+      }
+    : post.carnetContext
       ? {
-          href: `/clubs/${post.clubContext.slug}`,
-          label: post.clubContext.name,
-          kind: 'club' as const,
+          href: `/carnets/${post.carnetContext.id}`,
+          label: post.carnetContext.title,
+          kind: 'carnet' as const,
         }
-      : post.carnetContext
-        ? {
-            href: `/carnets/${post.carnetContext.id}`,
-            label: post.carnetContext.title,
-            kind: 'carnet' as const,
-          }
-        : null;
+      : null;
 
   const pillEl = onClick ? (
     <button type="button" className="lkdv-post-author" aria-label={label} onClick={onClick}>
