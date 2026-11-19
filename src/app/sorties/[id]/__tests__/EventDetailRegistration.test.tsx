@@ -49,4 +49,5 @@ it('conserve le RPC de la communauté pour une sortie hors du registre club', as
   render(<EventDetailClient event={event} signedIn />);
   fireEvent.click(screen.getByRole('button', { name: 'S’inscrire' }));
   await waitFor(() => expect(rpc).toHaveBeenCalledWith('join_event', { p_event_id: 'sortie-1' }));
+  await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 });

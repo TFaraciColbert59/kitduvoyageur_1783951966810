@@ -401,3 +401,35 @@ applicatif, car les anciens clients écrivent directement dans les tables.
 Restent ouverts le lien à l’aventure canonique, l’annulation de la sortie par
 l’organisateur et la recette Auth sur appareil. P09-03 conserve aussi les
 scénarios de départ, révision, dépense, kit, reprise hors ligne et notification.
+
+### P02-01 / P02-02 / P02-11 · Relier une sortie à une aventure existante
+
+Depuis la fiche de club ou de communauté, l’organisateur peut relier
+un voyage dont il est propriétaire. Supabase enregistre la source,
+son UUID, l’organisateur et le voyage canonique dans une table privée.
+Les anciennes fiches disposent du même choix. Aucun rapprochement
+automatique n’est fait à partir du titre, de la date ou d’un UUID
+commun à deux sources. Pour une sortie de club avec tracé, la résolution
+renvoie sa révision enregistrée.
+
+Les inscrits confirmés et les anciens RSVP admissibles retrouvent
+l’itinéraire dans le HUB et Compas. La fiche propose aussi de l’ouvrir
+directement dans le HUB. Les inscriptions d’un même utilisateur à
+plusieurs événements reliés au même voyage n’ajoutent qu’un voyage au
+sélecteur. La projection privée reste limitée aux informations de
+consultation. Un retrait ferme l’accès issu de cette inscription.
+La liste d’attente, le blocage, le changement d’organisateur et
+l’annulation côté communauté sont couverts par des tests locaux.
+
+La recette PostgreSQL locale couvre 120 suites et 2 005 assertions,
+dont 25 sur le lien et son retour arrière. Le typage et 4 782 tests
+applicatifs ciblés passent. Le script de retour supprime les liaisons
+et conserve les voyages, événements et inscriptions. Exécuter ce retour
+avant celui de la migration des RSVP historiques.
+
+La référence des activités libres, l’annulation des événements de
+club par l’organisateur et la recette Auth de la fiche jusqu’au HUB
+sur iPhone restent à vérifier ou à réaliser. Le sélecteur de liaison
+reprend les voyages disponibles dans la découverte actuelle. Le lien
+d’une fiche déjà associée reste modifiable si son voyage a quitté le
+sélecteur depuis.

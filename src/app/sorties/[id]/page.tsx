@@ -2,7 +2,11 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
+import { resolveEventAdventure } from '@/features/hub/server/resolveEventAdventure';
+import type { EventAdventureRef } from '@/features/hub/context/eventAdventureRef';
+import { discoverTrips } from '@/features/trips/server/discoverTrips';
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
+import EventHubLink from './EventHubLink';
 import './event-detail.css';
 
 export const dynamic = 'force-dynamic';
@@ -36,11 +40,13 @@ function isoDate(value: unknown): string | null {
  *
  * Aucune route de fiche n'existait : cette page affiche le billet daté, la méta,
  * le rendez-vous sur mini-carte, les participants, l'inscription et le fichier
- * `.ics`. Elle lit la base sous RLS (lecture publique des `events`), ne crée rien
- * et ne modifie rien côté serveur.
+ * `.ics`. L'organisateur peut y relier une aventure existante au HUB.
  */
-export default async function SortiePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function SortiePage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ source?: string | string[] }>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     notFound();
   }
@@ -51,16 +57,19 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     supabase.from('club_events').select('*').eq('id', id).maybeSingle(),
     supabase.auth.getUser(),
   ]);
-  if ((error && !clubEventRow) || (!eventRow && !clubEventRow)) notFound();
+  const requestedClubEvent = query?.source === 'club';
+  const selected = requestedClubEvent ? clubEventRow : eventRow ?? clubEventRow;
+  if (!selected || (error && !clubEventRow)) notFound();
 
-  const event = (eventRow ?? clubEventRow) as Row;
-  const isClubEventOnly = !eventRow && Boolean(clubEventRow);
-  const clubEventExtra = (clubEventRow ?? null) as Row | null;
+  const event = selected as Row;
+  const isClubEventOnly = requestedClubEvent || !eventRow;
   const organizerId = asString(event.organizer_id) ?? asString(event.created_by);
   const clubId = asString(event.club_id);
   const kitId = asString(event.kit_id);
 
-  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }] =
+  const eventRef: EventAdventureRef = { kind: isClubEventOnly ? 'club_event' : 'community_event', id };
+  const canLink = Boolean(user && user.id === event.organizer_id && event.status !== 'cancelled');
+  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }, linked, ownTrips] =
     await Promise.all([
       organizerId
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
@@ -78,6 +87,8 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
             .eq('id', kitId)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+      user ? resolveEventAdventure(eventRef) : null,
+      canLink && user ? discoverTrips(user.id) : null,
     ]);
 
   const participantsRaw = (participantRows ?? []) as Row[];
@@ -157,9 +168,9 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     cancelled: status === 'cancelled',
     recurrence: (asString(event.recurrence) as EventDetailData['recurrence']) ?? null,
     registrationUrl: getValidatedRaceRegistrationUrl(
-      asString(clubEventExtra?.registration_url) ?? asString(event.registration_url),
+      asString(event.registration_url),
     ),
-    format: asString(clubEventExtra?.format) ?? asString(event.format),
+    format: asString(event.format),
     safetyNotes: asString(event.safety_notes),
     safetyChecklist: asArray<string>(event.safety_checklist),
     organizer: organizerProfile
@@ -191,5 +202,21 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
       : null,
   };
 
-  return <EventDetailClient event={data} signedIn={Boolean(user?.id)} />;
+  const choices = ownTrips?.trips
+    .filter((trip) => trip.affiliation === 'owner')
+    .map(({ id: tripId, title }) => ({ id: tripId, title: title || 'Aventure sans titre' })) ?? [];
+  const linkedChoice = linked ? { id: linked.id, title: linked.title } : null;
+  if (canLink && linkedChoice && !choices.some((trip) => trip.id === linkedChoice.id)) {
+    choices.unshift(linkedChoice);
+  }
+
+  return (
+    <EventDetailClient
+      event={data}
+      signedIn={Boolean(user)}
+      hubLink={linkedChoice || choices.length > 0
+        ? <EventHubLink eventRef={eventRef} linked={linkedChoice} choices={choices} />
+        : null}
+    />
+  );
 }

@@ -99,9 +99,11 @@ function coords(event: EventDetailData): { lat: number; lng: number } | null {
 export default function EventDetailClient({
   event,
   signedIn,
+  hubLink,
 }: {
   event: EventDetailData;
   signedIn: boolean;
+  hubLink?: React.ReactNode;
 }) {
   const router = useRouter();
   const { haptic } = useHapticFeedback();
@@ -215,7 +217,6 @@ export default function EventDetailClient({
           }
           next = confirmedStatus;
         }
-        router.refresh();
       } else {
         const rpc = previous === 'none' ? 'join_event' : 'leave_event';
         const { data, error: rpcError } = await createClient().rpc(rpc, { p_event_id: event.id });
@@ -224,6 +225,7 @@ export default function EventDetailClient({
         next = payload.registered ? payload.waitlisted || payload.status === 'waitlist' ? 'waitlist' : 'registered' : 'none';
       }
       setStatus(next);
+      router.refresh();
       void refreshGroupPerformance(true);
       haptic(next === 'none' ? 'selection' : 'success');
       setNotice(
@@ -369,6 +371,8 @@ export default function EventDetailClient({
           </p>
         ) : null}
       </section>
+
+      {hubLink}
 
       <section className="lkdv-event-meta" aria-label="Détails de la sortie">
         {event.level ? (

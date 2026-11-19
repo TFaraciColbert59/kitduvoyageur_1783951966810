@@ -245,6 +245,21 @@
   transform: scale(0.96);
 }
 
+.lkdv-event-hub-form {
+  display: grid;
+  gap: 8px;
+}
+.lkdv-event-hub-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 12px;
+  background: var(--lkv-surface);
+  color: var(--lkv-text-primary);
+  font: 500 16px/1.25 var(--font-sans);
+}
+
 .lkdv-event-meta {
   display: flex;
   flex-wrap: wrap;
