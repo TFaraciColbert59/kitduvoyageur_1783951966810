@@ -469,7 +469,7 @@ export async function createClubWithAdminV2(
     await callRpc<CreatePostResultV2>('create_community_post', {
       content: [values.name.trim(), values.zoneLabel.trim()].filter(Boolean).join(' · '),
       post_type: 'share',
-      audience: 'public',
+      audience: 'club',
       club_id: result.id,
       media_urls: coverUrl ? [coverUrl] : [],
       image_url: coverUrl,
@@ -665,7 +665,7 @@ export async function createCarnetV2(
         post_type: 'share',
         audience:
           values.visibility === 'followers'
-            ? 'followers'
+            ? 'abonnies'
             : values.visibility === 'club'
               ? 'club'
               : 'public',
