@@ -2455,28 +2455,9 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   padding: 12px !important;
 }
 
-.lkdv-feed-post--sortie > .lkdv-feed-post-top,
-.lkdv-feed-post--kit > .lkdv-feed-post-top,
-.lkdv-feed-post--sport > .lkdv-feed-post-top,
-.lkdv-feed-post--text.lkdv-feed-post--carnet > .lkdv-feed-post-top {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
-  padding: 0 0 8px !important;
-}
-
-.lkdv-feed-post--sortie > .pmi-more-pill,
-.lkdv-feed-post--kit > .pmi-more-pill,
-.lkdv-feed-post--sport > .pmi-more-pill,
-.lkdv-feed-post--text.lkdv-feed-post--carnet > .pmi-more-pill {
-  top: 12px !important;
-  right: 12px !important;
-}
-
 .lkdv-feed-post--sortie .lkdv-feed-creation-card--sortie,
 .lkdv-feed-post--kit .lkdv-feed-creation-card {
-  padding: 0 !important;
+  padding: 50px 0 0 !important;
   gap: 8px !important;
   min-height: 0 !important;
   background: transparent !important;
