@@ -7,8 +7,11 @@ import 'server-only';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { parseMomentMeta, publicMediaPrefix } from './momentTypes';
 
-type Bucket = 'carnet-media' | 'carnet-moments-media';
-const BUCKETS: Bucket[] = ['carnet-media', 'carnet-moments-media'];
+import { PRIVATE_MOMENT_BUCKET, privateMomentMediaPath } from './privateMomentMedia';
+
+const PUBLIC_BUCKETS = ['carnet-media', 'carnet-moments-media'] as const;
+const BUCKETS = [...PUBLIC_BUCKETS, PRIVATE_MOMENT_BUCKET] as const;
+type Bucket = typeof BUCKETS[number];
 
 export interface MomentMediaRow {
   image_url?: string | null;
@@ -23,7 +26,9 @@ export interface MediaRef {
 
 function refOf(url: unknown, carnetId: string): MediaRef | null {
   if (typeof url !== 'string') return null;
-  for (const bucket of BUCKETS) {
+  const privatePath = privateMomentMediaPath(url, carnetId);
+  if (privatePath) return { bucket: PRIVATE_MOMENT_BUCKET, path: privatePath };
+  for (const bucket of PUBLIC_BUCKETS) {
     const prefix = publicMediaPrefix(bucket);
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !url.startsWith(prefix)) continue;
     const path = decodeURIComponent(url.slice(prefix.length).split('?')[0] ?? '');
