@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import ReportSheet from '@/components/social/ReportSheet';
+import dynamic from 'next/dynamic';
 import { PostAuthorPill } from './PostAuthorPill';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { authorName, firstMedia, isVideoMedia } from './feed-utils';
@@ -13,14 +13,42 @@ import { EngagementBar } from '@/components/social-kit';
 import { isHorizontalSwipe, isVerticalDismiss, useTouchSwipe } from '@/hooks/gestures';
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
-import { FreedomCommentsDrawer } from '@/features/community/reels/FreedomCommentsDrawer';
-import { PostSharePanel } from './PostSharePanel';
+import {
+  FeedKitPostCard,
+  FeedSortiePostCard,
+  isKitPost,
+  isSortiePost,
+} from './FeedCreationCards';
 import { PostAttachments } from './PostAttachments';
 import { usePostInteractions, type CommunityAuthReason } from './usePostInteractions';
 import type { FeedPost } from './useCommunityFeed';
 import type { PostSource } from './postSource';
 import { SportActivityCard } from '@/components/communaute/g01/SportActivityCard';
 import type { VideoPreferences } from '@/features/community/g01/videoPlayback';
+
+// Perf : commentaires, partage et signalement ne servent qu'à l'ouverture.
+// Hors du JS initial du fil, préchargés au repos (voir `prefetchPostPanels`).
+const loadComments = () =>
+  import('@/features/community/reels/FreedomCommentsDrawer').then((m) => ({ default: m.FreedomCommentsDrawer }));
+const loadShare = () => import('./PostSharePanel').then((m) => ({ default: m.PostSharePanel }));
+const loadReport = () => import('@/components/social/ReportSheet');
+const FreedomCommentsDrawer = dynamic(loadComments, { ssr: false });
+const PostSharePanel = dynamic(loadShare, { ssr: false });
+const ReportSheet = dynamic(loadReport, { ssr: false });
+
+let panelsPrefetched = false;
+/** Précharge les panneaux au repos : la première ouverture reste instantanée. */
+export function prefetchPostPanels() {
+  if (panelsPrefetched || typeof window === 'undefined') return;
+  panelsPrefetched = true;
+  const run = () => {
+    void loadComments().catch(() => {});
+    void loadShare().catch(() => {});
+    void loadReport().catch(() => {});
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 4000 });
+  else window.setTimeout(run, 2500);
+}
 
 export interface CommunityFeedPostProps {
   post: FeedPost;
@@ -102,11 +130,19 @@ export function CommunityFeedPost({
     ? { likes: source.likes, comments: source.comments, shares: source.shares ?? 0 }
     : localCounts;
   const [reportOpen, setReportOpen] = useState(false);
+  // Monté à la première ouverture puis conservé (animation de fermeture intacte).
+  const [reportMounted, setReportMounted] = useState(false);
+  useEffect(() => {
+    if (reportOpen) setReportMounted(true);
+  }, [reportOpen]);
   const [panel, setPanel] = useState<'comments' | 'share' | null>(initialPanel);
   const panelScrollRef = useRef(0);
   const panelTriggerRef = useRef<HTMLElement | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
+  const textBodyRef = useRef<HTMLParagraphElement | null>(null);
+  const [textExpanded, setTextExpanded] = useState(false);
+  const [textClamped, setTextClamped] = useState(false);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swiped = useRef(false);
   const sourceMedia = source?.media ?? null;
@@ -115,6 +151,24 @@ export function CommunityFeedPost({
     : firstMedia(post);
   const video = isVideoMedia(media);
   const hasMedia = Boolean(media);
+  const isSortie = !hasMedia && !post.sportCard && isSortiePost(post);
+  const isKit = !hasMedia && !post.sportCard && !isSortie && isKitPost(post);
+  const isCarnet = Boolean(
+    post.creation_meta &&
+      typeof post.creation_meta === 'object' &&
+      typeof (post.creation_meta as { carnet_id?: unknown }).carnet_id === 'string',
+  );
+  const isPlainTextPost = !hasMedia && !post.sportCard && !isSortie && !isKit;
+
+  useEffect(() => {
+    if (!isPlainTextPost || textExpanded) return;
+    const el = textBodyRef.current;
+    if (!el) return;
+    const check = () => setTextClamped(el.scrollHeight > el.clientHeight + 2);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [isPlainTextPost, post.content, textExpanded]);
   const optionsId = `feed-options-${post.id}`;
 
   /** Appui sur une action du menu : le bouton « pop », le menu se replie, puis l'action part. */
@@ -325,7 +379,7 @@ export function CommunityFeedPost({
     <article
       ref={articleRef}
       id={`feed-post-${post.id}`}
-      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${panel ? ' has-panel' : ''}`}
+      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${isSortie ? ' lkdv-feed-post--sortie' : ''}${isKit ? ' lkdv-feed-post--kit' : ''}${isCarnet ? ' lkdv-feed-post--carnet' : ''}${post.sportCard ? ' lkdv-feed-post--sport' : ''}${panel ? ' has-panel' : ''}`}
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{
@@ -388,6 +442,7 @@ export function CommunityFeedPost({
         <CommunityPostMedia
           media={media}
           isVideo={video}
+          interactiveVideo={Boolean(sourceMedia?.interactive)}
           poster={post.media_urls?.find((url) => !isVideoMedia(url)) ?? undefined}
           alt={post.image_alt ?? null}
           onRatio={setMediaRatio}
@@ -403,8 +458,16 @@ export function CommunityFeedPost({
             swiped.current = false;
             return true;
           }}
-          onLike={handleLike}
-          onComment={() => openPanel('comments')}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
           onShare={() => openPanel('share')}
           videoPreferences={videoPreferences}
         />
@@ -423,9 +486,69 @@ export function CommunityFeedPost({
             onReport={user?.id === post.author_id ? undefined : () => setReportOpen(true)}
           />
         </div>
+      ) : isSortie ? (
+        <FeedSortiePostCard
+          post={post}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
+      ) : isKit ? (
+        <FeedKitPostCard
+          post={post}
+          userId={user?.id}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
       ) : (
         <>
-          <p className="lkdv-feed-post-text">{post.content || 'Publication'}</p>
+          <div className="lkdv-feed-text-wrap">
+            <p
+              ref={textBodyRef}
+              className={`lkdv-feed-post-text${textExpanded ? ' is-expanded' : ' is-clamped'}`}
+            >
+              {post.content || 'Publication'}
+            </p>
+            {textClamped || textExpanded ? (
+              <button
+                type="button"
+                className="lkdv-feed-text-more"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setTextExpanded((v) => !v);
+                }}
+              >
+                {textExpanded ? 'afficher moins' : 'afficher plus…'}
+              </button>
+            ) : null}
+          </div>
           {panel ? null : (
             <EngagementBar
               tone="ink"
@@ -433,8 +556,16 @@ export function CommunityFeedPost({
               commentsCount={counts.comments}
               sharesCount={counts.shares}
               liked={liked}
-              onLike={handleLike}
-              onComment={() => openPanel('comments')}
+              onLike={
+                (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+                  ? undefined
+                  : handleLike
+              }
+              onComment={
+                (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+                  ? undefined
+                  : () => openPanel('comments')
+              }
               onShare={() => openPanel('share')}
             />
           )}
@@ -565,7 +696,7 @@ export function CommunityFeedPost({
         </div>
       ) : null}
 
-      <ReportSheet
+      {reportOpen || reportMounted ? <ReportSheet
         isOpen={reportOpen}
         onClose={() => setReportOpen(false)}
         contentId={post.id}
@@ -579,7 +710,7 @@ export function CommunityFeedPost({
             toast('Le signalement n’a pas pu être envoyé.', 'error');
           }
         }}
-      />
+      /> : null}
 
       {panel === 'comments' ? (
         <PostGlassPanel side="comments" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
@@ -634,7 +765,7 @@ export function CommunityFeedPost({
     </article>
   );
 
-  const hasAttachments = !source && (Boolean(post.linked_kit_id) || Boolean(post.snapshot_payload));
+  const hasAttachments = !source && !isKit && (Boolean(post.linked_kit_id) || Boolean(post.snapshot_payload));
   return source?.footer || hasAttachments ? (
     <div className="lkdv-feed-post-stack">
       {articleEl}
@@ -645,5 +776,8 @@ export function CommunityFeedPost({
     articleEl
   );
 }
+
+/** Mémoïsé : l'ajout d'une page au fil ne re-rend plus les cartes déjà affichées. */
+export const MemoCommunityFeedPost = memo(CommunityFeedPost);
 
 export default CommunityFeedPost;

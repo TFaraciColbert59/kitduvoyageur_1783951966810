@@ -46,26 +46,13 @@ describe('Carnet v2 Data Layer', () => {
     recit: 'Montée vers Platé',
   };
 
-  it('génère les nuits via le fallback hebergements si carnet_nights est vide', () => {
+  it('n’invente aucune nuit quand carnet_nights est vide', () => {
     const input: BuildCarnetDetailInput = {
       carnet: baseCarnet,
       author: null,
       hikeSession: null,
       etapes: [baseEtape],
       moments: [],
-      hebergements: [
-        {
-          id: 'heb-1',
-          apres_jour_numero: 1,
-          nom: 'Refuge de Platé',
-          type_hebergement: 'refuge',
-          prix_cents: 4500,
-          prix_note: '45 € en demi-pension',
-          altitude_m: 2032,
-          note: 'Refuge gardé très accueillant',
-          hote: 'Gardien Platé',
-        },
-      ],
       nights: [],
       kitItems: [],
       viewerRole: 'participant',
@@ -75,10 +62,8 @@ describe('Carnet v2 Data Layer', () => {
     };
 
     const detail = buildCarnetDetail(input);
-    expect(detail.nights).toHaveLength(1);
-    expect(detail.nights?.[0].name).toBe('Refuge de Platé');
-    expect(detail.nights?.[0].type).toBe('refuge');
-    expect(detail.nights?.[0].dayNumber).toBe(1);
+    expect(detail.nights).toEqual([]);
+    expect(detail.etapes[0].overnight).toBeNull();
   });
 
   it('utilise carnet_nights prioritairement lorsqu’elles sont fournies', () => {
@@ -88,7 +73,6 @@ describe('Carnet v2 Data Layer', () => {
       hikeSession: null,
       etapes: [baseEtape],
       moments: [],
-      hebergements: [],
       nights: [
         {
           id: 'night-1',
@@ -134,7 +118,6 @@ describe('Carnet v2 Data Layer', () => {
       hikeSession: null,
       etapes: [baseEtape],
       moments: [],
-      hebergements: [],
       kitItems: [],
       budget: budgetData,
       viewerRole: 'participant',
@@ -153,7 +136,6 @@ describe('Carnet v2 Data Layer', () => {
       hikeSession: null,
       etapes: [baseEtape],
       moments: [],
-      hebergements: [],
       kitItems: [],
       budget: budgetData,
       viewerRole: 'visitor',
@@ -173,7 +155,6 @@ describe('Carnet v2 Data Layer', () => {
       hikeSession: null,
       etapes: [baseEtape],
       moments: [],
-      hebergements: [],
       kitItems: [
         {
           id: 'kit-1',
@@ -233,7 +214,6 @@ describe('Carnet v2 Data Layer', () => {
           prive: false,
         },
       ],
-      hebergements: [],
       kitItems: [],
       dayReactions: {
         1: { dayNumber: 1, likesCount: 14, userLiked: true, commentsCount: 3 },

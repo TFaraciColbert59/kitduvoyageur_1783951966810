@@ -28,6 +28,10 @@ import {
   traceStyleForRoute,
 } from './traceStyles';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+} from '@/components/map/engine/createMapStyle';
 import type { SearchViewport } from '../searchArea';
 import { lineStringFromSections, type RouteDraft } from '@/features/adventure-prep/routeRevision';
 
@@ -253,9 +257,10 @@ export default function MapStage({
         attributionControl: false,
         dragRotate: true,
         pitchWithRotate: true,
-        fadeDuration: 120,
         maxPitch: 70,
+        ...SMOOTH_MAPLIBRE_OPTIONS,
       });
+      applySmoothMapPhysics(map);
       mapRef.current = map;
     } catch (caught) {
       console.error('[MapStage] MapLibre creation caught:', caught);

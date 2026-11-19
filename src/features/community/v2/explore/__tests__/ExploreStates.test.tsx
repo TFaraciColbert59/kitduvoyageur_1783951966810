@@ -55,14 +55,14 @@ describe('états du tiroir Explorer', () => {
     expect(container.querySelector('.lkdv-cv2x-skeleton')?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('le pied distingue « charger la suite » et fin de flux', () => {
+  it('le pied n’affiche pas de bouton charger la suite et affiche le chargement automatique', () => {
     const onLoadMore = vi.fn();
     const { rerender } = render(
       <ExploreListFoot hasMore loadingMore={false} onLoadMore={onLoadMore} total={12} label="12 carnets" />,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Charger la suite' }));
-    expect(onLoadMore).toHaveBeenCalledTimes(1);
-    rerender(<ExploreListFoot hasMore={false} loadingMore={false} onLoadMore={onLoadMore} total={12} label="12 carnets" />);
-    expect(screen.getByText('Tu as tout vu. 12 carnets')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Charger la suite' })).toBeNull();
+    expect(screen.getByText('12 carnets')).toBeTruthy();
+    rerender(<ExploreListFoot hasMore={false} loadingMore onLoadMore={onLoadMore} total={12} label="12 carnets" />);
+    expect(screen.getByText('Chargement…')).toBeTruthy();
   });
 });

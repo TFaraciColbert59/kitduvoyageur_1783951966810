@@ -8,9 +8,10 @@ import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { AgendaStrip } from '../../shared/AgendaStrip';
 import { formatCountFr, groupEventsByAgenda } from '../../shared/format';
 import { EventTicketV2 } from '../tiles/EventTicketV2';
-import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
+import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
 import type { EventView } from '../useExploreState';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 
 export interface EventsPaneProps {
   feed: CursorFeedResult<EventCardVM>;
@@ -34,6 +35,7 @@ export interface EventsPaneProps {
   onPeek: (event: EventCardVM, opener: HTMLElement) => void;
   onCreateEvent: () => void;
   onRetryAgenda: () => void;
+  hideAgenda?: boolean;
 }
 
 export interface EffectiveEventState {
@@ -93,6 +95,7 @@ export function EventsPane({
   onPeek,
   onCreateEvent,
   onRetryAgenda,
+  hideAgenda = false,
 }: EventsPaneProps) {
   const scrollRef = usePaneScrollMemory<HTMLDivElement>(`cv2:explore:scroll:sorties:${filter}:${day ?? ''}`);
   const nearBottomRef = usePaneNearBottom<HTMLDivElement>(
@@ -145,7 +148,7 @@ export function EventsPane({
     };
   }, [clubFiltersOpen, clubFormat, clubLoc, clubSport, day, hasClubFilters, racesOnly]);
 
-  const agenda = (
+  const agenda = hideAgenda ? null : (
     <div className="lkdv-cv2x-agenda-block">
       {agendaLoading && Object.keys(agendaCounts).length === 0 ? (
         <div className="lkdv-cv2x-agenda-skeleton" aria-hidden="true">
@@ -161,103 +164,16 @@ export function EventsPane({
           Agenda indisponible · Réessayer
         </button>
       ) : null}
-      <div className="lkdv-cv2x-events-head">
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2-pill--sm"
-          aria-expanded={clubFiltersOpen}
-          onClick={() => setClubFiltersOpen((prev) => !prev)}
-        >
-          {clubFiltersOpen ? 'Masquer filtres clubs' : 'Filtrer clubs & courses'}
-        </button>
-        <div className="lkdv-cv2-seg" role="group" aria-label="Affichage des sorties">
-          <button type="button" aria-pressed={view === 'grid'} onClick={() => onViewChange('grid')}>
-            Billets
-          </button>
-          <button type="button" aria-pressed={view === 'list'} onClick={() => onViewChange('list')}>
-            Liste
-          </button>
-        </div>
-      </div>
-
-      {clubFiltersOpen ? (
-        <div className="lkdv-cv2-card" style={{ marginTop: 8, display: 'grid', gap: 8 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 6 }}>
-            <input
-              type="search"
-              value={clubLoc}
-              onChange={(e) => setClubLoc(e.target.value)}
-              placeholder="Lieu (massif, ville…)"
-              aria-label="Filtrer les sorties clubs par lieu"
-            />
-            <input
-              type="search"
-              value={clubSport}
-              onChange={(e) => setClubSport(e.target.value)}
-              placeholder="Sport (trail, rando, vélo…)"
-              aria-label="Filtrer les sorties clubs par sport"
-            />
-            <select
-              value={clubFormat}
-              onChange={(e) => setClubFormat(e.target.value as '' | EventFormat)}
-              aria-label="Filtrer les sorties clubs par format"
-            >
-              <option value="">Tous formats</option>
-              <option value="social_ride">Sociale</option>
-              <option value="training">Entraînement</option>
-              <option value="trail_outing">Sortie trail</option>
-              <option value="race">Course / Compétition</option>
-              <option value="indoor">Indoor</option>
-            </select>
-          </div>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            <input
-              type="checkbox"
-              checked={racesOnly}
-              onChange={(e) => setRacesOnly(e.target.checked)}
-            />
-            Courses avec page d’inscription uniquement
-          </label>
-          {clubEventsLoading ? <p className="lkdv-cv2-meta">Recherche dans les clubs…</p> : null}
-          {clubEventsError ? <p className="lkdv-cv2-meta">{clubEventsError}</p> : null}
-          {!clubEventsLoading && hasClubFilters && clubEvents.length === 0 ? (
-            <p className="lkdv-cv2-meta">Aucune sortie club ou course ne correspond à ces filtres.</p>
-          ) : null}
-          {clubEvents.length > 0 ? (
-            <div className="lkdv-cv2-list">
-              {clubEvents.slice(0, 8).map((ev) => {
-                const raceUrl = getValidatedRaceRegistrationUrl(ev.registrationUrl);
-                return (
-                  <div key={ev.id} className="lkdv-cv2-row" style={{ justifyContent: 'space-between', gap: 8 }}>
-                    <div>
-                      <Link href={`/sorties/${ev.id}`}>
-                        <b>{ev.title}</b>
-                      </Link>
-                      <div className="lkdv-cv2-meta">
-                        {[ev.sport, ev.format === 'race' ? 'Course' : ev.format, ev.locationLabel]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </div>
-                    </div>
-                    {raceUrl ? (
-                      <a
-                        href={raceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2-pill--sm"
-                      >
-                        Inscription officielle
-                      </a>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
+
+  if (filter === 'map') {
+    return (
+      <div className="lkdv-cv2x-pane lkdv-cv2x-pane--map">
+        <ExploreWorldMap kind="sorties" day={day} />
+      </div>
+    );
+  }
 
   if (filter === 'near' && !nearPointKnown) {
     return (
@@ -287,19 +203,20 @@ export function EventsPane({
   }
 
   if (!feed.loading && feed.items.length === 0) {
-    const dayLabel = day ? 'ce jour-là' : filter === 'mine' ? 'dans tes sorties' : 'pour l’instant';
+    const emptyTitle = day
+      ? 'Aucune sortie ce jour-là'
+      : filter === 'mine'
+        ? 'Aucune sortie prévue'
+        : 'Aucune sortie ouverte';
+    const emptyDesc = day
+      ? 'Choisis un autre jour dans le calendrier ou retire le filtre.'
+      : filter === 'mine'
+        ? 'Inscris-toi à une sortie ou organise la tienne pour partir en groupe.'
+        : 'Organise la prochaine sortie et invite la communauté.';
     return (
       <div ref={scrollRef} className="lkdv-cv2x-pane">
         {agenda}
-        <ExploreEmpty
-          icon="calendar"
-          title={day ? 'Aucune sortie ce jour-là' : 'Aucune sortie'}
-          description={
-            day
-              ? 'Choisis un autre jour dans la bande ou retire le filtre.'
-              : `Aucune sortie ${dayLabel}. Organise la prochaine et invite ta cordée.`
-          }
-        >
+        <ExploreEmpty icon="calendar" title={emptyTitle} description={emptyDesc}>
           {day ? (
             <button
               type="button"
@@ -348,53 +265,18 @@ export function EventsPane({
     );
   };
 
-  const groups = groupEventsByAgenda(upcoming);
+  const allOrdered = [...upcoming, ...past];
 
   return (
     <div ref={scrollRef} className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
-      {agenda}
-
-      {upcoming.length === 0 && past.length > 0 ? (
-        <p className="lkdv-cv2x-events-empty-line">Aucune sortie à venir. Récap des sorties passées ci-dessous.</p>
-      ) : null}
-
-      {view === 'list' ? (
-        groups.map((group) => (
-          <div key={group.key} className="lkdv-cv2-group">
-            <div className="lkdv-cv2-group-head">
-              <span className="lkdv-cv2-eyebrow">
-                {group.label}
-                <b>{group.items.length}</b>
-              </span>
-            </div>
-            <div className="lkdv-cv2x-event-rows">{group.items.map((event) => renderEvent(event, 'compact'))}</div>
+      <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Sorties">
+        {allOrdered.map((event) => (
+          <div key={event.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
+            {renderEvent(event)}
           </div>
-        ))
-      ) : (
-        <div className="lkdv-cv2x-event-billets">{upcoming.map((event) => renderEvent(event))}</div>
-      )}
-
-      {past.length > 0 ? (
-        <div className="lkdv-cv2-group">
-          <div className="lkdv-cv2-group-head">
-            <span className="lkdv-cv2-eyebrow">
-              Sorties passées
-              <b>{past.length}</b>
-            </span>
-          </div>
-          <div className="lkdv-cv2x-event-rows">{past.map((event) => renderEvent(event, 'compact'))}</div>
-        </div>
-      ) : null}
-
-      <div ref={nearBottomRef}>
-        <ExploreListFoot
-          hasMore={feed.hasMore}
-          loadingMore={feed.loadingMore}
-          onLoadMore={feed.loadMore}
-          total={feed.items.length}
-          label={formatCountFr(feed.items.length, 'sortie')}
-        />
+        ))}
+        <div ref={nearBottomRef} className="lkdv-cv2x-hrail-sentinel" aria-hidden="true" />
       </div>
     </div>
   );

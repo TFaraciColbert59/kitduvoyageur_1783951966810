@@ -454,6 +454,8 @@ describe('getCarnetDetail — visibilité effective des traces', () => {
     expect(detail?.trace).toBeNull();
     expect(detail?.days).toEqual([]);
     expect(detail?.elevationProfile).toEqual([]);
+    expect(detail?.distanceKm).toBeNull();
+    expect(detail?.elevationM).toBeNull();
   });
 
   it('n’appelle pas service_role quand le carnet est refusé', async () => {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { LikeIcon } from './LikeIcon';
 
 export interface LikeButtonProps {
@@ -32,8 +33,10 @@ export function LikeButton({
 }: LikeButtonProps) {
   const size = variant === 'post' ? 18 : 13;
   return (
-    <button
+    <motion.button
       type="button"
+      whileTap={{ scale: 0.86 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 24 }}
       className={`lkdv-like-btn lkdv-like-btn--${variant} ${liked ? 'on' : ''}`}
       aria-pressed={liked}
       aria-label={label ?? (variant === 'post' ? `Aimer (${count})` : "J'aime ce commentaire")}
@@ -43,9 +46,15 @@ export function LikeButton({
         onToggle();
       }}
     >
-      <LikeIcon active={liked} size={size} pulseKey={pulseKey} />
+      <motion.span
+        animate={liked ? { scale: [0.72, 1.35, 0.94, 1] } : { scale: 1 }}
+        transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <LikeIcon active={liked} size={size} pulseKey={pulseKey} />
+      </motion.span>
       {count > 0 || variant === 'post' ? <span className="lkdv-like-count" aria-hidden="true">{formatCount(count)}</span> : null}
-    </button>
+    </motion.button>
   );
 }
 

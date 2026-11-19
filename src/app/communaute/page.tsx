@@ -31,7 +31,7 @@ const loadSectionsDrawer = () =>
     default: m.CommunitySectionsDrawer,
   }));
 const loadCreateSheetV2 = () =>
-  import('@/features/community/v2/create/CreateSheetV2').then((m) => ({
+  import('@/features/community/v2/create/CreateSheetV2Live').then((m) => ({
     default: m.CreateSheetV2,
   }));
 const loadExploreSheetV2 = () =>
@@ -42,6 +42,13 @@ const CreateDrawer = dynamic(loadCreateDrawer, { ssr: false });
 const CommunitySectionsDrawer = dynamic(loadSectionsDrawer, { ssr: false });
 const CreateSheetV2 = dynamic(loadCreateSheetV2, { ssr: false });
 const CommunityExploreSheetV2 = dynamic(loadExploreSheetV2, { ssr: false });
+const CommunityNotificationsDrawer = dynamic(
+  () =>
+    import('@/features/community/notifications/CommunityNotificationsDrawer').then((m) => ({
+      default: m.CommunityNotificationsDrawer,
+    })),
+  { ssr: false },
+);
 
 function CommunauteFeedContent() {
   const { user } = useAuth();
@@ -55,7 +62,7 @@ function CommunauteFeedContent() {
   const [sectionsOpen, setSectionsOpen] = useState(false);
   const [sectionsTab, setSectionsTab] = useState<SectionTabId>('carnets');
   const [sectionsSearch, setSectionsSearch] = useState(false);
-  const [feedPrefsOpen, setFeedPrefsOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   // Un tiroir est monté dès sa première ouverture, puis reste monté (fermeture animée, état conservé).
   const [createMounted, setCreateMounted] = useState(false);
   const [sectionsMounted, setSectionsMounted] = useState(false);
@@ -156,7 +163,9 @@ function CommunauteFeedContent() {
               setSectionsSearch(true);
               setSectionsOpen(true);
             }}
-            onOpenPreferences={() => setFeedPrefsOpen(true)}
+            onNotifications={() => {
+              setNotificationsOpen(true);
+            }}
           />
         }
         stories={
@@ -182,8 +191,6 @@ function CommunauteFeedContent() {
           initialCommentId={initialCommentId}
           onRequireAuth={requireAuth}
           refreshKey={feedRefreshKey}
-          preferencesOpen={feedPrefsOpen}
-          onPreferencesOpenChange={setFeedPrefsOpen}
         />
       </CommunityFeedShell>
 
@@ -236,6 +243,14 @@ function CommunauteFeedContent() {
             onRequireAuth={requireAuth}
           />
         ))}
+
+      {notificationsOpen ? (
+        <CommunityNotificationsDrawer
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          user={user}
+        />
+      ) : null}
     </>
   );
 }

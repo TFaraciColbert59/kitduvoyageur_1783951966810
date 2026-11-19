@@ -111,6 +111,10 @@ export interface CommunitySheetShellProps {
    * plus à l'écran).
    */
   previewSlotRef?: (element: HTMLDivElement | null) => void;
+  /** Contenu statique au-dessus du pager (ex: barre de recherche ou agenda). */
+  staticSlot?: ReactNode;
+  /** Plafonne le tiroir à 40% de hauteur en mode Recherche. */
+  compactSearch?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -152,20 +156,31 @@ export function CommunitySheetShell({
   kind,
   guestNotice = false,
   previewSlotRef,
+  staticSlot = null,
+  compactSearch = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
   const [state, setState] = useState<'opening' | 'open' | 'closing'>('opening');
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [detent, setDetent] = useState<'card' | 'large'>('card');
+  const [scrolled, setScrolled] = useState(false);
+  const [edgeBackX, setEdgeBackX] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const layerRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
-  const dragRef = useRef<{ pointerId: number; startY: number; startAt: number; height: number } | null>(
-    null,
-  );
+  const dragRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startX: number;
+    startAt: number;
+    height: number;
+    fromScrollTop?: boolean;
+  } | null>(null);
+  const edgeSwipeRef = useRef<{ pointerId: number; startX: number; startY: number } | null>(null);
 
   // ── prefers-reduced-motion ────────────────────────────────────────────────
   useEffect(() => {
@@ -327,7 +342,7 @@ export function CommunitySheetShell({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [detail, haptic, mounted, onEscape, open, requestClose]);
 
-  // ── Glissement vertical de fermeture (poignée / barre de navigation) ─────
+  // ── Glissement vertical de fermeture / detent (poignée / barre / scrollTop === 0) ──
   const onDragStart = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!open || state === 'closing') return;
@@ -338,6 +353,7 @@ export function CommunitySheetShell({
       dragRef.current = {
         pointerId: event.pointerId,
         startY: event.clientY,
+        startX: event.clientX,
         startAt: performance.now(),
         height,
       };
@@ -350,23 +366,64 @@ export function CommunitySheetShell({
     [open, state],
   );
 
-  const onDragMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const raw = Math.max(0, event.clientY - drag.startY);
-    if (raw > 4 && !dragging) setDragging(true);
-    const knee = drag.height * 0.35;
-    const banded = raw <= knee ? raw : knee + (raw - knee) * 0.35;
-    setDragY(banded);
-    if (banded > 4 && event.cancelable) event.preventDefault();
-  }, [dragging]);
+  const onBodyPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!open || state === 'closing') return;
+      if (event.button > 0) return;
+      const target = event.target as Element | null;
+      if (target?.closest('button, a, input, textarea, select, [role="tab"], [data-cv2-nodrag]')) return;
+      const scrollHost = target?.closest('.lkdv-cv2-pane, .lkdv-cv2-detail-body') as HTMLElement | null;
+      if (scrollHost && scrollHost.scrollTop > 2) return;
+      const height = sheetRef.current?.getBoundingClientRect().height ?? 0;
+      dragRef.current = {
+        pointerId: event.pointerId,
+        startY: event.clientY,
+        startX: event.clientX,
+        startAt: performance.now(),
+        height,
+        fromScrollTop: true,
+      };
+    },
+    [open, state],
+  );
+
+  const onDragMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      const dy = event.clientY - drag.startY;
+      const dx = event.clientX - drag.startX;
+      if (drag.fromScrollTop) {
+        if (dy <= 6 || Math.abs(dy) <= Math.abs(dx) * 1.2) {
+          if (dy < -8) dragRef.current = null;
+          return;
+        }
+      }
+      const raw = Math.max(0, dy);
+      if (raw > 4 && !dragging) setDragging(true);
+      const knee = drag.height * 0.35;
+      const banded = raw <= knee ? raw : knee + (raw - knee) * 0.35;
+      setDragY(banded);
+      if (banded > 4 && event.cancelable) event.preventDefault();
+    },
+    [dragging],
+  );
 
   const onDragEnd = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       const drag = dragRef.current;
       if (!drag || drag.pointerId !== event.pointerId) return;
       dragRef.current = null;
-      const raw = Math.max(0, event.clientY - drag.startY);
+      const dy = event.clientY - drag.startY;
+      // Glisser vers le haut sur la poignée étend la feuille en pleine hauteur (`large`)
+      if (!drag.fromScrollTop && dy < -48 && detent === 'card') {
+        setDragging(false);
+        setDragY(0);
+        setDetent('large');
+        haptic('selection');
+        return;
+      }
+      const raw = Math.max(0, dy);
       const elapsed = Math.max(1, performance.now() - drag.startAt);
       const velocity = raw / elapsed;
       const shouldClose =
@@ -374,13 +431,68 @@ export function CommunitySheetShell({
       setDragging(false);
       if (raw > 8) haptic(shouldClose ? 'medium' : 'selection');
       if (shouldClose) {
-        requestClose();
+        if (detent === 'large' && raw < drag.height * 0.55 && velocity <= SHEET_DRAG_CLOSE_VELOCITY) {
+          setDetent('card');
+          setDragY(0);
+        } else {
+          requestClose();
+        }
       } else {
         setDragY(0);
       }
     },
-    [haptic, requestClose],
+    [detent, haptic, requestClose],
   );
+
+  // ── Edge-swipe bord gauche pour dépiler une vue détail d'une main ────────
+  const onDetailPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!detail || event.button > 0) return;
+      const rect = sheetRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      if (event.clientX - rect.left <= 28) {
+        edgeSwipeRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY };
+      }
+    },
+    [detail],
+  );
+
+  const onDetailPointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const sw = edgeSwipeRef.current;
+    if (!sw || sw.pointerId !== event.pointerId) return;
+    const dx = Math.max(0, event.clientX - sw.startX);
+    const dy = Math.abs(event.clientY - sw.startY);
+    if (dy > 32 && dx < 24) {
+      edgeSwipeRef.current = null;
+      setEdgeBackX(0);
+      return;
+    }
+    if (dx > 8) setEdgeBackX(Math.min(120, dx * 0.6));
+  }, []);
+
+  const onDetailPointerEnd = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const sw = edgeSwipeRef.current;
+      if (!sw || sw.pointerId !== event.pointerId) return;
+      edgeSwipeRef.current = null;
+      const dx = event.clientX - sw.startX;
+      const dy = Math.abs(event.clientY - sw.startY);
+      setEdgeBackX(0);
+      if (detail && dx >= 56 && dx > dy * 1.4) {
+        haptic('light');
+        detail.onBack();
+      }
+    },
+    [detail, haptic],
+  );
+
+  const onSheetScrollCapture = useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (!target || typeof target.scrollTop !== 'number') return;
+    if (target.classList.contains('lkdv-cv2-pane') || target.classList.contains('lkdv-cv2-detail-body')) {
+      setScrolled(target.scrollTop > 6);
+    }
+  }, []);
 
   const sheetStyle = useMemo<CSSProperties>(() => {
     if (dragY <= 0 && !dragging) return {};
@@ -418,17 +530,33 @@ export function CommunitySheetShell({
       data-state={state}
       data-cv2-kind={kind}
       data-testid={kind ? `communaute-v2-${kind}` : 'communaute-v2-sheet'}
+      onClick={(e) => {
+        const target = e.target as Node | null;
+        if (!target || !sheetRef.current) return;
+        if (sheetRef.current.contains(target)) return;
+        if (target instanceof Element && target.closest('.lkdv-cv2-island-layer, .lkdv-cv2-peek')) return;
+        onClose();
+      }}
     >
-      <div className="lkdv-cv2-wrap" data-det="card" data-state={state}>
+      <div
+        className="lkdv-cv2-wrap"
+        data-det="card"
+        data-detent={detent}
+        data-search-compact={compactSearch ? 'true' : undefined}
+        data-state={state}
+      >
         <div
           ref={sheetRef}
           className="lkdv-cv2-sheet"
           data-testid="cv2-sheet"
+          data-dragging={dragging ? 'true' : undefined}
+          data-scrolled={scrolled ? 'true' : undefined}
           role="dialog"
           aria-modal={state === 'closing' ? undefined : 'true'}
           aria-label={label}
           tabIndex={-1}
           style={sheetStyle}
+          onScrollCapture={onSheetScrollCapture}
         >
           <div
             className="lkdv-cv2-grab"
@@ -437,6 +565,10 @@ export function CommunitySheetShell({
             onPointerMove={onDragMove}
             onPointerUp={onDragEnd}
             onPointerCancel={onDragEnd}
+            onDoubleClick={() => {
+              setDetent((prev) => (prev === 'card' ? 'large' : 'card'));
+              haptic('selection');
+            }}
             aria-hidden="true"
           >
             <span />
@@ -448,6 +580,9 @@ export function CommunitySheetShell({
               data-testid="cv2-capsule"
               data-cv2-drag
               onPointerDown={onDragStart}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onPointerCancel={onDragEnd}
             >
               <CapsuleTabs
                 items={capsuleItems}
@@ -473,10 +608,43 @@ export function CommunitySheetShell({
 
           {/* FID-056 : emplacement fixe de l'aperçu, au-dessus du pager. */}
           {previewSlotRef && !detail ? <SheetPreviewSlot slotRef={previewSlotRef} /> : null}
+          {staticSlot && !detail ? <div className="lkdv-cv2-static-slot">{staticSlot}</div> : null}
 
           {detail ? (
-            <div className="lkdv-cv2-detail" data-state={state} data-testid="cv2-detail">
-              <div className="lkdv-cv2-detail-nav" data-cv2-drag onPointerDown={onDragStart}>
+            <div
+              className="lkdv-cv2-detail"
+              data-state={state}
+              data-testid="cv2-detail"
+              style={
+                edgeBackX > 0
+                  ? { transform: `translateX(${edgeBackX}px)`, transition: 'none' }
+                  : undefined
+              }
+              onPointerDown={(e) => {
+                onDetailPointerDown(e);
+                onBodyPointerDown(e);
+              }}
+              onPointerMove={(e) => {
+                onDetailPointerMove(e);
+                onDragMove(e);
+              }}
+              onPointerUp={(e) => {
+                onDetailPointerEnd(e);
+                onDragEnd(e);
+              }}
+              onPointerCancel={(e) => {
+                onDetailPointerEnd(e);
+                onDragEnd(e);
+              }}
+            >
+              <div
+                className="lkdv-cv2-detail-nav"
+                data-cv2-drag
+                onPointerDown={onDragStart}
+                onPointerMove={onDragMove}
+                onPointerUp={onDragEnd}
+                onPointerCancel={onDragEnd}
+              >
                 <button
                   type="button"
                   className="lkdv-cv2-back"
@@ -522,7 +690,13 @@ export function CommunitySheetShell({
               )}
             </div>
           ) : (
-            <div className={cx('lkdv-cv2-body', Boolean(footer) && 'has-footer', Boolean(mini) && 'has-mini')}>
+            <div
+              className={cx('lkdv-cv2-body', Boolean(footer) && 'has-footer', Boolean(mini) && 'has-mini')}
+              onPointerDown={onBodyPointerDown}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onPointerCancel={onDragEnd}
+            >
               {capsule.items.map((voletItem, voletIndex) => {
                 const isActive = voletIndex === capsule.active;
                 const filterMode = Boolean(mini?.pages);
@@ -575,41 +749,76 @@ export function CommunitySheetShell({
             </div>
           )}
 
-          {mini && !detail ? (
-            <div
-              className={cx(
-                'lkdv-cv2-mini-slot',
-                Boolean(footer) && 'has-footer',
-                Boolean(mini.sort) && 'has-sort',
-              )}
-              data-testid="cv2-mini-capsule"
-            >
-              <CapsuleTabs
-                items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
-                activeIndex={mini.active}
-                onIndexChange={mini.onChange}
-                ariaLabel={mini.label}
-                size="sm"
-                className="lkdv-cv2-mini"
-                idFor={(id) => `cv2-mini-${id}`}
-                panelIdFor={
-                  filterPages && activeVoletItem
-                    ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
-                    : undefined
-                }
-              />
-              {mini.sort ? (
-                <SortMenuButton
-                  value={mini.sort.value}
-                  defaultValue={mini.sort.defaultValue}
-                  options={mini.sort.options}
-                  onChange={mini.sort.onChange}
-                />
-              ) : null}
-            </div>
+          {!detail && (mini || footer) ? (
+            footer && mini ? (
+              <div className="lkdv-cv2-bottom-dock">
+                <div className="lkdv-cv2-footer">{footer}</div>
+                <div
+                  className={cx(
+                    'lkdv-cv2-mini-slot',
+                    'has-footer',
+                    Boolean(mini.sort) && 'has-sort',
+                  )}
+                  data-testid="cv2-mini-capsule"
+                >
+                  <CapsuleTabs
+                    items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                    activeIndex={mini.active}
+                    onIndexChange={mini.onChange}
+                    ariaLabel={mini.label}
+                    size="sm"
+                    className="lkdv-cv2-mini"
+                    idFor={(id) => `cv2-mini-${id}`}
+                    panelIdFor={
+                      filterPages && activeVoletItem
+                        ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                        : undefined
+                    }
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                {mini ? (
+                  <div
+                    className={cx(
+                      'lkdv-cv2-mini-slot',
+                      Boolean(mini.sort) && 'has-sort',
+                    )}
+                    data-testid="cv2-mini-capsule"
+                  >
+                    <CapsuleTabs
+                      items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                      activeIndex={mini.active}
+                      onIndexChange={mini.onChange}
+                      ariaLabel={mini.label}
+                      size="sm"
+                      className="lkdv-cv2-mini"
+                      idFor={(id) => `cv2-mini-${id}`}
+                      panelIdFor={
+                        filterPages && activeVoletItem
+                          ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                          : undefined
+                      }
+                    />
+                    {mini.sort ? (
+                      <SortMenuButton
+                        value={mini.sort.value}
+                        defaultValue={mini.sort.defaultValue}
+                        options={mini.sort.options}
+                        onChange={mini.sort.onChange}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+                {footer ? (
+                  <div className="lkdv-cv2-bottom-dock lkdv-cv2-bottom-dock--footer-only">
+                    <div className="lkdv-cv2-footer">{footer}</div>
+                  </div>
+                ) : null}
+              </>
+            )
           ) : null}
-
-          {footer && !detail ? <div className="lkdv-cv2-footer">{footer}</div> : null}
 
           {children}
         </div>

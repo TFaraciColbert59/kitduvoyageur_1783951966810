@@ -14,10 +14,11 @@
   z-index: var(--cv2-layer-z, 60);
   pointer-events: none;
   isolation: isolate;
-  --cv2-card-top: calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 44px);
+  background: rgba(23, 43, 36, 0.16);
+  --cv2-card-top: max(10dvh, calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 48px));
   --cv2-card-bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 14px);
   --cv2-card-side: 8px;
-  --cv2-radius: 24px;
+  --cv2-radius: 32px;
 }
 
 /* La barre d'onglets de l'application s'efface derrière la carte, comme sur
@@ -38,11 +39,33 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   right: var(--cv2-card-side);
   bottom: var(--cv2-card-bottom);
   max-width: 430px;
+  max-height: 90dvh;
   margin: 0 auto;
   overflow: hidden;
   border-radius: var(--cv2-radius);
   pointer-events: none;
   visibility: hidden;
+  transition:
+    top 0.32s var(--motion-ease-standard),
+    bottom 0.32s var(--motion-ease-standard),
+    border-radius 0.32s var(--motion-ease-standard);
+}
+.lkdv-cv2-wrap[data-detent='large'] {
+  top: 10dvh;
+  max-height: 90dvh;
+  bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 6px);
+}
+.lkdv-cv2-wrap[data-search-compact='true'] {
+  top: auto;
+  height: 50dvh;
+  max-height: 50dvh;
+  bottom: calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 10px);
+  border-radius: 26px;
+}
+@media (max-width: 600px) {
+  .lkdv-cv2-wrap[data-detent='large'] {
+    border-radius: 28px;
+  }
 }
 .lkdv-cv2-wrap[data-state='opening'],
 .lkdv-cv2-wrap[data-state='open'],
@@ -59,10 +82,18 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   border-radius: inherit;
   padding: 0;
   pointer-events: auto;
-  background: var(--sheet-bg);
-  -webkit-backdrop-filter: var(--sheet-blur);
-  backdrop-filter: var(--sheet-blur);
-  box-shadow: var(--sheet-shadow);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(251, 250, 246, 0.96) 100%
+  );
+  -webkit-backdrop-filter: blur(36px) saturate(1.1);
+  backdrop-filter: blur(36px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.1),
+    0 18px 48px rgba(16, 32, 25, 0.16);
   transform: translateY(100%);
   transition: transform 0.72s var(--ease-out);
   will-change: transform;
@@ -96,6 +127,13 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 1px 6px rgba(23, 43, 36, 0.18);
+  transition:
+    transform 0.14s var(--motion-ease-standard),
+    opacity 0.14s ease;
+}
+.lkdv-cv2-sheet[data-dragging='true'] .lkdv-cv2-grab span {
+  transform: scaleX(1.22);
+  opacity: 0.96;
 }
 .lkdv-cv2-grab::after {
   content: '';
@@ -105,6 +143,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 
 /* Barre de capsule 56 px (/compte : onglets icône seule, lentille .42 s). */
 .lkdv-cv2-topnav {
+  position: relative;
   flex: none;
   display: flex;
   justify-content: center;
@@ -134,6 +173,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   color: var(--lkv-forest-900);
   font: 600 10.5px/1.2 var(--font-sans);
   letter-spacing: 0.02em;
+  transition: opacity 0.18s ease;
+}
+.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-guest {
+  opacity: 0.72;
 }
 
 .lkdv-cv2-guest svg {
@@ -157,6 +200,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 .lkdv-cv2-capsule button {
   min-height: 48px !important;
   height: 48px !important;
+  transition: transform 0.14s var(--motion-ease-standard);
+}
+.lkdv-cv2-capsule button:active {
+  transform: scale(0.96);
 }
 .lkdv-cv2-capsule button .ic {
   width: 24px !important;
@@ -173,12 +220,17 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
    Vide, il ne réserve aucune hauteur (détail empilé, formulaire sans aperçu). */
 .lkdv-cv2-preview-slot {
   flex: none;
-  height: 150px;
-  min-height: 150px;
-  margin: 0 14px 8px;
+  height: auto;
+  min-height: 0;
+  max-height: 150px;
+  margin: 0 14px 6px;
   overflow: hidden;
-  border-radius: 20px;
-  pointer-events: none;
+  border-radius: 16px;
+  pointer-events: auto;
+}
+
+.lkdv-cv2-preview-slot:has([data-expanded='true']) {
+  max-height: 240px;
 }
 
 .lkdv-cv2-preview-slot:empty {
@@ -187,9 +239,8 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 
 .lkdv-cv2-preview-frame {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   width: 100%;
-  height: 100%;
 }
 
 .lkdv-cv2-preview-frame > * {
@@ -201,44 +252,98 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: clip;
   padding: 0 14px;
 }
 .lkdv-cv2-body .lkdv-lens-pager {
   position: relative;
   height: 100%;
-  overflow: hidden;
-  border-radius: 18px;
+  overflow: clip !important;
+  border-radius: 0 0 26px 26px;
   touch-action: pan-y;
 }
 .lkdv-cv2-body .lkdv-lens-track {
   display: flex;
+  width: 100%;
   height: 100%;
   will-change: transform;
 }
 .lkdv-cv2-pane {
   flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   overscroll-behavior: contain;
-  padding: 2px 1px 76px;
+  padding: 8px 16px 28px;
+  box-sizing: border-box;
   scrollbar-width: none;
 }
 .lkdv-cv2-pane::-webkit-scrollbar {
   display: none;
 }
-.lkdv-cv2-body.has-footer .lkdv-cv2-pane {
-  padding-bottom: 16px;
+.lkdv-cv2-body.has-footer .lkdv-cv2-pane:not(.lkdv-cv2-pane--volet) {
+  padding: 8px 16px calc(80px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Dock bas flottant en liquid glass : le contenu défile dessous jusqu'en bas du tiroir. */
+.lkdv-cv2-bottom-dock {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: calc(10px + max(0px, env(safe-area-inset-bottom, 0px) - 10px));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.lkdv-cv2-bottom-dock--footer-only .lkdv-cv2-footer {
+  flex: 1 1 auto;
+  width: 100%;
+}
+.lkdv-cv2-bottom-dock .lkdv-cv2-footer {
+  padding: 0;
+  background: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  pointer-events: auto;
+}
+.lkdv-cv2-bottom-dock .lkdv-cv2-mini-slot.has-footer {
+  position: static !important;
+  padding: 0 !important;
+  margin-left: auto;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+.lkdv-cv2-bottom-dock .lkdv-cv2c-back--icon {
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    0 4px 16px rgba(23, 43, 36, 0.12),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.8);
+}
+.lkdv-cv2-bottom-dock .lkdv-cv2c-next {
+  background: rgba(23, 43, 36, 0.9);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+  box-shadow:
+    0 6px 20px rgba(23, 43, 36, 0.24),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
 }
 
 /* Mini-capsule 30 px + bouton de tri (30 px) sur la même ligne, en bas à droite. */
 .lkdv-cv2-mini-slot {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  right: 14px;
+  bottom: 12px;
+  max-width: calc(100% - 28px);
   z-index: 16;
   display: flex;
   align-items: center;
@@ -287,10 +392,14 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   flex-direction: column;
   min-height: 0;
   border-radius: inherit;
-  background: var(--sheet-bg);
-  -webkit-backdrop-filter: var(--sheet-blur);
-  backdrop-filter: var(--sheet-blur);
-  animation: cv2DetailIn 0.42s var(--ease-glass) both;
+  background: linear-gradient(
+    180deg,
+    rgba(251, 250, 246, 0.98) 0%,
+    rgba(246, 244, 238, 0.96) 100%
+  );
+  -webkit-backdrop-filter: blur(36px) saturate(1.1);
+  backdrop-filter: blur(36px) saturate(1.1);
+  animation: cv2DetailIn 0.2s var(--motion-ease-standard) both;
   /* Au-dessus de la poignée (z 15) : sinon la zone de préhension (18 px + son
      débordement `::after`) recouvre le bouton ‹ Retour et intercepte le tap.
      Le glissement de fermeture reste possible depuis `.lkdv-cv2-detail-nav`
@@ -298,6 +407,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   z-index: 16;
 }
 .lkdv-cv2-detail-nav {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
@@ -305,6 +415,21 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   height: 46px;
   padding: 0 14px 0 8px;
   touch-action: none;
+}
+.lkdv-cv2-detail-nav::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: rgba(23, 43, 36, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease;
+}
+.lkdv-cv2-sheet[data-scrolled='true'] .lkdv-cv2-detail-nav::after {
+  opacity: 1;
 }
 .lkdv-cv2-back {
   width: 32px;
@@ -383,7 +508,7 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 @keyframes cv2DetailIn {
   from {
     opacity: 0;
-    transform: translateX(24px) scale(0.995);
+    transform: translateX(16px);
   }
   to {
     opacity: 1;
@@ -411,13 +536,23 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
   outline: 2px solid var(--lkv-secondary);
   outline-offset: 2px;
 }
+.lkdv-cv2-sheet [aria-invalid='true']:focus,
+.lkdv-cv2-sheet [aria-invalid='true']:focus-visible {
+  outline: 2px solid #dc2626 !important;
+  border-color: #dc2626 !important;
+}
 .lkdv-cv2-sheet:focus {
   outline: none;
 }
 
 /* ── Réductions ─────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .lkdv-cv2-sheet {
+  .lkdv-cv2-wrap,
+  .lkdv-cv2-sheet,
+  .lkdv-cv2-grab span,
+  .lkdv-cv2-topnav::after,
+  .lkdv-cv2-detail-nav::after,
+  .lkdv-cv2-capsule button {
     transition-duration: 0.01ms !important;
   }
   .lkdv-cv2-wrap[data-state='closing'] .lkdv-cv2-sheet {
@@ -463,11 +598,11 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 /* Volets : les 4 conteneurs cohabitent dans le corps (les inactifs restent dans
    le DOM pour `aria-hidden`/`inert` mais sont superposés absolument, sinon ils
    s'empileraient verticalement et pousseraient le volet actif hors du cadre). */
-.lkdv-cv2-pane--volet {
+.lkdv-cv2-body .lkdv-cv2-pane--volet {
   position: absolute;
   inset: 0;
   height: auto;
-  overflow: hidden;
+  overflow: clip;
   padding: 0;
 }
 .lkdv-cv2-pane--volet[aria-hidden='true'] {
@@ -475,4 +610,10 @@ body:has(.lkdv-cv2-layer) .lkdv-floating-tabbar {
 }
 .lkdv-cv2-pane--volet > .lkdv-lens-pager {
   height: 100%;
+}
+
+.lkdv-sort-btn::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
 }

@@ -30,7 +30,11 @@ export interface EventDetailState {
  * (plus précis) lu par `fetchEventDetail`. La route utilisée est la même
  * (`/api/weather`, même origine) et rend la journée demandée.
  */
-export function useEventDetail(event: EventCardVM | null, enabled = true): EventDetailState {
+export function useEventDetail(
+  event: EventCardVM | null,
+  enabled = true,
+  viewerId: string | null = null,
+): EventDetailState {
   const [detail, setDetail] = useState<EventDetailExtras | null>(null);
   const [weather, setWeather] = useState<EventWeatherVM | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -71,7 +75,7 @@ export function useEventDetail(event: EventCardVM | null, enabled = true): Event
       if (forecast || feedPoint) setWeatherLoading(false);
 
       // 2) Détail (description, sécurité, RDV, participants).
-      const result = await fetchEventDetail(eventId);
+      const result = await fetchEventDetail(eventId, undefined, viewerId);
       if (requestRef.current !== requestId) return;
       setLoading(false);
       if (result.error || !result.data) {
@@ -93,7 +97,7 @@ export function useEventDetail(event: EventCardVM | null, enabled = true): Event
       if (requestRef.current === requestId) setWeatherLoading(false);
     })();
     // `eventPoint` ne sert qu'à invalider quand la sortie change de date/heure.
-  }, [attempt, enabled, eventDate, eventId, eventLat, eventLng, eventPoint]);
+  }, [attempt, enabled, eventDate, eventId, eventLat, eventLng, eventPoint, viewerId]);
 
   const retry = useCallback(() => setAttempt((value) => value + 1), []);
 

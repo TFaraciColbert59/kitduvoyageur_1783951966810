@@ -58,10 +58,6 @@ export function NumberStepperV2({
               <Plus size={16} aria-hidden="true" />
             </button>
           </div>
-          <span className="lkdv-cv2-field-hint">
-            {min} – {max}
-            {unit ? ` ${unit}` : ''}
-          </span>
         </div>
       )}
     </FieldV2>

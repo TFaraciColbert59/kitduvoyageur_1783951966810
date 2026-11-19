@@ -29,7 +29,7 @@ export function DateFieldV2({
   return (
     <FieldV2 name={name} label={label} hint={hint} required={required} className={className}>
       {({ id, describedBy, invalid }) => (
-        <div className="lkdv-cv2c-date">
+        <div className="lkdv-cv2c-date lkdv-cv2c-date--modern">
           <CalendarDays size={16} aria-hidden="true" />
           <input
             id={id}
@@ -38,6 +38,7 @@ export function DateFieldV2({
             aria-invalid={invalid || undefined}
             aria-describedby={describedBy}
             className="lkdv-cv2-input"
+            style={{ colorScheme: 'light', accentColor: '#172B24' }}
             {...form.register(name)}
           />
         </div>
@@ -63,7 +64,7 @@ export function TimeFieldV2({
   return (
     <FieldV2 name={name} label={label} hint={hint} required={required} className={className}>
       {({ id, describedBy, invalid }) => (
-        <div className="lkdv-cv2c-date">
+        <div className="lkdv-cv2c-date lkdv-cv2c-date--modern">
           <Clock size={16} aria-hidden="true" />
           <input
             id={id}
@@ -71,6 +72,7 @@ export function TimeFieldV2({
             aria-invalid={invalid || undefined}
             aria-describedby={describedBy}
             className="lkdv-cv2-input"
+            style={{ colorScheme: 'light', accentColor: '#172B24' }}
             {...form.register(name)}
           />
         </div>

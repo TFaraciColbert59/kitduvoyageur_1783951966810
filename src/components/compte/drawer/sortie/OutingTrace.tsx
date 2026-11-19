@@ -356,16 +356,6 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
     });
   }
 
-  const comparableOutings = useMemo(
-    () =>
-      findComparableOutings(
-        detail,
-        readProgressionSessionsSnapshot(),
-        resolveTimeZone().timeZone
-      ),
-    [detail]
-  );
-
   if (!hasVisibleTrace(detail)) {
     const state = traceUnavailableState(detail);
     return (
@@ -383,6 +373,15 @@ export function OutingTrace({ detail, onExport, onOpenMediaHub, onUpdated }: Out
   }
 
   const splits = splitUnit === 'km' ? telemetry.kmSplits : telemetry.miSplits;
+  const comparableOutings = useMemo(
+    () =>
+      findComparableOutings(
+        detail,
+        readProgressionSessionsSnapshot(),
+        resolveTimeZone().timeZone
+      ),
+    [detail]
+  );
 
   return (
     <div className="lkdv-sortie-pane">

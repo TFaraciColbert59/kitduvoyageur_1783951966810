@@ -1,0 +1,334 @@
+/* Réplique exacte de la carte principale du haut d'une page Club (`/clubs/[slug]`) */
+
+.lkdv-cv2c-club-ig-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-cv2c-club-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lkdv-cv2c-club-top-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(114, 145, 124, 0.78), rgba(90, 120, 100, 0.84));
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 4px 12px rgba(23, 43, 36, 0.14);
+  cursor: text;
+  max-width: 100%;
+}
+
+.lkdv-cv2c-club-top-name-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+  font: 700 13.5px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  min-width: 90px;
+  max-width: 220px;
+  field-sizing: content;
+}
+
+.lkdv-cv2c-club-top-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.lkdv-cv2c-club-top-chev {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.lkdv-cv2c-club-card-inner {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 8px;
+  gap: 6px;
+  background: linear-gradient(
+    180deg,
+    rgba(196, 220, 202, 0.9) 0%,
+    rgba(235, 241, 224, 0.92) 38%,
+    rgba(192, 208, 194, 0.88) 100%
+  );
+  -webkit-backdrop-filter: blur(24px) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(24px) saturate(1.8) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.4),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 10px 26px rgba(23, 43, 36, 0.14);
+}
+
+.lkdv-cv2c-club-ig-header {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.lkdv-cv2c-club-emblem-btn {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  padding: 3px;
+  border: 0;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.55),
+    rgba(255, 255, 255, 0.95),
+    rgba(91, 127, 85, 0.5),
+    rgba(255, 255, 255, 0.9)
+  );
+  box-shadow:
+    0 4px 14px rgba(23, 64, 44, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.lkdv-cv2c-club-emblem-inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  border: 1.5px solid rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #1b4d3e, #2f7a5c);
+}
+
+.lkdv-cv2c-club-emblem-inner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-cv2c-club-seal {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, #ffffff, #ebf2ec);
+  box-shadow: 0 2px 6px rgba(23, 43, 36, 0.22), 0 0 0 1.5px #ffffff;
+  display: grid;
+  place-items: center;
+  color: #17402c;
+}
+
+.lkdv-cv2c-club-stats {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
+.lkdv-cv2c-club-stat {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4px;
+}
+
+.lkdv-cv2c-club-stat b {
+  font: 700 18px/1.2 var(--font-display, var(--font-sans, sans-serif));
+  color: #17402c;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-cv2c-club-stat span {
+  font: 500 11.5px/1.2 var(--font-sans, sans-serif);
+  color: #46574e;
+}
+
+.lkdv-cv2c-club-bio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lkdv-cv2c-club-loc-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 500 12px/1.25 var(--font-sans, sans-serif);
+  color: #2c3e35;
+}
+
+.lkdv-cv2c-club-loc-input {
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+  font: 700 12.5px/1.25 var(--font-sans, sans-serif);
+  color: #17402c;
+  min-width: 38px;
+  max-width: 48%;
+  field-sizing: content;
+}
+
+.lkdv-cv2c-club-loc-input::placeholder {
+  color: #17402c;
+  opacity: 0.78;
+}
+
+.lkdv-cv2c-club-desc-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  outline: none;
+  font: 400 11.8px/1.3 var(--font-sans, sans-serif);
+  color: #46574e;
+}
+
+.lkdv-cv2c-club-desc-input::placeholder {
+  color: #46574e;
+  opacity: 0.85;
+}
+
+.lkdv-cv2c-club-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.lkdv-cv2c-club-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lkdv-cv2c-club-shortcut-ring {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  padding: 2.5px;
+  background: conic-gradient(
+    from 140deg,
+    rgba(23, 64, 44, 0.65),
+    rgba(91, 127, 85, 0.42),
+    rgba(255, 255, 255, 0.92),
+    rgba(23, 64, 44, 0.65)
+  );
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 3px 8px rgba(23, 43, 36, 0.12);
+  display: grid;
+  place-items: center;
+}
+
+.lkdv-cv2c-club-shortcut-in {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(244, 247, 243, 0.92);
+  border: 1.5px solid rgba(255, 255, 255, 0.96);
+  display: grid;
+  place-items: center;
+}
+
+.lkdv-cv2c-club-shortcut-label {
+  font: 500 10px/1.1 var(--font-sans, sans-serif);
+  color: #17402c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.lkdv-cv2c-club-empty-feed {
+  border-radius: 20px;
+  background: rgba(247, 250, 248, 0.92);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 4px 14px rgba(23, 43, 36, 0.08);
+  padding: 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.lkdv-cv2c-club-empty-feed b {
+  font: 700 13.5px/1.25 var(--font-sans, sans-serif);
+  color: #0f172a;
+}
+
+.lkdv-cv2c-club-empty-feed p {
+  margin: 0;
+  font: 400 11.2px/1.35 var(--font-sans, sans-serif);
+  color: #475569;
+  max-width: 280px;
+}
+
+.lkdv-cv2c-club-publish-cta {
+  margin-top: 2px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #133826;
+  color: #ffffff;
+  font: 700 11.5px/1 var(--font-sans, sans-serif);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lkdv-cv2c-club-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.lkdv-cv2c-club-tabs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 2px 6px rgba(23, 43, 36, 0.1);
+}
+
+.lkdv-cv2c-club-tab-chip {
+  width: 32px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #17402c;
+}
+
+.lkdv-cv2c-club-tab-chip.is-active {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(23, 43, 36, 0.12);
+}

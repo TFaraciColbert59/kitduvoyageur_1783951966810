@@ -37,6 +37,21 @@ import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/serie
 import { isActivityShareActive, parseActivityShareMeta } from '@/features/community/g01/activityShare';
 import { revokeActivityShare } from '@/features/community/g01/activityShareService';
 import type { LifecycleActivityRecord } from '@/features/activity/lifecycle';
+import {
+  normalizeVisibility,
+  parsePositionSegments,
+  parsePositions,
+  type OutingPoint,
+  type OutingVisibility,
+} from '../domain/outingGeometry';
+
+export {
+  normalizeVisibility,
+  parsePositionSegments,
+  parsePositions,
+  type OutingPoint,
+  type OutingVisibility,
+};
 
 /**
  * Drawer Sortie — lecture et écriture des données réelles.
@@ -46,23 +61,6 @@ import type { LifecycleActivityRecord } from '@/features/activity/lifecycle';
  * bornées au propriétaire par la RLS (`own_sessions`, policies filles) et par
  * un filtre `user_id` explicite côté serveur.
  */
-
-import {
-  normalizeVisibility,
-  numericOrNull,
-  parsePositionSegments,
-  parsePositions,
-  type OutingPoint,
-  type OutingVisibility,
-} from '@/features/compte/data/sortiesParsing';
-
-export {
-  normalizeVisibility,
-  parsePositionSegments,
-  parsePositions,
-  type OutingPoint,
-  type OutingVisibility,
-};
 
 export type OutingStatus = 'planned' | 'ongoing' | 'done';
 
@@ -429,6 +427,12 @@ type ProfileRow = {
 };
 
 const PROFILE_COLUMNS = 'id, full_name, handle, avatar_url';
+
+function numericOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : null;
+}
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
@@ -1550,8 +1554,10 @@ async function assertOwner(
   outingId: string
 ): Promise<SessionRow | null> {
   const { data } = await supabase
-    .from('hike_sessions')
-    .select('id,user_id,kit_id,title,notes,visibility,weather')
+    // RGPD : `notes` n'est plus lisible sur la table ; la vue participant rend
+    // la ligne de sa propre sortie (filtre user_id ci-dessous).
+    .from('hike_sessions_participant')
+    .select('id,user_id,kit_id,title,notes,visibility')
     .eq('id', outingId)
     .eq('user_id', userId)
     .maybeSingle();

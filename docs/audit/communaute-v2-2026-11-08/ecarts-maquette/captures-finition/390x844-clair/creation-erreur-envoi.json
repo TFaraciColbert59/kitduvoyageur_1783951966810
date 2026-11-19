@@ -1,0 +1,6 @@
+{
+  "id": "creation-erreur-envoi",
+  "project": "390x844-clair",
+  "maquette": "absente",
+  "raison": "la maquette ne simule l’échec d’envoi que par son panneau de démo, sans état propre à comparer"
+}

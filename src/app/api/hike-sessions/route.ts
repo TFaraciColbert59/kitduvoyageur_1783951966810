@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
@@ -28,6 +29,8 @@ const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const carnetIdSchema = z.string().uuid().nullable();
 
 interface PoiEvent {
   poiName: string;
@@ -296,6 +299,23 @@ export async function POST(req: NextRequest) {
 
     if (!body.startedAt || !body.endedAt || body.distanceKm == null || body.durationSeconds == null) {
       return NextResponse.json({ error: 'Données de session incomplètes' }, { status: 400 });
+    }
+
+    // Sécurité (2026-11-09) : une sortie, et ses positions, ne se rattache
+    // qu'à un carnet dont l'appelant est participant. La RLS de hike_sessions
+    // le refuse aussi ; ici on répond proprement avant l'insertion.
+    const carnetIdInput = carnetIdSchema.safeParse(body.carnetId || null);
+    if (!carnetIdInput.success) {
+      return NextResponse.json({ error: 'Identifiant de carnet invalide' }, { status: 400 });
+    }
+    if (carnetIdInput.data) {
+      const { data: isParticipant, error: participantError } = await supabase.rpc(
+        'is_carnet_participant',
+        { p_carnet: carnetIdInput.data },
+      );
+      if (participantError || isParticipant !== true) {
+        return NextResponse.json({ error: 'Ce carnet ne vous est pas ouvert' }, { status: 403 });
+      }
     }
 
     // Simplifier les positions : 1 point toutes les ~10 secondes max
@@ -624,7 +644,9 @@ export async function GET(req: NextRequest) {
      * ajoutée à cette requête (la liste n'est pas une surface de partage).
      */
     let query = supabase
-      .from('hike_sessions')
+      // RGPD : les événements et récits bruts ne se lisent plus sur la table
+      // (colonnes retirées au rôle authenticated) mais sur la vue participant.
+      .from('hike_sessions_participant')
       .select('id, route_id, kit_id, carnet_id, started_at, ended_at, distance_km, duration_seconds, elevation_gain_m, poi_events, narratives, created_at')
       .eq('user_id', user.id)
       .order('started_at', { ascending: false });

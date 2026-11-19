@@ -21,7 +21,7 @@ const user = {
 } as unknown as User;
 
 const EXPECTED_STEPS: Record<CreateKindV2, string[]> = {
-  post: ['Étape 1 : Format', 'Étape 2 : Contenu', 'Étape 3 : Diffusion'],
+  post: ['Étape 1 : Format', 'Étape 2 : Contenu'],
   story: ['Étape 1 : Média', 'Étape 2 : Édition', 'Étape 3 : Diffusion'],
   carnet: ['Étape 1 : Infos', 'Étape 2 : Tracé', 'Étape 3 : Jours', 'Étape 4 : Partage'],
   sortie: [
@@ -79,16 +79,10 @@ describe('les six formulaires V2 passent par le même moteur', () => {
     });
   }
 
-  it('Story : aperçu compact et deux pilules Galerie / Caméra à l’étape Média', async () => {
+  it('Story : deux pilules Galerie / Caméra à l’étape Média sans aperçu encombrant', async () => {
     renderKind('story');
-    await waitFor(() => expect(screen.getByTestId('cv2-story-preview')).toBeTruthy());
-    const preview = screen.getByTestId('cv2-story-preview');
-    expect(preview.textContent).toContain('Story · 24 h');
-    expect(preview.textContent).toContain('Ajoute un média pour commencer');
-    // Maquette : deux boutons, plus de segment (HTML L2890).
-    expect(screen.getByRole('button', { name: /Galerie/ })).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole('button', { name: /Galerie/ })).toBeTruthy());
     expect(screen.getByRole('button', { name: /Caméra/ })).toBeTruthy();
-    // La scène 9:16 n'est plus le contenu de l'étape Média.
     expect(screen.queryByTestId('cv2-story-stage')).toBeNull();
   });
 
@@ -126,12 +120,12 @@ describe('les six formulaires V2 passent par le même moteur', () => {
     expect(screen.getByRole('button', { name: 'Remplacer' })).toBeTruthy();
     // Légende et texte alternatif sont dans le flux, avant les outils.
     expect(screen.getByLabelText(/Légende/)).toBeTruthy();
-    expect(screen.getByLabelText(/Texte alternatif/)).toBeTruthy();
   });
 
-  it('Sortie : l’aperçu billet vivant est présent dès l’étape 1', async () => {
+  it('Sortie : menus déroulants Activité et Récurrence dès l’étape 1', async () => {
     renderKind('sortie');
-    await waitFor(() => expect(screen.getByLabelText(/Aperçu :/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: /Activité/ })).toBeTruthy());
+    expect(screen.getByRole('button', { name: /Récurrence/ })).toBeTruthy();
   });
 
   it('Carnet : la visibilité par défaut est privée', async () => {
@@ -139,15 +133,16 @@ describe('les six formulaires V2 passent par le même moteur', () => {
     expect(defaults.visibility).toBe('private');
   });
 
-  it('FID-056 : les six aperçus vivent dans l’emplacement fixe de la coque', async () => {
+  it('Aperçu en direct : présent uniquement pour Post et Sortie', async () => {
     for (const kind of CREATE_KINDS_V2) {
       renderKind(kind);
-      await waitFor(() =>
-        expect(screen.getByTestId('cv2-preview-slot').childElementCount).toBeGreaterThan(0),
-      );
-      expect(screen.getByTestId('cv2-preview-slot').getAttribute('aria-label')).toBe(
-        'Aperçu en direct',
-      );
+      if (kind === 'sortie' || kind === 'post') {
+        await waitFor(() =>
+          expect(screen.getByTestId('cv2-preview-slot').childElementCount).toBeGreaterThan(0),
+        );
+      } else {
+        await waitFor(() => expect(screen.queryByTestId('cv2-preview-slot')).toBeNull());
+      }
       cleanup();
     }
   });

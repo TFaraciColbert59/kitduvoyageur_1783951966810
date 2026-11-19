@@ -728,9 +728,10 @@ let lensFilter = function(w, h, r, bz, sc) {
     const s = document.createElementNS(NS, "svg");
     s.setAttribute("width", "0"); s.setAttribute("height", "0"); s.setAttribute("aria-hidden", "true"); s.style.position = "absolute";
     s.innerHTML = '<defs id="lensdefs"></defs>';
-    document.body.appendChild(s);
-    defs = $("lensdefs");
+    document.body?.appendChild(s);
+    defs = s.firstElementChild || $("lensdefs");
   }
+  if (!defs) return id;
   const f = document.createElementNS(NS, "filter");
   f.id = id; f.setAttribute("x", "0"); f.setAttribute("y", "0"); f.setAttribute("width", w); f.setAttribute("height", h);
   f.setAttribute("filterUnits", "userSpaceOnUse"); f.setAttribute("color-interpolation-filters", "sRGB");

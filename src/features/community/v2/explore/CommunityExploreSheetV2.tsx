@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import type { User } from '@supabase/supabase-js';
 import { CommunitySheetShell, type SheetDetail } from '../shared/CommunitySheetShell';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
@@ -31,6 +32,8 @@ import {
   EVENT_FILTERS,
   EXPLORE_CAPSULE_ITEMS,
   EXPLORE_TAB_ORDER,
+  KIT_FILTER_ITEMS,
+  KIT_FILTERS,
   SEARCH_SCOPE_ITEMS,
   SEARCH_SCOPES,
   filterIndex,
@@ -54,10 +57,16 @@ import { activityLabel } from '../data/communityFeedMappers';
 import { CarnetsPane } from './panes/CarnetsPane';
 import { ClubsPane, effectiveClubMembers, effectiveClubStatus } from './panes/ClubsPane';
 import { EventsPane, effectiveEventState } from './panes/EventsPane';
+// Perf : le volet Kits embarque l'aperçu du formulaire Kit ; chargé à la demande.
+const KitsPane = dynamic(() => import('./panes/KitsPane').then((m) => ({ default: m.KitsPane })), {
+  ssr: false,
+});
 import { SearchPane } from './panes/SearchPane';
 import { ClubDetailView } from './details/ClubDetailView';
 import { EventDetailView } from './details/EventDetailView';
 import { PeekOverlay, type PeekItem } from './details/PeekOverlay';
+import { ExploreIcon } from './ExploreIcons';
+import { AgendaStrip } from '../shared/AgendaStrip';
 import './explore-v2.css';
 
 export type CreateKindV2Param = 'post' | 'story' | 'carnet' | 'sortie' | 'kit' | 'club';
@@ -171,15 +180,21 @@ export function CommunityExploreSheetV2({
 
   const showIsland = useCallback((message: IslandMessage) => setIsland(message), []);
 
-  // ── Ouverture : volet mémorisé, sauf loupe (Recherche focalisée) ──────────
+  // ── Ouverture : applique toujours l'onglet demandé (ou Recherche sur loupe) ──
   const setTab = explore.setTab;
+  const prevOpenRef = useRef(false);
   useEffect(() => {
+    const justOpened = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
     if (!open) return;
-    if (!firstOpenRef.current) {
+    if (initialSearch) {
+      setTab('search');
+      return;
+    }
+    if (justOpened || !firstOpenRef.current) {
       firstOpenRef.current = true;
       setTab(initialTabToExplore(initialTab));
     }
-    if (initialSearch) setTab('search');
   }, [open, initialSearch, initialTab, setTab]);
 
   // ── « Près de moi » : position demandée au premier usage ────────────────
@@ -839,20 +854,23 @@ export function CommunityExploreSheetV2({
     return key ? key.slice(prefix.length) : null;
   };
 
-  const activeFilterIndex =
-    explore.tab === 'search'
-      ? filterIndex(SEARCH_SCOPE_ITEMS, explore.searchScope)
-      : explore.tab === 'carnets'
-        ? filterIndex(CARNET_FILTER_ITEMS, explore.carnetFilter)
-        : explore.tab === 'clubs'
-          ? filterIndex(CLUB_FILTER_ITEMS, explore.clubFilter)
-          : filterIndex(EVENT_FILTER_ITEMS, explore.eventFilter);
-
   const voletActive = (tab: ExploreTab): boolean => open && explore.tab === tab;
   const activeScope = explore.searchScope;
-  const activeCarnetFilter = explore.carnetFilter;
-  const activeClubFilter = explore.clubFilter;
-  const activeEventFilter = explore.eventFilter;
+  const activeCarnetFilter = CARNET_FILTERS.includes(explore.carnetFilter) ? explore.carnetFilter : 'discover';
+  const activeClubFilter = CLUB_FILTERS.includes(explore.clubFilter) ? explore.clubFilter : 'discover';
+  const activeEventFilter = EVENT_FILTERS.includes(explore.eventFilter) ? explore.eventFilter : 'discover';
+  const activeKitFilter = KIT_FILTERS.includes(explore.kitFilter) ? explore.kitFilter : 'discover';
+
+  const activeFilterIndex =
+    explore.tab === 'search'
+      ? filterIndex(SEARCH_SCOPE_ITEMS, activeScope)
+      : explore.tab === 'carnets'
+        ? filterIndex(CARNET_FILTER_ITEMS, activeCarnetFilter)
+        : explore.tab === 'clubs'
+          ? filterIndex(CLUB_FILTER_ITEMS, activeClubFilter)
+          : explore.tab === 'sorties'
+            ? filterIndex(EVENT_FILTER_ITEMS, activeEventFilter)
+            : filterIndex(KIT_FILTER_ITEMS, activeKitFilter);
 
   // ── Une pane par filtre (LensPager de la mini-capsule, `00-MISSION § 3`) ──
   const filterPages: React.ReactNode[][] = [
@@ -885,6 +903,7 @@ export function CommunityExploreSheetV2({
             onCreateRequested={
               onCreateRequested ? (kind, prefill) => onCreateRequested(kind, prefill) : undefined
             }
+            hideSearchBar
           />
         </FilterSlot>
       );
@@ -898,7 +917,7 @@ export function CommunityExploreSheetV2({
             filter={filterValue}
             sort={explore.carnetSort}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || carnetsNear != null}
+            nearPointKnown
             online={isOnline}
             likeBusyId={busyIdFor('like:')}
             onLike={(carnet) => void handleCarnetLike(carnet)}
@@ -906,6 +925,13 @@ export function CommunityExploreSheetV2({
             onCreateCarnet={() => onCreateRequested?.('carnet')}
             onDiscover={() => explore.setCarnetFilter('discover')}
             onRequestGeo={() => void nearMe.request()}
+            onSeeAll={() => {
+              if (filterValue !== 'discover') {
+                explore.setCarnetFilter('discover');
+              } else {
+                void carnetsFeed.loadMore();
+              }
+            }}
           />
         </FilterSlot>
       );
@@ -920,14 +946,17 @@ export function CommunityExploreSheetV2({
             sort={explore.clubSort}
             activity={explore.clubActivity}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || clubsNear != null}
+            nearPointKnown
             online={isOnline}
             overrides={clubOverrides}
             busyClubId={busyIdFor('club:')}
             onActivityChange={explore.setClubActivity}
             onFilterChange={explore.setClubFilter}
             onRequestGeo={() => void nearMe.request()}
-            onOpen={(club, opener) => openClubDetail(club, opener)}
+            onOpen={(club) => {
+              onClose();
+              router.push(`/clubs/${encodeURIComponent(club.slug)}`);
+            }}
             onJoin={(club) => void handleClubJoin(club)}
             onPeek={(club, opener) => openClubPeek(club, opener)}
             onCreateClub={() => onCreateRequested?.('club')}
@@ -948,7 +977,7 @@ export function CommunityExploreSheetV2({
             agendaLoading={agenda.loading}
             agendaError={agenda.error}
             nearState={nearMe.state}
-            nearPointKnown={filterValue !== 'near' || eventsNear != null}
+            nearPointKnown
             online={isOnline}
             overrides={eventOverrides}
             busyEventId={busyIdFor('event:')}
@@ -961,6 +990,20 @@ export function CommunityExploreSheetV2({
             onPeek={(event, opener) => openEventPeek(event, opener)}
             onCreateEvent={() => onCreateRequested?.('sortie')}
             onRetryAgenda={agenda.retry}
+            hideAgenda
+          />
+        </FilterSlot>
+      );
+    }),
+    KIT_FILTERS.map((filterValue, index) => {
+      const paneActive = voletActive('kits') && index === activeFilterIndex;
+      return (
+        <FilterSlot key={filterValue} active={paneActive}>
+          <KitsPane
+            filter={filterValue}
+            userId={viewerId}
+            online={isOnline}
+            onCreateKit={() => onCreateRequested?.('kit')}
           />
         </FilterSlot>
       );
@@ -1000,11 +1043,32 @@ export function CommunityExploreSheetV2({
         label: 'Filtres des clubs',
         pages: filterPages,
         sort: {
-          value: explore.clubSort,
+          value: explore.clubActivity ? `act:${explore.clubActivity}` : explore.clubSort,
           defaultValue: 'activity',
-          options: CLUB_SORT_OPTIONS,
-          onChange: (value: string) => explore.setClubSort(value as typeof explore.clubSort),
+          options: [
+            ...CLUB_SORT_OPTIONS,
+            { value: 'act:all', label: 'Activité : Toutes' },
+            { value: 'act:randonnee', label: 'Activité : Rando' },
+            { value: 'act:ski', label: 'Activité : Ski' },
+            { value: 'act:velo', label: 'Activité : Vélo' },
+            { value: 'act:escalade', label: 'Activité : Escalade' },
+            { value: 'act:trail', label: 'Activité : Trail' },
+          ],
+          onChange: (value: string) => {
+            if (value === 'act:all') explore.setClubActivity(null);
+            else if (value.startsWith('act:')) explore.setClubActivity(value.slice(4) as typeof explore.clubActivity);
+            else explore.setClubSort(value as typeof explore.clubSort);
+          },
         },
+      };
+    }
+    if (explore.tab === 'kits') {
+      return {
+        items: KIT_FILTER_ITEMS.map((item) => ({ id: item.value, label: item.label, icon: item.icon })),
+        active: filterIndex(KIT_FILTER_ITEMS, activeKitFilter),
+        onChange: (index: number) => explore.setKitFilter(KIT_FILTERS[index] ?? 'discover'),
+        label: 'Filtres des kits',
+        pages: filterPages,
       };
     }
     return {
@@ -1013,6 +1077,15 @@ export function CommunityExploreSheetV2({
       onChange: (index: number) => explore.setEventFilter(EVENT_FILTERS[index] ?? 'discover'),
       label: 'Filtres des sorties',
       pages: filterPages,
+      sort: {
+        value: explore.eventView,
+        defaultValue: 'grid',
+        options: [
+          { value: 'grid', label: 'Affichage : Billets' },
+          { value: 'list', label: 'Affichage : Liste' },
+        ],
+        onChange: (value: string) => explore.setEventView(value as typeof explore.eventView),
+      },
     };
   })();
 
@@ -1075,11 +1148,79 @@ export function CommunityExploreSheetV2({
       ],
       index: 0,
       title: detail.event.title,
-      meta: `/sorties/${detail.event.id.slice(0, 8)}`,
+      meta:
+        detail.event.dateLabel && !detail.event.dateLabel.includes('/')
+          ? detail.event.dateLabel
+          : 'Sortie',
       label: 'Sortie',
       onBack: closeDetail,
     };
   })();
+
+  const isMapSubtab =
+    (explore.tab === 'search' && activeScope === 'map') ||
+    (explore.tab === 'carnets' && activeCarnetFilter === 'map') ||
+    (explore.tab === 'clubs' && activeClubFilter === 'map') ||
+    (explore.tab === 'sorties' && activeEventFilter === 'map') ||
+    (explore.tab === 'kits' && activeKitFilter === 'map');
+
+  const staticSlot = (
+    <>
+      {!isMapSubtab ? (
+        <div className="lkdv-cv2-search lkdv-cv2x-search-field" role="search">
+          <ExploreIcon name="search" size={20} />
+          <input
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            placeholder="Rechercher dans toute la communauté…"
+            aria-label="Rechercher dans toute la communauté"
+            value={explore.searchQuery}
+            onChange={(event) => {
+              explore.setSearchQuery(event.target.value);
+              if (explore.tab !== 'search' && event.target.value.trim().length > 0) {
+                explore.setTab('search');
+              }
+            }}
+            data-cv2-autofocus={initialSearch ? '' : undefined}
+            data-cv2-testid="search-input"
+          />
+          {explore.searchQuery ? (
+            <button
+              type="button"
+              className="lkdv-cv2-round lkdv-cv2x-clear"
+              onClick={() => explore.setSearchQuery('')}
+              aria-label="Effacer la recherche"
+              data-testid="cv2-search-clear"
+            >
+              <ExploreIcon name="close" size={16} />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {explore.tab === 'sorties' ? (
+        <div className="lkdv-cv2x-agenda-block">
+          {agenda.loading && Object.keys(agenda.counts).length === 0 ? (
+            <div className="lkdv-cv2x-agenda-skeleton" aria-hidden="true">
+              {Array.from({ length: 7 }, (_, index) => (
+                <span key={index} />
+              ))}
+            </div>
+          ) : (
+            <AgendaStrip counts={agenda.counts} value={explore.eventDay} onChange={explore.setEventDay} />
+          )}
+          {agenda.error ? (
+            <button type="button" className="lkdv-cv2x-agenda-retry" onClick={agenda.retry}>
+              Agenda indisponible · Réessayer
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
 
   return (
     <CommunitySheetShell
@@ -1088,6 +1229,8 @@ export function CommunityExploreSheetV2({
       kind="explore"
       label="Explorer la communauté"
       guestNotice={isGuest}
+      compactSearch={!detailProp}
+      staticSlot={staticSlot}
       capsule={{
         items: EXPLORE_CAPSULE_ITEMS,
         active: tabIndex,

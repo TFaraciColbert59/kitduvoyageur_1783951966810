@@ -1,5 +1,6 @@
 'use client';
 
+import { isParticipantRole } from './viewerRole';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { CarnetLivePosition, CarnetPublicZone, CarnetViewerRole } from './types';
@@ -32,7 +33,7 @@ export function useCarnetLivePosition({
   const watchIdRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
 
-  const isParticipant = viewerRole === 'participant';
+  const isParticipant = isParticipantRole(viewerRole);
 
   // Broadcast GPS updates to Supabase (participants only)
   const sendLocationUpdate = useCallback(

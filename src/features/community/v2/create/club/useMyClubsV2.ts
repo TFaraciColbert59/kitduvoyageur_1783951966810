@@ -7,6 +7,8 @@ export interface MyClubV2 {
   id: string;
   name: string;
   slug: string;
+  avatarUrl?: string | null;
+  activity?: string | null;
 }
 
 /**
@@ -29,7 +31,7 @@ export function useMyClubsV2(userId: string | null | undefined) {
       const supabase = createClient();
       const { data } = await supabase
         .from('club_members')
-        .select('club_id, clubs(id, name, slug)')
+        .select('club_id, clubs(id, name, slug, avatar_url, activity)')
         .eq('user_id', userId)
         .eq('status', 'active')
         .limit(20);
@@ -46,6 +48,8 @@ export function useMyClubsV2(userId: string | null | undefined) {
               id: record.id,
               name: String(record.name ?? 'Club'),
               slug: String(record.slug ?? ''),
+              avatarUrl: typeof record.avatar_url === 'string' ? record.avatar_url : null,
+              activity: typeof record.activity === 'string' ? record.activity : null,
             };
           })
           .filter((entry): entry is MyClubV2 => entry !== null),

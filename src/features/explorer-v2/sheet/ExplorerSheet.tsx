@@ -198,7 +198,8 @@ export function ExplorerSheet({
     [detent, onDetent],
   );
 
-  const activeTab = tabs?.[tab];
+  const safeTab = tabs && tabs.length > 0 ? Math.min(Math.max(0, tab), tabs.length - 1) : 0;
+  const activeTab = tabs?.[safeTab];
   const grab = {
     onPointerDown,
     onPointerMove,
@@ -265,7 +266,7 @@ export function ExplorerSheet({
               onHaptic?.('tab');
             }}
           >
-            <span className="xp-tab-lens" aria-hidden="true" style={{ '--i': tab } as React.CSSProperties} />
+            <span className="xp-tab-lens" aria-hidden="true" style={{ '--i': safeTab } as React.CSSProperties} />
             {tabs.map((item, index) => (
               <button
                 key={item.id}
@@ -273,10 +274,10 @@ export function ExplorerSheet({
                 role="tab"
                 className="xp-tab"
                 id={`xp-tab-${item.id}`}
-                aria-selected={index === tab}
+                aria-selected={index === safeTab}
                 aria-label={item.label}
                 aria-controls={`xp-panel-${item.id}`}
-                tabIndex={index === tab ? 0 : -1}
+                tabIndex={index === safeTab ? 0 : -1}
                 onClick={() => {
                   onTab(index);
                   onHaptic?.('tab');
@@ -313,7 +314,7 @@ export function ExplorerSheet({
             aria-label="Sections"
             style={{ '--n': tabs.length } as React.CSSProperties}
           >
-            <span className="xp-tab-lens" aria-hidden="true" style={{ '--i': tab } as React.CSSProperties} />
+            <span className="xp-tab-lens" aria-hidden="true" style={{ '--i': safeTab } as React.CSSProperties} />
             {tabs.map((item, index) => (
               <button
                 key={item.id}
@@ -321,7 +322,7 @@ export function ExplorerSheet({
                 role="tab"
                 className="xp-tab"
                 id={`xp-tab-b-${item.id}`}
-                aria-selected={index === tab}
+                aria-selected={index === safeTab}
                 aria-label={item.label}
                 tabIndex={index === tab ? 0 : -1}
                 onClick={() => {

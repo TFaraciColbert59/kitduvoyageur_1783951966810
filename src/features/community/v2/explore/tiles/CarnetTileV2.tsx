@@ -85,77 +85,70 @@ export function CarnetTileV2({
 
   return (
     <article
-      className={`lkdv-cv2-tile lkdv-cv2x-carnet${wide ? ' lkdv-cv2-tile--wide' : ''}${week ? ' is-week' : ''}`}
+      className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile${carnet.coverImage ? ' has-cover-bg' : ''}${wide ? ' lkdv-cv2-tile--wide' : ''}${week ? ' is-week' : ''}`}
       data-testid="cv2-tile-carnet"
       data-id={carnet.id}
       {...longPress}
     >
+      {carnet.coverImage ? (
+        <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+          <AppImage
+            src={carnet.coverImage}
+            alt=""
+            fill
+            sizes="320px"
+            className="lkdv-cv2x-carnet-bg-img"
+          />
+          <span className="lkdv-cv2x-carnet-bg-scrim" />
+        </span>
+      ) : null}
       <Link
-        className="lkdv-cv2x-tile-link"
+        className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link"
         href={`/carnets/${carnet.id}`}
         aria-label={ariaLabel}
         data-cv2-testid="carnet-link"
       >
-        <span
-          className={`lkdv-cv2-cover lkdv-cv2x-carnet-cover${carnet.coverImage ? ' has-image' : ''}`}
-        >
-          {carnet.coverImage ? (
-            <AppImage
-              src={carnet.coverImage}
-              alt={carnet.coverAlt ?? ''}
-              fill
-              sizes="(max-width: 430px) 50vw, 200px"
-              className="lkdv-cv2x-cover-img"
-            />
-          ) : (
-            <span className="lkdv-cv2x-cover-fallback" aria-hidden="true" />
-          )}
-          {carnet.routeTrace && carnet.routeTrace.length > 1 ? (
-            <svg
-              className="lkdv-cv2-trace lkdv-cv2x-cover-trace"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid meet"
-              aria-hidden="true"
-            >
-              <path d={tracePath(carnet.routeTrace)} />
-              <circle cx={carnet.routeTrace[0]?.[0]} cy={carnet.routeTrace[0]?.[1]} r={1.8} />
-              <circle
-                cx={carnet.routeTrace[carnet.routeTrace.length - 1]?.[0]}
-                cy={carnet.routeTrace[carnet.routeTrace.length - 1]?.[1]}
-                r={1.8}
-              />
-            </svg>
-          ) : null}
-          {week ? <span className="lkdv-cv2x-carnet-week">Carnet de la semaine</span> : null}
-          {carnet.isLive ? (
-            <span className="lkdv-cv2x-live">
-              <i aria-hidden="true" />
-              En route
+        <div className="lkdv-ig-header">
+          <div className="lkdv-ig-avi-wrap">
+            <span className="lkdv-ig-avi">
+              {carnet.coverImage ? (
+                <AppImage
+                  src={carnet.coverImage}
+                  alt={carnet.coverAlt ?? ''}
+                  fill
+                  sizes="66px"
+                  className="lkdv-cv2x-cover-img"
+                />
+              ) : (
+                <span className="lkdv-cv2c-ig-avi-initials">
+                  {carnet.author.initials || carnet.title.slice(0, 1).toUpperCase()}
+                </span>
+              )}
             </span>
-          ) : null}
-          {carnet.verifiedGps ? (
-            <span className="lkdv-cv2x-gps" title="Trace GPS vérifiée">
-              <ExploreIcon name="shield" size={12} />
-              GPS
-            </span>
-          ) : null}
-          <span className="lkdv-cv2-visa lkdv-cv2x-visa" aria-hidden="true">
-            {/* Maquette (`maquette-communaute.html` L2321) : le visa porte le
-                pays puis « 4 J · 62,4 KM ». `country_iso` vient du feed depuis
-                FID-067 ; absent, on n'affiche que la ligne durée · distance
-                (aucun code inventé) — sans la 2e ligne « n VOYAGEURS » que la
-                V2 avait ajoutée. */}
-            {carnet.countryIso ? <b>{carnet.countryIso}</b> : null}
-            <i>{visaLabel(carnet)}</i>
-          </span>
-        </span>
+          </div>
 
-        <span className="lkdv-cv2x-carnet-body">
-          <span className="lkdv-cv2-title lkdv-cv2x-carnet-title">{carnet.title}</span>
+          <div className="lkdv-ig-stats" role="group" aria-label="Statistiques">
+            <div className="lkdv-ig-stat">
+              <b>{carnet.days ?? 1}</b>
+              <span>{(carnet.days ?? 1) > 1 ? 'jours' : 'jour'}</span>
+            </div>
+            <div className="lkdv-ig-stat">
+              <b>{carnet.distanceKm != null ? Math.round(carnet.distanceKm) : '—'}</b>
+              <span>km</span>
+            </div>
+            <div className="lkdv-ig-stat">
+              <b>{carnet.elevationGainM != null ? `+${Math.round(carnet.elevationGainM)}` : '—'}</b>
+              <span>D+ m</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="lkdv-ig-bio">
+          <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{carnet.title}</span>
           {metaParts.length > 0 ? (
-            <span className="lkdv-cv2-meta">{metaParts.join(' · ')}</span>
+            <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{metaParts.join(' · ')}</span>
           ) : null}
-        </span>
+        </div>
       </Link>
 
       <div className="lkdv-cv2x-tile-foot">

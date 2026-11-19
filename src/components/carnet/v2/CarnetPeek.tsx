@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bookmark, Flag, MessageCircle, Share2 } from 'lucide-react';
+import { Bookmark, BookOpen, Flag, MapPin, MessageCircle, Share2, X } from 'lucide-react';
 import { LikeIcon } from '@/components/social-kit';
 import type { CarnetMomentEngagementItem, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { useMomentEngagement } from '@/features/carnet/detail/useMomentEngagement';
@@ -35,6 +35,11 @@ export interface CarnetPeekProps {
   onOpenPost: (mode: 'open' | 'comments') => void;
   onShare: () => void;
   onReport: () => void;
+  /** « Voir sur la carte » : centre la carte du bas sur le moment. */
+  onShowOnMap?: () => void;
+  /** « Épingler / Désépingler » : coche dorée sur la tuile, annulable par l'île. */
+  pinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 /**
@@ -58,6 +63,9 @@ export function CarnetPeek({
   onOpenPost,
   onShare,
   onReport,
+  onShowOnMap,
+  pinned = false,
+  onTogglePin,
 }: CarnetPeekProps) {
   const { haptic } = useHapticFeedback();
   const [closing, setClosing] = useState(false);
@@ -129,7 +137,45 @@ export function CarnetPeek({
           </div>
         </div>
 
-        <div className="lkdv-peek-menu">
+        <div className="lkdv-peek-menu" role="group" aria-label="Actions sur le moment">
+          <button
+            type="button"
+            data-peek="read"
+            onClick={() => {
+              haptic('light');
+              onOpenPost('open');
+            }}
+          >
+            <span>Lire</span>
+            <BookOpen size={18} aria-hidden="true" />
+          </button>
+          {onShowOnMap ? (
+            <button
+              type="button"
+              data-peek="map"
+              onClick={() => {
+                haptic('light');
+                onShowOnMap();
+              }}
+            >
+              <span>Voir sur la carte</span>
+              <MapPin size={18} aria-hidden="true" />
+            </button>
+          ) : null}
+          {onTogglePin ? (
+            <button
+              type="button"
+              data-peek="pin"
+              aria-pressed={pinned}
+              onClick={() => {
+                haptic('light');
+                onTogglePin();
+              }}
+            >
+              <span>{pinned ? 'Désépingler' : 'Épingler'}</span>
+              <Bookmark size={18} fill={pinned ? 'currentColor' : 'none'} aria-hidden="true" />
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => {
@@ -190,6 +236,15 @@ export function CarnetPeek({
           >
             <span>Signaler</span>
             <Flag size={18} />
+          </button>
+
+          <button
+            type="button"
+            data-peek="close"
+            onClick={requestClose}
+          >
+            <span>Fermer</span>
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
       </div>

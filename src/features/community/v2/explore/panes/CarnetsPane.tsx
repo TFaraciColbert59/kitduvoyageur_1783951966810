@@ -5,9 +5,17 @@ import type { CarnetCardVM, CarnetFilter, CarnetSort, GeoPermissionState } from 
 import type { CursorFeedResult } from '../../data/useCursorFeed';
 import { formatCountFr } from '../../shared/format';
 import { CarnetTileV2 } from '../tiles/CarnetTileV2';
-import { ExploreEmpty, ExploreError, ExploreGeoPrompt, ExploreListFoot, ExploreOfflineBanner, ExploreSkeleton } from '../ExploreStates';
+import {
+  ExploreEmpty,
+  ExploreError,
+  ExploreGeoPrompt,
+  ExploreListFoot,
+  ExploreOfflineBanner,
+  ExplorePaneFoot,
+  ExploreSkeleton,
+} from '../ExploreStates';
 import { usePaneNearBottom, usePaneScrollMemory } from '../usePaneScrollMemory';
-import { C03DiscoverSection } from './C03DiscoverSection';
+import { ExploreWorldMap } from '../details/LazyExploreWorldMap';
 
 export interface CarnetsPaneProps {
   feed: CursorFeedResult<CarnetCardVM>;
@@ -22,6 +30,12 @@ export interface CarnetsPaneProps {
   onCreateCarnet: () => void;
   onDiscover: () => void;
   onRequestGeo: () => void;
+  /**
+   * « Tout voir » (Carnets#19) : élargit au flux complet. Le hub `/carnets`
+   * n'existe pas côté produit (la route `/carnets/[id]` est hors périmètre) ;
+   * le geste reste donc dans le tiroir et ne ramène jamais à la page courante.
+   */
+  onSeeAll?: () => void;
 }
 
 /**
@@ -42,12 +56,21 @@ export function CarnetsPane({
   onCreateCarnet,
   onDiscover,
   onRequestGeo,
+  onSeeAll,
 }: CarnetsPaneProps) {
   const scrollRef = usePaneScrollMemory<HTMLDivElement>(`cv2:explore:scroll:carnets:${filter}`);
   const nearBottomRef = usePaneNearBottom<HTMLDivElement>(
     feed.hasMore && !feed.loadingMore && !feed.loading,
     feed.loadMore,
   );
+
+  if (filter === 'map') {
+    return (
+      <div className="lkdv-cv2x-pane lkdv-cv2x-pane--map">
+        <ExploreWorldMap kind="carnets" />
+      </div>
+    );
+  }
 
   if (filter === 'near' && !nearPointKnown) {
     return (
@@ -74,31 +97,31 @@ export function CarnetsPane({
   }
 
   if (!feed.loading && feed.items.length === 0) {
-    if (filter === 'mine') {
+    if (filter === 'saved') {
       return (
         <div ref={scrollRef} className="lkdv-cv2x-pane">
           <ExploreEmpty
-            icon="book"
-            title="Aucun carnet pour l’instant"
-            description="Raconte ton premier voyage : trace, jours, moments et photos au même endroit."
+            icon="bookmark"
+            title="Aucun carnet enregistré"
+            description="Enregistre les carnets qui t’inspirent pour les retrouver ici."
           >
-            <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateCarnet}>
-              Créer mon premier carnet
+            <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onDiscover}>
+              Explorer Global
             </button>
           </ExploreEmpty>
         </div>
       );
     }
-    if (filter === 'followed') {
+    if (filter === 'liked') {
       return (
         <div ref={scrollRef} className="lkdv-cv2x-pane">
           <ExploreEmpty
-            icon="book"
-            title="Rien ici pour l’instant"
-            description="Suis des voyageurs pour retrouver leurs carnets au même endroit."
+            icon="heart"
+            title="Aucun carnet liké"
+            description="Aime les carnets de la communauté pour les garder sous la main."
           >
             <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--secondary" onClick={onDiscover}>
-              Découvrir
+              Explorer Global
             </button>
           </ExploreEmpty>
         </div>
@@ -106,16 +129,11 @@ export function CarnetsPane({
     }
     return (
       <div ref={scrollRef} className="lkdv-cv2x-pane">
-        {filter === 'discover' ? <C03DiscoverSection /> : null}
         <ExploreEmpty
           icon="book"
-          illustration={filter === 'discover' ? 'mountain' : undefined}
-          title={filter === 'near' ? 'Aucun carnet près de toi' : 'Aucun carnet à découvrir'}
-          description={
-            filter === 'near'
-              ? 'Aucun carnet n’a de point de départ dans les 100 km. Élargis ta recherche ou explore les carnets de la communauté.'
-              : 'Raconte ton premier voyage : trace, jours, moments et photos au même endroit.'
-          }
+          illustration="mountain"
+          title="Aucun carnet à découvrir"
+          description="Raconte ton premier voyage : trace, jours, moments et photos au même endroit."
         >
           <button type="button" className="lkdv-cv2-pill lkdv-cv2-pill--primary" onClick={onCreateCarnet}>
             Créer mon premier carnet
@@ -125,46 +143,22 @@ export function CarnetsPane({
     );
   }
 
-  const featured = filter === 'discover' && sort === 'recent' ? feed.items[0] : null;
-  const gridItems = featured ? feed.items.slice(1) : feed.items;
-
   return (
     <div ref={scrollRef} className="lkdv-cv2x-pane">
       {!online ? <ExploreOfflineBanner /> : null}
-      {filter === 'discover' ? <C03DiscoverSection /> : null}
-      {featured ? (
-        <div className="lkdv-cv2x-featured">
-          <CarnetTileV2
-            carnet={featured}
-            wide
-            week
-            showDistance={filter === 'near'}
-            likeBusy={likeBusyId === featured.id}
-            onLike={onLike}
-            onPeek={onPeek}
-          />
-        </div>
-      ) : null}
-      <div className="lkdv-cv2-grid lkdv-cv2x-carnet-grid">
-        {gridItems.map((carnet) => (
-          <CarnetTileV2
-            key={carnet.id}
-            carnet={carnet}
-            showDistance={filter === 'near'}
-            likeBusy={likeBusyId === carnet.id}
-            onLike={onLike}
-            onPeek={onPeek}
-          />
+      <div className="lkdv-cv2x-hrail" data-hscroll="" role="list" aria-label="Carnets">
+        {feed.items.map((carnet) => (
+          <div key={carnet.id} className="lkdv-cv2x-hrail-item lkdv-cv2x-hrail-item--wide" role="listitem">
+            <CarnetTileV2
+              carnet={carnet}
+              showDistance={filter === 'near'}
+              likeBusy={likeBusyId === carnet.id}
+              onLike={onLike}
+              onPeek={onPeek}
+            />
+          </div>
         ))}
-      </div>
-      <div ref={nearBottomRef}>
-        <ExploreListFoot
-          hasMore={feed.hasMore}
-          loadingMore={feed.loadingMore}
-          onLoadMore={feed.loadMore}
-          total={feed.items.length}
-          label={formatCountFr(feed.items.length, 'carnet')}
-        />
+        <div ref={nearBottomRef} className="lkdv-cv2x-hrail-sentinel" aria-hidden="true" />
       </div>
     </div>
   );

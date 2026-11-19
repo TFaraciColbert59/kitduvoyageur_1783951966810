@@ -56,10 +56,9 @@ describe('CarnetTileV2 (Carnets#1-12)', () => {
     expect(screen.getByTestId('cv2-tile-carnet').getAttribute('data-id')).toBe('c1');
   });
 
-  it('affiche visa, en route, GPS, voyageurs et j’aime hors du lien', () => {
-    render(<CarnetTileV2 carnet={carnet()} onLike={() => {}} onPeek={() => {}} />);
-    expect(screen.getByText('En route')).toBeTruthy();
-    expect(screen.getByText('GPS')).toBeTruthy();
+  it('affiche les stats carnet, voyageurs et j’aime hors du lien', () => {
+    const { container } = render(<CarnetTileV2 carnet={carnet()} onLike={() => {}} onPeek={() => {}} />);
+    expect(container.querySelector('.lkdv-carnet-card.lkdv-cv2c-carnet-ig-editor')).toBeTruthy();
     expect(screen.getByText('+1')).toBeTruthy();
     const like = screen.getByRole('button', { name: 'J’aime : 128' });
     expect(like.getAttribute('aria-pressed')).toBe('false');

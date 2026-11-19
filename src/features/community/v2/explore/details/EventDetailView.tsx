@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { levelLabel } from '@/features/community/v2/shared/format';
 import AppImage from '@/components/ui/AppImage';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
+import type { SortiePerformanceEstimate } from '@/features/community/v2/create/sortie/sortiePerformanceEngine';
 import type { EventCardVM, EventRegistration } from '../../shared/types';
 import {
   buildEventIcs,
@@ -19,7 +20,12 @@ import {
 } from '../../shared/format';
 import { useEventDetail } from '../../data/useEventDetail';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { PlaceMiniMap } from '../../shared/PlaceMiniMap';
+import dynamic from 'next/dynamic';
+// Perf : MapLibre seulement à l'ouverture d'un détail de sortie.
+const PlaceMiniMap = dynamic(
+  () => import('../../shared/PlaceMiniMap').then((m) => ({ default: m.PlaceMiniMap })),
+  { ssr: false },
+);
 import { ExploreIcon } from '../ExploreIcons';
 import { ExploreError, ExploreSkeleton } from '../ExploreStates';
 import { EventActionButton } from '../tiles/EventTicketV2';
@@ -31,6 +37,8 @@ export interface EventDetailViewProps {
   spotsLeft: number;
   busy: boolean;
   onSignup: (event: EventCardVM) => void;
+  /** Lecteur connecté : sert à distinguer les amis inscrits (Sorties#11). */
+  viewerId?: string | null;
 }
 
 /**
@@ -39,9 +47,16 @@ export interface EventDetailViewProps {
  * avec « Itinéraire », organisateur, participants, sécurité, `.ics` et lien
  * vers la fiche.
  */
-export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: EventDetailViewProps) {
+export function EventDetailView({
+  event,
+  status,
+  spotsLeft,
+  busy,
+  onSignup,
+  viewerId = null,
+}: EventDetailViewProps) {
   const { haptic } = useHapticFeedback();
-  const detailState = useEventDetail(event);
+  const detailState = useEventDetail(event, true, viewerId);
   const detail = detailState.detail;
   const weather = detailState.weather;
   const weatherLoading = detailState.weatherLoading;
@@ -56,6 +71,29 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
   const point = detail?.meetingPointPoint ?? detail?.locationPoint ?? null;
   const mapLabel = event.meetingPoint ?? event.location;
   const daysToEvent = event.eventDate ? daysBetweenIso(todayIso(), event.eventDate) : null;
+  const [groupEstimate, setGroupEstimate] = useState<SortiePerformanceEstimate | null>(null);
+
+  useEffect(() => {
+    if ((event.distanceKm ?? 0) <= 0 && (event.elevationGainM ?? 0) <= 0) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(event.id)) return;
+    const controller = new AbortController();
+    void fetch(
+      `/api/sorties/performance-estimate?eventId=${encodeURIComponent(event.id)}&sync=1`,
+      { signal: controller.signal },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload: { ok?: boolean; estimate?: SortiePerformanceEstimate } | null) => {
+        if (payload?.ok && payload.estimate) {
+          setGroupEstimate(payload.estimate);
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => controller.abort();
+  }, [event.currentParticipants, event.distanceKm, event.elevationGainM, event.id, status]);
+
+  const effectiveDuration = groupEstimate?.formattedDuration || event.duration;
 
   const downloadIcs = useCallback(() => {
     if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') return;
@@ -106,7 +144,7 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
             {levelLabel(event.level) ? <i>{levelLabel(event.level)}</i> : null}
             {event.distanceKm != null ? <i>{formatKm(event.distanceKm)}</i> : null}
             {event.elevationGainM != null ? <i>+{event.elevationGainM} m</i> : null}
-            {event.duration ? <i>{event.duration}</i> : null}
+            {effectiveDuration ? <i>{effectiveDuration}</i> : null}
           </span>
         </span>
       </div>
@@ -270,6 +308,30 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
             </span>
           </div>
 
+          {detail.friends.length > 0 ? (
+            <div className="lkdv-cv2-card lkdv-cv2x-friends-card" data-testid="cv2-event-friends">
+              <span className="lkdv-cv2-avatars" aria-hidden="true">
+                {detail.friends.slice(0, 3).map((friend) => (
+                  <span key={friend.id || friend.name} className="lkdv-cv2-avatar">
+                    {friend.avatarUrl ? (
+                      <AppImage src={friend.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
+                    ) : (
+                      friend.initials.slice(0, 1)
+                    )}
+                  </span>
+                ))}
+              </span>
+              <span>
+                <b>
+                  {detail.friends.length === 1
+                    ? '1 ami est inscrit'
+                    : `${detail.friends.length} amis sont inscrits`}
+                </b>
+                <small>{detail.friends.map((friend) => friend.name.split(' ')[0]).join(', ')}</small>
+              </span>
+            </div>
+          ) : null}
+
           <div className="lkdv-cv2-card">
             <span className="lkdv-cv2-eyebrow">Participants</span>
             <div className="lkdv-cv2x-participants-row">
@@ -297,6 +359,15 @@ export function EventDetailView({ event, status, spotsLeft, busy, onSignup }: Ev
                   : ''}
               </span>
             </div>
+            {groupEstimate && groupEstimate.durationHoursP50 > 0 ? (
+              <small className="lkdv-cv2-meta" style={{ display: 'block', marginTop: '6px' }}>
+                Temps groupe ajusté : <b>{groupEstimate.formattedDuration}</b> (
+                {groupEstimate.formattedRange}) · Densité stat. {groupEstimate.collectiveStatDensityPct} %
+                {groupEstimate.groupDeltaMinutes !== 0
+                  ? ` (${groupEstimate.groupDeltaMinutes > 0 ? '+' : ''}${groupEstimate.groupDeltaMinutes} min selon les inscrits)`
+                  : ''}
+              </small>
+            ) : null}
           </div>
 
           {detail.description ? <p className="lkdv-cv2x-detail-text">{detail.description}</p> : null}

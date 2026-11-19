@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Check } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import { useToast } from '@/contexts/ToastContext';
 import { usePostShareTargets } from './usePostShareTargets';
@@ -32,6 +33,7 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   const { conversations, loading, sending, send } = usePostShareTargets(user?.id);
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState('');
+  const [sentIds, setSentIds] = useState<string[]>([]);
   const filteredConversations = conversations.filter((conversation) => {
     const text = query.trim().toLowerCase();
     if (!text) return true;
@@ -66,6 +68,7 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   // Copier le lien / partager vers une app : en haut à droite de la carte, à
   // la place et au gabarit des « ··· » (même hauteur que la pastille auteur).
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const swipeStartRef = useRef<{ pointerId: number; startY: number } | null>(null);
   const [topHost, setTopHost] = useState<HTMLElement | null>(null);
   useEffect(() => {
     setTopHost(rootRef.current?.closest<HTMLElement>('.lkdv-feed-post') ?? null);
@@ -85,7 +88,29 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
   );
 
   return (
-    <div ref={rootRef} className="lkdv-post-panel lkdv-share-panel" role="dialog" aria-modal="true" aria-label="Partager la publication">
+    <div
+      ref={rootRef}
+      className="lkdv-post-panel lkdv-share-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Partager la publication"
+      onPointerDown={(e) => {
+        if (e.button > 0) return;
+        const body = rootRef.current?.querySelector('.lkdv-share-list') as HTMLElement | null;
+        if (body && body.scrollTop > 2) return;
+        swipeStartRef.current = { pointerId: e.pointerId, startY: e.clientY };
+      }}
+      onPointerUp={(e) => {
+        const sw = swipeStartRef.current;
+        swipeStartRef.current = null;
+        if (sw && sw.pointerId === e.pointerId && e.clientY - sw.startY > 48) {
+          onClose();
+        }
+      }}
+      onPointerCancel={() => {
+        swipeStartRef.current = null;
+      }}
+    >
       <div id={`share-conv-${post.id}`} className="lkdv-post-panel-body lkdv-share-list">
         {!user?.id ? (
           <button type="button" className="lkdv-section-action" aria-label="Se connecter pour envoyer" onClick={() => onRequireAuth?.('comment')}>
@@ -98,8 +123,9 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
         ) : (
           filteredConversations.map((conversation) => {
             const title = conversation.title || conversation.name || 'Conversation';
+            const alreadySent = sentIds.includes(conversation.id);
             return (
-              <div key={conversation.id} className="lkdv-share-conv">
+              <div key={conversation.id} className={`lkdv-share-conv${alreadySent ? ' is-sent' : ''}`}>
                 <Avatar url={conversation.avatar_url} name={title} />
                 <div>
                   <b>{title}</b>
@@ -108,14 +134,25 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
                 <button
                   type="button"
                   disabled={sending === conversation.id}
-                  aria-label={`Envoyer à ${title}`}
+                  className={alreadySent ? 'is-sent' : undefined}
+                  aria-label={alreadySent ? `Envoyé à ${title}` : `Envoyer à ${title}`}
                   onClick={async () => {
                     const ok = await send(post.id, conversation.id);
-                    toast(ok ? 'Publication envoyée.' : 'Envoi impossible.', ok ? 'success' : 'error');
-                    if (ok) onClose();
+                    if (ok) {
+                      setSentIds((prev) =>
+                        prev.includes(conversation.id) ? prev : [...prev, conversation.id],
+                      );
+                    }
+                    toast(ok ? `Envoyé à ${title}.` : 'Envoi impossible.', ok ? 'success' : 'error');
                   }}
                 >
-                  {sending === conversation.id ? '…' : <Icon name="send" size={15} aria-hidden="true" />}
+                  {sending === conversation.id ? (
+                    '…'
+                  ) : alreadySent ? (
+                    <Check size={15} strokeWidth={2.5} aria-hidden="true" />
+                  ) : (
+                    <Icon name="send" size={15} aria-hidden="true" />
+                  )}
                 </button>
               </div>
             );

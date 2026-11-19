@@ -367,24 +367,6 @@ import type { MultiDayPlan } from '@/features/planning/models';
 
 export type { SearchFilters };
 
-export interface ResolvedSearchPlace {
-  query: string;
-  selected: {
-    label: string;
-    lat: number;
-    lon: number;
-    detail?: string;
-    countryCode?: string | null;
-  };
-  candidates: Array<{
-    label: string;
-    lat: number;
-    lon: number;
-    detail?: string;
-    countryCode?: string | null;
-  }>;
-}
-
 export interface SearchResponse {
   filters: SearchFilters;
   results: SearchResultItem[];
@@ -392,8 +374,6 @@ export interface SearchResponse {
   routes?: SmartRankedRoute[];
   /** Aventures multi-jours (K1.13) si la requête vise l'itinérance. */
   adventures?: MultiDayPlan[];
-  /** Commune résolue avant la recherche de traces (D1.5, sans GPS ou lieu nommé). */
-  resolvedPlace?: ResolvedSearchPlace | null;
   /** Emprise réellement interrogée ; `null` pour l'ancien mode « autour du centre ». */
   zone: SearchViewport | null;
   /** Vrai quand la borne de la RPC a tronqué la liste avant l'affichage. */
@@ -567,8 +547,8 @@ export function useNaturalSearch(
     ],
     enabled:
       query.trim().length >= 2 &&
-      !blockedByViewport &&
-      (hasCenter || query.trim().length >= 2),
+      hasCenter &&
+      !blockedByViewport,
     queryFn: () => fetchSearchJson(`/api/explorer/v2/search?${params.toString()}`),
     staleTime: 60 * 1000,
     retry: 1,

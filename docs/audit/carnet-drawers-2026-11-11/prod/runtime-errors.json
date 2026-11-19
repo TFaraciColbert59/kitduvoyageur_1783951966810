@@ -1,0 +1,11 @@
+[
+  "Failed to load resource: the server responded with a status of 400 ()",
+  "failed https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/7/45/64?token=AAP net::ERR_ABORTED",
+  "failed https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/7/45/65?token=AAP net::ERR_ABORTED",
+  "failed https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/7/44/64?token=AAP net::ERR_ABORTED",
+  "failed https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/7/44/65?token=AAP net::ERR_ABORTED",
+  "failed https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/7/44/63?token=AAP net::ERR_ABORTED",
+  "failed https://static-map-tiles-api.arcgis.com/arcgis/rest/services/static-basemap-tiles-service/v1/arcgis/ net::ERR_ABORTED",
+  "Failed to load resource: the server responded with a status of 403 ()",
+  "Présence : battement refusé — new row violates row-level security policy \"presence_essai_sans_ecriture\" for table \"user_presence\""
+]

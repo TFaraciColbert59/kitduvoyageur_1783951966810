@@ -23,7 +23,6 @@ import {
 } from '@/features/explorer-v2/search/searchQueryParser';
 import { buildExplorerCatalogAdventures } from '@/features/planning/explorerAdapter';
 import { searchMultiDayPlans } from '@/features/planning/library';
-import { geocodePlace, type GeocodeMatch } from '@/features/adventure-prep/geocodeService';
 
 export type { SearchFilters };
 
@@ -196,44 +195,11 @@ export async function GET(request: Request) {
         { viewerId: null, friendIds: [], tribuIds: [], blockedUserIds: [] }
       ).items.slice(0, 4)
     : [];
-
-  let resolvedPlace: {
-    query: string;
-    selected: GeocodeMatch;
-    candidates: GeocodeMatch[];
-  } | null = null;
-  let resolvedZone: SearchViewport | null = viewport;
-  let center = viewport
+  const center = viewport
     ? { lat: viewportCenter(viewport)[1], lng: viewportCenter(viewport)[0] }
     : lat !== undefined && lng !== undefined
       ? { lat, lng }
       : null;
-
-  // D1.5 : résoudre la commune avant de chercher les traces (sans GPS ou avec lieu nommé).
-  const placeCandidate = !viewport ? extractPlaceCandidate(parsed.data.q, filters) : null;
-  if (placeCandidate) {
-    try {
-      const geo = await geocodePlace(placeCandidate, 'fr');
-      if (geo.status === 'ok' && geo.matches.length > 0) {
-        const selected = geo.matches[0];
-        resolvedPlace = {
-          query: placeCandidate,
-          selected,
-          candidates: geo.matches.slice(0, 5),
-        };
-        center = { lat: selected.lat, lng: selected.lon };
-        resolvedZone = {
-          minLat: selected.lat - 0.09,
-          maxLat: selected.lat + 0.09,
-          minLng: selected.lon - 0.14,
-          maxLng: selected.lon + 0.14,
-          zoom: parsed.data.zoom ?? 12,
-        };
-      }
-    } catch {
-      /* géocodage indisponible : on garde le centre existant le cas échéant */
-    }
-  }
 
   try {
     if (!center) {
@@ -242,8 +208,7 @@ export async function GET(request: Request) {
         results: [],
         routes: [],
         adventures,
-        resolvedPlace,
-        zone: resolvedZone,
+        zone: viewport,
         truncated: false,
         routesTruncated: false,
         routesUnavailable: false,
@@ -251,7 +216,7 @@ export async function GET(request: Request) {
     }
     const dLat = 0.09;
     const dLng = 0.14;
-    const searchWindow = resolvedZone ?? {
+    const searchWindow = viewport ?? {
       minLat: center.lat - dLat,
       maxLat: center.lat + dLat,
       minLng: center.lng - dLng,
@@ -367,8 +332,7 @@ export async function GET(request: Request) {
       results,
       routes,
       adventures,
-      resolvedPlace,
-      zone: resolvedZone,
+      zone: viewport,
       truncated: pois.length >= 80 && filtered.length > 20,
       routesTruncated:
         routeRows !== null &&
@@ -380,19 +344,6 @@ export async function GET(request: Request) {
     console.error('[explorer-v2] search', error);
     return NextResponse.json({ error: 'indisponible' }, { status: 503 });
   }
-}
-
-function extractPlaceCandidate(rawQuery: string, filters: SearchFilters): string | null {
-  const prepMatch = rawQuery.match(/\b(?:autour de|pr[èe]s de|vers|dans le|dans la|en|[àa])\s+([A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{1,40})/i);
-  if (prepMatch?.[1]) {
-    const cleaned = prepMatch[1].trim().replace(/\s+\d+\s*(km|h|m)\b.*$/i, '').trim();
-    if (cleaned.length >= 2) return cleaned;
-  }
-  const text = (filters.text ?? '').trim();
-  if (text.length >= 2 && !/^(boucle|rando|randonnee|velo|gravel|vtt|sentier|lac|foret|sommet)$/i.test(text)) {
-    return text;
-  }
-  return null;
 }
 
 function haversine(aLat: number, aLng: number, bLat: number, bLng: number) {

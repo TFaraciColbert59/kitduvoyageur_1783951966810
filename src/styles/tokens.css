@@ -1188,13 +1188,13 @@ button.g2,
      Sources exactes : HIG L2796-2810 (feuille), HIG L2832-2838 (carte
      interne de tiroir), V8 L273 (ligne de liste), LC L101-127
      (mini-capsule 30 px), HIG L877 (champ). */
-  --cv2-tile-bg: var(--drawer-card-bg);
-  --cv2-tile-blur: var(--drawer-card-blur);
-  --cv2-tile-shadow: var(--drawer-card-shadow);
+  --cv2-tile-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.86));
+  --cv2-tile-blur: blur(22px) saturate(1.3);
+  --cv2-tile-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 16px rgba(23, 43, 36, 0.05);
   --cv2-tile-border: var(--glass-border);
   --cv2-radius-tile-sm: 14px;
-  --cv2-radius-tile: 16px;
-  --cv2-radius-tile-lg: 18px; /* FID-046 : rayon maquette des tuiles */
+  --cv2-radius-tile: 18px;
+  --cv2-radius-tile-lg: 22px;
   --cv2-list-sep: var(--lkv-border-subtle);
   --cv2-list-sep-strong: var(--lkv-border);
 
@@ -1206,6 +1206,8 @@ button.g2,
 
   /* Verre des champs (HIG L877 : blanc .88, bordure .5 px). */
   --cv2-field-bg: rgba(255, 255, 255, 0.88);
+  /* Plaque sous les libellés de champ (AA sur fond sombre du verre). */
+  --cv2-label-plate: rgba(255, 255, 255, 0.4);
   --cv2-field-border: var(--lkv-field-border);
   --cv2-field-radius: 12px;
   --cv2-field-height: 48px;
@@ -1213,8 +1215,8 @@ button.g2,
   --cv2-field-blur: blur(18px) saturate(1.7);
 
   /* Squelettes (barres shimmer sur le verre). */
-  --cv2-skeleton-hi: rgba(255, 255, 255, 0.92);
-  --cv2-skeleton-lo: rgba(23, 43, 36, 0.10);
+  --cv2-skeleton-hi: rgba(255, 255, 255, 0.72);
+  --cv2-skeleton-lo: rgba(23, 43, 36, 0.06);
 
   /* Île dynamique (DynamicIsland) — source V8 L53-60, carnet-v2.css L681-736. */
   --cv2-island-bg: #172B24;

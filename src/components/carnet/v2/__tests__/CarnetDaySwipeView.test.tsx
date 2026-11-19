@@ -160,7 +160,7 @@ describe('CarnetDaySwipeView — vue du jour', () => {
     expect(screen.getByText('La Bérarde → Refuge du Pigeonnier')).toBeTruthy();
     expect(screen.getByText(/13 juil\./)).toBeTruthy();
     expect(screen.getByText(/6 h 40/)).toBeTruthy();
-    expect(screen.getByText('Éclaircies · 11 °C')).toBeTruthy();
+    expect(screen.getByLabelText('Éclaircies · 11 °C').textContent).toBe('11°');
 
     // Les cartes-jour ne sont que sur le Résumé ; la grille 3 colonnes reste.
     expect(screen.queryAllByRole('button', { name: /^Ouvrir le jour/ })).toHaveLength(0);

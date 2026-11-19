@@ -261,27 +261,9 @@ export default async function RootLayout({
         <TravelpayoutsDrive />
 
         {process.env.NODE_ENV !== 'production' && (
-          // Dev : un service worker résiduel d'un run production peut servir du
-          // HTML périmé pendant les redémarrages du serveur (hydratation cassée,
-          // ancienne UI). On le désinscrit et on purge ses caches automatiquement.
-          <script
-            id="service-worker-dev-cleanup"
-            suppressHydrationWarning
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(registration) { registration.unregister(); });
-                  }).catch(function() {});
-                  if (window.caches && caches.keys) {
-                    caches.keys().then(function(keys) {
-                      keys.forEach(function(key) { caches.delete(key); });
-                    }).catch(function() {});
-                  }
-                }
-              `,
-            }}
-          />
+          // Dev : script externe same-origin (autorisé par CSP) pour purger tout
+          // ancien Service Worker `/sw.js` et `lkdv-static-*` avant les chunks.
+          <script id="service-worker-dev-cleanup" src="/dev-sw-cleanup.js" />
         )}
       </head>
       <body

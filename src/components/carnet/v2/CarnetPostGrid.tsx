@@ -1,8 +1,21 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { Plus } from 'lucide-react';
 import type { CarnetMomentItem } from '@/features/carnet/detail/types';
+import { isMomentType, type MomentType } from '@/features/carnet/detail/momentTypes';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import {
+  CarnetMomentTileBody,
+  CarnetTilePinned,
+  CarnetTileTypeBadge,
+  tileAriaLabel,
+} from './CarnetMomentTile';
+
+/** Appui long d'une tuile : aperçu (maquette, 460 ms). */
+export const TILE_LONG_PRESS_MS = 460;
+/** Au-delà de ce déplacement (px) le geste est un défilement, pas un appui long. */
+const LONG_PRESS_SLOP = 8;
 
 export interface CarnetPostGridProps {
   moments: CarnetMomentItem[];
@@ -10,6 +23,10 @@ export interface CarnetPostGridProps {
   onPeek?: (moment: CarnetMomentItem) => void;
   isEditing?: boolean;
   onAddMoment?: () => void;
+  /** Moments épinglés (coche dorée en haut à gauche). */
+  pinnedIds?: ReadonlySet<string>;
+  /** Texte de l'état vide (aucun moment ce jour-là). */
+  emptyLabel?: string;
 }
 
 export function CarnetPostGrid({
@@ -18,10 +35,25 @@ export function CarnetPostGrid({
   onPeek,
   isEditing = false,
   onAddMoment,
+  pinnedIds,
+  emptyLabel = 'Aucun moment partagé pour cette journée.',
 }: CarnetPostGridProps) {
   const { haptic } = useHapticFeedback();
-  const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressOriginRef = useRef<{ x: number; y: number } | null>(null);
   const didLongPressRef = useRef(false);
+
+  const clearPress = () => {
+    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    pressTimerRef.current = null;
+    pressOriginRef.current = null;
+  };
+
+  const firePeek = (moment: CarnetMomentItem) => {
+    didLongPressRef.current = true;
+    haptic('medium');
+    onPeek?.(moment);
+  };
 
   const handlePointerDown = (
     event: React.PointerEvent<HTMLButtonElement>,
@@ -30,129 +62,88 @@ export function CarnetPostGrid({
     // Le déclencheur garde le focus : Peek & Pop le restitue à la fermeture.
     event.currentTarget.focus({ preventScroll: true });
     didLongPressRef.current = false;
-    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
-
+    clearPress();
+    if (!onPeek) return;
+    pressOriginRef.current = { x: event.clientX, y: event.clientY };
     pressTimerRef.current = setTimeout(() => {
-      didLongPressRef.current = true;
-      haptic('medium');
-      onPeek?.(moment);
-    }, 460);
+      pressTimerRef.current = null;
+      firePeek(moment);
+    }, TILE_LONG_PRESS_MS);
   };
 
-  const handlePointerUp = (moment: CarnetMomentItem, index: number) => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-    if (!didLongPressRef.current) {
-      haptic('light');
-      onSelect(moment, index);
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const origin = pressOriginRef.current;
+    if (!origin) return;
+    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > LONG_PRESS_SLOP) {
+      clearPress();
     }
   };
 
-  const handlePointerCancel = () => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
+  const handleClick = (moment: CarnetMomentItem, index: number) => {
+    clearPress();
+    // L'appui long a déjà ouvert l'aperçu : le relâchement ne doit pas ouvrir le post.
+    if (didLongPressRef.current) {
+      didLongPressRef.current = false;
+      return;
     }
+    haptic('light');
+    onSelect(moment, index);
   };
 
   if (moments.length === 0 && !isEditing) {
     return (
-      <div
-        style={{
-          padding: '24px 16px',
-          textAlign: 'center',
-          color: 'var(--label2, #56665D)',
-          font: '400 13px var(--font-sans, sans-serif)',
-        }}
-      >
-        Aucun moment partagé pour cette journée.
-      </div>
+      <p className="lkdv-ig-grid-empty" role="status">
+        {emptyLabel}
+      </p>
     );
   }
 
   return (
-    <div className="lkdv-ig-grid" role="group" aria-label="Moments du carnet">
-      {moments.map((moment, idx) => {
-        const imageUrl = moment.imageUrl;
-        const TYPE_LABELS: Record<string, string> = {
-          bivouac: 'Bivouac',
-          refuge: 'Refuge',
-          point_de_vue: 'Vue',
-          faune_flore: 'Nature',
-          rencontre: 'Rencontre',
-          photo: 'Photo',
-          video: 'Vidéo',
-          voice: 'Note vocale',
-          text: 'Note',
-          meet: 'Rencontre',
-          spend: 'Dépense',
-          kit: 'Kit',
-          species: 'Espèce',
-          inc: 'Incident',
-        };
-        const typeLabel = moment.type ? (TYPE_LABELS[moment.type] ?? null) : null;
+    <div className="lkdv-ig-grid-wrap">
+      <div className="lkdv-ig-grid" role="group" aria-label="Moments du carnet" data-testid="carnet-grid">
+        {moments.map((moment, idx) => {
+          const type: MomentType | null = isMomentType(moment.type) ? moment.type : null;
+          const pinned = pinnedIds?.has(moment.id) ?? false;
+          return (
+            <button
+              key={moment.id}
+              type="button"
+              className="lkdv-ig-tile"
+              data-moment-id={moment.id}
+              data-type={type ?? undefined}
+              aria-label={tileAriaLabel(moment, type, pinned)}
+              onPointerDown={(event) => handlePointerDown(event, moment)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={clearPress}
+              onPointerCancel={clearPress}
+              onPointerLeave={clearPress}
+              onContextMenu={(event) => {
+                if (!onPeek) return;
+                event.preventDefault();
+                clearPress();
+                firePeek(moment);
+              }}
+              onClick={() => handleClick(moment, idx)}
+            >
+              <CarnetMomentTileBody moment={moment} type={type} />
+              {pinned ? <CarnetTilePinned /> : null}
+              <CarnetTileTypeBadge type={type} />
+              {moment.time ? <span className="lkdv-ig-tile-h">{moment.time}</span> : null}
+            </button>
+          );
+        })}
 
-        return (
+        {isEditing && onAddMoment ? (
           <button
-            key={moment.id}
             type="button"
-            className="lkdv-ig-tile"
-            aria-label={`${moment.title || 'Moment'} ${moment.time || ''}`}
-            onPointerDown={(event) => handlePointerDown(event, moment)}
-            onPointerUp={() => handlePointerUp(moment, idx)}
-            onPointerCancel={handlePointerCancel}
+            className="lkdv-ig-tile lkdv-ig-tile-add"
+            onClick={onAddMoment}
+            aria-label="Ajouter un moment"
           >
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt={moment.title || ''} loading="lazy" decoding="async" />
-            ) : (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  padding: '8px',
-                  background: 'linear-gradient(145deg, #EBF2EC, #D8E5D5)',
-                  color: 'var(--tint, #17402C)',
-                  textAlign: 'center',
-                }}
-              >
-                <b style={{ fontSize: '11px', lineHeight: 1.2 }}>{moment.title || 'Note'}</b>
-                {moment.time ? (
-                  <span style={{ fontSize: '9.5px', opacity: 0.8, marginTop: '2px' }}>
-                    {moment.time}
-                  </span>
-                ) : null}
-              </div>
-            )}
-            {typeLabel ? <span className="lkdv-ig-tile-badge">{typeLabel}</span> : null}
+            <Plus size={22} strokeWidth={1.8} aria-hidden />
           </button>
-        );
-      })}
-
-      {isEditing && onAddMoment ? (
-        <button
-          type="button"
-          className="lkdv-ig-tile"
-          onClick={onAddMoment}
-          aria-label="Ajouter un moment"
-          style={{
-            background: 'rgba(150, 186, 142, 0.35)',
-            color: 'var(--tint, #17402C)',
-            display: 'grid',
-            placeItems: 'center',
-            fontSize: '24px',
-            fontWeight: 300,
-          }}
-        >
-          +
-        </button>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

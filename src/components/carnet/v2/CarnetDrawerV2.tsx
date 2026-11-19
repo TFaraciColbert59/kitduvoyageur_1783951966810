@@ -425,6 +425,11 @@ export function CarnetDrawerV2({
                     Altitude : {currentStackItem.night.altitudeM} m
                   </p>
                 ) : null}
+                {currentStackItem.night.infos ? (
+                  <p style={{ margin: '6px 0 0', fontSize: '12.5px', lineHeight: 1.4 }}>
+                    {currentStackItem.night.infos}
+                  </p>
+                ) : null}
               </div>
 
               {currentStackItem.night.lat && currentStackItem.night.lng ? (

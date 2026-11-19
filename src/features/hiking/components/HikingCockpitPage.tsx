@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { lkvAlert } from '@/components/ui/dialogs';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -36,6 +36,7 @@ const StatsSheet = dynamic(() => import('./sheets/StatsSheet'), {
   ),
 });
 import CaptureSheet from './sheets/CaptureSheet';
+import { publishSignal } from '@/features/carnet/detail/signalDeBord';
 import CopilotSheet from './sheets/CopilotSheet';
 import MoreSheet from './sheets/MoreSheet';
 import { TerrainLiveCockpitControl, useTerrainReports } from '@/features/terrain-live';
@@ -246,6 +247,7 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
   const handleStartHikeWithPermission = async () => {
     try {
       autoStartedRef.current = true;
+      setSignalCarnetId(null);
       await hikingStore.startHike(routeIdParam || undefined, undefined, tripIdParam || undefined);
       setGeoPermissionState('granted');
     } catch (err: any) {
@@ -263,22 +265,27 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
     } else if (hikingStore.isPaused) {
       hikingStore.resumeHike();
     } else {
+      setSignalCarnetId(null);
       hikingStore.startHike(routeIdParam || undefined, undefined, tripIdParam || undefined);
     }
   };
 
   const [showStopModal, setShowStopModal] = useState(false);
   const [savedCarnetId, setSavedCarnetId] = useState<string | null>(null);
+  /* Carnet où le premier signal de bord a été publié : réutilisé à l'arrêt pour
+     que la sortie soit rattachée à ce carnet au lieu d'en créer un second. */
+  const [signalCarnetId, setSignalCarnetId] = useState<string | null>(null);
 
   const handleConfirmStop = async () => {
     setShowStopModal(false);
-    const result = await hikingStore.stopHike();
+    const result = await hikingStore.stopHike(signalCarnetId ?? undefined);
     if (result?.sessionId) {
       setSavedSessionId(result.sessionId);
     }
     if (result?.carnetId) {
       setSavedCarnetId(result.carnetId);
     }
+    setSignalCarnetId(null);
     setIsCompleted(true);
   };
 
@@ -533,6 +540,16 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 isOpen={activeTab === 'capture' || activeTab === 'carnet'}
                 onClose={() => setActiveTab(null)}
                 onCaptureAction={() => setActiveTab(null)}
+                publish={publishSignal}
+                context={{
+                  tripId: tripIdParam ?? null,
+                  carnetId: signalCarnetId,
+                  place: dbRouteData?.name ?? hikingStore.routeName ?? null,
+                }}
+                onPublished={(signal) => {
+                  setSignalCarnetId(signal.carnetId);
+                  setActiveTab(null);
+                }}
               />
 
               <CopilotSheet

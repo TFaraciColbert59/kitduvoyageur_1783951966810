@@ -32,7 +32,7 @@ const ORDER_FILTERS: DrawerSecondaryItem[] = [
   { id: 'cancelled', label: 'Annulées', icon: <XCircle size={15} aria-hidden="true" /> },
 ];
 
-const NOTIFICATION_FILTERS: DrawerSecondaryItem[] = [
+export const NOTIFICATION_FILTERS: DrawerSecondaryItem[] = [
   { id: 'all', label: 'Tout', icon: <Bell size={15} aria-hidden="true" /> },
   { id: 'social', label: 'Social', icon: <Users size={15} aria-hidden="true" /> },
   { id: 'loans', label: 'Prêts', icon: <Package size={15} aria-hidden="true" /> },

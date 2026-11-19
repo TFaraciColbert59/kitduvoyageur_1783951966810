@@ -3,7 +3,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { createMapStyle } from '@/components/map/engine/createMapStyle';
+import {
+  SMOOTH_MAPLIBRE_OPTIONS,
+  applySmoothMapPhysics,
+  createMapStyle,
+} from '@/components/map/engine/createMapStyle';
 
 export interface PlaceMiniMapPoint {
   lat: number;
@@ -101,14 +105,18 @@ export function PlaceMiniMap({
     try {
       map = new MapLibreMap({
         container: containerRef.current,
-        style: createMapStyle('topo'),
+        style: createMapStyle('topo', { projection: 'mercator' }),
         center: [markers[0]?.lng as number, markers[0]?.lat as number],
         zoom,
         minZoom: 2,
-        maxZoom: 17,
+        maxZoom: 18,
         attributionControl: false,
         renderWorldCopies: false,
         interactive,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        ...SMOOTH_MAPLIBRE_OPTIONS,
       });
     } catch {
       setFailed(true);
@@ -121,6 +129,8 @@ export function PlaceMiniMap({
       map.dragPan.disable();
       map.scrollZoom.disable();
       map.doubleClickZoom.disable();
+    } else {
+      applySmoothMapPhysics(map, { lockRotation: true });
     }
     const activeMarkers = markersRef.current;
     map.on('load', () => {
@@ -190,8 +200,19 @@ export function PlaceMiniMap({
   }
 
   return (
-    <div className={`lkdv-cv2-map ${className ?? ''}`.trim()} style={{ height }}>
-      <div ref={containerRef} className="lkdv-cv2-map-canvas" aria-hidden="true" />
+    <div
+      className={`lkdv-cv2-map ${className ?? ''}`.trim()}
+      style={{ height, touchAction: interactive ? 'none' : undefined }}
+      data-hscroll={interactive ? '' : undefined}
+      data-no-swipe={interactive ? '' : undefined}
+      data-vaul-no-drag={interactive ? '' : undefined}
+    >
+      <div
+        ref={containerRef}
+        className="lkdv-cv2-map-canvas"
+        aria-hidden="true"
+        style={{ touchAction: interactive ? 'none' : undefined }}
+      />
       {label && single ? <span className="lkdv-cv2-map-label">{label}</span> : null}
       {!ready && !failed ? <span className="lkdv-cv2-map-loading" aria-hidden="true" /> : null}
       {itineraryHref ? (

@@ -57,13 +57,21 @@ function props(overrides: Partial<React.ComponentProps<typeof EventTicketV2>> = 
 }
 
 describe('EventTicketV2 (Sorties#1-6, 19)', () => {
-  it('affiche le billet daté sans doubler le pied de capacité partagé', () => {
+  it('affiche le billet daté sans pied de capacité coupé et avec le bouton intégré en bas à droite', () => {
     render(<EventTicketV2 {...props()} />);
     expect(screen.getByText('Footing de la Bastille')).toBeTruthy();
     expect(screen.getByTestId('cv2-tile-sortie').getAttribute('data-id')).toBe('e1');
-    // Une seule jauge de capacité dans la tuile (le pied du composant partagé).
-    expect(document.querySelectorAll('.lkdv-cv2-capacity').length).toBe(1);
+    expect(document.querySelectorAll('.lkdv-cv2-capacity').length).toBe(0);
+    expect(document.querySelector('.lkdv-cv2x-gauge')).toBeNull();
+    expect(document.querySelector('.lkdv-cv2x-event-cta-wrap')).toBeTruthy();
     expect(screen.getByRole('button', { name: /S’inscrire à Footing/ })).toBeTruthy();
+  });
+
+  it('affiche le vrai tracé de la sortie sur le topo quand il est fourni', () => {
+    const ev = { ...props().event, routeTrace: [[10, 80], [50, 40], [90, 20]] as Array<[number, number]> };
+    render(<EventTicketV2 {...props()} event={ev} />);
+    const route = document.querySelector('.lkdv-cv2-ticket-route') as SVGPathElement | null;
+    expect(route?.getAttribute('d')).toContain('M');
   });
 
   it('la tuile est un lien intercepté qui ouvre le détail', () => {
@@ -95,7 +103,7 @@ describe('EventTicketV2 (Sorties#1-6, 19)', () => {
     render(<EventTicketV2 {...props({ event: event({ past: true }), status: 'registered' })} />);
     const past = screen.getByRole('button', { name: /est terminée/ });
     expect(past.hasAttribute('disabled')).toBe(true);
-    expect(past.textContent).toContain('Terminée');
+    expect(past.getAttribute('title')).toContain('Terminée');
   });
 
   it('variante compacte : ligne datée + bouton d’action', () => {

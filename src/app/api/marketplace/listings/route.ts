@@ -33,8 +33,41 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Mode invalide' }, { status: 400 });
     const { data, error } = await db.rpc('marketplace_list', { p_mode: mode, p_mine: mine });
     if (error) return errorResponse(error);
+    const listings = (Array.isArray(data) ? data : []) as Array<Record<string, unknown>>;
+    const ownerIds = Array.from(
+      new Set(
+        listings
+          .map((row) => (typeof row.owner_id === 'string' ? row.owner_id : ''))
+          .filter(Boolean),
+      ),
+    );
+    const ownersById = new Map<
+      string,
+      { id: string; full_name: string | null; avatar_url: string | null; trust_score: number | null }
+    >();
+    if (ownerIds.length > 0) {
+      const { data: profiles } = await db
+        .from('public_profiles')
+        .select('id, full_name, avatar_url, trust_score')
+        .in('id', ownerIds);
+      for (const p of (profiles ?? []) as Array<{
+        id: string;
+        full_name: string | null;
+        avatar_url: string | null;
+        trust_score: number | null;
+      }>) {
+        ownersById.set(p.id, p);
+      }
+    }
+    const enriched = listings.map((row) => {
+      const ownerId = typeof row.owner_id === 'string' ? row.owner_id : '';
+      return {
+        ...row,
+        owner: ownerId ? ownersById.get(ownerId) ?? null : null,
+      };
+    });
     return NextResponse.json(
-      { listings: data ?? [] },
+      { listings: enriched },
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch {

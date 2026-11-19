@@ -95,17 +95,62 @@ interface FeedCursor {
 }
 
 /**
+ * Perf « instantané » : la première page de chaque lecteur est gardée en
+ * mémoire (navigation SPA) et en sessionStorage (rechargement). Elle est peinte
+ * immédiatement, puis revalidée en arrière-plan sans squelette.
+ */
+const FEED_CACHE_PREFIX = 'lkdv:feed:v1:';
+const memoryFeedCache = new Map<string, FeedPost[]>();
+const cacheKey = (userId?: string) => `${FEED_CACHE_PREFIX}${userId ?? 'anon'}`;
+
+function readFeedCache(userId?: string): FeedPost[] | null {
+  const key = cacheKey(userId);
+  const mem = memoryFeedCache.get(key);
+  if (mem) return mem;
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FeedPost[];
+    if (!Array.isArray(parsed)) return null;
+    memoryFeedCache.set(key, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeFeedCache(userId: string | undefined, posts: FeedPost[]) {
+  const key = cacheKey(userId);
+  const firstPage = posts.slice(0, PAGE_SIZE);
+  memoryFeedCache.set(key, firstPage);
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify(firstPage));
+  } catch {
+    /* cache optionnel (quota, navigation privée) */
+  }
+}
+
+/**
  * Fil Communauté : uniquement `community_posts`, par pages de 10.
  * Auteurs via `public_profiles`, états like/favori en une passe.
  * Aucun chargement de carnets/clubs/groupes/événements.
+ *
+ * `authReady` : tant que la session locale n'est pas lue, aucune requête ne
+ * part (évite le double chargement anonyme → connecté et le flash squelette).
  */
-export function useCommunityFeed(userId?: string) {
-  const [state, setState] = useState<FeedState>({
-    posts: [],
-    loading: true,
-    loadingMore: false,
-    hasMore: false,
-    error: null,
+export function useCommunityFeed(userId?: string, authReady = true) {
+  const [state, setState] = useState<FeedState>(() => {
+    // Mémoire seule ici (identique serveur/client à l'hydratation) ;
+    // le sessionStorage est relu dans l'effet de montage.
+    const cached = memoryFeedCache.get(cacheKey(userId)) ?? null;
+    return {
+      posts: cached ?? [],
+      loading: !cached,
+      loadingMore: false,
+      hasMore: Boolean(cached && cached.length >= PAGE_SIZE),
+      error: null,
+    };
   });
   const requestIdRef = useRef(0);
   const cursorRef = useRef<FeedCursor | null>(null);
@@ -122,7 +167,9 @@ export function useCommunityFeed(userId?: string) {
       inFlightRef.current = controller;
       setState((prev) => ({
         ...prev,
-        loading: replace,
+        // Revalidation silencieuse : des posts déjà peints ne cèdent jamais
+        // la place au squelette.
+        loading: replace && prev.posts.length === 0,
         loadingMore: !replace,
         error: null,
       }));
@@ -293,9 +340,13 @@ export function useCommunityFeed(userId?: string) {
           cursorRef.current = { createdAt: last.created_at, id: last.id };
         }
         setState((prev) => {
-          const nextPosts = replace
-            ? enriched
-            : [...prev.posts, ...enriched.filter((post) => !prev.posts.some((old) => old.id === post.id))];
+          let nextPosts: FeedPost[];
+          if (replace) {
+            nextPosts = enriched;
+          } else {
+            const known = new Set(prev.posts.map((old) => old.id));
+            nextPosts = [...prev.posts, ...enriched.filter((post) => !known.has(post.id))];
+          }
           return {
             posts: nextPosts,
             loading: false,
@@ -304,6 +355,7 @@ export function useCommunityFeed(userId?: string) {
             error: null,
           };
         });
+        if (replace) writeFeedCache(userId, enriched);
       } catch {
         // Une annulation n'est pas une panne : la requête suivante porte l'état.
         if (controller.signal.aborted || requestId !== requestIdRef.current) return;
@@ -321,10 +373,17 @@ export function useCommunityFeed(userId?: string) {
   );
 
   useEffect(() => {
+    if (!authReady) return undefined;
     cursorRef.current = null;
+    // Changement de lecteur : son propre cache est peint tout de suite.
+    const cached = readFeedCache(userId);
+    if (cached) {
+      setState((prev) => ({ ...prev, posts: cached, loading: false, hasMore: cached.length >= PAGE_SIZE }));
+    }
     void fetchPage(null, true);
     return () => inFlightRef.current?.abort();
-  }, [fetchPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchPage, authReady]);
 
   const loadMore = useCallback(async () => {
     // Verrou synchrone : deux clics avant le prochain rendu ne lancent pas

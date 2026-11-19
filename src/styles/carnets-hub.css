@@ -1,0 +1,875 @@
+/* =============================================================================
+   CARNETS DE BORD — HUB `/carnets` (lot L1, 2026-11-11)
+
+   Écran 1 de `docs/carnets/maquette-carnets-de-bord.html` L285-313 :
+   capsule de filtres, couverture pleine 4/5, voile encre, titre Instrument
+   Serif italique, tampon de pays, tracé en pointillé en filigrane, métriques
+   mono, avatars empilés, bande « En route maintenant », squelettes.
+
+   Règles :
+   - ZÉRO couleur littérale : uniquement les jetons `--lkv-*`, les dérivés
+     `color-mix()` de ces jetons et les variables de verre du système ;
+     aucune ombre à base de noir pur (ombres à base d'encre) ;
+   - cibles tactiles ≥ 44 px (`--lkv-touch-min`) ;
+   - mouvement sobre : `prefers-reduced-motion` coupe pulsation et transitions ;
+   - la coquille (fond, colonne 430-520 px, en-tête sticky) vient de
+     `CommunityFeedShell` / `community-feed.css` : rien n'est redéfini ici.
+   ========================================================================== */
+
+/* ── En-tête propre au hub ─────────────────────────────────────────────── */
+
+.lkdh-header {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  /* Le fil défile DERRIÈRE l'en-tête sticky de la coquille /communaute : sans
+     surface, les titres de cartes se superposaient au surtitre et au H1 une
+     fois la liste scrollée (constat de la capture de recette). Verre du
+     système (recette --glass-*), repli opaque quand la transparence est
+     réduite. Le fond est un dégradé, pas un aplat : le bord bas se fond dans
+     la page comme le fait la coquille. */
+  position: relative;
+  z-index: 1;
+  margin: -8px -10px 0;
+  padding: 8px 10px 12px;
+  border-radius: 0 0 22px 22px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lkv-surface) 94%, transparent) 0%,
+    color-mix(in srgb, var(--lkv-surface) 80%, transparent) 64%,
+    transparent 100%
+  );
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur, 26px) * 0.55))
+    saturate(var(--glass-saturation, 1.1));
+  backdrop-filter: blur(calc(var(--glass-blur, 26px) * 0.55))
+    saturate(var(--glass-saturation, 1.1));
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lkdh-header {
+    background: var(--lkv-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.lkdh-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lkdh-eyebrow {
+  display: block;
+  font: 700 10.5px/1.2 var(--font-sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdh-title {
+  margin: 0;
+  font: 400 21px/1.08 var(--font-serif);
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--lkv-text-primary);
+  text-wrap: balance;
+}
+
+.lkdh-title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--lkv-primary);
+}
+
+.lkdh-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--lkv-touch-min);
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-action);
+  color: var(--lkv-on-action);
+  font: 600 12.5px/1 var(--font-sans);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow:
+    0 6px 16px color-mix(in srgb, var(--lkv-forest-900) 24%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--lkv-on-action) 22%, transparent);
+  transition: transform 0.12s var(--ease-spring);
+}
+
+.lkdh-cta:active {
+  transform: scale(0.97);
+}
+
+.lkdh-cta:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 3px;
+}
+
+/* ── Corps : filtres, bande en route, liste ────────────────────────────── */
+
+.lkdh-body {
+  display: grid;
+  gap: 14px;
+  padding-top: 10px;
+}
+
+.lkdh-filters {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--lkv-radius-full);
+  background: color-mix(in srgb, var(--lkv-surface-paper) 72%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 0.5px var(--lkv-border-subtle),
+    0 8px 22px color-mix(in srgb, var(--lkv-ink-900) 10%, transparent);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lkdh-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdh-filter {
+  flex: 1 0 auto;
+  min-height: var(--lkv-touch-min);
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  font: 600 12.5px/1 var(--font-sans);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.18s var(--ease-out), color 0.18s var(--ease-out);
+}
+
+.lkdh-filter[aria-pressed='true'] {
+  background: var(--lkv-surface-paper);
+  color: var(--lkv-primary);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--lkv-ink-900) 12%, transparent);
+}
+
+.lkdh-filter:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 1px;
+}
+
+.lkdh-list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Bande « En route maintenant » ─────────────────────────────────────── */
+
+.lkdh-live-band {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lkdh-live-band .lkdh-eyebrow {
+  padding: 2px 2px 0;
+}
+
+.lkdh-strip {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.lkdh-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdh-mini {
+  position: relative;
+  flex: 0 0 44%;
+  max-width: 196px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: var(--lkv-radius-md);
+  background: linear-gradient(160deg, var(--lkv-secondary-subtle), var(--lkv-sage-50));
+  color: var(--lkv-on-dark);
+  text-decoration: none;
+  scroll-snap-align: start;
+  box-shadow:
+    0 8px 20px color-mix(in srgb, var(--lkv-ink-900) 16%, transparent),
+    inset 0 0 0 0.5px var(--lkv-border-subtle);
+}
+
+.lkdh-mini:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 2px;
+}
+
+.lkdh-mini-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdh-mini-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 32%,
+    color-mix(in srgb, var(--lkv-forest-950) 76%, transparent) 100%
+  );
+}
+
+.lkdh-mini-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+}
+
+.lkdh-mini-title {
+  font: 400 18px/1.05 var(--font-serif);
+  font-style: italic;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.lkdh-mini-meta {
+  font: 600 9.5px/1.2 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lkv-on-dark) 86%, transparent);
+}
+
+/* ── Carte de couverture ───────────────────────────────────────────────── */
+
+.lkdh-card {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--lkv-radius-lg);
+  background: var(--lkv-surface-paper);
+  box-shadow:
+    0 10px 26px color-mix(in srgb, var(--lkv-ink-900) 14%, transparent),
+    inset 0 0 0 0.5px var(--lkv-border-subtle);
+}
+
+.lkdh-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--lkv-radius-lg) var(--lkv-radius-lg) 0 0;
+}
+
+.lkdh-card-link:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 3px;
+}
+
+.lkdh-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--lkv-radius-lg) var(--lkv-radius-lg) 0 0;
+  background: linear-gradient(160deg, var(--lkv-secondary-subtle), var(--lkv-sage-50));
+  isolation: isolate;
+}
+
+/* Couverture sans photo : le fond topographique est dessiné (voir
+   `CarnetHubTopo`), jamais une simple initiale seule. */
+
+.lkdh-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sans photo : courbes de niveau dessinées + cachet de l'initiale (jamais seule). */
+.lkdh-topo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdh-topo-line {
+  fill: none;
+  stroke: var(--lkv-primary);
+  stroke-width: 0.6;
+  stroke-linecap: round;
+  opacity: 0.34;
+}
+
+.lkdh-seal {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: 76px;
+  height: 76px;
+  border: 1.5px dashed color-mix(in srgb, var(--lkv-primary) 55%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--lkv-surface-paper) 68%, transparent);
+  color: var(--lkv-primary);
+  transform: translate(-50%, -50%) rotate(-6deg);
+}
+
+.lkdh-seal b {
+  font: 400 26px/1 var(--font-serif);
+  font-style: italic;
+}
+
+.lkdh-seal small {
+  font: 700 7px/1 var(--font-sans);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--lkv-text-secondary);
+}
+
+.lkdh-mosaic {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  background: var(--lkv-surface-muted);
+}
+
+.lkdh-mosaic-cell {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lkdh-mosaic-cell:first-child {
+  grid-row: 1 / span 2;
+}
+
+.lkdh-mosaic-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Tracé en filigrane : pointillé blanc sur la photo (maquette L292). */
+.lkdh-trace {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.lkdh-trace path {
+  fill: none;
+  stroke: var(--lkv-on-dark);
+  stroke-width: 1.1;
+  stroke-dasharray: 2.2 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lkdh-trace circle {
+  fill: var(--lkv-on-dark);
+}
+
+.lkdh-trace circle.lkdh-trace-end {
+  fill: none;
+  stroke: var(--lkv-on-dark);
+  stroke-width: 1.3;
+}
+
+/* Sans photo (mosaïque ou fond topographique), le blanc du filigrane
+   disparaîtrait : le tracé reprend la couleur d'action du thème. */
+.lkdh-cover:not(.has-image) .lkdh-trace path {
+  stroke: var(--lkv-primary);
+}
+
+.lkdh-cover:not(.has-image) .lkdh-trace circle {
+  fill: var(--lkv-primary);
+}
+
+.lkdh-cover:not(.has-image) .lkdh-trace circle.lkdh-trace-end {
+  fill: none;
+  stroke: var(--lkv-primary);
+}
+
+/* Voile encre en bas : contraste AA du titre et des métriques sur photo. */
+.lkdh-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--lkv-forest-950) 34%, transparent) 0%,
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 32%,
+      color-mix(in srgb, var(--lkv-forest-950) 74%, transparent) 100%
+    );
+}
+
+/* Pastille vivante « En route · J4 sur 9 ». */
+.lkdh-live {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: var(--lkv-radius-full);
+  background: color-mix(in srgb, var(--lkv-surface-paper) 66%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    inset 0 0 0 0.5px color-mix(in srgb, var(--lkv-text-inverted) 62%, transparent),
+    0 6px 16px color-mix(in srgb, var(--lkv-ink-900) 14%, transparent);
+  color: var(--lkv-text-primary);
+  font: 600 11.5px/1.2 var(--font-sans);
+  white-space: nowrap;
+}
+
+.lkdh-live > i {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--lkv-action);
+}
+
+.lkdh-live > i::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--lkv-action);
+  opacity: 0.5;
+  animation: lkdh-pulse 1.8s var(--ease-out) infinite;
+}
+
+@keyframes lkdh-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Tampon de pays : cachet rond pointillé, incliné (maquette L294). */
+.lkdh-stamp {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  width: 58px;
+  height: 58px;
+  padding: 4px;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--lkv-on-dark) 82%, transparent);
+  background: color-mix(in srgb, var(--lkv-forest-950) 56%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: var(--lkv-on-dark);
+  font: 600 8.5px/1.15 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-12deg);
+  text-shadow: 0 1px 4px color-mix(in srgb, var(--lkv-forest-950) 55%, transparent);
+}
+
+.lkdh-stamp b {
+  max-width: 46px;
+  overflow: hidden;
+  font: 700 8.5px/1.15 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdh-stamp span {
+  max-width: 46px;
+  overflow: hidden;
+  font: 600 8.5px/1.15 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Corps de couverture : surtitre, titre serif, métriques, avatars. */
+.lkdh-cover-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 4;
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  color: var(--lkv-on-dark);
+}
+
+.lkdh-cover-kicker {
+  font: 600 10px/1.25 var(--font-sans);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--lkv-on-dark) 88%, transparent);
+  text-shadow: 0 1px 8px color-mix(in srgb, var(--lkv-forest-950) 55%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdh-cover-title {
+  margin: 0;
+  font: 400 30px/1.02 var(--font-serif);
+  font-style: italic;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  text-shadow: 0 2px 14px color-mix(in srgb, var(--lkv-forest-950) 45%, transparent);
+}
+
+.lkdh-metrics {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.lkdh-metric {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.lkdh-metric b {
+  font: 700 15px/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdh-metric span {
+  font: 600 9px/1.2 var(--font-sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.84;
+  white-space: nowrap;
+}
+
+.lkdh-avatars {
+  display: flex;
+  flex: none;
+  align-items: center;
+  align-self: flex-end;
+  margin-left: auto;
+  padding-left: 6px;
+}
+
+.lkdh-avatar {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: -8px;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--lkv-on-dark) 86%, transparent);
+  border-radius: 50%;
+  background: var(--lkv-forest-700);
+  color: var(--lkv-on-dark);
+  font: 700 9px/1 var(--font-sans);
+}
+
+.lkdh-avatar:first-child {
+  margin-left: 0;
+}
+
+.lkdh-avatar--more {
+  background: color-mix(in srgb, var(--lkv-forest-950) 62%, transparent);
+}
+
+.lkdh-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pied de carte : auteur, j'aime 44 px hors du lien, commentaires. */
+.lkdh-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--lkv-touch-min);
+  padding: 0 8px 0 16px;
+}
+
+.lkdh-foot-author {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font: 500 12px/1.3 var(--font-sans);
+  color: var(--lkv-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdh-like,
+.lkdh-comments {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: var(--lkv-touch-min);
+  min-height: var(--lkv-touch-min);
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: none;
+  color: var(--lkv-text-secondary);
+  font: 600 12px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lkdh-like[aria-pressed='true'] {
+  color: var(--lkv-primary);
+}
+
+.lkdh-like[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}
+
+.lkdh-like:focus-visible,
+.lkdh-comments:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 1px;
+}
+
+/* Petit tampon « GPS » du pied de carte : preuve de trace, jamais interactif. */
+.lkdh-gps {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-primary);
+  font: 700 9.5px/1 var(--font-sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lkdh-heart {
+  display: inline-flex;
+}
+
+/* La pulsation du cœur part quand `aria-pressed` passe à vrai : aucune
+   animation permanente, rien à couper si le mouvement est déjà réduit. */
+.lkdh-like[aria-pressed='true'] .lkdh-heart svg {
+  animation: lkdh-heart-pop 0.42s var(--ease-spring) both;
+}
+
+@keyframes lkdh-heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── États : vide, erreur, squelettes ──────────────────────────────────── */
+
+.lkdh-empty,
+.lkdh-error {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  border-radius: var(--lkv-radius-lg);
+  background: color-mix(in srgb, var(--lkv-surface-paper) 64%, transparent);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border-subtle);
+  text-align: center;
+}
+
+.lkdh-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--lkv-secondary-subtle);
+  color: var(--lkv-primary);
+}
+
+.lkdh-empty h2,
+.lkdh-error h2 {
+  margin: 0;
+  font: 400 21px/1.15 var(--font-serif);
+  font-style: italic;
+  color: var(--lkv-text-primary);
+  text-wrap: balance;
+}
+
+.lkdh-empty p,
+.lkdh-error p {
+  max-width: 34ch;
+  margin: 0;
+  font: 400 13px/1.45 var(--font-sans);
+  color: var(--lkv-text-secondary);
+}
+
+.lkdh-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lkdh-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--lkv-touch-min);
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-action);
+  color: var(--lkv-on-action);
+  font: 600 12.5px/1 var(--font-sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lkdh-empty-btn--ghost {
+  background: color-mix(in srgb, var(--lkv-surface-paper) 70%, transparent);
+  color: var(--lkv-text-primary);
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border);
+}
+
+.lkdh-empty-btn:focus-visible {
+  outline: 2px solid var(--lkv-focus-ring);
+  outline-offset: 3px;
+}
+
+.lkdh-skeletons {
+  display: grid;
+  gap: 16px;
+}
+
+.lkdh-like-status {
+  margin: 0;
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--lkv-danger);
+  text-align: center;
+}.lkdh-skeleton-card {
+  display: grid;
+  gap: 8px;
+}
+
+.lkdh-skeleton-cover {
+  aspect-ratio: 4 / 5;
+  border-radius: var(--lkv-radius-lg);
+  background: linear-gradient(
+    160deg,
+    var(--lkv-surface-muted),
+    color-mix(in srgb, var(--lkv-surface-muted) 55%, transparent)
+  );
+  box-shadow: inset 0 0 0 0.5px var(--lkv-border-subtle);
+  animation: lkdh-breathe 1.7s ease-in-out infinite;
+}
+
+.lkdh-skeleton-line {
+  width: 46%;
+  height: 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--lkv-surface-muted);
+  animation: lkdh-breathe 1.7s ease-in-out infinite;
+}
+
+@keyframes lkdh-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── Mouvement réduit : rien ne pulse, rien ne glisse ──────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdh-live > i::after,
+  .lkdh-like[aria-pressed='true'] .lkdh-heart svg,
+  .lkdh-skeleton-cover,
+  .lkdh-skeleton-line {
+    animation: none;
+  }
+
+  .lkdh-cta,
+  .lkdh-filter {
+    transition: none;
+  }
+
+  .lkdh-cta:active {
+    transform: none;
+  }
+}

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
+import { compressVideoV2 } from './videoCompress';
 import {
   IMAGE_MAX_BYTES,
   STORY_MEDIA_MAX_BYTES,
@@ -21,7 +22,7 @@ import {
  *   d'envoyer (`03 § 5`).
  */
 
-export type MediaBucketV2 = 'carnet-media' | 'stories-private';
+export type MediaBucketV2 = 'carnet-media' | 'stories-private' | 'carnet-moments-media';
 
 export interface MediaFileLimitsV2 {
   allowVideo: boolean;
@@ -30,6 +31,7 @@ export interface MediaFileLimitsV2 {
 
 export const IMAGE_LIMITS: MediaFileLimitsV2 = { allowVideo: false, maxBytes: IMAGE_MAX_BYTES };
 export const STORY_LIMITS: MediaFileLimitsV2 = { allowVideo: true, maxBytes: STORY_MEDIA_MAX_BYTES };
+export const CARNET_MOMENT_MEDIA_LIMITS: MediaFileLimitsV2 = { allowVideo: true, maxBytes: STORY_MEDIA_MAX_BYTES };
 
 export interface MediaValidationV2 {
   ok: boolean;
@@ -145,7 +147,13 @@ export async function uploadMediaV2(
   const isVideo = file.type.startsWith('video/');
   const supabase = createClient();
   onProgress?.(8);
-  const prepared = isVideo ? file : await stripImageMetadata(file);
+  // Story#15 : une vidéo lourde est ré-encodée côté client (MP4 plus léger) ;
+  // sans support, sans gain ou en cas d'erreur, l'original part tel quel.
+  const prepared = isVideo
+    ? await compressVideoV2(file, {
+        onProgress: (fraction) => onProgress?.(8 + Math.round(fraction * 22)),
+      })
+    : await stripImageMetadata(file);
   onProgress?.(32);
   const contentType = prepared.type || (isVideo ? 'video/mp4' : 'image/jpeg');
   const ext = safeExtension(prepared, isVideo ? 'mp4' : 'jpg');

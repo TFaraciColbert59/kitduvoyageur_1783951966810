@@ -27,39 +27,33 @@ export interface CreateKindConfigV2 {
   successTitle: string;
 }
 
-const POST_STEPS: readonly CreateStepV2[] = [
-  { id: 'format', label: 'Format', fields: ['format', 'audience', 'clubId'] },
+export const POST_STEPS: readonly CreateStepV2[] = [
+  { id: 'format', label: 'Format', fields: ['format', 'audience', 'clubId', 'eventDate', 'linkedEventId'] },
   {
     id: 'contenu',
     label: 'Contenu',
     fields: ['media', 'title', 'content', 'location', 'locationLat', 'locationLng'],
   },
-  // FID-062/FID-064 : Hashtags/Mentions séparés retirés (le hint maquette
-  // vit dans la légende) ; la Diffusion ne valide plus de champ propre.
-  { id: 'diffusion', label: 'Diffusion', fields: [] },
 ];
 
 const STORY_STEPS: readonly CreateStepV2[] = [
-  { id: 'media', label: 'Média', fields: ['media'] },
   {
     id: 'edition',
-    label: 'Édition',
-    fields: ['caption', 'altText', 'textLayers', 'stickers', 'trimStartMs', 'trimEndMs'],
+    label: 'Contenu',
+    fields: ['media', 'caption', 'altText', 'textLayers', 'stickers', 'trimStartMs', 'trimEndMs'],
   },
-  { id: 'diffusion', label: 'Diffusion', fields: ['audience', 'replyPolicy', 'allowReshare'] },
+  { id: 'diffusion', label: 'Diffusion', fields: ['audience', 'clubId', 'replyPolicy', 'allowReshare'] },
 ];
 
 const CARNET_STEPS: readonly CreateStepV2[] = [
   {
     id: 'infos',
     label: 'Infos',
-    // FID-064 : le stepper « Nombre de jours » vit en Infos (maquette L2970).
-    // `days` reste validé à l'étape Jours (moments incomplets).
-    fields: ['title', 'destination', 'startDate', 'endDate', 'nbJours', 'description', 'nbVoyageurs', 'visibility'],
+    fields: ['title', 'destination', 'startDate', 'endDate', 'nbJours', 'description', 'nbVoyageurs'],
   },
   { id: 'trace', label: 'Tracé', fields: ['trace', 'distanceKm', 'deniveleM'] },
   { id: 'jours', label: 'Jours', fields: ['days'] },
-  { id: 'partage', label: 'Partage', fields: ['coverMediaId', 'tags', 'collaborators', 'postContent'] },
+  { id: 'partage', label: 'Partage', fields: ['visibility', 'clubId', 'coverMediaId', 'tags', 'collaborators', 'postContent'] },
 ];
 
 const SORTIE_STEPS: readonly CreateStepV2[] = [
@@ -103,17 +97,19 @@ const KIT_STEPS: readonly CreateStepV2[] = [
   { id: 'inventaire', label: 'Inventaire', fields: ['items'] },
   { id: 'completer', label: 'Compléter', fields: ['season', 'cover'] },
   // FID-053 : la description passe en étape 3 (maquette L3208).
-  { id: 'partager', label: 'Partager', fields: ['name', 'description', 'isPublic', 'clientRequestId'] },
+  { id: 'partager', label: 'Partager', fields: ['name', 'description', 'isPublic', 'clubId', 'clientRequestId'] },
 ];
 
 const CLUB_STEPS: readonly CreateStepV2[] = [
-  { id: 'identite', label: 'Identité', fields: ['name', 'slug'] },
+  {
+    id: 'identite',
+    label: 'Identité',
+    fields: ['name', 'slug', 'activities', 'locationLabel', 'zoneRadiusKm'],
+  },
   {
     id: 'univers',
     label: 'Univers',
-    // Images du club (avatar carré + bannière 3:1) sur l'étape Univers, comme
-    // la maquette (HTML L3283-3289), avec les activités et la description.
-    fields: ['activities', 'description', 'locationLabel', 'zoneRadiusKm', 'avatar', 'banner'],
+    fields: ['description', 'avatar', 'banner'],
   },
   { id: 'adhesion', label: 'Adhésion', fields: ['privacy', 'membershipRules', 'joinQuestions'] },
   { id: 'publication', label: 'Publication', fields: ['welcomePost', 'welcomeContent', 'clientRequestId'] },

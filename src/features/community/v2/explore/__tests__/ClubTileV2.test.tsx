@@ -70,6 +70,29 @@ describe('clubJoinLabel / ClubTileV2 (Clubs#4-5, 20)', () => {
     expect(onJoin).toHaveBeenCalledTimes(1);
   });
 
+  it('garde le cadenas d’un club sur validation même pour un membre (maquette L2405)', () => {
+    render(
+      <ClubTileV2
+        club={club({ privacy: 'closed' })}
+        status="member"
+        membersCount={12}
+        onOpen={() => {}}
+        onJoin={() => {}}
+        onPeek={() => {}}
+      />,
+    );
+    expect(screen.getByTitle('Adhésion sur validation')).toBeTruthy();
+  });
+
+  it('marque la pilule longue « Demander à rejoindre » pour la réduire dans la tuile à deux colonnes', () => {
+    const { rerender } = render(
+      <ClubTileV2 club={club({ privacy: 'closed' })} status="none" membersCount={12} onOpen={() => {}} onJoin={() => {}} onPeek={() => {}} />,
+    );
+    expect(screen.getByTestId('cv2-club-join').getAttribute('data-long')).toBe('true');
+    rerender(<ClubTileV2 club={club()} status="none" membersCount={12} onOpen={() => {}} onJoin={() => {}} onPeek={() => {}} />);
+    expect(screen.getByTestId('cv2-club-join').getAttribute('data-long')).toBeNull();
+  });
+
   it('passe en Membre ✓ / Envoi… avec bouton occupé non cliquable', () => {
     const onJoin = vi.fn();
     const { rerender } = render(

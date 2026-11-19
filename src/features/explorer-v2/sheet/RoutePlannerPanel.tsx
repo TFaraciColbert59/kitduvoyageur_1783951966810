@@ -754,7 +754,7 @@ export function RoutePlannerPanel({ ctx }: { ctx: SheetContext }) {
 
       {/* K2.06 + K2.07 : Recherche de lieu + placement carte + POI proches */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           <input
             type="text"
             value={placeQuery}
@@ -765,7 +765,8 @@ export function RoutePlannerPanel({ ctx }: { ctx: SheetContext }) {
             placeholder="Ajouter un lieu (départ, étape, arrivée)…"
             aria-label="Chercher un lieu à ajouter à l'itinéraire"
             style={{
-              flex: 1,
+              flex: '1 1 170px',
+              minWidth: 0,
               height: 34,
               borderRadius: 10,
               border: '0.5px solid rgba(23,43,36,0.16)',
@@ -866,7 +867,6 @@ export function RoutePlannerPanel({ ctx }: { ctx: SheetContext }) {
           <select
             value={loopBearing}
             onChange={(e) => setLoopBearing(Number(e.target.value))}
-            style={{ height: 26, borderRadius: 6, border: '0.5px solid rgba(23,43,36,0.2)' }}
           >
             <option value={0}>Nord</option>
             <option value={90}>Est</option>

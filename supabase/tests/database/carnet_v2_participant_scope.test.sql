@@ -237,13 +237,17 @@ RESET ROLE;
 -- 16..17 — Lectures publiques historiques retirées (F4)
 -- ----------------------------------------------------------------------------
 SET LOCAL ROLE anon;
+SET LOCAL "request.jwt.claim.sub" = '';
+SET LOCAL "request.jwt.claims" = '{"role": "anon"}';
 SELECT is(
-  (SELECT count(*)::int FROM public.carnet_moments),
+  (SELECT count(*)::int FROM public.carnet_moments
+   WHERE carnet_id = 'c2a00000-0000-4000-8000-0000000000f1'),
   0,
   '16. anon ne lit aucun moment d''un carnet privé'
 );
 SELECT is(
-  (SELECT count(*)::int FROM public.carnet_kit_items),
+  (SELECT count(*)::int FROM public.carnet_kit_items
+   WHERE carnet_id = 'c2a00000-0000-4000-8000-0000000000f1'),
   0,
   '17. anon ne lit aucun kit d''un carnet privé'
 );

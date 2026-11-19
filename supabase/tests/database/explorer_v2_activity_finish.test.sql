@@ -204,6 +204,8 @@ SELECT is(
   '15. une séance historique hors taxonomie reste fermable'
 );
 
+-- Inspect persisted metadata with the suite owner. The RPC above ran as authenticated.
+RESET ROLE;
 SELECT is(
   (
     SELECT h.variant_id
@@ -218,6 +220,8 @@ SELECT is(
   'rando-legacy',
   '16. la variante historique est recopiée dans le résumé'
 );
+
+SET LOCAL ROLE authenticated;
 
 -- ── Résumé historique retrouvé par une autre clé ────────────────────────────
 SELECT is(
@@ -244,6 +248,7 @@ SELECT ok(
   '19. la fin directe sans clé crée un résumé'
 );
 
+RESET ROLE;
 SELECT is(
   (
     SELECT h.activity_session_id
@@ -255,6 +260,13 @@ SELECT is(
   '20. le résumé est durablement lié à la séance'
 );
 
+SELECT h.id AS direct_finish_summary
+  FROM public.hike_sessions h
+ WHERE h.user_id = 'a1f10000-0000-4000-8000-000000000001'
+   AND h.activity_session_id = 'a1f20000-0000-4000-8000-000000000005'
+\gset
+
+SET LOCAL ROLE authenticated;
 SELECT is(
   public.finish_activity_session_idempotent(
     'a1f20000-0000-4000-8000-000000000005',
@@ -269,12 +281,7 @@ SELECT is(
     'a1f20000-0000-4000-8000-000000000005',
     'finish-key-six'
   ) ->> 'summaryId',
-  (
-    SELECT h.id::text
-      FROM public.hike_sessions h
-     WHERE h.user_id = 'a1f10000-0000-4000-8000-000000000001'
-       AND h.activity_session_id = 'a1f20000-0000-4000-8000-000000000005'
-  ),
+  :'direct_finish_summary',
   '22. le résumé de la fin directe est renvoyé'
 );
 

@@ -207,6 +207,20 @@ export function ManualActivityDrawer({
       aria-label="Ajouter une activité manuellement"
       data-testid="manual-activity-drawer"
     >
+      <style>{`
+        .lkdv-trace-import{display:flex;flex-direction:column;gap:12px;color:#172b24;}
+        .lkdv-trace-import-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:0 2px;}
+        .lkdv-trace-import-head>div{display:flex;flex-direction:column;gap:2px;min-width:0;}
+        .lkdv-trace-import-eyebrow{margin:0;font:600 10.5px/1.2 -apple-system,"SF Pro Text",Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#56665d;}
+        .lkdv-trace-import-title{margin:0;font:700 18px/1.2 -apple-system,"SF Pro Display",Inter,sans-serif;letter-spacing:-.02em;color:#172b24;}
+        .lkdv-trace-import-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 13px;border-radius:999px;font:600 12.5px/1.2 -apple-system,"SF Pro Text",Inter,sans-serif;cursor:pointer;border:0.5px solid rgba(23,43,36,.16);background:rgba(255,255,255,.72);color:#172b24;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 8px rgba(10,20,14,.06);}
+        .lkdv-trace-import-btn.primary{background:#17402c;color:#fff;border-color:#17402c;box-shadow:0 4px 12px rgba(23,64,44,.22);}
+        .lkdv-trace-import-btn.ghost{background:rgba(255,255,255,.68);color:#172b24;}
+        .lkdv-trace-import input,.lkdv-trace-import select,.lkdv-trace-import textarea{border:0.5px solid rgba(23,43,36,.16);background:rgba(255,255,255,.78);color:#172b24;font:500 13.5px/1.3 -apple-system,"SF Pro Text",Inter,sans-serif;}
+        .lkdv-trace-import-saved{padding:14px;border-radius:16px;background:rgba(255,255,255,.76);border:0.5px solid rgba(23,64,44,.18);}
+        .lkdv-trace-import-saved-title{display:flex;align-items:center;gap:8px;color:#17402c;font-size:14px;}
+        .lkdv-trace-import-saved-sub{margin:4px 0 0;font-size:12.5px;color:#56665d;}
+      `}</style>
       <header className="lkdv-trace-import-head">
         <div>
           <p className="lkdv-trace-import-eyebrow">Saisie manuelle · sans GPS</p>

@@ -9,12 +9,9 @@ import type {
   ParkPerimeter,
   RouteRef,
 } from '@/features/highlights';
-import {
-  CollectionDrawer,
-  CollectionsPanel,
-  GuideDrawer,
-  InspirationRail,
-} from '@/components/highlights';
+import { CollectionDrawer } from '@/components/highlights/CollectionDrawer';
+import { GuideDrawer } from '@/components/highlights/GuideDrawer';
+import { InspirationRail } from '@/components/highlights/InspirationRail';
 
 interface DiscoverPayload {
   recommendations: InspirationRecommendation[];
@@ -205,7 +202,7 @@ export function C03DiscoverSection() {
   return (
     <section
       aria-label="Inspiration, guides et collections"
-      style={{ display: 'grid', gap: 12, marginBottom: 16 }}
+      style={{ display: 'grid', gap: 12, marginBottom: 14, minWidth: 0, paddingInline: 2 }}
     >
       <InspirationRail
         recommendations={discover?.recommendations ?? []}
@@ -217,7 +214,7 @@ export function C03DiscoverSection() {
       />
 
       {allGuides.length > 0 ? (
-        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, minWidth: 0 }}>
           {allGuides.map((guide) => (
             <button
               key={guide.id}
@@ -225,21 +222,11 @@ export function C03DiscoverSection() {
               className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
               onClick={() => setActiveGuide(guide)}
             >
-              Guide · {guide.title}
+              Guide · {guide.title.replace(/^Guide\s*[·:]\s*/i, '')}
             </button>
           ))}
         </div>
       ) : null}
-
-      <CollectionsPanel
-        hits={allCollections}
-        query={collectionsQuery}
-        onQueryChange={setCollectionsQuery}
-        onOpen={(collectionId) => {
-          const hit = allCollections.find((h) => h.collection.id === collectionId);
-          if (hit) setActiveCollection(hit.collection);
-        }}
-      />
     </section>
   );
 }

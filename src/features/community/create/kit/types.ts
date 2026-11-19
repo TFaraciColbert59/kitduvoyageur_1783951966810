@@ -21,10 +21,23 @@ export interface PickerProduct {
   category: string | null;
   weightG: number | null;
   image: string | null;
-  /** Usure en % (inventaire seulement, jamais inventée) ; `null` = inconnue. */
+  /** Usure en % (`null` = inconnue). */
   wear: number | null;
-  /** Prix lisible (« 129 € », « 12 € / jour », « Prêt gratuit »), `null` si inconnu. */
+  /** Libellé lisible d'état (« Neuf », « Bon état », « Usé »…). */
+  conditionLabel?: string | null;
+  /** Description du produit. */
+  description?: string | null;
+  /** Prix lisible (« 129 € », « 12 € / jour », « Gratuit »), `null` si inconnu. */
   priceLabel: string | null;
+  /** Caution / montant en cas de casse ou de perte (en centimes, notamment pour les prêts). */
+  depositCents?: number | null;
+  /** Propriétaire du produit (pour occasion, location, prêt). */
+  owner?: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    trustScore: number | null;
+  } | null;
   /** Produit du catalogue : seul celui-ci peut aller au panier. */
   cartable: UnifiedProduct | null;
   /** Lignes de `materiel_kit_items` à écrire. */

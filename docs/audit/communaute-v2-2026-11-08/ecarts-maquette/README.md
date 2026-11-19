@@ -17,6 +17,8 @@ Ce dossier compare les **tiroirs livrés** (Explorer + Création, sous-tiroirs e
 | `CHECKLIST-100.md` | Suivi item par item (cases, statuts, journal de progression) |
 | `BACKLOG-100.md` | Backlog exhaustif dédupliqué (85 items, lots, preuves) |
 | `GALERIE.html` | Galerie appairée des captures V2 ↔ maquette |
+| `finition.spec.ts` + `playwright.finition.config.ts` | Captures de **finition** app + maquette dans le même état : 360/430 au-delà de l'étape 1, thème sombre de chaque tiroir, Création vide/chargement/erreur, invité (sortie : `captures-finition/`) |
+| `audit-transverses.spec.ts` | Audit transversal : contraste AA des libellés sur le fond réel, rayon du focus clavier, cibles tactiles ≥ 44 px (sortie : `audit-transverses.json`) |
 | `ECARTS-EXPLORER.md` | Détail des écarts — tiroir Explorer et ses sous-tiroirs |
 | `ECARTS-CREATION.md` | Détail des écarts — tiroir Création, 6 formulaires, sous-tiroirs |
 | `ECARTS-TRANSVERSES.md` | Écarts transverses (couleurs, typo, rayons, motion, densités, états) |
@@ -54,5 +56,5 @@ npx playwright test \
 - `handoff/communaute-v2/JOURNAL.md` — décisions, exceptions (`01 § 6`), J-01…J-13.
 - `docs/audit/communaute-v2-2026-11-08/integration/RAPPORT-INTEGRATION.md` — écarts visuels et
   corrections du harnais d'intégration.
-- `docs/audit/communaute-v2-2026-11-08/COUVERTURE-200.md` — 161 fait / 23 partiel / 13 reporté /
-  3 non fait, avec raisons par numéro.
+- `docs/audit/communaute-v2-2026-11-08/COUVERTURE-200.md` — 187 fait (dont 4 dépendant de la production) /
+  0 partiel / 0 non fait / 13 reporté, avec preuves par numéro (état du 2026-11-10).

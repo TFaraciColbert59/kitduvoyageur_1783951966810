@@ -271,3 +271,16 @@ jeu de données `@ui-mock` **sans URL Storage ni trace GPS** ; pas de captures 3
 - **360 px et 430 px** : non capturés ici (couverts par l'e2e 1f, `PREUVES.md` A8).
 - **X10** : la référence maquette de l'étape 4 Carnet est manquante (PNG dupliqué) — la comparaison de cette étape n'est pas possible.
 - **`--cv2-island-shadow` en `rgba(0,0,0,.35)`** vs la règle « ombres à base d'encre » (CLAUDE.md §4) : à trancher côté design (l'île imite le matériel).
+
+### Résolution des points « à vérifier » (2026-11-10)
+
+Mesures : `audit-transverses.spec.ts` → `audit-transverses.json` (50 états : 4 volets, 6 types × toutes leurs étapes, clair et sombre).
+
+- **Contraste des surtitres** : mesuré sur le fond réellement rendu (texte rendu transparent, 10ᵉ centile du fond sous le texte de chaque libellé, contenu passé sous le pied exclu). Avant : jusqu'à 1,3 : 1 sur les zones sombres de la photo (« Début », « Visibilité », « Légende »…). Correctif : plaque claire `--cv2-label-plate` sous `.lkdv-cv2-field-label` et `.lkdv-cv2-eyebrow`. Après : **116 libellés mesurés, pire contraste 4.84 : 1 (AA ≥ 4,5)**, 0 échec.
+- **N12 (rayon du focus)** : la règle du tiroir ne force aucun rayon. Cause d'une déformation possible : la règle globale `*:focus-visible { border-radius: 2px }` de `tailwind.css` ; elle ne touche que les éléments sans rayon (capsule rectangulaire, 0 → 2 px, invisible). 12 cibles testées au clavier réel : **0 pilule déformée**.
+- **Cibles tactiles** : boîte effective (élément ∪ extension `::after`) de 900 contrôles visibles : **0 sous 44 px** (avant : 32 — segments, « + », lien secondaire, commentaires, tri).
+- **X2 / X3 / X5 / X10** : X2 (filigrane), X3 (badge GPS) et X5 (météo, RDV) se rendent sur des données que les fixtures du banc ne portent pas (URL Storage, `verifiedGps`, coordonnées) ; le rendu avec données est couvert par les tests unitaires (`CarnetTileV2.test.tsx`, `eventWeather.test.ts`, `EventTicketV2.test.tsx`) et reste **à constater sur données réelles** (FID-083). X10 : la référence de l'étape 4 du Carnet est recapturée par `finition.spec.ts` (`creation-carnet-etape4`).
+- **Ombre de l'île** : déjà `rgba(11, 31, 23, .35)` (`tokens.css`, `--cv2-island-shadow`) ; test `finitionCss.test.ts`.
+- **Chips 28 px** : apparence conservée, zone tactile ≥ 44 px (`::after` centré, `min-width/min-height: var(--lkv-touch-min)`).
+- **Thème sombre** : le tiroir est une carte claire forcée (`color-scheme: light`) : clair et sombre rendent la même chose (les mesures de l’audit sont identiques dans les deux schémas) ; la maquette n'a pas de rendu sombre du tiroir. Captures `captures-finition/390x844-sombre/`.
+- **Invité** : création inaccessible (le bouton « Créer » ouvre l'inscription, recette e2e) ; un geste interdit dans l'Explorer **redirige** vers l'inscription avec un toast (recette e2e 8b), alors que la maquette montre d'abord une île « Se connecter » : divergence assumée, non modifiée pour ne pas casser la recette.

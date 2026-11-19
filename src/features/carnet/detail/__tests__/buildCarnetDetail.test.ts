@@ -34,7 +34,6 @@ function input(overrides: Partial<BuildCarnetDetailInput> = {}): BuildCarnetDeta
     author: { id: 'u1', full_name: 'Camille Rochat', handle: 'camille', avatar_url: null, trust_score: 94 },
     hikeSession: null,
     etapes: [],
-    hebergements: [],
     moments: [],
     kitItems: [],
     viewerId: null,
@@ -113,7 +112,9 @@ describe('buildCarnetDetail — statistiques', () => {
       }),
     );
     expect(detail.trace).toBe(trace);
-    expect(detail.distanceKm).toBe(22);
+    /* Totaux déclarés du carnet prioritaires ; la trace, elle, reste celle de
+       la sortie trouvée par `pickCarnetTrace`. */
+    expect(detail.distanceKm).toBeCloseTo(106.4, 6);
     expect(detail.place.lat).toBeCloseTo(45.83, 6);
   });
 
@@ -151,9 +152,10 @@ describe('buildCarnetDetail — statistiques', () => {
     expect(detail.elevationProfile).toEqual([]);
   });
 
-  it('préfère la trace GPS aux colonnes du carnet', () => {
+  it('préfère les totaux déclarés du carnet pour son propriétaire', () => {
     const detail = buildCarnetDetail(
       input({
+        viewerId: 'u1',
         hikeSession: {
           id: 'h1',
           carnet_id: 'c1',
@@ -166,9 +168,9 @@ describe('buildCarnetDetail — statistiques', () => {
         rawSessionIds: ['h1'],
       }),
     );
-    expect(detail.distanceKm).toBe(118.2);
-    expect(detail.elevationM).toBe(2410);
-    expect(detail.stats[0].value).toBe('118,2 km');
+    expect(detail.distanceKm).toBe(106.4);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.stats[0].value).toBe('106,4 km');
   });
 
   it('compte les jours réels des étapes, jamais une division', () => {
@@ -194,14 +196,14 @@ describe('buildCarnetDetail — statistiques', () => {
 });
 
 describe('buildCarnetDetail — jours, moments, kit', () => {
-  it('construit un jour par étape réelle avec son hébergement', () => {
+  it('construit un jour par étape réelle avec sa nuit (carnet_nights)', () => {
     const detail = buildCarnetDetail(
       input({
         etapes: [
           { id: 'e1', jour_numero: 1, ordre: 1, date_etape: '2026-09-26', lieu_depart: 'Chamonix', lieu_arrivee: 'Les Houches', recit: 'Départ sous la pluie.', distance_km: 12, denivele_m: 800, duree_texte: '5h', meteo: 'pluie', temperature_c: 11 },
         ],
-        hebergements: [
-          { id: 'h1', apres_jour_numero: 1, nom: 'Refuge de Bellachat', prix_cents: 4600, prix_note: 'demi-pension', altitude_m: 2100, note: null, hote: null },
+        nights: [
+          { id: 'h1', dayNumber: 1, name: 'Refuge de Bellachat', type: 'refuge', altitudeM: 2100, infos: null, lat: null, lng: null, mapRefugeId: null },
         ],
       }),
     );
@@ -502,7 +504,9 @@ describe('buildCarnetDetail — lieu réel', () => {
 
     expect(detail.trace).not.toBe(trace);
     expect(detail.trace).not.toBeNull();
-    expect(detail.days).toEqual([]);
+    expect(detail.days).toEqual([
+      expect.objectContaining({ date: '2026-09-26', durationS: 3600, points: [], segments: [] }),
+    ]);
     expect(detail.elevationProfile).toEqual([]);
     expect(detail.place.lat).not.toBeCloseTo(45.83, 6);
     expect(detail.place.lng).not.toBeCloseTo(6.86, 6);
@@ -567,7 +571,9 @@ describe('buildCarnetDetail — lieu réel', () => {
     expect(detail.trace).not.toBe(trace);
     expect(detail.traceMasked).toBe(true);
     expect(detail.traceFullyMasked).toBe(false);
-    expect(detail.days).toEqual([]);
+    expect(detail.days).toEqual([
+      expect.objectContaining({ date: '2026-09-26', durationS: 3600, points: [], segments: [] }),
+    ]);
   });
 
   it('S6.15 : masque les agrégats et le profil dès qu’une sortie du carnet masque la métrique ou que la liste est incomplète', () => {
@@ -740,5 +746,64 @@ describe('buildCarnetDetail — lieu réel', () => {
       }),
     );
     expect(detail.place).toEqual({ country: null, region: null, locality: null, lat: null, lng: null });
+  });
+});
+
+
+function sessionAt(id: string, started_at: string, coordinates: Array<[number, number]>) {
+  return {
+    id,
+    carnet_id: 'c1',
+    distance_km: null,
+    elevation_gain_m: null,
+    duration_seconds: 3600,
+    started_at,
+    positions_geojson: { type: 'LineString' as const, coordinates },
+  };
+}
+
+describe('buildCarnetDetail — fenêtre du séjour', () => {
+  it('ignore une sortie datée hors séjour pour la trace et les totaux', () => {
+    const trace = {
+      type: 'LineString' as const,
+      coordinates: [
+        [6.9, 45.85],
+        [6.91, 45.86],
+      ] as Array<[number, number]>,
+    };
+    const detail = buildCarnetDetail(
+      input({
+        /* `getCarnetDetail` fournit la trace choisie par `pickCarnetTrace`,
+           qui se replie sur la sortie rattachée quand aucune n'est datée dans
+           le séjour. */
+        viewerId: 'u1',
+        rawSessionIds: ['hors'],
+        trace,
+        sessions: [sessionAt('hors', '2026-10-20T06:00:00Z', trace.coordinates)],
+      }),
+    );
+    /* Repli : la trace réelle de la sortie rattachée s'affiche quand même. */
+    expect(detail.trace).not.toBeNull();
+    expect(detail.distanceKm).toBeCloseTo(106.4, 6);
+    expect(detail.elevationM).toBe(2002);
+    expect(detail.days.every((day) => day.distanceKm === null)).toBe(true);
+  });
+
+  it('compte une sortie datée dans le séjour', () => {
+    const detail = buildCarnetDetail(
+      input({
+        viewerId: 'u1',
+        rawSessionIds: ['dans'],
+        trace: { type: 'LineString', coordinates: [[6.9, 45.85], [6.91, 45.86]] },
+        sessions: [
+          sessionAt('dans', '2026-09-27T06:00:00Z', [
+            [6.9, 45.85],
+            [6.91, 45.86],
+          ]),
+        ],
+      }),
+    );
+    expect(detail.trace).not.toBeNull();
+    expect(detail.days.some((day) => day.distanceKm !== null)).toBe(true);
   });
 });

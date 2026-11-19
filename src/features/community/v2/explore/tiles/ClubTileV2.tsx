@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ShieldCheck } from 'lucide-react';
 import AppImage from '@/components/ui/AppImage';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { activityLabel } from '../../data/communityFeedMappers';
@@ -64,7 +65,6 @@ export function ClubTileV2({
   onPeek,
 }: ClubTileV2Props) {
   const longPress = useLongPress({ onLongPress: (element) => onPeek(club, element) });
-  const isMember = status === 'member' || status === 'admin';
   const label = clubJoinDisplayLabel(club, status);
   const joinAria =
     status === 'member' || status === 'admin'
@@ -87,91 +87,88 @@ export function ClubTileV2({
 
   return (
     <article
-      className={`lkdv-cv2-tile lkdv-cv2x-club${month ? ' lkdv-cv2-tile--wide is-month' : ''}`}
+      className={`lkdv-cv2c-club-preview lkdv-cv2x-club-preview-tile${month ? ' lkdv-cv2-tile--wide is-month' : ''}`}
       data-testid="cv2-tile-club"
       data-id={club.id}
       {...longPress}
     >
-      <Link
-        className="lkdv-cv2x-tile-link"
-        href={`/clubs/${club.slug}`}
-        aria-label={tileAria}
-        onClick={(event) => {
-          event.preventDefault();
-          onOpen(club, event.currentTarget);
-        }}
-      >
-        <span className="lkdv-cv2x-club-head">
-          {/* Blason de la maquette (L2404) : 64 px pour le club du mois, 52 px
-              pour la grille — plus grand que les 44 px de la V2. */}
-          <ClubCrest
-            name={club.name}
-            activity={club.category}
-            seed={club.crestSeed}
-            size={month ? 64 : 52}
-          />
-          {club.privacy === 'closed' && !isMember ? (
-            <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
-              <ExploreIcon name="lock" size={12} />
+      <div className="lkdv-cv2-card lkdv-cv2c-crest-row lkdv-cv2x-club-crest-card">
+        <Link
+          className="lkdv-cv2x-club-preview-link"
+          href={`/clubs/${club.slug}`}
+          aria-label={tileAria}
+          onClick={(event) => {
+            event.preventDefault();
+            onOpen(club, event.currentTarget);
+          }}
+        >
+          {club.coverImage ? (
+            <span className="lkdv-cv2c-club-avatar">
+              <AppImage src={club.coverImage} alt="" width={44} height={44} className="lkdv-cv2x-avatar-img" />
             </span>
-          ) : null}
-          {month ? <span className="lkdv-cv2x-club-month">Club du mois</span> : null}
-        </span>
-        <span className="lkdv-cv2-title lkdv-cv2x-club-title">{club.name}</span>
-        <span className="lkdv-cv2-meta">
-          {[activityLabel(club.category), club.zoneLabel, formatCountFr(membersCount, 'membre')]
-            .filter(Boolean)
-            .join(' · ')}
-        </span>
-        <span className="lkdv-cv2x-club-signal">
-          <i aria-hidden="true" />
-          {activityLine(club)}
-        </span>
-        {club.friendsTotal > 0 ? (
-          <span className="lkdv-cv2x-club-friends">
-            <span className="lkdv-cv2-avatars" aria-hidden="true">
-              {club.friends.slice(0, 3).map((friend) => (
-                <span key={friend.id || friend.name} className="lkdv-cv2-avatar">
-                  {friend.avatarUrl ? (
-                    <AppImage src={friend.avatarUrl} alt="" width={28} height={28} className="lkdv-cv2x-avatar-img" />
-                  ) : (
-                    friend.initials.slice(0, 1)
-                  )}
+          ) : (
+            <ClubCrest
+              name={club.name}
+              activity={club.category}
+              seed={club.crestSeed}
+              size={44}
+            />
+          )}
+          <span className="lkdv-cv2x-club-preview-meta">
+            <b>
+              {club.name}
+              {club.privacy === 'closed' ? (
+                <span className="lkdv-cv2x-club-lock" title="Adhésion sur validation">
+                  <ExploreIcon name="lock" size={12} />
                 </span>
-              ))}
-            </span>
-            {/* Maquette (L2404) : « 3 amis » (et non « 3 amis membres »). */}
-            <small>{club.friendsTotal === 1 ? '1 ami' : `${club.friendsTotal} amis`}</small>
+              ) : null}
+              {month ? <span className="lkdv-cv2x-club-month-badge">Club du mois</span> : null}
+            </b>
+            <small>
+              {[
+                activityLabel(club.category),
+                club.zoneLabel,
+                formatCountFr(membersCount, 'membre'),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </small>
+            <small>
+              <ShieldCheck size={10} aria-hidden="true" />{' '}
+              {club.privacy === 'closed' ? 'Sur validation' : 'Ouvert'}
+              {club.friendsTotal > 0 ? ` · ${club.friendsTotal === 1 ? '1 ami' : `${club.friendsTotal} amis`}` : ''}
+            </small>
           </span>
-        ) : null}
-      </Link>
+        </Link>
 
-      <button
-        type="button"
-        className="lkdv-cv2x-join"
-        data-state={status}
-        aria-pressed={status !== 'none'}
-        aria-label={joinAria}
-        aria-busy={busy || undefined}
-        disabled={busy}
-        onClick={(event) => {
-          event.stopPropagation();
-          onJoin(club);
-        }}
-        data-testid="cv2-club-join"
-        data-id={club.id}
-      >
-        {busy ? (
-          <i className="lkdv-cv2x-spinner" aria-hidden="true" />
-        ) : status === 'pending' ? (
-          <ExploreIcon name="clock" size={15} />
-        ) : status === 'member' || status === 'admin' ? null : club.privacy === 'closed' ? (
-          <ExploreIcon name="lock" size={15} />
-        ) : (
-          <ExploreIcon name="plus" size={15} />
-        )}
-        <span>{busy ? 'Envoi…' : label}</span>
-      </button>
+        <button
+          type="button"
+          className="lkdv-cv2x-join lkdv-cv2x-club-join-compact"
+          data-state={status}
+          data-long={status === 'none' && club.privacy === 'closed' ? 'true' : undefined}
+          aria-pressed={status !== 'none'}
+          aria-label={joinAria}
+          aria-busy={busy || undefined}
+          disabled={busy}
+          onClick={(event) => {
+            event.stopPropagation();
+            onJoin(club);
+          }}
+          data-testid="cv2-club-join"
+          data-id={club.id}
+        >
+          {busy ? (
+            <i className="lkdv-cv2x-spinner" aria-hidden="true" />
+          ) : status === 'pending' ? (
+            <ExploreIcon name="clock" size={14} />
+          ) : status === 'member' || status === 'admin' ? null : club.privacy === 'closed' ? (
+            <ExploreIcon name="lock" size={14} />
+          ) : (
+            <ExploreIcon name="plus" size={14} />
+          )}
+          <span>{busy ? 'Envoi…' : label}</span>
+        </button>
+      </div>
     </article>
   );
 }

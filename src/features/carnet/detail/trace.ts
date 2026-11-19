@@ -1,30 +1,43 @@
-import { parsePositions } from '@/features/compte/map/geometry';
+import { parseTraceSegments } from '@/features/compte/map/geometry';
 import type { HikeSessionRow } from './types';
 
-/**
- * Trace réelle à exposer sur une fiche carnet.
- *
- * Un carnet peut porter plusieurs sorties : la plus récente donne les
- * statistiques (distance, D+), mais elle n'a pas forcément de trace GPS — le
- * relevé de terrain est optionnel. On choisit donc la trace de la session la
- * plus récente *qui en a une*, au lieu de regarder la seule dernière session
- * (constat de recette : carnet du Vercors, 3 traces en base, carte vide parce
- * que la sortie la plus récente n'avait pas de `positions_geojson`).
- *
- * Aucune coordonnée n'est inventée : sans session porteuse, on rend `null` et
- * la carte affiche un état vide honnête.
- */
-export function pickCarnetTraceSession(
-  sessions: HikeSessionRow[]
-): HikeSessionRow | null {
-  for (const session of sessions) {
-    const positions = session?.positions_geojson;
-    if (!positions) continue;
-    if (parsePositions(positions).length >= 2) return session;
-  }
-  return null;
+interface CarnetWindow {
+  startDate: string | null;
+  endDate: string | null;
 }
 
-export function pickCarnetTrace(sessions: HikeSessionRow[]): unknown | null {
-  return pickCarnetTraceSession(sessions)?.positions_geojson ?? null;
+export function isSessionInCarnetWindow(
+  session: HikeSessionRow,
+  window: CarnetWindow | null = null
+): boolean {
+  const start = window?.startDate?.trim();
+  const end = window?.endDate?.trim();
+  if (!start || !end) return true;
+  const at = session.started_at?.slice(0, 10) ?? '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(at) && at >= start && at <= end;
+}
+
+/**
+ * Choisit une trace parmi les sorties déjà autorisées par l'appelant, dans
+ * l'ordre fourni. Les sorties du séjour ont priorité sur les autres sorties
+ * liées. La sélection conserve les segments séparés des tracés masqués.
+ */
+export function pickCarnetTraceSession(
+  sessions: HikeSessionRow[],
+  window: CarnetWindow | null = null
+): HikeSessionRow | null {
+  let fallback: HikeSessionRow | null = null;
+  for (const session of sessions) {
+    if (!parseTraceSegments(session.positions_geojson).some((segment) => segment.length >= 2)) continue;
+    if (isSessionInCarnetWindow(session, window)) return session;
+    fallback ??= session;
+  }
+  return fallback;
+}
+
+export function pickCarnetTrace(
+  sessions: HikeSessionRow[],
+  window: CarnetWindow | null = null
+): unknown | null {
+  return pickCarnetTraceSession(sessions, window)?.positions_geojson ?? null;
 }

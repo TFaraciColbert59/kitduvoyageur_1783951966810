@@ -1063,10 +1063,13 @@ let lensFilter = function(w, h, r, bz, sc) {
   if (!defs) {
     const s = document.createElementNS(NS, "svg");
     s.setAttribute("width", "0"); s.setAttribute("height", "0"); s.setAttribute("aria-hidden", "true"); s.style.position = "absolute";
-    s.innerHTML = '<defs id="lensdefs"></defs>';
-    document.body.appendChild(s);
-    defs = $("lensdefs");
+    const d = document.createElementNS(NS, "defs");
+    d.id = "lensdefs";
+    s.appendChild(d);
+    if (document.body) document.body.appendChild(s);
+    defs = d;
   }
+  if (!defs) return id;
   const f = document.createElementNS(NS, "filter");
   f.id = id; f.setAttribute("x", "0"); f.setAttribute("y", "0"); f.setAttribute("width", w); f.setAttribute("height", h);
   f.setAttribute("filterUnits", "userSpaceOnUse"); f.setAttribute("color-interpolation-filters", "sRGB");
@@ -4362,12 +4365,12 @@ function applyAccountBootstrap(data) {
   return true;
 }
 
-const notifyHostAction = (a, v) => {
+function notifyHostAction(a, v) {
   if (!isCurrent()) return;
   if (typeof window.__lkdvOnAction === 'function') {
     try { return window.__lkdvOnAction(a, v, S); } catch (_) {}
   }
-};
+}
 /* ---------- Point 3 : Modal Post Instagram (100 % Réplique Native Liquid Glass) ---------- */
 function renderPostModal(postId) {
   if (!isCurrent()) return;

@@ -21,12 +21,14 @@ export interface CarnetRow {
   views_count: number | null;
   distance_km: number | string | null;
   denivele_m: number | string | null;
-  groupe_id: string | null;
+  /** Colonne historique : plus lue ni écrite (les tables `groupe_*` n'existent plus). */
+  groupe_id?: string | null;
   lieu_depart: string | null;
   lieu_arrivee: string | null;
   /** Code ISO 3166-1 alpha-2 réel de la colonne `carnets.country_iso`. */
   country_iso?: string | null;
   trip_id?: string | null;
+  map_points?: unknown;
   live_sharing?: boolean | null;
   created_at?: string | null;
   status?: string | null;
@@ -81,18 +83,6 @@ export interface CarnetStepRow {
   created_at?: string | null;
 }
 
-export interface HebergementRow {
-  id: string;
-  apres_jour_numero: number | null;
-  nom: string | null;
-  prix_cents: number | null;
-  prix_note: string | null;
-  altitude_m: number | null;
-  note: string | null;
-  hote: string | null;
-  type_hebergement?: string | null;
-}
-
 export interface MomentRow {
   id: string;
   jour_numero: number | null;
@@ -107,6 +97,11 @@ export interface MomentRow {
   media_type?: string | null;
   media_url?: string | null;
   prive?: boolean | null;
+  /** Type canonique (colonne `moment_type`, migration 20261109100001). */
+  moment_type?: string | null;
+  /** Données structurées du type (montant, citation, objet…) — `moment_meta`. */
+  moment_meta?: unknown;
+  auteur_id?: string | null;
 }
 
 export interface KitItemRow {
@@ -159,8 +154,11 @@ export interface CarnetMomentItem {
   place: string | null;
   imageUrl: string | null;
   title?: string | null;
+  /** Type canonique (`MomentType`) ou `null` quand rien ne permet de le dire. */
   type?: string | null;
   authorId?: string | null;
+  /** Données structurées du type (montant, citation, objet du kit…). */
+  meta?: import('./momentTypes').MomentMeta | null;
 }
 
 /** Un point GPS d'un jour : sa coordonnée réelle et son heure réelle. */
@@ -437,7 +435,7 @@ export interface CarnetDetail {
    * Un jour sans donnée n'est pas créé : la numérotation reste celle du carnet.
    */
   days: CarnetDay[];
-  /** Étapes déclarées du carnet (`groupe_etapes`), lecture historique inchangée. */
+  /** Étapes déclarées du carnet (`carnet_etapes`). */
   etapes: CarnetEtapeDay[];
   /** Totaux du carnet (`buildSummary`). */
   summary: CarnetSummary;
@@ -548,7 +546,6 @@ export interface BuildCarnetDetailInput {
   traceViewer?: TraceViewer;
   etapes?: EtapeRow[];
   steps?: CarnetStepRow[];
-  hebergements?: HebergementRow[];
   moments: MomentRow[];
   kitItems: KitItemRow[];
   viewerId: string | null;

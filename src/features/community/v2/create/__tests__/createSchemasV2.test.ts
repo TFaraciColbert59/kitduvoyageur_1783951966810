@@ -79,19 +79,25 @@ describe('schémas V2 — une validation par étape', () => {
     }
   });
 
-  it('Publication : le format Événement renvoie vers Sortie (maquette L2803)', () => {
-    const values = {
+  it('Publication : le format Événement se crée directement avec date, titre et détails ou sortie', () => {
+    const missing = {
       ...createDefaultsV2('post'),
       format: 'event' as const,
       audience: 'public' as const,
     };
-    const result = postSchemaV2.safeParse(values);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const issues = result.error.issues.filter((issue) => issue.path[0] === 'format');
-      expect(issues).toHaveLength(1);
-      expect(issues[0].message).toBe('Un événement se crée dans le formulaire Sortie.');
+    const invalid = postSchemaV2.safeParse(missing);
+    expect(invalid.success).toBe(false);
+    if (!invalid.success) {
+      expect(invalid.error.issues.some((issue) => issue.path[0] === 'eventDate')).toBe(true);
+      expect(invalid.error.issues.some((issue) => issue.path[0] === 'title')).toBe(true);
     }
+    const valid = postSchemaV2.safeParse({
+      ...missing,
+      eventDate: tomorrow,
+      title: 'Rando lever du soleil',
+      linkedEventId: '00000000-0000-0000-0000-000000000001',
+    });
+    expect(valid.success).toBe(true);
   });
 
   it('Sortie : ski de rando sans DVA → une seule erreur de check-list', () => {
@@ -232,8 +238,19 @@ describe('schémas V2 — une validation par étape', () => {
   it('Carnet : privé par défaut, fin avant début refusée, moment vide refusé', () => {
     const defaults = createDefaultsV2('carnet');
     expect(defaults.visibility).toBe('private');
-    const base = { ...defaults, title: 'Tour des Écrins', destination: 'Écrins' };
+    const base = {
+      ...defaults,
+      title: 'Tour des Écrins',
+      destination: 'Écrins',
+      trace: [
+        [6.1, 44.9],
+        [6.2, 44.95],
+      ],
+    };
     expect(carnetSchemaV2.safeParse(base).success).toBe(true);
+    /* Un carnet n'existe pas sans tracé : le schéma refuse un carnet vide de
+       tracé (la recherche de randonnée de l'étape Tracé en importe un). */
+    expect(carnetSchemaV2.safeParse({ ...base, trace: [] }).success).toBe(false);
     expect(
       carnetSchemaV2.safeParse({ ...base, startDate: '2026-05-02', endDate: '2026-05-01' }).success,
     ).toBe(false);
@@ -248,6 +265,164 @@ describe('schémas V2 — une validation par étape', () => {
             date: '',
             night: null,
             moments: [{ id: 'm1', kind: 'photo', time: '', text: '', place: '', photo: null }],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    // Moment avec titre ou média valide
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: 'Bivouac au lac',
+                kind: 'photo',
+                time: '19:30',
+                text: '',
+                place: 'Lac Noir',
+                photo: null,
+                media: [],
+                encounters: ['Lucas', 'Sophie'],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Moment avec jusqu'à 5 médias
+    const testMedia = {
+      id: 'med-1',
+      name: 'photo.jpg',
+      type: 'image/jpeg',
+      size: 1000,
+      previewUrl: '',
+      url: 'https://example.test/photo.jpg',
+      alt: '',
+      cover: true,
+      status: 'uploaded' as const,
+      progress: 100,
+      storageBucket: 'carnet-media',
+      storagePath: 'u/photo.jpg',
+      crop: '1:1' as const,
+    };
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: '',
+                kind: 'photo',
+                time: '',
+                text: '',
+                place: '',
+                photo: null,
+                media: Array(5).fill(testMedia),
+                encounters: [],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Refus de > 5 médias par moment
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: '',
+            date: '',
+            night: null,
+            moments: [
+              {
+                id: 'm1',
+                title: '',
+                kind: 'photo',
+                time: '',
+                text: '',
+                place: '',
+                photo: null,
+                media: Array(6).fill(testMedia),
+                encounters: [],
+              },
+            ],
+          },
+        ],
+      }).success,
+    ).toBe(false);
+
+    // Jusqu'à 100 moments par jour acceptés
+    const hundredMoments = Array.from({ length: 100 }, (_, idx) => ({
+      id: `m-${idx}`,
+      title: `Moment ${idx + 1}`,
+      kind: 'photo' as const,
+      time: '10:00',
+      text: '',
+      place: '',
+      photo: null,
+      media: [],
+      encounters: [],
+    }));
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: 'Jour 1',
+            date: '',
+            night: null,
+            moments: hundredMoments,
+          },
+        ],
+      }).success,
+    ).toBe(true);
+
+    // Refus de > 100 moments par jour
+    const hundredAndOneMoments = Array.from({ length: 101 }, (_, idx) => ({
+      id: `m-${idx}`,
+      title: `Moment ${idx + 1}`,
+      kind: 'photo' as const,
+      time: '10:00',
+      text: '',
+      place: '',
+      photo: null,
+      media: [],
+      encounters: [],
+    }));
+    expect(
+      carnetSchemaV2.safeParse({
+        ...base,
+        days: [
+          {
+            id: 'd1',
+            dayNumber: 1,
+            title: 'Jour 1',
+            date: '',
+            night: null,
+            moments: hundredAndOneMoments,
           },
         ],
       }).success,

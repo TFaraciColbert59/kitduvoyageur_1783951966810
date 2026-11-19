@@ -1,7 +1,9 @@
 import { buildDays, buildSummary, toMomentItems } from './days';
+import { etapeFromRow } from './editSchemas';
 import { formatDateRange, formatElevation, formatKm, toNumber } from './format';
 import { buildCarnetPlace } from './place';
 import { pickElevationProfile } from './elevationProfile';
+import { isSessionInCarnetWindow } from './trace';
 import {
   isShareableTraceVisibility,
   projectTraceGeometry,
@@ -85,43 +87,17 @@ export function buildParticipants(input: BuildCarnetDetailInput): CarnetParticip
 }
 
 function buildEtapes(input: BuildCarnetDetailInput): CarnetEtapeDay[] {
+  /* La nuit d'un jour vient de `carnet_nights` : absente, `overnight` reste nul. */
   const overnightByDay = new Map<number, string>();
-  for (const h of input.hebergements ?? []) {
-    const day = h.apres_jour_numero;
-    if (day && h.nom) overnightByDay.set(day, h.nom);
+  for (const n of input.nights ?? []) {
+    if (n.dayNumber && n.name) overnightByDay.set(n.dayNumber, n.name);
   }
 
   const rawEtapes = input.etapes ?? [];
   if (rawEtapes.length > 0) {
-    return rawEtapes.map((e) => {
-      const dayNumber = e.jour_numero ?? e.ordre ?? 1;
-      const dateLabel = e.date_etape
-        ? new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(
-            new Date(`${e.date_etape}T12:00:00Z`)
-          )
-        : null;
-      return {
-        id: e.id,
-        dayNumber,
-        label: dateLabel ? `JOUR ${dayNumber} · ${dateLabel}` : `JOUR ${dayNumber}`,
-        from: e.lieu_depart?.trim() || null,
-        to: e.lieu_arrivee?.trim() || null,
-        note: e.recit?.trim() || null,
-        distanceKm: toNumber(e.distance_km),
-        elevationM: toNumber(e.denivele_m),
-        durationText: e.duree_texte?.trim() || null,
-        weather:
-          [
-            e.meteo?.trim(),
-            e.temperature_c !== null && e.temperature_c !== undefined
-              ? `${e.temperature_c} °C`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || null,
-        overnight: overnightByDay.get(dayNumber) ?? null,
-      };
-    });
+    return rawEtapes.map((e) =>
+      etapeFromRow(e, overnightByDay.get(e.jour_numero ?? e.ordre ?? 1) ?? null)
+    );
   }
 
   // Pas d'étapes : les moments donnent les journées, sans récit inventé
@@ -173,6 +149,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
   /* Jours dérivés : les moments nomment leur jour, les points GPS des sorties
      datent le leur. Aucune valeur n'est inventée quand une source manque. */
   const sessions = input.sessions ?? (hikeSession ? [hikeSession] : []);
+  const window = { startDate: carnet.start_date, endDate: carnet.end_date };
+  const inWindow = (session: HikeSessionRow) => isSessionInCarnetWindow(session, window);
+  const sessionsInWindow = sessions.filter(inWindow);
 
   /*
    * S6.15 — visibilité effective du carnet pour un lecteur tiers. Un agrégat
@@ -210,11 +189,11 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
       : NO_OUTING_METRICS;
   };
   const carnetMetricVisibility: OutingMetricVisibility =
-    sessions.length === 0
-      ? SHARED_SUMMARY_METRICS
-      : sessionsComplete
-        ? intersectMetricVisibility(sessions.map(sessionMetricVisibility))
-        : NO_OUTING_METRICS;
+    !sessionsComplete
+      ? NO_OUTING_METRICS
+      : sessions.length === 0
+        ? SHARED_SUMMARY_METRICS
+        : intersectMetricVisibility(sessions.map(sessionMetricVisibility));
 
   const etapes = buildEtapes(input).map((etape) => ({
     ...etape,
@@ -244,8 +223,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    */
   const rawSessionIds = new Set(input.rawSessionIds ?? []);
   const isRawSession = (session: HikeSessionRow) => rawSessionIds.has(session.id);
-  const statsSession = hikeSession && isRawSession(hikeSession) ? hikeSession : null;
+  const statsSession = hikeSession && isRawSession(hikeSession) && inWindow(hikeSession) ? hikeSession : null;
   const rawSessions = sessions.filter(isRawSession);
+  const rawSessionsInWindow = sessionsInWindow.filter(isRawSession);
   /*
    * Agrégat scalaire d'un carnet, calculé uniquement sur les sorties dont la
    * politique autorise la métrique. On n'utilise les colonnes du carnet que
@@ -264,8 +244,8 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      */
     const sources =
       metricVisibilityBySession === undefined && viewerRole === 'participant'
-        ? rawSessions
-        : sessions;
+        ? rawSessionsInWindow
+        : sessionsInWindow;
     let total: number | null = null;
     for (const session of sources) {
       if (!sessionMetricVisibility(session)[key]) continue;
@@ -275,28 +255,27 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     }
     return total;
   };
-  /*
-   * Repli historique réservé au propriétaire quand AUCUNE map n'est fournie :
-   * un appel direct (test, ancien consommateur) conserve les colonnes du
-   * carnet. Dès que `getCarnetDetail` fournit les politiques, ce repli
-   * disparaît : les colonnes pourraient contenir une sortie masquée.
-   */
-  const legacyOwnerFallback =
-    metricVisibilityBySession === undefined && viewerRole === 'participant';
-  const distanceKm =
-    sessions.length === 0
-      ? toNumber(carnet.distance_km)
-      : (toNumber(statsSession?.distance_km) ??
-        (legacyOwnerFallback
-          ? toNumber(carnet.distance_km)
-          : aggregateMetric('distance', (session) => session.distance_km)));
-  const elevationM =
-    sessions.length === 0
-      ? toNumber(carnet.denivele_m)
-      : (toNumber(statsSession?.elevation_gain_m) ??
-        (legacyOwnerFallback
-          ? toNumber(carnet.denivele_m)
-          : aggregateMetric('elevationGain', (session) => session.elevation_gain_m)));
+  /* Un total enregistré peut agréger des données privées. Le lecteur qui
+     possède les sorties du séjour conserve ce total, les autres reçoivent
+     les métriques explicitement autorisées pour les sessions concernées. */
+  const isOwner = Boolean(input.viewerId && carnet.author_id === input.viewerId);
+  const canUseDeclaredTotals =
+    sessionsComplete &&
+    (sessions.length === 0 ||
+      (isOwner &&
+        (metricVisibilityBySession === undefined ||
+          (rawSessionsInWindow.length === sessions.length &&
+            carnetMetricVisibility.distance && carnetMetricVisibility.elevationGain))));
+  const carnetMetric = (
+    key: 'distance' | 'elevationGain',
+    declared: unknown,
+    read: (session: HikeSessionRow) => unknown
+  ) =>
+    (canUseDeclaredTotals ? toNumber(declared) : null) ??
+    aggregateMetric(key, read) ??
+    (statsSession ? toNumber(read(statsSession)) : null);
+  const distanceKm = carnetMetric('distance', carnet.distance_km, (session) => session.distance_km);
+  const elevationM = carnetMetric('elevationGain', carnet.denivele_m, (session) => session.elevation_gain_m);
   /*
    * Une sortie partageable mais non brute ne fournit que ses métadonnées
    * agrégées. La politique par métrique décide lesquelles : sans elle, aucune
@@ -304,7 +283,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    * recalculer celle-ci ou de replacer la sortie dans un jour par simple
    * lecture.
    */
-  const metadataOnlySessions = sessions
+  const metadataOnlySessions = sessionsInWindow
     .filter(
       (session) =>
         !isRawSession(session) && isShareableTraceVisibility(session.visibility),
@@ -332,7 +311,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
         positions_timed: null,
       };
     });
-  const daySessions = [...rawSessions, ...metadataOnlySessions];
+  const daySessions = [...rawSessionsInWindow, ...metadataOnlySessions];
   /*
    * Le profil construit depuis `positions_timed` contient les coordonnées
    * brutes du départ et de l'arrivée : il ne peut venir que d'une sortie
@@ -349,7 +328,9 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    */
   const elevationProfileVisible =
     rawSessions.length > 0 || canExposeElevationProfile(carnetMetricVisibility);
-  const elevationProfile = elevationProfileVisible ? pickElevationProfile(rawSessions) : [];
+  const elevationProfile = elevationProfileVisible
+    ? pickElevationProfile(rawSessionsInWindow.length > 0 ? rawSessionsInWindow : rawSessions)
+    : [];
   const builtDays = buildDays({
     moments: input.moments,
     sessions: daySessions,
@@ -397,7 +378,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
      fin sont masqués — ou toute la trace si elle n'est pas explicitement
      partageable. La projection est calculée une seule fois pour exposer aussi
      son état (masquée, totalement masquée, erreur). */
-  const canUseHikeSessionTrace = hikeSession ? rawSessionIds.has(hikeSession.id) : false;
+  const canUseHikeSessionTrace = hikeSession ? isRawSession(hikeSession) && inWindow(hikeSession) : false;
   const rawTrace =
     input.trace ?? (canUseHikeSessionTrace ? (hikeSession?.positions_geojson ?? null) : null);
   const traceVisibility = input.traceVisibility ?? carnet.visibility;
@@ -420,24 +401,11 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
    */
   const viewerDays = days;
 
-  const nights: CarnetNightItem[] =
-    input.nights && input.nights.length > 0
-      ? input.nights
-      : (input.hebergements ?? []).map((h) => ({
-          id: h.id,
-          dayNumber: h.apres_jour_numero ?? 1,
-          name: h.nom?.trim() || 'Hébergement',
-          type: (['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre'].includes(
-            (h as { type_hebergement?: string | null }).type_hebergement ?? ''
-          )
-            ? (h as { type_hebergement?: string | null }).type_hebergement
-            : 'refuge') as CarnetNightItem['type'],
-          altitudeM: toNumber(h.altitude_m),
-          infos: h.prix_note || h.note || null,
-          lat: null,
-          lng: null,
-          mapRefugeId: null,
-        }));
+  /* Nuits du carnet (`carnet_nights`), triées par jour. Aucun repli : les
+     anciennes tables `groupe_*` n'existent plus, une nuit absente n'est pas inventée. */
+  const nights: CarnetNightItem[] = [...(input.nights ?? [])].sort(
+    (x, y) => x.dayNumber - y.dayNumber
+  );
 
   const budget = viewerRole === 'visitor' ? null : (input.budget ?? null);
 
@@ -467,7 +435,7 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     visibility: carnet.visibility ?? 'public',
     isPublic: (carnet.visibility ?? 'public') === 'public',
     verified: carnet.verified === true,
-    isOwner: Boolean(input.viewerId && carnet.author_id && input.viewerId === carnet.author_id),
+    isOwner,
     author: buildAuthor(input),
     participants: buildParticipants(input),
     stats,

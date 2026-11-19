@@ -18,6 +18,12 @@ export interface MarketplaceListing {
   deposit_cents: number;
   status: ListingStatus;
   created_at: string;
+  owner?: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    trust_score: number | null;
+  } | null;
 }
 export interface MarketplaceTransaction {
   id: string;

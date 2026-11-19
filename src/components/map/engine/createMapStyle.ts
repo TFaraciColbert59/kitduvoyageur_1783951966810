@@ -110,6 +110,85 @@ export interface CreateMapStyleOptions {
   withTiles?: boolean;
   /** Fond transparent (globe pays posé sur la vidéo de fond). */
   transparentBackground?: boolean;
+  /** Projection de la carte : 'globe' (défaut) ou 'mercator' (cartes 2D locales ultra-fluides). */
+  projection?: 'globe' | 'mercator';
+}
+
+/**
+ * Options de constructeur MapLibre optimisées pour un zoom, dézoom et déplacement
+ * ultra-fluides (60/120 Hz) sur iOS tactile et desktop :
+ * - conserve les tuiles en cours de chargement pendant le zoom (`cancelPendingTileRequestsWhileZooming: false`)
+ * - cache élargi en mémoire (`maxTileCacheSize: 160`) pour éviter les flashs blancs au dézoom
+ * - fondu rapide (`fadeDuration: 120`)
+ */
+export const SMOOTH_MAPLIBRE_OPTIONS = {
+  fadeDuration: 120,
+  maxTileCacheSize: 160,
+  refreshExpiredTiles: false,
+  cancelPendingTileRequestsWhileZooming: false,
+} as const;
+
+export interface SmoothMapPhysicsTarget {
+  dragPan?: {
+    enable?: (options?: { linearity?: number; maxSpeed?: number; deceleration?: number }) => void;
+  };
+  scrollZoom?: {
+    enable?: (options?: { around?: 'center' }) => void;
+    setWheelZoomRate?: (wheelZoomRate: number) => void;
+    setZoomRate?: (zoomRate: number) => void;
+  };
+  touchZoomRotate?: {
+    enable?: (options?: { around?: 'center' }) => void;
+    disableRotation?: () => void;
+  };
+  touchPitch?: {
+    disable?: () => void;
+  };
+  dragRotate?: {
+    disable?: () => void;
+  };
+}
+
+export interface SmoothMapPhysicsOptions {
+  /** Verrouille la rotation à 2 doigts et le pitch pour un pinch-to-zoom pur et sans tremblement. */
+  lockRotation?: boolean;
+}
+
+/**
+ * Applique une physique de déplacement et de zoom ultra-fluide (inertie longue type iOS natif,
+ * suivi immédiat du doigt, vitesse de zoom molette/trackpad x2.8, pinch-zoom stable).
+ */
+export function applySmoothMapPhysics(
+  map: SmoothMapPhysicsTarget | null | undefined,
+  options: SmoothMapPhysicsOptions = {},
+): void {
+  if (!map) return;
+  const { lockRotation = false } = options;
+  try {
+    map.dragPan?.enable?.({
+      linearity: 0.15,
+      maxSpeed: 2400,
+      deceleration: 1600,
+    });
+  } catch {
+    map.dragPan?.enable?.();
+  }
+  try {
+    map.scrollZoom?.setWheelZoomRate?.(1 / 160);
+    map.scrollZoom?.setZoomRate?.(1 / 65);
+  } catch {
+    /* ignore */
+  }
+  try {
+    map.touchZoomRotate?.enable?.();
+    if (lockRotation) {
+      map.touchZoomRotate?.disableRotation?.();
+      map.touchPitch?.disable?.();
+      map.dragRotate?.disable?.();
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 export function createMapStyle(
@@ -120,7 +199,7 @@ export function createMapStyle(
   // pipeline de style (aucun style.load/load, sources jamais chargées).
   // L'atmosphère est donc appliquée via `map.setSky()` APRÈS le load
   // (voir UnifiedExplorerMap). Écart v6 documenté dans MISSION_LOG.
-  const { withTiles = true, transparentBackground = false } = options;
+  const { withTiles = true, transparentBackground = false, projection = 'globe' } = options;
   const sources: StyleSpecification['sources'] = {};
   const layers: StyleSpecification['layers'] = [];
 
@@ -183,7 +262,7 @@ export function createMapStyle(
 
   return {
     version: 8,
-    projection: { type: 'globe' },
+    projection: { type: projection },
     sources,
     layers,
   };

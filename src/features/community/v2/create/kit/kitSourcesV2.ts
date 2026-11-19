@@ -16,6 +16,14 @@ import { createClient } from '@/lib/supabase/client';
  * un prérequis.
  */
 
+export interface InventoryItemV2 {
+  ownershipId: string;
+  productId: string | null;
+  name: string;
+  category: string | null;
+  weightG: number | null;
+}
+
 export interface KitSourceOptionV2 {
   id: string;
   name: string;

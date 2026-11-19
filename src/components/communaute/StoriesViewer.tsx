@@ -10,13 +10,31 @@ import { SHEET_EXIT_MS } from '@/design/motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { CloudSun, Compass, Link2, MapPin, Mountain } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 
-export interface StoryOverlay {
-  type: 'text';
-  text: string;
-}
+export type StoryOverlay =
+  | {
+      type: 'text';
+      text: string;
+      x?: number;
+      y?: number;
+      scale?: number;
+      rotation?: number;
+      style?: 'clair' | 'encre' | 'sauge';
+    }
+  | {
+      type: 'sticker';
+      kind: 'lieu' | 'altitude' | 'meteo' | 'distance';
+      label?: string;
+      value?: number;
+    }
+  | {
+      type: 'link';
+      url: string;
+      label?: string;
+    };
 
 export interface StorySlide {
   image: string;
@@ -101,6 +119,7 @@ export default function StoriesViewer({
   onDelete,
   onReport,
   onBlock,
+  onAuthor,
   likedStoryIds,
   followedAuthorIds,
   myUserId,
@@ -111,6 +130,11 @@ export default function StoriesViewer({
   onClose: () => void;
   onReport?: (user: StoryUser, slide: StorySlide) => void;
   onBlock?: (user: StoryUser) => void;
+  /**
+   * Contexte où le profil public n'est pas la bonne destination (fiche carnet :
+   * la pilule ouvre la fiche du voyageur dans le carnet). Absent : lien `/profil/<id>`.
+   */
+  onAuthor?: (user: StoryUser) => void;
   onDelete?: (slide: StorySlide) => void;
   onView?: (slide: StorySlide) => void;
   onToggleLike?: (slide: StorySlide, liked: boolean) => void;
@@ -575,12 +599,107 @@ export default function StoriesViewer({
           aria-hidden="true"
         />
 
-        {/* Overlays texte (phase 07) — pastilles lisibles, sans interaction :
-            la navigation tactile reste prioritaire. */}
+        {/* Overlays texte positionnés (Création V2) */}
+        {slide.overlays
+          ?.filter(
+            (o): o is Extract<StoryOverlay, { type: 'text' }> =>
+              o.type === 'text' && Boolean(o.text) && typeof o.x === 'number' && typeof o.y === 'number',
+          )
+          .map((overlay, i) => {
+            const toneClass =
+              overlay.style === 'encre'
+                ? 'bg-[#172B24]/88 text-white'
+                : overlay.style === 'sauge'
+                  ? 'bg-[#3D7A52]/88 text-white'
+                  : 'bg-white/90 text-[#172B24]';
+            return (
+              <span
+                key={`pos-overlay-${userIndex}-${slideIndex}-${i}`}
+                className={`pointer-events-none absolute z-[var(--z-sticky)] max-w-[78%] rounded-[14px] px-3.5 py-1.5 text-center text-[15px] font-bold leading-snug shadow-lg backdrop-blur-md ${toneClass}`}
+                style={{
+                  left: `${Math.round((overlay.x ?? 0.5) * 100)}%`,
+                  top: `${Math.round((overlay.y ?? 0.5) * 100)}%`,
+                  transform: `translate(-50%, -50%) scale(${overlay.scale ?? 1}) rotate(${overlay.rotation ?? 0}deg)`,
+                }}
+              >
+                {overlay.text}
+              </span>
+            );
+          })}
+
+        {/* Overlays texte legacy (v1) + stickers & liens (Création V2) */}
         {slide.overlays && slide.overlays.length > 0 && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-[max(var(--space-12),calc(var(--safe-bottom)+var(--space-12)))] z-[var(--z-sticky)] flex flex-col items-center gap-[var(--space-1)] px-[var(--space-4)]">
+          <div className="pointer-events-none absolute inset-x-0 bottom-[max(var(--space-12),calc(var(--safe-bottom)+var(--space-12)))] z-[var(--z-sticky)] flex flex-col items-center gap-[var(--space-2)] px-[var(--space-4)]">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {slide.overlays.map((overlay, i) => {
+                if (overlay.type === 'sticker') {
+                  if (overlay.kind === 'lieu' && overlay.label) {
+                    return (
+                      <span
+                        key={`st-lieu-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <MapPin size={11} aria-hidden="true" />
+                        {overlay.label}
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'meteo' && overlay.label) {
+                    return (
+                      <span
+                        key={`st-meteo-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <CloudSun size={11} aria-hidden="true" />
+                        {overlay.label}
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'altitude' && overlay.value != null) {
+                    return (
+                      <span
+                        key={`st-alt-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <Mountain size={11} aria-hidden="true" />
+                        {overlay.value} m
+                      </span>
+                    );
+                  }
+                  if (overlay.kind === 'distance' && overlay.value != null) {
+                    return (
+                      <span
+                        key={`st-dist-${userIndex}-${slideIndex}-${i}`}
+                        className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md"
+                      >
+                        <Compass size={11} aria-hidden="true" />
+                        {overlay.value} km
+                      </span>
+                    );
+                  }
+                  return null;
+                }
+                if (overlay.type === 'link' && overlay.url) {
+                  return (
+                    <a
+                      key={`st-link-${userIndex}-${slideIndex}-${i}`}
+                      href={overlay.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="pointer-events-auto inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-[#172B24] shadow-sm backdrop-blur-md"
+                    >
+                      <Link2 size={11} aria-hidden="true" />
+                      {overlay.label || 'Lien'}
+                    </a>
+                  );
+                }
+                return null;
+              })}
+            </div>
             {slide.overlays.map((overlay, i) =>
-              overlay.type === 'text' && overlay.text ? (
+              overlay.type === 'text' && overlay.text && (typeof overlay.x !== 'number' || typeof overlay.y !== 'number') ? (
                 <span
                   key={`overlay-${userIndex}-${slideIndex}-${i}`}
                   className="max-w-full rounded-[var(--lkv-radius-md)] bg-black/45 px-[var(--space-3)] py-[var(--space-1)] text-center text-[length:var(--lkv-text-body-sm)] font-semibold text-white backdrop-blur-sm"
@@ -615,13 +734,17 @@ export default function StoriesViewer({
 
         {/* Pillule auteur — copie de la pillule d'un post. Aucun bouton. */}
         <div className="absolute left-[var(--space-4)] top-[max(var(--space-8),calc(var(--safe-top)+var(--space-6)))] z-[var(--z-sticky)] max-w-[calc(100%-var(--space-8))]">
-          <Link
-            href={`/profil/${user.id}`}
-            className="lkdv-post-author lkdv-account-glass"
-            aria-label={`Profil de ${user.name}`}
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-          >
+          {onAuthor ? (
+            <button
+              type="button"
+              className="lkdv-post-author lkdv-account-glass"
+              aria-label={`Fiche de ${user.name}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAuthor(user);
+              }}
+            >
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- avatar distant
               <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
@@ -636,7 +759,31 @@ export default function StoriesViewer({
               </span>
               {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
             </span>
-          </Link>
+            </button>
+          ) : (
+            <Link
+              href={`/profil/${user.id}`}
+              className="lkdv-post-author lkdv-account-glass"
+              aria-label={`Profil de ${user.name}`}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- avatar distant
+              <img className="lkdv-post-author-av" src={user.avatarUrl} alt="" />
+            ) : (
+              <span className="lkdv-post-author-av flex items-center justify-center bg-[rgba(23,64,44,.12)] text-[13px] font-bold text-[#17402C]">
+                {user.name.charAt(0)}
+              </span>
+            )}
+            <span className="lkdv-post-author-txt">
+              <span className="lkdv-post-author-line">
+                <b>{user.name}</b>
+              </span>
+              {user.time ? <span className="lkdv-post-author-meta">{user.time}</span> : null}
+            </span>
+            </Link>
+          )}
         </div>
 
         <div className="lkdv-story-options lkdv-account-glass">
@@ -748,6 +895,17 @@ export default function StoriesViewer({
                   }}
                 >
                   <Icon key={likePulse} className={likePulse > 0 ? 'is-pop' : ''} name="heart" size={16} color={liked ? '#E0245E' : '#17402C'} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Partager la story"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void shareStory();
+                  }}
+                >
+                  <Icon name="share2" size={16} color="#17402C" />
                 </button>
               </div>
             ) : null}

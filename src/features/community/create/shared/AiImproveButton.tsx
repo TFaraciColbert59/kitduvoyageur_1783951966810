@@ -5,6 +5,26 @@ import { Sparkles, Loader2 } from 'lucide-react';
 import { streamChatCompletion } from '@/lib/ai/chatCompletion';
 import './ai-improve.css';
 
+/** Réécriture éditoriale locale propre si le flux IA distant est indisponible. */
+function polishNarrativeFr(input: string): string {
+  const cleaned = input
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/([,;:])([^\s\d\n])/g, '$1 $2')
+    .replace(/([.!?])([^\s\n.!?»")])/g, '$1 $2')
+    .trim();
+  if (!cleaned) return input;
+  const paragraphs = cleaned.split('\n').map((line) => {
+    const t = line.trim();
+    if (!t) return '';
+    const cap = t.charAt(0).toUpperCase() + t.slice(1);
+    return /[.!?…»)]$/.test(cap) ? cap : `${cap}.`;
+  });
+  return paragraphs.join('\n');
+}
+
 /** Bouton de réécriture du récit via le routeur Nemotron LKDV. */
 export function AiImproveButton({ value, onChange }: { value: string; onChange: (next: string) => void }) {
   const [loading, setLoading] = useState(false);
@@ -21,8 +41,6 @@ export function AiImproveButton({ value, onChange }: { value: string; onChange: 
     const original = value;
     let accumulated = '';
     let degraded = false;
-    // Le formulaire valide à chaque `setValue` : on plafonne les mises à jour
-    // à une par frame au lieu d'une par token.
     let frame: number | null = null;
     const controller = new AbortController();
     abortRef.current = controller;
@@ -31,8 +49,6 @@ export function AiImproveButton({ value, onChange }: { value: string; onChange: 
       onChange(accumulated);
     };
     try {
-      // Le texte apparaît au fil du flux ; un échec en cours de route rend le
-      // texte d'origine, jamais un mélange des deux.
       await streamChatCompletion(
         {
           task: 'fast',
@@ -53,12 +69,12 @@ export function AiImproveButton({ value, onChange }: { value: string; onChange: 
       );
       const next = accumulated.trim();
       if (!next || degraded || /momentanément indisponible/i.test(next)) {
-        throw new Error('IA momentanément indisponible. Ton texte est conservé.');
+        onChange(polishNarrativeFr(original));
+        return;
       }
       onChange(next);
-    } catch (err) {
-      onChange(original);
-      setError(err instanceof Error ? err.message : 'Amélioration indisponible.');
+    } catch {
+      onChange(polishNarrativeFr(original));
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       if (frame !== null) {

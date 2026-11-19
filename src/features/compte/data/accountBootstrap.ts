@@ -1811,7 +1811,8 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     ),
     safeRowsOrNull<HikeRow>(
       supabase
-        .from('hike_sessions')
+        // RGPD : la trace horodatée passe par la vue participant.
+        .from('hike_sessions_participant')
         .select('id,route_id,started_at,ended_at,distance_km,elevation_gain_m,positions_timed,kit_id,title,max_altitude_m,visibility')
         .eq('user_id', user.id)
         .order('started_at', { ascending: false })
@@ -1822,7 +1823,7 @@ export async function loadAccountBootstrap(supabase: SupabaseLike) {
     // `duration_seconds` et `title` alimentent le calendrier S2.17/S2.18.
     safeRowsOrNull<StatsHikeRow>(
       supabase
-        .from('hike_sessions')
+        .from('hike_sessions_participant')
         .select(
           'id,route_id,started_at,ended_at,distance_km,duration_seconds,elevation_gain_m,positions_timed,title'
         )

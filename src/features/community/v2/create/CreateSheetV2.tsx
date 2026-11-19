@@ -3,16 +3,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
-import {
-  BookOpen,
-  Backpack,
-  Camera,
-  ChevronLeft,
-  ChevronRight,
-  Map as MapIcon,
-  PenLine,
-  Users,
-} from 'lucide-react';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+import { ExploreIcon } from '../explore/ExploreIcons';
 import { CommunitySheetShell } from '../shared/CommunitySheetShell';
 import { SheetPreviewContext } from '../shared/SheetPreview';
 import { DynamicIsland } from '@/components/ui/drawer/DynamicIsland';
@@ -23,12 +17,7 @@ import { createKindConfig, stepAriaLabel } from './engine/steps';
 import type { CreateNavV2 } from './engine/nav';
 import { flushDraftV2, hasDraftContentV2 } from './engine/useDraftV2';
 import { ConfirmDialogV2 } from './ConfirmDialogV2';
-import { PostFormV2 } from './forms/PostFormV2';
-import { StoryFormV2 } from './forms/StoryFormV2';
-import { SortieFormV2 } from './forms/SortieFormV2';
-import { ClubFormV2 } from './forms/ClubFormV2';
-import { KitFormV2 } from './forms/KitFormV2';
-import { CarnetFormV2 } from './forms/CarnetFormV2';
+import dynamic from 'next/dynamic';
 import {
   CreateSheetContext,
   type CreateDetailRequest,
@@ -36,6 +25,37 @@ import {
   type CreateSuccessV2,
 } from './CreateSheetContext';
 import './create-v2.css';
+
+// Perf : chaque formulaire (carte MapLibre, éditeur photo, kit…) est un chunk
+// séparé. Seul le type actif est chargé à l'ouverture ; les autres sont
+// préchargés au repos pour que le changement de type reste instantané.
+const FORM_LOADERS = {
+  post: () => import('./forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
+  story: () => import('./forms/StoryFormV2').then((m) => ({ default: m.StoryFormV2 })),
+  sortie: () => import('./forms/SortieFormV2').then((m) => ({ default: m.SortieFormV2 })),
+  club: () => import('./forms/ClubFormV2').then((m) => ({ default: m.ClubFormV2 })),
+  kit: () => import('./forms/KitFormV2').then((m) => ({ default: m.KitFormV2 })),
+  carnet: () => import('./forms/CarnetFormV2').then((m) => ({ default: m.CarnetFormV2 })),
+} as const;
+const formLoading = () => <div className="lkdv-cv2c-form-loading" aria-busy="true" />;
+const PostFormV2 = dynamic(FORM_LOADERS.post, { ssr: false, loading: formLoading });
+const StoryFormV2 = dynamic(FORM_LOADERS.story, { ssr: false, loading: formLoading });
+const SortieFormV2 = dynamic(FORM_LOADERS.sortie, { ssr: false, loading: formLoading });
+const ClubFormV2 = dynamic(FORM_LOADERS.club, { ssr: false, loading: formLoading });
+const KitFormV2 = dynamic(FORM_LOADERS.kit, { ssr: false, loading: formLoading });
+const CarnetFormV2 = dynamic(FORM_LOADERS.carnet, { ssr: false, loading: formLoading });
+
+let formsPrefetched = false;
+function prefetchAllForms(first?: CreateKindV2) {
+  if (first) void FORM_LOADERS[first]().catch(() => {});
+  if (formsPrefetched || typeof window === 'undefined') return;
+  formsPrefetched = true;
+  const run = () => {
+    for (const load of Object.values(FORM_LOADERS)) void load().catch(() => {});
+  };
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(run, { timeout: 2500 });
+  else window.setTimeout(run, 800);
+}
 
 /**
  * Tiroir Création V2 — coque `/compte` (`CommunitySheetShell`) + moteur unique
@@ -73,23 +93,25 @@ export interface CreateSheetV2Props {
   onCreateRequested?: (kind: CreateKindV2, prefill?: Record<string, unknown>) => void;
 }
 
+/** Pictogrammes de la capsule : ceux de la maquette (`CRTYPES`, L2618), 24 px comme la capsule de l'Explorer. */
 const KIND_META: Record<CreateKindV2, { label: string; icon: React.ReactNode }> = {
-  post: { label: 'Publication', icon: <PenLine size={22} aria-hidden="true" /> },
-  story: { label: 'Story', icon: <Camera size={22} aria-hidden="true" /> },
-  carnet: { label: 'Carnet', icon: <BookOpen size={22} aria-hidden="true" /> },
-  sortie: { label: 'Sortie', icon: <MapIcon size={22} aria-hidden="true" /> },
-  kit: { label: 'Kit', icon: <Backpack size={22} aria-hidden="true" /> },
-  club: { label: 'Club', icon: <Users size={22} aria-hidden="true" /> },
+  post: { label: 'Publication', icon: <ExploreIcon name="pen" size={24} /> },
+  story: { label: 'Story', icon: <ExploreIcon name="camera" size={24} /> },
+  carnet: { label: 'Carnet', icon: <ExploreIcon name="book" size={24} /> },
+  sortie: { label: 'Sortie', icon: <ExploreIcon name="map" size={24} /> },
+  kit: { label: 'Kit', icon: <ExploreIcon name="backpack" size={24} /> },
+  club: { label: 'Club', icon: <ExploreIcon name="users" size={24} /> },
 };
 
 interface IslandState {
   title: string;
   subtitle: string;
   kind: CreateKindV2;
-  actionLabel: string;
-  action: () => void;
+  actionLabel?: string;
+  action?: () => void;
   undoLabel?: string;
   undo?: () => void;
+  stayOpen?: boolean;
 }
 
 function kindIndexOf(kind: CreateKindV2): number {
@@ -130,6 +152,11 @@ export function CreateSheetV2({
   const activeNav = navs.get(activeKind) ?? null;
   const config = createKindConfig(activeKind);
 
+  // Perf : le formulaire demandé part tout de suite, les autres au repos.
+  useEffect(() => {
+    prefetchAllForms(initialKind);
+  }, [initialKind]);
+
   // Ouverture : type demandé, préremplissage, remise à zéro des couches.
   useEffect(() => {
     if (!open) {
@@ -149,6 +176,24 @@ export function CreateSheetV2({
       setPrefillNonce((nonce) => nonce + 1);
     }
   }, [initialKind, initialPrefill, open]);
+
+  // Écoute des notifications d'erreur/alerte Dynamic Island iPhone (ex. tracé trop long d'un coup).
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return undefined;
+    const onIslandEvent = (event: Event) => {
+      const detailPayload = (event as CustomEvent<{ title?: string; subtitle?: string }>).detail;
+      if (!detailPayload?.title) return;
+      keepOpenRef.current = true;
+      setIsland({
+        title: detailPayload.title,
+        subtitle: detailPayload.subtitle ?? '',
+        kind: activeKind,
+        stayOpen: true,
+      });
+    };
+    window.addEventListener('lkdv-create-island', onIslandEvent);
+    return () => window.removeEventListener('lkdv-create-island', onIslandEvent);
+  }, [activeKind, open]);
 
   // Clavier mobile : le champ actif reste visible au-dessus du clavier.
   useEffect(() => {
@@ -324,6 +369,31 @@ export function CreateSheetV2({
   const reportCreated = useCallback(
     (kind: CreateKindV2, result: CreateSuccessV2) => {
       haptic('success');
+      if (kind === 'sortie' && prefillByKind.sortie?.returnToPostEvent) {
+        keepOpenRef.current = true;
+        setPrefillByKind((current) => {
+          const prevSortie = current.sortie ?? {};
+          const { returnToPostEvent: _consumed, ...restSortie } = prevSortie;
+          return {
+            ...current,
+            sortie: restSortie,
+          };
+        });
+        toast.success('Sortie créée et rattachée à ton événement.');
+        requestCreate('post', {
+          format: 'event',
+          linkedEventId: result.id,
+          linkedEventTitle: result.name ?? '',
+          eventDate:
+            typeof result.extra?.eventDate === 'string' ? result.extra.eventDate : undefined,
+          location:
+            typeof result.extra?.eventLocation === 'string' && result.extra.eventLocation
+              ? result.extra.eventLocation
+              : undefined,
+          step: 1,
+        });
+        return;
+      }
       const openPage = () => {
         keepOpenRef.current = false;
         if (kind === 'club' && result.slug) router.push(`/clubs/${result.slug}`);
@@ -403,7 +473,7 @@ export function CreateSheetV2({
       // L'île est posée : la feuille se referme derrière elle (FID-033).
       closeBehindIsland(kind);
     },
-    [closeBehindIsland, config.successTitle, finishCreated, haptic, requestCreate, router],
+    [closeBehindIsland, config.successTitle, finishCreated, haptic, prefillByKind.sortie, requestCreate, router],
   );
 
   const contextValue = useMemo<CreateSheetContextValue>(
@@ -420,6 +490,13 @@ export function CreateSheetV2({
 
   const stepHostsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [, bumpHostsVersion] = useState(0);
+  const attachStepHost = useCallback((stepIndex: number, element: HTMLDivElement | null) => {
+    if (stepHostsRef.current[stepIndex] === element) return;
+    stepHostsRef.current[stepIndex] = element;
+    if (element) {
+      queueMicrotask(() => bumpHostsVersion((version) => version + 1));
+    }
+  }, []);
   const miniPages = useMemo(
     () =>
       CREATE_KINDS_V2.map((kind, index) =>
@@ -427,20 +504,14 @@ export function CreateSheetV2({
           ? config.steps.map((step, stepIndex) => (
               <div
                 key={`${kind}-${step.id}`}
-                ref={(element) => {
-                  if (stepHostsRef.current[stepIndex] === element) return;
-                  stepHostsRef.current[stepIndex] = element;
-                  // Les hôtes arrivent après le premier rendu du formulaire :
-                  // ce rendu les fait connaître au moteur (portails d'étapes).
-                  if (element) bumpHostsVersion((version) => version + 1);
-                }}
+                ref={(element) => attachStepHost(stepIndex, element)}
                 className="lkdv-cv2c-step-host"
                 data-step-host={stepIndex}
               />
             ))
           : [],
       ),
-    [config.steps, kindIndex],
+    [attachStepHost, config.steps, kindIndex],
   );
 
   const capsureItems = useMemo(
@@ -475,41 +546,55 @@ export function CreateSheetV2({
           {activeNav.serverError}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-foot-actions">
-        {/* Maquette (`cr-foot .back`, HTML L1138-1144) : « Retour » reste
-            **visible et désactivé** à l'étape 1 — la spec § 4.1 le voulait masqué,
-            la maquette fait foi (item 2). */}
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back"
-          onClick={activeNav.goBack}
-          disabled={activeNav.busy || !activeNav.canBack}
+      <LayoutGroup id="cv2c-foot-actions-group">
+        <motion.div
+          layout
+          className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact"
+          transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
         >
-          <ChevronLeft size={15} aria-hidden="true" />
-          Retour
-        </button>
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-          onClick={activeNav.goNext}
-          disabled={activeNav.busy || !user}
-          aria-busy={activeNav.busy || undefined}
-        >
-          {activeNav.busy
-            ? 'Envoi…'
-            : activeNav.busyLabel ??
-              (activeNav.stepIndex >= activeNav.stepCount - 1
-                ? // Maquette L2715 : après échec serveur, l'action finale devient
-                  // « Réessayer » (même action) ; elle reprend son libellé
-                  // nominal dès que l'erreur est levée (FID-032).
-                  activeNav.serverError
-                  ? 'Réessayer'
-                  : activeNav.finalLabel
-                : 'Suivant')}
-          {/* Chevron de la maquette (`.cr-foot .next`, HTML L1138-1142). */}
-          <ChevronRight size={15} aria-hidden="true" />
-        </button>
-      </div>
+          <AnimatePresence initial={false} mode="popLayout">
+            {activeNav.canBack ? (
+              <motion.button
+                key="cv2c-back-btn"
+                layout
+                type="button"
+                className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
+                aria-label="Retour"
+                onClick={activeNav.goBack}
+                disabled={activeNav.busy}
+                initial={{ opacity: 0, x: 34, scale: 0.6 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 34, scale: 0.6 }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                style={{ position: 'relative', zIndex: 1 }}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </motion.button>
+            ) : null}
+          </AnimatePresence>
+          <motion.button
+            key="cv2c-next-btn"
+            layout="position"
+            type="button"
+            className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
+            onClick={activeNav.goNext}
+            disabled={activeNav.busy || !user}
+            aria-busy={activeNav.busy || undefined}
+            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+            style={{ position: 'relative', zIndex: 2 }}
+          >
+            {activeNav.busy
+              ? 'Envoi…'
+              : activeNav.busyLabel ??
+                (activeNav.stepIndex >= activeNav.stepCount - 1
+                  ? activeNav.serverError
+                    ? 'Réessayer'
+                    : activeNav.finalLabel
+                  : 'Suivant')}
+            <ChevronRight size={15} aria-hidden="true" />
+          </motion.button>
+        </motion.div>
+      </LayoutGroup>
     </div>
   ) : null;
 
@@ -588,10 +673,10 @@ export function CreateSheetV2({
       open
       title={island.title}
       subtitle={island.subtitle}
-      action={{ label: island.actionLabel, onAction: island.action }}
+      action={island.action && island.actionLabel ? { label: island.actionLabel, onAction: island.action } : undefined}
       undo={island.undo && island.undoLabel ? { label: island.undoLabel, onUndo: island.undo } : undefined}
       onClose={() => {
-        const stay = keepOpenRef.current;
+        const stay = keepOpenRef.current || Boolean(island.stayOpen);
         keepOpenRef.current = false;
         setIsland(null);
         if (!stay) finishCreated(island.kind);
@@ -599,9 +684,17 @@ export function CreateSheetV2({
     />
   ) : null;
 
+  const usesPreviewSlot =
+    activeKind === 'post' ||
+    activeKind === 'story' ||
+    activeKind === 'carnet' ||
+    activeKind === 'sortie' ||
+    activeKind === 'club' ||
+    activeKind === 'kit';
+
   return (
     <CreateSheetContext.Provider value={contextValue}>
-      <SheetPreviewContext.Provider value={previewSlot}>
+      <SheetPreviewContext.Provider value={usesPreviewSlot ? previewSlot : null}>
         <CommunitySheetShell
           open={open}
           onClose={requestClose}
@@ -617,11 +710,19 @@ export function CreateSheetV2({
           resetKey={`${activeKind}:${prefillNonce}`}
           island={islandNode}
           className={keyboard > 0 ? 'lkdv-cv2c-keyboard' : undefined}
-          previewSlotRef={setPreviewSlot}
+          previewSlotRef={usesPreviewSlot ? setPreviewSlot : undefined}
         >
           <div className="lkdv-cv2c-form-mount" data-kind={activeKind}>
             {activeFormByKind[activeKind]}
           </div>
+          <Toaster
+            position="top-center"
+            richColors
+            offset="max(11px, calc(env(safe-area-inset-top, 0px) - 48px))"
+            toastOptions={{
+              className: 'lkdv-island-toast',
+            }}
+          />
           <ConfirmDialogV2
             open={confirmClose}
             title="Fermer sans publier ?"

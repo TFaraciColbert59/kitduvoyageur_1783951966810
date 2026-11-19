@@ -17,14 +17,33 @@ export interface ClubCrestProps {
 
 type CrestActivity = 'rando' | 'ski' | 'velo' | 'escalade' | 'trail';
 
-const ACTIVITY_PATHS: Record<CrestActivity, string> = {
-  rando: 'M3 19.5 9.5 7l4 7.5 2-3 5.5 8z',
-  ski: 'M12 3v18M4.8 7.2l14.4 9.6M19.2 7.2 4.8 16.8',
-  velo:
-    'M5.5 17.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM18.5 17.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM8.5 14l3-5.5h3.5M12 14l3.5 3.5',
-  escalade: 'M3 20l6-11 4 7 2-3 6 7M15 4v4M15 4l4 1.6L15 8',
-  trail: 'M3 18c3 0 4.5-2 7.5-2s4.5 2 7.5 1.5M6 7h2M11 7h2M16 7h2M6 11h2M11 11h2',
+/** Pictogrammes d'activité de la maquette (`LK.IC.mountain / ski / bike / climb / shoe`, L1564-1622). */
+const ACTIVITY_ICONS: Record<CrestActivity, React.ReactNode> = {
+  rando: <path d="M3 19l6-10 4 6 2.5-4L21 19z" />,
+  ski: (
+    <>
+      <path d="M3 19l17-7M6 13l3 5M14 8l3 5" />
+      <circle cx="16" cy="5" r="1.8" />
+    </>
+  ),
+  velo: (
+    <>
+      <circle cx="6" cy="16" r="3.5" />
+      <circle cx="18" cy="16" r="3.5" />
+      <path d="M6 16l4-8h4l4 8M10 8l4 8" />
+    </>
+  ),
+  escalade: (
+    <>
+      <path d="M12 21V8M12 8l-5 4M12 8l5 3M9 21h6" />
+      <circle cx="12" cy="4.5" r="1.8" />
+    </>
+  ),
+  trail: <path d="M4 15c3 0 4-3 5-6l3 2c1 1 3 1 5 1l3 3v3H4z" />,
 };
+
+/** Teinte par activité (maquette `TONE`) : l'index est lu par `communaute-v2.css` (`data-tone`). */
+const TONE_INDEX: Record<CrestActivity, number> = { rando: 0, ski: 1, velo: 2, escalade: 3, trail: 4 };
 
 const CREST_PATTERNS = [
   'M4 22 20 14 36 22V30L20 22 4 30z',
@@ -39,7 +58,7 @@ function fold(value: string): string {
     .toLowerCase();
 }
 
-/** Hash 32 bits stable (aucun `Math.random`, aucun état). */
+/** Hash 32 bits stable (aucun `Math.random`, aucun état) : celui de la maquette (`hash`, L2295). */
 function hash(value: string): number {
   let out = 7;
   for (let i = 0; i < value.length; i += 1) {
@@ -69,8 +88,8 @@ export function crestInitial(name: string | null | undefined): string {
 /**
  * Blason de club généré et déterministe (aucune image requise).
  *
- * - initiale du nom + icône d'activité, motif de champ dérivé de la graine ;
- * - teinte uniquement en jetons verts (`data-tone` → `--crest-bg` dans
+ * - initiale du nom + icône d'activité, motif de champ dérivé du nom (maquette) ;
+ * - teinte par activité, uniquement en jetons verts (`data-tone` → `--crest-bg` dans
  *   `src/styles/communaute-v2.css` : forêt, sauge), aucune couleur littérale ;
  * - `aria-hidden` : le libellé complet est porté par le parent (tuile, détail) ;
  * - largeurs 28 / 44 / 72 px (hauteur = ratio 40:46 du bouclier).
@@ -82,10 +101,11 @@ export function ClubCrest({
   size = 44,
   className,
 }: ClubCrestProps) {
-  const source = seed != null && String(seed).length > 0 ? String(seed) : name || 'club';
+  // Maquette (`EXP.blason`, L2302) : le motif vient du NOM du club (`hash(c.n) % 3`), la teinte de
+  // son ACTIVITÉ (`TONE`). La graine ne sert plus qu'à départager des clubs sans nom.
+  const source = name && name.length > 0 ? name : seed != null && String(seed).length > 0 ? String(seed) : 'club';
   const hashValue = hash(source);
-  const tone = hashValue % 5;
-  const pattern = CREST_PATTERNS[Math.floor(hashValue / 5) % CREST_PATTERNS.length];
+  const pattern = CREST_PATTERNS[hashValue % CREST_PATTERNS.length];
   const resolvedActivity = resolveActivity(activity);
   const initial = crestInitial(name);
   const width = size;
@@ -98,7 +118,7 @@ export function ClubCrest({
       width={width}
       height={height}
       viewBox="0 0 40 46"
-      data-tone={tone}
+      data-tone={TONE_INDEX[resolvedActivity]}
       data-activity={resolvedActivity}
       data-testid="club-crest"
       aria-hidden="true"
@@ -111,7 +131,7 @@ export function ClubCrest({
         d="M20 5 34 10v12c0 8-6 13-14 18C12 35 6 30 6 22V10z"
       />
       <g className="lkdv-crest-icon" transform="translate(14 8) scale(.5)">
-        <path d={ACTIVITY_PATHS[resolvedActivity]} />
+        {ACTIVITY_ICONS[resolvedActivity]}
       </g>
       <text className="lkdv-crest-initial" x="20" y="34" textAnchor="middle">
         {initial}

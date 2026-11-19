@@ -20,10 +20,9 @@ export const CREATE_KINDS_V2 = ['post', 'story', 'carnet', 'sortie', 'kit', 'clu
 export type CreateKindV2 = (typeof CREATE_KINDS_V2)[number];
 
 /**
- * Formats de publication. `event` est une **vraie option de la grille** (radio
- * de la maquette, HTML L2771/L2811) : elle ne se publie pas ici, elle renvoie
- * vers le formulaire Sortie par le bouton « Créer dans Sortie » — le schéma
- * bloque l'étape Format avec le message de la maquette (L2803).
+ * Formats de publication. `event` se crée directement ici avec une date cible
+ * et le rattachement d'une Sortie existante (ou créée en amont si aucune
+ * sortie n'existe encore à cette date).
  */
 export const POST_FORMATS_V2 = ['photo', 'billet', 'question', 'event'] as const;
 export type PostFormatV2 = (typeof POST_FORMATS_V2)[number];
@@ -31,7 +30,7 @@ export type PostFormatV2 = (typeof POST_FORMATS_V2)[number];
 export const POST_AUDIENCES_V2 = ['public', 'abonnies', 'club'] as const;
 export type PostAudienceV2 = (typeof POST_AUDIENCES_V2)[number];
 
-export const STORY_AUDIENCES_V2 = ['public', 'abonnies', 'close_friends', 'only_me'] as const;
+export const STORY_AUDIENCES_V2 = ['public', 'abonnies', 'close_friends', 'only_me', 'club'] as const;
 export type StoryAudienceV2 = (typeof STORY_AUDIENCES_V2)[number];
 
 export const STORY_REPLY_POLICIES_V2 = ['everyone', 'followers', 'off'] as const;
@@ -66,7 +65,10 @@ export type SortieRecurrenceV2 = (typeof SORTIE_RECURRENCES_V2)[number];
 export const KIT_SEASONS_V2 = ['toute_saison', 'printemps', 'ete', 'automne', 'hiver'] as const;
 export type KitSeasonV2 = (typeof KIT_SEASONS_V2)[number];
 
-export const CARNET_VISIBILITIES_V2 = ['public', 'friends', 'private'] as const;
+export const KIT_SEASON_CHOICES_V2 = ['printemps', 'ete', 'automne', 'hiver'] as const;
+export type KitSeasonChoiceV2 = (typeof KIT_SEASON_CHOICES_V2)[number];
+
+export const CARNET_VISIBILITIES_V2 = ['public', 'friends', 'private', 'club'] as const;
 export type CarnetVisibilityV2 = (typeof CARNET_VISIBILITIES_V2)[number];
 
 export const CARNET_MOMENT_KINDS_V2 = ['photo', 'rencontre', 'nuit', 'depense', 'objet', 'espece'] as const;
@@ -78,8 +80,47 @@ export type ClubPrivacyV2 = (typeof CLUB_PRIVACIES_V2)[number];
 /** Limites de médias (`03 § 7`), réexportées pour l'UI. */
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const STORY_MEDIA_MAX_BYTES = 25 * 1024 * 1024;
-export const POST_MEDIA_MAX_COUNT = 10;
+export const POST_MEDIA_MAX_COUNT = 15;
 export const STORY_MAX_DURATION_MS = 60_000;
+
+export interface PhotoModifiersV2 {
+  // Catégorie 1 : Lumière (5 modificateurs)
+  brightness: number; // 50–150%, défaut 100%
+  contrast: number;   // 50–150%, défaut 100%
+  exposure: number;   // -50–50%, défaut 0%
+  shadows: number;    // -50–50%, défaut 0%
+  warmth: number;     // -50–50%, défaut 0%
+  // Catégorie 2 : Couleur (5 modificateurs)
+  saturation: number;  // 0–200%, défaut 100%
+  hue: number;         // -180–180°, défaut 0°
+  temperature: number; // -50–50%, défaut 0%
+  fade: number;        // 0–100%, défaut 0%
+  vibrance: number;    // -50–50%, défaut 0%
+  // Catégorie 3 : Détails & Géométrie (5 modificateurs)
+  rotation: number; // -45–45°, défaut 0°
+  vignette: number; // 0–100%, défaut 0%
+  blur: number;     // 0–8px, défaut 0px
+  zoom: number;     // 100–150%, défaut 100%
+  flipX: boolean;   // boolean toggle, défaut false
+}
+
+export const DEFAULT_PHOTO_MODIFIERS: PhotoModifiersV2 = {
+  brightness: 100,
+  contrast: 100,
+  exposure: 0,
+  shadows: 0,
+  warmth: 0,
+  saturation: 100,
+  hue: 0,
+  temperature: 0,
+  fade: 0,
+  vibrance: 0,
+  rotation: 0,
+  vignette: 0,
+  blur: 0,
+  zoom: 100,
+  flipX: false,
+};
 
 export type MediaCropV2 = 'original' | '4:5' | '1:1' | '9:16' | '3:1';
 export type MediaStatusV2 = 'local' | 'uploading' | 'uploaded' | 'error';
@@ -106,6 +147,7 @@ export interface MediaItemV2 {
   storageBucket: string;
   storagePath: string;
   crop: MediaCropV2;
+  modifiers?: PhotoModifiersV2;
   /** Story vidéo : extrait publié, en millisecondes. */
   durationMs?: number;
   trimStartMs?: number;
@@ -157,21 +199,29 @@ export interface KitItemV2 {
   ownershipId: string | null;
   /** Mode préparation (`Kit#10`) : objet coché « emporté ». */
   isChecked: boolean;
+  /** Emprunté (Kit#12) : interface seule, non envoyé à la RPC. */
+  borrowed?: boolean;
 }
 
 export interface CarnetMomentV2 {
   id: string;
   kind: CarnetMomentKindV2;
+  title?: string;
   /** Heure `HH:MM`, vide si non renseignée. */
   time: string;
   text: string;
   place: string;
+  lat?: number | null;
+  lng?: number | null;
   photo: MediaItemV2 | null;
+  media?: MediaItemV2[];
+  encounters?: string[];
 }
 
 export interface CarnetNightV2 {
   name: string;
   type: 'refuge' | 'gite' | 'bivouac' | 'hotel' | 'camping' | 'autre';
+  altitudeM?: number | null;
   infos: string;
 }
 
@@ -182,6 +232,7 @@ export interface CarnetDayV2 {
   title: string;
   date: string;
   night: CarnetNightV2 | null;
+  trace?: [number, number][];
   moments: CarnetMomentV2[];
 }
 
@@ -388,21 +439,44 @@ export const postSchemaV2 = z
     title: z.string().max(120, '120 caractères maximum.').default(''),
     /** 600 caractères pour **tous** les formats (maquette `max:600, count:600`, L2824). */
     content: z.string().max(600, '600 caractères maximum.').default(''),
+    eventDate: optionalDate,
+    linkedEventId: z.string().default(''),
+    linkedEventTitle: z.string().max(120, '120 caractères maximum.').default(''),
     location: z.string().max(120, '120 caractères maximum.').default(''),
     locationLat: z.number().nullable().default(null),
     locationLng: z.number().nullable().default(null),
     tags: tagArray,
     mentions: handleArray,
+    allowComments: z.boolean().default(true),
+    allowLikes: z.boolean().default(true),
+    scheduleEnabled: z.boolean().default(false),
+    scheduleDate: z.string().default(''),
+    scheduleTime: z.string().default('09:00'),
     clientRequestId: clientRequestIdSchema,
   })
   .superRefine((value, ctx) => {
     if (value.format === 'event') {
-      // La maquette bloque l'étape Format et renvoie vers Sortie (L2803, L2814).
-      ctx.addIssue({
-        code: 'custom',
-        path: ['format'],
-        message: 'Un événement se crée dans le formulaire Sortie.',
-      });
+      if (!value.eventDate.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['eventDate'],
+          message: 'Choisis la date de l’événement.',
+        });
+      }
+      if (!value.title.trim() && !value.linkedEventTitle.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['title'],
+          message: 'Le titre de l’événement est requis.',
+        });
+      }
+      if (!value.content.trim() && !value.linkedEventId.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content'],
+          message: 'Décris ton événement ou rattache une sortie.',
+        });
+      }
     }
     if (value.format === 'photo') {
       if (value.media.length === 0) {
@@ -425,13 +499,6 @@ export const postSchemaV2 = z
       }
     } else if (value.format === 'question' && !value.content.trim()) {
       ctx.addIssue({ code: 'custom', path: ['content'], message: 'Pose ta question.' });
-    }
-    if (value.audience !== 'public' && value.media.length > 0) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['media'],
-        message: 'Les médias ne sont autorisés que pour une publication publique.',
-      });
     }
     if (value.audience === 'club' && !value.clubId.trim()) {
       ctx.addIssue({ code: 'custom', path: ['clubId'], message: 'Choisis un club.' });
@@ -503,10 +570,11 @@ const storyStickersSchema = z.object({
 
 export const storySchemaV2 = z
   .object({
-    media: mediaArray(1, 1, 'Ajoute une photo ou une vidéo.').default([]),
+    media: mediaArray(20, 1, 'Ajoute une photo ou une vidéo.').default([]),
     caption: z.string().max(280, '280 caractères maximum.').default(''),
     altText: z.string().max(200, '200 caractères maximum.').default(''),
     audience: z.enum(STORY_AUDIENCES_V2, { error: 'Choisis une audience.' }).default('public'),
+    clubId: z.string().default(''),
     replyPolicy: z.enum(STORY_REPLY_POLICIES_V2, { error: 'Choisis une politique de réponse.' }).default('everyone'),
     allowReshare: z.boolean().default(true),
     textLayers: z.array(storyTextLayerSchema).max(5, '5 textes maximum.').default([]),
@@ -537,6 +605,51 @@ export const storySchemaV2 = z
 export type StoryFormValuesV2 = z.infer<typeof storySchemaV2>;
 
 // ---------------------------------------------------------------------------
+// Briques Tracé & Jours (partagées entre Carnet et Sortie)
+// ---------------------------------------------------------------------------
+
+const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
+
+const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
+
+export const carnetMomentSchema = z.object({
+  id: z.string(),
+  title: z.string().default(''),
+  kind: momentKindSchema,
+  time: z
+    .string()
+    .default('')
+    .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
+  text: z.string().max(500, '500 caractères maximum.').default(''),
+  place: z.string().max(120, '120 caractères maximum.').default(''),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
+  photo: mediaItemSchema.nullable().default(null),
+  media: z.array(mediaItemSchema).max(5).default([]),
+  encounters: z.array(z.string()).default([]),
+});
+
+export const carnetNightSchema = z.object({
+  name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
+  type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
+  altitudeM: z.number().int().min(-500).max(9000).nullable().optional(),
+  infos: z.string().max(300, '300 caractères maximum.').default(''),
+});
+
+export const carnetDaySchema = z.object({
+  id: z.string(),
+  dayNumber: z.number().int().min(1).max(60),
+  title: z.string().max(120, '120 caractères maximum.').default(''),
+  date: z
+    .string()
+    .default('')
+    .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
+  night: carnetNightSchema.nullable().default(null),
+  trace: z.array(tracePointSchema).max(2000).optional(),
+  moments: z.array(carnetMomentSchema).max(100, '100 moments par jour maximum.').default([]),
+});
+
+// ---------------------------------------------------------------------------
 // Sortie — Activité et lieu, Itinéraire, Participants, Sécurité
 // ---------------------------------------------------------------------------
 
@@ -553,15 +666,22 @@ export const sortieSchemaV2 = z
       .default('')
       .refine((value) => value.trim().length > 0, 'Le lieu est requis.')
       .refine((value) => value.trim().length <= 120, '120 caractères maximum.'),
+    destination: z.string().default(''),
     meetingPoint: z.string().max(120, '120 caractères maximum.').default(''),
     meetingLat: z.number().nullable().default(null),
     meetingLng: z.number().nullable().default(null),
+    startLat: z.number().nullable().default(null),
+    startLng: z.number().nullable().default(null),
     date: requiredDate('La date est requise.'),
+    endDate: optionalDate,
+    nbJours: z.number().int().min(1, '1 jour minimum.').max(30, '30 jours maximum.').default(1),
     startTime: requiredClock,
     endTime: z
       .string()
       .default('')
       .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
+    trace: z.array(tracePointSchema).max(2000, 'Tracé trop long.').default([]),
+    days: z.array(carnetDaySchema).max(30, '30 jours maximum.').default([]),
     level: z.enum(SORTIE_LEVELS_V2, { error: 'Choisis un niveau.' }).default('moyen'),
     distanceKm: z.number().min(0, 'La distance ne peut pas être négative.').max(500, '500 km maximum.').default(0),
     elevationGainM: z
@@ -570,6 +690,9 @@ export const sortieSchemaV2 = z
       .min(0, 'Le dénivelé ne peut pas être négatif.')
       .max(20_000, '20 000 m maximum.')
       .default(0),
+    deniveleM: z.number().int().min(0).max(30_000).default(0),
+    elevationLossM: z.number().int().min(0).max(30_000).default(0),
+    maxAltitudeM: z.number().int().min(0).max(9000).nullable().default(null),
     duration: z.string().max(60, '60 caractères maximum.').default(''),
     maxParticipants: z
       .number()
@@ -596,7 +719,13 @@ export const sortieSchemaV2 = z
         message: 'La date doit être aujourd’hui ou dans le futur.',
       });
     }
-    if (value.endTime && isClock(value.endTime) && isClock(value.startTime) && value.endTime <= value.startTime) {
+    if (
+      (value.nbJours ?? 1) <= 1 &&
+      value.endTime &&
+      isClock(value.endTime) &&
+      isClock(value.startTime) &&
+      value.endTime <= value.startTime
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['endTime'],
@@ -631,6 +760,8 @@ const kitItemSchema = z.object({
   productId: z.string().nullable().default(null),
   ownershipId: z.string().nullable().default(null),
   isChecked: z.boolean().default(false),
+  /** Emprunté (Kit#12) : champ d'interface, non envoyé à la RPC. */
+  borrowed: z.boolean().optional(),
 });
 
 export const kitSchemaV2 = z
@@ -640,9 +771,16 @@ export const kitSchemaV2 = z
      * suggestions de l'étape Compléter et le point de départ « Modèle ».
      * Champ d'interface : non envoyé à la RPC `create_kit_with_items`.
      */
-    model: z.enum(['jour', 'bivouac', 'alpi']).default('bivouac'),
+    model: z.string().trim().max(80, '80 caractères maximum.').default('Bivouac'),
     /** Objectif de poids sélectionnable (`GOALS`, L3172) — interface seule. */
     goal: z.enum(['ultra', 'light', 'std']).default('light'),
+    /**
+     * Unités d'affichage (Kit#15) : champ d'interface, non envoyé à la RPC
+     * (le poids reste en grammes). Valeur initiale = préférence du compte.
+     */
+    units: z.enum(['metric', 'imperial']).default('metric'),
+    /** Mode préparation (Kit#12) : check-list « emporté / emprunté », interface seule. */
+    prep: z.boolean().default(false),
     name: z
       .string()
       .default('')
@@ -650,7 +788,9 @@ export const kitSchemaV2 = z
       .refine((value) => value.trim().length <= 100, '100 caractères maximum.'),
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     season: z.enum(KIT_SEASONS_V2, { error: 'Choisis une saison.' }).default('toute_saison'),
+    seasons: z.array(z.enum(KIT_SEASON_CHOICES_V2)).default(['printemps', 'ete', 'automne']),
     isPublic: z.boolean().default(false),
+    clubId: z.string().default(''),
     cover: mediaArray(1).default([]),
     items: z.array(kitItemSchema).default([]),
     clientRequestId: clientRequestIdSchema,
@@ -710,6 +850,9 @@ export const clubSchemaV2 = z.object({
     .default([]),
   description: z.string().max(1500, '1 500 caractères maximum.').default(''),
   locationLabel: z.string().max(120, '120 caractères maximum.').default(''),
+  /** Centre de la zone d'activité (Club#4) : mini-carte, épingle déplaçable. */
+  zoneLat: z.number().min(-90).max(90).nullable().default(null),
+  zoneLng: z.number().min(-180).max(180).nullable().default(null),
   zoneRadiusKm: z.number().min(1, '1 km minimum.').max(500, '500 km maximum.').nullable().default(null),
   membershipRules: z.string().max(1000, '1 000 caractères maximum.').default(''),
   joinQuestions: z
@@ -726,40 +869,6 @@ export type ClubFormValuesV2 = z.infer<typeof clubSchemaV2>;
 // ---------------------------------------------------------------------------
 // Carnet — Infos, Tracé, Jours, Partage
 // ---------------------------------------------------------------------------
-
-const momentKindSchema = z.enum(CARNET_MOMENT_KINDS_V2).default('photo');
-
-const carnetMomentSchema = z.object({
-  id: z.string(),
-  kind: momentKindSchema,
-  time: z
-    .string()
-    .default('')
-    .refine((value) => value === '' || isClock(value), 'Heure invalide (format HH:MM).'),
-  text: z.string().max(500, '500 caractères maximum.').default(''),
-  place: z.string().max(120, '120 caractères maximum.').default(''),
-  photo: mediaItemSchema.nullable().default(null),
-});
-
-const carnetNightSchema = z.object({
-  name: z.string().trim().min(1, 'Le nom du lieu est requis.').max(120, '120 caractères maximum.'),
-  type: z.enum(['refuge', 'gite', 'bivouac', 'hotel', 'camping', 'autre']).default('bivouac'),
-  infos: z.string().max(300, '300 caractères maximum.').default(''),
-});
-
-const carnetDaySchema = z.object({
-  id: z.string(),
-  dayNumber: z.number().int().min(1).max(60),
-  title: z.string().max(120, '120 caractères maximum.').default(''),
-  date: z
-    .string()
-    .default('')
-    .refine((value) => value === '' || isIsoDate(value), 'Date invalide.'),
-  night: carnetNightSchema.nullable().default(null),
-  moments: z.array(carnetMomentSchema).max(12, '12 moments par jour maximum.').default([]),
-});
-
-const tracePointSchema = z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]);
 
 export const carnetSchemaV2 = z
   .object({
@@ -778,6 +887,7 @@ export const carnetSchemaV2 = z
     endDate: optionalDate,
     description: z.string().max(1000, '1 000 caractères maximum.').default(''),
     visibility: z.enum(CARNET_VISIBILITIES_V2, { error: 'Choisis une visibilité.' }).default('private'),
+    clubId: z.string().default(''),
     nbVoyageurs: z
       .number()
       .int()
@@ -793,7 +903,11 @@ export const carnetSchemaV2 = z
     isCollaborative: z.boolean().default(false),
     collaborators: z.array(z.string()).max(20, '20 collaborateurs maximum.').default([]),
     tags: tagArray,
-    trace: z.array(tracePointSchema).max(2000, 'Tracé trop long.').default([]),
+    trace: z
+      .array(tracePointSchema)
+      .min(2, 'Un carnet doit avoir un tracé : cherche une randonnée, dessine-le ou importe un GPX.')
+      .max(2000, 'Tracé trop long.')
+      .default([]),
     distanceKm: z.number().min(0).max(10_000, '10 000 km maximum.').default(0),
     deniveleM: z.number().int().min(0).max(30_000, '30 000 m maximum.').default(0),
     startLat: z.number().nullable().default(null),
@@ -812,7 +926,17 @@ export const carnetSchemaV2 = z
         message: 'La date de fin ne peut pas précéder la date de début.',
       });
     }
-    if (value.days.some((day) => day.moments.some((moment) => !moment.text.trim() && !moment.photo))) {
+    if (
+      value.days.some((day) =>
+        day.moments.some(
+          (moment) =>
+            !moment.text.trim() &&
+            !(moment.title && moment.title.trim()) &&
+            !moment.photo &&
+            (!moment.media || moment.media.length === 0),
+        ),
+      )
+    ) {
       ctx.addIssue({
         code: 'custom',
         path: ['days'],
@@ -844,11 +968,19 @@ const defaultsFactories = {
     media: [],
     title: '',
     content: '',
+    eventDate: '',
+    linkedEventId: '',
+    linkedEventTitle: '',
     location: '',
     locationLat: null,
     locationLng: null,
     tags: [],
     mentions: [],
+    allowComments: true,
+    allowLikes: true,
+    scheduleEnabled: false,
+    scheduleDate: '',
+    scheduleTime: '09:00',
     clientRequestId: newClientRequestId(),
   }),
   story: (): StoryFormValuesV2 => ({
@@ -856,6 +988,7 @@ const defaultsFactories = {
     caption: '',
     altText: '',
     audience: 'public',
+    clubId: '',
     replyPolicy: 'everyone',
     allowReshare: true,
     textLayers: [],
@@ -868,15 +1001,25 @@ const defaultsFactories = {
     activity: 'rando',
     title: '',
     location: '',
+    destination: '',
     meetingPoint: '',
     meetingLat: null,
     meetingLng: null,
+    startLat: null,
+    startLng: null,
     date: '',
+    endDate: '',
+    nbJours: 1,
     startTime: '',
     endTime: '',
+    trace: [],
+    days: [],
     level: 'moyen',
     distanceKm: 0,
     elevationGainM: 0,
+    deniveleM: 0,
+    elevationLossM: 0,
+    maxAltitudeM: null,
     duration: '',
     maxParticipants: 10,
     waitlist: false,
@@ -891,12 +1034,16 @@ const defaultsFactories = {
     clientRequestId: newClientRequestId(),
   }),
   kit: (): KitFormValuesV2 => ({
-    model: 'bivouac',
+    model: 'Bivouac',
     goal: 'light',
+    units: 'metric',
+    prep: false,
     name: '',
     description: '',
     season: 'toute_saison',
+    seasons: ['printemps', 'ete', 'automne'],
     isPublic: false,
+    clubId: '',
     cover: [],
     items: [],
     clientRequestId: newClientRequestId(),
@@ -910,6 +1057,8 @@ const defaultsFactories = {
     activities: [],
     description: '',
     locationLabel: '',
+    zoneLat: null,
+    zoneLng: null,
     zoneRadiusKm: null,
     membershipRules: '',
     joinQuestions: [],
@@ -924,6 +1073,7 @@ const defaultsFactories = {
     endDate: '',
     description: '',
     visibility: 'private',
+    clubId: '',
     nbVoyageurs: 1,
     nbJours: 3,
     isCollaborative: false,

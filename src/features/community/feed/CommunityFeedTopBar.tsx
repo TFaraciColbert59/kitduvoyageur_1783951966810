@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
 import { NotificationBell } from '@/components/ui/NotificationBell';
@@ -11,7 +10,7 @@ export interface CommunityFeedTopBarProps {
   onCreate: () => void;
   onOpenSection: (id: SectionTabId) => void;
   onSearch: () => void;
-  onOpenPreferences?: () => void;
+  onNotifications?: () => void;
 }
 
 /**
@@ -23,7 +22,7 @@ export function CommunityFeedTopBar({
   onCreate,
   onOpenSection,
   onSearch,
-  onOpenPreferences,
+  onNotifications,
 }: CommunityFeedTopBarProps) {
   return (
     <>
@@ -45,17 +44,7 @@ export function CommunityFeedTopBar({
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>
           <Icon name="search" size={17} aria-hidden="true" />
         </button>
-        {onOpenPreferences ? (
-          <button
-            type="button"
-            className="gbtn"
-            aria-label="Préférences du fil"
-            onClick={onOpenPreferences}
-          >
-            <SlidersHorizontal size={16} aria-hidden="true" />
-          </button>
-        ) : null}
-        <NotificationBell userId={user?.id} />
+        <NotificationBell userId={user?.id} onClick={onNotifications} />
       </div>
     </>
   );

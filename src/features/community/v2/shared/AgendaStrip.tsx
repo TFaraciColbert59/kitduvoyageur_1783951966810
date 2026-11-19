@@ -64,11 +64,13 @@ export function AgendaStrip({
             type="button"
             className={classes}
             aria-pressed={active}
+            aria-current={day.isToday ? 'date' : undefined}
             aria-label={`${fullDate} · ${countLabel}`}
             data-iso={day.iso}
             onClick={() => onChange(active ? null : day.iso)}
           >
-            <i aria-hidden="true">{day.weekdayShort}</i>
+            {/* Maquette (`.ag i`) : initiale du jour (D, L, M…) ; le nom complet est porté par le libellé du bouton. */}
+            <i aria-hidden="true">{day.weekdayShort.charAt(0).toUpperCase()}</i>
             <b aria-hidden="true">{day.dayLabel}</b>
             <span className="lkdv-cv2-agenda-dots" aria-hidden="true">
               {Array.from({ length: dots }, (_, index) => (

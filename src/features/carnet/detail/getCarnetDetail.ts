@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
-import { pickCarnetTraceSession } from './trace';
+import { isSessionInCarnetWindow, pickCarnetTraceSession } from './trace';
 import {
   isShareableTraceVisibility,
   mostRestrictiveTraceVisibility,
@@ -23,7 +23,6 @@ import type {
   CarnetPublicZone,
   CarnetRow,
   EtapeRow,
-  HebergementRow,
   HikeSessionRow,
   KitItemRow,
   MomentRow,
@@ -60,11 +59,11 @@ const CARNET_COLUMNS_WITH_LIVE = [
   'views_count',
   'distance_km',
   'denivele_m',
-  'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
   'country_iso',
   'trip_id',
+  'map_points',
   'live_sharing',
 ].join(', ');
 
@@ -85,12 +84,29 @@ const CARNET_COLUMNS_BASE = [
   'views_count',
   'distance_km',
   'denivele_m',
-  'groupe_id',
   'lieu_depart',
   'lieu_arrivee',
   'country_iso',
   'trip_id',
+  'map_points',
 ].join(', ');
+
+/** Extrait la trace manuelle `carnets.map_points.trace` en GeoJSON LineString quand aucune `hike_session` n'existe. */
+function parseManualCarnetTrace(mapPoints: unknown): { type: 'LineString'; coordinates: [number, number][] } | null {
+  if (!mapPoints || typeof mapPoints !== 'object' || Array.isArray(mapPoints)) return null;
+  const rawTrace = (mapPoints as { trace?: unknown }).trace;
+  if (!Array.isArray(rawTrace) || rawTrace.length < 2) return null;
+  const coordinates: [number, number][] = [];
+  for (const pt of rawTrace) {
+    if (!Array.isArray(pt) || pt.length < 2) continue;
+    const lng = Number(pt[0]);
+    const lat = Number(pt[1]);
+    if (Number.isFinite(lng) && Number.isFinite(lat) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      coordinates.push([lng, lat]);
+    }
+  }
+  return coordinates.length >= 2 ? { type: 'LineString', coordinates } : null;
+}
 
 /**
  * Lit un carnet, son auteur, ses étapes, ses moments, son kit et l'engagement
@@ -147,10 +163,11 @@ export async function getCarnetDetail(id: string) {
    * que ce soit. Sans clé service, on retombe sur le client utilisateur : le
    * partage se dégrade, il ne s'ouvre pas.
    */
-  const sessionClient = createServiceClient() ?? supabase;
+  const serviceClient = createServiceClient();
+  const sessionClient = serviceClient ?? supabase;
 
   /* Tout ce qui ne dépend que du carnet part dans le même `Promise.all` :
-     auteur, sorties, étapes, hébergements, moments, kit, collaborateurs,
+     auteur, sorties, étapes, moments, kit, collaborateurs,
      identifiants de sorties, j'aime et favori du lecteur. Une seule vague de
      requêtes, donc un seul aller-retour au lieu de quatre. */
   const viewerFlags: Promise<[{ data: unknown }, { data: unknown }]> = viewerId
@@ -175,7 +192,6 @@ export async function getCarnetDetail(id: string) {
       authorResult,
       hikeResult,
       etapesResult,
-      hebergementsResult,
       momentsResult,
       kitResult,
       likesRows,
@@ -205,28 +221,36 @@ export async function getCarnetDetail(id: string) {
         .eq('carnet_id', carnet.id)
         .order('started_at', { ascending: false })
         .limit(10),
-      carnet.groupe_id
-        ? supabase
-            .from('groupe_etapes')
-            .select(
-              'id, jour_numero, ordre, date_etape, lieu_depart, lieu_arrivee, recit, distance_km, denivele_m, duree_texte, meteo, temperature_c',
-            )
-            .eq('groupe_id', carnet.groupe_id)
-            .order('ordre', { ascending: true })
-        : Promise.resolve({ data: [] as EtapeRow[] }),
-      carnet.groupe_id
-        ? supabase
-            .from('groupe_hebergements')
-            .select('id, apres_jour_numero, nom, prix_cents, prix_note, altitude_m, note, hote')
-            .eq('groupe_id', carnet.groupe_id)
-            .order('apres_jour_numero', { ascending: true })
-        : Promise.resolve({ data: [] as HebergementRow[] }),
+      /* Étapes du carnet (`carnet_etapes`, RLS `can_view_carnet`) : une erreur
+         ou une table vide donne `[]`, jamais d'étape inventée. */
       supabase
-        .from('carnet_moments')
-        .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url')
+        .from('carnet_etapes')
+        .select(
+          'id, jour_numero, ordre, date_etape, lieu_depart, lieu_arrivee, recit, distance_km, denivele_m, duree_texte, meteo, temperature_c',
+        )
         .eq('carnet_id', carnet.id)
         .order('jour_numero', { ascending: true })
-        .order('created_at', { ascending: true }),
+        .order('ordre', { ascending: true }),
+      /* Colonnes de la v2 (`auteur_id`, `moment_type`, `moment_meta`) : la
+         migration 20261109100001 n'est peut-être pas appliquée, on retombe alors
+         sur la lecture historique (type déduit, jamais inventé). */
+      supabase
+        .from('carnet_moments')
+        .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url, auteur_id, moment_type, moment_meta')
+        .eq('carnet_id', carnet.id)
+        .order('jour_numero', { ascending: true })
+        .order('created_at', { ascending: true })
+        .then((res) => {
+          if (res.error?.code === '42703') {
+            return supabase
+              .from('carnet_moments')
+              .select('id, jour_numero, heure, citation, auteur_nom, lieu, image_url')
+              .eq('carnet_id', carnet.id)
+              .order('jour_numero', { ascending: true })
+              .order('created_at', { ascending: true });
+          }
+          return res;
+        }),
       supabase
         .from('carnet_kit_items')
         .select('id, nom, detail, poids_g, couleur_tag, sort_order, verdict, verdict_note, jours_utilises')
@@ -352,6 +376,7 @@ export async function getCarnetDetail(id: string) {
       .filter((row) => viewerId && row.user_id === viewerId)
       .map((row) => row.session_id),
   );
+  const window = { startDate: carnet.start_date, endDate: carnet.end_date };
   const rawSessionIds = sessions
     .filter(
       (session) =>
@@ -359,8 +384,9 @@ export async function getCarnetDetail(id: string) {
         (session.user_id === viewerId || participantSessionIds.has(session.id)),
     )
     .map((session) => session.id);
-  const statsSession = sessions.find((session) => rawSessionIds.includes(session.id)) ?? null;
   const rawSessionIdSet = new Set(rawSessionIds);
+  const statsSession =
+    sessions.find((session) => rawSessionIdSet.has(session.id) && isSessionInCarnetWindow(session, window)) ?? null;
 
   /*
    * Visibilité effective d'une sortie : la plus restrictive du carnet et de la
@@ -433,7 +459,7 @@ export async function getCarnetDetail(id: string) {
     });
   }
 
-  const anyTraceSession = pickCarnetTraceSession(sessions);
+  const anyTraceSession = pickCarnetTraceSession(sessions, window);
   /*
    * Priorité à la trace brute du lecteur : un participant qui a sa propre
    * trace ne la voit pas remplacée par une sortie partageable plus récente
@@ -442,6 +468,7 @@ export async function getCarnetDetail(id: string) {
    */
   const rawTraceSession = pickCarnetTraceSession(
     sessions.filter((session) => rawSessionIdSet.has(session.id)),
+    window,
   );
   const sharedTraceCandidates = sessions.filter((session) => {
     if (rawSessionIdSet.has(session.id)) return false;
@@ -452,12 +479,12 @@ export async function getCarnetDetail(id: string) {
       Boolean(session.user_id && followedOwnerIds.has(session.user_id))
     );
   });
-  const traceSession = rawTraceSession ?? pickCarnetTraceSession(sharedTraceCandidates);
+  const traceSession = rawTraceSession ?? pickCarnetTraceSession(sharedTraceCandidates, window);
+  const manualTrace = sessions.length === 0 ? parseManualCarnetTrace(carnet.map_points) : null;
   const traceWithheld = Boolean(anyTraceSession && !traceSession);
-  const traceVisibility = mostRestrictiveTraceVisibility(
-    carnet.visibility,
-    traceSession?.visibility,
-  );
+  const traceVisibility = traceSession
+    ? mostRestrictiveTraceVisibility(carnet.visibility, traceSession.visibility)
+    : (carnet.visibility ?? 'public');
   const isTraceSessionParticipant = Boolean(
     traceSession && rawSessionIdSet.has(traceSession.id),
   );
@@ -471,12 +498,15 @@ export async function getCarnetDetail(id: string) {
    * relation réelle avec le propriétaire de la sortie, comme la route
    * `GET /api/hike-sessions/[id]`. Sinon il reste `visitor` (tout masqué pour
    * `friends`, extrémités masquées pour une sortie publique).
+   * En l'absence de sortie liée (carnet saisi à la main), l'auteur/collaborateur
+   * garde sa trace manuelle complète et un visiteur reçoit la trace projetée.
    */
-  const traceViewer = isTraceSessionParticipant
-    ? ('participant' as const)
-    : traceVisibility === 'friends' && followsTraceOwner
-      ? ('follower' as const)
-      : ('visitor' as const);
+  const traceViewer =
+    isTraceSessionParticipant || (sessions.length === 0 && manualTrace !== null && isCarnetParticipant)
+      ? ('participant' as const)
+      : traceVisibility === 'friends' && followsTraceOwner
+        ? ('follower' as const)
+        : ('visitor' as const);
 
   const momentRows = ((momentsResult.data ?? []) as MomentRow[]) ?? [];
   const momentIds = momentRows.map((m) => m.id);
@@ -707,18 +737,22 @@ export async function getCarnetDetail(id: string) {
     sessions,
     /*
      * `hikeResult` est plafonné à 10 alors que `sessionIdResult` liste toutes
-     * les sorties. Une liste partielle ne permet pas de garantir qu'aucune
-     * sortie masquée n'entre dans le total : le builder ferme alors les
-     * agrégats pour un tiers. Le propriétaire garde ses valeurs.
+     * les sorties. Avec la RLS ou deux listes différentes (plafond, erreur
+     * ou modification concurrente), on ne peut pas vérifier les droits sur
+     * toutes les sorties susceptibles d'entrer dans les totaux enregistrés.
      */
-    sessionsComplete: sessionIds.length <= sessions.length,
+    sessionsComplete:
+      Boolean(serviceClient) &&
+      !hikeResult.error &&
+      !sessionIdResult.error &&
+      sessionIds.length === sessions.length &&
+      sessionIds.every((id) => sessions.some((session) => session.id === id)),
     rawSessionIds,
     metricVisibilities,
-    trace: traceSession?.positions_geojson ?? null,
+    trace: traceSession?.positions_geojson ?? manualTrace ?? null,
     traceVisibility,
     traceWithheld,
     etapes: (etapesResult.data as unknown as EtapeRow[]) ?? [],
-    hebergements: (hebergementsResult.data as unknown as HebergementRow[]) ?? [],
     moments: momentRows,
     kitItems: (kitResult.data as unknown as KitItemRow[]) ?? [],
     viewerId,

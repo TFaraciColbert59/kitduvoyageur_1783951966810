@@ -1,20 +1,16 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   BookOpen,
   Check,
-  Link2,
-  Loader2,
   Mountain,
   PenLine,
   Plus,
   Users,
-  X,
 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
-import { AiImproveButton } from '@/features/community/create/shared/AiImproveButton';
 import { CreateFormEngineV2, type CreateFormEngineApiV2 } from '../engine/CreateFormEngineV2';
 import {
   carnetSchemaV2,
@@ -23,23 +19,28 @@ import {
 } from '../engine/createSchemasV2';
 import { useCreateSheet } from '../CreateSheetContext';
 import { carnetCover, carnetPhotos, createCarnetV2 } from '../createRpc';
-import { DateFieldV2 } from '../fields/DateFieldV2';
-import { TextAreaFieldV2, TextFieldV2 } from '../fields/FieldV2';
-import { NumberStepperV2 } from '../fields/NumberStepperV2';
+import { TextFieldV2 } from '../fields/FieldV2';
+import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
+import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
+import { TagsFieldV2 } from '../fields/TagsFieldV2';
+import { useMyClubsV2 } from '../club/useMyClubsV2';
 import { PlaceFieldV2 } from '../fields/PlaceFieldV2';
 import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { deleteMediaObjectsV2, uploadedObjectsOf } from '../fields/media';
-import { HAS_CARNET_NIGHTS } from '../carnet/capabilities';
+import { normalizeRouteTrace } from '../../data/communityFeedMappers';
+import { useCarnetNights } from '../carnet/capabilities';
 import { TracePaneV2 } from '../carnet/TracePaneV2';
+import { TrailSearchFieldV2 } from '../carnet/TrailSearchFieldV2';
 import { DaysPaneV2 } from '../carnet/DaysPaneV2';
 import {
   carnetDayCountV2,
   carnetEndDateForDaysV2,
   syncCarnetDaysV2,
 } from '../carnet/daySync';
-import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { SheetPreview } from '../../shared/SheetPreview';
+import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
+import { CarnetHeroEditorV2 } from '../carnet/CarnetHeroEditorV2';
 import type { CreateFormV2Props } from './types';
 
 const VISIBILITIES = [
@@ -61,12 +62,6 @@ const WRITING_HELP = [
   'Ce que tu emporterais la prochaine fois',
 ];
 
-interface FriendV2 {
-  id: string;
-  name: string;
-  handle: string;
-}
-
 function visibilityLabel(value: CarnetFormValuesV2['visibility']): string {
   return value === 'public' ? 'Public' : value === 'friends' ? 'Amis' : 'Privé';
 }
@@ -82,15 +77,31 @@ function formatKm(km: number): string {
 function CarnetPreviewV2({ values }: { values: CarnetFormValuesV2 }) {
   const cover = carnetCover(values);
   const days = values.nbJours || values.days.length || 1;
+  // Carnet#10 : le tracé dessiné apparaît en filigrane sur la couverture, comme
+  // sur la tuile (maquette `cprev`, L3008) ; il se met à jour à chaque geste.
+  const trace = normalizeRouteTrace(values.trace);
   return (
     <div className="lkdv-cv2c-carnet-preview" data-testid="cv2c-carnet-preview" inert aria-hidden="true">
-      <span className="lkdv-cv2c-carnet-preview-cover">
+      <span className="lkdv-cv2c-carnet-preview-cover" data-photo={cover?.url ? 'true' : undefined}>
         {cover?.url ? (
           // eslint-disable-next-line @next/next/no-img-element -- URL Storage du carnet
           <img src={cover.url} alt="" />
         ) : (
           <Mountain size={22} />
         )}
+        {trace ? (
+          <svg
+            className="lkdv-cv2-trace lkdv-cv2c-carnet-preview-trace"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+            data-testid="cv2c-carnet-preview-trace"
+          >
+            <path d={trace.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ')} />
+            <circle cx={trace[0]?.[0]} cy={trace[0]?.[1]} r={2.2} />
+            <circle cx={trace[trace.length - 1]?.[0]} cy={trace[trace.length - 1]?.[1]} r={2.2} />
+          </svg>
+        ) : null}
         <span className="lkdv-cv2c-carnet-preview-visa">
           <b>{values.destination.slice(0, 2).toUpperCase() || 'FR'}</b>
           <i>
@@ -118,17 +129,14 @@ function InfosStep({ user }: { user: User | null }) {
   const values = form.watch();
   const description = values.description ?? '';
   const { haptic } = useHapticFeedback();
+  const myClubs = useMyClubsV2(user?.id ?? null);
+  useEffect(() => {
+    if (values.visibility === 'club') void myClubs.load();
+  }, [myClubs, values.visibility]);
   const dateCount = carnetDayCountV2(values.startDate, values.endDate);
   const days = values.nbJours || 1;
 
-  // Dates → nombre de jours, dans les deux sens (maquette `onInput`, L2971).
-  useEffect(() => {
-    if (dateCount <= 0) return;
-    if (form.getValues('nbJours') === dateCount) return;
-    form.setValue('nbJours', dateCount, { shouldDirty: true });
-  }, [dateCount, form]);
-
-  // Nombre de jours → date de fin (maquette `onSet days`, L2972).
+  // Nombre de jours → date de fin (unidirectionnel, sans boucle sur les dates).
   useEffect(() => {
     if (!values.startDate) return;
     const end = carnetEndDateForDaysV2(values.startDate, days);
@@ -161,6 +169,13 @@ function InfosStep({ user }: { user: User | null }) {
     });
   }, [days, form, values.startDate]);
 
+  const handleDatesChange = (nextStart: string, nextEnd: string) => {
+    const nextCount = carnetDayCountV2(nextStart, nextEnd);
+    if (nextCount > 0 && form.getValues('nbJours') !== nextCount) {
+      form.setValue('nbJours', nextCount, { shouldDirty: true });
+    }
+  };
+
   const appendHelp = (question: string) => {
     const current = form.getValues('description') ?? '';
     const next = `${current.replace(/\s+$/, '')}${current ? '\n\n' : ''}${question}\n`;
@@ -176,117 +191,17 @@ function InfosStep({ user }: { user: User | null }) {
   };
 
   return (
-    <>
-      <TextFieldV2
-        name="title"
-        label="Titre du carnet"
-        placeholder="Tour des Écrins"
-        required
-        // Maquette L2967 : `max:100` (le schéma borne à 100).
-        maxLength={100}
-      />
+    <div className="lkdv-cv2c-carnet-step0">
       <PlaceFieldV2
         name="destination"
         label="Destination"
         placeholder="Chamonix, Vercors…"
+        latName="startLat"
+        lngName="startLng"
         required
       />
-      <div className="lkdv-cv2-chips">
-        {DESTINATION_SUGGESTIONS.filter((destination) => destination !== values.destination).map(
-          (destination) => (
-            <button
-              key={destination}
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => form.setValue('destination', destination, { shouldDirty: true, shouldValidate: true })}
-            >
-              {destination}
-            </button>
-          ),
-        )}
-      </div>
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Dates</span>
-        <div className="lkdv-cv2c-date-range">
-          <DateFieldV2 name="startDate" label="Début" />
-          <DateFieldV2 name="endDate" label="Fin" hint="La fin ne précède pas le début." />
-        </div>
-        {/* Maquette L2970 : stepper « Nombre de jours » + hint
-            « Proposé à partir des dates, et inversement. » (FID-029). */}
-        <NumberStepperV2
-          name="nbJours"
-          label="Nombre de jours"
-          min={1}
-          max={60}
-          hint="Proposé à partir des dates, et inversement."
-        />
-        {dateCount > 0 ? (
-          <p className="lkdv-cv2-field-hint" role="status">
-            <Check size={11} aria-hidden="true" /> {dateCount} jour{dateCount > 1 ? 's' : ''} d’après tes dates
-          </p>
-        ) : null}
-      </div>
-      <NumberStepperV2 name="nbVoyageurs" label="Voyageurs" min={1} max={50} />
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Visibilité</span>
-        <div className="lkdv-cv2c-audience-list" role="radiogroup" aria-label="Visibilité du carnet">
-          {VISIBILITIES.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={values.visibility === option.value}
-              className="lkdv-cv2c-audience-card"
-              data-active={values.visibility === option.value}
-              onClick={() => {
-                form.setValue('visibility', option.value, { shouldDirty: true, shouldValidate: true });
-                haptic('selection');
-              }}
-            >
-              <span className="lkdv-cv2c-radio" aria-hidden="true" />
-              <span>
-                <b>{option.label}</b>
-                <small>{option.description}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-      <TextAreaFieldV2
-        name="description"
-        label="Récit"
-        placeholder="Récit, idée, points forts…"
-        maxLength={1000}
-        rows={5}
-        action={
-          <AiImproveButton
-            value={description}
-            onChange={(next) =>
-              form.setValue('description', next, { shouldDirty: true, shouldValidate: true })
-            }
-          />
-        }
-        hint="L’IA relit et améliore le texte, sans inventer de faits."
-      />
-      {/* « Aide à l'écriture » en chips (maquette L2982) : chaque chip ajoute la
-          question au récit (comportement de `acts['n-help']`, L3045). */}
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Aide à l’écriture</span>
-        <div className="lkdv-cv2-chips">
-          {WRITING_HELP.map((help) => (
-            <button
-              key={help}
-              type="button"
-              className="lkdv-cv2-chip lkdv-cv2-chip--sm"
-              onClick={() => appendHelp(help)}
-            >
-              <PenLine size={11} aria-hidden="true" /> {help}
-            </button>
-          ))}
-        </div>
-      </div>
       {!user ? <p className="lkdv-cv2c-warning">Connecte-toi pour créer un carnet.</p> : null}
-    </>
+    </div>
   );
 }
 
@@ -298,7 +213,10 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
   return (
     <>
       {active ? (
-        <TracePaneV2 user={user} />
+        <>
+          <TrailSearchFieldV2 />
+          <TracePaneV2 user={user} />
+        </>
       ) : (
         <p className="lkdv-cv2-field-hint">Le tracé s’affiche quand tu reviens sur cette étape.</p>
       )}
@@ -307,11 +225,11 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
         `TracePaneV2` (Distance / Dénivelé, maquette `#mstats` L3038) est la
         seule source — les `NumberFieldV2` doublons qui suivaient sont retirés.
       */}
-      <p className="lkdv-cv2-field-hint">
-        {trace.length > 1
-          ? `Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`
-          : 'Trace au doigt ou importe un GPX : distance et dénivelé se remplissent seuls.'}
-      </p>
+      {trace.length > 1 ? (
+        <p className="lkdv-cv2-field-hint">
+          {`Tracé enregistré : ${trace.length} points, ${km.toFixed(1).replace('.', ',')} km, +${gain} m.`}
+        </p>
+      ) : null}
     </>
   );
 }
@@ -319,168 +237,89 @@ function TraceStep({ user, active }: { user: { id: string } | null; active: bool
 function PartageStep({ user }: { user: User | null }) {
   const form = useFormContext<CarnetFormValuesV2>();
   const values = form.watch();
+  const myClubs = useMyClubsV2(user?.id ?? null);
   const photos = useMemo(
     () => carnetPhotos(values).filter((photo) => photo.status === 'uploaded' && photo.url),
     [values],
   );
   const cover = carnetCover(values);
-  const [handle, setHandle] = useState('');
-  const [resolveState, setResolveState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [collaboratorNames, setCollaboratorNames] = useState<Record<string, string>>({});
-  const [friends, setFriends] = useState<FriendV2[] | null>(null);
-  const [friendsError, setFriendsError] = useState<string | null>(null);
-  const [inviteState, setInviteState] = useState<'idle' | 'copied' | 'link'>('idle');
-  const [inviteUrl, setInviteUrl] = useState('');
   const { haptic } = useHapticFeedback();
-
-  // « Voyageurs » de la maquette (L3005) : les personnes suivies servent de
-  // chips d'amis. Aucune table d'invitation n'existe (SP §6) : le lien copié
-  // est une invitation générique, jamais une fausse adhésion.
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const supabase = createClient();
-        const { data: follows, error } = await supabase
-          .from('user_follows')
-          .select('following_id')
-          .eq('follower_id', user.id)
-          .limit(20);
-        if (error) throw error;
-        const ids = (Array.isArray(follows) ? follows : [])
-          .map((row) => String((row as Record<string, unknown>).following_id ?? ''))
-          .filter(Boolean);
-        if (ids.length === 0) {
-          if (!cancelled) setFriends([]);
-          return;
-        }
-        const { data: profiles } = await supabase
-          .from('public_profiles')
-          .select('id, handle, full_name')
-          .in('id', ids);
-        if (cancelled) return;
-        setFriends(
-          (Array.isArray(profiles) ? profiles : []).map((row) => {
-            const record = row as Record<string, unknown>;
-            const name = String(record.full_name ?? record.handle ?? 'Ami');
-            return { id: String(record.id ?? ''), name, handle: String(record.handle ?? '') };
-          }).filter((friend) => friend.id),
-        );
-      } catch {
-        if (!cancelled) {
-          setFriends([]);
-          setFriendsError('Ta liste d’amis est indisponible pour le moment.');
-        }
-      }
-    };
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  // Le switch « Carnet collaboratif » devient un **état dérivé** (FID-031) :
-  // un carnet est collaboratif dès qu'un voyageur y est associé.
-  useEffect(() => {
-    const derived = values.collaborators.length > 0;
-    if (form.getValues('isCollaborative') !== derived) {
-      form.setValue('isCollaborative', derived, { shouldDirty: true });
-    }
-  }, [form, values.collaborators.length]);
-
-  const addCollaborator = async () => {
-    const raw = handle.trim().replace(/^@/, '');
-    if (!raw || !user) return;
-    setResolveState('loading');
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('public_profiles')
-        .select('id, handle, full_name')
-        .eq('handle', raw.toLowerCase())
-        .maybeSingle();
-      const record = data as { id?: string; handle?: string; full_name?: string } | null;
-      if (!record?.id) {
-        setResolveState('error');
-        return;
-      }
-      if (!values.collaborators.includes(record.id)) {
-        form.setValue('collaborators', [...values.collaborators, record.id], {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        setCollaboratorNames((current) => ({
-          ...current,
-          [record.id as string]: record.full_name ?? record.handle ?? raw,
-        }));
-      }
-      setHandle('');
-      setResolveState('idle');
-    } catch {
-      setResolveState('error');
-    }
-  };
-
-  const toggleFriend = (friend: FriendV2) => {
-    const selected = values.collaborators.includes(friend.id);
-    form.setValue(
-      'collaborators',
-      selected
-        ? values.collaborators.filter((entry) => entry !== friend.id)
-        : [...values.collaborators, friend.id],
-      { shouldDirty: true, shouldValidate: true },
-    );
-    setCollaboratorNames((current) => ({ ...current, [friend.id]: friend.name }));
-    haptic('selection');
-  };
-
-  /**
-   * « Inviter par lien » (maquette `n-invite`, L3053) : copie une URL
-   * d'invitation. Aucune route d'invitation n'existe encore (SP §6, pas de
-   * table) : l'adresse suit le format de la maquette et n'accorde aucun accès
-   * tant que le chantier invitations n'est pas livré — c'est assumé et écrit
-   * au code, pas une fausse adhésion.
-   */
-  const inviteByLink = async () => {
-    const token = crypto.randomUUID().slice(0, 8);
-    const url = `${window.location.origin}/inviter/carnet-${token}`;
-    setInviteUrl(url);
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-        setInviteState('copied');
-      } else {
-        setInviteState('link');
-      }
-    } catch {
-      setInviteState('link');
-    }
-    haptic('success');
-  };
 
   return (
     <>
-      <div className="lkdv-cv2-card lkdv-cv2c-recap">
-        <span className="lkdv-cv2-eyebrow">Aperçu de la fiche</span>
-        <b>{values.title || 'Titre du carnet'}</b>
-        <small>
-          {values.destination || 'Destination'} · {values.nbJours} jour{values.nbJours > 1 ? 's' : ''} ·{' '}
-          {values.distanceKm.toFixed(1).replace('.', ',')} km · {visibilityLabel(values.visibility)}
-        </small>
-        {cover?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- URL Storage du carnet
-          <img src={cover.url} alt="" className="lkdv-cv2c-carnet-cover" />
+      <VisibilityPickerV2
+        name="visibility"
+        label="Visibilité"
+        options={[
+          { value: 'public', label: 'Public' },
+          { value: 'private', label: 'Privé' },
+          { value: 'club', label: 'Club' },
+        ]}
+        clubs={myClubs.clubs ?? []}
+        clubsLoading={myClubs.loading}
+        clubsError={myClubs.error}
+      />
+
+      <div className="lkdv-cv2-field">
+        <label className="lkdv-cv2-field-label">Collaboration</label>
+        <button
+          type="button"
+          className="lkdv-cv2c-switch"
+          role="switch"
+          aria-checked={Boolean(values.isCollaborative)}
+          onClick={() => {
+            const next = !values.isCollaborative;
+            form.setValue('isCollaborative', next, { shouldDirty: true, shouldValidate: true });
+            haptic('selection');
+          }}
+        >
+          <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+            <span className="lkdv-cv2c-switch-dot" />
+          </span>
+          Carnet collaboratif
+        </button>
+      </div>
+
+      <div className="lkdv-cv2-field">
+        <label className="lkdv-cv2-field-label">Publication dans le fil</label>
+        <button
+          type="button"
+          className="lkdv-cv2c-switch"
+          role="switch"
+          aria-checked={Boolean(values.postEnabled)}
+          onClick={() => {
+            const next = !values.postEnabled;
+            form.setValue('postEnabled', next, { shouldDirty: true, shouldValidate: true });
+            haptic('selection');
+          }}
+        >
+          <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+            <span className="lkdv-cv2c-switch-dot" />
+          </span>
+          Publier aussi dans le fil d’actualité
+        </button>
+        {values.postEnabled ? (
+          <div style={{ marginTop: '8px' }}>
+            <textarea
+              className="lkdv-cv2-input"
+              rows={3}
+              maxLength={2000}
+              placeholder="Texte de la publication accompagnant ce carnet…"
+              value={values.postContent ?? ''}
+              onChange={(e) =>
+                form.setValue('postContent', e.target.value, { shouldDirty: true })
+              }
+            />
+          </div>
         ) : null}
       </div>
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Couverture</span>
-        {photos.length === 0 ? (
-          <p className="lkdv-cv2-field-hint">
-            Ajoute des photos dans les moments (étape Jours) : la première devient la couverture.
-          </p>
-        ) : (
-          <div className="lkdv-cv2-media-grid">
+
+      <TagsFieldV2 name="tags" label="Hashtags" />
+
+      {photos.length > 0 ? (
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Photo de couverture</span>
+          <div className="lkdv-cv2-media-grid lkdv-cv2c-hrail">
             {photos.map((photo) => (
               <button
                 key={photo.id}
@@ -497,118 +336,8 @@ function PartageStep({ user }: { user: User | null }) {
               </button>
             ))}
           </div>
-        )}
-      </div>
-      {/* Maquette L3005 : fieldset « Voyageurs » avec chips d'amis + « Inviter
-          par lien » ; le switch collaboratif n'est plus un réglage séparé. */}
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Voyageurs</span>
-        {friends === null ? (
-          <p className="lkdv-cv2-field-hint" role="status">
-            <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" /> Chargement de tes amis…
-          </p>
-        ) : friends.length === 0 ? (
-          <p className="lkdv-cv2-field-hint">
-            {friendsError ?? 'Aucun ami à inviter pour l’instant : ajoute un pseudo ci-dessous.'}
-          </p>
-        ) : (
-          <div className="lkdv-cv2-chips" role="group" aria-label="Inviter des voyageurs">
-            {friends.map((friend) => (
-              <button
-                key={friend.id}
-                type="button"
-                className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-                aria-pressed={values.collaborators.includes(friend.id)}
-                onClick={() => toggleFriend(friend)}
-              >
-                <Users size={12} aria-hidden="true" /> {friend.name}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="lkdv-cv2c-inline-add">
-          <input
-            type="text"
-            className="lkdv-cv2-input"
-            value={handle}
-            placeholder="@pseudo d’un compagnon de route"
-            aria-label="Pseudo du collaborateur"
-            onChange={(event) => setHandle(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                void addCollaborator();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="lkdv-cv2-chip lkdv-cv2-chip--lg"
-            onClick={() => void addCollaborator()}
-            disabled={resolveState === 'loading'}
-          >
-            {resolveState === 'loading' ? (
-              <Loader2 size={12} className="lkdv-cv2c-spin" aria-hidden="true" />
-            ) : (
-              <Plus size={12} aria-hidden="true" />
-            )}
-            Ajouter
-          </button>
         </div>
-        {resolveState === 'error' ? (
-          <p className="lkdv-cv2-field-hint lkdv-cv2c-notice" role="status">
-            Aucun profil trouvé avec ce pseudo.
-          </p>
-        ) : null}
-        <button type="button" className="lkdv-cv2-chip lkdv-cv2-chip--lg" onClick={() => void inviteByLink()}>
-          <Link2 size={12} aria-hidden="true" /> Inviter par lien
-        </button>
-        {inviteState !== 'idle' ? (
-          <p className="lkdv-cv2-field-hint" role="status">
-            {inviteState === 'copied'
-              ? `Lien d’invitation copié · ${inviteUrl}`
-              : `Copie impossible : ${inviteUrl}`}
-          </p>
-        ) : null}
-      </div>
-      {values.collaborators.length > 0 ? (
-        <>
-        {/* FID-031 : l'ancien switch « Carnet collaboratif » est un **état
-            dérivé** — un carnet est collaboratif dès qu'un voyageur est lié. */}
-        <p className="lkdv-cv2-field-hint" role="status">
-          Carnet collaboratif · {values.collaborators.length} voyageur
-          {values.collaborators.length > 1 ? 's' : ''} invité
-          {values.collaborators.length > 1 ? 's' : ''}
-        </p>
-        <div className="lkdv-cv2-chips" aria-label="Voyageurs invités">
-          {values.collaborators.map((id) => (
-            <span key={id} className="lkdv-cv2-chip lkdv-cv2-chip--sm">
-              {collaboratorNames[id] ?? friends?.find((friend) => friend.id === id)?.name ?? 'Voyageur'}
-              <button
-                type="button"
-                className="lkdv-cv2c-chip-x"
-                aria-label="Retirer ce voyageur"
-                onClick={() =>
-                  form.setValue(
-                    'collaborators',
-                    values.collaborators.filter((entry) => entry !== id),
-                    { shouldDirty: true, shouldValidate: true },
-                  )
-                }
-              >
-                <X size={11} aria-hidden="true" />
-              </button>
-            </span>
-          ))}
-        </div>
-        </>
       ) : null}
-      <p className="lkdv-cv2-field-hint">
-        <BookOpen size={11} aria-hidden="true" /> {photos.length} photo{photos.length > 1 ? 's' : ''} et{' '}
-        {values.days.reduce((total, day) => total + day.moments.length, 0)} moment
-        {values.days.reduce((total, day) => total + day.moments.length, 0) > 1 ? 's' : ''} seront
-        enregistrés.
-      </p>
     </>
   );
 }
@@ -644,16 +373,31 @@ function CarnetBody({
     form.setValue('startLng', trace[0][0], { shouldDirty: true });
   }, [form, trace]);
 
+  const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active && api.step > 0);
+  const daysCount = values.nbJours || values.days.length || 1;
+  const cover = carnetCover(values);
+
+  useEffect(() => {
+    if (api.step === 0) setPreviewCollapsed(false);
+  }, [api.step, setPreviewCollapsed]);
+
   return (
     <>
-      <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
-      {/* FID-056 : l'aperçu vivant d'Infos (FID-029) passe dans l'emplacement
-          fixe de la coque, au-dessus du pager — il suit désormais les 4 étapes. */}
       {api.active ? (
-        <SheetPreview>
-          <CarnetPreviewV2 values={values} />
+        <SheetPreview compact={false}>
+          <CollapsibleHeroPreview
+            collapsed={api.step > 0 ? previewCollapsed : false}
+            onExpand={() => setPreviewCollapsed(false)}
+            title={values.title.trim() || 'Carnet sans titre'}
+            subtitle={`${daysCount} j · ${values.nbVoyageurs || 1} voy.`}
+            avatarUrl={cover?.url ?? null}
+            fallbackText={values.title || 'C'}
+          >
+            <CarnetHeroEditorV2 user={user} />
+          </CollapsibleHeroPreview>
         </SheetPreview>
       ) : null}
+      <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.step === 0 ? <InfosStep user={user} /> : null}
       {api.step === 1 ? <TraceStep user={user} active={api.active} /> : null}
       {api.step === 2 ? <DaysPaneV2 user={user} /> : null}
@@ -675,6 +419,7 @@ function CarnetBody({
 export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('carnet')).current;
+  const hasNights = useCarnetNights();
 
   return (
     <CreateFormEngineV2<CarnetFormValuesV2>
@@ -685,12 +430,16 @@ export function CarnetFormV2({ active, prefill, prefillNonce, onNavChange, stepH
       disabled={!user}
       onNavChange={onNavChange}
       stepHosts={stepHosts}
+      queueWhenOffline
       onSubmit={async (values) => {
         try {
-          const result = await createCarnetV2(values, { hasCarnetNights: HAS_CARNET_NIGHTS });
+          const result = await createCarnetV2(values, { hasCarnetNights: hasNights });
           reportCreated('carnet', { id: result.id, name: values.title.trim() });
         } catch (error) {
-          await deleteMediaObjectsV2(uploadedObjectsOf(carnetPhotos(values)));
+          // Hors ligne, l'envoi est mis en file (Carnet#19) : les photos déjà
+          // téléversées doivent rester en place pour la reprise.
+          const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+          if (!offline) await deleteMediaObjectsV2(uploadedObjectsOf(carnetPhotos(values)));
           throw error;
         }
       }}
