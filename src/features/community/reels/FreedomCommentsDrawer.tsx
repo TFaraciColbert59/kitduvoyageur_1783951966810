@@ -493,13 +493,16 @@ export const FreedomCommentsDrawer: React.FC<FreedomCommentsDrawerProps> = ({
   const body = (
     <>
         {/* Comments & Replies Threaded List */}
-        <div ref={listRef} className="freedom-drawer-content space-y-4">
+        <div
+          ref={listRef}
+          className={`freedom-drawer-content ${!loading && threads.length === 0 ? 'flex flex-1 flex-col items-center justify-center' : 'space-y-4'}`}
+        >
           {loading ? (
             <div className="flex h-36 items-center justify-center">
               <div className="size-6 animate-spin rounded-full border-2 border-[#17402C] border-t-transparent" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="flex h-44 flex-col items-center justify-center gap-2 text-center text-sm text-[#56665D]">
+            <div className="my-auto flex flex-col items-center justify-center gap-2 px-4 text-center text-sm text-[#56665D]">
               <p className="font-semibold text-[#172B24]">Aucun commentaire pour l’instant.</p>
               <p className="text-xs">Soyez le premier voyageur à partager votre avis ou votre kit !</p>
             </div>
