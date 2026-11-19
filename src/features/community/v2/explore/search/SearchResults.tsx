@@ -91,6 +91,69 @@ export function SearchResultRow({ hit, terms, index, active, rowId, onPeek }: Se
   const ariaLabel = [label.singular, hit.title, hit.subtitle, hit.distanceKm != null ? `à ${formatKm(hit.distanceKm)}` : '']
     .filter(Boolean)
     .join(' : ');
+
+  if (hit.kind === 'membre') {
+    return (
+      <a
+        id={rowId}
+        className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile${hit.cover ? ' has-cover-bg' : ''}${active ? ' is-kb' : ''}`}
+        href={hit.href}
+        aria-label={ariaLabel}
+        data-testid={`cv2-tile-${hit.kind}`}
+        data-type={hit.kind}
+        data-id={hit.id}
+        data-index={index}
+        {...longPress}
+      >
+        {hit.cover ? (
+          <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+            <AppImage src={hit.cover} alt="" fill sizes="320px" className="lkdv-cv2x-carnet-bg-img" />
+            <span className="lkdv-cv2x-carnet-bg-scrim" />
+          </span>
+        ) : null}
+        <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
+          <span className="lkdv-ig-header">
+            <span className="lkdv-ig-avi-wrap">
+              <span className="lkdv-ig-avi">
+                {hit.cover ? (
+                  <AppImage src={hit.cover} alt="" fill sizes="66px" className="lkdv-cv2x-cover-img" />
+                ) : (
+                  <span className="lkdv-cv2c-ig-avi-initials">
+                    {initialsFromName(hit.title).slice(0, 1)}
+                  </span>
+                )}
+              </span>
+            </span>
+            <span className="lkdv-ig-stats" role="group" aria-label="Profil voyageur">
+              <span className="lkdv-ig-stat">
+                <b>{hit.distanceKm != null ? Math.round(hit.distanceKm) : '—'}</b>
+                <span>{hit.distanceKm != null ? 'km' : 'distance'}</span>
+              </span>
+              <span className="lkdv-ig-stat">
+                <b>Membre</b>
+                <span>profil</span>
+              </span>
+              <span className="lkdv-ig-stat">
+                <b>Voir</b>
+                <span>compte</span>
+              </span>
+            </span>
+          </span>
+          <span className="lkdv-ig-bio">
+            <span className="lkdv-ig-name lkdv-cv2x-carnet-title">
+              <HighlightedText text={hit.title} terms={terms} />
+            </span>
+            {hit.subtitle ? (
+              <span className="lkdv-ig-handle-sub lkdv-cv2-meta">
+                <HighlightedText text={hit.subtitle} terms={terms} />
+              </span>
+            ) : null}
+          </span>
+        </span>
+      </a>
+    );
+  }
+
   return (
     <a
       id={rowId}

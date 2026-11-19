@@ -2672,6 +2672,19 @@
   height: 18px;
 }
 
+.lkdv-cv2x-member-ig-tile {
+  flex: none;
+  width: min(300px, 80vw);
+  min-width: min(300px, 80vw);
+  text-decoration: none;
+  color: inherit;
+}
+
+.lkdv-cv2x-member-ig-tile .lkdv-carnet-card-scroll,
+.lkdv-cv2x-member-ig-tile .lkdv-ig-bio {
+  display: block;
+}
+
 .lkdv-cv2x-event-icon-pill {
   width: 30px;
   height: 30px;
