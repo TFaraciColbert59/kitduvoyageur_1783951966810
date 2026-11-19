@@ -344,12 +344,19 @@ html body .lkdv-feed-post.lkdv-feed-post--text:not(#lkdv-post-polish) {
   min-height: 35dvh;
 }
 
-/* --- Panneaux swipe : transparents sans fond blanc + glissement fluide --- */
+/* --- Panneaux swipe : verre givré fort + glissement fluide --- */
 html body .lkdv-feed-post .lkdv-feed-panel-surface:not(#lkdv-post-polish) {
-  background: transparent !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(252, 251, 248, 0.44)) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(1.8) !important;
+  backdrop-filter: blur(34px) saturate(1.8) !important;
 }
 html body .lkdv-feed-post .lkdv-post-panel:not(#lkdv-post-polish) {
   background: var(--post-glass-bg) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(1.8) !important;
+  backdrop-filter: blur(34px) saturate(1.8) !important;
+}
+html body .lkdv-feed-post .lkdv-post-panel.lkdv-post-panel--freedom:not(#lkdv-post-polish) {
+  background: linear-gradient(180deg, rgba(252, 251, 248, 0.72), rgba(252, 251, 248, 0.58)) !important;
 }
 html body .lkdv-post-panel-slot:not(#lkdv-post-polish) {
   user-select: none;
