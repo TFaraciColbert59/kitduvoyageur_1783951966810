@@ -315,8 +315,8 @@ export function mapCarnetRow(row: CarnetFeedRow, extras?: CarnetExtras | null): 
      * ces totaux ne sont pas affichés dans la liste. La fiche du carnet, elle,
      * les projette via `buildCarnetDetail` et sa politique.
      */
-    distanceKm: null,
-    elevationGainM: null,
+    distanceKm: toNumber(row.route_distance_km),
+    elevationGainM: toNumber(row.elevation_gain_m),
     author,
     likesCount: toNumber(row.likes_count) ?? 0,
     commentsCount: toNumber(row.comments_count) ?? 0,
