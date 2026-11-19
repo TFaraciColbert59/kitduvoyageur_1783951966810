@@ -14,8 +14,12 @@ import { isHorizontalSwipe, isVerticalDismiss, useTouchSwipe } from '@/hooks/ges
 import { PostGlassPanel } from '@/features/posts/ui/PostGlassPanel';
 import { CommunityPostMedia } from './CommunityPostMedia';
 import {
+  FeedCarnetPostCard,
+  FeedClubPostCard,
   FeedKitPostCard,
   FeedSortiePostCard,
+  isCarnetPost,
+  isClubPost,
   isKitPost,
   isSortiePost,
 } from './FeedCreationCards';
@@ -153,12 +157,9 @@ export function CommunityFeedPost({
   const hasMedia = Boolean(media);
   const isSortie = !hasMedia && !post.sportCard && isSortiePost(post);
   const isKit = !hasMedia && !post.sportCard && !isSortie && isKitPost(post);
-  const isCarnet = Boolean(
-    post.creation_meta &&
-      typeof post.creation_meta === 'object' &&
-      typeof (post.creation_meta as { carnet_id?: unknown }).carnet_id === 'string',
-  );
-  const isPlainTextPost = !hasMedia && !post.sportCard && !isSortie && !isKit;
+  const isCarnet = !post.sportCard && !isSortie && !isKit && isCarnetPost(post);
+  const isClub = !post.sportCard && !isSortie && !isKit && !isCarnet && isClubPost(post);
+  const isPlainTextPost = !hasMedia && !post.sportCard && !isSortie && !isKit && !isCarnet && !isClub;
 
   useEffect(() => {
     if (!isPlainTextPost || textExpanded) return;
@@ -379,7 +380,7 @@ export function CommunityFeedPost({
     <article
       ref={articleRef}
       id={`feed-post-${post.id}`}
-      className={`${hasMedia ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${isSortie ? ' lkdv-feed-post--sortie' : ''}${isKit ? ' lkdv-feed-post--kit' : ''}${isCarnet ? ' lkdv-feed-post--carnet' : ''}${post.sportCard ? ' lkdv-feed-post--sport' : ''}${panel ? ' has-panel' : ''}`}
+      className={`${hasMedia && !isCarnet && !isClub ? 'lkdv-feed-post' : 'lkdv-feed-post lkdv-feed-post--text'}${isSortie ? ' lkdv-feed-post--sortie' : ''}${isKit ? ' lkdv-feed-post--kit' : ''}${isCarnet ? ' lkdv-feed-post--carnet' : ''}${isClub ? ' lkdv-feed-post--club' : ''}${post.sportCard ? ' lkdv-feed-post--sport' : ''}${panel ? ' has-panel' : ''}`}
       aria-label={`Publication de ${authorName(post)}`}
       data-keyboard="false"
       style={{
@@ -438,7 +439,47 @@ export function CommunityFeedPost({
         swipeStart.current = null;
       }}
     >
-      {hasMedia && media ? (
+      {isCarnet ? (
+        <FeedCarnetPostCard
+          post={post}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
+      ) : isClub ? (
+        <FeedClubPostCard
+          post={post}
+          likesCount={counts.likes}
+          commentsCount={counts.comments}
+          sharesCount={counts.shares}
+          liked={liked}
+          showEngagement={!panel}
+          onLike={
+            (post as { creation_meta?: { allow_likes?: boolean } }).creation_meta?.allow_likes === false
+              ? undefined
+              : handleLike
+          }
+          onComment={
+            (post as { creation_meta?: { allow_comments?: boolean } }).creation_meta?.allow_comments === false
+              ? undefined
+              : () => openPanel('comments')
+          }
+          onShare={() => openPanel('share')}
+        />
+      ) : hasMedia && media ? (
         <CommunityPostMedia
           media={media}
           isVideo={video}

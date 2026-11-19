@@ -457,7 +457,38 @@ export async function createClubWithAdminV2(
   values: ClubFormValuesV2,
   slug: string,
 ): Promise<CreateClubResultV2> {
-  return callRpc<CreateClubResultV2>('create_club_with_admin', buildClubPayload(values, slug));
+  const result = await callRpc<CreateClubResultV2>(
+    'create_club_with_admin',
+    buildClubPayload(values, slug),
+  );
+  try {
+    const avatar = values.avatar[0];
+    const banner = values.banner[0];
+    const cover = avatar?.status === 'uploaded' && avatar.url ? avatar : banner;
+    const coverUrl = cover?.status === 'uploaded' && cover.url ? cover.url : null;
+    await callRpc<CreatePostResultV2>('create_community_post', {
+      content: [values.name.trim(), values.zoneLabel.trim()].filter(Boolean).join(' · '),
+      post_type: 'share',
+      audience: 'public',
+      club_id: result.id,
+      media_urls: coverUrl ? [coverUrl] : [],
+      image_url: coverUrl,
+      creation_meta: {
+        created_from: 'create_club_with_admin',
+        club_id: result.id,
+        club_slug: result.slug || slug,
+        club_name: values.name.trim(),
+        club_category: values.category,
+        club_zone: values.zoneLabel.trim() || null,
+        club_privacy: values.privacy,
+        club_cover: coverUrl,
+      },
+      client_request_id: `${values.clientRequestId}:post`,
+    });
+  } catch {
+    /* publication dans le fil best-effort : le club est déjà créé */
+  }
+  return result;
 }
 
 export function buildKitPayload(values: KitFormValuesV2): Record<string, unknown> {
@@ -620,7 +651,42 @@ export async function createCarnetV2(
   values: CarnetFormValuesV2,
   options: { hasCarnetNights: boolean },
 ): Promise<CreateCarnetResultV2> {
-  return callRpc<CreateCarnetResultV2>('create_carnet_v2', buildCarnetPayload(values, options));
+  const result = await callRpc<CreateCarnetResultV2>(
+    'create_carnet_v2',
+    buildCarnetPayload(values, options),
+  );
+  if (values.visibility !== 'only_me') {
+    try {
+      const photos = carnetPhotos(values);
+      const uploadedCover = values.cover[0]?.status === 'uploaded' ? values.cover[0] : photos[0];
+      const coverUrl = uploadedCover?.status === 'uploaded' && uploadedCover.url ? uploadedCover.url : null;
+      await callRpc<CreatePostResultV2>('create_community_post', {
+        content: [values.title.trim(), values.destination.trim()].filter(Boolean).join(' · '),
+        post_type: 'share',
+        audience:
+          values.visibility === 'followers'
+            ? 'followers'
+            : values.visibility === 'club'
+              ? 'club'
+              : 'public',
+        ...(values.visibility === 'club' && values.clubId ? { club_id: values.clubId } : {}),
+        media_urls: coverUrl ? [coverUrl] : [],
+        image_url: coverUrl,
+        creation_meta: {
+          created_from: 'create_carnet_v2',
+          carnet_id: result.id,
+          carnet_title: values.title.trim(),
+          carnet_destination: values.destination.trim() || null,
+          carnet_days: values.days.length,
+          carnet_cover: coverUrl,
+        },
+        client_request_id: `${values.clientRequestId}:post`,
+      });
+    } catch {
+      /* publication dans le fil best-effort : le carnet est déjà enregistré */
+    }
+  }
+  return result;
 }
 
 /** Disponibilité d'un slug de club (`Club#5`, lecture seule, ouverte à anon). */

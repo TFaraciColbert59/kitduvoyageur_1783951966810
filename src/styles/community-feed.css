@@ -2439,7 +2439,8 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 .lkdv-feed-post--sortie,
 .lkdv-feed-post--kit,
 .lkdv-feed-post--sport,
-.lkdv-feed-post--text.lkdv-feed-post--carnet {
+.lkdv-feed-post--text.lkdv-feed-post--carnet,
+.lkdv-feed-post--text.lkdv-feed-post--club {
   background: rgba(255, 255, 255, 0.74) !important;
   background-image: none !important;
   -webkit-backdrop-filter: blur(22px) saturate(1.6) !important;
@@ -2484,7 +2485,7 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
 }
 
 /* ── Posts texte pur : texture verre d'origine, texte blanc, 5 lignes max + « afficher plus… » ── */
-.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) {
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club) {
   aspect-ratio: auto !important;
   height: auto !important;
   min-height: 140px !important;
@@ -2493,19 +2494,19 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   overflow: hidden !important;
 }
 
-.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .lkdv-feed-post-top {
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club) > .lkdv-feed-post-top {
   position: absolute !important;
   top: 12px !important;
   left: 12px !important;
 }
 
-.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .pmi-more-pill {
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club) > .pmi-more-pill {
   position: absolute !important;
   top: 12px !important;
   right: 12px !important;
 }
 
-.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet) > .lkdv-post-media-glass {
+.lkdv-feed-post--text:not(.lkdv-feed-post--sortie):not(.lkdv-feed-post--kit):not(.lkdv-feed-post--sport):not(.lkdv-feed-post--carnet):not(.lkdv-feed-post--club) > .lkdv-post-media-glass {
   position: absolute !important;
   right: 12px !important;
   bottom: 12px !important;
