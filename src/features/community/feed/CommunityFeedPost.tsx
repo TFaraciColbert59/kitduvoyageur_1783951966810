@@ -28,6 +28,39 @@ import { usePostInteractions, type CommunityAuthReason } from './usePostInteract
 import type { FeedPost } from './useCommunityFeed';
 import type { PostSource } from './postSource';
 import { SportActivityCard } from '@/components/communaute/g01/SportActivityCard';
+import { CarnetCommentsPane } from '@/components/carnet/profile/panes/CarnetCommentsPane';
+import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
+
+function FeedCarnetCommentsPanel({
+  carnetId,
+  user,
+  onRequireAuth,
+  onCommentsCountChange,
+}: {
+  carnetId: string;
+  user: any;
+  onRequireAuth: () => void;
+  onCommentsCountChange: (count: number) => void;
+}) {
+  const { comments, loading, canWrite, send, remove } = useCarnetComments({ carnetId, user });
+  useEffect(() => {
+    if (!loading) onCommentsCountChange(comments.length);
+  }, [comments.length, loading, onCommentsCountChange]);
+  return (
+    <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Commentaires du carnet">
+      <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
+      <CarnetCommentsPane
+        comments={comments}
+        loading={loading}
+        canWrite={canWrite}
+        currentUserId={user?.id ?? null}
+        onSend={send}
+        onRemove={remove}
+        onRequireAuth={onRequireAuth}
+      />
+    </div>
+  );
+}
 import type { VideoPreferences } from '@/features/community/g01/videoPlayback';
 
 // Perf : commentaires, partage et signalement ne servent qu'à l'ouverture.
@@ -762,6 +795,13 @@ export function CommunityFeedPost({
                 <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
                 {source.renderComments({ onClose: closePanel })}
               </div>
+            ) : isCarnet && typeof (post.creation_meta as { carnet_id?: unknown })?.carnet_id === 'string' ? (
+              <FeedCarnetCommentsPanel
+                carnetId={(post.creation_meta as { carnet_id: string }).carnet_id}
+                user={user}
+                onRequireAuth={() => onRequireAuth?.('comment')}
+                onCommentsCountChange={(count) => setCounts((value) => ({ ...value, comments: count }))}
+              />
             ) : (
 <div className="lkdv-post-panel lkdv-post-panel--freedom">
               <FreedomCommentsDrawer

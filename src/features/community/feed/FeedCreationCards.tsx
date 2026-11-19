@@ -476,10 +476,8 @@ export function FeedCarnetPostCard({
   }, [carnetId, userId]);
 
   const effectiveLiked = carnetLiked ?? liked;
-  const effectiveLikesCount =
-    carnetLikesCount !== null ? Math.max(carnetLikesCount, likesCount) : likesCount;
-  const effectiveCommentsCount =
-    carnetCommentsCount !== null ? Math.max(carnetCommentsCount, commentsCount) : commentsCount;
+  const effectiveLikesCount = carnetLikesCount ?? likesCount;
+  const effectiveCommentsCount = carnetCommentsCount ?? commentsCount;
 
   const handleSyncedLike = () => {
     const nextLiked = !effectiveLiked;
@@ -489,8 +487,9 @@ export function FeedCarnetPostCard({
     );
     if (carnetId && userId) {
       void setCarnetLike(carnetId, nextLiked, userId);
+    } else {
+      onLike?.();
     }
-    onLike?.();
   };
 
   return (
