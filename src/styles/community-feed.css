@@ -2495,6 +2495,29 @@ body:has([role="dialog"][aria-label^="Story de"]) .lkdv-feed-shell .tb {
   min-height: 148px !important;
 }
 
+.lkdv-feed-post--kit .lkdv-feed-kit-preview-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.lkdv-feed-post--kit .lkdv-feed-kit-import-pill--inside {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 3;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+  font: 700 11px/1 var(--font-sans, -apple-system, system-ui, sans-serif);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  cursor: pointer;
+}
+
 .lkdv-feed-post--kit .lkdv-feed-creation-actions,
 .lkdv-feed-post--carnet .lkdv-feed-creation-actions,
 .lkdv-feed-post--club .lkdv-feed-creation-actions {

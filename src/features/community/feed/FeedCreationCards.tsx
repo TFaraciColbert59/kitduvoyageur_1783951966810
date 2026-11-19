@@ -346,7 +346,21 @@ export function FeedKitPostCard({
 
   return (
     <div className="lkdv-feed-creation-card" data-testid="feed-kit-card">
-      <KitRectangularPreviewV2 items={kitItems} values={kitValues} />
+      <div className="lkdv-feed-kit-preview-wrap">
+        <KitRectangularPreviewV2 items={kitItems} values={kitValues} />
+        {kitId ? (
+          <button
+            type="button"
+            className="lkdv-feed-kit-import-pill lkdv-feed-kit-import-pill--inside"
+            onClick={(e) => void handleForkKit(e)}
+            disabled={importing}
+            aria-label="Reprendre ce kit dans le Kit Studio"
+          >
+            {imported ? <Check size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
+            <span>{importing ? 'Ouverture…' : 'Reprendre ce kit'}</span>
+          </button>
+        ) : null}
+      </div>
       {showEngagement ? (
         <div className="lkdv-feed-creation-actions">
           <EngagementBar
@@ -359,18 +373,6 @@ export function FeedKitPostCard({
             onComment={onComment ?? (() => undefined)}
             onShare={onShare}
           />
-          {kitId ? (
-            <button
-              type="button"
-              className="lkdv-feed-kit-import-pill"
-              onClick={(e) => void handleForkKit(e)}
-              disabled={importing}
-              aria-label="Reprendre ce kit dans le Kit Studio"
-            >
-              {imported ? <Check size={13} aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
-              <span>{importing ? 'Ouverture…' : 'Reprendre ce kit'}</span>
-            </button>
-          ) : null}
         </div>
       ) : null}
     </div>
