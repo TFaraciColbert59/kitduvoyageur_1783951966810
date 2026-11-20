@@ -55,6 +55,7 @@ import {
 } from './CarnetDrawerMotion';
 import { CarnetFilDrawerBody } from './CarnetFilDrawerBody';
 import { CarnetRouteDrawerBody } from './CarnetRouteDrawerBody';
+import { CarnetPokedexDrawerBody } from './CarnetPokedexDrawerBody';
 import { CarnetKitDrawerBody } from './CarnetKitDrawerBody';
 import { CarnetChiffresDrawerBody } from './CarnetChiffresDrawerBody';
 import { CarnetEquipageDrawerBody } from './CarnetEquipageDrawerBody';
@@ -207,7 +208,7 @@ export function CarnetDrawerV2({
   const slotTabs: CapsuleTabItem[] = useMemo(
     () => [
       { id: 'fil', label: 'Fil de bord', icon: <Compass size={17} /> },
-      { id: 'route', label: 'Route', icon: <MapPin size={17} /> },
+      { id: 'route', label: 'Pokédex Nature', icon: <Leaf size={17} /> },
       { id: 'sac', label: 'Sac', icon: <Backpack size={17} /> },
       { id: 'chiffres', label: 'Chiffres', icon: <BarChart2 size={17} /> },
       { id: 'equipage', label: 'Équipage', icon: <Users size={17} /> },
@@ -221,15 +222,17 @@ export function CarnetDrawerV2({
     return {
       fil: [
         { id: 'moments', label: 'Moments', icon: <Clock size={15} /> },
-        { id: 'medias', label: 'Médias', icon: <ImageIcon size={15} /> },
-        { id: 'rencontres', label: 'Rencontres', icon: <Quote size={15} /> },
-        { id: 'nature', label: 'Nature', icon: <Leaf size={15} /> },
-      ],
-      route: [
         { id: 'etapes', label: 'Étapes', icon: <Flag size={15} /> },
+        { id: 'medias', label: 'Médias', icon: <ImageIcon size={15} /> },
         { id: 'altitude', label: 'Altitude', icon: <Mountain size={15} /> },
         { id: 'nuits', label: 'Nuits', icon: <Moon size={15} /> },
         { id: 'meteo', label: 'Météo', icon: <CloudSun size={15} /> },
+        { id: 'rencontres', label: 'Rencontres', icon: <Quote size={15} /> },
+      ],
+      route: [
+        { id: 'pokedex', label: 'Pokédex', icon: <Leaf size={15} /> },
+        { id: 'faune', label: 'Faune', icon: <Compass size={15} /> },
+        { id: 'flore', label: 'Flore & Milieux', icon: <Mountain size={15} /> },
       ],
       sac: [
         { id: 'kit', label: 'Kit', icon: <Package size={15} /> },
@@ -788,6 +791,21 @@ export function CarnetDrawerV2({
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
+        if (
+          lens.id === 'etapes' ||
+          lens.id === 'altitude' ||
+          lens.id === 'nuits' ||
+          lens.id === 'meteo'
+        ) {
+          return (
+            <CarnetRouteDrawerBody
+              detail={detail}
+              lensId={lens.id}
+              onSelectEtape={(etape) => pushStack({ type: 'etape', etape })}
+              onSelectNight={(night) => pushStack({ type: 'night', night })}
+            />
+          );
+        }
         return (
           <CarnetFilDrawerBody
             detail={detail}
@@ -796,14 +814,7 @@ export function CarnetDrawerV2({
           />
         );
       case 'route':
-        return (
-          <CarnetRouteDrawerBody
-            detail={detail}
-            lensId={lens.id}
-            onSelectEtape={(etape) => pushStack({ type: 'etape', etape })}
-            onSelectNight={(night) => pushStack({ type: 'night', night })}
-          />
-        );
+        return <CarnetPokedexDrawerBody detail={detail} lensId={lens.id} />;
       case 'sac':
         return (
           <CarnetKitDrawerBody
