@@ -270,6 +270,8 @@
   min-width: 0;
   border-radius: var(--lkv-radius-lg);
   background: var(--lkv-surface-paper);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 380px;
   box-shadow:
     0 10px 26px color-mix(in srgb, var(--lkv-ink-900) 14%, transparent),
     inset 0 0 0 0.5px var(--lkv-border-subtle);

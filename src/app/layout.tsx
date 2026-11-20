@@ -1,6 +1,5 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import type { Metadata, Viewport } from 'next';
-import { cookies, headers } from 'next/headers';
 import localFont from 'next/font/local';
 import Script from 'next/script';
 import '@/styles/tokens.generated.css';
@@ -28,32 +27,19 @@ import { WishlistProvider } from '@/contexts/WishlistContext';
 import { SearchProvider } from '@/contexts/SearchContext';
 import { KitSheetProvider } from '@/features/kits/KitSheetContext';
 import ErrorBoundaryWrapper from '@/components/ErrorBoundaryWrapper';
-import GoogleAnalytics from '@/components/GoogleAnalytics';
 import MobileNavWrapper from '@/components/mobile-nav/MobileNavWrapper';
-import CookieConsentBanner from '@/components/CookieConsentBanner';
-import ConfirmHost from '@/components/ui/ConfirmHost';
-import PromptHost from '@/components/ui/PromptHost';
-import ToastHost from '@/components/ui/ToastHost';
-import DynamicIslandHost from '@/components/ui/DynamicIslandHost';
-import RocketConsentScripts from '@/components/RocketConsentScripts';
-import TravelpayoutsDrive from '@/components/TravelpayoutsDrive';
-import MigrationEffect from '@/lib/storage/MigrationEffect';
 import { getOrganizationSchema, getWebsiteSchema } from '@/lib/seo-utils';
 import ReactQueryProvider from '@/components/ReactQueryProvider';
 import PageTransition from '@/components/ui/PageTransition';
-import { ConditionalCursor } from '@/components/ui/CustomCursor';
 import PrefetchRoutes from '@/components/PrefetchRoutes';
 import NativeAppBootstrap from '@/components/NativeAppBootstrap';
-import { AccessibilityRuntime, SkipToContentLink } from '@/components/accessibility';
-import PresenceTracker from '@/components/system/PresenceTracker';
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
-import WebVitalsReporter from '@/components/WebVitalsReporter';
+import { SkipToContentLink } from '@/components/accessibility/SkipToContentLink';
+import CookieConsentBanner from '@/components/CookieConsentBanner';
+import DeferredGlobalHosts from '@/components/DeferredGlobalHosts';
 import { ActiveTripProvider } from '@/features/trips/context/ActiveTripContext';
-import { getActiveTrip } from '@/features/trips/context/activeTripServer';
 import { ActiveAdventureProvider } from '@/features/hub/context/ActiveAdventureContext';
-import { getActiveAdventure } from '@/features/hub/context/activeAdventureServer';
 import { LocaleProvider } from '@/lib/i18n/context';
-import { LOCALE_COOKIE, resolveLocale } from '@/lib/i18n/locale';
+import { DEFAULT_LOCALE } from '@/lib/i18n/locale';
 
 // Fonts — Phase 2 : SF Pro (système) pour toute l'UI (--font-sans/--font-display
 // définis dans tokens.css), Manrope conservée comme police de marque (--font-brand).
@@ -189,21 +175,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Les deux lectures (et l'en-tête de requête) partent en même temps :
-  // un aller-retour base de données de moins avant le premier octet.
-  const [activeTrip, activeAdventure, cookieStore, headerStore] = await Promise.all([
-    getActiveTrip(),
-    getActiveAdventure(),
-    cookies(),
-    headers(),
-  ]);
-  const locale = resolveLocale({
-    cookie: cookieStore.get(LOCALE_COOKIE)?.value,
-    acceptLanguage: headerStore.get('accept-language'),
-  });
+  // Ne pas lire `cookies()` ni `headers()` dans le layout racine : sinon
+  // Next.js force le rendu dynamique sur 100 % des routes (y compris `/`,
+  // `/manifeste`, `/cgu`, `/cgv`, `/connexion`), empêchant tout pré-rendu
+  // statique et le cache CDN Vercel. `LocaleProvider` réconcilie le cookie de
+  // langue côté client si un drapeau multi-langue est activé, et les routes
+  // dynamiques (`/hub`, `/compas`, `/carnets`) lisent leurs cookies dans leur
+  // propre layout/page.
+  const locale = DEFAULT_LOCALE;
   const organizationSchema = getOrganizationSchema(siteUrl);
   const websiteSchema = getWebsiteSchema(siteUrl);
 
@@ -255,12 +237,6 @@ export default async function RootLayout({
           }}
         />
 
-        {/* Rocket analytics scripts — chargés uniquement après consentement */}
-        <RocketConsentScripts />
-
-        {/* Travelpayouts Drive — chargé uniquement après consentement (Z7) */}
-        <TravelpayoutsDrive />
-
         {process.env.NODE_ENV !== 'production' && (
           // Dev : script externe same-origin (autorisé par CSP) pour purger tout
           // ancien Service Worker `/sw.js` et `lkdv-static-*` avant les chunks.
@@ -278,27 +254,16 @@ export default async function RootLayout({
         <div className="lkv-app-background" aria-hidden="true" />
         <LocaleProvider initialLocale={locale}>
         <AuthProvider>
-          <ActiveTripProvider initialTrip={activeTrip}>
-            <ActiveAdventureProvider initialAdventure={activeAdventure}>
+          <ActiveTripProvider>
+            <ActiveAdventureProvider>
             <WishlistProvider>
               <ToastProvider>
                 <SearchProvider>
                   <ErrorBoundaryWrapper>
                     <ReactQueryProvider>
                       <NativeAppBootstrap />
-                      {/* O02 — préférences d'accessibilité persistées, appliquées à chaque page. */}
-                      <AccessibilityRuntime />
-                      {/* F-028 — présence réelle (canal privé lkdv-online) */}
-                      <PresenceTracker />
-                      {/* Service worker web (production) — jamais enregistré dans
-                          l'app Capacitor (garde `isNative()` côté client). */}
-                      <ServiceWorkerRegistration />
-        <WebVitalsReporter />
                       <KitSheetProvider>
                       <PrefetchRoutes />
-                      <Suspense fallback={null}>
-                        <GoogleAnalytics />
-                      </Suspense>
                       {/* Skip navigation for accessibility — place le focus sur <main>. */}
                       <SkipToContentLink targetId="main-content" />
 
@@ -309,13 +274,7 @@ export default async function RootLayout({
                         <PageTransition>{children}</PageTransition>
                       </main>
                       <CookieConsentBanner />
-                      <ConfirmHost />
-                      <PromptHost />
-                      <ToastHost />
-                      <DynamicIslandHost />
-                      <ConditionalCursor />
-                      {/* Migration Mon Matériel — exécutée UNE SEULE FOIS au montage */}
-                      <MigrationEffect />
+                      <DeferredGlobalHosts />
                       </KitSheetProvider>
                     </ReactQueryProvider>
                   </ErrorBoundaryWrapper>

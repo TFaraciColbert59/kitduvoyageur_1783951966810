@@ -14,20 +14,12 @@ import { CarnetCardV2 } from './CarnetCardV2';
 import { CarnetDrawerV2, type CarnetSlotId } from './CarnetDrawerV2';
 import { CarnetIsland, type CarnetIslandToast } from './CarnetIsland';
 import { CarnetPeek } from './CarnetPeek';
-import { CarnetCreateSheet } from './CarnetCreateSheet';
-import { CarnetHighlightEditSheet } from './CarnetHighlightEditSheet';
-import { CarnetEditSheet, type CarnetEditTarget } from './CarnetEditSheet';
+import type { CarnetEditTarget } from './CarnetEditSheet';
 import { CarnetAltitude } from './CarnetAltitude';
 import { CarnetMapBadge } from './CarnetMapBadge';
-import { CompteMap } from '@/components/compte/map/CompteMap';
 import { DRAWER_V2_CSS } from '@/components/compte/drawer/SlotShell';
 import { parsePositions } from '@/features/compte/map/geometry';
-import { CarnetPostSheet } from '@/components/carnet/profile/CarnetPostSheet';
-import StoriesViewer, {
-  type StoryUser,
-  type StorySlide,
-} from '@/components/communaute/StoriesViewer';
-import ReportSheet from '@/components/social/ReportSheet';
+import type { StoryUser, StorySlide } from '@/components/communaute/StoriesViewer';
 import { useCarnetComments } from '@/features/carnet/detail/useCarnetComments';
 import { useCarnetEngagement } from '@/features/carnet/detail/useCarnetEngagement';
 import { useCarnetLivePosition } from '@/features/carnet/detail/useCarnetLivePosition';
@@ -50,6 +42,34 @@ import dynamic from 'next/dynamic';
 
 const CommunityCreateKitSheetV2 = dynamic(
   () => import('@/features/community/v2/create/CreateSheetV2'),
+  { ssr: false }
+);
+const CompteMap = dynamic(
+  () => import('@/components/compte/map/CompteMap').then((m) => m.CompteMap),
+  { ssr: false }
+);
+const CarnetCreateSheet = dynamic(
+  () => import('./CarnetCreateSheet').then((m) => m.CarnetCreateSheet),
+  { ssr: false }
+);
+const CarnetHighlightEditSheet = dynamic(
+  () => import('./CarnetHighlightEditSheet').then((m) => m.CarnetHighlightEditSheet),
+  { ssr: false }
+);
+const CarnetEditSheet = dynamic(
+  () => import('./CarnetEditSheet').then((m) => m.CarnetEditSheet),
+  { ssr: false }
+);
+const CarnetPostSheet = dynamic(
+  () => import('@/components/carnet/profile/CarnetPostSheet').then((m) => m.CarnetPostSheet),
+  { ssr: false }
+);
+const StoriesViewer = dynamic(
+  () => import('@/components/communaute/StoriesViewer'),
+  { ssr: false }
+);
+const ReportSheet = dynamic(
+  () => import('@/components/social/ReportSheet'),
   { ssr: false }
 );
 

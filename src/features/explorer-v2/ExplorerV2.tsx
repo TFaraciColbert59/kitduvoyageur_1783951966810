@@ -5,13 +5,26 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import './map/prefetchMapStage';
 import type { MapPin } from './map/MapStage';
-import { ExplorerSheet } from './sheet/ExplorerSheet';
-import { buildSheetModel } from './sheet/SheetContent';
-import { ExplorerLiveSegmentsPanel } from './components/ExplorerLiveSegmentsPanel';
-import { ExplorerBeaconBar } from './components/ExplorerLiveTrackingPanel';
 import { TopChrome } from './chrome/TopChrome';
 import { ActivityPill } from './chrome/BottomBar';
 import { SosButton } from './chrome/SosButton';
+
+const ExplorerSheetHost = dynamic(() => import('./sheet/ExplorerSheetHost'), {
+  ssr: false,
+  loading: () => null,
+});
+
+const loadOfflineRuntimeStore = () =>
+  import('@/features/offline/offlineRuntimeStore').then((m) => m.getOfflineRuntimeStore());
+
+const ExplorerLiveSegmentsPanel = dynamic(
+  () => import('./components/ExplorerLiveSegmentsPanel').then((m) => m.ExplorerLiveSegmentsPanel),
+  { ssr: false }
+);
+const ExplorerBeaconBar = dynamic(
+  () => import('./components/ExplorerLiveTrackingPanel').then((m) => m.ExplorerBeaconBar),
+  { ssr: false }
+);
 import { Countdown, useLongPress } from './activity/Countdown';
 import { useGpsTracker, type RestoredTrackerState } from './activity/useGpsTracker';
 import {
@@ -70,7 +83,7 @@ import {
 import type { ActivityState } from './state/types';
 import { useNavigationGuidance } from './guidance/useNavigationGuidance';
 import { TurnByTurnBanner, WaypointAlertBanner } from './guidance/ui';
-import { getOfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
+import type { OfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
 import type { OfflineDownloadProgress, OfflineInstalledPackRecord } from '@/features/offline';
 import { isSceneName, sceneEnabled, SCENES } from './state/scenes';
 import {
@@ -453,7 +466,7 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || session) {
             void flushPending();
           } else if (event === 'SIGNED_OUT') {
-            void getOfflineRuntimeStore().purgePrivateOnLogout();
+            void loadOfflineRuntimeStore().then((store) => store.purgePrivateOnLogout());
           }
         });
         subscription = data.subscription;
@@ -1478,20 +1491,51 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
   );
   const [offlineProgress, setOfflineProgress] = useState<OfflineDownloadProgress | null>(null);
   const [coverageVisible, setCoverageVisible] = useState(false);
+  const offlineStoreRef = React.useRef<OfflineRuntimeStore | null>(null);
 
   const refreshOfflinePacks = useCallback(() => {
-    setInstalledOfflinePacks(getOfflineRuntimeStore().listInstalledPacks());
-  }, []);
-
-  useEffect(() => {
-    void getOfflineRuntimeStore().hydrate().then((packs) => {
-      setInstalledOfflinePacks(packs);
+    void loadOfflineRuntimeStore().then((store) => {
+      offlineStoreRef.current = store;
+      setInstalledOfflinePacks(store.listInstalledPacks());
     });
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    let idleId: number | null = null;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    const hydrate = () => {
+      void loadOfflineRuntimeStore()
+        .then((store) => {
+          offlineStoreRef.current = store;
+          return store.hydrate();
+        })
+        .then((packs) => {
+          if (!cancelled) setInstalledOfflinePacks(packs);
+        })
+        .catch(() => {});
+      // Préchargement au temps mort du tiroir Explorer pour une ouverture instantanée.
+      void import('./sheet/ExplorerSheetHost').catch(() => {});
+    };
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (w.requestIdleCallback) {
+      idleId = w.requestIdleCallback(hydrate, { timeout: 2500 });
+    } else {
+      timerId = setTimeout(hydrate, 1200);
+    }
+    return () => {
+      cancelled = true;
+      if (idleId !== null && w.cancelIdleCallback) w.cancelIdleCallback(idleId);
+      if (timerId !== null) clearTimeout(timerId);
+    };
+  }, []);
+
   const offlineCoverageGeoJson = useMemo<GeoCollection | null>(() => {
-    if (!coverageVisible) return null;
-    const fc = getOfflineRuntimeStore().buildCoverageGeoJson();
+    if (!coverageVisible || !offlineStoreRef.current) return null;
+    const fc = offlineStoreRef.current.buildCoverageGeoJson();
     return {
       type: 'FeatureCollection',
       features: fc.features.map((f) => ({
@@ -1504,45 +1548,47 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
 
   const handleShortcutLaunch = useCallback(
     (deepLinkUri: string) => {
-      const store = getOfflineRuntimeStore();
-      const res = store.resolveShortcut(deepLinkUri);
-      if (res.status === 'unavailable') {
-        useExplorerStore.getState().showToast({
-          title: 'Raccourci hors ligne indisponible',
-          sub: res.reason ?? 'Paquet supprimé ou non téléchargé.',
-          tone: 'warn',
-        });
-        return;
-      }
-      const s = useExplorerStore.getState();
-      setSheetOpen(true);
-      if (res.actionKind === 'plan_route') {
-        s.setSheet('start', 'low');
-      } else if (
-        res.actionKind === 'open_offline_downloads' ||
-        res.actionKind === 'open_downloaded_region'
-      ) {
-        s.setSheet('offline', 'mid');
-      } else if (res.actionKind === 'record_activity') {
-        if (!s.activity) {
-          s.startActivity('rando');
-        } else {
-          s.setSheet('live', 'mid');
-        }
-      } else if (res.actionKind === 'open_downloaded_route' && res.targetRouteId) {
-        const offlineRoute = store.getInstalledRouteNavigationData(res.targetRouteId);
-        if (offlineRoute) {
-          s.setTrailRoute({
-            id: offlineRoute.routeId,
-            name: offlineRoute.name,
-            geojson: offlineRoute.geojson,
-            status: 'ready',
+      void loadOfflineRuntimeStore().then((store) => {
+        offlineStoreRef.current = store;
+        const res = store.resolveShortcut(deepLinkUri);
+        if (res.status === 'unavailable') {
+          useExplorerStore.getState().showToast({
+            title: 'Raccourci hors ligne indisponible',
+            sub: res.reason ?? 'Paquet supprimé ou non téléchargé.',
+            tone: 'warn',
           });
-          s.select({ kind: 'trail', id: offlineRoute.routeId }, 'trail', 'mid');
+          return;
         }
-      } else if (res.targetRegionId) {
-        s.setSheet('offline', 'mid');
-      }
+        const s = useExplorerStore.getState();
+        setSheetOpen(true);
+        if (res.actionKind === 'plan_route') {
+          s.setSheet('start', 'low');
+        } else if (
+          res.actionKind === 'open_offline_downloads' ||
+          res.actionKind === 'open_downloaded_region'
+        ) {
+          s.setSheet('offline', 'mid');
+        } else if (res.actionKind === 'record_activity') {
+          if (!s.activity) {
+            s.startActivity('rando');
+          } else {
+            s.setSheet('live', 'mid');
+          }
+        } else if (res.actionKind === 'open_downloaded_route' && res.targetRouteId) {
+          const offlineRoute = store.getInstalledRouteNavigationData(res.targetRouteId);
+          if (offlineRoute) {
+            s.setTrailRoute({
+              id: offlineRoute.routeId,
+              name: offlineRoute.name,
+              geojson: offlineRoute.geojson,
+              status: 'ready',
+            });
+            s.select({ kind: 'trail', id: offlineRoute.routeId }, 'trail', 'mid');
+          }
+        } else if (res.targetRegionId) {
+          s.setSheet('offline', 'mid');
+        }
+      });
     },
     [],
   );
@@ -1820,11 +1866,13 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
         progress: offlineProgress,
         coverageVisible,
         onDownloadRegion: (region) => {
-          void getOfflineRuntimeStore()
-            .downloadOrResumeRegion(
-              region,
-              { pois, routes },
-              { onProgress: setOfflineProgress },
+          void loadOfflineRuntimeStore()
+            .then((store) =>
+              store.downloadOrResumeRegion(
+                region,
+                { pois, routes },
+                { onProgress: setOfflineProgress },
+              ),
             )
             .then(() => {
               refreshOfflinePacks();
@@ -1835,20 +1883,26 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             });
         },
         onPausePack: (packId) => {
-          void getOfflineRuntimeStore().pausePack(packId).then(refreshOfflinePacks);
+          void loadOfflineRuntimeStore()
+            .then((store) => store.pausePack(packId))
+            .then(refreshOfflinePacks);
         },
         onDeletePack: (packId) => {
-          void getOfflineRuntimeStore().deletePack(packId).then(() => {
-            refreshOfflinePacks();
-            useExplorerStore.getState().showToast({ title: 'Paquet supprimé' });
-          });
+          void loadOfflineRuntimeStore()
+            .then((store) => store.deletePack(packId))
+            .then(() => {
+              refreshOfflinePacks();
+              useExplorerStore.getState().showToast({ title: 'Paquet supprimé' });
+            });
         },
         onDownloadZones: (multi) => {
-          void getOfflineRuntimeStore()
-            .downloadCustomZones(
-              multi,
-              { pois, routes },
-              { onProgress: setOfflineProgress },
+          void loadOfflineRuntimeStore()
+            .then((store) =>
+              store.downloadCustomZones(
+                multi,
+                { pois, routes },
+                { onProgress: setOfflineProgress },
+              ),
             )
             .then(() => {
               refreshOfflinePacks();
@@ -1856,11 +1910,13 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
             });
         },
         onDownloadRoutePack: (route) => {
-          void getOfflineRuntimeStore()
-            .downloadRouteOfflinePack(
-              { ...route, sport: state.activity?.sport ?? 'rando' },
-              pois,
-              { onProgress: setOfflineProgress },
+          void loadOfflineRuntimeStore()
+            .then((store) =>
+              store.downloadRouteOfflinePack(
+                { ...route, sport: state.activity?.sport ?? 'rando' },
+                pois,
+                { onProgress: setOfflineProgress },
+              ),
             )
             .then(() => {
               refreshOfflinePacks();
@@ -1879,8 +1935,6 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     }),
     [state, countries, country, regionsGeo, regionGroups, place, pois, routes, weather, unitsForCountry, reportsData, carnetsData, tripsData, selectedPoi, me, mapViewport, slope.state, slope.summary, slopeRoute, allDistanceMarkers, communityState.enabled, communityHeatmapQuery.data, communityHeatmapQuery.isPending, communityHeatmapQuery.isError, personalState.enabled, personalHeatmapQuery.data, personalHeatmapQuery.isPending, personalHeatmapQuery.isError, personalHeatmapQuery.error, bikePoisQuery.data, bikePoisQuery.isPending, firesQuery.data, firesQuery.isPending, surfacesQuery.data, surfacesQuery.isPending, highlightsQuery.data, requestStartSafe, onConfirmReport, markLap, requestPosition, navGuidance, installedOfflinePacks, offlineProgress, coverageVisible, refreshOfflinePacks, handleShortcutLaunch],
   );
-
-  const model = useMemo(() => buildSheetModel(ctx), [ctx]);
 
   // ── repères de carte ───────────────────────────────────────────────────
   const pins = useMemo<MapPin[]>(() => {
@@ -2222,14 +2276,18 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
     return items.slice(-1);
   }, [country?.name, state]);
 
+  const fallbackTitle =
+    place?.place?.placeName ??
+    place?.place?.regionName ??
+    (state.level === 2 ? 'Région' : state.level >= 3 ? 'Lieu' : state.geo ?? 'Monde');
   const current =
     state.level >= 2
       ? state.level === 2
-        ? (state.regionId ?? model.title)
-        : (region?.name ?? model.title)
+        ? (state.regionId ?? fallbackTitle)
+        : (region?.name ?? fallbackTitle)
       : state.level === 0
         ? 'Monde'
-        : (country?.name ?? model.title);
+        : (country?.name ?? fallbackTitle);
 
   // L'action n'est proposée que lorsque la carte est assez précise, qu'une
   // demande existe déjà, que le réseau est là et que le tiroir est fermé.
@@ -2541,28 +2599,20 @@ function ExplorerV2Inner({ initialScene, initialCenter }: ExplorerV2Props) {
       ) : null}
 
       {sheetOpen ? (
-        <ExplorerSheet
-          title={model.title}
-          subtitle={model.subtitle}
-          tabs={model.tabs}
+        <ExplorerSheetHost
+          ctx={ctx}
           tab={state.tab}
+          detent={state.detent}
           onTab={(index) => {
             haptic('tab');
             state.setTab(index);
           }}
-          detent={state.detent}
           onDetent={(detent) => {
             haptic('sheet-open');
             state.setDetent(detent);
           }}
           onClose={() => setSheetOpen(false)}
           onHaptic={(event) => haptic(event)}
-          actions={model.actions}
-          onBack={model.onBack}
-          mini={model.mini}
-          bottomInset={0}
-          labelledBy="xp-sheet-title"
-          tabsBottom={model.tabsBottom ?? false}
         />
       ) : null}
 

@@ -1,5 +1,4 @@
 import { dehydrate, type DehydratedState, type Query, type QueryClient } from '@tanstack/react-query';
-import { deleteCacheEntry, getCacheEntry, setCacheEntry } from './cacheDB';
 
 const SCHEMA_VERSION = 1;
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '0.1.0';
@@ -94,16 +93,23 @@ export function getHydratableState(
 }
 
 export async function readCriticalSnapshot(userId: string): Promise<DehydratedState | null> {
+  const { getCacheEntry } = await import('./cacheDB');
   const snapshot = await getCacheEntry<CriticalQuerySnapshot>(storageKey(userId));
   return getHydratableState(snapshot, userId);
 }
 
 export async function writeCriticalSnapshot(client: QueryClient, userId: string): Promise<void> {
   const snapshot = createCriticalSnapshot(client, userId);
-  if (snapshot) await setCacheEntry(storageKey(userId), snapshot, MAX_AGE_MS);
-  else await clearCriticalSnapshot(userId);
+  if (snapshot) {
+    const { setCacheEntry } = await import('./cacheDB');
+    await setCacheEntry(storageKey(userId), snapshot, MAX_AGE_MS);
+  } else {
+    await clearCriticalSnapshot(userId);
+  }
 }
 
 export async function clearCriticalSnapshot(userId: string): Promise<void> {
-  if (userId) await deleteCacheEntry(storageKey(userId));
+  if (!userId) return;
+  const { deleteCacheEntry } = await import('./cacheDB');
+  await deleteCacheEntry(storageKey(userId));
 }

@@ -1,5 +1,7 @@
 import type { InventoryStatus } from '@/features/materiel/domain/inventory';
 import 'server-only';
+import { unstable_cache } from 'next/cache';
+import { createClient as createAnonClient } from '@supabase/supabase-js';
 import { MAX_NOTES } from '../engine/advice';
 import { originOf, partySizeOf, shortHoursOf, tripLengthDays } from '../engine/tripContext';
 
@@ -410,7 +412,7 @@ async function loadBookings(client: SupabaseClient, tripId: string): Promise<Com
   }
 }
 
-async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
+async function loadShopUncached(client: SupabaseClient): Promise<CompasShopProduct[]> {
   try {
     const { data, error } = await client
       .from('shop_products')
@@ -443,6 +445,31 @@ async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
     console.warn('[compas] catalogue indisponible');
     return [];
   }
+}
+
+const loadPublicShopCached = unstable_cache(
+  async (): Promise<CompasShopProduct[]> => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return [];
+    const publicClient = createAnonClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as unknown as SupabaseClient;
+    return loadShopUncached(publicClient);
+  },
+  ['compas-shop-catalog-v1'],
+  { revalidate: 300 },
+);
+
+async function loadShop(client: SupabaseClient): Promise<CompasShopProduct[]> {
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return await loadPublicShopCached();
+    }
+  } catch {
+    // Hors contexte cache Next.js (tests Vitest) : lecture directe via le client fourni.
+  }
+  return loadShopUncached(client);
 }
 
 async function loadPendingInvites(
@@ -498,9 +525,10 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
   if (!trip) return null;
 
   const client = (await createClient()) as unknown as SupabaseClient;
-  const {
-    data: { user },
-  } = await client.auth.getUser();
+  const user =
+    hub.viewer !== undefined
+      ? hub.viewer
+      : (await client.auth.getUser()).data.user;
   const viewerId = user?.id ?? null;
   // Langue de l'interface : textes calculés par le moteur (conseils de kit, contexte projet).
   const locale = await getRequestLocale();

@@ -1,14 +1,14 @@
 import { CompasLightTheme } from '@/features/compas/components/CompasLightTheme';
+import { CompasLocaleProvider } from '@/lib/i18n/CompasLocaleProvider';
 import type { Metadata } from 'next';
 import AppShell from '@/components/shell/AppShell';
 import { COMPAS_STEPS, type CompasStepId } from '@/features/compas/engine/compasModel';
-import { CompasScreen } from '@/features/compas/components/CompasScreen';
 import { getCompasData } from '@/features/compas/server/getCompasData';
 import { listCompasTrips } from '@/features/compas/server/myTrips';
 import { CompasTripPicker } from '@/features/compas/components/CompasTripPicker';
-import { CompasStart } from '@/features/compas/components/CompasStart';
 import { CompasV5Screen } from '@/features/compas/v5/CompasV5Screen';
 import { V5Start } from '@/features/compas/v5/V5Start';
+import { LegacyCompasScreen, LegacyCompasStart } from '@/features/compas/components/LegacyCompasClient';
 import { createClient } from '@/lib/supabase/server';
 import { listMyTripInvitations } from '@/features/compas/server/invitationActions';
 import { readTravellerState } from '@/features/compas/server/traveller';
@@ -65,6 +65,7 @@ export default async function CompasPage({
     // Profil voyageur demandé une fois (PLAN-100 4.1) : jamais à un essai sans compte.
     const traveller = user && user.is_anonymous !== true ? await readTravellerState(supabase, user.id) : null;
     return (
+      <CompasLocaleProvider>
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
         {screenV5 ? (
@@ -75,7 +76,7 @@ export default async function CompasPage({
             aiOn={aiEnabled()}
           />
         ) : (
-          <CompasStart
+          <LegacyCompasStart
             signedIn={Boolean(user)}
             invitations={invitations}
             askTraveller={traveller != null && !traveller.asked}
@@ -84,6 +85,7 @@ export default async function CompasPage({
           />
         )}
       </AppShell>
+      </CompasLocaleProvider>
     );
   };
 
@@ -97,10 +99,12 @@ export default async function CompasPage({
     const [trips, invitations] = await Promise.all([listCompasTrips(), listMyTripInvitations()]);
     if (trips.length === 0) return start();
     return (
+      <CompasLocaleProvider>
       <AppShell hasBottomNav videoBackground={false}>
         <CompasLightTheme />
         <CompasTripPicker trips={trips} invitations={invitations} />
       </AppShell>
+      </CompasLocaleProvider>
     );
   }
 
@@ -109,9 +113,15 @@ export default async function CompasPage({
   return (
     // Fond peint par `.cp-bg` (paysage éclairci de la maquette) : la toile
     // globale assombrie n'est pas rendue sur cette route.
+    <CompasLocaleProvider>
     <AppShell hasBottomNav videoBackground={false}>
       <CompasLightTheme />
-      {screenV5 ? <CompasV5Screen data={data} initialStep={initialStep} /> : <CompasScreen data={data} initialStep={initialStep} />}
+      {screenV5 ? (
+        <CompasV5Screen data={data} initialStep={initialStep} />
+      ) : (
+        <LegacyCompasScreen data={data} initialStep={initialStep} />
+      )}
     </AppShell>
+    </CompasLocaleProvider>
   );
 }

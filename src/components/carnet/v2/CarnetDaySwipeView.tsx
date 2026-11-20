@@ -317,7 +317,7 @@ export function CarnetDaySwipeView({
 
             {dayViews.length > 0 ? (
               <div className={cx(styles.vlist)} role="group" aria-label="Jours du carnet">
-                {dayViews.map((day) => {
+                {dayViews.map((day, dayIndex) => {
                   const number = day.dayNumber;
                   const image =
                     day.moments.find((moment) => moment.imageUrl)?.imageUrl ?? coverImage;
@@ -359,7 +359,8 @@ export function CarnetDaySwipeView({
                           className={cx(styles.voyageImage)}
                           src={image}
                           alt=""
-                          loading="lazy"
+                          loading={dayIndex === 0 ? 'eager' : 'lazy'}
+                          fetchPriority={dayIndex === 0 ? 'high' : undefined}
                           decoding="async"
                         />
                       ) : null}

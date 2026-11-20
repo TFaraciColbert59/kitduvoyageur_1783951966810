@@ -6,14 +6,7 @@ import {
 import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
 import { getGroupeMenuSummary } from '@/features/hub/server/getGroupeMenu';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
-import { SortieMenu } from '@/features/hub/components/menu/SortieMenu';
-import { PossessionMenu } from '@/features/hub/components/menu/PossessionMenu';
-import { CollectifMenu } from '@/features/hub/components/menu/CollectifMenu';
-import { PhaseLiveView, PhaseRecountView } from '@/features/hub/components/menu/PhaseViews';
-import { HubResumeBanner } from '@/features/hub/components/HubResumeBanner';
-
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
-import { HubCampShell } from '@/features/hub/components/HubCampShell';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getStudioData } from '@/features/kit-studio/server/getStudioData';
@@ -21,6 +14,15 @@ import { resolveStudioPageState } from '@/features/kit-studio/server/studioMode'
 import { loadCockpit } from '@/features/hub/cockpit/loadCockpit';
 import { HubCockpit } from '@/features/hub/cockpit/HubCockpit';
 import { AdventureSwitcher } from '@/features/hub/components/AdventureSwitcher';
+import {
+  DynamicCollectifMenu,
+  DynamicHubCampShell,
+  DynamicHubResumeBanner,
+  DynamicPhaseLiveView,
+  DynamicPhaseRecountView,
+  DynamicPossessionMenu,
+  DynamicSortieMenu,
+} from '@/features/hub/components/LegacyHubClient';
 
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
@@ -50,9 +52,11 @@ export default async function HubPage({
     if (data.trip && phase === 'live') {
       const stats = await getHubTripStats(data.trip.id);
       const details = getTripPhaseDetails(data.trip);
-      return <PhaseLiveView trip={data.trip} stats={stats} dayIndex={details.dayIndex} totalDays={details.totalDays} />;
+      return <DynamicPhaseLiveView trip={data.trip} stats={stats} dayIndex={details.dayIndex} totalDays={details.totalDays} />;
     }
-    if (data.trip && phase === 'recount') return <PhaseRecountView trip={data.trip} />;
+    if (data.trip && phase === 'recount') {
+      return <DynamicPhaseRecountView trip={data.trip} />;
+    }
 
     const cockpit = await loadCockpit(data);
     return (
@@ -94,7 +98,7 @@ export default async function HubPage({
     }
 
     return (
-      <HubCampShell
+      <DynamicHubCampShell
         adventure={data.adventure}
         trip={data.trip}
         hiking={data.hiking}
@@ -110,7 +114,7 @@ export default async function HubPage({
     const phaseDetails = getTripPhaseDetails(data.trip);
     if (phase === 'live') {
       return (
-        <PhaseLiveView
+        <DynamicPhaseLiveView
           trip={data.trip}
           stats={stats}
           dayIndex={phaseDetails.dayIndex}
@@ -119,12 +123,12 @@ export default async function HubPage({
       );
     }
     if (phase === 'recount') {
-      return <PhaseRecountView trip={data.trip} />;
+      return <DynamicPhaseRecountView trip={data.trip} />;
     }
     return (
       <div className="space-y-4">
-        <HubResumeBanner adventure={data.adventure} />
-        <SortieMenu
+        <DynamicHubResumeBanner adventure={data.adventure} />
+        <DynamicSortieMenu
           trip={data.trip}
           stats={stats}
           pendingInvites={data.pendingInvites}
@@ -144,8 +148,8 @@ export default async function HubPage({
     const summary = await getGroupeMenuSummary(data.adventure.id);
     return (
       <div className="space-y-4">
-        <HubResumeBanner adventure={data.adventure} />
-        <CollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />
+        <DynamicHubResumeBanner adventure={data.adventure} />
+        <DynamicCollectifMenu summary={summary} linkedTripSlug={data.linkedTripSlug} />
       </div>
     );
   }
@@ -153,8 +157,8 @@ export default async function HubPage({
   const summary = await getMaterielSummary();
   return (
     <div className="space-y-4">
-      <HubResumeBanner adventure={data.adventure} />
-      <PossessionMenu summary={summary} />
+      <DynamicHubResumeBanner adventure={data.adventure} />
+      <DynamicPossessionMenu summary={summary} />
     </div>
   );
 }

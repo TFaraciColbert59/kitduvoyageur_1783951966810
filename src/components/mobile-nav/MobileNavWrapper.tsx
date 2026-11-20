@@ -1,11 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 
 import OfflineBanner from '@/components/mobile-nav/OfflineBanner';
-import SearchOverlay from '@/components/search/SearchOverlay';
 import { HUB_DEPART_HREF } from '@/features/hub/registry/hubSectionRegistry';
 import { useSearchContext } from '@/contexts/SearchContext';
 
@@ -14,9 +13,19 @@ const NavigationBar = dynamic(() => import('@/components/mobile-nav/NavigationBa
   loading: () => null,
 });
 
+const SearchOverlay = dynamic(() => import('@/components/search/SearchOverlay'), {
+  ssr: false,
+  loading: () => null,
+});
+
 export default function MobileNavWrapper() {
-  useSearchContext();
+  const { isSearchOpen } = useSearchContext();
+  const [searchMounted, setSearchMounted] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (isSearchOpen) setSearchMounted(true);
+  }, [isSearchOpen]);
 
   // Masquer la navigation mobile uniquement sur les flux immersifs plein écran
   // (authentification, tunnels de commande, lecteur plein écran vertical et carte 3D).
@@ -58,7 +67,7 @@ export default function MobileNavWrapper() {
   return (
     <>
       <NavigationBar />
-      <SearchOverlay />
+      {searchMounted ? <SearchOverlay /> : null}
       <OfflineBanner />
     </>
   );

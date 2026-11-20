@@ -178,10 +178,11 @@ export function CarnetsHubScreen({ data, onToggleLike }: CarnetsHubScreenProps) 
           <CarnetHubEmptyState filter={filter} onExplore={() => selectFilter('world')} />
         ) : (
           <ul className="lkdh-list">
-            {visibleItems.map((item) => (
+            {visibleItems.map((item, index) => (
               <CarnetCoverCard
                 key={item.id}
                 item={item}
+                priority={index === 0}
                 likeBusy={Boolean(likeBusy[item.id])}
                 onLike={handleLike}
               />

@@ -10,7 +10,7 @@ import { ClubCrest } from '@/features/community/v2/shared/ClubCrest';
 import type { EventCardVM } from '@/features/community/v2/shared/types';
 import { activityLabel, normalizeRouteTrace } from '@/features/community/v2/data/communityFeedMappers';
 import { setCarnetLike } from '@/features/community/v2/data/communityMutations';
-import { KitRectangularPreviewV2 } from '@/features/community/v2/create/forms/KitFormV2';
+import { KitRectangularPreviewV2 } from '@/features/community/v2/create/forms/KitRectangularPreviewV2';
 import type { KitFormValuesV2, KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import { EngagementBar } from '@/components/social-kit';
 import { Check, Download } from 'lucide-react';

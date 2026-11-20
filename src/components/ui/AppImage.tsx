@@ -36,6 +36,37 @@ interface ImageBaseProps {
     blurDataURL?: string;
 }
 
+/** Hôtes distants déclarés dans `image-hosts.config.mjs` éligibles à l'optimisation
+ * Next/Vercel (`/_next/image` → AVIF/WebP + srcset adaptatif). Les autres hôtes
+ * externes basculent en `unoptimized` pour ne jamais lever `Invalid src prop`. */
+const OPTIMIZABLE_HOSTS = new Set([
+    'images.unsplash.com',
+    'images.pexels.com',
+    'images.pixabay.com',
+    'img.rocket.new',
+    'api.dicebear.com',
+    'i.pravatar.cc',
+    'commons.wikimedia.org',
+    'upload.wikimedia.org',
+]);
+
+function isOptimizableUrl(src: string): boolean {
+    if (!src.startsWith('http://') && !src.startsWith('https://')) return true;
+    try {
+        const u = new URL(src);
+        if (u.protocol !== 'https:') return false;
+        // Les URLs signées Supabase avec jeton expirant ou SVG Dicebear restent optimisables
+        // uniquement si ce n'est pas un SVG (dangerouslyAllowSVG: false dans next.config.mjs).
+        if (u.hostname === 'api.dicebear.com' || u.pathname.toLowerCase().endsWith('.svg')) {
+            return false;
+        }
+        if (u.hostname.endsWith('.supabase.co')) return true;
+        return OPTIMIZABLE_HOSTS.has(u.hostname);
+    } catch {
+        return false;
+    }
+}
+
 const AppImage = memo(function AppImage({
     src,
     alt,
@@ -43,7 +74,7 @@ const AppImage = memo(function AppImage({
     height,
     className = '',
     priority = false,
-    quality = 85,
+    quality = 80,
     placeholder = 'empty',
     blurDataURL,
     fill = false,
@@ -57,8 +88,10 @@ const AppImage = memo(function AppImage({
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(!src);
 
-    const isExternalUrl = useMemo(() => typeof imageSrc === 'string' && imageSrc.startsWith('http'), [imageSrc]);
-    const resolvedUnoptimized = unoptimized || isExternalUrl;
+    const resolvedUnoptimized = useMemo(
+        () => unoptimized || (typeof imageSrc === 'string' && !isOptimizableUrl(imageSrc)),
+        [unoptimized, imageSrc],
+    );
 
     const handleError = useCallback(() => {
         if (!hasError && imageSrc !== fallbackSrc) {

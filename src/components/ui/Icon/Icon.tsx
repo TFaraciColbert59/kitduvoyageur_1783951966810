@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import * as LucideIcons from 'lucide-react';
+import { LUCIDE_ICONS } from './lucide.generated';
 import { HERO_OUTLINE, HERO_SOLID } from './heroicons.generated';
 import { INSTAGRAM_FILLED, INSTAGRAM_GLYPHS } from './instagram.generated';
 import type { IconGlyphProps, IconProps } from './types';
@@ -160,8 +160,8 @@ function isComponent(val: unknown): val is React.ComponentType<any> {
 function getLucideIcon(key: string): React.ComponentType<any> | undefined {
   if (!key || typeof key !== 'string') return undefined;
   if (key in Object.prototype) return undefined;
-  if (!Object.prototype.hasOwnProperty.call(LucideIcons, key)) return undefined;
-  const comp = (LucideIcons as Record<string, any>)[key];
+  if (!Object.prototype.hasOwnProperty.call(LUCIDE_ICONS, key)) return undefined;
+  const comp = LUCIDE_ICONS[key];
   return isComponent(comp) ? comp : undefined;
 }
 

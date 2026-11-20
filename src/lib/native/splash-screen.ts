@@ -7,6 +7,8 @@ export async function hideNativeSplashScreen(): Promise<void> {
   if (!isNative()) return;
   try {
     const { SplashScreen } = await import("@capacitor/splash-screen");
-    await SplashScreen.hide({ fadeOutDuration: 300 });
-  } catch {}
+    await SplashScreen.hide({ fadeOutDuration: 120 });
+  } catch {
+    // Plugin natif absent ou déjà masqué.
+  }
 }

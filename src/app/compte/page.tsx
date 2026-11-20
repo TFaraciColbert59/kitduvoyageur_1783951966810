@@ -4,7 +4,6 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileCompteV2 } from '@/components/compte/MobileCompteV2';
-import { Profile6040Shell } from '@/components/profile/Profile6040Shell';
 
 function CompteContent() {
   const { user, signOut } = useAuth();
@@ -20,19 +19,14 @@ function CompteContent() {
 
   return (
     <main className="min-h-screen w-full bg-[color:var(--bg-body)]">
-      <Profile6040Shell
-        mode="owner"
-        initialTab={activeTab}
+      {/* MobileCompteV2 délègue directement à CompteLiquidGlassV8 et conserve
+          le sentinel P5 sans monter un second CompteLiquidGlassV8 caché. */}
+      <MobileCompteV2
+        user={user}
+        activeDesktopTab={activeTab}
+        onSelectDesktopTab={setActiveTab}
+        onSignOut={signOut}
       />
-      {/* MobileCompteV2 contract sentinel for regression suites */}
-      <div className="sr-only" aria-hidden="true">
-        <MobileCompteV2
-          user={user}
-          activeDesktopTab={activeTab}
-          onSelectDesktopTab={setActiveTab}
-          onSignOut={signOut}
-        />
-      </div>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { XpIcon } from '../ui/XpIcon';
 import {
   ExplorerSearchError,
@@ -28,8 +29,6 @@ import {
 } from '../map/nationalTopo';
 import { ElevationProfile, type ProfilePayload } from './ElevationProfile';
 import { countTiles, downloadZone, purgeZone, readZone } from '../offline/zone';
-import { RoutePlannerPanel } from './RoutePlannerPanel';
-import { MultiDaySheetPanel } from './MultiDaySheetPanel';
 import { buildExplorerRouteAnalysis } from '@/features/routes/analysis/explorerBridge';
 import { copyRouteToDraft } from '@/features/routes/library/routeLibrary';
 import { defaultSpeedKmHForSport, gpxFromRouteDraft } from '@/features/adventure-prep/routeRevision';
@@ -43,25 +42,74 @@ import type {
   ParsedSurface,
   SearchCriteriaOverrides,
 } from '../search/searchQueryParser';
-import { StrengthPanel } from './StrengthPanel';
-import { ZoneSettingsEntry, ZoneSettingsPanel } from './ZoneSettingsPanel';
-import { MetricSeriesPanel } from './MetricSeries';
-import { SlopeAdjustedPacePanel } from './SlopeAdjustedPace';
-import { ExplorerSegmentsSearchSection } from '../components/ExplorerSegmentsSearchSection';
-import { ExplorerLiveSegmentsPanel } from '../components/ExplorerLiveSegmentsPanel';
-import { ExplorerLiveTrackingPanel } from '../components/ExplorerLiveTrackingPanel';
-import {
-  HeatmapSubDrawer,
-  ReportMapErrorPanel,
-  SavedPlacesPanel,
-} from './LayersExtensions';
-import { TrailCommunityPanel } from './TrailCommunityPanel';
-import { LiveMediaCapture } from './LiveMediaCapture';
+import { ZoneSettingsEntry } from './ZoneSettingsPanel';
 import { isPlaceSavedInList } from '../savedPlaces';
-import {
-  ExplorerSummaryEffortAndSplits,
-  ExplorerStatsTelemetryBridge,
-} from './SummaryTelemetryPanel';
+
+const HeatmapSubDrawer = dynamic(
+  () => import('./LayersExtensions').then((m) => m.HeatmapSubDrawer),
+  { ssr: false }
+);
+const ReportMapErrorPanel = dynamic(
+  () => import('./LayersExtensions').then((m) => m.ReportMapErrorPanel),
+  { ssr: false }
+);
+const SavedPlacesPanel = dynamic(
+  () => import('./LayersExtensions').then((m) => m.SavedPlacesPanel),
+  { ssr: false }
+);
+
+const RoutePlannerPanel = dynamic(
+  () => import('./RoutePlannerPanel').then((m) => m.RoutePlannerPanel),
+  { ssr: false }
+);
+const MultiDaySheetPanel = dynamic(
+  () => import('./MultiDaySheetPanel').then((m) => m.MultiDaySheetPanel),
+  { ssr: false }
+);
+const StrengthPanel = dynamic(
+  () => import('./StrengthPanel').then((m) => m.StrengthPanel),
+  { ssr: false }
+);
+const ZoneSettingsPanel = dynamic(
+  () => import('./ZoneSettingsPanel').then((m) => m.ZoneSettingsPanel),
+  { ssr: false }
+);
+const MetricSeriesPanel = dynamic(
+  () => import('./MetricSeries').then((m) => m.MetricSeriesPanel),
+  { ssr: false }
+);
+const SlopeAdjustedPacePanel = dynamic(
+  () => import('./SlopeAdjustedPace').then((m) => m.SlopeAdjustedPacePanel),
+  { ssr: false }
+);
+const ExplorerSegmentsSearchSection = dynamic(
+  () => import('../components/ExplorerSegmentsSearchSection').then((m) => m.ExplorerSegmentsSearchSection),
+  { ssr: false }
+);
+const ExplorerLiveSegmentsPanel = dynamic(
+  () => import('../components/ExplorerLiveSegmentsPanel').then((m) => m.ExplorerLiveSegmentsPanel),
+  { ssr: false }
+);
+const ExplorerLiveTrackingPanel = dynamic(
+  () => import('../components/ExplorerLiveTrackingPanel').then((m) => m.ExplorerLiveTrackingPanel),
+  { ssr: false }
+);
+const TrailCommunityPanel = dynamic(
+  () => import('./TrailCommunityPanel').then((m) => m.TrailCommunityPanel),
+  { ssr: false }
+);
+const LiveMediaCapture = dynamic(
+  () => import('./LiveMediaCapture').then((m) => m.LiveMediaCapture),
+  { ssr: false }
+);
+const ExplorerSummaryEffortAndSplits = dynamic(
+  () => import('./SummaryTelemetryPanel').then((m) => m.ExplorerSummaryEffortAndSplits),
+  { ssr: false }
+);
+const ExplorerStatsTelemetryBridge = dynamic(
+  () => import('./SummaryTelemetryPanel').then((m) => m.ExplorerStatsTelemetryBridge),
+  { ssr: false }
+);
 import {
   XpAvatars,
   XpCard,
@@ -75,9 +123,6 @@ import {
 } from './blocks';
 import type { SheetTab } from './ExplorerSheet';
 import {
-  AudioGuidanceControls,
-  ClimbDescentCard,
-  CustomFieldsEditor,
   JoinStartCard,
   LiveActivityPreview,
   OrientationCompass,
@@ -88,8 +133,24 @@ import {
   WaypointAlertBanner,
 } from '../guidance/ui';
 import { browserSpeechAdapter, type ActiveRecordingSnapshot } from '@/features/navigation';
-import { OfflinePacksScreen } from '@/components/offline';
 import { getOfflineRuntimeStore, listPredefinedRegions } from '@/features/offline';
+
+const AudioGuidanceControls = dynamic(
+  () => import('../guidance/ui').then((m) => m.AudioGuidanceControls),
+  { ssr: false }
+);
+const ClimbDescentCard = dynamic(
+  () => import('../guidance/ui').then((m) => m.ClimbDescentCard),
+  { ssr: false }
+);
+const CustomFieldsEditor = dynamic(
+  () => import('../guidance/ui').then((m) => m.CustomFieldsEditor),
+  { ssr: false }
+);
+const OfflinePacksScreen = dynamic(
+  () => import('@/components/offline').then((m) => m.OfflinePacksScreen),
+  { ssr: false }
+);
 import {
   formatImperialDistance,
   formatImperialElevation,

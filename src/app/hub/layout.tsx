@@ -4,11 +4,13 @@ import { Suspense } from 'react';
 import { getHubAdventureData, buildHubCounts, getHubTripStats } from '@/features/hub/server/getHubAdventureData';
 import { getAdventureIntelligence } from '@/features/hub/server/getAdventureIntelligence';
 import { deriveHubProfile, type HubSectionId } from '@/features/hub/engine/hubProfileEngine';
-import { HubShell } from '@/features/hub/components/HubShell';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
-import { AdventureIntelligenceHub } from '@/features/adventure-intelligence/ui';
-import { ItineraryAdventureCockpit } from '@/features/hub/components/mobile/itinerary/ItineraryAdventureCockpit';
 import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
+import {
+  DynamicAdventureIntelligenceHub,
+  DynamicHubShell,
+  DynamicItineraryAdventureCockpit,
+} from '@/features/hub/components/LegacyHubClient';
 import { traceStage } from '@/lib/perf/ssrTrace';
 import RouteLoading from '@/components/shell/RouteLoading';
 
@@ -74,7 +76,7 @@ async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
     <TripAffiliateProvider
       value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}
     >
-      <HubShell
+      <DynamicHubShell
         adventure={data.adventure}
         profile={profile}
         baseEnabled={baseEnabled}
@@ -87,7 +89,7 @@ async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
         tripStats={tripStats}
         adventureIntelligence={
           intelligence ? (
-            <AdventureIntelligenceHub
+            <DynamicAdventureIntelligenceHub
               key="adventure-intelligence"
               cockpit={intelligence.cockpit}
               sections={intelligence.sections}
@@ -99,7 +101,7 @@ async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
         }
         itineraryAdventureCockpit={
           intelligence && data.adventure.nature === 'sortie' ? (
-            <ItineraryAdventureCockpit
+            <DynamicItineraryAdventureCockpit
               key="itinerary-adventure-cockpit"
               cockpit={intelligence.cockpit}
               sections={intelligence.sections}
@@ -109,7 +111,7 @@ async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
         }
       >
         {children}
-      </HubShell>
+      </DynamicHubShell>
     </TripAffiliateProvider>
   );
 }

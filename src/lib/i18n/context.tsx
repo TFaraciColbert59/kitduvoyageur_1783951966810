@@ -17,8 +17,17 @@ import {
   serializeLocaleCookie,
   type Locale,
 } from './locale';
-import { translations, type TranslationKeys } from './translations';
+import { translations as fullTranslations, type TranslationKeys } from './translations';
+import { coreTranslations } from './translations/core';
 import { t as translate, type TranslationKey, type TranslationVars } from './translate';
+
+// En production, le layout racine n'embarque que le dictionnaire socle (~4 Ko gzip) ;
+// l'espace de noms `compas` (~38 Ko gzip) est fourni par `<CompasLocaleProvider>`.
+// Hors production (Vitest / dev), le dictionnaire complet reste disponible directement.
+const baseTranslations: Record<Locale, TranslationKeys> =
+  process.env.NODE_ENV !== 'production'
+    ? fullTranslations
+    : (coreTranslations as unknown as Record<Locale, TranslationKeys>);
 
 export interface LocaleContextValue {
   locale: Locale;
@@ -27,7 +36,7 @@ export interface LocaleContextValue {
   t: (key: TranslationKey, vars?: TranslationVars) => string;
 }
 
-const LocaleContext = createContext<LocaleContextValue | null>(null);
+export const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 let warnedMissingProvider = false;
 
@@ -37,7 +46,7 @@ let warnedMissingProvider = false;
  * sélection de langue est neutralisée jusqu'à ce que le provider soit monté.
  */
 function createFallback(): LocaleContextValue {
-  const dict = translations[DEFAULT_LOCALE];
+  const dict = baseTranslations[DEFAULT_LOCALE];
   return {
     locale: DEFAULT_LOCALE,
     dict,
@@ -92,7 +101,7 @@ export function LocaleProvider({
   }, [locale]);
 
   const value = useMemo<LocaleContextValue>(() => {
-    const dict = translations[locale];
+    const dict = baseTranslations[locale];
     return {
       locale,
       dict,

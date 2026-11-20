@@ -14,21 +14,22 @@ import { supportsNativeUI, syncNativeUIRoute } from "@/lib/native/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCriticalCacheReady } from "@/components/ReactQueryProvider";
 
-/** A recoverable error is preferable to a splash stuck over an empty screen. */
-const SPLASH_MAX_WAIT_MS = 4_000;
+/**
+ * Plafond de garde-fou : l'écran de démarrage ne doit jamais bloquer plus de 1,5 s
+ * (cible démarrage à froid < 1,5 s). En pratique il se masque dès le premier paint utile.
+ */
+const SPLASH_MAX_WAIT_MS = 1_500;
 
 export default function NativeAppBootstrap() {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const { user, loading, refreshProfile } = useAuth();
-  const cacheReady = useCriticalCacheReady();
+  const { user, refreshProfile } = useAuth();
+  // Préserve l'abonnement de contexte React Query sans bloquer le premier écran utile.
+  useCriticalCacheReady();
 
   const resumeRef = useRef({ user, refreshProfile, queryClient });
   resumeRef.current = { user, refreshProfile, queryClient };
-  const revealReadyRef = useRef(false);
-  revealReadyRef.current = !loading && cacheReady;
-  const paintedRef = useRef(false);
   const splashDismissedRef = useRef(false);
   const nativeUIRevisionRef = useRef(0);
 
@@ -37,22 +38,40 @@ export default function NativeAppBootstrap() {
     splashDismissedRef.current = true;
     hideNativeSplashScreen().catch(() => {});
   }, []);
-  const revealAfterPaint = useCallback(() => {
-    if (paintedRef.current && revealReadyRef.current) dismissSplash();
-  }, [dismissSplash]);
 
-  // Dexie (cacheDB) est chargé à la demande : il sort du JS initial de la mise en page racine.
+  // Dexie (cacheDB) est différé au temps mort après chargement : il ne concurrence
+  // ni l'hydratation ni le LCP / démarrage à froid.
   useEffect(() => {
-    import("@/lib/storage/cacheDB")
-      .then(({ purgeExpiredCache }) => purgeExpiredCache())
-      .catch(() => {});
+    let idleId: number | null = null;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    const runPurge = () => {
+      import("@/lib/storage/cacheDB")
+        .then(({ purgeExpiredCache }) => purgeExpiredCache())
+        .catch(() => {});
+    };
+    const schedule = () => {
+      const w = window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
+        cancelIdleCallback?: (id: number) => void;
+      };
+      if (w.requestIdleCallback) {
+        idleId = w.requestIdleCallback(runPurge, { timeout: 4_000 });
+      } else {
+        timerId = setTimeout(runPurge, 3_000);
+      }
+    };
+    if (document.readyState === "complete") {
+      schedule();
+    } else {
+      window.addEventListener("load", schedule, { once: true });
+    }
+    return () => {
+      window.removeEventListener("load", schedule);
+      const w = window as unknown as { cancelIdleCallback?: (id: number) => void };
+      if (idleId !== null && w.cancelIdleCallback) w.cancelIdleCallback(idleId);
+      if (timerId !== null) clearTimeout(timerId);
+    };
   }, []);
-
-  // Auth and IndexedDB may resolve after the first paint. Keep the native
-  // splash until both are ready, subject to the existing four-second cap.
-  useEffect(() => {
-    if (isNative()) revealAfterPaint();
-  }, [cacheReady, loading, revealAfterPaint]);
 
   // Navigation stays owned by Next.js. The SwiftUI host only gets an ordered
   // route snapshot, including /compas so it can close any transient native UI.
@@ -93,25 +112,24 @@ export default function NativeAppBootstrap() {
 
     const dismissAfterFirstPaint = () => {
       requestAnimationFrame(() => requestAnimationFrame(() => {
-        paintedRef.current = true;
-        revealAfterPaint();
+        dismissSplash();
       }));
     };
-    if (document.readyState === "complete") {
+    if (document.readyState === "interactive" || document.readyState === "complete") {
       dismissAfterFirstPaint();
     } else {
-      window.addEventListener("load", dismissAfterFirstPaint, { once: true });
+      document.addEventListener("DOMContentLoaded", dismissAfterFirstPaint, { once: true });
     }
     window.addEventListener("error", dismissSplash, { once: true, capture: true });
     const splashTimer = setTimeout(dismissSplash, SPLASH_MAX_WAIT_MS);
 
     return () => {
       clearTimeout(splashTimer);
-      window.removeEventListener("load", dismissAfterFirstPaint);
+      document.removeEventListener("DOMContentLoaded", dismissAfterFirstPaint);
       window.removeEventListener("error", dismissSplash, true);
       unsubPromise.then((unsub) => unsub());
     };
-  }, [router, dismissSplash, revealAfterPaint]);
+  }, [router, dismissSplash]);
 
   return null;
 }

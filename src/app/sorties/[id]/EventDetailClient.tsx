@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { cancelClubEventAction } from './cancelClubEventAction';
@@ -8,8 +9,21 @@ import HeaderBackButton from '@/components/ui/HeaderBackButton';
 import { createClient } from '@/lib/supabase/client';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
-import { PlaceMiniMap } from '@/features/community/v2/shared/PlaceMiniMap';
 import type { SortiePerformanceEstimate } from '@/features/community/v2/create/sortie/sortiePerformanceEngine';
+
+// MapLibre (~248 Ko gzip) chargé uniquement côté client quand un point de rendez-vous existe.
+const PlaceMiniMap = dynamic(
+  () => import('@/features/community/v2/shared/PlaceMiniMap').then((m) => m.PlaceMiniMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        aria-hidden="true"
+        style={{ height: 170, borderRadius: 14, background: 'rgba(23, 64, 44, 0.06)' }}
+      />
+    ),
+  },
+);
 import {
   buildEventIcs,
   eventIcsFilename,

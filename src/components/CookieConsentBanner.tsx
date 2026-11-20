@@ -103,21 +103,8 @@ export default function CookieConsentBanner() {
     >
       <div
         ref={panelRef}
-        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[rgba(240,245,238,0.92)] backdrop-blur-[var(--glass-blur)] saturate-[var(--glass-saturation)] border border-[rgba(23,64,44,0.15)] text-[#172B24] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300"
-        style={{
-          margin: '0 auto',
-          // P2 — offset UNIQUE via token : jamais sous la bottom bar mobile
-          // (`--nav-offset` inclut déjà la safe-area basse).
-          marginBottom: 'calc(var(--nav-offset) + var(--space-2))',
-        }}
+        className="pointer-events-auto max-w-[min(38rem,calc(100vw-24px))] mx-auto bg-[rgba(240,245,238,0.92)] backdrop-blur-[var(--glass-blur)] saturate-[var(--glass-saturation)] border border-[rgba(23,64,44,0.15)] text-[#172B24] rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 mb-[calc(var(--nav-offset)+var(--space-2))] sm:mb-[calc(20px+env(safe-area-inset-bottom))]"
       >
-        <style jsx>{`
-          @media (min-width: 640px) {
-            div {
-              margin-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
-            }
-          }
-        `}</style>
         {!showDetails ? (
           <div className="px-4 py-3 sm:p-5">
             <div className="flex items-start gap-3">
