@@ -2,7 +2,12 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getValidatedRaceRegistrationUrl } from '@/features/clubs';
+import { resolveEventAdventure } from '@/features/hub/server/resolveEventAdventure';
+import type { EventAdventureRef } from '@/features/hub/context/eventAdventureRef';
+import { listOwnedTripLinkChoices } from '@/features/trips/server/discoverTrips';
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
+import EventHubLink from './EventHubLink';
+import ClubEventRouteProposal from './ClubEventRouteProposal';
 import './event-detail.css';
 
 export const dynamic = 'force-dynamic';
@@ -36,36 +41,51 @@ function isoDate(value: unknown): string | null {
  *
  * Aucune route de fiche n'existait : cette page affiche le billet daté, la méta,
  * le rendez-vous sur mini-carte, les participants, l'inscription et le fichier
- * `.ics`. Elle lit la base sous RLS (lecture publique des `events`), ne crée rien
- * et ne modifie rien côté serveur.
+ * `.ics`. L'organisateur peut y relier une aventure existante au HUB.
  */
-export default async function SortiePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function SortiePage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ source?: string | string[] }>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     notFound();
   }
 
   const supabase = await createClient();
-  const [{ data: eventRow, error }, { data: clubEventRow }] = await Promise.all([
+  const [{ data: eventRow, error }, { data: clubEventRow }, { data: { user } }] = await Promise.all([
     supabase.from('events').select('*').eq('id', id).maybeSingle(),
     supabase.from('club_events').select('*').eq('id', id).maybeSingle(),
+    supabase.auth.getUser(),
   ]);
-  if ((error && !clubEventRow) || (!eventRow && !clubEventRow)) notFound();
+  const requestedClubEvent = query?.source === 'club';
+  const selected = requestedClubEvent ? clubEventRow : eventRow ?? clubEventRow;
+  if (!selected || (error && !clubEventRow)) notFound();
 
-  const event = (eventRow ?? clubEventRow) as Row;
-  const isClubEventOnly = !eventRow && Boolean(clubEventRow);
-  const clubEventExtra = (clubEventRow ?? null) as Row | null;
+  const event = selected as Row;
+  const isClubEventOnly = requestedClubEvent || !eventRow;
   const organizerId = asString(event.organizer_id) ?? asString(event.created_by);
   const clubId = asString(event.club_id);
   const kitId = asString(event.kit_id);
 
-  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }] =
+  const eventRef: EventAdventureRef = { kind: isClubEventOnly ? 'club_event' : 'community_event', id };
+  const cancelled = event.status === 'cancelled' || (isClubEventOnly && Boolean(asString(event.cancelled_at)));
+  const isOrganizer = Boolean(user && user.id === event.organizer_id);
+  const canLink = isOrganizer && !cancelled;
+  const revision = asNumber(event.route_revision);
+  const canLoadRoute = Boolean(user && isClubEventOnly && !cancelled && revision && revision > 0);
+  const [
+    { data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow },
+    linked, ownChoices, { data: proposal }, { data: routeDecision }, { data: routeState },
+  ] =
     await Promise.all([
       organizerId
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
         : Promise.resolve({ data: null }),
       isClubEventOnly
-        ? supabase.from('club_event_registrations').select('*').eq('event_id', id)
+        ? user
+          ? supabase.from('club_event_registrations_effective').select('*').eq('event_id', id).neq('status', 'cancelled')
+          : Promise.resolve({ data: [] })
         : supabase.from('event_participants').select('*').eq('event_id', id),
       clubId ? supabase.from('clubs').select('id,slug,name').eq('id', clubId).maybeSingle() : Promise.resolve({ data: null }),
       kitId
@@ -75,6 +95,20 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
             .eq('id', kitId)
             .maybeSingle()
         : Promise.resolve({ data: null }),
+      user ? resolveEventAdventure(eventRef) : null,
+      canLink && user ? listOwnedTripLinkChoices(user.id) : null,
+      canLoadRoute
+        ? supabase.from('club_event_route_revisions').select('route_name,meeting_point,distance_m,elevation_gain_m')
+          .eq('event_id', id).eq('revision', revision).not('canonical_revision_id', 'is', null).maybeSingle()
+        : { data: null },
+      canLoadRoute && user
+        ? supabase.from('club_event_route_decisions').select('adopted')
+          .eq('event_id', id).eq('user_id', user.id).eq('revision', revision).maybeSingle()
+        : { data: null },
+      canLoadRoute && user
+        ? supabase.from('club_event_route_sync').select('adopted_revision')
+          .eq('event_id', id).eq('user_id', user.id).maybeSingle()
+        : { data: null },
     ]);
 
   const participantsRaw = (participantRows ?? []) as Row[];
@@ -92,9 +126,6 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     if (profileId) profilesById.set(profileId, profile);
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   let myStatus: 'none' | 'registered' | 'waitlist' = 'none';
   if (user?.id) {
     const mine = participantsRaw.find((row) => asString(row.user_id) === user.id);
@@ -118,10 +149,12 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
   const eventDate = isoDate(startsAt) ?? isoDate(event.event_date) ?? '';
   const endsAt = asString(event.ends_at);
   const maxParticipants = asNumber(event.max_participants) ?? 0;
-  const currentParticipants = participants.filter((p) => p.status === 'confirmed').length || (asNumber(event.current_participants) ?? 0);
+  const currentParticipants = isClubEventOnly
+    ? asNumber(event.participants_count) ?? 0
+    : participants.filter((p) => p.status === 'confirmed').length || (asNumber(event.current_participants) ?? 0);
   const startsAtMs = startsAt ? Date.parse(startsAt) : eventDate ? Date.parse(`${eventDate}T23:59:59+01:00`) : NaN;
   const past = Number.isFinite(startsAtMs) ? startsAtMs < Date.now() : false;
-  const status = asString(event.status);
+  const status = cancelled ? 'cancelled' : asString(event.status);
 
   const organizerProfile = organizerRow as Row | null;
   const coverImage = asString(event.cover_image);
@@ -152,12 +185,13 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
     waitlistEnabled: Boolean(event.waitlist_enabled),
     status: status ?? null,
     past: past || status === 'past',
-    cancelled: status === 'cancelled',
+    cancelled,
+    canCancelClubEvent: isClubEventOnly && isOrganizer && !cancelled,
     recurrence: (asString(event.recurrence) as EventDetailData['recurrence']) ?? null,
     registrationUrl: getValidatedRaceRegistrationUrl(
-      asString(clubEventExtra?.registration_url) ?? asString(event.registration_url),
+      asString(event.registration_url),
     ),
-    format: asString(clubEventExtra?.format) ?? asString(event.format),
+    format: asString(event.format),
     safetyNotes: asString(event.safety_notes),
     safetyChecklist: asArray<string>(event.safety_checklist),
     organizer: organizerProfile
@@ -172,6 +206,7 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
         : null,
     participants,
     myStatus,
+    registrationClubId: isClubEventOnly ? clubId : undefined,
     club: clubRow
       ? {
           id: asString((clubRow as Row).id) ?? '',
@@ -188,5 +223,34 @@ export default async function SortiePage({ params }: { params: Promise<{ id: str
       : null,
   };
 
-  return <EventDetailClient event={data} signedIn={Boolean(user?.id)} />;
+  const choices = ownChoices ?? [];
+  const linkedChoice = linked ? { id: linked.id, title: linked.title } : null;
+  if (canLink && linkedChoice && !choices.some((trip) => trip.id === linkedChoice.id)) {
+    choices.unshift(linkedChoice);
+  }
+
+  return (
+    <EventDetailClient
+      key={eventRef.kind + '/' + id}
+      event={data}
+      signedIn={Boolean(user)}
+      routeProposal={proposal && revision != null ? (
+        <ClubEventRouteProposal
+          key={revision}
+          eventId={id}
+          revision={revision}
+          routeName={asString(proposal.route_name)}
+          meetingPoint={asString(proposal.meeting_point)}
+          distanceM={asNumber(proposal.distance_m)}
+          elevationGainM={asNumber(proposal.elevation_gain_m)}
+          canDecide={myStatus === 'registered'}
+          decision={typeof routeDecision?.adopted === 'boolean' ? routeDecision.adopted : null}
+          adoptedRevision={asNumber(routeState?.adopted_revision)}
+        />
+      ) : null}
+      hubLink={linkedChoice || choices.length > 0
+        ? <EventHubLink eventRef={eventRef} linked={linkedChoice} choices={choices} />
+        : null}
+    />
+  );
 }

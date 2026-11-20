@@ -74,7 +74,7 @@ export default async function HubSectionPage({
   const [{ section }, sp, flags] = await Promise.all([
     params,
     searchParams,
-    currentFeatureFlags(),
+    process.env.LKDV_HUB_LAYOUT === 'legacy' ? currentFeatureFlags() : null,
   ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
@@ -85,7 +85,7 @@ export default async function HubSectionPage({
 
   const data = await getHubAdventureData();
 
-  if (flags.hub_camp_v1) {
+  if (flags?.hub_camp_v1) {
     const servable = isHubSectionServable(def, data.adventure.nature);
     const serverSectionNode = servable ? (
       <>

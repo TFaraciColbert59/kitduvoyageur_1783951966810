@@ -18,6 +18,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getStudioData } from '@/features/kit-studio/server/getStudioData';
 import { resolveStudioPageState } from '@/features/kit-studio/server/studioMode';
+import { loadCockpit } from '@/features/hub/cockpit/loadCockpit';
+import { HubCockpit } from '@/features/hub/cockpit/HubCockpit';
+import { AdventureSwitcher } from '@/features/hub/components/AdventureSwitcher';
 
 export const metadata = {
   title: 'Hub — Le Kit du Voyageur',
@@ -31,21 +34,37 @@ function daysUntil(dateStr: string | null | undefined, now: number): number | nu
   return Math.round((t - now) / 86400000);
 }
 
-/**
- * Hub V4 — RACINE = MENU de cartes-onglets (remplace l'aperçu hero).
- * ?phase=live|recount → surfaces de phase (cockpit terrain / raconter).
- * Gated by hub_camp_v1: renders HubCampShell when flag is true.
- */
+/** Cockpit du voyage actif. Les anciens liens directs vers les phases restent disponibles. */
 export default async function HubPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [flags, data, sp] = await Promise.all([
-    currentFeatureFlags(),
-    getHubAdventureData(),
-    searchParams,
-  ]);
+  const [data, sp] = await Promise.all([getHubAdventureData(), searchParams]);
+  const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
+
+  if (process.env.LKDV_HUB_LAYOUT !== 'legacy') {
+    if (sp.studio === '1' || sp.studio === 'true') {
+      redirect(sp.debug === '1' ? '/kit-studio?debug=1' : '/kit-studio');
+    }
+    if (data.trip && phase === 'live') {
+      const stats = await getHubTripStats(data.trip.id);
+      const details = getTripPhaseDetails(data.trip);
+      return <PhaseLiveView trip={data.trip} stats={stats} dayIndex={details.dayIndex} totalDays={details.totalDays} />;
+    }
+    if (data.trip && phase === 'recount') return <PhaseRecountView trip={data.trip} />;
+
+    const cockpit = await loadCockpit(data);
+    return (
+      <HubCockpit
+        key={cockpit.key}
+        data={cockpit}
+        adventureControl={<AdventureSwitcher variant="dock" />}
+      />
+    );
+  }
+
+  const flags = await currentFeatureFlags();
 
   if (flags.hub_camp_v1) {
     // P3 : le studio du hub est le studio survivant. Sa donnée réelle est lue ici, côté
@@ -85,8 +104,6 @@ export default async function HubPage({
       />
     );
   }
-
-  const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
 
   if (data.input.kind === 'sortie' && data.trip) {
     const stats = await getHubTripStats(data.trip.id);

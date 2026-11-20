@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { TrailSearchFieldV2 } from '@/features/community/v2/create/carnet/TrailSearchFieldV2';
+import '@/features/community/v2/create/create-v2.css';
 
 import {
   buildEventFlyer,
@@ -54,12 +56,11 @@ export interface ClubEventDetailProps {
   onCancel: () => Promise<void> | void;
   onPublishRoute?: (input: {
     routeId: string;
-    checksum: string;
-    distanceM: number;
-    elevationGainM: number;
-    requiresParticipantDecision: boolean;
+    expectedRevision: number;
+    meetingPoint: string;
   }) => Promise<void> | void;
   onSyncRoute?: () => Promise<void> | void;
+  onDecideRoute?: (revision: number, adopt: boolean) => Promise<void> | void;
   onCopyShareUrl?: (url: string) => Promise<void> | void;
 }
 
@@ -87,6 +88,7 @@ export function ClubEventDetail({
   onCancel,
   onPublishRoute,
   onSyncRoute,
+  onDecideRoute,
   onCopyShareUrl,
 }: ClubEventDetailProps) {
   const [paceGroupId, setPaceGroupId] = useState<string>(event.paceGroups[0]?.id ?? '');
@@ -94,10 +96,7 @@ export function ClubEventDetail({
   const [copied, setCopied] = useState(false);
   const [revisionDraft, setRevisionDraft] = useState({
     routeId: event.routeId ?? '',
-    checksum: latestRevision?.checksum ?? '',
-    distanceKm: latestRevision ? (latestRevision.distanceM / 1000).toString() : '',
-    elevationGainM: latestRevision ? String(latestRevision.elevationGainM) : '',
-    requiresParticipantDecision: true,
+    meetingPoint: event.meetingPoint ?? '',
   });
   const [revisionError, setRevisionError] = useState<string | null>(null);
 
@@ -110,6 +109,7 @@ export function ClubEventDetail({
     [club.id, currentUserId, memberships],
   );
   const canManage = isClubManager(viewerMembership);
+  const canPublish = !event.cancelledAt && (canManage || currentUserId === event.createdBy);
   const capacity = eventCounts ? eventCapacityFromCounts(event, eventCounts) : eventCapacity(event, registrations);
   const rsvp = eventRsvpStatus(event.id, currentUserId, registrations);
   const temporal = eventTemporalState(event.startsAt, event.endsAt, nowIso);
@@ -143,31 +143,26 @@ export function ClubEventDetail({
   const publishRevision = async (formEvent: React.FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
     setRevisionError(null);
-    const distanceKm = Number(revisionDraft.distanceKm.replace(',', '.'));
-    const elevationGainM = Number(revisionDraft.elevationGainM);
-    if (!revisionDraft.routeId.trim() || !revisionDraft.checksum.trim()) {
-      setRevisionError('Identifiant de tracé et empreinte requis.');
-      return;
-    }
-    if (!Number.isFinite(distanceKm) || distanceKm <= 0) {
-      setRevisionError('Distance invalide.');
-      return;
-    }
-    if (!Number.isFinite(elevationGainM) || elevationGainM < 0) {
-      setRevisionError('Dénivelé invalide.');
+    if (!/^[1-9][0-9]{0,17}$/.test(revisionDraft.routeId)) {
+      setRevisionError('Choisis un tracé dans le catalogue.');
       return;
     }
     if (!onPublishRoute) return;
-    await run(() =>
-      onPublishRoute({
-        routeId: revisionDraft.routeId.trim(),
-        checksum: revisionDraft.checksum.trim(),
-        distanceM: Math.round(distanceKm * 1000),
-        elevationGainM: Math.round(elevationGainM),
-        requiresParticipantDecision: revisionDraft.requiresParticipantDecision,
-      }),
-    );
+    await runRouteAction(() => onPublishRoute({
+        routeId: revisionDraft.routeId,
+        expectedRevision: event.routeRevision,
+        meetingPoint: revisionDraft.meetingPoint.trim(),
+    }));
   };
+
+  async function runRouteAction(action: () => Promise<void> | void) {
+    setRevisionError(null);
+    try {
+      await run(action);
+    } catch (error) {
+      setRevisionError(error instanceof Error ? error.message : 'Parcours indisponible.');
+    }
+  }
 
   if (!visible) {
     return (
@@ -365,7 +360,7 @@ export function ClubEventDetail({
             <h2 className={styles.cardTitle}>Tracé partagé</h2>
             <p className={styles.cardMeta}>
               {event.routeId
-                ? `Tracé ${event.routeId} · révision ${event.routeRevision}`
+                ? `${latestRevision?.routeName ?? 'Tracé partagé'} · révision ${event.routeRevision}`
                 : 'Aucun tracé publié pour cette sortie.'}
             </p>
           </div>
@@ -380,10 +375,12 @@ export function ClubEventDetail({
               <span className={styles.metricValue}>{formatDistance(latestRevision.distanceM)}</span>
               <span className={styles.metricLabel}>Distance</span>
             </div>
-            <div className={styles.metric}>
-              <span className={styles.metricValue}>{formatElevation(latestRevision.elevationGainM)}</span>
-              <span className={styles.metricLabel}>Dénivelé</span>
-            </div>
+            {latestRevision.elevationGainM != null && (
+              <div className={styles.metric}>
+                <span className={styles.metricValue}>{formatElevation(latestRevision.elevationGainM)}</span>
+                <span className={styles.metricLabel}>Dénivelé</span>
+              </div>
+            )}
             <div className={styles.metric}>
               <span className={styles.metricValue}>{latestRevision.revision}</span>
               <span className={styles.metricLabel}>Révision</span>
@@ -401,102 +398,52 @@ export function ClubEventDetail({
           </p>
         ) : null}
 
-        {routeSyncState?.decisionRequired && !routeSyncState.revoked && onSyncRoute ? (
+        {latestRevision && rsvp === 'registered' && !event.cancelledAt &&
+          routeSyncState?.lastSyncedRevision !== latestRevision.revision && onSyncRoute ? (
           <button
             type="button"
             className={cx(styles.button, styles.primary)}
             disabled={pending}
-            onClick={() => void run(onSyncRoute)}
+            onClick={() => void runRouteAction(onSyncRoute)}
           >
-            {pending ? 'Synchronisation…' : 'Accepter la nouvelle trace'}
+            {pending ? 'Synchronisation…' : 'Recevoir la révision'}
           </button>
         ) : null}
 
-        {canManage && onPublishRoute ? (
+        {latestRevision?.canonicalRevisionId && rsvp === 'registered' && !event.cancelledAt
+          && routeSyncState?.pendingRevision === latestRevision.revision && onDecideRoute && (
+          <div className={styles.formRow}>
+            <button type="button" className={cx(styles.button, styles.primary)}
+              disabled={pending} onClick={() => void runRouteAction(() => onDecideRoute(latestRevision.revision, true))}>
+              Adopter ce tracé
+            </button>
+            <button type="button" className={styles.button}
+              disabled={pending} onClick={() => void runRouteAction(() => onDecideRoute(latestRevision.revision, false))}>
+              Garder mon tracé
+            </button>
+          </div>
+        )}
+        {routeSyncState?.adoptedRevision != null && (
+          <p className={styles.tiny}>Tracé adopté · révision {routeSyncState.adoptedRevision}</p>
+        )}
+        {revisionError && <p className={styles.notice} role="alert">{revisionError}</p>}
+
+        {canPublish && onPublishRoute ? (
           <form className={styles.stack} onSubmit={(formEvent) => void publishRevision(formEvent)}>
-            <div className={styles.formRow}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="g02-route-id">
-                  Identifiant du tracé
-                </label>
-                <input
-                  id="g02-route-id"
-                  className={styles.input}
-                  value={revisionDraft.routeId}
-                  onChange={(changeEvent) =>
-                    setRevisionDraft((current) => ({ ...current, routeId: changeEvent.target.value }))
-                  }
-                  required
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="g02-route-checksum">
-                  Empreinte (checksum)
-                </label>
-                <input
-                  id="g02-route-checksum"
-                  className={styles.input}
-                  value={revisionDraft.checksum}
-                  onChange={(changeEvent) =>
-                    setRevisionDraft((current) => ({ ...current, checksum: changeEvent.target.value }))
-                  }
-                  required
-                />
-              </div>
-            </div>
-            <div className={styles.formRow}>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="g02-route-distance">
-                  Distance (km)
-                </label>
-                <input
-                  id="g02-route-distance"
-                  className={styles.input}
-                  inputMode="decimal"
-                  value={revisionDraft.distanceKm}
-                  onChange={(changeEvent) =>
-                    setRevisionDraft((current) => ({ ...current, distanceKm: changeEvent.target.value }))
-                  }
-                  required
-                />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="g02-route-elevation">
-                  Dénivelé (m)
-                </label>
-                <input
-                  id="g02-route-elevation"
-                  className={styles.input}
-                  inputMode="numeric"
-                  value={revisionDraft.elevationGainM}
-                  onChange={(changeEvent) =>
-                    setRevisionDraft((current) => ({
-                      ...current,
-                      elevationGainM: changeEvent.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-            </div>
-            <label className={styles.inlineCheck}>
+            <TrailSearchFieldV2
+              label="Tracé du catalogue"
+              onPickTrail={(trail) => setRevisionDraft((current) => ({ ...current, routeId: String(trail.id) }))}
+            />
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="g02-route-meeting">Rendez-vous</label>
               <input
-                type="checkbox"
-                checked={revisionDraft.requiresParticipantDecision}
-                onChange={(changeEvent) =>
-                  setRevisionDraft((current) => ({
-                    ...current,
-                    requiresParticipantDecision: changeEvent.target.checked,
-                  }))
-                }
+                id="g02-route-meeting"
+                className={styles.input}
+                value={revisionDraft.meetingPoint}
+                onChange={(change) => setRevisionDraft((current) => ({ ...current, meetingPoint: change.target.value }))}
+                maxLength={200}
               />
-              Demander une décision aux participants
-            </label>
-            {revisionError ? (
-              <p className={styles.tiny} role="alert" style={{ color: 'var(--lkv-danger-dark)' }}>
-                {revisionError}
-              </p>
-            ) : null}
+            </div>
             <div>
               <button type="submit" className={cx(styles.button, styles.small)} disabled={pending}>
                 Publier la révision

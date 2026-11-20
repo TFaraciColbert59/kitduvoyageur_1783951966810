@@ -108,9 +108,9 @@ export async function GET(
 
     let registrations: EventRegistration[] = [];
     const eventCounts: Record<string, { registered: number; waitlist: number }> = {};
-    if (visible.length > 0) {
+    if (user && visible.length > 0) {
       const { data, error } = await supabase
-        .from('club_event_registrations')
+        .from('club_event_registrations_effective')
         .select('*')
         .in(
           'event_id',
@@ -143,6 +143,12 @@ export async function GET(
       registrations = isManager(bundle)
         ? allRegistrations
         : allRegistrations.filter((registration) => registration.userId === user?.id);
+    }
+
+    for (const event of visible) {
+      if (event.registeredCount == null) continue;
+      const counts = eventCounts[event.id] ?? { registered: 0, waitlist: 0 };
+      eventCounts[event.id] = { ...counts, registered: event.registeredCount };
     }
 
     // Fail-closed supplémentaire : la recherche applique déjà canViewClubEvent,

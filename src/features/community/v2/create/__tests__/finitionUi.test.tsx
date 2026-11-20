@@ -175,7 +175,7 @@ describe('Carnets#19 — « Tout voir »', () => {
     render(<CarnetsPane {...base} feed={feed()} filter="discover" onSeeAll={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /Tout voir/ })).toBeNull();
     cleanup();
-    render(<CarnetsPane {...base} feed={feed()} filter="mine" onSeeAll={vi.fn()} />);
+    render(<CarnetsPane {...base} feed={feed()} filter="saved" onSeeAll={vi.fn()} />);
     expect(screen.getByRole('button', { name: /Tout voir/ })).toBeTruthy();
   });
 });

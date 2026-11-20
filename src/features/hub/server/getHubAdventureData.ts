@@ -9,6 +9,8 @@ import type { ActiveAdventureData } from '../context/adventureSchema';
 import type { HubAdventureInput, HubSectionId } from '../engine/hubProfileEngine';
 import { deriveActivityType, aggregateHikeStats, estimateHikeDurationMin } from '../engine/activityTypes';
 import type { TripFull } from '@/features/trips/types/trip.types';
+import { discoverTrips } from '@/features/trips/server/discoverTrips';
+import { getConfirmedTripOverview } from '@/features/trips/server/getConfirmedTripOverview';
 import { getTripItemImages, type TripItemImage } from './getTripItemImages';
 import { fetchPublicProfiles } from '@/lib/queries/publicProfiles';
 import type { AffiliateCategory, AffiliateLink } from '@/features/affiliation/types/affiliate.types';
@@ -39,6 +41,7 @@ export interface HubAdventureLists {
   pendingInvites: number;
   possession: { items: number; loans: number; alerts: number };
   trips: HubUserTripLite[];
+  tripsUnavailable?: boolean;
 }
 
 export interface HubCrewMemberLite {
@@ -107,6 +110,7 @@ export interface HubHikingContext {
     current: { tempC: number; weathercode: number; precipPct: number | null; precipMm?: number | null };
     days: WeatherDay[];
     locationLabel: string | null;
+    point?: { lat: number; lon: number };
   } | null;
 }
 
@@ -176,12 +180,7 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     supabase.from('product_ownership').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('is_resolved', false),
     supabase.from('materiel_loans').select('*', { count: 'exact', head: true }).eq('lender_id', userId).in('status', ['en_cours', 'en_retard']),
-    supabase
-      .from('trips')
-      .select('id, slug, title, status, primary_activity, start_date, cover_image_url, trip_steps(distance_km, elevation_gain_m)')
-      .eq('user_id', userId)
-      .order('start_date', { ascending: false, nullsFirst: false })
-      .limit(20),
+    discoverTrips(userId),
   ]);
   out.pendingInvites = invitesRes.count ?? 0;
   out.possession = {
@@ -189,21 +188,13 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
     loans: loansRes.count ?? 0,
     alerts: alertsRes.count ?? 0,
   };
-  out.trips = ((tripsRes.data ?? []) as Array<{
-    id: string;
-    slug: string;
-    title: string;
-    status: string;
-    primary_activity: string;
-    start_date: string | null;
-    cover_image_url: string | null;
-    trip_steps?: Array<{ distance_km: number | null; elevation_gain_m: number | null }>;
-  }>).map((row) => {
+  out.tripsUnavailable = tripsRes.unavailable;
+  out.trips = tripsRes.trips.map((row) => {
     const steps = row.trip_steps ?? [];
     return {
       id: row.id,
       slug: row.slug,
-      title: row.title,
+      title: row.title?.trim() || 'Voyage sans titre',
       status: row.status,
       primary_activity: row.primary_activity,
       start_date: row.start_date,
@@ -526,6 +517,7 @@ async function loadHikingContext(
         current: forecast.current,
         days: forecast.days,
         locationLabel: forecast.location.label || null,
+        point: { lat: forecast.location.latitude, lon: forecast.location.longitude },
       };
     }
   } catch (err) {
@@ -600,11 +592,12 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     // dépendent tous deux de user.id mais sont indépendants entre eux.
     const [lists, trip] = await Promise.all([
       traceStage('lists', () => loadLists(user?.id)),
-      traceStage('trip.full', () =>
-        getTripBySlug(adventure.slug, user?.id).catch(() => null),
-      ),
+      traceStage('trip.full', async () => {
+        const full = await getTripBySlug(adventure.slug, user?.id).catch(() => null);
+        return full ?? (user ? await getConfirmedTripOverview(adventure.slug) : null);
+      }),
     ]);
-    if (trip) {
+    if (trip && trip.id === adventure.id) {
       const activityType = deriveActivityType(trip.primary_activity);
       // Météo/parcours dès qu'une étape est géolocalisée — pas seulement
       // en activité « randonnée » (tout voyage outdoor mérite la météo).

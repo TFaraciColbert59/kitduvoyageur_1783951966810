@@ -60,7 +60,12 @@ import { getCurrentGeoPosition } from '@/lib/native/geolocation';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetDayV2, CarnetFormValuesV2 } from '../engine/createSchemasV2';
 import { parseGeoJsonTrace, readTraceFile } from './gpx';
-import { carnetDayDateV2, carnetEndDateForDaysV2, syncCarnetDaysV2 } from './daySync';
+import {
+  carnetDayDateV2,
+  carnetEndDateForDaysV2,
+  normalizeCarnetDayV2,
+  syncCarnetDaysV2,
+} from './daySync';
 import { dayTraceColor } from './dayTraceColors';
 
 const DEFAULT_CENTER: [number, number] = [6.87, 45.92];
@@ -369,7 +374,7 @@ export function TracePaneV2({
   const applyOrderedDays = useCallback(
     (nextRawDays: CarnetDayV2[], nextSelectedIdx: number) => {
       const renumbered = nextRawDays.map((d, i) => ({
-        ...d,
+        ...normalizeCarnetDayV2(d),
         dayNumber: i + 1,
         date: carnetDayDateV2(startDate, i),
       }));

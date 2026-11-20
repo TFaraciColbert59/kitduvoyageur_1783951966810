@@ -1,3 +1,4 @@
+import { privateMomentMediaPath } from './privateMomentMedia';
 /**
  * Création d'un moment depuis la feuille « Créer » (mode modification, participant).
  * Toute entrée est validée par zod avant d'atteindre la base ; les messages sont
@@ -145,7 +146,7 @@ export function momentInsertRow(value: MomentInput, ctx: MomentInsertContext) {
     lieu: value.place,
     // photo : `carnet-media` ; vidéo : `carnet-moments-media` (même colonne).
     image_url:
-      isOwnMediaUrl(ctx.imageUrl, 'carnet-media') || isOwnMediaUrl(ctx.imageUrl, 'carnet-moments-media')
+      isOwnMediaUrl(ctx.imageUrl, 'carnet-media') || isOwnMediaUrl(ctx.imageUrl, 'carnet-moments-media') || privateMomentMediaPath(ctx.imageUrl, ctx.carnetId)
         ? ctx.imageUrl
         : null,
     moment_timestamp: ctx.now.toISOString(),

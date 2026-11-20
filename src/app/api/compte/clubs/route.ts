@@ -19,13 +19,11 @@ export const dynamic = 'force-dynamic';
  *   Pour un événement rattaché à un club, une adhésion `active` est exigée
  *   (`membership_required`, 403) : un banni, un candidat en attente ou un
  *   non-membre ne peut pas s'inscrire. Un événement sans `club_id` est ouvert
- *   aux utilisateurs connectés. `attending: false` retire la participation ;
- *   `attending` vaut `true` par défaut. L'upsert est idempotent sur la clé
- *   primaire `(event_id, user_id)`.
+ *   aux utilisateurs connectés. `attending: false` retire l’inscription ;
+ *   `attending` vaut `true` par défaut. Le RPC du club gère la capacité,
+ *   la liste d’attente et les répétitions pour la session.
  *
- * Toutes les lectures/écritures passent par le client de session : la RLS de
- * `club_members` et `club_event_participants` borne chaque ligne à
- * `auth.uid()`. Aucune clé service n'est utilisée.
+ * Les lectures et écritures passent par le client de session.
  *
  * `clubs.members_count` n'est pas réécrit ici : la RLS de `clubs` réserve
  * l'UPDATE au créateur/admin du club, un membre ne peut donc pas mettre à jour
@@ -300,27 +298,24 @@ export async function POST(request: NextRequest) {
         }
 
         const attending = body.attending !== false;
-        if (attending) {
-          const { error: upsertError } = await supabase
-            .from('club_event_participants')
-            .upsert(
-              { event_id: body.eventId, user_id: user.id },
-              { onConflict: 'event_id,user_id', ignoreDuplicates: true }
-            );
-          if (upsertError) return failure(upsertError);
-        } else {
-          const { error: deleteError } = await supabase
-            .from('club_event_participants')
-            .delete()
-            .eq('event_id', body.eventId)
-            .eq('user_id', user.id);
-          if (deleteError) return failure(deleteError);
-        }
+        const { data, error: registrationError } = await supabase.rpc('transact_club_event_registration', {
+          p_event_id: body.eventId,
+          p_attending: attending,
+        });
+        if (registrationError?.details === 'club_event_cancelled') return json({ error: 'event_cancelled' }, 409);
+        if (registrationError) return failure(registrationError);
+        const result = data as {
+          registration?: { status: 'registered' | 'waitlist' | 'cancelled' } | null;
+          event_cancelled?: boolean;
+        };
+        if (result.event_cancelled) return json({ error: 'event_cancelled' }, 409);
+        const registrationStatus = result.registration?.status ?? null;
 
         return json({
           clubId: body.clubId ?? event.club_id ?? null,
           eventId: body.eventId,
-          attending,
+          attending: registrationStatus === 'registered',
+          registrationStatus,
         });
       }
     }

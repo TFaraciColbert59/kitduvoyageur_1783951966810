@@ -48,6 +48,7 @@ export interface CarnetCreateSheetProps {
   initialSpeciesLatin?: string;
   onSubmit: (input: unknown, file: File | null) => Promise<CreateMomentResult>;
   onClose: () => void;
+  embedded?: boolean;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -72,6 +73,7 @@ export function CarnetCreateSheet({
   initialSpeciesLatin = '',
   onSubmit,
   onClose,
+  embedded = false,
 }: CarnetCreateSheetProps) {
   const { user } = useAuth();
   const [type, setType] = useState<MomentType | null>(initialType);
@@ -79,7 +81,7 @@ export function CarnetCreateSheet({
   const [main, setMain] = useState('');
   const [who, setWho] = useState('');
   const [latin, setLatin] = useState('');
-  const [amount, setAmount] = useState('12');
+  const [amount, setAmount] = useState(embedded ? '' : '12');
   const [category, setCategory] = useState<string>(MOMENT_EXPENSE_CATEGORIES[0]);
   const [itemId, setItemId] = useState(kitItems[0]?.id ?? '');
   const [file, setFile] = useState<File | null>(null);
@@ -431,6 +433,21 @@ export function CarnetCreateSheet({
           </div>
         </div>
       )}
-    </OverlaySheet>
+    </>
   );
+
+  if (embedded) return <>
+    {type && <h3 className="lkdv-cv2-title">{MOMENT_TYPE_LABELS[type]}</h3>}
+    {backButton}
+    {form}
+    {submitButton}
+  </>;
+
+  return <OverlaySheet
+    title={type ? MOMENT_TYPE_LABELS[type] : 'Créer'}
+    subtitle={type ? undefined : `Ajouter un moment à J${day}`}
+    onClose={onClose}
+    headerRight={backButton}
+    footer={submitButton}
+  >{form}</OverlaySheet>;
 }

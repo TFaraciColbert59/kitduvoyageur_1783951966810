@@ -55,6 +55,7 @@ interface HarnessOptions {
   /** File de lectures `club_members` (join en conflit : lecture + relecture). */
   memberships?: Result[];
   event?: Result;
+  registration?: Result;
   insert?: Result;
   upsert?: Result;
   remove?: Result;
@@ -71,6 +72,7 @@ interface HarnessCalls {
   inserts: Array<{ table: string; row: Row }>;
   upserts: Array<{ table: string; row: Row; options: Row }>;
   deletes: DeleteCall[];
+  rpcs: Array<{ name: string; params: Row }>;
 }
 
 function selectResultFor(table: string, options: HarnessOptions): Result {
@@ -134,10 +136,14 @@ function builder(table: string, options: HarnessOptions, calls: HarnessCalls): R
 }
 
 function harness(options: HarnessOptions = {}) {
-  const calls: HarnessCalls = { tables: [], eqs: [], inserts: [], upserts: [], deletes: [] };
+  const calls: HarnessCalls = { tables: [], eqs: [], inserts: [], upserts: [], deletes: [], rpcs: [] };
   const user = options.user === undefined ? { id: USER_ID } : options.user;
   const client = {
     auth: { getUser: vi.fn(async () => ({ data: { user } })) },
+    rpc: vi.fn(async (name: string, params: Row) => {
+      calls.rpcs.push({ name, params });
+      return options.registration ?? ok({ registration: { status: params.p_attending ? 'registered' : 'cancelled' } });
+    }),
     from: vi.fn((table: string) => {
       calls.tables.push(table);
       return builder(table, options, calls);
@@ -418,57 +424,44 @@ describe('POST /api/compte/clubs — rsvp', () => {
     ...overrides,
   });
 
-  it('upsert la participation de l’appelant à un événement réel (200)', async () => {
-    const h = use(
-      harness({
-        event: ok(event()),
-        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
-        upsert: ok(null),
-      })
-    );
-
+  it('inscrit via la transaction de club et renvoie le statut confirmé', async () => {
+    const h = use(harness({
+      event: ok(event()),
+      membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+    }));
     const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
-
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      clubId: CLUB_ID,
-      eventId: EVENT_ID,
-      attending: true,
-    });
-    expect(h.calls.upserts).toEqual([
-      {
-        table: 'club_event_participants',
-        row: { event_id: EVENT_ID, user_id: USER_ID },
-        options: { onConflict: 'event_id,user_id', ignoreDuplicates: true },
-      },
-    ]);
+    expect(await response.json()).toEqual({ clubId: CLUB_ID, eventId: EVENT_ID, attending: true, registrationStatus: 'registered' });
+    expect(h.calls.rpcs).toEqual([{
+      name: 'transact_club_event_registration',
+      params: { p_event_id: EVENT_ID, p_attending: true },
+    }]);
+    expect(h.calls.upserts).toEqual([]);
   });
 
-  it('retire la participation avec attending=false (200)', async () => {
-    const h = use(
-      harness({
-        event: ok(event()),
-        membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
-        remove: ok(null),
-      })
-    );
-
-    const response = await POST(
-      post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID, attending: false })
-    );
-
+  it('s’appuie sur le même RPC pour se retirer', async () => {
+    const h = use(harness({
+      event: ok(event()),
+      membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+    }));
+    const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID, attending: false }));
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      clubId: CLUB_ID,
-      eventId: EVENT_ID,
-      attending: false,
-    });
-    expect(h.calls.upserts).toEqual([]);
-    expect(h.calls.deletes).toHaveLength(1);
-    expect(h.calls.deletes[0].filters).toEqual([
-      ['event_id', EVENT_ID],
-      ['user_id', USER_ID],
-    ]);
+    expect(await response.json()).toEqual({ clubId: CLUB_ID, eventId: EVENT_ID, attending: false, registrationStatus: 'cancelled' });
+    expect(h.calls.rpcs).toEqual([{
+      name: 'transact_club_event_registration',
+      params: { p_event_id: EVENT_ID, p_attending: false },
+    }]);
+    expect(h.calls.deletes).toEqual([]);
+  });
+
+  it('renvoie l’attente sans afficher une place confirmée', async () => {
+    use(harness({
+      event: ok(event()),
+      membership: ok({ id: MEMBER_ID, role: 'member', status: 'active' }),
+      registration: ok({ registration: { status: 'waitlist' } }),
+    }));
+    const response = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
+    expect(await response.json()).toMatchObject({ attending: false, registrationStatus: 'waitlist' });
   });
 
   it('renvoie 404 si l’événement n’existe pas, sans écrire', async () => {
@@ -563,18 +556,19 @@ describe('POST /api/compte/clubs — rsvp', () => {
       clubId: null,
       eventId: EVENT_ID,
       attending: true,
+      registrationStatus: 'registered',
     });
-    expect(h.calls.upserts).toHaveLength(1);
+    expect(h.calls.rpcs).toHaveLength(1);
   });
 
   it('traduit un refus RLS en 403 et une panne en 500', async () => {
     const activeMembership = ok({ id: MEMBER_ID, role: 'member', status: 'active' });
-    use(harness({ event: ok(event()), membership: activeMembership, upsert: fail('42501') }));
+    use(harness({ event: ok(event()), membership: activeMembership, registration: fail('42501') }));
     const forbidden = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
     expect(forbidden.status).toBe(403);
     expect(await forbidden.json()).toEqual({ error: 'forbidden' });
 
-    use(harness({ event: ok(event()), membership: activeMembership, upsert: fail('XX000') }));
+    use(harness({ event: ok(event()), membership: activeMembership, registration: fail('XX000') }));
     const broken = await POST(post({ action: 'rsvp', clubId: CLUB_ID, eventId: EVENT_ID }));
     expect(broken.status).toBe(500);
     expect(await broken.json()).toEqual({ error: 'server_error' });

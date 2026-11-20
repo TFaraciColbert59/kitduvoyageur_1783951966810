@@ -9,9 +9,32 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchSavedPosts } from '@/features/community/posts/queries';
 import type { SavedPost } from '@/features/community/posts/types';
 import { ActionPill } from '@/components/ui/ActionPill';
-import { OverlaySheet } from './OverlaySheet';
+import { DrawerButton, OverlaySheet } from './OverlaySheet';
 import { formatElevation, formatKm } from '@/lib/format/metrics';
 import { GearMileagePanel } from '../drawer/gear/GearMileagePanel';
+import {
+  EFFORT_CSS_VARS,
+  EffortExpertDrawer,
+  type EffortExpertDrawerData,
+  EffortFatigueDrawer,
+  type EffortFatigueDrawerData,
+  EffortGroupDrawer,
+  type EffortGroupDrawerData,
+  type EffortOutingSummary,
+  type EffortPlannedOutingSummary,
+  EffortPrivacyDrawer,
+  type EffortPrivacyDrawerData,
+  EffortStateFeedback,
+  type EffortSubDrawerKind,
+  type EffortUiState,
+  EffortWhyDrawer,
+  formatDataLevelLabel,
+  formatEffortInterval,
+  formatEffortValue,
+  formatPreventiveRiskMessage,
+  formatTechniciteLabel,
+  haptic,
+} from './EffortSubDrawers';
 
 export interface BadgeRow { id: string; name?: string; description?: string; rarity?: string; earned?: boolean; earnedAt?: string; requirement?: string; requirementValue?: number; points?: number }
 export interface GearRowData { id: string; realId?: string; name?: string; brand?: string; category?: string; weight_g?: number; price_cents?: number; condition?: string; photo_url?: string | null; is_lent?: boolean; loaned_to?: string | null; outings_count?: number }
@@ -48,6 +71,18 @@ export interface BootstrapOverlayData {
   kitContentUnavailable?: boolean;
   kitVisualsUnavailable?: boolean;
   outingPhotosUnavailable?: boolean;
+  /** Lot P4 — Empreinte & Effort (Niveau 0, Niveau 1, Niveau 2). */
+  sealUnavailable?: boolean;
+  effortState?: EffortUiState;
+  effortDiagnosticId?: string | null;
+  effortErrorMessage?: string | null;
+  effortCachedAt?: string | null;
+  lastOutingEffort?: EffortOutingSummary | null;
+  nextPlannedOutingEffort?: EffortPlannedOutingSummary | null;
+  effortGroupSummary?: EffortGroupDrawerData | null;
+  effortFatigueSummary?: EffortFatigueDrawerData | null;
+  effortPrivacySummary?: EffortPrivacyDrawerData | null;
+  effortExpertSummary?: EffortExpertDrawerData | null;
 }
 
 export function SavedPostsDrawer({ onClose, onOpenPost }: { onClose: () => void; onOpenPost: (id: string) => void }) {
@@ -159,41 +194,560 @@ function radar(values: number[]): string {
   }).join(' ');
 }
 
-export function SealDrawer({ data, onClose }: { data: BootstrapOverlayData; onClose: () => void }) {
+export interface SealDrawerProps {
+  data: BootstrapOverlayData;
+  onClose: () => void;
+  onOpenSubDrawer?: (kind: EffortSubDrawerKind) => void;
+  onRetryEffort?: () => void;
+  effortStateOverride?: EffortUiState;
+}
+
+export function SealDrawer({
+  data,
+  onClose,
+  onOpenSubDrawer,
+  onRetryEffort,
+  effortStateOverride,
+}: SealDrawerProps) {
+  const [internalSubDrawer, setInternalSubDrawer] = useState<EffortSubDrawerKind | null>(null);
+
   const stats = data.stats ?? {};
   // Une liste illisible n'est pas une liste vide : afficher « — » plutôt que
   // « 0 », qui laisserait croire à une tribu réellement vide.
+  const sealUnavailable = data.sealUnavailable === true;
   const followersUnavailable =
+    sealUnavailable ||
     data.followersUnavailable === true ||
     (data.followersUnavailable === undefined && data.followListsUnavailable === true);
   const followersCount = data.followers?.length ?? 0;
   const tribeValue = followersUnavailable ? 0 : followersCount;
   const tribeDisplay = followersUnavailable ? '—' : String(followersCount);
   // Même règle pour les autres lectures : un échec n'est pas un zéro.
-  const statsUnavailable = data.statsUnavailable === true;
-  const gearUnavailable = data.gearItemsUnavailable === true;
-  const kitsUnavailable = data.kitsUnavailable === true;
+  const statsUnavailable = sealUnavailable || data.statsUnavailable === true;
+  const gearUnavailable = sealUnavailable || data.gearItemsUnavailable === true;
+  const kitsUnavailable = sealUnavailable || data.kitsUnavailable === true;
   const gearCount = data.gearItems?.length ?? 0;
   const kitsCount = data.kits?.length ?? 0;
-  const values = [statsUnavailable ? 0 : stats.outings ?? 0, statsUnavailable ? 0 : stats.km ?? 0, statsUnavailable ? 0 : stats.dplus ?? 0, gearUnavailable ? 0 : gearCount, kitsUnavailable ? 0 : kitsCount, data.species?.length ?? 0, tribeValue];
+  const speciesCount = data.species?.length ?? 0;
+  const values = [
+    statsUnavailable ? 0 : stats.outings ?? 0,
+    statsUnavailable ? 0 : stats.km ?? 0,
+    statsUnavailable ? 0 : stats.dplus ?? 0,
+    gearUnavailable ? 0 : gearCount,
+    kitsUnavailable ? 0 : kitsCount,
+    sealUnavailable ? 0 : speciesCount,
+    tribeValue,
+  ];
   const labels = ['Sorties', 'Kilomètres', 'Dénivelé', 'Matériel', 'Kits', 'Espèces', 'Tribu'];
-  const displays = [statsUnavailable ? '—' : String(stats.outings ?? 0), statsUnavailable ? '—' : formatKm(stats.km ?? 0), statsUnavailable ? '—' : formatElevation(stats.dplus ?? 0), gearUnavailable ? '—' : String(gearCount), kitsUnavailable ? '—' : String(kitsCount), String(data.species?.length ?? 0), tribeDisplay];
-  const someUnavailable = statsUnavailable || gearUnavailable || kitsUnavailable;
+  const displays = [
+    statsUnavailable ? '—' : String(stats.outings ?? 0),
+    statsUnavailable ? '—' : formatKm(stats.km ?? 0),
+    statsUnavailable ? '—' : formatElevation(stats.dplus ?? 0),
+    gearUnavailable ? '—' : String(gearCount),
+    kitsUnavailable ? '—' : String(kitsCount),
+    sealUnavailable ? '—' : String(speciesCount),
+    tribeDisplay,
+  ];
+  const someUnavailable = sealUnavailable || statsUnavailable || gearUnavailable || kitsUnavailable;
+
+  const uiState: EffortUiState = effortStateOverride ?? data.effortState ?? 'ready';
+  const lastOuting = sealUnavailable ? null : data.lastOutingEffort ?? null;
+  const nextOuting = sealUnavailable ? null : data.nextPlannedOutingEffort ?? null;
+
+  const triggerSubDrawer = (kind: EffortSubDrawerKind) => {
+    haptic();
+    if (onOpenSubDrawer) {
+      onOpenSubDrawer(kind);
+      return;
+    }
+    const globalApi =
+      typeof window !== 'undefined' ? (window as any).__lkdvCompteOverlay : undefined;
+    if (globalApi && typeof globalApi.openEffortSubDrawer === 'function') {
+      globalApi.openEffortSubDrawer(kind);
+      return;
+    }
+    setInternalSubDrawer(kind);
+  };
+
+  if (internalSubDrawer === 'effort-why') {
+    return (
+      <EffortWhyDrawer
+        outing={lastOuting ?? nextOuting}
+        state={uiState}
+        diagnosticId={data.effortDiagnosticId}
+        errorMessage={data.effortErrorMessage}
+        cachedAt={data.effortCachedAt}
+        onRetry={onRetryEffort}
+        onClose={() => setInternalSubDrawer(null)}
+      />
+    );
+  }
+  if (internalSubDrawer === 'effort-group') {
+    return (
+      <EffortGroupDrawer
+        groupData={sealUnavailable ? null : data.effortGroupSummary}
+        state={uiState}
+        diagnosticId={data.effortDiagnosticId}
+        errorMessage={data.effortErrorMessage}
+        cachedAt={data.effortCachedAt}
+        onRetry={onRetryEffort}
+        onClose={() => setInternalSubDrawer(null)}
+      />
+    );
+  }
+  if (internalSubDrawer === 'effort-fatigue') {
+    return (
+      <EffortFatigueDrawer
+        fatigueData={sealUnavailable ? null : data.effortFatigueSummary}
+        state={uiState}
+        diagnosticId={data.effortDiagnosticId}
+        errorMessage={data.effortErrorMessage}
+        cachedAt={data.effortCachedAt}
+        onRetry={onRetryEffort}
+        onClose={() => setInternalSubDrawer(null)}
+      />
+    );
+  }
+  if (internalSubDrawer === 'effort-privacy') {
+    return (
+      <EffortPrivacyDrawer
+        privacyData={
+          sealUnavailable
+            ? null
+            : data.effortPrivacySummary ?? {
+                dataLevel: lastOuting?.dataLevel ?? null,
+                evidence: lastOuting?.evidence ?? [],
+                consents: [],
+              }
+        }
+        state={uiState}
+        diagnosticId={data.effortDiagnosticId}
+        errorMessage={data.effortErrorMessage}
+        cachedAt={data.effortCachedAt}
+        onRetry={onRetryEffort}
+        onClose={() => setInternalSubDrawer(null)}
+      />
+    );
+  }
+  if (internalSubDrawer === 'effort-expert') {
+    return (
+      <EffortExpertDrawer
+        expertData={
+          sealUnavailable
+            ? null
+            : data.effortExpertSummary ??
+              (lastOuting
+                ? {
+                    scoreVersion: lastOuting.scoreVersion || 'effort-score-v1',
+                    snapshotHash: lastOuting.snapshotHash ?? null,
+                    iea: lastOuting.iea ?? null,
+                    erp: lastOuting.erp ?? null,
+                    eFlatKm: lastOuting.eFlatKm ?? null,
+                    rawDose: lastOuting.rawDose ?? null,
+                    multipliers: lastOuting.multipliers ?? null,
+                    ablations: [],
+                    rawSegments: [],
+                  }
+                : null)
+        }
+        state={uiState}
+        diagnosticId={data.effortDiagnosticId}
+        errorMessage={data.effortErrorMessage}
+        cachedAt={data.effortCachedAt}
+        onRetry={onRetryEffort}
+        onClose={() => setInternalSubDrawer(null)}
+      />
+    );
+  }
+
   return (
-    <OverlaySheet title="Empreinte" subtitle="100 % dérivé de tes sorties GPS vérifiées" onClose={onClose} className="lkdv-seal-drawer">
-      <div className="lkdv-seal">
-        <div className="lkdv-seal-radar"><svg viewBox="0 0 160 160">
-          {[40, 62, 78].map((r) => <circle key={r} cx="80" cy="80" r={r} fill="none" stroke="rgba(23,64,44,.16)" />)}
-          {values.map((_, i) => { const a = -Math.PI / 2 + (Math.PI * 2 * i) / values.length; return <line key={i} x1="80" y1="80" x2={80 + Math.cos(a) * 78} y2={80 + Math.sin(a) * 78} stroke="rgba(23,64,44,.14)" />; })}
-          <polygon points={radar(values)} fill="rgba(23,64,44,.16)" stroke="#17402c" strokeWidth="2" /><circle cx="80" cy="80" r="4" fill="#17402c" />
-        </svg></div>
-        <div className="lkdv-seal-grid">{labels.map((label, i) => <div key={label}><span>{label}</span><b>{displays[i]}</b></div>)}</div>
+    <OverlaySheet
+      title="Empreinte & Effort"
+      subtitle="100 % dérivé de tes sorties GPS vérifiées"
+      onClose={onClose}
+      className="lkdv-seal-drawer"
+    >
+      <div className="lkdv-seal" style={{ ...EFFORT_CSS_VARS, color: '#172B24' }}>
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#172B24' }}>
+            Empreinte
+          </h3>
+          <span
+            data-testid="seal-data-level-header"
+            style={{
+              padding: '2px 8px',
+              borderRadius: '999px',
+              background: '#F2F7EE',
+              border: '1px solid var(--tint, #17402C)',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#172B24',
+            }}
+          >
+            {formatDataLevelLabel(lastOuting?.dataLevel ?? nextOuting?.dataLevel ?? null)}
+          </span>
+        </div>
+
+        <div className="lkdv-seal-radar">
+          <svg
+            viewBox="0 0 160 160"
+            role="img"
+            aria-label="Radar 7 axes de l’Empreinte terrain"
+          >
+            {[40, 62, 78].map((r) => (
+              <circle key={r} cx="80" cy="80" r={r} fill="none" stroke="rgba(23,64,44,.16)" />
+            ))}
+            {values.map((_, i) => {
+              const a = -Math.PI / 2 + (Math.PI * 2 * i) / values.length;
+              return (
+                <line
+                  key={i}
+                  x1="80"
+                  y1="80"
+                  x2={80 + Math.cos(a) * 78}
+                  y2={80 + Math.sin(a) * 78}
+                  stroke="rgba(23,64,44,.14)"
+                />
+              );
+            })}
+            <polygon
+              points={radar(values)}
+              fill="rgba(23,64,44,.16)"
+              stroke="#17402c"
+              strokeWidth="2"
+            />
+            <circle cx="80" cy="80" r="4" fill="#17402c" />
+          </svg>
+        </div>
+
+        <div className="lkdv-seal-grid">
+          {labels.map((label, i) => (
+            <div key={label}>
+              <span style={{ color: '#172B24' }}>{label}</span>
+              <b style={{ color: '#172B24' }}>{displays[i]}</b>
+            </div>
+          ))}
+        </div>
+
         {followersUnavailable ? (
-          <p className="lkdv-trust-detail-empty">Liste de la tribu momentanément indisponible.</p>
+          <p className="lkdv-trust-detail-empty" style={{ color: '#172B24' }}>
+            Liste de la tribu momentanément indisponible.
+          </p>
         ) : null}
         {someUnavailable ? (
-          <p className="lkdv-trust-detail-empty">Certaines données de l’Empreinte sont momentanément indisponibles.</p>
+          <p className="lkdv-trust-detail-empty" style={{ color: '#172B24' }}>
+            Certaines données de l’Empreinte sont momentanément indisponibles.
+          </p>
         ) : null}
+
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+          <EffortStateFeedback
+            state={uiState}
+            diagnosticId={data.effortDiagnosticId}
+            errorMessage={data.effortErrorMessage}
+            cachedAt={data.effortCachedAt}
+            onRetry={onRetryEffort}
+          />
+
+          {uiState !== 'loading' && uiState !== 'error' ? (
+            <>
+              {/* CARTE 1 : DERNIÈRE SORTIE */}
+              <section
+                aria-labelledby="lkdv-effort-last-outing-title"
+                data-testid="effort-last-outing-card"
+                className="lkdv-overlay-card"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px',
+                  background: '#FFFFFF',
+                  color: '#172B24',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '6px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div>
+                    <h3
+                      id="lkdv-effort-last-outing-title"
+                      style={{ margin: 0, fontSize: '13.5px', fontWeight: 700, color: '#172B24' }}
+                    >
+                      Dernière sortie
+                    </h3>
+                    <small style={{ fontSize: '11px', color: '#172B24' }}>
+                      {lastOuting?.title
+                        ? `${lastOuting.title}${lastOuting.dateLabel ? ` · ${lastOuting.dateLabel}` : ''}`
+                        : 'Aucune sortie évaluée'}
+                    </small>
+                  </div>
+                  <span
+                    data-testid="effort-last-data-level"
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '999px',
+                      background: '#F6F9F4',
+                      border: '1px solid rgba(23, 43, 36, 0.2)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#172B24',
+                    }}
+                  >
+                    {formatDataLevelLabel(lastOuting?.dataLevel)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: '7px',
+                    marginBottom: '9px',
+                  }}
+                >
+                  <div style={{ padding: '7px 9px', borderRadius: '10px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10.5px', color: '#172B24' }}>
+                      Score IEA (absolu)
+                    </span>
+                    <b data-testid="effort-last-iea" style={{ fontSize: '14px', color: '#172B24' }}>
+                      {lastOuting && lastOuting.iea != null
+                        ? formatEffortValue(lastOuting.iea, { suffix: '%' })
+                        : '— (non évalué)'}
+                    </b>
+                  </div>
+
+                  <div style={{ padding: '7px 9px', borderRadius: '10px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10.5px', color: '#172B24' }}>
+                      Fourchette [P10–P90]
+                    </span>
+                    <b data-testid="effort-last-interval" style={{ fontSize: '13px', color: '#172B24' }}>
+                      {formatEffortInterval(lastOuting?.interval, '%')}
+                    </b>
+                  </div>
+
+                  <div style={{ padding: '7px 9px', borderRadius: '10px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10.5px', color: '#172B24' }}>
+                      Score ERP (personnel)
+                    </span>
+                    <b data-testid="effort-last-erp" style={{ fontSize: '14px', color: '#172B24' }}>
+                      {lastOuting && lastOuting.erp != null
+                        ? formatEffortValue(lastOuting.erp, { suffix: '%' })
+                        : '— (non évalué)'}
+                    </b>
+                  </div>
+
+                  <div style={{ padding: '7px 9px', borderRadius: '10px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10.5px', color: '#172B24' }}>
+                      Équivalent plat (eFlatKm)
+                    </span>
+                    <b data-testid="effort-last-eflat" style={{ fontSize: '13.5px', color: '#172B24' }}>
+                      {lastOuting && lastOuting.eFlatKm != null
+                        ? formatEffortValue(lastOuting.eFlatKm, { decimals: 1, suffix: 'km-effort' })
+                        : '—'}
+                    </b>
+                  </div>
+                </div>
+
+                <div
+                  data-testid="effort-last-action-phrase"
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '10px',
+                    background: '#F2F7EE',
+                    border: '1px solid var(--good, #3D7A52)',
+                    fontSize: '11.5px',
+                    marginBottom: '8px',
+                    color: '#172B24',
+                  }}
+                >
+                  <b>Action conseillée : </b>
+                  <span>{lastOuting?.actionPhrase || 'non évalué'}</span>
+                </div>
+
+                {/* Bandeaux Technicité (1–5) et Risque strictement séparés du score */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div
+                    role="region"
+                    aria-label="Technicité du parcours (séparée du score d’effort)"
+                    data-testid="effort-last-technicite"
+                    style={{
+                      padding: '7px 10px',
+                      borderRadius: '10px',
+                      background: '#F6F9F4',
+                      border: '1px solid var(--tint, #17402C)',
+                      fontSize: '11.5px',
+                      color: '#172B24',
+                    }}
+                  >
+                    <b>Technicité (1–5) : </b>
+                    <span>{formatTechniciteLabel(lastOuting?.technicite)}</span>
+                  </div>
+
+                  <div
+                    role="region"
+                    aria-label="Vigilance terrain (séparée du score d’effort)"
+                    data-testid="effort-last-risque"
+                    style={{
+                      padding: '7px 10px',
+                      borderRadius: '10px',
+                      background: '#FDF6E7',
+                      border: '1.5px solid var(--warn, #B98A2E)',
+                      fontSize: '11.5px',
+                      color: '#172B24',
+                    }}
+                  >
+                    <b>Vigilance &amp; conditions : </b>
+                    <span>{formatPreventiveRiskMessage(lastOuting?.risque)}</span>
+                  </div>
+                </div>
+              </section>
+
+              {/* CARTE 2 : PROCHAINE SORTIE PRÉVUE + ACCÈS NIVEAU 1 & NIVEAU 2 */}
+              <section
+                aria-labelledby="lkdv-effort-next-outing-title"
+                data-testid="effort-next-outing-card"
+                className="lkdv-overlay-card"
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '12px',
+                  background: '#FFFFFF',
+                  color: '#172B24',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '6px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div>
+                    <h3
+                      id="lkdv-effort-next-outing-title"
+                      style={{ margin: 0, fontSize: '13.5px', fontWeight: 700, color: '#172B24' }}
+                    >
+                      Prochaine sortie prévue
+                    </h3>
+                    <small style={{ fontSize: '11px', color: '#172B24' }}>
+                      {nextOuting?.title
+                        ? `${nextOuting.title}${nextOuting.departureLabel ? ` · ${nextOuting.departureLabel}` : ''}`
+                        : 'Aucune sortie planifiée'}
+                    </small>
+                  </div>
+                  <span
+                    data-testid="effort-next-data-level"
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '999px',
+                      background: '#F6F9F4',
+                      border: '1px solid rgba(23, 43, 36, 0.2)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#172B24',
+                    }}
+                  >
+                    {formatDataLevelLabel(nextOuting?.dataLevel)}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                    gap: '6px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div style={{ padding: '6px 8px', borderRadius: '9px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#172B24' }}>IEA prévu</span>
+                    <b data-testid="effort-next-iea" style={{ fontSize: '13px', color: '#172B24' }}>
+                      {nextOuting && nextOuting.iea != null
+                        ? formatEffortValue(nextOuting.iea, { suffix: '%' })
+                        : '—'}
+                    </b>
+                  </div>
+                  <div style={{ padding: '6px 8px', borderRadius: '9px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#172B24' }}>[P10–P90]</span>
+                    <b data-testid="effort-next-interval" style={{ fontSize: '12px', color: '#172B24' }}>
+                      {formatEffortInterval(nextOuting?.interval, '%')}
+                    </b>
+                  </div>
+                  <div style={{ padding: '6px 8px', borderRadius: '9px', background: '#F6F9F4' }}>
+                    <span style={{ display: 'block', fontSize: '10px', color: '#172B24' }}>Équiv. plat</span>
+                    <b data-testid="effort-next-eflat" style={{ fontSize: '12px', color: '#172B24' }}>
+                      {nextOuting && nextOuting.eFlatKm != null
+                        ? formatEffortValue(nextOuting.eFlatKm, { decimals: 1, suffix: 'km' })
+                        : '—'}
+                    </b>
+                  </div>
+                </div>
+
+                <p style={{ margin: '0 0 10px', fontSize: '11.5px', color: '#172B24' }}>
+                  <b>Préparation : </b>
+                  <span>{nextOuting?.actionPhrase || 'non évalué'}</span>
+                </p>
+
+                <nav
+                  aria-label="Approfondir l’analyse d’effort (Niveaux 1 et 2)"
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}
+                >
+                  <DrawerButton
+                    tone="secondary"
+                    data-testid="open-subdrawer-effort-why"
+                    onClick={() => triggerSubDrawer('effort-why')}
+                  >
+                    Pourquoi ce score ?
+                  </DrawerButton>
+                  <DrawerButton
+                    tone="secondary"
+                    data-testid="open-subdrawer-effort-group"
+                    onClick={() => triggerSubDrawer('effort-group')}
+                  >
+                    Sortie de groupe
+                  </DrawerButton>
+                  <DrawerButton
+                    tone="secondary"
+                    data-testid="open-subdrawer-effort-fatigue"
+                    onClick={() => triggerSubDrawer('effort-fatigue')}
+                  >
+                    Forme &amp; fatigue
+                  </DrawerButton>
+                  <DrawerButton
+                    tone="secondary"
+                    data-testid="open-subdrawer-effort-privacy"
+                    onClick={() => triggerSubDrawer('effort-privacy')}
+                  >
+                    Données, confiance &amp; vie privée
+                  </DrawerButton>
+                  <DrawerButton
+                    tone="primary"
+                    data-testid="open-subdrawer-effort-expert"
+                    onClick={() => triggerSubDrawer('effort-expert')}
+                  >
+                    Mode expert
+                  </DrawerButton>
+                </nav>
+              </section>
+            </>
+          ) : null}
+        </div>
       </div>
     </OverlaySheet>
   );

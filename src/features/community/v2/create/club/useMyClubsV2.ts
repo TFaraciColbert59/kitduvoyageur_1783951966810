@@ -52,7 +52,7 @@ export function useMyClubsV2(userId: string | null | undefined) {
               activity: typeof record.activity === 'string' ? record.activity : null,
             };
           })
-          .filter((entry): entry is MyClubV2 => entry !== null),
+          .filter((entry) => entry !== null),
       );
     } catch {
       setClubs([]);

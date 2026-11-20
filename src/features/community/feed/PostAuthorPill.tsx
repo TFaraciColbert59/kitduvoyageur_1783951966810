@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, Users } from 'lucide-react';
 import type { FeedPost } from './useCommunityFeed';
@@ -27,12 +27,27 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
   const meta = metaOverride ?? [location, place, timeAgo(post.created_at)].filter(Boolean).join(' · ');
   const trust = typeof author?.trust_score === 'number' ? author.trust_score : null;
 
+  return <IdentityPill name={name} avatarUrl={author?.avatar_url} meta={meta || timeAgo(post.created_at)}
+    trust={trust} badge={badge} href={href} onClick={onClick} />;
+}
+
+export function IdentityPill({ name, avatarUrl, meta, trust, badge, href, onClick, itemId }: {
+  name: string;
+  avatarUrl?: string | null;
+  meta?: string;
+  trust?: number | null;
+  badge?: string;
+  href?: string;
+  onClick?: (element: HTMLButtonElement) => void;
+  itemId?: string;
+}) {
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
   const label = `${name}${meta ? ` — ${meta}` : ''}`;
   const body = (
     <>
-      {author?.avatar_url ? (
+      {avatarUrl && avatarUrl !== failedAvatar ? (
         // eslint-disable-next-line @next/next/no-img-element -- avatar distant
-        <img className="lkdv-post-author-av" src={author.avatar_url} alt="" />
+        <img className="lkdv-post-author-av" src={avatarUrl} alt="" onError={() => setFailedAvatar(avatarUrl)} />
       ) : (
         <span className="lkdv-post-author-av pmi-author-initial" aria-hidden="true">
           {name.charAt(0).toUpperCase()}
@@ -41,7 +56,7 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
       <span className="lkdv-post-author-txt">
         <span className="lkdv-post-author-line">
           <b>{name}</b>
-          {trust !== null ? (
+          {trust != null ? (
             <span className="lkdv-post-author-badge">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 3l7 3v5c0 4.4-2.8 7.6-7 9-4.2-1.4-7-4.6-7-9V6l7-3Z" />
@@ -52,7 +67,7 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
           ) : null}
           {badge ? <span className="lkdv-post-author-badge">{badge}</span> : null}
         </span>
-        <span className="lkdv-post-author-meta">{meta || timeAgo(post.created_at)}</span>
+        {meta && <span className="lkdv-post-author-meta">{meta}</span>}
       </span>
     </>
   );

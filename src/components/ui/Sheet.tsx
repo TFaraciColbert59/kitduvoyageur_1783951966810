@@ -26,6 +26,10 @@ export interface SheetProps {
   panelClassName?: string;
   /** Classe de la zone de contenu (padding, overflow) — optionnel. */
   contentClassName?: string;
+  contentRef?: React.Ref<HTMLDivElement>;
+  headerLeading?: React.ReactNode;
+  onCloseAutoFocus?: React.ComponentProps<typeof Dialog.Content>['onCloseAutoFocus'];
+  onEscapeKeyDown?: React.ComponentProps<typeof Dialog.Content>['onEscapeKeyDown'];
 }
 
 const DETENT: Record<string, string> = {
@@ -63,6 +67,10 @@ export function Sheet({
   dragToDismiss = false,
   panelClassName,
   contentClassName,
+  contentRef,
+  headerLeading,
+  onCloseAutoFocus,
+  onEscapeKeyDown,
 }: SheetProps) {
   const effectiveDetent = snap ?? detent;
   const panelRef = React.useRef<HTMLDivElement>(null);
@@ -112,7 +120,11 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Overlay className="lkv-fade-in fixed inset-0 z-[var(--z-sheet)] bg-[color:var(--lkv-overlay-scrim)] backdrop-blur-[var(--blur-sm)] data-[state=closed]:[animation:lkv-fade-out_var(--motion-control-duration)_var(--lkv-ease)_both] motion-reduce:[animation:none]" />
         <Dialog.Content
-          onEscapeKeyDown={blockDismiss}
+          onCloseAutoFocus={onCloseAutoFocus}
+          onEscapeKeyDown={(event) => {
+            onEscapeKeyDown?.(event);
+            blockDismiss(event);
+          }}
           onPointerDownOutside={blockDismiss}
           onInteractOutside={blockDismiss}
           {...(description ? {} : { 'aria-describedby': undefined })}
@@ -150,7 +162,8 @@ export function Sheet({
             </div>
             {title ? (
               <div className="flex shrink-0 items-center justify-between gap-[var(--space-3)] px-[var(--space-5)] pb-[var(--space-3)] pt-[var(--space-2)]">
-                <div className="min-w-0">
+                {headerLeading}
+                <div className="min-w-0 flex-1">
                   <Dialog.Title
                     className={cn(
                       'text-[length:var(--lkv-text-title-sm)] font-bold leading-[var(--lkv-line-title)] text-[color:var(--lkv-text-primary)]',
@@ -181,6 +194,7 @@ export function Sheet({
               <Dialog.Title className="sr-only">Fenêtre de dialogue</Dialog.Title>
             )}
             <div
+              ref={contentRef}
               className={cn(
                 'min-h-0 flex-1 overflow-y-auto overscroll-contain px-[var(--space-5)] pb-[var(--space-4)] pt-[var(--space-1)]',
                 contentClassName

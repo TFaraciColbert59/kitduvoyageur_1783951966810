@@ -11,6 +11,7 @@ import React, {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import Icon from '@/components/ui/Icon';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import { LensPager } from '@/components/ui/drawer/LensPager';
 import { SortMenuButton, type SortOption } from '@/components/ui/drawer/SortMenuButton';
@@ -115,6 +116,10 @@ export interface CommunitySheetShellProps {
   staticSlot?: ReactNode;
   /** Plafonne le tiroir à 40% de hauteur en mode Recherche. */
   compactSearch?: boolean;
+  initialDetent?: 'card' | 'large';
+  hideCapsule?: boolean;
+  hideDetailTitle?: boolean;
+  showClose?: boolean;
 }
 
 function cx(...classes: Array<string | false | null | undefined>): string {
@@ -158,13 +163,17 @@ export function CommunitySheetShell({
   previewSlotRef,
   staticSlot = null,
   compactSearch = false,
+  initialDetent = 'card',
+  hideCapsule = false,
+  hideDetailTitle = false,
+  showClose = false,
 }: CommunitySheetShellProps) {
   const { haptic } = useHapticFeedback();
   const [mounted, setMounted] = useState(open);
   const [state, setState] = useState<'opening' | 'open' | 'closing'>('opening');
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [detent, setDetent] = useState<'card' | 'large'>('card');
+  const [detent, setDetent] = useState<'card' | 'large'>(initialDetent);
   const [scrolled, setScrolled] = useState(false);
   const [edgeBackX, setEdgeBackX] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -195,6 +204,7 @@ export function CommunitySheetShell({
   // ── Ouverture / sortie animée ─────────────────────────────────────────────
   useEffect(() => {
     if (open) {
+      setDetent(initialDetent);
       openerRef.current = (document.activeElement as HTMLElement | null) ?? null;
       setMounted(true);
       setState('opening');
@@ -242,7 +252,7 @@ export function CommunitySheetShell({
     };
     // `mounted` est volontairement hors dépendances : sinon la sortie se relance.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, reducedMotion]);
+  }, [open, reducedMotion, initialDetent]);
 
   // Un changement de nature (Explorer <-> Création) remonte la position de drag.
   useEffect(() => {
@@ -514,7 +524,7 @@ export function CommunitySheetShell({
   const paneId = (id: string) => `cv2-pane-${id}`;
   const detailPages = detail?.pages ?? [];
   const detailCount = detailPages.length;
-  const showCapsule = !detail;
+  const showCapsule = !detail && !hideCapsule;
   // Le LensPager suit les filtres/étapes (mini-capsule) quand `mini.pages` est
   // fourni ; sinon il conserve le glisser entre volets (compatibilité).
   const filterPages = mini?.pages?.[capsule.active] ?? null;
@@ -559,7 +569,7 @@ export function CommunitySheetShell({
           onScrollCapture={onSheetScrollCapture}
         >
           <div
-            className="lkdv-cv2-grab"
+            className={cx('lkdv-cv2-grab', showClose && 'lkdv-cv2-grab--with-close')}
             data-cv2-drag
             onPointerDown={onDragStart}
             onPointerMove={onDragMove}
@@ -660,7 +670,7 @@ export function CommunitySheetShell({
                     <path d="M15 5l-7 7 7 7" />
                   </svg>
                 </button>
-                <b className="lkdv-cv2-detail-title">{detail.title}</b>
+                <b className={hideDetailTitle ? 'sr-only' : 'lkdv-cv2-detail-title'}>{detail.title}</b>
                 {detail.meta ? <span className="lkdv-cv2-detail-meta">{detail.meta}</span> : null}
               </div>
               {detailCount > 1 ? (
@@ -820,6 +830,9 @@ export function CommunitySheetShell({
             )
           ) : null}
 
+          {showClose && <button type="button" className="lkdv-cv2-back lkdv-cv2-close" aria-label="Fermer" onClick={onClose}>
+            <Icon name="x" size={18} />
+          </button>}
           {children}
         </div>
       </div>

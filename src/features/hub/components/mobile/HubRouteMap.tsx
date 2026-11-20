@@ -38,6 +38,7 @@ export interface HubRouteManualSegment {
 
 export interface HubRouteMapProps {
   routeCoords: Array<[number, number]>;
+  routeSegments?: Array<Array<[number, number]>>;
   highlightCoords?: Array<[number, number]>;
   /** Tracés manuels hors réseau, dessinés en pointillés par-dessus la carte. */
   manualSegments?: HubRouteManualSegment[];
@@ -50,24 +51,35 @@ export interface HubRouteMapProps {
   onMapClick?: (lat: number, lon: number) => void;
   /** Poignée relâchée : son identifiant et sa nouvelle position. */
   onPointMove?: (id: string, lat: number, lon: number) => void;
+  onPointSelect?: (point: HubRoutePoint) => void;
+  onBasemapState?: (state: 'loading' | 'ready' | 'unavailable') => void;
 }
+
+const NO_SEGMENTS: Array<Array<[number, number]>> = [];
+const NO_POINTS: HubRoutePoint[] = [];
 
 export default function HubRouteMap({
   routeCoords,
+  routeSegments = NO_SEGMENTS,
   highlightCoords = [],
   manualSegments = [],
-  points = [],
+  points = NO_POINTS,
   interactive = false,
   reserveBottom = 0,
   className,
   emptyLabel = 'Trace non géolocalisée',
   onMapClick,
   onPointMove,
+  onPointSelect,
+  onBasemapState,
 }: HubRouteMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const fitRef = useRef<(() => void) | null>(null);
   const onMapClickRef = useRef(onMapClick);
   const onPointMoveRef = useRef(onPointMove);
+  const onPointSelectRef = useRef(onPointSelect);
+  const onBasemapStateRef = useRef(onBasemapState);
   const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -77,21 +89,26 @@ export default function HubRouteMap({
 
   useEffect(() => {
     onPointMoveRef.current = onPointMove;
-  }, [onPointMove]);
+    onPointSelectRef.current = onPointSelect;
+    onBasemapStateRef.current = onBasemapState;
+  }, [onPointMove, onPointSelect, onBasemapState]);
 
   const hasRoute =
     routeCoords.length >= 1 ||
+    routeSegments.some((segment) => segment.length >= 2) ||
     highlightCoords.length >= 1 ||
-    manualSegments.some((segment) => segment.coordinates.length >= 2);
+    manualSegments.some((segment) => segment.coordinates.length >= 2) ||
+    points.length > 0;
   const geoKey = useMemo(
     () =>
       JSON.stringify([
         routeCoords,
+        routeSegments,
         highlightCoords,
         manualSegments.map((segment) => segment.coordinates),
-        points.map((p) => [p.lat, p.lon, p.color, p.label, p.id ?? '', p.draggable ? 1 : 0]),
+        points.map((p) => [p.lat, p.lon, p.color, p.label, p.id ?? '', p.stepId, p.draggable ? 1 : 0]),
       ]),
-    [routeCoords, highlightCoords, manualSegments, points],
+    [routeCoords, routeSegments, highlightCoords, manualSegments, points],
   );
 
   useEffect(() => {
@@ -118,6 +135,7 @@ export default function HubRouteMap({
     let readyTimer: ReturnType<typeof setTimeout> | null = null;
     let resizeObserver: ResizeObserver | null = null;
     setReady(false);
+    onBasemapStateRef.current?.('loading');
 
     const observeResize = (el: HTMLElement) => {
       if (typeof ResizeObserver === 'undefined') return;
@@ -163,8 +181,18 @@ export default function HubRouteMap({
       L.control.attribution({ prefix: false }).addTo(map);
       const base = leafletTiles('topo');
       const tiles = L.tileLayer(base.url, { ...base.options, keepBuffer: 4 }).addTo(map);
-      tiles.once('load', () => setReady(true));
-      readyTimer = setTimeout(() => setReady(true), 2600);
+      let tileLoaded = false;
+      tiles.on('tileload', () => {
+        if (tileLoaded || cancelled) return;
+        tileLoaded = true;
+        setReady(true);
+        onBasemapStateRef.current?.('ready');
+      });
+      readyTimer = setTimeout(() => {
+        if (cancelled || tileLoaded) return;
+        setReady(true);
+        onBasemapStateRef.current?.('unavailable');
+      }, 4000);
 
       if (interactive) {
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -188,15 +216,16 @@ export default function HubRouteMap({
       }
 
       const active = highlight.length >= 2 ? highlight : routeCoords;
-      if (active.length >= 2) {
-        L.polyline(active, {
+      for (const segment of [active, ...routeSegments]) {
+        if (segment.length < 2) continue;
+        L.polyline(segment, {
           color: '#FFFFFF',
           weight: 7,
           opacity: 0.9,
           lineCap: 'round',
           lineJoin: 'round',
         }).addTo(map);
-        L.polyline(active, {
+        L.polyline(segment, {
           color: '#17402C',
           weight: 4.5,
           opacity: 1,
@@ -249,6 +278,24 @@ export default function HubRouteMap({
 
       for (const [index, p] of points.entries()) {
         const pointId = p.id?.trim() || `hub-point-${index}`;
+        const tooltip = document.createElement('span');
+        tooltip.textContent = p.label;
+        if (interactive && p.stepId && onPointSelectRef.current) {
+          const pin = L.marker([p.lat, p.lon], {
+            title: p.label,
+            alt: p.label,
+            keyboard: true,
+            icon: L.divIcon({
+              className: 'lkdv-hub-step-pin',
+              html: '<span></span>',
+              iconSize: [44, 44],
+              iconAnchor: [22, 22],
+            }),
+          }).addTo(map);
+          pin.bindTooltip(tooltip, { direction: 'top', offset: [0, -12] });
+          pin.on('click', () => onPointSelectRef.current?.(p));
+          continue;
+        }
         if (interactive && p.draggable) {
           // Cible tactile de 44 px : la poignée visible reste petite, la zone
           // de saisie respecte la taille minimale. Couleurs par tokens LKDV.
@@ -265,7 +312,7 @@ export default function HubRouteMap({
               iconAnchor: [22, 22],
             }),
           }).addTo(map);
-          handle.bindTooltip(p.label, { direction: 'top', offset: [0, -18] });
+          handle.bindTooltip(tooltip, { direction: 'top', offset: [0, -18] });
           handle.on('dragend', () => {
             const position = handle.getLatLng();
             onPointMoveRef.current?.(pointId, position.lat, position.lng);
@@ -279,7 +326,7 @@ export default function HubRouteMap({
           fillOpacity: 1,
           weight: 1.8,
         }).addTo(map);
-        if (interactive) marker.bindTooltip(p.label, { direction: 'top', offset: [0, -6] });
+        if (interactive) marker.bindTooltip(tooltip, { direction: 'top', offset: [0, -6] });
       }
 
       const fitCoords =
@@ -287,7 +334,9 @@ export default function HubRouteMap({
           ? highlight
           : [
               ...routeCoords,
+              ...routeSegments.flat(),
               ...manualSegments.flatMap((segment) => segment.coordinates),
+              ...points.map(({ lat, lon }): [number, number] => [lat, lon]),
             ];
       const fit = () => {
         if (fitCoords.length >= 2) {
@@ -301,6 +350,7 @@ export default function HubRouteMap({
         }
       };
       fit();
+      fitRef.current = fit;
       mapRef.current = map;
       observeResize(el);
 
@@ -310,10 +360,16 @@ export default function HubRouteMap({
           fit();
         }
       }, 250);
+    }).catch(() => {
+      if (!cancelled) {
+        setReady(true);
+        onBasemapStateRef.current?.('unavailable');
+      }
     });
 
     return () => {
       cancelled = true;
+      fitRef.current = null;
       if (readyTimer) clearTimeout(readyTimer);
       if (resizeObserver) resizeObserver.disconnect();
       if (mapRef.current) {
@@ -348,6 +404,10 @@ export default function HubRouteMap({
 
   return (
     <div className={`relative h-full w-full overflow-hidden ${className ?? ''}`}>
+      {interactive && onPointSelect && ready && (
+        <button type="button" className="lkdv-cv2-chip absolute left-2 top-2 z-[700]"
+          onClick={() => fitRef.current?.()}>Recentrer</button>
+      )}
       {!ready && (
         <div className="pointer-events-none absolute inset-0 animate-pulse bg-[var(--lkv-surface-raised)]" />
       )}

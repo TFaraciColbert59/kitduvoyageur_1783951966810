@@ -231,7 +231,8 @@
   color: var(--lkv-on-primary);
   box-shadow: var(--elevation-2);
 }
-.lkdv-event-primary:disabled {
+.lkdv-event-primary:disabled,
+.lkdv-event-secondary:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -241,8 +242,30 @@
   box-shadow: var(--elevation-2);
 }
 .lkdv-event-primary:active:not(:disabled),
-.lkdv-event-secondary:active {
+.lkdv-event-secondary:active:not(:disabled) {
   transform: scale(0.96);
+}
+
+#parcours { scroll-margin-top: var(--space-4); }
+.lkdv-event-route-map {
+  height: min(46svh, 280px);
+  overflow: hidden;
+  border-radius: var(--lkv-radius-card);
+}
+
+.lkdv-event-hub-form {
+  display: grid;
+  gap: 8px;
+}
+.lkdv-event-hub-form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--lkv-border-subtle);
+  border-radius: 12px;
+  background: var(--lkv-surface);
+  color: var(--lkv-text-primary);
+  font: 500 16px/1.25 var(--font-sans);
 }
 
 .lkdv-event-meta {

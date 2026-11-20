@@ -503,6 +503,13 @@ export const postSchemaV2 = z
     if (value.audience === 'club' && !value.clubId.trim()) {
       ctx.addIssue({ code: 'custom', path: ['clubId'], message: 'Choisis un club.' });
     }
+    if (value.audience !== 'public' && value.media.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['media'],
+        message: 'Pour une audience restreinte, retire les médias publics.',
+      });
+    }
   });
 
 export type PostFormValuesV2 = z.infer<typeof postSchemaV2>;

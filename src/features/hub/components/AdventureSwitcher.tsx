@@ -8,9 +8,11 @@ import * as Cmd from 'cmdk';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Compass } from 'lucide-react';
 import { Sheet } from '@/components/ui/Sheet';
+import { CommunitySheetShell } from '@/features/community/v2/shared/CommunitySheetShell';
 import { zIndex } from '@/lib/ui/zIndex';
 import { useActiveAdventure } from '../context/ActiveAdventureContext';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import styles from './AdventureSwitcher.module.css';
 import {
   adventureKey,
   consumeSwitcherAutoOpen,
@@ -55,7 +57,7 @@ export function AdventureSwitcher({
 }: {
   forceOpenSignal?: number;
   /** Quel dialog cette instance contrôle (un seul Root Radix ouvert à la fois). */
-  variant?: 'mobile' | 'desktop';
+  variant?: 'mobile' | 'desktop' | 'dock';
   /** Ne pas rendre les boutons déclencheurs (ouverture pilotée par le titre mobile). */
   hideTrigger?: boolean;
 }) {
@@ -86,7 +88,8 @@ export function AdventureSwitcher({
    * `aria-hidden` le portal sœur — deux Roots ouverts s'excluaient mutuellement
    * de l'arbre d'accessibilité. Chaque instance ne contrôle que sa variante.
    */
-  const controlsVariant = variant === 'mobile' ? isMobile : !isMobile;
+  const usesSheet = variant !== 'desktop';
+  const controlsVariant = variant === 'dock' || (usesSheet ? isMobile : !isMobile);
 
   // H6.1 — Pilotage externe (retour Android) : signal croissant → ouvre.
   // Le réglage différé de controlsVariant (matchMedia) ne doit PAS rouvrir :
@@ -100,9 +103,9 @@ export function AdventureSwitcher({
     if (forceOpenSignal === lastSignal.current) return;
     lastSignal.current = forceOpenSignal;
     if (!controlsVariantRef.current) return;
-    if (variant === 'mobile') setSheetOpen(true);
+    if (usesSheet) setSheetOpen(true);
     else setOpen(true);
-  }, [forceOpenSignal, variant]);
+  }, [forceOpenSignal, usesSheet]);
 
   // H6.1 — Dialogue d'état (retour Android) : publie ouvert/fermé, écoute la fermeture.
   // Seule l'instance qui contrôle le viewport courant publie (évite qu'une
@@ -118,9 +121,14 @@ export function AdventureSwitcher({
       setOpen(false);
       setSheetOpen(false);
     };
+    const openDock = () => setSheetOpen(true);
     window.addEventListener('hub:close-switcher', close);
-    return () => window.removeEventListener('hub:close-switcher', close);
-  }, []);
+    if (variant === 'dock') window.addEventListener('hub:open-switcher', openDock);
+    return () => {
+      window.removeEventListener('hub:close-switcher', close);
+      window.removeEventListener('hub:open-switcher', openDock);
+    };
+  }, [variant]);
 
   // Appui long sur le tab Hub central hors surface hub : signal one-shot
   // consommé par L'INSTANCE du viewport courant (peek puis consume — sinon
@@ -130,10 +138,10 @@ export function AdventureSwitcher({
     if (autoOpenDone.current || !controlsVariant) return;
     autoOpenDone.current = true;
     if (peekSwitcherAutoOpen() && consumeSwitcherAutoOpen()) {
-      if (variant === 'mobile') setSheetOpen(true);
+      if (usesSheet) setSheetOpen(true);
       else setOpen(true);
     }
-  }, [controlsVariant, variant]);
+  }, [controlsVariant, usesSheet]);
 
   // Raccourci conservé (Ctrl/Cmd+K ou J). Escape : Radix ferme le dialog
   // ouvert via onOpenChange — aucun listener global dupliqué.
@@ -142,13 +150,13 @@ export function AdventureSwitcher({
       if (shouldToggleSwitcher(e)) {
         e.preventDefault();
         if (!controlsVariant) return;
-        if (variant === 'mobile') setSheetOpen((v) => !v);
+        if (usesSheet) setSheetOpen((v) => !v);
         else setOpen((v) => !v);
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [controlsVariant, variant]);
+  }, [controlsVariant, usesSheet]);
 
   const filtered = useMemo(() => filterAdventures(groups, query), [groups, query]);
 
@@ -162,12 +170,12 @@ export function AdventureSwitcher({
   /** Cookie posé → push + refresh (l'action revalide /hub côté serveur). */
   const goToAdventure = useCallback(
     (entry: AdventureEntry) => {
-      const href = resolveAdventureHref(entry, getLastSection);
+      const href = variant === 'dock' ? '/hub' : resolveAdventureHref(entry, getLastSection);
       closeAll();
       router.push(href);
       router.refresh();
     },
-    [closeAll, getLastSection, router]
+    [closeAll, getLastSection, router, variant]
   );
 
   const activate = useCallback(
@@ -294,7 +302,7 @@ export function AdventureSwitcher({
 
   /** Contenu cmdk complet : input en entête + liste + pied (structure miroir desktop/sheet). */
   const listContent = (withSearchIcon: boolean) => (
-    <Cmd.CommandRoot loop onValueChange={() => {}}>
+    <Cmd.CommandRoot loop shouldFilter={false}>
       <div className="flex items-center gap-2 px-3 h-11 rounded-[var(--lkv-radius-md)] bg-white/35">
         {withSearchIcon && (
           <Icon
@@ -308,7 +316,7 @@ export function AdventureSwitcher({
           value={query}
           onValueChange={setQuery}
           placeholder="Rechercher une activité…"
-          autoFocus
+          autoFocus={variant !== 'dock'}
           className="w-full bg-transparent outline-none font-body text-[15px] text-[color:var(--label)] placeholder:text-[color:var(--label-tertiary)]"
           aria-label="Rechercher une activité"
         />
@@ -328,7 +336,7 @@ export function AdventureSwitcher({
 
   return (
     <>
-      {!hideTrigger && (
+      {!hideTrigger && variant !== 'dock' && (
         <div className="hidden md:block">
           <Button
             variant="secondary"
@@ -348,8 +356,16 @@ export function AdventureSwitcher({
         </div>
       )}
 
+      {!hideTrigger && variant === 'dock' && (
+        <button type="button" className={styles.dock} aria-haspopup="dialog" aria-expanded={sheetOpen}
+          aria-label="Rechercher ou changer de sortie" title={triggerLabel}
+          onClick={() => setSheetOpen(true)}>
+          <span aria-hidden="true" />
+        </button>
+      )}
+
       {/* Palette desktop — Dialog Radix portal (focus trap + Escape gérés). */}
-      {mounted && (
+      {mounted && variant !== 'dock' && (
         <Dialog.Root
           open={open && !isMobile}
           onOpenChange={(v) => {
@@ -376,7 +392,7 @@ export function AdventureSwitcher({
         </Dialog.Root>
       )}
 
-      {!hideTrigger && (
+      {!hideTrigger && variant !== 'dock' && (
         <div className="md:hidden min-w-0">
           <Button
             variant="secondary"
@@ -394,8 +410,16 @@ export function AdventureSwitcher({
         </div>
       )}
 
-      <Sheet
-        open={variant === 'mobile' && isMobile && sheetOpen}
+      {variant === 'dock' ? <CommunitySheetShell
+        open={sheetOpen}
+        onClose={closeAll}
+        label="Changer de sortie"
+        hideCapsule
+        showClose
+        capsule={{ items: [{ id: 'hub-sorties', label: 'Sorties', icon: null }], active: 0, onChange: () => undefined }}
+        panes={[<div key="sorties" data-cv2-nodrag>{listContent(true)}</div>]}
+      /> : <Sheet
+        open={usesSheet && controlsVariant && sheetOpen}
         onOpenChange={(v) => {
           setSheetOpen(v);
           if (!v) setSwitchError(false);
@@ -403,7 +427,7 @@ export function AdventureSwitcher({
         title="Changer d'activité"
       >
         <div className="glass p-2 rounded-[var(--lkv-radius-card)]">{listContent(false)}</div>
-      </Sheet>
+      </Sheet>}
     </>
   );
 }

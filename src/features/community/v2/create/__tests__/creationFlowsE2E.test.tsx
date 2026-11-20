@@ -564,6 +564,7 @@ describe('Tier 1: Feature Coverage (R1, R2, R3)', () => {
               {
                 id: 'm1',
                 kind: 'photo' as const,
+                title: '',
                 time: '10:00',
                 text: 'Pause au col',
                 place: 'Col Agnel',
@@ -700,6 +701,7 @@ describe('Tier 1: Feature Coverage (R1, R2, R3)', () => {
               {
                 id: 'm1',
                 kind: 'photo',
+                title: '',
                 time: '09:00',
                 text: 'Départ sous le soleil',
                 place: 'Ceillac',
@@ -1166,6 +1168,7 @@ describe('Tier 3: Cross-Feature Combinations', () => {
             {
               id: 'm-complex',
               kind: 'photo',
+              title: '',
               time: '14:30',
               text: 'Pause déjeuner au lac',
               place: 'Lac Cornu',
@@ -1212,6 +1215,7 @@ describe('Tier 3: Cross-Feature Combinations', () => {
             {
               id: 'm1',
               kind: 'photo',
+              title: '',
               time: '08:00',
               text: 'Départ du Cugnon',
               place: 'Le Cugnon',
@@ -1222,6 +1226,7 @@ describe('Tier 3: Cross-Feature Combinations', () => {
             {
               id: 'm2',
               kind: 'photo',
+              title: '',
               time: '12:30',
               text: 'Pause au Chalet de Tré-la-Tête',
               place: 'Tré-la-Tête',
@@ -1393,6 +1398,7 @@ describe('Tier 4: Real-World Application Scenarios', () => {
             {
               id: 'm-1-1',
               kind: 'photo',
+              title: '',
               time: '08:30',
               text: 'Départ sous les mélèzes',
               place: 'Pralognan',
@@ -1403,6 +1409,7 @@ describe('Tier 4: Real-World Application Scenarios', () => {
             {
               id: 'm-1-2',
               kind: 'photo',
+              title: '',
               time: '12:45',
               text: 'Passage du Col de la Vanoise',
               place: 'Col de la Vanoise',
@@ -1422,6 +1429,7 @@ describe('Tier 4: Real-World Application Scenarios', () => {
             {
               id: 'm-2-1',
               kind: 'photo',
+              title: '',
               time: '09:15',
               text: 'Traversée du Lac des Vaches sur les dalles',
               place: 'Lac des Vaches',

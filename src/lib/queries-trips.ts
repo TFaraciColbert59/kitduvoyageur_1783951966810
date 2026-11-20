@@ -353,6 +353,10 @@ async function loadFullTripDetails(
     member_profiles: (memberProfilesRes.data as TripMemberProfile[]) || [],
     user_role: role,
     permissions,
+    unavailableSections: ([
+      ['collaborators', collabsRes], ['steps', stepsRes], ['items', itemsRes],
+      ['expenses', expensesRes], ['documents', docsRes], ['notes', notesRes],
+    ] as const).flatMap(([section, response]) => 'error' in response && response.error ? [section] : []),
   };
 }
 

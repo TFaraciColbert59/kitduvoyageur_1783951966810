@@ -2,3 +2,6 @@
 # traitement de fin de ligne (contenu identique au paquet publié).
 public/maplibre/maplibre-gl-worker.mjs -text
 public/maplibre/maplibre-gl-shared.mjs -text
+
+# GeoNames : la tabulation finale porte la dernière colonne vide du TSV.
+tests/e2e/compas/fixtures/geonames-countryinfo-fr.tsv -text whitespace=-blank-at-eol

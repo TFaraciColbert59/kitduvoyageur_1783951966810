@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 import { E2E_JWT_SECRET } from './tests/e2e/compas/support/jwt.mjs';
+import { assertLocalDatabase } from './tests/e2e/compas/support/seed.mjs';
 
 /**
  * PLAN-100 2.12 — Parcours E2E du Compas, SANS réseau externe, SANS secret.
@@ -28,6 +29,7 @@ import { E2E_JWT_SECRET } from './tests/e2e/compas/support/jwt.mjs';
 const root = path.dirname(fileURLToPath(import.meta.url));
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('[e2e compas] DATABASE_URL (base locale installée) est requis.');
+assertLocalDatabase(databaseUrl);
 
 const NEXT_PORT = Number(process.env.E2E_NEXT_PORT ?? 4028);
 const DOUBLES_PORT = Number(process.env.E2E_DOUBLES_PORT ?? 4040);

@@ -1,3 +1,4 @@
+import { privateMomentMediaPath } from './privateMomentMedia';
 /**
  * Les neuf types de moment de la fiche carnet v2 (maquette `CREATE_TYPES`,
  * spec 01 § 1.2). Un moment ancien n'a pas de type en base : il est déduit
@@ -116,7 +117,7 @@ export function parseMomentMeta(raw: unknown): MomentMeta | null {
     if (typeof value === 'string' && value.trim()) meta[key] = value.trim().slice(0, 120);
   }
   const audio = source.audioUrl;
-  if (isOwnMediaUrl(audio, 'carnet-moments-media') && audio.length <= 600) meta.audioUrl = audio;
+  if (typeof audio === 'string' && audio.length <= 600 && (isOwnMediaUrl(audio, 'carnet-moments-media') || privateMomentMediaPath(audio))) meta.audioUrl = audio;
   if (source.ambiance === true) meta.ambiance = true;
   return Object.keys(meta).length > 0 ? meta : null;
 }

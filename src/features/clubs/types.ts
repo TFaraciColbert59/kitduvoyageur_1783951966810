@@ -201,6 +201,7 @@ export interface ClubEvent {
   format: EventFormat;
   startsAt: string;
   endsAt: string | null;
+  cancelledAt?: string | null;
   locationLabel: string;
   meetingPoint: string | null;
   lat?: number | null;
@@ -208,6 +209,7 @@ export interface ClubEvent {
   /** Visibilité propre de l'événement (bornée par celle du club). */
   visibility: P01Visibility;
   maxParticipants: number | null;
+  registeredCount?: number | null;
   waitlistEnabled: boolean;
   paceGroups: readonly PaceGroup[];
   /** Lien d'inscription externe/interne pour les courses (S5.16). */
@@ -289,7 +291,10 @@ export interface RouteRevisionSnapshot {
   revision: number;
   checksum: string;
   distanceM: number;
-  elevationGainM: number;
+  elevationGainM: number | null;
+  canonicalRevisionId?: string | null;
+  routeName?: string | null;
+  meetingPoint?: string | null;
   updatedBy: string;
   updatedAt: string;
   requiresParticipantDecision: boolean;
@@ -299,6 +304,7 @@ export interface ParticipantRouteSyncState {
   eventId: string;
   userId: string;
   lastSyncedRevision: number;
+  adoptedRevision?: number | null;
   pendingRevision: number | null;
   decisionRequired: boolean;
   revoked: boolean;

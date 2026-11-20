@@ -383,7 +383,14 @@ describe('Milestone 1 — Photo Editor & Post Flow (F1.1 to F1.6)', () => {
     it('monte la coque avec le formulaire post, l’aperçu interactif, et sans étape Récapitulatif', async () => {
       render(
         <ToastProvider>
-          <CreateSheetV2 open initialKind="post" onClose={vi.fn()} user={testUser} />
+          <CreateSheetV2
+            open
+            initialKind="post"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+            onRequireAuth={vi.fn()}
+            user={testUser}
+          />
         </ToastProvider>,
       );
 
@@ -426,7 +433,14 @@ describe('Milestone 1 — Photo Editor & Post Flow (F1.1 to F1.6)', () => {
     it('le clic sur l’aperçu déclenche l’input de sélection de fichier', async () => {
       render(
         <ToastProvider>
-          <CreateSheetV2 open initialKind="post" onClose={vi.fn()} user={testUser} />
+          <CreateSheetV2
+            open
+            initialKind="post"
+            onClose={vi.fn()}
+            onCreated={vi.fn()}
+            onRequireAuth={vi.fn()}
+            user={testUser}
+          />
         </ToastProvider>,
       );
 

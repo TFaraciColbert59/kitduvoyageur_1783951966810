@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
       share_url: created.data.shareUrl,
       qr_payload: created.data.qrPayload,
     });
+    if (error?.details === 'club_event_cancelled') return errorJson('event_cancelled', 409);
     if (error) return dbFailure('POST invite', error);
 
     const invite: InviteLink = created.data;

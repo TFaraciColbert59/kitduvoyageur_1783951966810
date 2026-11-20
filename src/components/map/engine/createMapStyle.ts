@@ -133,12 +133,11 @@ export interface SmoothMapPhysicsTarget {
     enable?: (options?: { linearity?: number; maxSpeed?: number; deceleration?: number }) => void;
   };
   scrollZoom?: {
-    enable?: (options?: { around?: 'center' }) => void;
     setWheelZoomRate?: (wheelZoomRate: number) => void;
     setZoomRate?: (zoomRate: number) => void;
   };
   touchZoomRotate?: {
-    enable?: (options?: { around?: 'center' }) => void;
+    enable?: () => void;
     disableRotation?: () => void;
   };
   touchPitch?: {

@@ -29,13 +29,18 @@ function extractRealRouteCoords(
 /**
  * H2.2/H3.1 — Aventures de l'utilisateur pour le sélecteur (`AdventureSwitcher`) et le Camp de base.
  * Délègue à `getHubAdventureData` (source unique, partagée avec le layout /hub).
- * Payload : groupes, invitations, compteurs possession, tracé réel éventuel.
+ * Payload : sorties accessibles, groupes, invitations, compteurs possession,
+ * tracé réel éventuel.
  * Non connecté → zéros/vides (jamais 401, zéro donnée fictive).
  */
 export async function GET() {
   try {
     const data = await getHubAdventureData();
     return NextResponse.json({
+      trips: data.trips.map(({ id, slug, title, status, primary_activity, start_date }) => ({
+        id, slug, title, status, primary_activity, start_date,
+      })),
+      tripsUnavailable: data.tripsUnavailable ?? false,
       groups: data.groups,
       pendingInvites: data.pendingInvites,
       possession: data.possession,
@@ -44,6 +49,7 @@ export async function GET() {
     });
   } catch (err: unknown) {
     return NextResponse.json({
+      trips: [],
       groups: [],
       pendingInvites: 0,
       possession: { items: 0, loans: 0, alerts: 0 },

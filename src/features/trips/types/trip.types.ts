@@ -276,6 +276,8 @@ export interface TripWithDetails extends Trip {
 }
 
 export interface TripFull extends Trip {
+  /** Présence confirmée issue du registre, sans droit d’édition. */
+  confirmed_participant?: { userId: string; role: string };
   collaborators: TripCollaborator[];
   steps: TripStep[];
   items: TripItem[];
@@ -288,6 +290,7 @@ export interface TripFull extends Trip {
   member_profiles?: TripMemberProfile[];
   user_role?: TripRole | null;
   permissions: TripPermissions;
+  unavailableSections?: ('collaborators' | 'steps' | 'items' | 'expenses' | 'documents' | 'notes')[];
 }
 
 /** Snapshot `trip_member_profiles` : données de préparation par membre. */

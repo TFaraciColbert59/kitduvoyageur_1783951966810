@@ -22,9 +22,11 @@ export async function GET(request: NextRequest) {
   });
   if (limited) return limited;
 
-  const lat = Number(request.nextUrl.searchParams.get('lat'));
-  const lon = Number(request.nextUrl.searchParams.get('lon'));
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+  const latInput = request.nextUrl.searchParams.get('lat');
+  const lonInput = request.nextUrl.searchParams.get('lon');
+  const lat = Number(latInput);
+  const lon = Number(lonInput);
+  if (!latInput?.trim() || !lonInput?.trim() || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
     return NextResponse.json({ status: 'error', reason: 'invalid_point' }, { status: 400 });
   }
   const data = await fetchMetnoAsOpenMeteo(lat, lon, { timeoutMs: 5000 });

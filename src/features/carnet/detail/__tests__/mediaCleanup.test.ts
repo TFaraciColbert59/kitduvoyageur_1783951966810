@@ -99,7 +99,7 @@ describe('effacement des médias', () => {
     spy.mockRestore();
   });
 
-  it('carnet entier : liste le préfixe dans les deux seaux, supprime, revalide', async () => {
+  it('carnet entier : liste le préfixe dans les trois seaux, supprime, revalide', async () => {
     state.responses['carnet_moments.select'] = {
       data: [{ image_url: imageUrl, moment_meta: null, auteur_id: USER }],
     };
@@ -108,6 +108,7 @@ describe('effacement des médias', () => {
     expect(state.listed).toEqual([
       `carnet-media:${USER}/carnet-moments/${CARNET}`,
       `carnet-moments-media:${USER}/carnet-moments/${CARNET}`,
+      `hub-carnet-media:${USER}/carnet-moments/${CARNET}`,
     ]);
     const media = state.removed.find((r) => r.bucket === 'carnet-media');
     expect(media?.paths).toContain(`${USER}/carnet-moments/${CARNET}/orphan.jpg`);

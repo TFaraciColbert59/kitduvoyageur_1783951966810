@@ -5,11 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import {
   buildEventFlyer,
   canViewClubEvent,
-  cancelEventRegistration,
   computeEventAttendanceStats,
-  publishEventRouteRevision,
-  registerForClubEvent,
-  syncParticipantRouteRevision,
   updateEventOrganization,
   type Club,
   type ParticipantRouteSyncState,
@@ -37,6 +33,7 @@ import {
 import {
   mapClubRow,
   mapEventRow,
+  mapRegistrationRow,
   mapRouteSnapshot,
   mapRouteSyncRow,
   type Row,
@@ -56,14 +53,17 @@ const actionSchema = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('publish_route'),
-      routeId: z.string().trim().min(1).max(120),
-      checksum: z.string().trim().min(1).max(160),
-      distanceM: z.number().min(0).max(1_000_000),
-      elevationGainM: z.number().min(0).max(30_000),
-      requiresParticipantDecision: z.boolean().default(true),
+      routeId: z.string().regex(/^[1-9][0-9]{0,17}$/),
+      expectedRevision: z.number().int().min(0).max(2147483647),
+      meetingPoint: z.string().trim().max(200).nullish(),
     })
     .strict(),
   z.object({ action: z.literal('sync_route') }).strict(),
+  z.object({
+    action: z.literal('decide_route'),
+    revision: z.number().int().positive().max(2147483647),
+    adopt: z.boolean(),
+  }).strict(),
   z.object({ action: z.literal('attendance') }).strict(),
   z
     .object({
@@ -144,10 +144,10 @@ export async function GET(
       return errorJson('not_found', 404);
     }
 
-    const registrations = await loadEventRegistrations(supabase, eventId);
+    const registrations = user ? await loadEventRegistrations(supabase, eventId) : [];
     const manager = isManager(bundle);
     const eventCounts = {
-      registered: registrations.filter((registration) => registration.status === 'registered').length,
+      registered: event.registeredCount ?? registrations.filter((registration) => registration.status === 'registered').length,
       waitlist: registrations.filter((registration) => registration.status === 'waitlist').length,
     };
     const visibleRegistrations = manager
@@ -220,7 +220,7 @@ export async function POST(
     const nowIso = new Date().toISOString();
     const action = parsed.data;
 
-    if (!canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members)) {
+    if (action.action !== 'cancel' && !canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members)) {
       return errorJson('not_found', 404);
     }
 
@@ -240,125 +240,56 @@ export async function POST(
       return respondClubResult(flyer);
     }
 
-    const registrations = await loadEventRegistrations(supabase, eventId);
-
-    if (action.action === 'register') {
-      const result = registerForClubEvent({
-        event,
-        club: bundle.club,
-        userId: user.id,
-        memberships: bundle.members,
-        registrations,
-        paceGroupId: action.paceGroupId ?? null,
-        nowIso,
+    if (action.action === 'register' || action.action === 'cancel') {
+      const attending = action.action === 'register';
+      const { data, error } = await supabase.rpc('transact_club_event_registration', {
+        p_event_id: eventId,
+        p_attending: attending,
+        p_pace_group_id: attending ? action.paceGroupId ?? null : null,
       });
-      if (!result.ok) return respondClubResult(result);
-
-      const { error } = await supabase.from('club_event_registrations').upsert(
-        {
-          event_id: eventId,
-          user_id: user.id,
-          status: result.data.registration.status,
-          pace_group_id: result.data.registration.paceGroupId,
-          registered_at: nowIso,
-          updated_at: nowIso,
-        },
-        { onConflict: 'event_id,user_id' },
-      );
-      if (error) return dbFailure('POST register', error);
-      return json({ data: result.data.registration }, 201);
-    }
-
-    if (action.action === 'cancel') {
-      const result = cancelEventRegistration({ event, userId: user.id, registrations, nowIso });
-      if (!result.ok) return respondClubResult(result);
-
-      const { error } = await supabase
-        .from('club_event_registrations')
-        .update({ status: 'cancelled', updated_at: nowIso })
-        .eq('event_id', eventId)
-        .eq('user_id', user.id);
-      if (error) return dbFailure('POST cancel', error);
-
-      if (result.data.promotedUserId) {
-        const { error: promoteError } = await supabase
-          .from('club_event_registrations')
-          .update({ status: 'registered', updated_at: nowIso })
-          .eq('event_id', eventId)
-          .eq('user_id', result.data.promotedUserId);
-        if (promoteError) return dbFailure('POST cancel promote', promoteError);
-      }
-      return json({ data: result.data });
+      if (error?.details === 'club_event_cancelled') return errorJson('event_cancelled', 409);
+      if (error?.code === '23514') return errorJson('CAPACITY_FULL', 409);
+      if (error?.code === '22023') return errorJson('invalid_body', 400);
+      if (error) return dbFailure('POST registration', error);
+      const transaction = data as { registration: Row | null; promoted_user_id?: string | null; event_cancelled?: boolean };
+      if (transaction.event_cancelled) return errorJson('event_cancelled', 409);
+      const registration = transaction.registration ? mapRegistrationRow(transaction.registration) : null;
+      if (attending) return json({ data: registration }, 201);
+      return json({ data: { registrations: registration ? [registration] : [], promotedUserId: transaction.promoted_user_id ?? null } });
     }
 
     if (action.action === 'publish_route') {
-      const published = publishEventRouteRevision({
-        event,
-        actorMember: bundle.viewerMembership ?? undefined,
-        routeId: action.routeId,
-        checksum: action.checksum,
-        distanceM: action.distanceM,
-        elevationGainM: action.elevationGainM,
-        requiresParticipantDecision: action.requiresParticipantDecision,
-        nowIso,
+      const { data, error } = await supabase.rpc('publish_club_event_route', {
+        p_event_id: eventId,
+        p_expected_revision: action.expectedRevision,
+        p_route_id: action.routeId,
+        p_meeting_point: action.meetingPoint ?? null,
       });
-      if (!published.ok) return respondClubResult(published);
-
-      const { error: eventError } = await supabase
-        .from('club_events')
-        .update({
-          route_id: published.data.event.routeId,
-          route_revision: published.data.event.routeRevision,
-        })
-        .eq('id', eventId)
-        .eq('club_id', id);
-      if (eventError) return dbFailure('POST publish route event', eventError);
-
-      const { error: snapshotError } = await supabase.from('club_event_route_revisions').insert({
-        event_id: eventId,
-        route_id: published.data.snapshot.routeId,
-        revision: published.data.snapshot.revision,
-        checksum: published.data.snapshot.checksum,
-        distance_m: published.data.snapshot.distanceM,
-        elevation_gain_m: published.data.snapshot.elevationGainM,
-        updated_by: user.id,
-        requires_participant_decision: published.data.snapshot.requiresParticipantDecision,
-      });
-      if (snapshotError) return dbFailure('POST publish route snapshot', snapshotError);
-      return json({ data: published.data }, 201);
+      if (error?.code === '40001') {
+        return json({ error: 'revision_conflict', message: 'Le parcours a changé. Actualise la fiche.' }, 409);
+      }
+      if (error?.code === '22023') {
+        return json({ error: 'route_unavailable', message: 'Ce tracé n’est pas disponible dans le catalogue.' }, 422);
+      }
+      if (error) return dbFailure('POST publish route', error);
+      const result = data as { event: Row; snapshot: Row };
+      return json({ data: { event: mapEventRow(result.event), snapshot: mapRouteSnapshot(result.snapshot) } }, 201);
     }
 
-    if (action.action === 'sync_route') {
-      const snapshot = await loadLatestRevision(supabase, eventId);
-      if (!snapshot) return errorJson('not_found', 404);
-      const currentSync = await loadRouteSync(supabase, eventId, user.id);
-      const synced = syncParticipantRouteRevision({
-        event,
-        club: bundle.club,
-        snapshot,
-        participantUserId: user.id,
-        currentSync: currentSync ?? undefined,
-        memberships: bundle.members,
-        registrations,
-        nowIso,
+    if (action.action === 'sync_route' || action.action === 'decide_route') {
+      const { data, error } = await supabase.rpc('save_event_route_state', {
+        p_event_id: eventId,
+        p_revision: action.action === 'decide_route' ? action.revision : null,
+        p_adopt: action.action === 'decide_route' ? action.adopt : null,
       });
-      if (!synced.ok) return respondClubResult(synced);
-
-      const { error } = await supabase.from('club_event_route_sync').upsert(
-        {
-          event_id: eventId,
-          user_id: user.id,
-          last_synced_revision: synced.data.lastSyncedRevision,
-          pending_revision: synced.data.pendingRevision,
-          decision_required: synced.data.decisionRequired,
-          revoked: synced.data.revoked,
-          synced_at: nowIso,
-        },
-        { onConflict: 'event_id,user_id' },
-      );
-      if (error) return dbFailure('POST sync route', error);
-      return json({ data: synced.data });
+      if (error?.code === '40001') {
+        return json({ error: 'revision_conflict', message: 'Le parcours ou ta décision a changé. Actualise la fiche.' }, 409);
+      }
+      if (error) return dbFailure('POST save route state', error);
+      return json({ data: mapRouteSyncRow(data as Row) });
     }
+
+    const registrations = await loadEventRegistrations(supabase, eventId);
 
     if (action.action === 'attendance') {
       const records = await loadAttendanceRecords(supabase, eventId);

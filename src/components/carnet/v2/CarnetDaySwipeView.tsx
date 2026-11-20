@@ -19,7 +19,9 @@ import type {
   CarnetNightItem,
 } from '@/features/carnet/detail/types';
 import { CarnetPostGrid } from './CarnetPostGrid';
+import { CarnetArt } from './CarnetArt';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { parseWeather } from '@/features/carnet/detail/dayView';
 import { formatDayLabel, formatDuration, formatElevation, formatKm } from '@/features/carnet/detail/format';
 import styles from './CarnetDaySwipeView.module.css';
 
@@ -33,6 +35,8 @@ export interface CarnetDaySwipeViewProps {
   onPeekMoment?: (moment: CarnetMomentItem) => void;
   isEditing?: boolean;
   onAddMoment?: () => void;
+  /** Moments épinglés (coche dorée sur la tuile). */
+  pinnedIds?: ReadonlySet<string>;
   /** Nuits réelles du carnet (`detail.nights`) : seule source de l'altitude d'une nuit. */
   nights?: CarnetNightItem[];
   /** Couverture du carnet, repli quand le jour ne porte aucun moment photo. */
@@ -152,6 +156,15 @@ function buildDayViews({
     });
 }
 
+function WeatherGlyph({ kind }: { kind: NonNullable<ReturnType<typeof parseWeather>>['kind'] }) {
+  const props = { size: 20, 'aria-hidden': true } as const;
+  if (kind === 'sun') return <Sun {...props} />;
+  if (kind === 'partly') return <CloudSun {...props} />;
+  if (kind === 'rain') return <CloudRain {...props} />;
+  if (kind === 'snow') return <Snowflake {...props} />;
+  return <Cloud {...props} />;
+}
+
 export function CarnetDaySwipeView({
   days,
   etapes,
@@ -162,6 +175,7 @@ export function CarnetDaySwipeView({
   onPeekMoment,
   isEditing = false,
   onAddMoment,
+  pinnedIds,
   nights,
   coverImage = null,
   travellers = 1,
@@ -188,6 +202,7 @@ export function CarnetDaySwipeView({
   );
   const maxDay = dayViews.reduce((max, day) => Math.max(max, day.dayNumber), 0);
   const currentDay = dayViews.find((day) => day.dayNumber === activeDay) ?? null;
+  const weather = useMemo(() => parseWeather(currentDay?.weather), [currentDay?.weather]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -260,10 +275,14 @@ export function CarnetDaySwipeView({
   };
 
   // Day options for the floating selector: 0 (Résumé), 1..maxDay
-  const dayOptions = [
-    { label: 'R', value: 0, fullLabel: 'Résumé' },
+  const dayOptions: Array<{ label: React.ReactNode; value: number; fullLabel: string }> = [
+    {
+      label: <AlignLeft size={14} strokeWidth={1.9} aria-hidden="true" />,
+      value: 0,
+      fullLabel: 'Résumé de tout le carnet',
+    },
     ...dayViews.map((day) => ({
-      label: `J${day.dayNumber}`,
+      label: String(day.dayNumber),
       value: day.dayNumber,
       fullLabel: `Jour ${day.dayNumber}`,
     })),
@@ -273,11 +292,10 @@ export function CarnetDaySwipeView({
   const daysCount = days.length || etapes.length;
   const distanceLabel = formatKm(distanceKm);
   const elevationLabel = signedElevation(elevationM);
-  const resumeMeta = [
-    distanceLabel ?? '—',
-    elevationLabel ?? '—',
-    counted(moments.length, 'moment', 'moments'),
-  ].join(' · ');
+  /* Pas de « — · — » : on n'affiche que les chiffres réellement connus. */
+  const resumeMeta = [distanceLabel, elevationLabel, counted(moments.length, 'moment', 'moments')]
+    .filter(Boolean)
+    .join(' · ');
 
   /* ---- Jour n : en-tête de l'étape + grille 3 colonnes ------------------- */
   const dayNumber = activeDay;
@@ -308,8 +326,9 @@ export function CarnetDaySwipeView({
               <span className={cx(styles.dayheadBadge)}>Tout</span>
               <div className={cx(styles.dayheadText)}>
                 <b className={cx(styles.dayheadTitle)}>
-                  {daysCount > 0 ? `${counted(daysCount, 'jour', 'jours')} · ` : ''}
-                  {counted(travellers, 'voyageur', 'voyageurs')}
+                  {[daysCount > 0 ? counted(daysCount, 'jour', 'jours') : null, counted(travellers, 'voyageur', 'voyageurs')]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </b>
                 <span className={cx(styles.dayheadMeta)}>{resumeMeta}</span>
               </div>
@@ -333,10 +352,12 @@ export function CarnetDaySwipeView({
                   const title =
                     [day.from, day.to].filter(Boolean).join(' → ') || `Jour ${number}`;
                   const cardMeta = [
-                    formatKm(day.distanceKm) ?? '—',
-                    signedElevation(day.elevationM) ?? '—',
+                    formatKm(day.distanceKm),
+                    signedElevation(day.elevationM),
                     counted(day.moments.length, 'moment', 'moments'),
-                  ].join(' · ');
+                  ]
+                    .filter(Boolean)
+                    .join(' · ');
 
                   return (
                     <button
@@ -362,7 +383,9 @@ export function CarnetDaySwipeView({
                           loading="lazy"
                           decoding="async"
                         />
-                      ) : null}
+                      ) : (
+                        <CarnetArt className={cx(styles.voyageImage)} />
+                      )}
                       <span className={cx(styles.voyagePillDay)}>
                         {dateLabel ? `J${number} · ${dateLabel}` : `J${number}`}
                       </span>
@@ -413,6 +436,7 @@ export function CarnetDaySwipeView({
               onPeek={onPeekMoment}
               isEditing={isEditing}
               onAddMoment={onAddMoment}
+              pinnedIds={pinnedIds}
             />
           </>
         )}
@@ -425,14 +449,31 @@ export function CarnetDaySwipeView({
               <div
                 className="lkdv-day-capsule"
                 role="tablist"
-                aria-label="Sélection du jour"
-                style={{ width: `${dayOptions.length * 36 + 6}px` }}
+                aria-label="Jour affiché"
+                aria-orientation="horizontal"
+                style={{ width: `${dayOptions.length * 35}px` }}
+                onKeyDown={(event) => {
+                  const tabs = Array.from(
+                    event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                  );
+                  const at = tabs.indexOf(document.activeElement as HTMLButtonElement);
+                  if (at < 0) return;
+                  let next: number | null = null;
+                  if (event.key === 'ArrowRight') next = (at + 1) % tabs.length;
+                  else if (event.key === 'ArrowLeft') next = (at - 1 + tabs.length) % tabs.length;
+                  else if (event.key === 'Home') next = 0;
+                  else if (event.key === 'End') next = tabs.length - 1;
+                  if (next === null) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  tabs[next].focus();
+                }}
               >
                 <span
                   className="lkdv-day-capsule-lens"
                   style={{
-                    width: `${(dayOptions.length * 36) / dayOptions.length}px`,
-                    transform: `translateX(${activeDay * 36}px)`,
+                    width: `calc((100% - 5px) / ${dayOptions.length})`,
+                    transform: `translateX(${activeDay * 100}%)`,
                   }}
                 />
                 {dayOptions.map((opt) => {

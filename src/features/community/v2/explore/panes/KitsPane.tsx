@@ -88,7 +88,6 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
               weightG: Number(ir.weight_g ?? 0) || 0,
               quantity: Math.max(1, Number(ir.quantity ?? 1) || 1),
               isChecked: Boolean(ir.is_checked ?? true),
-              layer: 'sac',
               ownershipId: null,
               productId: null,
             });
@@ -162,7 +161,7 @@ export function KitsPane({ filter, userId, online, onCreateKit }: KitsPaneProps)
               model: 'bivouac',
               season: (String(r.season ?? 'toute_saison') as KitFormValuesV2['season']),
               seasons: [],
-              goal: 'leger',
+              goal: 'light',
             },
             items: itemsByKit.get(id) ?? [],
             usage: usageByKit.get(id) ?? null,

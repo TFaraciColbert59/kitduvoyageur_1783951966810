@@ -119,7 +119,7 @@ function formatSeasonsSummary(seasons: readonly string[] | undefined, fallbackSe
   if (active.length > 0) {
     const labels = active
       .map((s) => SEASON_OPTIONS.find((opt) => opt.value === s)?.label)
-      .filter((x): x is string => Boolean(x));
+      .filter((label) => label !== undefined);
     if (labels.length > 0) return labels.join(' · ');
   }
   return SEASON_OPTIONS.find((opt) => opt.value === fallbackSeason)?.label ?? 'Toute saison';

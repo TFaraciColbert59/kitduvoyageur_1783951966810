@@ -75,7 +75,7 @@ function buildFallbackEventVM(post: FeedPost): EventCardVM {
     activity: 'rando',
     startsAt: typeof meta.starts_at === 'string' ? meta.starts_at : post.created_at ?? null,
     endsAt: null,
-    eventDate: typeof meta.event_date === 'string' ? meta.event_date : null,
+    eventDate: typeof meta.event_date === 'string' ? meta.event_date : '',
     location:
       (typeof meta.location === 'string' && meta.location.trim()) ||
       (typeof post.location === 'string' && post.location.trim()) ||
@@ -91,7 +91,7 @@ function buildFallbackEventVM(post: FeedPost): EventCardVM {
     currentParticipants: 1,
     spotsLeft: 9,
     waitlistEnabled: false,
-    myStatus: null,
+    myStatus: 'none',
     organizer: {
       id: post.author_id ?? 'org',
       name: post.author?.full_name ?? 'Organisateur',
@@ -260,7 +260,7 @@ export function FeedKitPostCard({
     model: 'bivouac',
     season: 'toute_saison',
     seasons: [],
-    goal: 'leger',
+    goal: 'light',
   });
   const [kitItems, setKitItems] = useState<KitItemV2[]>([]);
   const [importing, setImporting] = useState(false);

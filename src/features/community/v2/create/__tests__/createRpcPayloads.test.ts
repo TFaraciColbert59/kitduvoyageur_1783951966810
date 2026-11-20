@@ -225,7 +225,17 @@ describe('payloads RPC — conformes à RPC-CONTRACTS.md', () => {
           date: '2026-07-10',
           night: { name: 'Refuge du Temple', type: 'refuge', altitudeM: 2410, infos: 'Demi-pension' },
           moments: [
-            { id: 'm1', kind: 'photo', time: '18:00', text: 'Arrivée au refuge.', place: '', photo },
+            {
+              id: 'm1',
+              kind: 'photo',
+              title: '',
+              time: '18:00',
+              text: 'Arrivée au refuge.',
+              place: '',
+              photo,
+              media: [],
+              encounters: [],
+            },
           ],
         },
       ],

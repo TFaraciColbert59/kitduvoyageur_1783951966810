@@ -11,6 +11,7 @@ import {
   type MomentInput,
 } from './createMoment';
 import type { CarnetMomentItem } from './types';
+import { PRIVATE_MOMENT_BUCKET, privateMomentMediaRef } from './privateMomentMedia';
 
 /** 25 Mo : au-delà, le téléversement est refusé avant tout appel réseau. */
 export const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
@@ -57,6 +58,7 @@ export interface UseCarnetEditsOptions {
   carnetId: string;
   userId: string | null;
   authorName: string | null;
+  privateMedia?: boolean;
   onIsland?: (message: string, undo?: () => void, subtitle?: string) => void;
   onMomentAdded: (moment: CarnetMomentItem) => void;
   onMomentRemoved: (momentId: string) => void;
@@ -73,6 +75,7 @@ export function useCarnetEdits({
   carnetId,
   userId,
   authorName,
+  privateMedia = false,
   onIsland,
   onMomentAdded,
   onMomentRemoved,
@@ -99,6 +102,7 @@ export function useCarnetEdits({
 
       let imageUrl: string | null = null;
       let audioUrl: string | undefined;
+      let uploaded: { bucket: string; path: string } | undefined;
       if (value.type === 'photo' || value.type === 'video' || value.type === 'voice') {
         const media = mediaPlan(value.type, file ?? null);
         if (!media.ok) return media;
@@ -107,14 +111,17 @@ export function useCarnetEdits({
         /* Le premier segment du chemin est l'identifiant de la personne : c'est
            ce que vérifient les politiques de stockage (`carnet_media_insert_owner`
            et `carnet_moments_media_insert_owner`). */
-        const path = `${userId}/carnet-moments/${carnetId}/${crypto.randomUUID()}.${ext}`;
-        const bucket = bucketFor(value.type);
+        const filename = `${crypto.randomUUID()}.${ext}`;
+        const path = `${userId}/carnet-moments/${carnetId}/${filename}`;
+        const bucket = privateMedia ? PRIVATE_MOMENT_BUCKET : bucketFor(value.type);
         const upload = await supabase.storage.from(bucket).upload(path, prepared, {
           contentType: prepared.type || undefined,
           upsert: false,
         });
         if (upload.error) return { ok: false, error: 'Le fichier n’a pas pu être envoyé.' };
-        const publicUrl = supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+        uploaded = { bucket, path };
+        const publicUrl = privateMedia ? privateMomentMediaRef(carnetId, userId, filename)
+          : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
         if (value.type === 'voice') audioUrl = publicUrl;
         else imageUrl = publicUrl;
       }
@@ -139,6 +146,7 @@ export function useCarnetEdits({
         result = await supabase.from('carnet_moments').insert(legacy).select('id').single();
       }
       if (result.error || !result.data) {
+        if (uploaded && privateMedia) await supabase.storage.from(uploaded.bucket).remove([uploaded.path]);
         return { ok: false, error: 'Le moment n’a pas pu être ajouté.' };
       }
 
@@ -154,7 +162,7 @@ export function useCarnetEdits({
       );
       return { ok: true, moment };
     },
-    [authorName, carnetId, onIsland, onMomentAdded, removeMoment, supabase, userId]
+    [authorName, carnetId, onIsland, onMomentAdded, privateMedia, removeMoment, supabase, userId]
   );
 
   return { createMoment, removeMoment };

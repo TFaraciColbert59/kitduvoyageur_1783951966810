@@ -612,7 +612,7 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(mapVisibility(null).profile).toBe('public');
   });
 
-  it('charge club_event_participants pour l’appelant et expose attending', async () => {
+  it('charge club_event_registrations_effective pour l’appelant et expose attending', async () => {
     const soon = new Date(Date.now() + 3 * 86_400_000).toISOString();
     const { client, filters, selections } = createBootstrapClient({
       user_profiles: [{ id: 'u1', handle: 'tony', full_name: 'Tony' }],
@@ -629,7 +629,7 @@ describe('Compte bootstrap — mapping réel', () => {
           max_participants: 10,
         },
       ],
-      club_event_participants: [{ event_id: 'e1', user_id: 'u1' }],
+      club_event_registrations_effective: [{ event_id: 'e1', user_id: 'u1', status: 'registered' }],
     });
 
     const payload = await loadAccountBootstrap(client as never);
@@ -639,13 +639,13 @@ describe('Compte bootstrap — mapping réel', () => {
     expect(selections).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          table: 'club_event_participants',
+          table: 'club_event_registrations_effective',
           columns: expect.stringContaining('event_id'),
         }),
       ])
     );
     expect(filters).toContainEqual({
-      table: 'club_event_participants',
+      table: 'club_event_registrations_effective',
       column: 'user_id',
       value: 'u1',
     });
