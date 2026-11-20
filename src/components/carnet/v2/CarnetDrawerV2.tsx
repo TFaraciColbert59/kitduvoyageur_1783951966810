@@ -49,6 +49,7 @@ import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReac
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
 import {
+  AnimatedNumber,
   CarnetMotionRoot,
   LensTransition,
   StackSlideView,
@@ -152,6 +153,10 @@ export function CarnetDrawerV2({
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
   const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
+  const [pokedexProgress, setPokedexProgress] = useState<{
+    discovered: number;
+    total: number;
+  } | null>(null);
 
   // Reactions : le jour choisi dans la lentille, sinon le jour actif.
   const effectiveDay = activeDay > 0 ? activeDay : 1;
@@ -821,6 +826,7 @@ export function CarnetDrawerV2({
             detail={detail}
             lensId={lens.id}
             onObserveSpecies={onObserveSpecies}
+            onZoneProgressChange={setPokedexProgress}
           />
         );
       case 'sac':
@@ -914,6 +920,35 @@ export function CarnetDrawerV2({
           </LensTransition>
         )}
       />
+
+      {/* Pilule de progression Pokédex Nature — tout en bas à gauche du drawer */}
+      {activeSlot === 'route' && pokedexProgress ? (
+        <div
+          className="lkdv-carnet-pokedex-floating-bar"
+          aria-label={`${pokedexProgress.discovered} espèces trouvées sur ${pokedexProgress.total} présentes dans la zone`}
+        >
+          <div className="lkdv-carnet-pokedex-floating-track">
+            <div
+              className="lkdv-carnet-pokedex-floating-fill"
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.max(
+                    pokedexProgress.discovered > 0 ? 4 : 0,
+                    Math.round(
+                      (pokedexProgress.discovered / Math.max(1, pokedexProgress.total)) * 100,
+                    ),
+                  ),
+                )}%`,
+              }}
+            />
+          </div>
+          <span className="lkdv-carnet-pokedex-floating-count">
+            <AnimatedNumber value={pokedexProgress.discovered} /> /{' '}
+            <AnimatedNumber value={pokedexProgress.total} />
+          </span>
+        </div>
+      ) : null}
 
       {/* Reprise de lecture — au-dessus de la pilule « Reprendre le kit » (30). */}
       {resumePill && resumePill.key === activeLensKey ? (

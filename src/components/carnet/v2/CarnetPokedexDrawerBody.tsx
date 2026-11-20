@@ -268,12 +268,14 @@ interface CarnetPokedexDrawerBodyProps {
   detail: CarnetDetail;
   lensId: string;
   onObserveSpecies?: (species: { name: string; latin: string }) => void;
+  onZoneProgressChange?: (progress: { discovered: number; total: number }) => void;
 }
 
 export function CarnetPokedexDrawerBody({
   detail,
   lensId,
   onObserveSpecies,
+  onZoneProgressChange,
 }: CarnetPokedexDrawerBodyProps) {
   const [kingdomFilter, setKingdomFilter] = useState<'all' | PokedexKingdom>('all');
   const [query, setQuery] = useState('');
@@ -462,10 +464,10 @@ export function CarnetPokedexDrawerBody({
     [entries],
   );
   const zoneTotal = totalInZone ?? entries.length;
-  const progressPct = Math.min(
-    100,
-    Math.max(discoveredCount > 0 ? 4 : 0, Math.round((discoveredCount / Math.max(1, zoneTotal)) * 100)),
-  );
+
+  useEffect(() => {
+    onZoneProgressChange?.({ discovered: discoveredCount, total: zoneTotal });
+  }, [discoveredCount, zoneTotal, onZoneProgressChange]);
 
   const visibleEntries = useMemo(() => {
     let base = entries;
@@ -695,23 +697,6 @@ export function CarnetPokedexDrawerBody({
           />
         ))}
       </StaggerList>
-
-      <div
-        className="lkdv-carnet-pokedex-floating-bar"
-        aria-label={`${discoveredCount} espèces trouvées sur ${zoneTotal} présentes dans la zone`}
-      >
-        <div className="lkdv-carnet-pokedex-floating-track">
-          <motion.div
-            className="lkdv-carnet-pokedex-floating-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPct}%` }}
-            transition={CARNET_SPRING}
-          />
-        </div>
-        <span className="lkdv-carnet-pokedex-floating-count">
-          <AnimatedNumber value={discoveredCount} /> / <AnimatedNumber value={zoneTotal} />
-        </span>
-      </div>
     </div>
   );
 }
