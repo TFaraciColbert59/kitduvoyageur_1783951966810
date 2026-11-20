@@ -245,8 +245,8 @@ export function CarnetDrawerV2({
         { id: 'distance', label: 'Distance', icon: <Route size={15} /> },
         { id: 'denivele', label: 'Dénivelé', icon: <TrendingUp size={15} /> },
         { id: 'duree', label: 'Durée', icon: <Timer size={15} /> },
-        // Budget is only displayed if participant or budget data is available
-        ...(!isVisitor && detail.budget
+        // Budget is displayed for participants, or for visitors if the carnet members made it public
+        ...((!isVisitor || detail.budgetPublic) && detail.budget
           ? [{ id: 'budget', label: 'Budget', icon: <Wallet size={15} /> }]
           : []),
       ],
@@ -256,7 +256,7 @@ export function CarnetDrawerV2({
         { id: 'suivre', label: 'Suivre', icon: <Radio size={15} /> },
       ],
     };
-  }, [detail.budget, detail.viewerRole]);
+  }, [detail.budget, detail.budgetPublic, detail.viewerRole]);
 
   // Account / Settings Tabs
   const accountTabs = useMemo(() => {

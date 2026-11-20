@@ -66,6 +66,7 @@ const CARNET_COLUMNS_WITH_LIVE = [
   'trip_id',
   'map_points',
   'live_sharing',
+  'budget_public',
 ].join(', ');
 
 const CARNET_COLUMNS_BASE = [
@@ -521,6 +522,7 @@ export async function getCarnetDetail(id: string) {
     momentSavesRes,
     livePosRes,
     publicZoneRes,
+    tripMetaRes,
     budgetRes,
   ] = await Promise.all([
     fetchPublicProfilesWith(supabase as never, likeRows.map((row) => row.user_id)),
@@ -553,8 +555,11 @@ export async function getCarnetDetail(id: string) {
     !isCarnetParticipant && carnet.live_sharing
       ? supabase.rpc('carnet_public_position', { p_carnet: carnet.id }).maybeSingle()
       : Promise.resolve({ data: null }),
-    isCarnetParticipant && carnet.trip_id
-      ? supabase
+    typeof carnet.budget_public !== 'boolean' && carnet.trip_id
+      ? sessionClient.from('trips').select('metadata').eq('id', carnet.trip_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    carnet.trip_id
+      ? sessionClient
           .from('trip_expenses')
           .select('id, title, amount, currency, category, payer_id, expense_date')
           .eq('trip_id', carnet.trip_id)
@@ -662,7 +667,12 @@ export async function getCarnetDetail(id: string) {
     mapRefugeId: n.map_refuge_id,
   }));
 
-  // Budget (Lot D, participant uniquement)
+  // Budget (Lot D : participant ou rendu public par l'auteur du carnet)
+  const tripMeta = (tripMetaRes?.data as { metadata?: { budget_public?: unknown } } | null)?.metadata;
+  const isBudgetPublic =
+    typeof carnet.budget_public === 'boolean'
+      ? carnet.budget_public
+      : Boolean(tripMeta?.budget_public);
   let budget: CarnetBudget | null = null;
   const budgetRows = (budgetRes?.data ?? []) as Array<{
     id: string;
@@ -673,7 +683,7 @@ export async function getCarnetDetail(id: string) {
     payer_id: string | null;
     expense_date: string | null;
   }>;
-  if (isCarnetParticipant && budgetRows.length > 0) {
+  if ((isCarnetParticipant || isBudgetPublic) && budgetRows.length > 0) {
     const totalCents = budgetRows.reduce(
       (sum, item) => sum + Math.round((Number(item.amount) || 0) * 100),
       0,
@@ -783,6 +793,7 @@ export async function getCarnetDetail(id: string) {
     livePosition,
     publicZone,
     budget,
+    budgetPublic: isBudgetPublic,
   });
 
   const memberKits = await loadCarnetMemberKits({

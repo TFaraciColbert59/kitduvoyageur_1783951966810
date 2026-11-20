@@ -385,6 +385,49 @@ export async function updateCarnetSettingsAction(
     .eq('id', value.carnetId)
     .select('id');
   if (error) {
+    if (error.code === '42703' && 'budget_public' in changes) {
+      const { budget_public, ...rest } = changes;
+      if (Object.keys(rest).length > 0) {
+        const restRes = await ctx.supabase
+          .from('carnets')
+          .update(rest)
+          .eq('id', value.carnetId)
+          .select('id');
+        if (restRes.error) return { ok: false, error: OFFLINE };
+        if (!restRes.data || restRes.data.length === 0) {
+          return { ok: false, error: 'Seul l’auteur du carnet peut changer ses réglages.' };
+        }
+      }
+      const { data: carnetRow } = await ctx.supabase
+        .from('carnets')
+        .select('trip_id')
+        .eq('id', value.carnetId)
+        .maybeSingle();
+      const tripId = (carnetRow as { trip_id?: string | null } | null)?.trip_id;
+      if (tripId) {
+        const { data: tripRow } = await ctx.supabase
+          .from('trips')
+          .select('metadata')
+          .eq('id', tripId)
+          .maybeSingle();
+        const prevMeta =
+          tripRow && typeof (tripRow as { metadata?: unknown }).metadata === 'object' && (tripRow as { metadata?: unknown }).metadata !== null
+            ? ((tripRow as { metadata?: Record<string, unknown> }).metadata as Record<string, unknown>)
+            : {};
+        const tripUpd = await ctx.supabase
+          .from('trips')
+          .update({ metadata: { ...prevMeta, budget_public } })
+          .eq('id', tripId)
+          .select('id');
+        if (!tripUpd.error && tripUpd.data && tripUpd.data.length > 0) {
+          return done(value.carnetId, { changes });
+        }
+      }
+      return {
+        ok: false,
+        error: 'La visibilité publique du budget n’est pas encore disponible sur ce carnet.',
+      };
+    }
     return {
       ok: false,
       error:

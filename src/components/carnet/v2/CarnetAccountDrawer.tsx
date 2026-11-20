@@ -430,7 +430,10 @@ function SettingsPane({
   const [pref, setPref] = useNotifPref(detail.id);
   const [busy, setBusy] = useState(false);
 
-  const save = async (changes: { visibility?: 'public' | 'private'; liveSharing?: boolean }, done: string) => {
+  const save = async (
+    changes: { visibility?: 'public' | 'private'; liveSharing?: boolean; budgetPublic?: boolean },
+    done: string
+  ) => {
     if (busy) return;
     setBusy(true);
     const result = await updateCarnetSettingsAction({ carnetId: detail.id, ...changes });
@@ -490,6 +493,32 @@ function SettingsPane({
                   void save(
                     { liveSharing: !detail.liveSharing },
                     detail.liveSharing ? 'Position masquée' : 'Position partagée'
+                  )
+                }
+              />
+            </div>
+          </div>
+          <div className="lkdv-card2">
+            <div className="lkdv-set-row">
+              <div className="t">
+                <b>Budget public</b>
+                <small>
+                  {detail.budgetPublic
+                    ? 'Visible par tous les visiteurs dans le tiroir Chiffres'
+                    : 'Réservé aux participants du carnet'}
+                </small>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                className="lkdv-sw"
+                aria-checked={Boolean(detail.budgetPublic)}
+                aria-label="Rendre le budget public"
+                disabled={busy}
+                onClick={() =>
+                  void save(
+                    { budgetPublic: !detail.budgetPublic },
+                    detail.budgetPublic ? 'Budget privé' : 'Budget public'
                   )
                 }
               />

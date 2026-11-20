@@ -293,13 +293,15 @@ export const CarnetSettingsSchema = z
     description: z.string().trim().max(160, 'La description tient en 160 caractères.').optional(),
     visibility: z.enum(['public', 'private'], { message: 'Choisis public ou privé.' }).optional(),
     liveSharing: z.boolean().optional(),
+    budgetPublic: z.boolean().optional(),
   })
   .refine(
     (v) =>
       v.title !== undefined ||
       v.description !== undefined ||
       v.visibility !== undefined ||
-      v.liveSharing !== undefined,
+      v.liveSharing !== undefined ||
+      v.budgetPublic !== undefined,
     { message: 'Rien à enregistrer.' }
   );
 export type CarnetSettingsInput = z.infer<typeof CarnetSettingsSchema>;
@@ -313,6 +315,7 @@ export function carnetSettingsRow(value: CarnetSettingsInput) {
   if (value.description !== undefined) row.description = value.description;
   if (value.visibility !== undefined) row.visibility = value.visibility;
   if (value.liveSharing !== undefined) row.live_sharing = value.liveSharing;
+  if (value.budgetPublic !== undefined) row.budget_public = value.budgetPublic;
   return row;
 }
 

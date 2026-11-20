@@ -1040,6 +1040,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
               typeof changes.visibility === 'string' ? changes.visibility === 'public' : d.isPublic,
             liveSharing:
               typeof changes.live_sharing === 'boolean' ? changes.live_sharing : d.liveSharing,
+            budgetPublic:
+              typeof changes.budget_public === 'boolean' ? changes.budget_public : d.budgetPublic,
           }))
         }
         onDeleted={() => router.push('/compte')}

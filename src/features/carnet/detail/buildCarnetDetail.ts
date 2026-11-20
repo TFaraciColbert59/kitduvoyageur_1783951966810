@@ -499,5 +499,6 @@ export function buildCarnetDetail(input: BuildCarnetDetailInput): CarnetDetail {
     publicZone: input.publicZone ?? null,
     budget,
     liveSharing: Boolean(carnet.live_sharing),
+    budgetPublic: input.budgetPublic ?? Boolean(carnet.budget_public),
   };
 }

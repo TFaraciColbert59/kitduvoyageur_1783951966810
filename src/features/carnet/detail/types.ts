@@ -30,6 +30,7 @@ export interface CarnetRow {
   trip_id?: string | null;
   map_points?: unknown;
   live_sharing?: boolean | null;
+  budget_public?: boolean | null;
   created_at?: string | null;
   status?: string | null;
 }
@@ -489,6 +490,7 @@ export interface CarnetDetail {
   publicZone?: CarnetPublicZone | null;
   budget?: CarnetBudget | null;
   liveSharing?: boolean;
+  budgetPublic?: boolean;
 }
 
 export interface BuildCarnetDetailInput {
@@ -582,5 +584,6 @@ export interface BuildCarnetDetailInput {
   livePosition?: CarnetLivePosition | null;
   publicZone?: CarnetPublicZone | null;
   budget?: CarnetBudget | null;
+  budgetPublic?: boolean;
   viewerRole?: CarnetViewerRole;
 }
