@@ -1480,13 +1480,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
     0 0 0 0.5px rgba(23, 43, 36, 0.1),
     0 18px 48px rgba(16, 32, 25, 0.16) !important;
   color: var(--label);
-  animation: lkdv-sheet-up 0.38s var(--motion-ease-standard);
+  animation: lkdv-sheet-up 260ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
 @keyframes lkdv-sheet-up {
   from {
-    opacity: 0;
-    transform: translateY(22px);
+    opacity: 0.65;
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
