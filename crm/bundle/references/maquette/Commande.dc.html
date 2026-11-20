@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Barre de commande</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-stone{background:#EDF1EA;color:#46584D}.c-info{background:#DDE7EE;color:#172B24}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.res{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 14px;border-radius:12px;color:#172B24;text-decoration:none}
+.res.sel{background:#EBF2EC;box-shadow:inset 0 0 0 1px rgba(34,97,72,.25)}
+.ic{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:12px;font-weight:700}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; position: relative; overflow: hidden; background: #F5F7F3">
+<div aria-hidden="true" style="position: absolute; inset: 0; padding: 24px; display: flex; flex-direction: column; gap: 16px; opacity: .55">
+<div style="height: 52px; border-radius: 14px; background: rgba(255,255,255,.8)"></div>
+<div style="display: flex; gap: 16px; flex: 1"><div style="width: 232px; border-radius: 18px; background: rgba(255,255,255,.6)"></div><div style="flex: 1; border-radius: 18px; background: rgba(255,255,255,.75)"></div><div style="width: 340px; border-radius: 18px; background: rgba(255,255,255,.6)"></div></div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(16,28,23,.45)"></div>
+
+<div role="dialog" aria-label="Barre de commande" style="position: absolute; left: 50%; top: 96px; transform: translateX(-50%); width: 720px; border-radius: 22px; background: rgba(255,255,255,.97); box-shadow: 0 24px 64px rgba(11,31,23,.32); overflow: hidden">
+<label style="display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid rgba(23,43,36,.10)">
+<svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#226148" stroke-width="1.6"></circle><path d="M11 11l3.5 3.5" stroke="#226148" stroke-width="1.6" stroke-linecap="round"></path></svg>
+<span style="position: absolute; left: -9999px">Chercher ou agir</span>
+<input type="text" value="rembourser 10482" style="flex: 1; border: 0; outline: 0; background: transparent; font: 500 18px Inter, sans-serif; color: #172B24">
+<span class="kbd">Échap</span>
+</label>
+
+<div style="padding: 10px 8px; display: flex; flex-direction: column; gap: 2px">
+<span class="label" style="padding: 8px 14px 4px">Actions</span>
+<a href="Remboursement.dc.html" class="res sel"><span class="ic" style="background: #D3EBD9; color: #17402C">€</span><span style="flex: 1; display: flex; flex-direction: column"><strong>Proposer un remboursement — <span class="mono">LKDV-10482</span></strong><span class="muted" style="font-size: 12.5px">Commerce · passera par la validation (mode solo : vous)</span></span><span class="kbd">↵</span></a>
+<a href="Remboursement.dc.html" class="res"><span class="ic" style="background: #EDF1EA; color: #46584D">≡</span><span style="flex: 1; display: flex; flex-direction: column"><strong>Ouvrir la commande <span class="mono">LKDV-10482</span></strong><span class="muted" style="font-size: 12.5px">129,80 € · @claire.vercors · livrée le 4 nov.</span></span><span class="kbd">⌘↵</span></a>
+
+<span class="label" style="padding: 12px 14px 4px">Membres</span>
+<a href="Membre.dc.html" class="res"><span class="ic" style="background: #D8E5D5; color: #2D482A">CV</span><span style="flex: 1; display: flex; flex-direction: column"><strong>@claire.vercors</strong><span class="muted" style="font-size: 12.5px">3 commandes · 1 demande de remboursement en cours</span></span></a>
+
+<span class="label" style="padding: 12px 14px 4px">Récents</span>
+<a href="Moderation.dc.html" class="res"><span class="ic" style="background: #FBF1DC; color: #765014">!</span><span style="flex: 1; display: flex; flex-direction: column"><strong>Commentaire signalé 3 fois — sous un carnet GR20</strong><span class="muted" style="font-size: 12.5px">Confiance · ouvert il y a 4 min</span></span></a>
+<a href="Journal.dc.html" class="res"><span class="ic" style="background: #EDF1EA; color: #46584D">J</span><span style="flex: 1; display: flex; flex-direction: column"><strong>Journal d'audit</strong><span class="muted" style="font-size: 12.5px">Pilotage</span></span></a>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 20px; border-top: 1px solid rgba(23,43,36,.10); background: #F5F7F3; font-size: 12.5px" class="muted">
+<span><span class="kbd">↑</span> <span class="kbd">↓</span> choisir</span><span><span class="kbd">↵</span> lancer</span><span><span class="kbd">⌘↵</span> ouvrir sans agir</span><span style="margin-left: auto">Seules les actions autorisées pour votre rôle apparaissent</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 50%; top: 640px; transform: translateX(-50%); width: 720px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center">
+<span class="chip c-stone">« suspendre @… »</span><span class="chip c-stone">« masquer »</span><span class="chip c-stone">« SOS en cours »</span><span class="chip c-stone">« erreurs aujourd'hui »</span><span class="chip c-stone">« arrêter l'agent Trieur »</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

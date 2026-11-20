@@ -1,0 +1,2641 @@
+{
+  "version": "1.0",
+  "generated": "2026-11-08",
+  "statuses": [
+    "todo",
+    "in_progress",
+    "verifying",
+    "done",
+    "blocked",
+    "blocked-by-tony"
+  ],
+  "roles": [
+    "agents-ia",
+    "architecte",
+    "auditeur",
+    "backend",
+    "base-de-donnees",
+    "deploiement",
+    "frontend",
+    "integrations",
+    "orchestrateur",
+    "parite-design",
+    "securite",
+    "testeur"
+  ],
+  "rules": "L'orchestrateur choisit une tâche 'todo' dont toutes les dépendances sont 'done'. Il peut ajouter des tâches (ID T-<phase>.X<n>) mais jamais en supprimer ; une tâche abandonnée passe 'blocked' avec la raison. 'evidence' = chemins dans crm/bundle/etat/preuves/.",
+  "tasks": [
+    {
+      "id": "T-0.01",
+      "phase": 0,
+      "title": "Lire le bundle, CLAUDE.md, DESIGN_SYSTEM.md, DESIGN_REFERENCE.md, tokens.css ; créer crm/bundle/etat/ depuis templates/",
+      "role": "orchestrateur",
+      "depends_on": [],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "etat/ETAT.md, ECARTS.md, DECISIONS.md, JOURNAL_DE_BORD.md, preuves/ existent"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.02",
+      "phase": 0,
+      "title": "Point de référence LKDV : type-check, lint, test:unit, test:e2e sur l'aperçu de main ; rapports dans etat/preuves/reference/",
+      "role": "testeur",
+      "depends_on": [
+        "T-0.01"
+      ],
+      "ex": [
+        "EX-LKDV-06"
+      ],
+      "act": [],
+      "acceptance": [
+        "Rapports bruts rangés, nombre de tests verts/rouges noté dans ETAT.md"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.03",
+      "phase": 0,
+      "title": "Relever l'état réel de la base (tables, colonnes de modération, policies, fonctions, advisors) et comparer à 03 § 1 ; écarts consignés",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-0.01"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "etat/preuves/reference/base.md ; advisors du jour rangés ; écarts éventuels dans ECARTS.md"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.04",
+      "phase": 0,
+      "title": "Lire le code LKDV touché par le chantier : src/app/admin, src/app/api/admin, ADMIN_ROUTES, notifications, client IA NVIDIA, webhook Stripe, lecteurs de hub_dashboard_kpis et public_profiles",
+      "role": "architecte",
+      "depends_on": [
+        "T-0.01"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "etat/preuves/reference/code-lkdv.md : chemins:lignes, dépendances, lecteurs des vues"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.05",
+      "phase": 0,
+      "title": "Créer crm/ (Next.js 15.5, React 19, TS strict, Tailwind 3.4, @supabase/ssr, zod 4, Vitest 4, Playwright 1.63, axe) ; copie des jetons + test d'égalité avec src/styles/tokens.css",
+      "role": "frontend",
+      "depends_on": [
+        "T-0.01"
+      ],
+      "ex": [
+        "EX-GEN-01",
+        "EX-GEN-05"
+      ],
+      "act": [],
+      "acceptance": [
+        "crm build vert",
+        "test d'égalité des jetons vert"
+      ],
+      "files": [
+        "crm/package.json",
+        "crm/src/design/tokens.css",
+        "crm/tests/unit/tokens.test.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.06",
+      "phase": 0,
+      "title": "Workflow .github/workflows/crm-ci.yml : lint, types, Vitest, Postgres éphémère + pgTAP (schéma de prod dumpé), Playwright sur aperçu",
+      "role": "backend",
+      "depends_on": [
+        "T-0.05",
+        "T-0.03"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "CI verte sur la branche crm/phase-0-preparation"
+      ],
+      "files": [
+        ".github/workflows/crm-ci.yml",
+        "supabase/tests/database/crm_smoke.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.07",
+      "phase": 0,
+      "title": "Projet Vercel lkdv-control (Root Directory crm, cdg1, Ignored Build Step), variables d'environnement disponibles, protection des aperçus, en-têtes de sécurité, noindex",
+      "role": "integrations",
+      "depends_on": [
+        "T-0.05"
+      ],
+      "ex": [
+        "EX-GEN-01",
+        "EX-SEC-04"
+      ],
+      "act": [],
+      "acceptance": [
+        "Aperçu du CRM vide en ligne, corps vérifié",
+        "Liste des variables présentes/absentes dans ETAT.md (sans valeurs)"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.08",
+      "phase": 0,
+      "title": "Script de données de test idempotent (comptes is_demo, contenus [TEST CRM], commandes Stripe test)",
+      "role": "testeur",
+      "depends_on": [
+        "T-0.05"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Deux exécutions successives sans doublon"
+      ],
+      "files": [
+        "crm/scripts/seed-test-data.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-0.09",
+      "phase": 0,
+      "title": "Porte 0",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-0.02",
+        "T-0.03",
+        "T-0.04",
+        "T-0.06",
+        "T-0.07",
+        "T-0.08"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Conditions de 06_PLAN_PHASES.md Porte 0 prouvées"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-1.01",
+      "phase": 1,
+      "title": "M00 crm_security_fixes : migration, .down, pgTAP ; vérifier lecteurs LKDV des vues",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-0.09"
+      ],
+      "ex": [
+        "EX-SEC-05"
+      ],
+      "act": [],
+      "acceptance": [
+        "pgTAP vert ×2 sur base éphémère",
+        "rollback prouvé"
+      ],
+      "files": [
+        "supabase/migrations/2026111*_crm_security_fixes.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-1.02",
+      "phase": 1,
+      "title": "Revue sécurité de M00 (anon, fonctions retirées, tables sans policy)",
+      "role": "securite",
+      "depends_on": [
+        "T-1.01"
+      ],
+      "ex": [
+        "EX-SEC-05"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-1.03",
+      "phase": 1,
+      "title": "Appliquer M00 en production (sauvegarde, relevés, 15 min d'observation)",
+      "role": "deploiement",
+      "depends_on": [
+        "T-1.02"
+      ],
+      "ex": [
+        "EX-SEC-05"
+      ],
+      "act": [],
+      "acceptance": [
+        "Advisors sans erreur",
+        "Références LKDV identiques"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-1.04",
+      "phase": 1,
+      "title": "Porte 1",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-1.03"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.01",
+      "phase": 2,
+      "title": "M01 crm_admin_socle : migration, .down, pgTAP",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-1.04"
+      ],
+      "ex": [
+        "EX-AUTH-02",
+        "EX-SEC-01",
+        "EX-SEC-02",
+        "EX-MOD-03",
+        "EX-MOD-04",
+        "EX-RT-01"
+      ],
+      "act": [],
+      "acceptance": [
+        "pgTAP vert ×2",
+        "rollback prouvé",
+        "Brouillon sql/001_socle_admin.sql relu et complété (admin.log)"
+      ],
+      "files": [
+        "supabase/migrations/2026111*_crm_admin_socle.sql",
+        "supabase/tests/database/crm_admin_socle.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.02",
+      "phase": 2,
+      "title": "Appliquer M01 en production",
+      "role": "deploiement",
+      "depends_on": [
+        "T-2.01"
+      ],
+      "ex": [
+        "EX-SEC-01"
+      ],
+      "act": [],
+      "acceptance": [
+        "Advisors sans erreur nouvelle",
+        "6 super admins conservent leurs droits"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.03",
+      "phase": 2,
+      "title": "M02 crm_poles_agents : migration, .down, pgTAP",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-2.02"
+      ],
+      "ex": [
+        "EX-ROLE-01",
+        "EX-ROLE-02",
+        "EX-ROLE-03",
+        "EX-ROLE-04",
+        "EX-ROLE-05",
+        "EX-ROLE-06",
+        "EX-ROLE-07"
+      ],
+      "act": [],
+      "acceptance": [
+        "pgTAP vert ×2",
+        "rollback prouvé"
+      ],
+      "files": [
+        "supabase/migrations/2026111*_crm_poles_agents.sql",
+        "supabase/tests/database/crm_poles_agents.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.04",
+      "phase": 2,
+      "title": "Appliquer M02 en production",
+      "role": "deploiement",
+      "depends_on": [
+        "T-2.03"
+      ],
+      "ex": [
+        "EX-ROLE-05"
+      ],
+      "act": [],
+      "acceptance": [
+        "Advisors sans erreur nouvelle",
+        "6 super admins conservent leurs droits"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.05",
+      "phase": 2,
+      "title": "M03 crm_commands_registry : migration, .down, pgTAP",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-2.04"
+      ],
+      "ex": [
+        "EX-GEN-03",
+        "EX-ROLE-02"
+      ],
+      "act": [],
+      "acceptance": [
+        "pgTAP vert ×2",
+        "rollback prouvé",
+        "Registre = 144 lignes conformes (catalog-diff)"
+      ],
+      "files": [
+        "supabase/migrations/2026111*_crm_commands_registry.sql",
+        "supabase/tests/database/crm_commands_registry.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.06",
+      "phase": 2,
+      "title": "Appliquer M03 en production",
+      "role": "deploiement",
+      "depends_on": [
+        "T-2.05"
+      ],
+      "ex": [
+        "EX-GEN-03"
+      ],
+      "act": [],
+      "acceptance": [
+        "Advisors sans erreur nouvelle",
+        "6 super admins conservent leurs droits"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.07",
+      "phase": 2,
+      "title": "M04 crm_requests : migration, .down, pgTAP",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-2.06"
+      ],
+      "ex": [
+        "EX-ROLE-07",
+        "EX-MOD-07",
+        "EX-COM-01",
+        "EX-COM-03"
+      ],
+      "act": [],
+      "acceptance": [
+        "pgTAP vert ×2",
+        "rollback prouvé"
+      ],
+      "files": [
+        "supabase/migrations/2026111*_crm_requests.sql",
+        "supabase/tests/database/crm_requests.sql"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.08",
+      "phase": 2,
+      "title": "Appliquer M04 en production",
+      "role": "deploiement",
+      "depends_on": [
+        "T-2.07"
+      ],
+      "ex": [
+        "EX-COM-01"
+      ],
+      "act": [],
+      "acceptance": [
+        "Advisors sans erreur nouvelle",
+        "6 super admins conservent leurs droits"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.09",
+      "phase": 2,
+      "title": "Script crm/scripts/catalog-diff.ts (catalogue ↔ admin.commands ↔ admin.cmd_* ↔ tests E2E)",
+      "role": "backend",
+      "depends_on": [
+        "T-2.05"
+      ],
+      "ex": [
+        "EX-GEN-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [
+        "crm/scripts/catalog-diff.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.10",
+      "phase": 2,
+      "title": "Revue sécurité de la matrice de droits et du mode solo",
+      "role": "securite",
+      "depends_on": [
+        "T-2.08"
+      ],
+      "ex": [
+        "EX-ROLE-01",
+        "EX-ROLE-07",
+        "EX-COM-01"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-2.11",
+      "phase": 2,
+      "title": "Porte 2",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-2.09",
+        "T-2.10"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.01",
+      "phase": 3,
+      "title": "M05 crm_moderation_states (8 tables, verrou, politiques restrictives)",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-2.11"
+      ],
+      "ex": [
+        "EX-LKDV-01",
+        "EX-LKDV-02",
+        "EX-MOD-12"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.02",
+      "phase": 3,
+      "title": "M06 crm_account_status (statut, verrou, compte_actif_pour_ecrire)",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-2.11"
+      ],
+      "ex": [
+        "EX-LKDV-03",
+        "EX-MEM-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.03",
+      "phase": 3,
+      "title": "M08 crm_sanctions_appeals (avertissements, recours DSA)",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-3.01",
+        "T-3.02"
+      ],
+      "ex": [
+        "EX-MOD-06",
+        "EX-MOD-11"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.04",
+      "phase": 3,
+      "title": "LKDV : notifications de modération avec « Contester », écran de recours, abonnement temps réel au masquage (liste fermée 02 § 10)",
+      "role": "frontend",
+      "depends_on": [
+        "T-3.03"
+      ],
+      "ex": [
+        "EX-LKDV-04",
+        "EX-MOD-11",
+        "EX-MOD-12",
+        "EX-RT-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.05",
+      "phase": 3,
+      "title": "M12 partie LKDV (publication temps réel de community_posts pour le masquage)",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-3.01"
+      ],
+      "ex": [
+        "EX-RT-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.06",
+      "phase": 3,
+      "title": "Revue sécurité RLS par rôle sur les 8 tables + statut de compte",
+      "role": "securite",
+      "depends_on": [
+        "T-3.01",
+        "T-3.02",
+        "T-3.03"
+      ],
+      "ex": [
+        "EX-LKDV-01",
+        "EX-LKDV-02",
+        "EX-LKDV-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.07",
+      "phase": 3,
+      "title": "Appliquer M05 en production (15 min d'observation)",
+      "role": "deploiement",
+      "depends_on": [
+        "T-3.06",
+        "T-3.05"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Références LKDV identiques",
+        "Advisors sans erreur nouvelle"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.08",
+      "phase": 3,
+      "title": "Appliquer M06 en production (15 min d'observation)",
+      "role": "deploiement",
+      "depends_on": [
+        "T-3.07"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Références LKDV identiques",
+        "Advisors sans erreur nouvelle"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.09",
+      "phase": 3,
+      "title": "Appliquer M08 en production (15 min d'observation)",
+      "role": "deploiement",
+      "depends_on": [
+        "T-3.08"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Références LKDV identiques",
+        "Advisors sans erreur nouvelle"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.10",
+      "phase": 3,
+      "title": "Appliquer M12 (LKDV) en production (15 min d'observation)",
+      "role": "deploiement",
+      "depends_on": [
+        "T-3.09"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [
+        "Références LKDV identiques",
+        "Advisors sans erreur nouvelle"
+      ],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.11",
+      "phase": 3,
+      "title": "Mettre LKDV en production avec T-3.04 ; E2E « post masqué disparaît en < 2 s »",
+      "role": "deploiement",
+      "depends_on": [
+        "T-3.10",
+        "T-3.04"
+      ],
+      "ex": [
+        "EX-RT-04",
+        "EX-LKDV-06"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-3.12",
+      "phase": 3,
+      "title": "Porte 3",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-3.11"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.01",
+      "phase": 4,
+      "title": "Connexion, enrôlement et vérification TOTP, middleware (aal2, rôle, 12 h, 30 min)",
+      "role": "backend",
+      "depends_on": [
+        "T-3.12"
+      ],
+      "ex": [
+        "EX-AUTH-01",
+        "EX-AUTH-02",
+        "EX-AUTH-03",
+        "EX-AUTH-04",
+        "EX-SEC-08",
+        "EX-GEN-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.02",
+      "phase": 4,
+      "title": "Activer MFA TOTP dans Auth via l'API de gestion (sans toucher aux autres réglages) ; exposer le schéma admin",
+      "role": "integrations",
+      "depends_on": [
+        "T-3.12"
+      ],
+      "ex": [
+        "EX-AUTH-02",
+        "EX-GEN-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.03",
+      "phase": 4,
+      "title": "Primitives crm/src/ui (Chip, Button, Kbd, Toast, EmptyState, ErrorState, Skeleton, BlurredMedia) + AppShell + NavPoles",
+      "role": "frontend",
+      "depends_on": [
+        "T-3.12"
+      ],
+      "ex": [
+        "EX-UX-05",
+        "EX-A11Y-01"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.04",
+      "phase": 4,
+      "title": "CommandBar ⌘K générée depuis admin.commands, filtrée par droits",
+      "role": "frontend",
+      "depends_on": [
+        "T-4.03"
+      ],
+      "ex": [
+        "EX-UX-03",
+        "EX-GEN-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.05",
+      "phase": 4,
+      "title": "M07 crm_moderation_inbox + M12 (déclencheurs realtime.send, présence) ; appliquer en production",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-3.12"
+      ],
+      "ex": [
+        "EX-INBOX-01",
+        "EX-INBOX-02",
+        "EX-INBOX-03",
+        "EX-RT-01",
+        "EX-RT-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.06",
+      "phase": 4,
+      "title": "Écran À traiter (file virtualisée, groupes, compte à rebours, temps réel, lots) — maquette Main",
+      "role": "frontend",
+      "depends_on": [
+        "T-4.03",
+        "T-4.05"
+      ],
+      "ex": [
+        "EX-INBOX-02",
+        "EX-INBOX-03",
+        "EX-INBOX-04",
+        "EX-INBOX-05",
+        "EX-INBOX-06",
+        "EX-INBOX-07",
+        "EX-RT-03",
+        "EX-PERF-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.07",
+      "phase": 4,
+      "title": "Écran Cas / DecisionCard + ContextRail + annulation 10 s — maquette Moderation",
+      "role": "frontend",
+      "depends_on": [
+        "T-4.06"
+      ],
+      "ex": [
+        "EX-MOD-01",
+        "EX-MOD-02",
+        "EX-MOD-04",
+        "EX-MOD-05",
+        "EX-MOD-08",
+        "EX-MOD-09",
+        "EX-MOD-10"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.08",
+      "phase": 4,
+      "title": "Validation à 2 personnes et mode solo : ApprovalPanel — maquette Remboursement",
+      "role": "frontend",
+      "depends_on": [
+        "T-4.03"
+      ],
+      "ex": [
+        "EX-ROLE-07",
+        "EX-COM-01",
+        "EX-COM-03",
+        "EX-MOD-07"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.09",
+      "phase": 4,
+      "title": "Stripe en mode test : remboursement (approve → refund idempotent → complete), webhook CRM",
+      "role": "integrations",
+      "depends_on": [
+        "T-4.08"
+      ],
+      "ex": [
+        "EX-COM-02",
+        "EX-COM-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.10",
+      "phase": 4,
+      "title": "Écran Journal — maquette Journal",
+      "role": "frontend",
+      "depends_on": [
+        "T-4.03"
+      ],
+      "ex": [
+        "EX-SEC-01",
+        "EX-SEC-02"
+      ],
+      "act": [
+        "ACT-143"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D02",
+      "phase": 4,
+      "title": "M13 crm_commands_d02 (Publications communauté) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-015",
+        "ACT-016",
+        "ACT-017",
+        "ACT-018",
+        "ACT-019",
+        "ACT-020",
+        "ACT-021",
+        "ACT-022",
+        "ACT-023"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E02",
+      "phase": 4,
+      "title": "E2E D2 (Publications communauté)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D02"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-015",
+        "ACT-016",
+        "ACT-017",
+        "ACT-018",
+        "ACT-019",
+        "ACT-020",
+        "ACT-021",
+        "ACT-022",
+        "ACT-023"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d02.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D03",
+      "phase": 4,
+      "title": "M13 crm_commands_d03 (Stories) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-024",
+        "ACT-025",
+        "ACT-026",
+        "ACT-027",
+        "ACT-028"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E03",
+      "phase": 4,
+      "title": "E2E D3 (Stories)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D03"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-024",
+        "ACT-025",
+        "ACT-026",
+        "ACT-027",
+        "ACT-028"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d03.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D06",
+      "phase": 4,
+      "title": "M13 crm_commands_d06 (Groupes, tribus, messagerie) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-044",
+        "ACT-045",
+        "ACT-046",
+        "ACT-047",
+        "ACT-048",
+        "ACT-049",
+        "ACT-050",
+        "ACT-051"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E06",
+      "phase": 4,
+      "title": "E2E D6 (Groupes, tribus, messagerie)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D06"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-044",
+        "ACT-045",
+        "ACT-046",
+        "ACT-047",
+        "ACT-048",
+        "ACT-049",
+        "ACT-050",
+        "ACT-051"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d06.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D09",
+      "phase": 4,
+      "title": "M13 crm_commands_d09 (Marketplace et occasion) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-067",
+        "ACT-068",
+        "ACT-069",
+        "ACT-070",
+        "ACT-071",
+        "ACT-072",
+        "ACT-073",
+        "ACT-074"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E09",
+      "phase": 4,
+      "title": "E2E D9 (Marketplace et occasion)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D09"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-067",
+        "ACT-068",
+        "ACT-069",
+        "ACT-070",
+        "ACT-071",
+        "ACT-072",
+        "ACT-073",
+        "ACT-074"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d09.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D11",
+      "phase": 4,
+      "title": "M13 crm_commands_d11 (Commandes et paiements) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-083",
+        "ACT-084",
+        "ACT-085",
+        "ACT-086",
+        "ACT-087",
+        "ACT-088",
+        "ACT-089",
+        "ACT-090",
+        "ACT-091"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E11",
+      "phase": 4,
+      "title": "E2E D11 (Commandes et paiements)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D11"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-083",
+        "ACT-084",
+        "ACT-085",
+        "ACT-086",
+        "ACT-087",
+        "ACT-088",
+        "ACT-089",
+        "ACT-090",
+        "ACT-091"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d11.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.D14",
+      "phase": 4,
+      "title": "M13 crm_commands_d14 (Voyages et sécurité) : commandes admin.cmd_* + pgTAP, branchées dans l'interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.07",
+        "T-4.08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-108",
+        "ACT-109",
+        "ACT-110",
+        "ACT-111",
+        "ACT-112",
+        "ACT-113"
+      ],
+      "acceptance": [
+        "Un test pgTAP par commande : droits, motif, effet, journal, notification, temps réel"
+      ],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.E14",
+      "phase": 4,
+      "title": "E2E D14 (Voyages et sécurité)",
+      "role": "testeur",
+      "depends_on": [
+        "T-4.D14"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-108",
+        "ACT-109",
+        "ACT-110",
+        "ACT-111",
+        "ACT-112",
+        "ACT-113"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d14.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.11",
+      "phase": 4,
+      "title": "Parité design écrans 1, 2, 4, 7 + 40 contrôles",
+      "role": "parite-design",
+      "depends_on": [
+        "T-4.E02",
+        "T-4.E03",
+        "T-4.E06",
+        "T-4.E09",
+        "T-4.E11",
+        "T-4.E14",
+        "T-4.10"
+      ],
+      "ex": [
+        "EX-UX-01",
+        "EX-UX-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.12",
+      "phase": 4,
+      "title": "Mise en production CRM phase 4 (migrations M07, M12, M13 P1) ",
+      "role": "deploiement",
+      "depends_on": [
+        "T-4.11",
+        "T-4.09"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-4.13",
+      "phase": 4,
+      "title": "Porte 4 (dont remboursement test complet de bout en bout)",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-4.12"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.01",
+      "phase": 5,
+      "title": "M09 crm_members (notes, member_360, reveal_pii, open_identity_document SA + motif + 15 min)",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.13"
+      ],
+      "ex": [
+        "EX-MEM-02",
+        "EX-MEM-05",
+        "EX-MEM-06",
+        "EX-SEC-02",
+        "EX-SEC-06",
+        "EX-SEC-07"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.02",
+      "phase": 5,
+      "title": "Écran Membre 360° — maquette Membre ; écran Commande",
+      "role": "frontend",
+      "depends_on": [
+        "T-5.01"
+      ],
+      "ex": [
+        "EX-MEM-01",
+        "EX-MEM-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.03",
+      "phase": 5,
+      "title": "M10 crm_support + écran support",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.13"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.04",
+      "phase": 5,
+      "title": "M11 crm_settings_ops (app_settings, ops.job_runs, purge) + écrans Réglages et Technique",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-4.13"
+      ],
+      "ex": [
+        "EX-SEC-03",
+        "EX-MOD-10"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D01",
+      "phase": 5,
+      "title": "M13 crm_commands_d01 (Comptes et identité) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-001",
+        "ACT-002",
+        "ACT-003",
+        "ACT-004",
+        "ACT-005",
+        "ACT-006",
+        "ACT-007",
+        "ACT-008",
+        "ACT-009",
+        "ACT-010",
+        "ACT-011",
+        "ACT-012",
+        "ACT-013",
+        "ACT-014"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E01",
+      "phase": 5,
+      "title": "E2E D1 (Comptes et identité)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D01"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-001",
+        "ACT-002",
+        "ACT-003",
+        "ACT-004",
+        "ACT-005",
+        "ACT-006",
+        "ACT-007",
+        "ACT-008",
+        "ACT-009",
+        "ACT-010",
+        "ACT-011",
+        "ACT-012",
+        "ACT-013",
+        "ACT-014"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d01.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D04",
+      "phase": 5,
+      "title": "M13 crm_commands_d04 (Carnets) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-029",
+        "ACT-030",
+        "ACT-031",
+        "ACT-032",
+        "ACT-033",
+        "ACT-034"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E04",
+      "phase": 5,
+      "title": "E2E D4 (Carnets)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-029",
+        "ACT-030",
+        "ACT-031",
+        "ACT-032",
+        "ACT-033",
+        "ACT-034"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d04.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D05",
+      "phase": 5,
+      "title": "M13 crm_commands_d05 (Clubs) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-035",
+        "ACT-036",
+        "ACT-037",
+        "ACT-038",
+        "ACT-039",
+        "ACT-040",
+        "ACT-041",
+        "ACT-042",
+        "ACT-043"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E05",
+      "phase": 5,
+      "title": "E2E D5 (Clubs)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D05"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-035",
+        "ACT-036",
+        "ACT-037",
+        "ACT-038",
+        "ACT-039",
+        "ACT-040",
+        "ACT-041",
+        "ACT-042",
+        "ACT-043"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d05.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D07",
+      "phase": 5,
+      "title": "M13 crm_commands_d07 (Lieux et terrain) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-052",
+        "ACT-053",
+        "ACT-054",
+        "ACT-055",
+        "ACT-056",
+        "ACT-057",
+        "ACT-058",
+        "ACT-059",
+        "ACT-060"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E07",
+      "phase": 5,
+      "title": "E2E D7 (Lieux et terrain)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D07"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-052",
+        "ACT-053",
+        "ACT-054",
+        "ACT-055",
+        "ACT-056",
+        "ACT-057",
+        "ACT-058",
+        "ACT-059",
+        "ACT-060"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d07.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D08",
+      "phase": 5,
+      "title": "M13 crm_commands_d08 (Avis et questions) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-061",
+        "ACT-062",
+        "ACT-063",
+        "ACT-064",
+        "ACT-065",
+        "ACT-066"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E08",
+      "phase": 5,
+      "title": "E2E D8 (Avis et questions)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D08"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-061",
+        "ACT-062",
+        "ACT-063",
+        "ACT-064",
+        "ACT-065",
+        "ACT-066"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d08.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D10",
+      "phase": 5,
+      "title": "M13 crm_commands_d10 (Catalogue) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-075",
+        "ACT-076",
+        "ACT-077",
+        "ACT-078",
+        "ACT-079",
+        "ACT-080",
+        "ACT-081",
+        "ACT-082"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E10",
+      "phase": 5,
+      "title": "E2E D10 (Catalogue)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D10"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-075",
+        "ACT-076",
+        "ACT-077",
+        "ACT-078",
+        "ACT-079",
+        "ACT-080",
+        "ACT-081",
+        "ACT-082"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d10.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D12",
+      "phase": 5,
+      "title": "M13 crm_commands_d12 (Récompenses et progression) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-092",
+        "ACT-093",
+        "ACT-094",
+        "ACT-095",
+        "ACT-096",
+        "ACT-097",
+        "ACT-098",
+        "ACT-099",
+        "ACT-100",
+        "ACT-101"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E12",
+      "phase": 5,
+      "title": "E2E D12 (Récompenses et progression)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D12"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-092",
+        "ACT-093",
+        "ACT-094",
+        "ACT-095",
+        "ACT-096",
+        "ACT-097",
+        "ACT-098",
+        "ACT-099",
+        "ACT-100",
+        "ACT-101"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d12.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D13",
+      "phase": 5,
+      "title": "M13 crm_commands_d13 (Lignées de kits) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-102",
+        "ACT-103",
+        "ACT-104",
+        "ACT-105",
+        "ACT-106",
+        "ACT-107"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E13",
+      "phase": 5,
+      "title": "E2E D13 (Lignées de kits)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D13"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-102",
+        "ACT-103",
+        "ACT-104",
+        "ACT-105",
+        "ACT-106",
+        "ACT-107"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d13.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D15",
+      "phase": 5,
+      "title": "M13 crm_commands_d15 (Contenus et pays) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-114",
+        "ACT-115",
+        "ACT-116",
+        "ACT-117",
+        "ACT-118",
+        "ACT-119",
+        "ACT-120",
+        "ACT-121"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E15",
+      "phase": 5,
+      "title": "E2E D15 (Contenus et pays)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D15"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-114",
+        "ACT-115",
+        "ACT-116",
+        "ACT-117",
+        "ACT-118",
+        "ACT-119",
+        "ACT-120",
+        "ACT-121"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d15.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D16",
+      "phase": 5,
+      "title": "M13 crm_commands_d16 (Affiliation) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-122",
+        "ACT-123",
+        "ACT-124",
+        "ACT-125",
+        "ACT-126"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E16",
+      "phase": 5,
+      "title": "E2E D16 (Affiliation)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D16"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-122",
+        "ACT-123",
+        "ACT-124",
+        "ACT-125",
+        "ACT-126"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d16.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D17",
+      "phase": 5,
+      "title": "M13 crm_commands_d17 (IA et coûts) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-127",
+        "ACT-128",
+        "ACT-129",
+        "ACT-130",
+        "ACT-131"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E17",
+      "phase": 5,
+      "title": "E2E D17 (IA et coûts)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D17"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-127",
+        "ACT-128",
+        "ACT-129",
+        "ACT-130",
+        "ACT-131"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d17.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D18",
+      "phase": 5,
+      "title": "M13 crm_commands_d18 (Support et notifications) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-132",
+        "ACT-133",
+        "ACT-134",
+        "ACT-135",
+        "ACT-136"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E18",
+      "phase": 5,
+      "title": "E2E D18 (Support et notifications)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D18"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-132",
+        "ACT-133",
+        "ACT-134",
+        "ACT-135",
+        "ACT-136"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d18.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.D19",
+      "phase": 5,
+      "title": "M13 crm_commands_d19 (Système et équipe) : commandes + pgTAP + interface",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.01",
+        "T-5.03",
+        "T-5.04"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-137",
+        "ACT-138",
+        "ACT-139",
+        "ACT-140",
+        "ACT-141",
+        "ACT-142",
+        "ACT-143",
+        "ACT-144"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.E19",
+      "phase": 5,
+      "title": "E2E D19 (Système et équipe)",
+      "role": "testeur",
+      "depends_on": [
+        "T-5.D19"
+      ],
+      "ex": [],
+      "act": [
+        "ACT-137",
+        "ACT-138",
+        "ACT-139",
+        "ACT-140",
+        "ACT-141",
+        "ACT-142",
+        "ACT-143",
+        "ACT-144"
+      ],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/d19.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.T",
+      "phase": 5,
+      "title": "Commandes transverses T-01 à T-10 + E2E",
+      "role": "backend",
+      "depends_on": [
+        "T-5.01"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [
+        "crm/tests/e2e/transverses.spec.ts"
+      ],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.05",
+      "phase": 5,
+      "title": "Écrans de pôles, catalogue, contenus, IA, technique (gabarit Main + tiroir) ; 3 gestes max vers chaque action",
+      "role": "frontend",
+      "depends_on": [
+        "T-5.E01",
+        "T-5.E04",
+        "T-5.E05",
+        "T-5.E07",
+        "T-5.E08",
+        "T-5.E10",
+        "T-5.E12",
+        "T-5.E13",
+        "T-5.E15",
+        "T-5.E16",
+        "T-5.E17",
+        "T-5.E18",
+        "T-5.E19"
+      ],
+      "ex": [
+        "EX-GEN-03",
+        "EX-COM-05"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.06",
+      "phase": 5,
+      "title": "Parité design écrans 3 et 6 + 40 contrôles",
+      "role": "parite-design",
+      "depends_on": [
+        "T-5.02",
+        "T-5.05"
+      ],
+      "ex": [
+        "EX-UX-01",
+        "EX-UX-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.07",
+      "phase": 5,
+      "title": "catalog-diff : 144/144 ; mise en production phase 5",
+      "role": "deploiement",
+      "depends_on": [
+        "T-5.06",
+        "T-5.T"
+      ],
+      "ex": [
+        "EX-GEN-03",
+        "EX-GEN-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-5.08",
+      "phase": 5,
+      "title": "Porte 5",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-5.07"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.01",
+      "phase": 6,
+      "title": "M14 crm_agents_runtime + comptes de service des 6 agents",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-5.08"
+      ],
+      "ex": [
+        "EX-AGT-01",
+        "EX-AGT-02",
+        "EX-AGT-05"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.02",
+      "phase": 6,
+      "title": "Serveur MCP /api/mcp généré depuis le registre",
+      "role": "agents-ia",
+      "depends_on": [
+        "T-6.01"
+      ],
+      "ex": [
+        "EX-AGT-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.03",
+      "phase": 6,
+      "title": "Les 6 agents (NVIDIA NIM), crons/événements, propositions dans la file",
+      "role": "agents-ia",
+      "depends_on": [
+        "T-6.02"
+      ],
+      "ex": [
+        "EX-AGT-07",
+        "EX-AGT-08",
+        "EX-AGT-09",
+        "EX-MEM-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.04",
+      "phase": 6,
+      "title": "Écran Équipe et agents — maquette Agents ; arrêt individuel et global < 5 s",
+      "role": "frontend",
+      "depends_on": [
+        "T-6.01"
+      ],
+      "ex": [
+        "EX-AGT-05",
+        "EX-AGT-06"
+      ],
+      "act": [
+        "ACT-144"
+      ],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.05",
+      "phase": 6,
+      "title": "Banc d'injection 50 cas + revue sécurité des agents",
+      "role": "securite",
+      "depends_on": [
+        "T-6.03"
+      ],
+      "ex": [
+        "EX-AGT-04",
+        "EX-AGT-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.06",
+      "phase": 6,
+      "title": "Mise en production phase 6",
+      "role": "deploiement",
+      "depends_on": [
+        "T-6.04",
+        "T-6.05"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-6.07",
+      "phase": 6,
+      "title": "Porte 6",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-6.06"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.01",
+      "phase": 7,
+      "title": "SOS et astreinte : écran SOS (mobile d'abord), escalade : e-mail après 5 min sans « Je prends », e-mail Resend",
+      "role": "frontend",
+      "depends_on": [
+        "T-6.07"
+      ],
+      "ex": [
+        "EX-SOS-01",
+        "EX-SOS-02",
+        "EX-SOS-03",
+        "EX-MOB-01"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.02",
+      "phase": 7,
+      "title": "Bac à sable /entrainement (10 faux cas)",
+      "role": "frontend",
+      "depends_on": [
+        "T-6.07"
+      ],
+      "ex": [
+        "EX-UX-04"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.03",
+      "phase": 7,
+      "title": "Mesure : indicateurs, UMUX-Lite, relecture hebdo des agents",
+      "role": "backend",
+      "depends_on": [
+        "T-6.07"
+      ],
+      "ex": [
+        "EX-MES-01",
+        "EX-MES-02",
+        "EX-MES-03"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.04",
+      "phase": 7,
+      "title": "Accessibilité complète (axe, clavier, contraste) sur tous les écrans et états",
+      "role": "testeur",
+      "depends_on": [
+        "T-7.01",
+        "T-7.02"
+      ],
+      "ex": [
+        "EX-A11Y-01"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.05",
+      "phase": 7,
+      "title": "Performance (couche 7)",
+      "role": "testeur",
+      "depends_on": [
+        "T-7.01",
+        "T-7.02"
+      ],
+      "ex": [
+        "EX-PERF-01",
+        "EX-PERF-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.06",
+      "phase": 7,
+      "title": "Parité des 8 écrans + 40 contrôles + test novice",
+      "role": "parite-design",
+      "depends_on": [
+        "T-7.04",
+        "T-7.05"
+      ],
+      "ex": [
+        "EX-UX-01",
+        "EX-UX-02",
+        "EX-UX-05",
+        "EX-GEN-05"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.07",
+      "phase": 7,
+      "title": "Revue sécurité complète (couche 8)",
+      "role": "securite",
+      "depends_on": [
+        "T-7.06"
+      ],
+      "ex": [
+        "EX-SEC-04",
+        "EX-SEC-07"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-7.08",
+      "phase": 7,
+      "title": "Porte 7 : couches 1 à 9 vertes sur l'aperçu",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-7.07",
+        "T-7.03"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.01",
+      "phase": 8,
+      "title": "Retirer src/app/admin, src/app/api/admin, ADMIN_ROUTES de LKDV (après vérification qu'aucune fonction n'en dépend)",
+      "role": "backend",
+      "depends_on": [
+        "T-7.08"
+      ],
+      "ex": [
+        "EX-LKDV-05"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.02",
+      "phase": 8,
+      "title": "M15 crm_cleanup (preuve d'absence d'usage) ",
+      "role": "base-de-donnees",
+      "depends_on": [
+        "T-8.01"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.03",
+      "phase": 8,
+      "title": "Mettre à jour CLAUDE.md (EX-SEC-07, mention du CRM)",
+      "role": "architecte",
+      "depends_on": [
+        "T-7.08"
+      ],
+      "ex": [
+        "EX-SEC-07"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.04",
+      "phase": 8,
+      "title": "Mise en production finale CRM + LKDV ; couche 10",
+      "role": "deploiement",
+      "depends_on": [
+        "T-8.01",
+        "T-8.02",
+        "T-8.03"
+      ],
+      "ex": [
+        "EX-LKDV-06",
+        "EX-GEN-02"
+      ],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": true,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.05",
+      "phase": 8,
+      "title": "Boucle finale : audits indépendants jusqu'à deux audits consécutifs sans écart nouveau ; auto-évaluation ≥ 95",
+      "role": "auditeur",
+      "depends_on": [
+        "T-8.04"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "T-8.06",
+      "phase": 8,
+      "title": "Rapport final (templates/RAPPORT_FINAL.md)",
+      "role": "orchestrateur",
+      "depends_on": [
+        "T-8.05"
+      ],
+      "ex": [],
+      "act": [],
+      "acceptance": [],
+      "files": [],
+      "touches_production": false,
+      "status": "todo",
+      "evidence": []
+    }
+  ]
+}

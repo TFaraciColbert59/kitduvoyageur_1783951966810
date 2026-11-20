@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Journal d'audit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.card{background:rgba(255,255,255,.88);border:1px solid rgba(23,43,36,.10);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 24px rgba(11,31,23,.06)}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-danger{background:#FDE8E6;color:#7E2D25}.c-info{background:#DDE7EE;color:#172B24}.c-stone{background:#EDF1EA;color:#46584D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:14px;border:0;font:600 14px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.btn-pg{background:#D3EBD9;color:#17402C;box-shadow:inset 0 0 0 1px rgba(34,97,72,.28)}
+.btn-soft{background:rgba(255,255,255,.92);color:#172B24;box-shadow:inset 0 0 0 1px rgba(23,43,36,.16)}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:0 12px;border-radius:12px;color:#172B24;text-decoration:none;font-weight:500}
+.nav a.on{background:#D3EBD9;color:#17402C;font-weight:600}
+.nav .n{font:600 12px Inter,sans-serif;color:#56665D}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D;padding:12px 14px;border-bottom:1px solid rgba(23,43,36,.12);white-space:nowrap}
+td{padding:12px 14px;border-bottom:.5px solid rgba(23,43,36,.10);vertical-align:top;font-size:13.5px}
+select{font:500 14px Inter,system-ui,sans-serif;color:#172B24;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid rgba(23,43,36,.22);background:#fff}
+a{color:#226148}a:hover{color:#17402C}
+</style>
+</helmet>
+<div style="min-height: 1040px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 24px; background: rgba(255,255,255,.72); border-bottom: 1px solid rgba(23,43,36,.10)">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 200px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="#17402C"></circle><path d="M14 6l3 8-3 8-3-8z" fill="#D3EBD9"></path></svg>
+<span class="brand" style="font-weight: 800; font-size: 17px; color: #17402C">LKDV Control</span>
+</div>
+<a href="Commande.dc.html" class="btn btn-soft" style="flex: 1 1 360px; max-width: 560px; justify-content: space-between; font-weight: 500; color: #56665D"><span>Chercher un membre, une commande… ou agir</span><span class="kbd">⌘K</span></a>
+<div style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+<span class="chip c-warn">Mode solo</span>
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TF</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1; align-items: stretch">
+<nav class="nav" aria-label="Navigation principale" style="flex: 1 1 232px; max-width: 260px; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid rgba(23,43,36,.08)">
+<a href="Main.dc.html"><span>À traiter</span><span class="n">34</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pôles</span>
+<a href="Moderation.dc.html"><span>Confiance</span><span class="n">14</span></a>
+<a href="Membre.dc.html"><span>Membres</span><span class="n">3</span></a>
+<a href="Remboursement.dc.html"><span>Commerce</span><span class="n">2</span></a>
+<a href="Main.dc.html"><span>Contenus</span><span class="n">21</span></a>
+<a href="Main.dc.html"><span>Produit et IA</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Croissance</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Technique</span><span class="n">1</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pilotage</span>
+<a href="Agents.dc.html"><span>Équipe et agents IA</span><span class="n">6</span></a>
+<a href="Journal.dc.html" class="on"><span>Journal d'audit</span></a>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="brand" style="margin: 0; font-size: 28px; font-weight: 800; color: #17402C">Journal d'audit</h1>
+<span class="muted">Ajout seul : aucune ligne ne peut être modifiée ni supprimée · décisions conservées 3 ans, consultations 1 an</span>
+</div>
+<button class="btn btn-soft">Exporter la période</button>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 4px"><span class="label">Période</span><select><option>Aujourd'hui</option><option>7 derniers jours</option><option>30 derniers jours</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px"><span class="label">Acteur</span><select><option>Tout le monde</option><option>Tony</option><option>Agents IA</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px"><span class="label">Type</span><select><option>Toutes les actions</option><option>Décisions</option><option>Consultations sensibles</option><option>Argent</option></select></label>
+<span style="display: inline-flex; gap: 6px; align-items: center; margin-left: auto"><span class="chip c-warn">2 validations seules</span><span class="chip c-info">1 accès sensible</span></span>
+</div>
+
+<section class="card" style="overflow-x: auto" aria-label="Lignes du journal">
+<table>
+<thead><tr><th scope="col">Heure</th><th scope="col">Acteur</th><th scope="col">Action</th><th scope="col">Cible</th><th scope="col">Motif</th><th scope="col">Avant → après</th></tr></thead>
+<tbody>
+<tr><td class="mono">22:31</td><td>Tony</td><td><strong>Remboursement validé</strong><br><span class="chip c-warn" style="margin-top: 4px">Validé seul · mode solo</span></td><td class="mono">LKDV-10477</td><td>Colis perdu</td><td class="mono">0,00 € → 54,00 € remboursés</td></tr>
+<tr><td class="mono">22:30</td><td><span class="chip c-stone">Agent</span> Remboursements</td><td>Demande de remboursement préparée</td><td class="mono">LKDV-10477</td><td>Colis perdu</td><td class="muted">—</td></tr>
+<tr><td class="mono">22:18</td><td>Tony</td><td><strong>Commentaire masqué</strong></td><td>Commentaire <span class="mono">c_8f2…</span></td><td>Harcèlement ou insulte</td><td class="mono">visible → masqué</td></tr>
+<tr><td class="mono">22:18</td><td><span class="chip c-stone">Agent</span> Trieur</td><td>Motif proposé · confiance moyenne</td><td>Commentaire <span class="mono">c_8f2…</span></td><td>Harcèlement ou insulte</td><td class="muted">—</td></tr>
+<tr><td class="mono">22:04</td><td>Tony</td><td><strong>Document d'identité consulté</strong><br><span class="chip c-info" style="margin-top: 4px">Accès sensible · 15 min</span></td><td>Membre @marc.dolomites</td><td>Demande du membre</td><td class="muted">—</td></tr>
+<tr><td class="mono">21:57</td><td>Tony</td><td>E-mail affiché</td><td>Membre @randonneur_alpin</td><td>Vérification d'un signalement</td><td class="muted">—</td></tr>
+<tr><td class="mono">21:40</td><td>Tony</td><td><strong>Masquage annulé</strong> (dans les 10 s)</td><td>Publication <span class="mono">p_31a…</span></td><td>Erreur de cible</td><td class="mono">masqué → visible</td></tr>
+<tr><td class="mono">21:12</td><td><span class="chip c-stone">Agent</span> Surveillant</td><td>Tâche relancée une fois</td><td class="mono">process-hike-sessions</td><td>Échec réseau</td><td class="mono">échec → réussi</td></tr>
+<tr><td class="mono">20:46</td><td>Tony</td><td>Connexion au CRM</td><td>Session</td><td class="muted">—</td><td>Clé physique · appareil connu</td></tr>
+</tbody>
+</table>
+</section>
+<p class="muted" style="margin: 0; font-size: 12.5px">Les journaux servent à la sécurité et à la contestation des décisions ; ils ne mesurent jamais le temps de travail.</p>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

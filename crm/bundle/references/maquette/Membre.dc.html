@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LKDV Control — Fiche membre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@600;700;800&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap">
+<style>
+body{margin:0;background:#F5F7F3;color:#172B24;font-family:Inter,-apple-system,'SF Pro Text',system-ui,sans-serif;font-size:14px;line-height:1.45}
+.brand{font-family:Manrope,system-ui,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.card{background:rgba(255,255,255,.88);border:1px solid rgba(23,43,36,.10);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 24px rgba(11,31,23,.06)}
+.chip{display:inline-flex;align-items:center;gap:5px;min-height:22px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.c-sage{background:#D8E5D5;color:#2D482A}.c-warn{background:#FBF1DC;color:#765014}.c-danger{background:#FDE8E6;color:#7E2D25}.c-info{background:#DDE7EE;color:#172B24}.c-stone{background:#EDF1EA;color:#46584D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:14px;border:0;font:600 14px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.btn-pg{background:#D3EBD9;color:#17402C;box-shadow:inset 0 0 0 1px rgba(34,97,72,.28)}
+.btn-soft{background:rgba(255,255,255,.92);color:#172B24;box-shadow:inset 0 0 0 1px rgba(23,43,36,.16)}
+.btn-bad{background:#FDE8E6;color:#7E2D25;box-shadow:inset 0 0 0 1px rgba(168,68,58,.28)}
+.kbd{display:inline-flex;min-width:18px;height:20px;padding:0 6px;align-items:center;justify-content:center;border-radius:6px;background:rgba(23,43,36,.07);color:#46584D;font:600 11px 'IBM Plex Mono',monospace}
+.label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#56665D}
+.muted{color:#56665D}
+.nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:40px;padding:0 12px;border-radius:12px;color:#172B24;text-decoration:none;font-weight:500}
+.nav a.on{background:#D3EBD9;color:#17402C;font-weight:600}
+.nav .n{font:600 12px Inter,sans-serif;color:#56665D}
+.prop{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:.5px solid rgba(23,43,36,.10)}
+.ev{display:flex;align-items:center;gap:12px;min-height:48px;padding:8px 4px;border-bottom:.5px solid rgba(23,43,36,.10)}
+.ev .ic{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-size:12px;font-weight:700}
+a{color:#226148}a:hover{color:#17402C}
+</style>
+</helmet>
+<div style="min-height: 1040px; display: flex; flex-direction: column">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px 24px; background: rgba(255,255,255,.72); border-bottom: 1px solid rgba(23,43,36,.10)">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 200px">
+<svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="#17402C"></circle><path d="M14 6l3 8-3 8-3-8z" fill="#D3EBD9"></path></svg>
+<span class="brand" style="font-weight: 800; font-size: 17px; color: #17402C">LKDV Control</span>
+</div>
+<a href="Commande.dc.html" class="btn btn-soft" style="flex: 1 1 360px; max-width: 560px; justify-content: space-between; font-weight: 500; color: #56665D"><span>Chercher un membre, une commande… ou agir</span><span class="kbd">⌘K</span></a>
+<div style="display: flex; align-items: center; gap: 10px; margin-left: auto">
+<span class="chip c-warn">Mode solo</span>
+<span style="width: 36px; height: 36px; border-radius: 50%; background: #17402C; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">TF</span>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1; align-items: stretch">
+<nav class="nav" aria-label="Navigation principale" style="flex: 1 1 232px; max-width: 260px; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid rgba(23,43,36,.08)">
+<a href="Main.dc.html"><span>À traiter</span><span class="n">34</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pôles</span>
+<a href="Moderation.dc.html"><span>Confiance</span><span class="n">14</span></a>
+<a href="Membre.dc.html" class="on"><span>Membres</span><span class="n" style="color: #17402C">3</span></a>
+<a href="Remboursement.dc.html"><span>Commerce</span><span class="n">2</span></a>
+<a href="Main.dc.html"><span>Contenus</span><span class="n">21</span></a>
+<a href="Main.dc.html"><span>Produit et IA</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Croissance</span><span class="n">0</span></a>
+<a href="Main.dc.html"><span>Technique</span><span class="n">1</span></a>
+<span class="label" style="padding: 18px 12px 6px">Pilotage</span>
+<a href="Agents.dc.html"><span>Équipe et agents IA</span><span class="n">6</span></a>
+<a href="Journal.dc.html"><span>Journal d'audit</span></a>
+</nav>
+
+<div style="flex: 999 1 720px; min-width: 0; display: flex; flex-direction: column">
+<section style="padding: 24px 28px 18px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; border-bottom: 1px solid rgba(23,43,36,.08)">
+<span style="width: 64px; height: 64px; border-radius: 50%; background: #D8E5D5; color: #2D482A; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 22px">RA</span>
+<div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 240px">
+<h1 class="brand" style="margin: 0; font-size: 26px; font-weight: 800; color: #17402C">@randonneur_alpin</h1>
+<span style="display: flex; flex-wrap: wrap; gap: 6px"><span class="chip c-sage">Compte actif</span><span class="chip c-warn">1 avertissement actif · expire le 28 oct. 2027</span><span class="chip c-stone">Membre depuis mars 2025</span></span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button class="btn btn-soft">Écrire au membre</button>
+<button class="btn btn-soft">Déconnecter partout</button>
+<button class="btn btn-bad">Suspendre…</button>
+<button class="btn btn-soft" aria-label="Plus d'actions">…</button>
+</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; flex: 1">
+<aside aria-label="Identité" style="flex: 1 1 260px; max-width: 300px; padding: 18px 24px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid rgba(23,43,36,.08)">
+<span class="label" style="padding-bottom: 4px">Coordonnées</span>
+<div class="prop"><span class="muted" style="font-size: 12px">E-mail</span><span style="display: flex; justify-content: space-between; align-items: center"><span class="mono">r••••@••••.fr</span><button class="btn btn-soft" style="min-height: 32px; padding: 0 10px; font-size: 12.5px">Afficher</button></span></div>
+<div class="prop"><span class="muted" style="font-size: 12px">Téléphone</span><span style="display: flex; justify-content: space-between; align-items: center"><span class="mono">+33 • •• •• •• 12</span><button class="btn btn-soft" style="min-height: 32px; padding: 0 10px; font-size: 12.5px">Afficher</button></span></div>
+<p class="muted" style="font-size: 12px; margin: 6px 0 10px">Chaque affichage est inscrit au journal.</p>
+<span class="label" style="padding: 8px 0 4px">Compte</span>
+<div class="prop"><span class="muted" style="font-size: 12px">Pseudo public</span><span>@randonneur_alpin</span></div>
+<div class="prop"><span class="muted" style="font-size: 12px">Visibilité du profil</span><span>Public</span></div>
+<div class="prop"><span class="muted" style="font-size: 12px">Double authentification</span><span>Non activée</span></div>
+<div class="prop"><span class="muted" style="font-size: 12px">Consentement e-mails</span><span>Refusé</span></div>
+<div class="prop" style="border-bottom: 0"><span class="muted" style="font-size: 12px">Documents d'identité</span><span style="display: flex; justify-content: space-between; align-items: center"><span>1 document</span><button class="btn btn-soft" style="min-height: 32px; padding: 0 10px; font-size: 12.5px">Ouvrir avec motif</button></span><span class="muted" style="font-size: 12px">Super admin seul · 15 min · journalisé</span></div>
+</aside>
+
+<main style="flex: 999 1 420px; min-width: 0; padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+<div class="card" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; background: rgba(240,245,238,.9)">
+<span style="display: flex; justify-content: space-between; align-items: center"><span class="label">Résumé</span><span class="chip c-stone">Agent Résumeur · à relire</span></span>
+<span style="font-size: 13.5px">Randonneur actif dans les Alpes et en Corse : 41 publications, 6 carnets, 2 commandes. Ton souvent vif dans les commentaires ; 4 signalements en 90 jours, tous sur des commentaires. Aucun litige de paiement.</span>
+</div>
+
+<div role="tablist" aria-label="Sections" style="display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 999px; background: #EDF1EA; align-self: flex-start">
+<button role="tab" aria-selected="true" class="btn" style="min-height: 36px; padding: 0 14px; border-radius: 999px; background: #fff; color: #17402C; box-shadow: 0 1px 3px rgba(11,31,23,.12)">Activité</button>
+<button role="tab" aria-selected="false" class="btn" style="min-height: 36px; padding: 0 14px; border-radius: 999px; background: transparent; color: #46584D">Modération · 4</button>
+<button role="tab" aria-selected="false" class="btn" style="min-height: 36px; padding: 0 14px; border-radius: 999px; background: transparent; color: #46584D">Commandes · 2</button>
+<button role="tab" aria-selected="false" class="btn" style="min-height: 36px; padding: 0 14px; border-radius: 999px; background: transparent; color: #46584D">Voyages · 3</button>
+<button role="tab" aria-selected="false" class="btn" style="min-height: 36px; padding: 0 14px; border-radius: 999px; background: transparent; color: #46584D">Accès à cette fiche</button>
+</div>
+
+<label style="display: flex"><span class="label" style="position: absolute; left: -9999px">Chercher dans l'activité</span><input type="search" placeholder="Chercher dans l'activité…" style="flex: 1; min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid rgba(23,43,36,.22); background: #fff; font: 500 14px Inter, sans-serif"></label>
+
+<section class="card" style="padding: 6px 16px" aria-label="Activité">
+<div style="padding: 10px 4px 4px"><span class="label">À venir</span></div>
+<div class="ev"><span class="ic" style="background: #FBF1DC; color: #765014">!</span><span style="flex: 1"><strong>Signalement en cours</strong> <span class="muted">· commentaire sous « Traversée du GR20 »</span></span><span class="chip c-warn">Reste 12 min</span></div>
+<div style="padding: 14px 4px 4px"><span class="label">Novembre 2026</span></div>
+<div class="ev"><span class="ic" style="background: #D8E5D5; color: #2D482A">C</span><span style="flex: 1">A publié un carnet <span class="muted">· « Traversée du GR20 en 9 jours »</span></span><span class="muted" style="font-size: 12.5px">6 nov.</span></div>
+<div class="ev"><span class="ic" style="background: #DDE7EE; color: #172B24">€</span><span style="flex: 1">Commande <span class="mono">LKDV-10471</span> livrée <span class="muted">· 2 articles · 64,80 €</span></span><span class="muted" style="font-size: 12.5px">3 nov.</span></div>
+<div style="padding: 14px 4px 4px"><span class="label">Octobre 2026</span></div>
+<div class="ev"><span class="ic" style="background: #FDE8E6; color: #7E2D25">M</span><span style="flex: 1">Commentaire masqué <span class="muted">· harcèlement · par Tony</span></span><span class="muted" style="font-size: 12.5px">28 oct.</span></div>
+<div class="ev"><span class="ic" style="background: #EDF1EA; color: #46584D">S</span><span style="flex: 1">Sortie enregistrée <span class="muted">· 14,2 km · massif du Mont-Blanc</span></span><span class="muted" style="font-size: 12.5px">19 oct.</span></div>
+<div class="ev" style="border-bottom: 0"><span class="ic" style="background: #FBF1DC; color: #765014">P</span><span style="flex: 1">Message privé de rappel des règles <span class="muted">· par Tony</span></span><span class="muted" style="font-size: 12.5px">12 oct.</span></div>
+<button class="btn btn-soft" style="width: 100%; margin: 10px 0">Afficher les 38 événements plus anciens</button>
+</section>
+</main>
+
+<aside aria-label="Contexte" style="flex: 1 1 280px; max-width: 340px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; border-left: 1px solid rgba(23,43,36,.08); background: rgba(255,255,255,.45)">
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Confiance</span>
+<span style="display: flex; justify-content: space-between"><span>Score de confiance</span><strong>42 / 100</strong></span>
+<span style="display: block; height: 8px; border-radius: 99px; background: #EDF1EA; overflow: hidden"><span style="display: block; width: 42%; height: 100%; background: #C89A3B"></span></span>
+<span class="muted" style="font-size: 12.5px">Sorties prouvées au GPS : 9 · signalements reçus : 4</span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Commandes</span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span class="mono">LKDV-10471</span><span>64,80 € · livrée</span></span>
+<span style="display: flex; justify-content: space-between; font-size: 13px"><span class="mono">LKDV-10213</span><span>129,00 € · livrée</span></span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Support</span>
+<span style="font-size: 13px">Aucun ticket ouvert</span>
+</div>
+<div class="card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px">
+<span class="label">Appareils et sessions</span>
+<span style="font-size: 13px">2 sessions actives · iPhone, navigateur</span>
+<span class="muted" style="font-size: 12.5px">Dernière connexion il y a 1 h</span>
+</div>
+</aside>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

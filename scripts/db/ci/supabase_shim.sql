@@ -146,3 +146,34 @@ begin
     create publication supabase_realtime;
   end if;
 end $$;
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- Doublure Realtime (le projet Supabase fournit ce schéma ; l'émulateur non).
+-- Les migrations CRM posent seulement des policies et appellent realtime.send.
+-- ───────────────────────────────────────────────────────────────────────────
+create schema if not exists realtime;
+create table if not exists realtime.messages (
+  id bigserial primary key,
+  topic text,
+  extension text,
+  payload jsonb,
+  event text,
+  private boolean default true,
+  inserted_at timestamptz default now()
+);
+alter table realtime.messages enable row level security;
+create or replace function realtime.topic() returns text language sql stable
+as $$ select current_setting('realtime.topic', true) $$;
+create or replace function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+returns void language plpgsql
+as $$
+begin
+  insert into realtime.messages(topic, event, payload, private) values (topic, event, payload, private);
+exception when others then
+  null;
+end $$;
+
+-- Droits Realtime comme sur Supabase : la RLS (policy M12) filtre les lignes.
+grant usage on schema realtime to anon, authenticated, service_role;
+grant select, insert on realtime.messages to authenticated, service_role;
+grant select on realtime.messages to anon;
