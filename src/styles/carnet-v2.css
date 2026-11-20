@@ -1394,13 +1394,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 .lkdv-carnet-drawer,
 .lkdv-stack-sheet {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  top: calc(env(safe-area-inset-top, 0px) + 52px);
+  left: 12px;
+  right: 12px;
+  top: calc(max(env(safe-area-inset-top, 0px), 10px) + 49px);
   z-index: 20;
-  height: 56dvh;
-  max-height: calc(100% - env(safe-area-inset-top, 0px) - 52px);
-  border-radius: 28px;
+  height: calc(69dvh - max(env(safe-area-inset-top, 0px), 10px) - 55px);
+  max-height: calc(69dvh - max(env(safe-area-inset-top, 0px), 10px) - 55px);
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
