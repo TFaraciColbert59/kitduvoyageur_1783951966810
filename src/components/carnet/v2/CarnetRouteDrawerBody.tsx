@@ -127,6 +127,16 @@ export function CarnetRouteDrawerBody({
       );
     }
 
+    const totalPts = elevationData.length;
+    const lowCount = elevationData.filter((p) => p.alt < 1500).length;
+    const midCount = elevationData.filter((p) => p.alt >= 1500 && p.alt < 2200).length;
+    const highCount = elevationData.filter((p) => p.alt >= 2200).length;
+    const bands = [
+      { label: '< 1 500 m', pct: Math.round((lowCount / totalPts) * 100), color: '#52b788' },
+      { label: '1 500 – 2 200 m', pct: Math.round((midCount / totalPts) * 100), color: '#2d6a4f' },
+      { label: '> 2 200 m', pct: Math.round((highCount / totalPts) * 100), color: '#1b4332' },
+    ];
+
     return (
       <div className="lkdv-carnet-drawer-pane">
         {elevationStats ? (
@@ -159,12 +169,12 @@ export function CarnetRouteDrawerBody({
         <div className="lkdv-carnet-chart-card">
           <span className="lkdv-carnet-kit-eyebrow">Courbe d’altitude (m)</span>
           {canObserveResize ? (
-            <div style={{ width: '100%', height: 175 }}>
+            <div style={{ width: '100%', height: 155 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={elevationData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                   <defs>
                     <linearGradient id="carnetAltFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1b4332" stopOpacity={0.35} />
+                      <stop offset="5%" stopColor="#1b4332" stopOpacity={0.38} />
                       <stop offset="95%" stopColor="#1b4332" stopOpacity={0.03} />
                     </linearGradient>
                   </defs>
@@ -196,7 +206,7 @@ export function CarnetRouteDrawerBody({
                     type="monotone"
                     dataKey="alt"
                     stroke="#1b4332"
-                    strokeWidth={2}
+                    strokeWidth={2.2}
                     fill="url(#carnetAltFill)"
                     isAnimationActive
                   />
@@ -209,6 +219,24 @@ export function CarnetRouteDrawerBody({
               elevationM={detail.elevationM}
             />
           )}
+        </div>
+
+        <div className="lkdv-carnet-chart-card">
+          <span className="lkdv-carnet-kit-eyebrow">Répartition par tranche d’altitude</span>
+          <div className="lkdv-carnet-kit-bars">
+            {bands.map((b) => (
+              <div key={b.label} className="lkdv-carnet-kit-bar-row">
+                <span className="lkdv-carnet-kit-bar-label">{b.label}</span>
+                <div className="lkdv-carnet-kit-bar-track">
+                  <div
+                    className="lkdv-carnet-kit-bar-fill"
+                    style={{ width: `${Math.max(4, b.pct)}%`, background: b.color }}
+                  />
+                </div>
+                <span className="lkdv-carnet-kit-bar-val">{b.pct} %</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

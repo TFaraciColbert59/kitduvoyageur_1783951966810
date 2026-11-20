@@ -228,12 +228,10 @@ export function CarnetDrawerV2({
     const isVisitor = detail.viewerRole === 'visitor';
     return {
       fil: [
-        { id: 'moments', label: 'Moments', icon: <Clock size={15} /> },
-        { id: 'etapes', label: 'Étapes', icon: <Flag size={15} /> },
+        { id: 'moments', label: 'Global', icon: <Clock size={15} /> },
         { id: 'medias', label: 'Médias', icon: <ImageIcon size={15} /> },
-        { id: 'altitude', label: 'Altitude', icon: <Mountain size={15} /> },
-        { id: 'nuits', label: 'Nuits', icon: <Moon size={15} /> },
         { id: 'meteo', label: 'Météo', icon: <CloudSun size={15} /> },
+        { id: 'altitude', label: 'Altitude', icon: <Mountain size={15} /> },
         { id: 'rencontres', label: 'Rencontres', icon: <Quote size={15} /> },
       ],
       route: [
