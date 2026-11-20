@@ -1,5 +1,5 @@
 /**
- * A3 — Profil Terrain appris (moteur pur).
+ * A3 & Lot P5 — Profil Terrain appris & Filtre de Kalman en ligne (moteur pur).
  *
  * Construit un `PerformanceProfile` à partir d'observations GPS dérivées
  * (Phase 2) + déclaratif, sans aucune donnée de santé connectée :
@@ -7,10 +7,19 @@
  * séparées plat / montée / descente, courbe de fatigue, modèle de pauses,
  * réponse au portage et niveaux de calibration.
  *
- * Aucune I/O : uniquement des nombres et des chaînes. La persistance est
- * laissée à `server/buildUserProfile.ts`.
+ * Extension Lot P5 :
+ * - Filtre de Kalman séquentiel en ligne sur le vecteur d'état `theta = [flat, ascent, descent]`
+ *   et sa matrice de covariance 3×3 `covarianceP` (compatible avec la colonne `posterior jsonb` P3).
+ * - Sous-pondération explicite des sorties de groupe (variance d'observation majorée
+ *   car l'allure observée est contrainte par le collectif ; `nSoloSessions` n'est incrémenté
+ *   que sur les sorties solo).
+ * - Prior de pauses ATP 3-21.18 (`10 min/h` en V2).
  */
 import { clamp01, makeConfidence, type Confidence } from './confidence';
+import {
+  computeKalmanBasisWeights,
+  computeWoodCampbellPriorSpeedMs,
+} from './paceResolver';
 import type {
   CalibrationLevel,
   FatigueCurve,
@@ -32,6 +41,10 @@ export interface ProfileObservation {
   quality?: number | null;
   declaredFatigue?: number | null;
   perceivedDifficulty?: number | null;
+  /** Lot P5 : indique si l'observation provient d'une sortie de groupe (sous-pondérée par Kalman). */
+  isGroupSession?: boolean | null;
+  /** Taille du groupe si `isGroupSession === true`. */
+  groupSize?: number | null;
 }
 
 export interface BuildProfileOptions {
@@ -47,6 +60,7 @@ export interface BuildProfileOptions {
  */
 export type LearnedPerformanceProfile = Omit<PerformanceProfile, 'userId'> & {
   personalized: boolean;
+  posterior?: KalmanProfilePosterior;
 };
 
 /** Seuils normatifs des niveaux de calibration (spec Phase 3). */
@@ -61,6 +75,12 @@ export const PERFORMANCE_PROFILE_MODEL_VERSION = 'a3-v1';
 
 export const DEFAULT_HALF_LIFE_DAYS = 90;
 export const DEFAULT_MIN_QUALITY = 0.5;
+
+/** Prior de pauses ATP 3-21.18 (10 min/h au lieu de 5 min/h). */
+export const ATP_DEFAULT_PAUSE_MINUTES_PER_HOUR = 10;
+
+/** Facteur de majoration de la variance d'observation pour une sortie de groupe. */
+export const GROUP_OBSERVATION_VARIANCE_INFLATION = 4.5;
 
 /** Borne d'un nombre dans [min, max] ; non fini ⇒ min. */
 function clamp(value: number, min: number, max: number): number {
@@ -145,7 +165,10 @@ function medianOrFallback(entries: WeightedValue[], fallback: number): number {
   return median;
 }
 
-function toExploitable(observation: ProfileObservation, options: Required<BuildProfileOptions>): ExploitableObservation | null {
+function toExploitable(
+  observation: ProfileObservation,
+  options: Required<BuildProfileOptions>
+): ExploitableObservation | null {
   if (!Number.isFinite(observation.distanceM) || observation.distanceM <= 0) return null;
   if (!Number.isFinite(observation.durationS) || observation.durationS <= 0) return null;
 
@@ -169,7 +192,12 @@ function toExploitable(observation: ProfileObservation, options: Required<BuildP
     Number.isFinite(options.halfLifeDays) && options.halfLifeDays > 0
       ? Math.pow(0.5, ageDays / options.halfLifeDays)
       : 1;
-  const weight = recency * quality;
+
+  // Sous-pondération des sorties de groupe dans le poids statistique
+  const groupPenalty =
+    observation.isGroupSession === true ? 1 / GROUP_OBSERVATION_VARIANCE_INFLATION : 1.0;
+
+  const weight = recency * quality * groupPenalty;
   if (!(weight > 0)) return null;
 
   const gainM = Number.isFinite(observation.gainM ?? Number.NaN)
@@ -182,7 +210,7 @@ function toExploitable(observation: ProfileObservation, options: Required<BuildP
   const gradePct = Number.isFinite(observation.meanGradePct ?? Number.NaN)
     ? (observation.meanGradePct as number)
     : gainM !== null || lossM !== null
-      ? ((gainM ?? 0) - (lossM ?? 0)) / observation.distanceM * 100
+      ? (((gainM ?? 0) - (lossM ?? 0)) / observation.distanceM) * 100
       : 0;
 
   const terrain: TerrainClass =
@@ -208,8 +236,12 @@ function buildGradeResponse(
   for (const terrain of ['ascent', 'descent'] as const) {
     const bucket = exploitable.filter((entry) => entry.terrain === terrain);
     if (bucket.length === 0) continue;
-    const grade = weightedMedian(bucket.map((entry) => ({ value: entry.gradePct, weight: entry.weight })));
-    const speed = weightedMedian(bucket.map((entry) => ({ value: entry.speedKmH, weight: entry.weight })));
+    const grade = weightedMedian(
+      bucket.map((entry) => ({ value: entry.gradePct, weight: entry.weight }))
+    );
+    const speed = weightedMedian(
+      bucket.map((entry) => ({ value: entry.speedKmH, weight: entry.weight }))
+    );
     if (grade === null || speed === null) continue;
     points.push({ x: Number(grade.toFixed(2)), value: Number((speed / reference).toFixed(4)) });
   }
@@ -261,7 +293,9 @@ function buildSurfaceResponse(
 
 /** Décroissance exponentielle horaire estimée sur les vitesses observées. */
 function buildFatigueCurve(exploitable: ExploitableObservation[]): FatigueCurve {
-  const usable = exploitable.filter((entry) => entry.observation.durationS > 0 && entry.speedKmH > 0);
+  const usable = exploitable.filter(
+    (entry) => entry.observation.durationS > 0 && entry.speedKmH > 0
+  );
   if (usable.length < 5) {
     return { points: [{ x: 0, value: 1 }], decayPerHour: 0 };
   }
@@ -361,17 +395,22 @@ function confidenceFor(exploitable: ExploitableObservation[], sampleCount: numbe
   const flatSpeeds = exploitable
     .filter((entry) => entry.terrain === 'flat')
     .map((entry) => ({ value: entry.speedKmH, weight: entry.weight }));
-  const samples = flatSpeeds.length >= 2 ? flatSpeeds : exploitable.map((entry) => ({
-    value: entry.speedKmH,
-    weight: entry.weight,
-  }));
+  const samples =
+    flatSpeeds.length >= 2
+      ? flatSpeeds
+      : exploitable.map((entry) => ({
+          value: entry.speedKmH,
+          weight: entry.weight,
+        }));
 
   const medianSpeed = weightedMedian(samples);
   const totalWeight = samples.reduce((sum, entry) => sum + entry.weight, 0);
   const meanAbsoluteDeviation =
     medianSpeed !== null && totalWeight > 0
-      ? samples.reduce((sum, entry) => sum + entry.weight * Math.abs(entry.value - medianSpeed), 0) /
-        totalWeight
+      ? samples.reduce(
+          (sum, entry) => sum + entry.weight * Math.abs(entry.value - medianSpeed),
+          0
+        ) / totalWeight
       : 0;
   const relativeDispersion =
     medianSpeed !== null && medianSpeed > 0 ? meanAbsoluteDeviation / medianSpeed : 0;
@@ -380,6 +419,199 @@ function confidenceFor(exploitable: ExploitableObservation[], sampleCount: numbe
   const score = Math.min(0.95, sampleScore * (1 - 0.7 * clamp01(relativeDispersion)));
 
   return makeConfidence({ score, sampleCount, method: 'weighted_median_a3' });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOT P5 — FILTRE DE KALMAN SÉQUENTIEL EN LIGNE (SOUS-PONDÉRATION GROUPE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Matrix3x3 = [
+  [number, number, number],
+  [number, number, number],
+  [number, number, number],
+];
+
+/**
+ * État postérieur bayésien du profil de marche (compatible avec `posterior jsonb` P3).
+ * `theta = [theta_flat, theta_ascent, theta_descent]` représente le résidu log-vitesse
+ * par rapport au prior Wood (2023) / Campbell (2019).
+ */
+export interface KalmanProfilePosterior {
+  theta: [number, number, number];
+  covarianceP: Matrix3x3;
+  nSoloSessions: number;
+  /** Alias snake_case pour interopérabilité directe avec la colonne `posterior jsonb` Supabase. */
+  n_solo_sessions: number;
+  nTotalObservations: number;
+  updatedAt: string;
+}
+
+/** Crée le prior initial de Kalman $\theta_0 = [0, 0, 0]$, $P_0 = \sigma_0^2 I_3$. */
+export function createInitialKalmanPosterior(
+  priorVariance = 0.04,
+  nowIso = '2026-11-20T12:00:00.000Z'
+): KalmanProfilePosterior {
+  const v = clamp(priorVariance, 1e-4, 1.0);
+  return {
+    theta: [0, 0, 0],
+    covarianceP: [
+      [v, 0, 0],
+      [0, v, 0],
+      [0, 0, v],
+    ],
+    nSoloSessions: 0,
+    n_solo_sessions: 0,
+    nTotalObservations: 0,
+    updatedAt: nowIso,
+  };
+}
+
+/**
+ * Mise à jour séquentielle d'un pas du filtre de Kalman en ligne :
+ * - Dérive temporelle $P^- = P + Q \cdot \Delta t_{\text{days}}$
+ * - Vecteur d'observation $H = [w_{\text{flat}}, w_{\text{up}}, w_{\text{down}}]$
+ * - Variance de mesure $R$ majorée d'un facteur `GROUP_OBSERVATION_VARIANCE_INFLATION`
+ *   lorsque `observation.isGroupSession === true` (l'allure de groupe contraint l'individu).
+ * - `nSoloSessions` n'est incrémenté que pour les observations solo.
+ */
+export function updateKalmanProfileOnline(
+  posterior: KalmanProfilePosterior | null | undefined,
+  observation: ProfileObservation
+): KalmanProfilePosterior {
+  const current =
+    posterior ?? createInitialKalmanPosterior(0.04, observation.observedAt);
+
+  if (
+    !Number.isFinite(observation.distanceM) ||
+    observation.distanceM <= 0 ||
+    !Number.isFinite(observation.durationS) ||
+    observation.durationS <= 0
+  ) {
+    return current;
+  }
+
+  const movingS =
+    observation.movingS != null &&
+    Number.isFinite(observation.movingS) &&
+    observation.movingS > 0
+      ? observation.movingS
+      : observation.durationS;
+
+  const observedSpeedMs = clamp(observation.distanceM / movingS, 0.20, 2.50);
+  const gainM = Math.max(0, observation.gainM ?? 0);
+  const lossM = Math.max(0, observation.lossM ?? 0);
+  const gradePct =
+    observation.meanGradePct != null && Number.isFinite(observation.meanGradePct)
+      ? observation.meanGradePct
+      : ((gainM - lossM) / observation.distanceM) * 100;
+
+  const priorSpeedMs = computeWoodCampbellPriorSpeedMs(
+    gradePct,
+    observation.surface ?? 'trail'
+  );
+  const logObservation = clamp(Math.log(observedSpeedMs / priorSpeedMs), -0.8, 0.8);
+
+  const h = computeKalmanBasisWeights(gradePct);
+
+  // Dérive temporelle Q (process noise) entre l'état précédent et la nouvelle observation
+  const prevMs = Date.parse(current.updatedAt);
+  const obsMs = Date.parse(observation.observedAt);
+  const elapsedDays =
+    Number.isFinite(prevMs) && Number.isFinite(obsMs)
+      ? clamp((obsMs - prevMs) / 86_400_000, 0, 365)
+      : 0;
+  const processNoiseQ = 0.00012 * elapsedDays;
+
+  const pMinus: Matrix3x3 = [
+    [current.covarianceP[0][0] + processNoiseQ, current.covarianceP[0][1], current.covarianceP[0][2]],
+    [current.covarianceP[1][0], current.covarianceP[1][1] + processNoiseQ, current.covarianceP[1][2]],
+    [current.covarianceP[2][0], current.covarianceP[2][1], current.covarianceP[2][2] + processNoiseQ],
+  ];
+
+  // Variance de mesure R : fortement majorée en sortie de groupe (sous-pondération)
+  const quality = clamp(observation.quality ?? 0.75, 0.15, 1.0);
+  const baseR = 0.012 / quality;
+  const isGroup = observation.isGroupSession === true;
+  const groupSizeFactor = isGroup
+    ? GROUP_OBSERVATION_VARIANCE_INFLATION * Math.max(1, (observation.groupSize ?? 4) / 2)
+    : 1.0;
+  const measurementR = baseR * groupSizeFactor;
+
+  // PH^T (vecteur 3x1)
+  const pht: [number, number, number] = [
+    pMinus[0][0] * h[0] + pMinus[0][1] * h[1] + pMinus[0][2] * h[2],
+    pMinus[1][0] * h[0] + pMinus[1][1] * h[1] + pMinus[1][2] * h[2],
+    pMinus[2][0] * h[0] + pMinus[2][1] * h[1] + pMinus[2][2] * h[2],
+  ];
+
+  // Innovation covariance S = H P^- H^T + R
+  const innovationS = Math.max(
+    1e-8,
+    h[0] * pht[0] + h[1] * pht[1] + h[2] * pht[2] + measurementR
+  );
+
+  // Gain de Kalman K = P^- H^T / S
+  const k: [number, number, number] = [
+    pht[0] / innovationS,
+    pht[1] / innovationS,
+    pht[2] / innovationS,
+  ];
+
+  // Innovation y = z - H * theta
+  const predictedLogRes =
+    h[0] * current.theta[0] + h[1] * current.theta[1] + h[2] * current.theta[2];
+  const innovationY = logObservation - predictedLogRes;
+
+  const nextTheta: [number, number, number] = [
+    clamp(current.theta[0] + k[0] * innovationY, -0.65, 0.55),
+    clamp(current.theta[1] + k[1] * innovationY, -0.65, 0.55),
+    clamp(current.theta[2] + k[2] * innovationY, -0.65, 0.55),
+  ];
+
+  // Mise à jour de la covariance P^+ = (I - K H) P^-
+  const nextP: Matrix3x3 = [
+    [0, 0, 0],
+    [0, 0, 0],
+    [0, 0, 0],
+  ];
+  for (let r = 0; r < 3; r += 1) {
+    for (let c = 0; c < 3; c += 1) {
+      let sum = 0;
+      for (let m = 0; m < 3; m += 1) {
+        const ikh = (r === m ? 1 : 0) - k[r] * h[m];
+        sum += ikh * pMinus[m][c];
+      }
+      nextP[r][c] = r === c ? Math.max(1e-6, sum) : sum;
+    }
+  }
+
+  const nextSolo = current.nSoloSessions + (isGroup ? 0 : 1);
+
+  return {
+    theta: nextTheta,
+    covarianceP: nextP,
+    nSoloSessions: nextSolo,
+    n_solo_sessions: nextSolo,
+    nTotalObservations: current.nTotalObservations + 1,
+    updatedAt: observation.observedAt || current.updatedAt,
+  };
+}
+
+/** Assimile séquentiellement un lot d'observations triées chronologiquement dans le filtre de Kalman. */
+export function buildKalmanPosteriorFromObservations(
+  observations: ProfileObservation[],
+  initialPosterior?: KalmanProfilePosterior | null
+): KalmanProfilePosterior {
+  const sorted = [...observations].sort(
+    (a, b) => (Date.parse(a.observedAt) || 0) - (Date.parse(b.observedAt) || 0)
+  );
+  let state =
+    initialPosterior ??
+    createInitialKalmanPosterior(0.04, sorted[0]?.observedAt ?? '2026-11-20T12:00:00.000Z');
+  for (const obs of sorted) {
+    state = updateKalmanProfileOnline(state, obs);
+  }
+  return state;
 }
 
 /**
@@ -423,10 +655,17 @@ export function buildPerformanceProfile(
   const sampleCount = exploitable.length;
   const distinctTerrains = new Set(exploitable.map((entry) => entry.terrain));
   const distinctSurfaces = new Set(
-    exploitable.map((entry) => entry.observation.surface).filter((surface): surface is string => Boolean(surface))
+    exploitable
+      .map((entry) => entry.observation.surface)
+      .filter((surface): surface is string => Boolean(surface))
   );
   const diversified = distinctTerrains.size >= 2 || distinctSurfaces.size >= 2;
   const calibrationLevel = calibrationLevelFor(sampleCount, diversified);
+
+  const posterior = buildKalmanPosteriorFromObservations(
+    exploitable.map((e) => e.observation),
+    createInitialKalmanPosterior(0.04, resolvedOptions.now)
+  );
 
   return {
     activityType: 'hiking',
@@ -444,5 +683,6 @@ export function buildPerformanceProfile(
     modelVersion: PERFORMANCE_PROFILE_MODEL_VERSION,
     computedAt: resolvedOptions.now,
     personalized: calibrationLevel !== 'cold',
+    posterior,
   };
 }

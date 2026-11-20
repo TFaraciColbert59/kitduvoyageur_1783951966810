@@ -1,15 +1,21 @@
 /**
- * A9 — Backtesting des prédictions (moteur pur).
+ * A9 & Lot P6 — Backtesting des prédictions, étanchéité temporelle & ablations (moteur pur).
  *
- * Confronte les prédictions P50/P90 aux durées réellement observées :
- * erreur en pourcentage (`(réel − P50) / P50 × 100`, positive = sous-estimation),
- * MAE médiane/moyenne, P90 des erreurs absolues (rang le plus proche),
- * couverture P90 (part des sorties réelles ≤ P90 prédit, cible ≥ 0.85),
- * MAE de difficulté (paires complètes uniquement) et dérive signée par
- * bucket de terrain (moyenne, buckets `null` exclus).
+ * A9 (rétrocompatible) :
+ * - Confronte les prédictions P50/P90 aux durées réellement observées :
+ *   MAE médiane/moyenne, P90 des erreurs absolues, couverture P90 (cible >= 0.85),
+ *   MAE de difficulté et dérive signée par bucket de terrain.
  *
- * Aucune I/O, aucune écriture : uniquement des fonctions pures.
+ * Extension Lot P6 :
+ * - Étanchéité temporelle stricte (`assertNoSplitLeakage`) : vérifie qu'aucun
+ *   utilisateur, itinéraire, groupe ni saison ne fuit entre calibration et évaluation.
+ * - Évaluation séparée du pipeline **Prévision (`forecast`)** (météo prévue avant départ)
+ *   et **Rétrospectif (`retrospective`)** (météo observée).
+ * - Ablations automatisées (`runEffortAblations`) : `full` vs `no_weather`, `no_pack`,
+ *   `no_fatigue`, `no_cardio` (MAE, RMSE, biais moyen, couverture P90).
  */
+import type { DataLevel, EffortScoreInput } from '../schemas/effort.schema';
+import { computeEffortScore } from './effortScore';
 
 export type TerrainBucket = 'flat' | 'ascent' | 'descent' | 'technical';
 
@@ -171,4 +177,292 @@ export function residualAnomalies(
   });
 
   return anomalies;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOT P6 — ÉTANCHÉITÉ TEMPORELLE (FORECAST vs RETROSPECTIVE) & ABLATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EvaluationPipelineKind = 'forecast' | 'retrospective';
+
+export interface SplitEntityIdentity {
+  userId: string;
+  routeId: string;
+  groupId?: string | null;
+  season: string;
+  occurredAt: string;
+}
+
+export interface SplitLeakageReport {
+  isLeakFree: boolean;
+  overlappingUsers: string[];
+  overlappingRoutes: string[];
+  overlappingGroups: string[];
+  overlappingSeasons: string[];
+  temporalOrderViolations: number;
+}
+
+/**
+ * Contrôle strict d'étanchéité de split (Lot P6) :
+ * Vérifie qu'aucun utilisateur, itinéraire, groupe ni saison ne chevauche
+ * entre l'ensemble d'entraînement/calibration et l'ensemble d'évaluation,
+ * et que l'évaluation est strictement postérieure ou temporellement étanche.
+ */
+export function assertNoSplitLeakage(
+  calibrationSplit: ReadonlyArray<SplitEntityIdentity>,
+  evaluationSplit: ReadonlyArray<SplitEntityIdentity>,
+  options: { throwOnLeak?: boolean; requireStrictChronology?: boolean } = {}
+): SplitLeakageReport {
+  const calUsers = new Set(calibrationSplit.map((e) => e.userId));
+  const calRoutes = new Set(calibrationSplit.map((e) => e.routeId));
+  const calGroups = new Set(
+    calibrationSplit.map((e) => e.groupId).filter((g): g is string => Boolean(g))
+  );
+  const calSeasons = new Set(calibrationSplit.map((e) => e.season));
+
+  let maxCalMs = Number.NEGATIVE_INFINITY;
+  for (const e of calibrationSplit) {
+    const ms = Date.parse(e.occurredAt);
+    if (Number.isFinite(ms) && ms > maxCalMs) maxCalMs = ms;
+  }
+
+  const overlappingUsers = new Set<string>();
+  const overlappingRoutes = new Set<string>();
+  const overlappingGroups = new Set<string>();
+  const overlappingSeasons = new Set<string>();
+  let temporalOrderViolations = 0;
+
+  for (const e of evaluationSplit) {
+    if (calUsers.has(e.userId)) overlappingUsers.add(e.userId);
+    if (calRoutes.has(e.routeId)) overlappingRoutes.add(e.routeId);
+    if (e.groupId && calGroups.has(e.groupId)) overlappingGroups.add(e.groupId);
+    if (calSeasons.has(e.season)) overlappingSeasons.add(e.season);
+    if (options.requireStrictChronology) {
+      const evalMs = Date.parse(e.occurredAt);
+      if (Number.isFinite(evalMs) && Number.isFinite(maxCalMs) && evalMs <= maxCalMs) {
+        temporalOrderViolations += 1;
+      }
+    }
+  }
+
+  const report: SplitLeakageReport = {
+    isLeakFree:
+      overlappingUsers.size === 0 &&
+      overlappingRoutes.size === 0 &&
+      overlappingGroups.size === 0 &&
+      overlappingSeasons.size === 0 &&
+      temporalOrderViolations === 0,
+    overlappingUsers: [...overlappingUsers],
+    overlappingRoutes: [...overlappingRoutes],
+    overlappingGroups: [...overlappingGroups],
+    overlappingSeasons: [...overlappingSeasons],
+    temporalOrderViolations,
+  };
+
+  if (options.throwOnLeak && !report.isLeakFree) {
+    throw new Error(
+      `Fuite de split détectée : users=${report.overlappingUsers.length}, routes=${report.overlappingRoutes.length}, groups=${report.overlappingGroups.length}, seasons=${report.overlappingSeasons.length}, chrono=${report.temporalOrderViolations}`
+    );
+  }
+
+  return report;
+}
+
+export interface EffortBacktestRecord extends SplitEntityIdentity {
+  pipeline: EvaluationPipelineKind;
+  dataLevel: DataLevel;
+  /** Entrée complète pour le moteur d'effort `effort-score-v1`. */
+  input: EffortScoreInput;
+  /** Score d'effort réel / référence observé (0..100). */
+  observedScore: number;
+}
+
+export interface EffortScoreErrorMetrics {
+  sampleCount: number;
+  mae: number;
+  rmse: number;
+  meanBias: number;
+  p90Coverage: number;
+}
+
+export interface TemporalEffortBacktestResult {
+  forecast: EffortScoreErrorMetrics;
+  retrospective: EffortScoreErrorMetrics;
+}
+
+function summarizeEffortErrors(
+  pairs: ReadonlyArray<{ predicted: number; p90: number; observed: number }>
+): EffortScoreErrorMetrics {
+  if (pairs.length === 0) {
+    return { sampleCount: 0, mae: 0, rmse: 0, meanBias: 0, p90Coverage: 0 };
+  }
+  let absSum = 0;
+  let sqSum = 0;
+  let biasSum = 0;
+  let covered = 0;
+
+  for (const p of pairs) {
+    const err = p.predicted - p.observed;
+    absSum += Math.abs(err);
+    sqSum += err * err;
+    biasSum += err;
+    if (p.observed <= p.p90) covered += 1;
+  }
+
+  const n = pairs.length;
+  return {
+    sampleCount: n,
+    mae: round(absSum / n, 3),
+    rmse: round(Math.sqrt(sqSum / n), 3),
+    meanBias: round(biasSum / n, 3),
+    p90Coverage: round(covered / n, 4),
+  };
+}
+
+/**
+ * Évalue séparément les pipelines Prévision (`forecast`, météo prévue avant départ)
+ * et Rétrospectif (`retrospective`, météo observée) sur `effort-score-v1`.
+ */
+export function evaluateTemporalEffortBacktest(
+  records: ReadonlyArray<EffortBacktestRecord>
+): TemporalEffortBacktestResult {
+  const forecastPairs: { predicted: number; p90: number; observed: number }[] = [];
+  const retroPairs: { predicted: number; p90: number; observed: number }[] = [];
+
+  for (const rec of records) {
+    const out = computeEffortScore(rec.input);
+    const pair = {
+      predicted: out.erp,
+      p90: out.interval.p90,
+      observed: rec.observedScore,
+    };
+    if (rec.pipeline === 'forecast') {
+      forecastPairs.push(pair);
+    } else {
+      retroPairs.push(pair);
+    }
+  }
+
+  return {
+    forecast: summarizeEffortErrors(forecastPairs),
+    retrospective: summarizeEffortErrors(retroPairs),
+  };
+}
+
+export type EffortAblationVariant =
+  | 'full'
+  | 'no_weather'
+  | 'no_pack'
+  | 'no_fatigue'
+  | 'no_cardio';
+
+export interface EffortAblationReport {
+  variants: Record<EffortAblationVariant, EffortScoreErrorMetrics>;
+  deltaMaeVsFull: Record<Exclude<EffortAblationVariant, 'full'>, number>;
+}
+
+function buildAblatedInput(
+  input: EffortScoreInput,
+  variant: EffortAblationVariant
+): EffortScoreInput {
+  if (variant === 'full') return input;
+
+  if (variant === 'no_weather') {
+    return {
+      ...input,
+      weather: {
+        tempC: 15,
+        windMs: 0,
+        humidityPct: 50,
+        precipMmPerH: 0,
+      },
+      ground: {
+        ...input.ground,
+        snowSinkCm: 0,
+        wetness: 0,
+      },
+      segments: input.segments.map((s) => ({ ...s, snowSinkCm: 0 })),
+    };
+  }
+
+  if (variant === 'no_pack') {
+    return {
+      ...input,
+      pack: {
+        ...input.pack,
+        packWeightKg: 0,
+        footwearWeightKg: 0,
+      },
+    };
+  }
+
+  if (variant === 'no_fatigue') {
+    return {
+      ...input,
+      observations: input.observations
+        ? {
+            ...input.observations,
+            declaredFatigue: 0,
+            recentLoadS: 0,
+          }
+        : undefined,
+    };
+  }
+
+  // 'no_cardio' : masque la fréquence cardiaque observée et repasse en `socle`
+  return {
+    ...input,
+    dataLevel: 'socle',
+    observations: input.observations
+      ? {
+          ...input.observations,
+          avgHeartRateBpm: undefined,
+          maxHeartRateBpm: undefined,
+          hrCoverageRatio: undefined,
+        }
+      : undefined,
+  };
+}
+
+/**
+ * Exécute les ablations automatisées sur `effort-score-v1` :
+ * `full` vs `no_weather`, `no_pack`, `no_fatigue`, `no_cardio`
+ * (MAE, RMSE, biais moyen, couverture P90).
+ */
+export function runEffortAblations(
+  records: ReadonlyArray<{ input: EffortScoreInput; observedScore: number }>
+): EffortAblationReport {
+  const variantNames: EffortAblationVariant[] = [
+    'full',
+    'no_weather',
+    'no_pack',
+    'no_fatigue',
+    'no_cardio',
+  ];
+
+  const variants = {} as Record<EffortAblationVariant, EffortScoreErrorMetrics>;
+
+  for (const variant of variantNames) {
+    const pairs = records.map((rec) => {
+      const ablated = buildAblatedInput(rec.input, variant);
+      const out = computeEffortScore(ablated);
+      return {
+        predicted: out.erp,
+        p90: out.interval.p90,
+        observed: rec.observedScore,
+      };
+    });
+    variants[variant] = summarizeEffortErrors(pairs);
+  }
+
+  const fullMae = variants.full.mae;
+  return {
+    variants,
+    deltaMaeVsFull: {
+      no_weather: round(variants.no_weather.mae - fullMae, 3),
+      no_pack: round(variants.no_pack.mae - fullMae, 3),
+      no_fatigue: round(variants.no_fatigue.mae - fullMae, 3),
+      no_cardio: round(variants.no_cardio.mae - fullMae, 3),
+    },
+  };
 }

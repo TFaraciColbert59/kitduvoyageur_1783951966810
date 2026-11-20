@@ -1,5 +1,5 @@
 /**
- * A6 — Registre de moteurs (ADR-AI-005).
+ * A6 & P1 — Registre de moteurs (ADR-AI-005).
  *
  * Orchestre des `AdventureEngine` purs dans l'ordre topologique de leurs
  * dépendances. Règles :
@@ -13,14 +13,23 @@
  * - confiance du plan = `combineConfidence` des moteurs ayant produit ;
  * - `durationMs` mesuré ; zéro I/O dans le domaine.
  */
+import type { EffortScoreInput } from '../schemas/effort.schema';
 import { combineConfidence, COLD_CONFIDENCE, type Confidence } from './confidence';
-import type {
-  AdventureEngine,
-  AdventureExecutionContext,
-  EngineResult,
-  EngineWarning,
+import {
+  EFFORT_SCORE_VERSION,
+  computeEffortScore,
+  type EffortScoreComputedOutput,
+} from './effortScore';
+import {
+  makeEngineResult,
+  type AdventureEngine,
+  type AdventureExecutionContext,
+  type EngineResult,
+  type EngineWarning,
 } from './engine';
 import { isCriticalEngine } from './orchestratorGraph';
+
+export const EFFORT_SCORE_ENGINE_ID = EFFORT_SCORE_VERSION;
 
 export interface EngineRunRecord {
   engineId: string;
@@ -74,14 +83,65 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * Moteur pur `effort-score-v1` (Lot P1) conforme au contrat `AdventureEngine`.
+ */
+export const effortScoreEngine: AdventureEngine<EffortScoreInput, EffortScoreComputedOutput> = {
+  id: EFFORT_SCORE_ENGINE_ID,
+  version: EFFORT_SCORE_VERSION,
+  dependencies: ['profile', 'terrain', 'weather'],
+  canRun(context: AdventureExecutionContext): boolean {
+    if (context.featureFlags && context.featureFlags.effort_score_v1_disabled === true) {
+      return false;
+    }
+    return true;
+  },
+  async run(
+    input: EffortScoreInput,
+    context: AdventureExecutionContext
+  ): Promise<EngineResult<EffortScoreComputedOutput>> {
+    if (!input || !Array.isArray(input.segments) || input.segments.length === 0) {
+      throw new EngineSkipSignal({
+        code: 'effort_score_no_segments',
+        message: 'Aucun segment disponible pour calculer effort-score-v1.',
+        severity: 'warning',
+      });
+    }
+    const output = computeEffortScore(input);
+    return makeEngineResult({
+      value: output,
+      confidence: output.confidence,
+      warnings: output.warnings.map((w) => ({
+        code: String(w.code),
+        message: w.message,
+        severity: w.severity,
+      })),
+      computedAt: context.nowIso,
+    });
+  },
+};
+
 export class EngineRegistry {
   private readonly engines: SkippableEngine[] = [];
+
+  /** Crée un registre pré-équipé du moteur pur `effort-score-v1`. */
+  static withEffortScoreV1(): EngineRegistry {
+    return new EngineRegistry().registerEffortScoreV1();
+  }
 
   register(engine: AdventureEngine<unknown, unknown>): void {
     if (this.has(engine.id)) {
       throw new Error(`Moteur déjà enregistré : ${engine.id}`);
     }
     this.engines.push(engine as SkippableEngine);
+  }
+
+  /** Enregistre de manière idempotente le moteur bioénergétique `effort-score-v1`. */
+  registerEffortScoreV1(): this {
+    if (!this.has(EFFORT_SCORE_ENGINE_ID)) {
+      this.register(effortScoreEngine as AdventureEngine<unknown, unknown>);
+    }
+    return this;
   }
 
   has(id: string): boolean {
@@ -218,4 +278,9 @@ export class EngineRegistry {
 
     return { outputs, runs, planConfidence };
   }
+}
+
+/** Enregistre de manière idempotente `effort-score-v1` dans un `EngineRegistry` existant. */
+export function registerEffortScoreEngine(registry: EngineRegistry): EngineRegistry {
+  return registry.registerEffortScoreV1();
 }

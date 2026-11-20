@@ -1,10 +1,18 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { RotateCcw } from 'lucide-react';
 import { ActionPill } from '@/components/ui/ActionPill';
 import type { BootstrapOverlayData } from './DetailDrawers';
+import {
+  EffortExpertDrawer,
+  EffortFatigueDrawer,
+  EffortGroupDrawer,
+  EffortPrivacyDrawer,
+  type EffortSubDrawerKind,
+  EffortWhyDrawer,
+} from './EffortSubDrawers';
 
 const PostDrawer = dynamic(() => import('./PostDrawer').then((mod) => mod.PostDrawer), { ssr: false });
 const SavedPostsDrawer = dynamic(() => import('./DetailDrawers').then((mod) => mod.SavedPostsDrawer), { ssr: false });
@@ -15,7 +23,7 @@ const SealDrawer = dynamic(() => import('./DetailDrawers').then((mod) => mod.Sea
 const TrustDetailSheet = dynamic(() => import('./DetailDrawers').then((mod) => mod.TrustDetailSheet), { ssr: false });
 const CreateDrawer = dynamic(() => import('../create/CreateDrawer').then((mod) => mod.CreateDrawer), { ssr: false });
 
-type CompteOverlay =
+export type CompteOverlay =
   | { kind: 'post'; postId: string; pane?: 'post' | 'comments' | 'share'; commentId?: string | null }
   | { kind: 'saved' }
   | { kind: 'badge'; badgeId: string }
@@ -23,11 +31,16 @@ type CompteOverlay =
   | { kind: 'seal' }
   | { kind: 'trust' }
   | { kind: 'profile'; userId: string }
-  | { kind: 'create'; type?: string };
+  | { kind: 'create'; type?: string }
+  | { kind: 'effort-why' }
+  | { kind: 'effort-group' }
+  | { kind: 'effort-fatigue' }
+  | { kind: 'effort-privacy' }
+  | { kind: 'effort-expert' };
 
 type Entry = { key: string; overlay: CompteOverlay };
 
-function keyOf(overlay: CompteOverlay) {
+export function keyOf(overlay: CompteOverlay): string {
   if (overlay.kind === 'post') return `post:${overlay.postId}:${overlay.pane || 'post'}`;
   if (overlay.kind === 'badge') return `badge:${overlay.badgeId}`;
   if (overlay.kind === 'gear') return `gear:${overlay.gearId}`;
@@ -35,6 +48,18 @@ function keyOf(overlay: CompteOverlay) {
   if (overlay.kind === 'create') return `create:${overlay.type || 'menu'}`;
   return overlay.kind;
 }
+
+const BOOTSTRAP_OVERLAY_KINDS = new Set<CompteOverlay['kind']>([
+  'badge',
+  'gear',
+  'seal',
+  'trust',
+  'effort-why',
+  'effort-group',
+  'effort-fatigue',
+  'effort-privacy',
+  'effort-expert',
+]);
 
 const OVERLAY_DATA_KEYS = [
   'profile',
@@ -47,6 +72,12 @@ const OVERLAY_DATA_KEYS = [
   'tribu',
   'species',
   'trust',
+  'lastOutingEffort',
+  'nextPlannedOutingEffort',
+  'effortGroupSummary',
+  'effortFatigueSummary',
+  'effortPrivacySummary',
+  'effortExpertSummary',
 ] as const;
 
 function hasMeaningfulValue(value: unknown): boolean {
@@ -74,6 +105,9 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const [bootstrap, setBootstrap] = useState<BootstrapOverlayData | null>(null);
   const [bootstrapError, setBootstrapError] = useState(false);
 
+  const stackLengthRef = useRef(0);
+  stackLengthRef.current = stack.length;
+
   const invalidate = useCallback(() => {
     setBootstrap(null);
     setBootstrapError(false);
@@ -86,15 +120,39 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
   const push = useCallback((overlay: CompteOverlay) => {
     setStack((current) => {
       const key = keyOf(overlay);
-      const base = current.filter((entry) => !entry.key.startsWith(`${key}:`));
-      return [...base, { key, overlay }];
+      const base = current.filter((entry) => entry.key !== key && !entry.key.startsWith(`${key}:`));
+      const next = [...base, { key, overlay }];
+      stackLengthRef.current = next.length;
+      return next;
     });
   }, []);
-  const pop = useCallback(() => setStack((current) => current.slice(0, -1)), []);
+
+  const pop = useCallback(() => {
+    setStack((current) => {
+      const next = current.slice(0, -1);
+      stackLengthRef.current = next.length;
+      return next;
+    });
+  }, []);
+
+  const handleHardwareBackButton = useCallback(
+    (info?: { canGoBack?: boolean }): boolean => {
+      if (stackLengthRef.current > 0) {
+        pop();
+        return true;
+      }
+      if (info && info.canGoBack !== false && typeof window !== 'undefined') {
+        window.history.back();
+      }
+      return false;
+    },
+    [pop]
+  );
 
   useEffect(() => {
     const api = {
-      openPost: (postId: string, options?: { pane?: 'post' | 'comments' | 'share'; commentId?: string | null }) => push({ kind: 'post', postId, pane: options?.pane ?? 'post', commentId: options?.commentId ?? null }),
+      openPost: (postId: string, options?: { pane?: 'post' | 'comments' | 'share'; commentId?: string | null }) =>
+        push({ kind: 'post', postId, pane: options?.pane ?? 'post', commentId: options?.commentId ?? null }),
       openSaved: () => push({ kind: 'saved' }),
       openBadge: (badgeId: string) => push({ kind: 'badge', badgeId }),
       openGear: (gearId: string) => push({ kind: 'gear', gearId }),
@@ -102,8 +160,18 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
       openTrust: () => push({ kind: 'trust' }),
       openProfile: (userId: string) => push({ kind: 'profile', userId }),
       openCreate: (type?: string) => push({ kind: 'create', type }),
+      openEffortWhy: () => push({ kind: 'effort-why' }),
+      openEffortGroup: () => push({ kind: 'effort-group' }),
+      openEffortFatigue: () => push({ kind: 'effort-fatigue' }),
+      openEffortPrivacy: () => push({ kind: 'effort-privacy' }),
+      openEffortExpert: () => push({ kind: 'effort-expert' }),
+      openEffortSubDrawer: (kind: EffortSubDrawerKind) => push({ kind }),
+      handleBackButton: handleHardwareBackButton,
       close: pop,
-      closeAll: () => setStack([]),
+      closeAll: () => {
+        stackLengthRef.current = 0;
+        setStack([]);
+      },
     };
     (window as any).__lkdvCompteOverlay = api;
     (window as any).__lkdvOpenPost = api.openPost;
@@ -113,6 +181,13 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
     (window as any).__lkdvOpenSeal = api.openSeal;
     (window as any).__lkdvOpenTrust = api.openTrust;
     (window as any).__lkdvOpenCreate = api.openCreate;
+    (window as any).__lkdvOpenEffortWhy = api.openEffortWhy;
+    (window as any).__lkdvOpenEffortGroup = api.openEffortGroup;
+    (window as any).__lkdvOpenEffortFatigue = api.openEffortFatigue;
+    (window as any).__lkdvOpenEffortPrivacy = api.openEffortPrivacy;
+    (window as any).__lkdvOpenEffortExpert = api.openEffortExpert;
+    (window as any).__lkdvOpenEffortSubDrawer = api.openEffortSubDrawer;
+
     return () => {
       if ((window as any).__lkdvCompteOverlay === api) {
         delete (window as any).__lkdvCompteOverlay;
@@ -123,12 +198,69 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
         delete (window as any).__lkdvOpenSeal;
         delete (window as any).__lkdvOpenTrust;
         delete (window as any).__lkdvOpenCreate;
+        delete (window as any).__lkdvOpenEffortWhy;
+        delete (window as any).__lkdvOpenEffortGroup;
+        delete (window as any).__lkdvOpenEffortFatigue;
+        delete (window as any).__lkdvOpenEffortPrivacy;
+        delete (window as any).__lkdvOpenEffortExpert;
+        delete (window as any).__lkdvOpenEffortSubDrawer;
       }
     };
-  }, [pop, push]);
+  }, [handleHardwareBackButton, pop, push]);
+
+  // Listener Capacitor Android App.addListener('backButton') + événement DOM testable :
+  // dépile l'overlay actif (close()) lorsque stack.length > 0 avant tout history.back().
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let removed = false;
+    let listenerHandle: { remove?: () => void | Promise<void> } | null = null;
+
+    const capacitorApp = (window as any).Capacitor?.Plugins?.App;
+    if (capacitorApp && typeof capacitorApp.addListener === 'function') {
+      try {
+        const maybePromise = capacitorApp.addListener(
+          'backButton',
+          (info?: { canGoBack?: boolean }) => {
+            handleHardwareBackButton(info ?? { canGoBack: true });
+          }
+        );
+        if (maybePromise && typeof maybePromise.then === 'function') {
+          void maybePromise.then((handle: { remove?: () => void }) => {
+            if (removed) {
+              void handle?.remove?.();
+            } else {
+              listenerHandle = handle;
+            }
+          });
+        } else if (maybePromise && typeof maybePromise === 'object') {
+          listenerHandle = maybePromise as { remove?: () => void };
+        }
+      } catch {
+        // Environnement web sans plugin natif Capacitor App.
+      }
+    }
+
+    const onDomBackButton = (event: Event) => {
+      if (stackLengthRef.current > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        pop();
+      }
+    };
+
+    window.addEventListener('lkdv:backButton', onDomBackButton);
+    document.addEventListener('backbutton', onDomBackButton);
+
+    return () => {
+      removed = true;
+      void listenerHandle?.remove?.();
+      window.removeEventListener('lkdv:backButton', onDomBackButton);
+      document.removeEventListener('backbutton', onDomBackButton);
+    };
+  }, [handleHardwareBackButton, pop]);
 
   const top = stack[stack.length - 1];
-  const needsBootstrap = top && ['badge', 'gear', 'seal', 'trust'].includes(top.overlay.kind);
+  const needsBootstrap = Boolean(top && BOOTSTRAP_OVERLAY_KINDS.has(top.overlay.kind));
 
   // Une fermeture complète invalide le snapshot : la prochaine ouverture relit
   // les données au lieu d'afficher un état figé après un suivi ou du matériel
@@ -162,15 +294,31 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
         }
         setBootstrap(payload);
       })
-      .catch(() => { if (!cancelled) setBootstrapError(true); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setBootstrapError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [bootstrap, bootstrapError, needsBootstrap]);
 
   if (!top) return null;
   const overlay = top.overlay;
 
   if (overlay.kind === 'post') {
-    return <PostDrawer postId={overlay.postId} initialPane={overlay.pane} initialCommentId={overlay.commentId} onClose={pop} onOpenProfile={(userId) => push({ kind: 'profile', userId })} onDeleted={() => { handleChanged(); pop(); }} />;
+    return (
+      <PostDrawer
+        postId={overlay.postId}
+        initialPane={overlay.pane}
+        initialCommentId={overlay.commentId}
+        onClose={pop}
+        onOpenProfile={(userId) => push({ kind: 'profile', userId })}
+        onDeleted={() => {
+          handleChanged();
+          pop();
+        }}
+      />
+    );
   }
   if (overlay.kind === 'saved') {
     return <SavedPostsDrawer onClose={pop} onOpenPost={(postId) => push({ kind: 'post', postId })} />;
@@ -209,8 +357,116 @@ export function CompteOverlayHost({ onChanged }: { onChanged?: () => void }) {
     const gear = (bootstrap.gearItems ?? []).find((entry) => entry.id === overlay.gearId || entry.realId === overlay.gearId);
     return gear ? <GearDetailSheet item={gear} onClose={pop} /> : null;
   }
-  if (overlay.kind === 'seal') return <SealDrawer data={bootstrap} onClose={pop} />;
-  if (overlay.kind === 'trust') return <TrustDetailSheet data={bootstrap} trustScore={bootstrap.profile?.trustScore} onClose={pop} />;
+  if (overlay.kind === 'seal') {
+    return (
+      <SealDrawer
+        data={bootstrap}
+        onClose={pop}
+        onOpenSubDrawer={(kind) => push({ kind })}
+        onRetryEffort={invalidate}
+      />
+    );
+  }
+  if (overlay.kind === 'trust') {
+    return <TrustDetailSheet data={bootstrap} trustScore={bootstrap.profile?.trustScore} onClose={pop} />;
+  }
+
+  const sealUnavailable = bootstrap.sealUnavailable === true;
+  const lastOuting = sealUnavailable ? null : bootstrap.lastOutingEffort ?? null;
+  const nextOuting = sealUnavailable ? null : bootstrap.nextPlannedOutingEffort ?? null;
+  const effortState = bootstrap.effortState ?? 'ready';
+
+  if (overlay.kind === 'effort-why') {
+    return (
+      <EffortWhyDrawer
+        outing={lastOuting ?? nextOuting}
+        state={effortState}
+        diagnosticId={bootstrap.effortDiagnosticId}
+        errorMessage={bootstrap.effortErrorMessage}
+        cachedAt={bootstrap.effortCachedAt}
+        onRetry={invalidate}
+        onClose={pop}
+      />
+    );
+  }
+  if (overlay.kind === 'effort-group') {
+    return (
+      <EffortGroupDrawer
+        groupData={sealUnavailable ? null : bootstrap.effortGroupSummary}
+        state={effortState}
+        diagnosticId={bootstrap.effortDiagnosticId}
+        errorMessage={bootstrap.effortErrorMessage}
+        cachedAt={bootstrap.effortCachedAt}
+        onRetry={invalidate}
+        onClose={pop}
+      />
+    );
+  }
+  if (overlay.kind === 'effort-fatigue') {
+    return (
+      <EffortFatigueDrawer
+        fatigueData={sealUnavailable ? null : bootstrap.effortFatigueSummary}
+        state={effortState}
+        diagnosticId={bootstrap.effortDiagnosticId}
+        errorMessage={bootstrap.effortErrorMessage}
+        cachedAt={bootstrap.effortCachedAt}
+        onRetry={invalidate}
+        onClose={pop}
+      />
+    );
+  }
+  if (overlay.kind === 'effort-privacy') {
+    return (
+      <EffortPrivacyDrawer
+        privacyData={
+          sealUnavailable
+            ? null
+            : bootstrap.effortPrivacySummary ?? {
+                dataLevel: lastOuting?.dataLevel ?? null,
+                evidence: lastOuting?.evidence ?? [],
+                consents: [],
+              }
+        }
+        state={effortState}
+        diagnosticId={bootstrap.effortDiagnosticId}
+        errorMessage={bootstrap.effortErrorMessage}
+        cachedAt={bootstrap.effortCachedAt}
+        onRetry={invalidate}
+        onClose={pop}
+      />
+    );
+  }
+  if (overlay.kind === 'effort-expert') {
+    return (
+      <EffortExpertDrawer
+        expertData={
+          sealUnavailable
+            ? null
+            : bootstrap.effortExpertSummary ??
+              (lastOuting
+                ? {
+                    scoreVersion: lastOuting.scoreVersion || 'effort-score-v1',
+                    snapshotHash: lastOuting.snapshotHash ?? null,
+                    iea: lastOuting.iea ?? null,
+                    erp: lastOuting.erp ?? null,
+                    eFlatKm: lastOuting.eFlatKm ?? null,
+                    rawDose: lastOuting.rawDose ?? null,
+                    multipliers: lastOuting.multipliers ?? null,
+                    ablations: [],
+                    rawSegments: [],
+                  }
+                : null)
+        }
+        state={effortState}
+        diagnosticId={bootstrap.effortDiagnosticId}
+        errorMessage={bootstrap.effortErrorMessage}
+        cachedAt={bootstrap.effortCachedAt}
+        onRetry={invalidate}
+        onClose={pop}
+      />
+    );
+  }
+
   return null;
 }
 

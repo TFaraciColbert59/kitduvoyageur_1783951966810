@@ -1,13 +1,18 @@
 /**
- * A9 — Shadow mode (moteur pur).
+ * A9 & Lot P6 — Shadow mode, seuils collectifs D-13 & preuve de rollback (moteur pur).
  *
- * Compare une valeur `primary` et une valeur `shadow` sans aucun effet
- * utilisateur : `deltaPct = (shadow − primary) / |primary| × 100`, accord si
- * l'écart absolu reste dans la tolérance (15 % par défaut). Une donnée
- * manquante donne `deltaPct: null` et `agreement: false`.
+ * A9 (rétrocompatible) :
+ * - Compare une valeur `primary` et une valeur `shadow` sans aucun effet utilisateur :
+ *   `deltaPct = (shadow − primary) / |primary| × 100`, accord si l'écart absolu
+ *   reste dans la tolérance (15 % par défaut).
  *
- * Les flags `*_shadow` sont exposés pour le rollout (9.5) ; ce module ne lit
- * ni n'écrit aucun flag.
+ * Extension Lot P6 :
+ * - Enregistrement des flags `effort_score_v1_shadow` et `group_prediction_v2_shadow`
+ *   (`EFFORT_SHADOW_FLAGS` / `ALL_SHADOW_FLAGS`), sans casser `SHADOW_FLAGS` (A9).
+ * - Contrôle explicite des seuils collectifs DECISIONS D-13 :
+ *   `MIN_DISTINCT_USERS = 5`, `MIN_PUBLISH_CONFIDENCE = 0.5`.
+ * - Résolution déterministe du rollout (`resolveEffortShadowRollout`) prouvant le
+ *   rollback instantané et non destructif dès que `effort_score_v1_shadow = false`.
  */
 
 export const SHADOW_FLAGS = [
@@ -19,8 +24,23 @@ export const SHADOW_FLAGS = [
 
 export type ShadowFlag = (typeof SHADOW_FLAGS)[number];
 
+/** Flags shadow du chantier effort-engine-v1 (Lot P3/P6, tous à false par défaut). */
+export const EFFORT_SHADOW_FLAGS = [
+  'effort_score_v1_shadow',
+  'group_prediction_v2_shadow',
+] as const;
+
+export type EffortShadowFlag = (typeof EFFORT_SHADOW_FLAGS)[number];
+
+export const ALL_SHADOW_FLAGS = [...SHADOW_FLAGS, ...EFFORT_SHADOW_FLAGS] as const;
+export type AnyShadowFlag = (typeof ALL_SHADOW_FLAGS)[number];
+
 /** Tolérance d'accord par défaut, en pourcentage. */
 export const DEFAULT_SHADOW_TOLERANCE_PCT = 15;
+
+/** Seuils collectifs normatifs (DECISIONS D-13) : publication collective interdite en dessous. */
+export const MIN_DISTINCT_USERS = 5;
+export const MIN_PUBLISH_CONFIDENCE = 0.5;
 
 export interface ShadowComparison {
   primary: number | null;
@@ -111,5 +131,82 @@ export function summarizeShadow(comparisons: ShadowComparison[]): ShadowSummary 
     count,
     agreementRate: round(agreements / count, 4),
     medianDeltaPct: deltas.length > 0 ? round(median(deltas), 2) : null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOT P6 — CONTRÔLE D-13 & PREUVE DE ROLLBACK NON DESTRUCTIF
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface CollectivePublishGateInput {
+  distinctUsers: number;
+  confidenceScore: number;
+}
+
+export interface CollectivePublishGateResult {
+  allowed: boolean;
+  reasons: string[];
+}
+
+/**
+ * Garde-fou normatif DECISIONS D-13 :
+ * Exige au moins `MIN_DISTINCT_USERS = 5` utilisateurs distincts ET une confiance
+ * d'agrégat `>= MIN_PUBLISH_CONFIDENCE = 0.5` avant toute publication collective.
+ */
+export function evaluateCollectivePublishGate(
+  input: CollectivePublishGateInput
+): CollectivePublishGateResult {
+  const reasons: string[] = [];
+  const users = Number.isFinite(input.distinctUsers) ? Math.trunc(input.distinctUsers) : 0;
+  const conf = Number.isFinite(input.confidenceScore) ? input.confidenceScore : 0;
+
+  if (users < MIN_DISTINCT_USERS) {
+    reasons.push(
+      `Nombre d'utilisateurs distincts insuffisant (${users} < ${MIN_DISTINCT_USERS}, règle D-13).`
+    );
+  }
+  if (conf < MIN_PUBLISH_CONFIDENCE) {
+    reasons.push(
+      `Score de confiance insuffisant (${conf.toFixed(2)} < ${MIN_PUBLISH_CONFIDENCE}, règle D-13).`
+    );
+  }
+
+  return {
+    allowed: reasons.length === 0,
+    reasons,
+  };
+}
+
+export interface EffortRolloutState {
+  activePrimaryEngine: 'a3-legacy';
+  effortShadowEnabled: boolean;
+  groupV2ShadowEnabled: boolean;
+  writesEffortShadowRows: boolean;
+  requiresDestructiveMigrationForRollback: false;
+  rollbackMode: 'flag_off_instant_noop' | 'shadow_active_primary_unchanged';
+}
+
+/**
+ * Résout l'état de rollout d'`effort-score-v1` à partir des feature flags :
+ * - Quand `effort_score_v1_shadow === false` (ou absent) : aucun calcul shadow n'est écrit,
+ *   l'utilisateur reste sur le moteur primaire `a3-legacy` sans aucune migration destructive.
+ * - Quand `effort_score_v1_shadow === true` : le calcul tourne exclusivement en shadow
+ *   (`activePrimaryEngine` reste `'a3-legacy'`, aucun impact utilisateur).
+ */
+export function resolveEffortShadowRollout(
+  flags: Partial<Record<AnyShadowFlag | string, boolean>> | null | undefined
+): EffortRolloutState {
+  const effortShadowEnabled = flags?.effort_score_v1_shadow === true;
+  const groupV2ShadowEnabled = flags?.group_prediction_v2_shadow === true;
+
+  return {
+    activePrimaryEngine: 'a3-legacy',
+    effortShadowEnabled,
+    groupV2ShadowEnabled,
+    writesEffortShadowRows: effortShadowEnabled,
+    requiresDestructiveMigrationForRollback: false,
+    rollbackMode: effortShadowEnabled
+      ? 'shadow_active_primary_unchanged'
+      : 'flag_off_instant_noop',
   };
 }
