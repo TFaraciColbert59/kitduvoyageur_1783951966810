@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
   const q = searchParams.get('q')?.trim() ?? '';
   const iconic =
     searchParams.get('iconic_taxa') ??
-    'Mammalia,Aves,Amphibia,Reptilia,Insecta,Plantae,Fungi';
+    'Mammalia,Aves,Amphibia,Reptilia,Plantae';
 
   const lat = latParam ? Number(latParam) : NaN;
   const lng = lngParam ? Number(lngParam) : NaN;
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
   if (hasCoords) {
     params.set('lat', lat.toFixed(4));
     params.set('lng', lng.toFixed(4));
-    params.set('radius', '20');
+    params.set('radius', '5');
   } else {
     params.set('place_id', '6753');
   }

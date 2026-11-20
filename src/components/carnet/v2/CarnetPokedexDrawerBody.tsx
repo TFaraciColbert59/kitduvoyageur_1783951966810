@@ -463,7 +463,7 @@ export function CarnetPokedexDrawerBody({
     () => entries.filter((e) => e.discovered).length,
     [entries],
   );
-  const zoneTotal = totalInZone ?? entries.length;
+  const zoneTotal = entries.length;
 
   useEffect(() => {
     onZoneProgressChange?.({ discovered: discoveredCount, total: zoneTotal });
