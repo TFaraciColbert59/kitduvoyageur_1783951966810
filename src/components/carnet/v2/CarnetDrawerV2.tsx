@@ -160,6 +160,14 @@ export function CarnetDrawerV2({
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
   const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
+  const sacKitItems = useMemo(() => {
+    if (detail.kit?.items?.length) return detail.kit.items;
+    const memberLists = Object.values(detail.memberKits ?? {});
+    for (const mk of memberLists) {
+      if (mk?.items?.length) return mk.items;
+    }
+    return [];
+  }, [detail.kit, detail.memberKits]);
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
   const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
@@ -866,15 +874,6 @@ export function CarnetDrawerV2({
     }
     return null;
   };
-
-  const sacKitItems = useMemo(() => {
-    if (detail.kit?.items?.length) return detail.kit.items;
-    const memberLists = Object.values(detail.memberKits ?? {});
-    for (const mk of memberLists) {
-      if (mk?.items?.length) return mk.items;
-    }
-    return [];
-  }, [detail.kit, detail.memberKits]);
 
   const currentSlotLenses = slotLenses[activeSlot] || [];
   const currentSlotIndex = slotTabs.findIndex((t) => t.id === activeSlot);
