@@ -638,27 +638,81 @@ export function RouteCollabWorkspace({
   );
 
   // Recalcul réel via /api/route (Valhalla / Geoapify) + /api/elevation (DEM) avec empreinte d'entrée
-  const handleRealRouteSection = async (sectionId: string) => {
-    const sec = workspace.sections.find((s) => s.id === sectionId);
+  /** Appelle /api/route (snap au réseau routier/sentiers) pour une suite de jalons. */
+  const fetchRoutedLegs = async (
+    waypoints: ReadonlyArray<readonly [number, number]>,
+    ws: RouteWorkspaceState,
+  ): Promise<{
+    provider: string | null;
+    legs: Array<{ geometry: Array<[number, number]>; distanceKm: number; durationMin: number | null }>;
+  } | null> => {
+    try {
+      const qs = new URLSearchParams({
+        points: waypoints.map(([lon, lat]) => `${lon.toFixed(6)},${lat.toFixed(6)}`).join(';'),
+        sport: ws.sport,
+        snap: '1',
+      });
+      const o = ws.routingOptions;
+      if (o?.ebike) qs.set('ebike', '1');
+      if (o?.surfacePref) qs.set('surfacePref', o.surfacePref);
+      if (o?.avoidSteps) qs.set('avoidSteps', '1');
+      if (o?.avoidFerries) qs.set('avoidFerries', '1');
+      const res = await fetch(`/api/route?${qs.toString()}`);
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        status?: string;
+        provider?: string | null;
+        legs?: Array<{
+          distanceKm?: number;
+          durationMin?: number;
+          geometry?:
+            | Array<[number, number]>
+            | { type: 'LineString'; coordinates: Array<[number, number]> };
+        }>;
+      };
+      if (data.status !== 'ok' || !Array.isArray(data.legs)) return null;
+      const legs = data.legs.map((leg) => {
+        const g = Array.isArray(leg.geometry)
+          ? leg.geometry
+          : leg.geometry && 'coordinates' in leg.geometry
+            ? leg.geometry.coordinates
+            : [];
+        return {
+          geometry: g,
+          distanceKm: leg.distanceKm ?? 0,
+          durationMin: leg.durationMin != null ? Math.round(leg.durationMin) : null,
+        };
+      });
+      if (legs.some((l) => l.geometry.length < 2)) return null;
+      return { provider: data.provider ?? null, legs };
+    } catch {
+      return null;
+    }
+  };
+
+  const handleRealRouteSection = async (sectionId: string, silent = false) => {
+    const ws = workspaceRef.current;
+    const livePoints = activePoints(ws);
+    const sec = ws.sections.find((s) => s.id === sectionId);
     if (!sec) return;
-    const fromPt = orderedPoints.find((p) => p.id === sec.fromPointId);
-    const toPt = orderedPoints.find((p) => p.id === sec.toPointId);
+    const fromPt = livePoints.find((p) => p.id === sec.fromPointId);
+    const toPt = livePoints.find((p) => p.id === sec.toPointId);
     if (!fromPt || !toPt) return;
 
     const fingerprint = computeRoutingFingerprint({
       from: fromPt,
       to: toPt,
-      sport: workspace.sport,
-      options: workspace.routingOptions,
+      sport: ws.sport,
+      options: ws.routingOptions,
     });
     setRoutingBusy(true);
     try {
       const ptsParam = `${fromPt.lon},${fromPt.lat};${toPt.lon},${toPt.lat}`;
       const res = await fetch(
-        `/api/route?points=${encodeURIComponent(ptsParam)}&sport=${encodeURIComponent(workspace.sport)}`,
+        `/api/route?points=${encodeURIComponent(ptsParam)}&sport=${encodeURIComponent(ws.sport)}&snap=1`,
       );
       if (!res.ok) {
-        setStatusMessage('Routeur indisponible : passez la section en mode manuel.');
+        setStatusMessage('Routeur indisponible : tronçon conservé en ligne droite (mode manuel).');
         return;
       }
       const data = (await res.json()) as {
@@ -742,7 +796,9 @@ export function RouteCollabWorkspace({
         },
       });
       setStatusMessage(
-        `Section recalculée via ${data.provider ?? 'routeur'} (${(leg?.distanceKm ?? sec.distanceKm).toFixed(2)} km, ${rawCoords.length} pts${ascentM != null ? `, D+ ${ascentM} m` : ''}).`,
+        silent
+          ? 'Tronçon recollé au réseau.'
+          : `Section recalculée via ${data.provider ?? 'routeur'} (${(leg?.distanceKm ?? sec.distanceKm).toFixed(2)} km, ${rawCoords.length} pts${ascentM != null ? `, D+ ${ascentM} m` : ''}).`,
       );
     } catch {
       setStatusMessage(
@@ -752,6 +808,8 @@ export function RouteCollabWorkspace({
       setRoutingBusy(false);
     }
   };
+  const realRouteRef = useRef(handleRealRouteSection);
+  realRouteRef.current = handleRealRouteSection;
 
   const handleReplayOffline = async () => {
     const res = await replayOfflineQueue(currentUserId, workspace.id, async (queued) => {
@@ -1582,24 +1640,142 @@ export function RouteCollabWorkspace({
 
   const handleFreehandDrawComplete = useCallback(
     (coords: readonly [number, number][]) => {
-      applyImportedCoordinates(coords, workspace.title, 'manual', 'trace-manuelle');
       setDrawingMode(false);
       setSheetOpen(true);
-      setStatusMessage(`Tracé dessiné (${coords.length} points).`);
+      if (coords.length < 2) return;
+      const ws = workspaceRef.current;
+
+      // 1) Échantillonne ≤ 12 jalons répartis sur la distance du geste (début & fin inclus)
+      const cum: number[] = [0];
+      for (let i = 1; i < coords.length; i += 1) {
+        cum.push(
+          cum[i - 1] +
+            haversineKm(
+              { lat: coords[i - 1][1], lon: coords[i - 1][0] },
+              { lat: coords[i][1], lon: coords[i][0] },
+            ),
+        );
+      }
+      const total = cum[cum.length - 1];
+      const wpCount = Math.max(2, Math.min(12, Math.ceil(total / 0.4) + 1));
+      const waypoints: Array<[number, number]> = [];
+      let cursor = 0;
+      for (let k = 0; k < wpCount; k += 1) {
+        const target = (total * k) / (wpCount - 1);
+        while (cursor < coords.length - 1 && cum[cursor] < target) cursor += 1;
+        const c = coords[k === wpCount - 1 ? coords.length - 1 : cursor];
+        const prev = waypoints[waypoints.length - 1];
+        if (!prev || prev[0] !== c[0] || prev[1] !== c[1]) waypoints.push([c[0], c[1]]);
+      }
+      if (waypoints.length < 2) {
+        applyImportedCoordinates(coords, ws.title, 'manual', 'trace-manuelle');
+        return;
+      }
+
+      setRoutingBusy(true);
+      setStatusMessage('Ajustement du tracé sur les routes et sentiers…');
+      void (async () => {
+        try {
+          const routed = await fetchRoutedLegs(waypoints, ws);
+          if (!routed || routed.legs.length !== waypoints.length - 1) {
+            applyImportedCoordinates(coords, ws.title, 'manual', 'trace-manuelle');
+            setStatusMessage(
+              'Routeur indisponible : tracé libre conservé tel que dessiné (non collé aux routes).',
+            );
+            return;
+          }
+          const nowIso = new Date().toISOString();
+          const stamp = Date.now().toString(36);
+          const snapped: Array<[number, number]> = routed.legs.map((leg) => leg.geometry[0]);
+          const lastGeom = routed.legs[routed.legs.length - 1].geometry;
+          snapped.push(lastGeom[lastGeom.length - 1]);
+          const pts: CollaborativeRoutePoint[] = waypoints.map((_, i) => ({
+            id: `pt-${stamp}-${i}`,
+            workspaceId: ws.id,
+            kind: i === 0 ? 'start' : i === waypoints.length - 1 ? 'finish' : 'via',
+            orderKey: i === 0 ? 'A' : i === waypoints.length - 1 ? 'Z' : String.fromCharCode(66 + i),
+            lat: snapped[i][1],
+            lon: snapped[i][0],
+            name: i === 0 ? 'Départ' : i === waypoints.length - 1 ? 'Arrivée' : `Passage ${i}`,
+            entityVersion: 1,
+          }));
+          const secs: CollaborativeRouteSection[] = routed.legs.map((leg, i) => ({
+            id: `sec-${stamp}-${i}`,
+            workspaceId: ws.id,
+            fromPointId: pts[i].id,
+            toPointId: pts[i + 1].id,
+            mode: 'routed',
+            geometry: { type: 'LineString', coordinates: leg.geometry },
+            distanceKm: Number(leg.distanceKm.toFixed(2)),
+            durationMin: leg.durationMin,
+            ascentM: null,
+            descentM: null,
+            surfaceSegments: [],
+            routingInputHash: computeRoutingFingerprint({
+              from: pts[i],
+              to: pts[i + 1],
+              sport: ws.sport,
+              options: ws.routingOptions,
+            }),
+            provenance: {
+              provider: routed.provider ?? 'valhalla',
+              calculatedAt: nowIso,
+              profile: ws.sport,
+              confidence: 'verified',
+            },
+            warnings: [],
+            entityVersion: 1,
+          }));
+          commitState({
+            ...ws,
+            points: pts,
+            sections: secs,
+            headSeq: ws.headSeq + 1,
+            updatedAt: nowIso,
+          });
+          setFitTrigger((n) => n + 1);
+          setKnowledgePois([]);
+          const km = secs.reduce((a, s) => a + s.distanceKm, 0);
+          setStatusMessage(
+            `Tracé collé au réseau via ${routed.provider ?? 'routeur'} (${km.toFixed(1)} km, ${pts.length} jalons).`,
+          );
+        } finally {
+          setRoutingBusy(false);
+        }
+      })();
     },
-    [applyImportedCoordinates, workspace.title],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [applyImportedCoordinates, commitState],
   );
+
+  /** Recolle automatiquement au réseau les tronçons touchés par un point déplacé ou ajouté. */
+  const snapSectionsAroundPoint = useCallback(async (pointId: string) => {
+    const ws = workspaceRef.current;
+    const ids = ws.sections
+      .filter(
+        (s) =>
+          s.mode !== 'imported_preserved' &&
+          (s.fromPointId === pointId || s.toPointId === pointId),
+      )
+      .map((s) => s.id);
+    for (const id of ids) {
+      await realRouteRef.current(id, true);
+    }
+  }, []);
 
   const handleDragPoint = useCallback(
     (pointId: string, lat: number, lon: number) => {
-      const pt = orderedPoints.find((p) => p.id === pointId);
+      const pt = activePoints(workspaceRef.current).find((p) => p.id === pointId);
       if (!pt) return;
-      void runOperation(
-        { type: 'move_point', pointId, lat, lon },
-        { [pointId]: pt.entityVersion },
-      );
+      void (async () => {
+        await runOperation(
+          { type: 'move_point', pointId, lat, lon },
+          { [pointId]: pt.entityVersion },
+        );
+        await snapSectionsAroundPoint(pointId);
+      })();
     },
-    [orderedPoints, runOperation],
+    [runOperation, snapSectionsAroundPoint],
   );
 
   const handleCenterMyPosition = async () => {
@@ -3659,14 +3835,17 @@ export function RouteCollabWorkspace({
           onMapClickAddPoint={(lat, lon) => {
             const last = orderedPoints[orderedPoints.length - 1];
             const newId = `pt-${Date.now().toString(36)}`;
-            void runOperation({
-              type: 'insert_point',
-              pointId: newId,
-              afterPointId: last?.id ?? null,
-              lat,
-              lon,
-              name: `Passage ${orderedPoints.length + 1}`,
-            });
+            void (async () => {
+              await runOperation({
+                type: 'insert_point',
+                pointId: newId,
+                afterPointId: last?.id ?? null,
+                lat,
+                lon,
+                name: `Passage ${orderedPoints.length + 1}`,
+              });
+              await snapSectionsAroundPoint(newId);
+            })();
             setSelectedPointId(newId);
             setFocusCoord([lon, lat]);
           }}
