@@ -1461,6 +1461,368 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   width: calc((100% - 8px) / var(--n, 5)) !important;
 }
 
+/* ==========================================================================
+   Carnet Kit Drawer — Design aligné sur le drawer création kit (/communaute)
+   ========================================================================== */
+.lkdv-carnet-kit-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 12px;
+}
+
+.lkdv-carnet-kit-users-rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 2px 6px;
+}
+
+.lkdv-carnet-kit-users-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-carnet-kit-user-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 3px 12px 3px 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 67, 50, 0.12);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--label, #111827);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, transform 0.12s ease;
+}
+
+.lkdv-carnet-kit-user-pill.is-active {
+  background: #1b4332;
+  border-color: #1b4332;
+  color: #ffffff;
+}
+
+.lkdv-carnet-kit-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 67, 50, 0.12);
+  color: #1b4332;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lkdv-carnet-kit-user-pill.is-active .lkdv-carnet-kit-user-avatar {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.lkdv-carnet-kit-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-carnet-kit-user-name {
+  white-space: nowrap;
+}
+
+.lkdv-carnet-kit-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-carnet-kit-weight-panel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.76));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.lkdv-carnet-kit-ring {
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  background: conic-gradient(
+    #1b4332 calc(var(--p, 0) * 1%),
+    rgba(27, 67, 50, 0.12) 0
+  );
+}
+
+.lkdv-carnet-kit-ring-core {
+  position: absolute;
+  inset: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  text-align: center;
+}
+
+.lkdv-carnet-kit-ring-core b {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kit-ring-core small {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--label2, #56665d);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lkdv-carnet-kit-weight-side {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lkdv-carnet-kit-weight-side > small {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-kit-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.lkdv-carnet-kit-layer {
+  display: grid;
+  grid-template-columns: minmax(76px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-kit-layer > i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 4px;
+  width: var(--share, 0%);
+  border-radius: 999px;
+  background: #1b4332;
+}
+
+.lkdv-carnet-kit-layer[data-layer='porte'] > i {
+  background: #40916c;
+}
+
+.lkdv-carnet-kit-layer[data-layer='conso'] > i {
+  background: #95d5b2;
+}
+
+.lkdv-carnet-kit-layer > b {
+  font-weight: 600;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-kit-layer > small {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kit-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-kit-group {
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.76));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  overflow: hidden;
+}
+
+.lkdv-carnet-kit-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  color: var(--label, #111827);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lkdv-carnet-kit-group-head small {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--label2, #56665d);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kit-plus-row {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 10px;
+  padding: 6px 2px 2px;
+  margin-top: 8px;
+}
+
+.lkdv-carnet-kit-plus-row::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-carnet-kit-mini-tile {
+  flex: 0 0 92px;
+  width: 92px;
+  height: 92px;
+  padding: 8px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(27, 67, 50, 0.14);
+  cursor: pointer;
+}
+
+.lkdv-carnet-kit-mini-tile-top,
+.lkdv-carnet-kit-mini-tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+
+.lkdv-carnet-kit-mini-ico {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lkdv-carnet-kit-mini-qty {
+  border: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.12);
+  color: #1b4332;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.lkdv-carnet-kit-mini-tile b {
+  display: block;
+  width: 100%;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-kit-mini-tile small {
+  font-size: 0.66rem;
+  color: #1b4332;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kit-chart-card {
+  padding: 14px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.76));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-carnet-kit-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-kit-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-kit-bar-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.lkdv-carnet-kit-bar-label {
+  color: var(--label, #111827);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-kit-bar-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.08);
+  overflow: hidden;
+}
+
+.lkdv-carnet-kit-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.lkdv-carnet-kit-bar-val {
+  text-align: right;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes lkdv-sheet-push {
   from {
     transform: translateX(100%);
@@ -1720,4 +2082,910 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 }
 .lkdv-report-sheet button:disabled {
   color: rgba(23, 43, 36, 0.55) !important;
+}
+
+/* ==========================================================================
+   Carnet Drawers V2 — Styles unifiés (Fil, Route, Chiffres, Équipage, Sac)
+   ========================================================================== */
+.lkdv-carnet-kit-user-wt {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kit-user-pill.is-active .lkdv-carnet-kit-user-wt {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.lkdv-carnet-drawer-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 14px;
+}
+
+.lkdv-carnet-cards-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px 18px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.72));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.1);
+  text-align: center;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-empty-card b {
+  font-size: 14px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-empty-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 260px;
+}
+
+.lkdv-carnet-filter-rail {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0 4px;
+}
+
+.lkdv-carnet-filter-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-carnet-filter-pill {
+  position: relative;
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 67, 50, 0.12);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--label, #111827);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.lkdv-carnet-filter-pill.is-active {
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.lkdv-carnet-filter-pill-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #1b4332;
+}
+
+.lkdv-carnet-filter-pill-label {
+  position: relative;
+  z-index: 1;
+}
+
+.lkdv-carnet-chip-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #1b4332;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.lkdv-carnet-chip-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.09);
+  color: #1b4332;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.lkdv-carnet-chip-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--label2, #56665d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-chevron {
+  flex: none;
+  color: #1b4332;
+  opacity: 0.7;
+}
+
+/* Fil — Timeline */
+.lkdv-carnet-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lkdv-carnet-timeline-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-carnet-timeline-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.lkdv-carnet-timeline-rail::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: -14px;
+  width: 2px;
+  background: rgba(27, 67, 50, 0.16);
+}
+
+.lkdv-carnet-timeline-row:last-child .lkdv-carnet-timeline-rail::before {
+  display: none;
+}
+
+.lkdv-carnet-timeline-dot {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #1b4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.14);
+}
+
+.lkdv-carnet-timeline-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.lkdv-carnet-timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lkdv-carnet-timeline-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lkdv-carnet-timeline-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  flex: none;
+}
+
+.lkdv-carnet-timeline-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-timeline-quote {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-timeline-author {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--label2, #56665d);
+}
+
+/* Fil — Bento Médias */
+.lkdv-carnet-bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-carnet-bento-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: rgba(27, 67, 50, 0.08);
+}
+
+.lkdv-carnet-bento-tile.is-hero {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 9;
+}
+
+.lkdv-carnet-bento-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-carnet-bento-overlay {
+  position: absolute;
+  inset: auto 8px 8px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-carnet-bento-day {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.72);
+  backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.lkdv-carnet-bento-place {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #111827;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fil — Rencontres & Nature */
+.lkdv-carnet-encounter-card,
+.lkdv-carnet-nature-card {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-encounter-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lkdv-carnet-encounter-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #1b4332;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex: none;
+}
+
+.lkdv-carnet-encounter-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-encounter-meta b {
+  display: block;
+  font-size: 13px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-encounter-meta small {
+  font-size: 11px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-encounter-qicon {
+  color: #1b4332;
+  opacity: 0.45;
+}
+
+.lkdv-carnet-encounter-quote {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-nature-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(64, 145, 108, 0.14);
+  color: #1b4332;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lkdv-carnet-nature-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lkdv-carnet-nature-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex: none;
+}
+
+.lkdv-carnet-nature-row b {
+  font-size: 13px;
+}
+
+.lkdv-carnet-nature-row p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--label2, #56665d);
+}
+
+/* Route — Roadbook, Nuits, Météo */
+.lkdv-carnet-roadbook-card {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  padding: 13px 14px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-roadbook-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lkdv-carnet-day-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: #1b4332;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.lkdv-carnet-roadbook-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-roadbook-title b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-roadbook-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-roadbook-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lkdv-carnet-metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.08);
+  color: #1b4332;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.lkdv-carnet-metric-pill.is-night {
+  background: rgba(30, 58, 138, 0.09);
+  color: #1e3a8a;
+}
+
+.lkdv-carnet-night-card,
+.lkdv-carnet-weather-card {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lkdv-carnet-night-card {
+  cursor: pointer;
+}
+
+.lkdv-carnet-night-ico,
+.lkdv-carnet-weather-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.lkdv-carnet-night-info,
+.lkdv-carnet-weather-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-night-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.lkdv-carnet-night-info b,
+.lkdv-carnet-weather-head b {
+  font-size: 13.5px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-night-info p,
+.lkdv-carnet-weather-body p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-weather-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.lkdv-carnet-weather-head small {
+  font-size: 11px;
+  color: var(--label2, #56665d);
+}
+
+/* Chiffres — KPI & Budget */
+.lkdv-carnet-kpi-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.lkdv-carnet-kpi-mini {
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.lkdv-carnet-kpi-mini small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-kpi-mini b {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1b4332;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kpi-hero {
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.8));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-kpi-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lkdv-carnet-kpi-ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lkdv-carnet-kpi-hero-val {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #1b4332;
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-kpi-subrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-kpi-subrow b {
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-budget-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-radius: 16px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.1);
+  font-size: 13px;
+}
+
+.lkdv-carnet-budget-row small {
+  display: block;
+  font-size: 11px;
+  color: var(--label2, #56665d);
+}
+
+/* Équipage — Participants, Réactions, Suivre */
+.lkdv-carnet-crew-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.lkdv-carnet-crew-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lkdv-carnet-crew-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(27, 67, 50, 0.12);
+  color: #1b4332;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.lkdv-carnet-crew-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-carnet-crew-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-crew-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lkdv-carnet-crew-name-row b {
+  font-size: 13.5px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-crew-stats {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-crew-kit-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 67, 50, 0.16);
+  background: rgba(27, 67, 50, 0.08);
+  color: #1b4332;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lkdv-carnet-kudos-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.8));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.lkdv-carnet-kudos-card b {
+  font-size: 14px;
+}
+
+.lkdv-carnet-kudos-card p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-like-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(27, 67, 50, 0.09);
+  color: #1b4332;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.lkdv-carnet-like-btn.is-liked {
+  background: #e0245e;
+  color: #ffffff;
+}
+
+.lkdv-carnet-comment-bubble {
+  padding: 11px 13px;
+  border-radius: 18px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.1);
+}
+
+.lkdv-carnet-comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lkdv-carnet-comment-head b {
+  font-size: 12px;
+}
+
+.lkdv-carnet-comment-bubble p {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.lkdv-carnet-comment-del {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--bad, #a8443a);
+}
+
+.lkdv-carnet-comment-composer {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lkdv-carnet-comment-composer input {
+  flex: 1;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 67, 50, 0.16);
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 12.5px;
+}
+
+.lkdv-carnet-comment-composer button {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 0;
+  background: #1b4332;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.lkdv-carnet-follow-card {
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.8));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lkdv-carnet-follow-card b {
+  font-size: 15px;
+}
+
+.lkdv-carnet-follow-card p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.09);
+  color: #1b4332;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lkdv-carnet-live-badge.is-live {
+  background: rgba(22, 163, 74, 0.14);
+  color: #15803d;
+}
+
+.lkdv-carnet-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #16a34a;
+}
+
+.lkdv-carnet-follow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lkdv-carnet-btn-primary {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 0;
+  background: #1b4332;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lkdv-carnet-btn-soft {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 67, 50, 0.16);
+  background: rgba(255, 255, 255, 0.84);
+  color: #1b4332;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
 }

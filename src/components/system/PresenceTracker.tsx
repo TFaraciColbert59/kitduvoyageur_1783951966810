@@ -28,11 +28,15 @@ export default function PresenceTracker() {
     const supabase = createClient();
     const beat = async () => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-      const { error } = await supabase
-        .from('user_presence')
-        .upsert({ user_id: user.id }, { onConflict: 'user_id' });
-      if (error) {
-        console.error('Présence : battement refusé —', error.message);
+      try {
+        const { error } = await supabase
+          .from('user_presence')
+          .upsert({ user_id: user.id }, { onConflict: 'user_id' });
+        if (error && !/failed to fetch|network|abort/i.test(error.message ?? '')) {
+          console.warn('Présence : battement refusé —', error.message);
+        }
+      } catch {
+        // Ignorer les erreurs réseau transitoires (navigation, reprise de veille).
       }
     };
 

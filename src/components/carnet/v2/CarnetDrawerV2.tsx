@@ -48,8 +48,16 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useCarnetDayReactions } from '@/features/carnet/detail/useCarnetDayReactions';
 import { useKitFork } from '@/features/carnet/detail/useKitFork';
 import { useCarnetDialog } from './useCarnetDialog';
-import { CarnetAltitude } from './CarnetAltitude';
-import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
+import {
+  CarnetMotionRoot,
+  LensTransition,
+  StackSlideView,
+} from './CarnetDrawerMotion';
+import { CarnetFilDrawerBody } from './CarnetFilDrawerBody';
+import { CarnetRouteDrawerBody } from './CarnetRouteDrawerBody';
+import { CarnetKitDrawerBody } from './CarnetKitDrawerBody';
+import { CarnetChiffresDrawerBody } from './CarnetChiffresDrawerBody';
+import { CarnetEquipageDrawerBody } from './CarnetEquipageDrawerBody';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
 
@@ -140,6 +148,7 @@ export function CarnetDrawerV2({
   const [stack, setStack] = useState<StackView[]>([]);
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
+  const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
 
   // Reactions : le jour choisi dans la lentille, sinon le jour actif.
   const effectiveDay = activeDay > 0 ? activeDay : 1;
@@ -355,6 +364,8 @@ export function CarnetDrawerV2({
         </div>
 
         <div className="lkdv-stack-body">
+          <CarnetMotionRoot>
+            <StackSlideView stackKey={`${currentStackItem.type}-${stack.length}`}>
           {currentStackItem.type === 'etape' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div
@@ -551,6 +562,24 @@ export function CarnetDrawerV2({
                 </div>
               </div>
 
+              {(detail.memberKits?.[currentStackItem.participant.userId]?.items.length ?? 0) > 0 ||
+              (currentStackItem.participant.userId === detail.author?.id &&
+                detail.kit.items.length > 0) ? (
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-primary"
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => {
+                    setKitJumpUserId(currentStackItem.participant.userId);
+                    setStack([]);
+                    onSlotChange('sac');
+                  }}
+                >
+                  <Package size={14} />
+                  <span>Voir son kit</span>
+                </button>
+              ) : null}
+
               <b style={{ fontSize: '13px', margin: '4px 0 0' }}>Médias de ce voyageur</b>
               <div className="lkdv-ig-grid">
                 {detail.photoMoments
@@ -575,6 +604,8 @@ export function CarnetDrawerV2({
               </div>
             </div>
           )}
+            </StackSlideView>
+          </CarnetMotionRoot>
         </div>
       </div>
     );
@@ -621,6 +652,8 @@ export function CarnetDrawerV2({
         </div>
 
         <div className="lkdv-stack-body">
+          <CarnetMotionRoot>
+            <StackSlideView stackKey={`${currentStackItem.type}-${stack.length}`}>
           {accountTab === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div
@@ -744,6 +777,8 @@ export function CarnetDrawerV2({
               </div>
             </div>
           )}
+            </StackSlideView>
+          </CarnetMotionRoot>
         </div>
       </div>
     );
@@ -753,958 +788,67 @@ export function CarnetDrawerV2({
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
-        if (lens.id === 'moments') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.moments.length === 0 ? (
-                <div
-                  style={{
-                    padding: '22px 14px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    textAlign: 'center',
-                    fontSize: '13px',
-                    opacity: 0.72,
-                  }}
-                >
-                  Aucun moment enregistré dans ce carnet pour le moment.
-                </div>
-              ) : null}
-              {detail.moments.map((m, idx) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    gap: '10px',
-                    width: '100%',
-                    padding: '10px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => onSelectMoment?.(m, idx)}
-                >
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.imageUrl}
-                      alt=""
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '10px',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '10px',
-                        background: '#DDEBD8',
-                        display: 'grid',
-                        placeItems: 'center',
-                      }}
-                    >
-                      <Clock size={20} color="var(--tint)" />
-                    </div>
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <b style={{ fontSize: '13px' }}>
-                        {m.place || m.title || `Jour ${m.dayNumber}`}
-                      </b>
-                      <span style={{ fontSize: '11px', color: 'var(--label2)' }}>{m.time}</span>
-                    </div>
-                    {m.caption ? (
-                      <p
-                        style={{
-                          margin: '2px 0 0',
-                          fontSize: '12px',
-                          color: 'var(--label2)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {m.caption}
-                      </p>
-                    ) : null}
-                  </div>
-                </button>
-              ))}
-            </div>
-          );
-        }
-        if (lens.id === 'medias') {
-          return (
-            <div className="lkdv-ig-grid" style={{ padding: '6px' }}>
-              {detail.photoMoments.map((m, idx) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="lkdv-ig-tile"
-                  onClick={() => onSelectMoment?.(m, idx)}
-                >
-                  {m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.imageUrl} alt="" loading="lazy" />
-                  ) : null}
-                </button>
-              ))}
-            </div>
-          );
-        }
-        if (lens.id === 'rencontres') {
-          const encounters = detail.moments.filter(
-            (m) =>
-              m.type === 'rencontre' || (m.caption && m.caption.toLowerCase().includes('rencontre'))
-          );
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {encounters.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
-                  Aucune rencontre répertoriée.
-                </p>
-              ) : (
-                encounters.map((m, idx) => (
-                  <div
-                    key={m.id}
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      padding: '12px',
-                      borderRadius: '16px',
-                      background: 'var(--drawer-card-bg)',
-                    }}
-                  >
-                    <b>{m.place || m.title || 'Rencontre'}</b>
-                    <p style={{ margin: '4px 0 0', fontSize: '12.5px' }}>{m.caption}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          );
-        }
-        if (lens.id === 'nature') {
-          const natureMoments = detail.moments.filter(
-            (m) =>
-              m.type === 'faune_flore' ||
-              (m.caption &&
-                (m.caption.toLowerCase().includes('faune') ||
-                  m.caption.toLowerCase().includes('flore')))
-          );
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {natureMoments.length === 0 ? (
-                <p style={{ textAlign: 'center', color: 'var(--label2)', fontSize: '13px' }}>
-                  Aucune observation nature consignée.
-                </p>
-              ) : (
-                natureMoments.map((m, idx) => (
-                  <div
-                    key={m.id}
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      padding: '12px',
-                      borderRadius: '16px',
-                      background: 'var(--drawer-card-bg)',
-                    }}
-                  >
-                    <b>{m.place || m.title || 'Observation'}</b>
-                    <p style={{ margin: '4px 0 0', fontSize: '12.5px' }}>{m.caption}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          );
-        }
-        break;
-
+        return (
+          <CarnetFilDrawerBody
+            detail={detail}
+            lensId={lens.id}
+            onSelectMoment={onSelectMoment}
+          />
+        );
       case 'route':
-        if (lens.id === 'etapes') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.etapes.map((e, idx) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '12px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => pushStack({ type: 'etape', etape: e })}
-                >
-                  <div>
-                    <b style={{ fontSize: '13.5px' }}>{e.label}</b>
-                    {e.from && e.to ? (
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                        {e.from} → {e.to}
-                      </p>
-                    ) : null}
-                  </div>
-                  <ChevronRight size={16} color="var(--accent)" />
-                </button>
-              ))}
-            </div>
-          );
-        }
-        if (lens.id === 'nuits') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {(detail.nights ?? []).map((n, idx) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '12px',
-                    border: 0,
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    pushStack({ type: 'night', night: n });
-                    if (n.lat && n.lng) {
-                      onFocusMap?.(n.lat, n.lng, 13);
-                    }
-                  }}
-                >
-                  <div>
-                    <b style={{ fontSize: '13.5px' }}>{n.name}</b>
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                      Jour {n.dayNumber} · {n.type} {n.altitudeM ? `(${n.altitudeM} m)` : ''}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} color="var(--accent)" />
-                </button>
-              ))}
-              {(detail.nights ?? []).length === 0 ? (
-                <div
-                  style={{
-                    padding: '24px 16px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    textAlign: 'center',
-                  }}
-                >
-                  <b style={{ fontSize: '13px' }}>Aucune nuit enregistrée.</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    Les nuits apparaissent ici dès qu’elles sont renseignées sur le terrain.
-                  </p>
-                </div>
-              ) : null}
-            </div>
-          );
-        }
-        if (lens.id === 'altitude') {
-          const profile = detail.elevationProfile ?? [];
-          const profileGain = elevationProfileGain(profile);
-          return (
-            <div className="lkdv-altitude-card">
-              <b>Profil d’altitude du tracé</b>
-              <p>
-                {profileGain !== null
-                  ? `Dénivelé du tracé : +${profileGain} m`
-                  : detail.elevationM
-                    ? `Dénivelé total positif : +${Math.round(detail.elevationM)} m`
-                    : detail.elevationWithheld
-                      ? 'Dénivelé masqué pour ce partage'
-                      : 'Dénivelé total non renseigné'}
-              </p>
-              {profile.length >= 2 ? (
-                <CarnetAltitude
-                  points={profile}
-                  height={80}
-                  interactive
-                  label="Profil d’altitude du tracé"
-                />
-              ) : (
-                <p className="lkdv-altitude-empty" role="status">
-                  {detail.elevationWithheld
-                    ? 'Profil d’altitude masqué pour ce partage.'
-                    : 'Aucune mesure d’altitude enregistrée pour ce carnet.'}
-                </p>
-              )}
-            </div>
-          );
-        }
-        if (lens.id === 'meteo') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.etapes.map((e) => (
-                <div
-                  key={e.id}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <b>{e.label}</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    {e.weather || 'Météo stable, ensoleillée avec brume d’altitude.'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          );
-        }
-        break;
-
+        return (
+          <CarnetRouteDrawerBody
+            detail={detail}
+            lensId={lens.id}
+            onSelectEtape={(etape) => pushStack({ type: 'etape', etape })}
+            onSelectNight={(night) => pushStack({ type: 'night', night })}
+          />
+        );
       case 'sac':
-        if (lens.id === 'kit') {
-          if (!detail.kit?.items || detail.kit.items.length === 0) {
-            return (
-              <div style={{ position: 'relative', minHeight: '100%', padding: '24px 16px', textAlign: 'center' }}>
-                <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '14px', color: 'var(--label)' }}>
-                  Aucun équipement renseigné dans ce carnet
-                </p>
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
-                  Le matériel emporté apparaîtra ici lorsque l’auteur complètera son sac.
-                </p>
-              </div>
-            );
-          }
-          return (
-            <div style={{ position: 'relative', minHeight: '100%', paddingBottom: '48px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 12px',
-                    borderRadius: '14px',
-                    background: 'rgba(150, 186, 142, 0.25)',
-                  }}
-                >
-                  <b style={{ fontSize: '13px' }}>Poids total du sac</b>
-                  <span style={{ fontWeight: 700, fontSize: '14px' }}>
-                    {detail.kit.totalWeightG
-                      ? `${(detail.kit.totalWeightG / 1000).toFixed(1)} kg`
-                      : '—'}
-                  </span>
-                </div>
-
-                {detail.kit.items.map((item, idx) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-carnet-row=""
-                    style={{
-                      ...rowStyle(idx),
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: 0,
-                      borderRadius: '14px',
-                      background: 'var(--drawer-card-bg)',
-                      color: 'inherit',
-                      font: 'inherit',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() =>
-                      pushStack({
-                        type: 'item',
-                        itemId: item.id,
-                        name: item.name,
-                        weightG: item.weightG,
-                        detailText: item.detail,
-                      })
-                    }
-                  >
-                    <div>
-                      <b style={{ fontSize: '13px' }}>{item.name}</b>
-                      {item.weightG ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
-                          {item.weightG} g
-                        </p>
-                      ) : null}
-                    </div>
-                    <ChevronRight size={15} color="var(--accent)" />
-                  </button>
-                ))}
-              </div>
-
-              {/* Floating pill "Reprendre" on Sac slot bottom-left */}
-              <button
-                type="button"
-                className="lkdv-pill-reprendre"
-                onClick={() => {
-                  const ids = detail.kit.items.map((i) => i.id);
-                  void forkAllItems(ids);
-                }}
-              >
-                <Package size={14} />
-                <span>Reprendre le kit</span>
-              </button>
-            </div>
-          );
-        }
-        if (lens.id === 'verdicts') {
-          const verdictsList = detail.kit.items.filter((i) => i.verdict);
-          const filtered = verdictsList.filter((v) => {
-            if (verdictFilter === 'all') return true;
-            return v.verdict === verdictFilter;
-          });
-
-          const VERDICT_LABELS: Record<KitVerdictType, string> = {
-            essentiel: 'Essentiel',
-            utile: 'Utile',
-            jamais_servi: 'Jamais servi',
-            defaillant: 'Défaillant',
-            manquait: 'Manquait',
-            top: 'Top',
-            flop: 'Flop',
-            neutre: 'Neutre',
-          };
-          const VERDICT_STYLES: Record<KitVerdictType, { bg: string; color: string }> = {
-            essentiel: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
-            utile: { bg: 'var(--fill2, rgba(23,43,36,.06))', color: 'var(--info, #4B6B7C)' },
-            jamais_servi: {
-              bg: 'var(--fill2, rgba(23,43,36,.06))',
-              color: 'var(--label2, #56665D)',
-            },
-            defaillant: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
-            manquait: { bg: 'var(--warn-bg, #FBF1DC)', color: 'var(--warn, #B98A2E)' },
-            top: { bg: 'var(--mint, #E1EBDE)', color: 'var(--good, #3D7A52)' },
-            flop: { bg: 'var(--bad-bg, #F5DDD9)', color: 'var(--bad, #A8443A)' },
-            neutre: {
-              bg: 'var(--fill2, rgba(23,43,36,.06))',
-              color: 'var(--label2, #56665D)',
-            },
-          };
-
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {(
-                  ['all', 'essentiel', 'utile', 'jamais_servi', 'defaillant', 'manquait'] as const
-                ).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    style={{
-                      height: '26px',
-                      padding: '0 10px',
-                      borderRadius: '9999px',
-                      border: '0',
-                      background:
-                        verdictFilter === f ? 'var(--tint, #17402C)' : 'rgba(23, 64, 44, 0.08)',
-                      color: verdictFilter === f ? 'var(--tint-ink, #fff)' : 'var(--tint)',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => setVerdictFilter(f)}
-                  >
-                    {f === 'all' ? 'Tous' : VERDICT_LABELS[f]}
-                  </button>
-                ))}
-              </div>
-
-              {filtered.length === 0 ? (
-                <div
-                  style={{
-                    padding: '24px 16px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                    textAlign: 'center',
-                  }}
-                >
-                  <b style={{ fontSize: '13px' }}>Aucun verdict pour ce carnet.</b>
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                    Les verdicts se remplissent depuis le terrain, après les sorties.
-                  </p>
-                </div>
-              ) : null}
-
-              {filtered.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <b>{item.name}</b>
-                    <span
-                      style={{
-                        padding: '2px 8px',
-                        borderRadius: '9999px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        background: item.verdict ? VERDICT_STYLES[item.verdict].bg : undefined,
-                        color: item.verdict ? VERDICT_STYLES[item.verdict].color : undefined,
-                      }}
-                    >
-                      {item.verdict ? VERDICT_LABELS[item.verdict] : '—'}
-                    </span>
-                  </div>
-                  {item.verdictNote ? (
-                    <p style={{ margin: '6px 0 0', fontSize: '12px', lineHeight: 1.35 }}>
-                      « {item.verdictNote} »
-                    </p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          );
-        }
-        if (lens.id === 'poids') {
-          return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Répartition du poids du sac</b>
-              <p style={{ margin: '4px 0 12px', fontSize: '12px', color: 'var(--label2)' }}>
-                {detail.kit.totalWeightG
-                  ? `${(detail.kit.totalWeightG / 1000).toFixed(2)} kg au total`
-                  : 'Poids non renseigné'}
-              </p>
-              <div
-                style={{
-                  height: '120px',
-                  borderRadius: '12px',
-                  background: 'rgba(23, 64, 44, 0.06)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontSize: '12px',
-                  color: 'var(--tint)',
-                }}
-              >
-                Anneau de répartition catégorielle
-              </div>
-            </div>
-          );
-        }
-        break;
-
+        return (
+          <CarnetKitDrawerBody
+            detail={detail}
+            lensId={lens.id}
+            initialUserId={kitJumpUserId}
+            verdictFilter={verdictFilter}
+            onVerdictFilterChange={setVerdictFilter}
+            onSelectItem={(item) =>
+              pushStack({
+                type: 'item',
+                itemId: item.id,
+                name: item.name,
+                weightG: item.weightG,
+                detailText: item.detail,
+              })
+            }
+            onForkAll={(ids) => {
+              void forkAllItems(ids);
+            }}
+          />
+        );
       case 'chiffres':
-        if (lens.id === 'distance') {
-          return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Distance totale</b>
-              <p
-                style={{
-                  margin: '4px 0 0',
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'var(--tint)',
-                }}
-              >
-                {detail.distanceKm ? `${Math.round(detail.distanceKm)} km` : '—'}
-              </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                Moyenne journalière :{' '}
-                {detail.distanceKm && detail.days.length
-                  ? `${(detail.distanceKm / detail.days.length).toFixed(1)} km/j`
-                  : '—'}
-              </p>
-            </div>
-          );
-        }
-        if (lens.id === 'denivele') {
-          return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Dénivelé positif</b>
-              <p
-                style={{
-                  margin: '4px 0 0',
-                  fontSize: '20px',
-                  fontWeight: 700,
-                  color: 'var(--tint)',
-                }}
-              >
-                {detail.elevationM ? `+${Math.round(detail.elevationM)} m` : '—'}
-              </p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                Moyenne journalière :{' '}
-                {detail.elevationM && detail.days.length
-                  ? `+${Math.round(detail.elevationM / detail.days.length)} m/j`
-                  : '—'}
-              </p>
-            </div>
-          );
-        }
-        if (lens.id === 'duree') {
-          return (
-            <div
-              style={{ padding: '12px', borderRadius: '16px', background: 'var(--drawer-card-bg)' }}
-            >
-              <b>Durée d’expédition</b>
-              <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700 }}>
-                {detail.days.length} journées de marche
-              </p>
-            </div>
-          );
-        }
-        if (lens.id === 'budget' && detail.budget) {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Budget total</b>
-                <p
-                  style={{
-                    margin: '4px 0 0',
-                    fontSize: '20px',
-                    fontWeight: 700,
-                    color: 'var(--tint)',
-                  }}
-                >
-                  {detail.budget.total} {detail.budget.currency}
-                </p>
-              </div>
-              {detail.budget.items.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '10px 12px',
-                    borderRadius: '12px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <span>{item.label}</span>
-                  <b>
-                    {item.amount} {detail.budget?.currency}
-                  </b>
-                </div>
-              ))}
-            </div>
-          );
-        }
-        break;
-
+        return <CarnetChiffresDrawerBody detail={detail} lensId={lens.id} />;
       case 'equipage':
-        if (lens.id === 'participants') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              {detail.participants.map((p, idx) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  data-carnet-row=""
-                  style={{
-                    ...rowStyle(idx),
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: 0,
-                    borderRadius: '14px',
-                    background: 'var(--drawer-card-bg)',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => pushStack({ type: 'participant', participant: p })}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {p.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.avatarUrl}
-                        alt=""
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: 'var(--fill)',
-                          display: 'grid',
-                          placeItems: 'center',
-                        }}
-                      >
-                        <Users size={16} />
-                      </div>
-                    )}
-                    <div>
-                      <b style={{ fontSize: '13px' }}>{p.name}</b>
-                      {p.role ? (
-                        <p style={{ margin: 0, fontSize: '11px', color: 'var(--label2)' }}>
-                          {roleLabel(p.role)}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                  <ChevronRight size={15} color="var(--accent)" />
-                </button>
-              ))}
-            </div>
-          );
-        }
-        if (lens.id === 'reactions') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '6px' }}>
-              <div
-                role="group"
-                aria-label="Jour des réactions"
-                style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
-              >
-                {(detail.days.length > 0 ? detail.days : [{ dayNumber: 1 }]).map((d) => {
-                  const n = d.dayNumber ?? 1;
-                  const on = n === reactionDay;
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setReactionDay(n)}
-                      style={{
-                        height: 28,
-                        padding: '0 11px',
-                        borderRadius: 9999,
-                        border: 0,
-                        background: on ? 'var(--tint)' : 'rgba(23,64,44,.08)',
-                        color: on ? 'var(--tint-ink, #fff)' : 'var(--tint)',
-                        font: '600 11px var(--font-sans)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Jour {n}
-                    </button>
-                  );
-                })}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <div>
-                  <b style={{ fontSize: '14px' }}>Jour {reactionDay}</b>
-                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--label2)' }}>
-                    {reactions.likesCount} mention{reactions.likesCount > 1 ? 's' : ''} J’aime
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  style={{
-                    height: '34px',
-                    padding: '0 14px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: reactions.liked ? '#E0245E' : 'rgba(23, 64, 44, 0.08)',
-                    color: reactions.liked ? '#fff' : 'var(--tint)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={reactions.toggleLike}
-                  aria-pressed={reactions.liked}
-                  aria-label={reactions.liked ? 'Retirer mon j’aime du jour' : 'J’aime ce jour'}
-                >
-                  <LikeIcon size={15} active={reactions.liked} />
-                  <span>{reactions.liked ? 'Aimé' : 'J’aime'}</span>
-                </button>
-              </div>
-
-              <b style={{ fontSize: '13px', margin: '4px 0 0' }}>Commentaires</b>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {reactions.comments.map((c) => (
-                  <div
-                    key={c.id}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '14px',
-                      background: 'var(--drawer-card-bg)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <b style={{ fontSize: '12px' }}>{c.authorName}</b>
-                      {userId && c.authorId === userId ? (
-                        <button
-                          type="button"
-                          style={{
-                            border: 0,
-                            background: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--bad)',
-                          }}
-                          onClick={() => reactions.deleteComment(c.id)}
-                          aria-label="Supprimer mon commentaire"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      ) : null}
-                    </div>
-                    <p style={{ margin: '3px 0 0', fontSize: '12px', lineHeight: 1.35 }}>
-                      {c.content}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                <input
-                  type="text"
-                  placeholder="Écrire un mot d’encouragement…"
-                  value={newCommentText}
-                  onChange={(e) => setNewCommentText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newCommentText.trim()) {
-                      void reactions.addComment(newCommentText);
-                      setNewCommentText('');
-                    }
-                  }}
-                  style={{
-                    flex: 1,
-                    height: '36px',
-                    padding: '0 12px',
-                    borderRadius: '9999px',
-                    border: '0.5px solid rgba(23, 43, 36, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.8)',
-                    fontSize: '12.5px',
-                  }}
-                />
-                <button
-                  type="button"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    border: 0,
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'grid',
-                    placeItems: 'center',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (newCommentText.trim()) {
-                      void reactions.addComment(newCommentText);
-                      setNewCommentText('');
-                    }
-                  }}
-                  aria-label="Envoyer le commentaire"
-                >
-                  <Send size={15} />
-                </button>
-              </div>
-            </div>
-          );
-        }
-        if (lens.id === 'suivre') {
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '6px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Suivi du carnet</b>
-                <p style={{ margin: '4px 0 10px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Abonnez-vous aux notifications pour suivre l’aventure pas à pas.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '34px',
-                    padding: '0 16px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (!userId) onRequireAuth?.();
-                    else onIsland?.('Vous suivez désormais cette expédition');
-                  }}
-                >
-                  Suivre cette expédition
-                </button>
-              </div>
-            </div>
-          );
-        }
-        break;
+        return (
+          <CarnetEquipageDrawerBody
+            detail={detail}
+            lensId={lens.id}
+            userId={userId}
+            reactionDay={reactionDay}
+            onReactionDayChange={setReactionDay}
+            reactions={reactions}
+            newCommentText={newCommentText}
+            onNewCommentTextChange={setNewCommentText}
+            onSelectParticipant={(participant) => pushStack({ type: 'participant', participant })}
+            onJumpToParticipantKit={(uid) => {
+              setKitJumpUserId(uid);
+              onSlotChange('sac');
+            }}
+            onRequireAuth={onRequireAuth}
+            onIsland={onIsland}
+          />
+        );
     }
-
     return null;
   };
 
@@ -1745,7 +889,11 @@ export function CarnetDrawerV2({
             size="default"
           />
         }
-        renderLens={(lens) => renderCurrentSlotContent(lens)}
+        renderLens={(lens) => (
+          <LensTransition transitionKey={`${activeSlot}:${lens.id}`}>
+            {renderCurrentSlotContent(lens)}
+          </LensTransition>
+        )}
       />
 
       {/* Reprise de lecture — au-dessus de la pilule « Reprendre le kit » (30). */}

@@ -238,6 +238,9 @@ export interface CarnetKitItemRow {
   detail: string | null;
   weightG: number | null;
   color: string | null;
+  category?: string | null;
+  quantity?: number;
+  carryMode?: 'porte' | 'sac' | 'conso' | null;
   verdict?: KitVerdictType | null;
   verdictNote?: string | null;
   joursUtilises?: number[];
@@ -247,6 +250,12 @@ export interface CarnetKit {
   /** Somme des poids connus. `null` si aucun poids n'est renseigné. */
   totalWeightG: number | null;
   items: CarnetKitItemRow[];
+}
+
+export interface CarnetMemberKit extends CarnetKit {
+  userId: string;
+  kitId?: string | null;
+  kitName?: string | null;
 }
 
 export interface CarnetLiker {
@@ -440,6 +449,8 @@ export interface CarnetDetail {
   /** Totaux du carnet (`buildSummary`). */
   summary: CarnetSummary;
   kit: CarnetKit;
+  /** Kits par participant (clé = userId), quand plusieurs membres ont un kit lié ou partagé. */
+  memberKits?: Record<string, CarnetMemberKit>;
   trace: unknown | null;
   /** Vrai quand la trace affichée a subi un masque (visiteur). */
   traceMasked?: boolean;

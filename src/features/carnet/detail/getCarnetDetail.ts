@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/api/serviceClient';
 import { createClient } from '@/lib/supabase/server';
 import { buildCarnetDetail } from './buildCarnetDetail';
 import { enrichCarnetElevation } from './enrichElevation';
+import { loadCarnetMemberKits } from './memberKits';
 import { isSessionInCarnetWindow, pickCarnetTraceSession } from './trace';
 import {
   isShareableTraceVisibility,
@@ -775,6 +776,20 @@ export async function getCarnetDetail(id: string) {
     publicZone,
     budget,
   });
+
+  const memberKits = await loadCarnetMemberKits({
+    client: sessionClient,
+    participantIds: detail.participants.map((p) => p.userId),
+    authorId: detail.author?.id ?? carnet.author_id ?? null,
+    authorCarnetKit: detail.kit,
+    sessions,
+    viewerId,
+    isCarnetParticipant,
+  });
+
+  if (memberKits) {
+    detail.memberKits = memberKits;
+  }
 
   /* Le profil altimétrique manque partout en production : `elevationM` n'est
      renseigné par aucune sortie. `enrichCarnetElevation` demande l'altitude des
