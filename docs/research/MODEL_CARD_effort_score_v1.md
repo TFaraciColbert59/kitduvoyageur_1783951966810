@@ -110,4 +110,4 @@ Le déploiement d'`effort-score-v1` est **strictement additif et isolé derrièr
 **Rollback immédiat (< 5 s, zéro migration destructive)** :
 1. Basculer `effort_score_v1_shadow = false` (et `group_prediction_v2_shadow = false`) dans `public.feature_flags`.
 2. `resolveEffortShadowRollout()` bascule instantanément en `flag_off_instant_noop` : aucune écriture supplémentaire dans `public.effort_scores`, le moteur primaire `a3-legacy` reste inchangé pour 100 % des utilisateurs.
-3. Si une suppression complète du schéma additif est souhaitée ultérieurement en environnement de test, exécuter `supabase/migrations_down/20261120143000_effort_engine_v1.sql`.
+3. Si une suppression complète du schéma additif est souhaitée ultérieurement en environnement de test, exécuter `supabase/migrations_down/20261120143000_effort_engine_v1.down.sql`.

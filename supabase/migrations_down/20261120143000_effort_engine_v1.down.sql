@@ -1,6 +1,6 @@
 -- ==============================================================================
 -- ROLLBACK LOT P3 — PERSISTANCE SUPABASE, RLS & SHADOW MODE (Effort Engine V1)
--- Migration down : 20261120143000_effort_engine_v1.sql
+-- Migration down : 20261120143000_effort_engine_v1.down.sql
 --
 -- Annule proprement les ajouts de 20261120143000_effort_engine_v1.sql sans
 -- jamais détruire les données préexistantes (notamment les consentements

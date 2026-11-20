@@ -3,7 +3,7 @@
 **Projet Supabase cible** : `icxyvwzfjbflcbqukpfz` (PostgreSQL `17.6.1.141`)  
 **Branche applicative** : `feat/effort-engine-v1` → `main`  
 **Migration UP** : `supabase/migrations/20261120143000_effort_engine_v1.sql`  
-**Migration DOWN (rollback schéma)** : `supabase/migrations_down/20261120143000_effort_engine_v1.sql`  
+**Migration DOWN (rollback schéma)** : `supabase/migrations_down/20261120143000_effort_engine_v1.down.sql`  
 **Portée de mise en service** : Shadow Mode silencieux uniquement (`effort_score_v1_shadow`), sans exposition utilisateur en production tant que la phase shadow n'est pas validée.
 
 > **Règle d'ordre stricte** : Exécuter les étapes **A → B → C** dans cet ordre exact. Ne jamais activer `effort_score_v1_shadow = true` avant que la migration DB (Étape A) ET le déploiement Vercel de `main` (Étape B) ne soient tous deux **verts**.
@@ -263,10 +263,10 @@ UPDATE public.feature_flags SET enabled = false, updated_at = now() WHERE id = '
 
 #### 2. Rollback schéma complet (uniquement si retrait complet de la migration P3 requis)
 
-La migration descendante `supabase/migrations_down/20261120143000_effort_engine_v1.sql` annule proprement les objets P3 (flags shadow, tables `group_prediction_members` / `effort_scores` / `user_physiology`, colonnes additives et contrainte CHECK A1) **tout en préservant intégralement** la ligne historique `'personal_performance'` (`8b450312-7106-4025-8954-a8a43d35abf4`) et les lignes solo existantes de `route_predictions` :
+La migration descendante `supabase/migrations_down/20261120143000_effort_engine_v1.down.sql` annule proprement les objets P3 (flags shadow, tables `group_prediction_members` / `effort_scores` / `user_physiology`, colonnes additives et contrainte CHECK A1) **tout en préservant intégralement** la ligne historique `'personal_performance'` (`8b450312-7106-4025-8954-a8a43d35abf4`) et les lignes solo existantes de `route_predictions` :
 
 ```bash
 psql "$SUPABASE_PROD_DB_URL" \
   -v ON_ERROR_STOP=1 \
-  -f supabase/migrations_down/20261120143000_effort_engine_v1.sql
+  -f supabase/migrations_down/20261120143000_effort_engine_v1.down.sql
 ```

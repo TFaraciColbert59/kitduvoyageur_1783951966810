@@ -504,7 +504,7 @@ describe('Lot P3 — Vérification structurelle de la migration SQL, du rollback
     'utf8'
   );
   const downSql = readFileSync(
-    path.join(ROOT, 'supabase/migrations_down/20261120143000_effort_engine_v1.sql'),
+    path.join(ROOT, 'supabase/migrations_down/20261120143000_effort_engine_v1.down.sql'),
     'utf8'
   );
   const pgtapSql = readFileSync(
