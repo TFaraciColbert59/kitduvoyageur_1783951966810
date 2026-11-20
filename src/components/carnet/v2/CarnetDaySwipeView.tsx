@@ -98,7 +98,7 @@ function parseDayWeather(weather: string): {
   temp: string | null;
 } {
   const w = weather.toLowerCase();
-  const tempMatch = weather.match(/-?\d+\s*°\s*[cf]?/i);
+  const tempMatch = weather.match(/-?\d+\s*°/);
   const temp = tempMatch ? tempMatch[0].replace(/\s+/g, '') : null;
 
   if (/orage|tonnerre|storm|éclair/.test(w)) return { Icon: CloudLightning, temp };
