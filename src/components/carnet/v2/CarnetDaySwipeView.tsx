@@ -2,6 +2,16 @@
 
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  Cloud,
+  CloudFog,
+  CloudLightning,
+  CloudRain,
+  CloudSun,
+  Snowflake,
+  Sun,
+  Wind,
+} from 'lucide-react';
 import type {
   CarnetDay,
   CarnetEtapeDay,
@@ -81,6 +91,25 @@ interface DayView {
   durationText: string | null;
   weather: string | null;
   moments: CarnetMomentItem[];
+}
+
+function parseDayWeather(weather: string): {
+  Icon: typeof Sun;
+  temp: string | null;
+} {
+  const w = weather.toLowerCase();
+  const tempMatch = weather.match(/-?\d+\s*°\s*[cf]?/i);
+  const temp = tempMatch ? tempMatch[0].replace(/\s+/g, '') : null;
+
+  if (/orage|tonnerre|storm|éclair/.test(w)) return { Icon: CloudLightning, temp };
+  if (/neige|snow|grésil|flocon/.test(w)) return { Icon: Snowflake, temp };
+  if (/pluie|averse|rain|bruine|humide/.test(w)) return { Icon: CloudRain, temp };
+  if (/brouillard|brume|fog/.test(w)) return { Icon: CloudFog, temp };
+  if (/vent|rafale|wind/.test(w)) return { Icon: Wind, temp };
+  if (/éclairc|partiellement|variable|voilé|mitigé/.test(w)) return { Icon: CloudSun, temp };
+  if (/nuage|couvert|gris|cloud/.test(w)) return { Icon: Cloud, temp };
+  if (/soleil|ensoleill|dégagé|clair|beau|sun|clear|☀️/.test(w)) return { Icon: Sun, temp };
+  return { Icon: CloudSun, temp };
 }
 
 function buildDayViews({
@@ -361,7 +390,20 @@ export function CarnetDaySwipeView({
                 {dayMeta ? <span className={cx(styles.dayheadMeta)}>{dayMeta}</span> : null}
               </div>
               {currentDay?.weather ? (
-                <span className={cx(styles.dayheadWeather)}>{currentDay.weather}</span>
+                (() => {
+                  const { Icon, temp } = parseDayWeather(currentDay.weather);
+                  return (
+                    <span
+                      className={cx(styles.dayheadWeather)}
+                      title={currentDay.weather}
+                      aria-label={currentDay.weather}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Icon size={14} strokeWidth={2} aria-hidden="true" />
+                      {temp ? <span>{temp}</span> : null}
+                    </span>
+                  );
+                })()
               ) : null}
             </div>
 
