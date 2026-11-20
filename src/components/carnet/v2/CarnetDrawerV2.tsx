@@ -981,7 +981,7 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
-      {/* Pilule « Reprendre le tracé » dans le volet Chiffres -> redirige vers Compas / Itinéraire */}
+      {/* Pilule « Reprendre le tracé » en bas à droite (au-dessus du sélecteur) -> Compas / Itinéraire */}
       {activeSlot === 'chiffres' ? (
         <button
           type="button"
@@ -994,20 +994,6 @@ export function CarnetDrawerV2({
         >
           <Route size={14} aria-hidden="true" />
           <span>Reprendre le tracé</span>
-        </button>
-      ) : null}
-
-      {/* Reprise de lecture — au-dessus de la pilule « Reprendre ce kit » (30). */}
-      {resumePill && resumePill.key === activeLensKey ? (
-        <button
-          type="button"
-          className="lkdv-pill-reprendre lkdv-pill-resume"
-          style={{ left: '10px', bottom: '48px', zIndex: 21 }}
-          onClick={resumeReading}
-          aria-label="Reprendre la lecture"
-        >
-          <Bookmark size={14} />
-          <span>Reprendre</span>
         </button>
       ) : null}
 
