@@ -980,12 +980,17 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
-      {/* Pilule « Reprendre le tracé » en bas à droite (au-dessus du sélecteur) -> Compas / Itinéraire */}
+      {/* Pilule « Reprendre le tracé » en bas à droite (au même niveau que le sélecteur) -> Compas / Itinéraire */}
       {activeSlot === 'chiffres' ? (
         <button
           type="button"
           className="lkdv-pill-reprendre"
-          style={{ right: '10px', left: 'auto', bottom: '46px', zIndex: 20 }}
+          style={{
+            right: currentSlotLenses.length >= 4 ? '192px' : '150px',
+            left: 'auto',
+            bottom: '10px',
+            zIndex: 20,
+          }}
           onClick={() => {
             onClose();
             router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
