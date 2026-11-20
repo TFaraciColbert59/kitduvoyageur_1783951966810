@@ -11,11 +11,28 @@ import {
   YAxis,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { Route, Timer, TrendingUp, Wallet } from 'lucide-react';
+import { Copy, Flame, Route, Timer, TrendingUp, Users, Wallet } from 'lucide-react';
+import { toast } from 'sonner';
 import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { AnimatedNumber, CARNET_SPRING, StaggerCard, StaggerList } from './CarnetDrawerMotion';
 
 const CHART_COLORS = ['#1b4332', '#2d6a4f', '#40916c', '#52b788', '#74c69d'] as const;
+
+function parseDurationHours(text?: string | null): number {
+  if (!text) return 0;
+  const hMatch = text.match(/(\d+)\s*h/i);
+  const mMatch = text.match(/h\s*(\d+)/i);
+  const h = hMatch ? Number(hMatch[1]) : 0;
+  const m = mMatch ? Number(mMatch[1]) : 0;
+  return Number((h + m / 60).toFixed(2));
+}
+
+function formatHoursLabel(hours: number): string {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  if (h === 0) return `${m} min`;
+  return m > 0 ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`;
+}
 
 interface CarnetChiffresDrawerBodyProps {
   detail: CarnetDetail;
@@ -26,42 +43,93 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
   const canObserveResize = typeof ResizeObserver !== 'undefined';
 
   const dayMetrics = useMemo(() => {
-    if (detail.days.length > 0) {
-      return detail.days.map((d) => ({
-        label: `J${d.index}`,
-        km: d.distanceKm ? Number(d.distanceKm.toFixed(1)) : 0,
-        elev: d.elevationM ? Math.round(d.elevationM) : 0,
-        hours: d.durationS ? Number((d.durationS / 3600).toFixed(1)) : 0,
-      }));
-    }
-    return detail.etapes.map((e) => ({
-      label: `J${e.dayNumber}`,
-      km: e.distanceKm ? Number(e.distanceKm.toFixed(1)) : 0,
-      elev: e.elevationM ? Math.round(e.elevationM) : 0,
-      hours: 0,
-    }));
+    const dayNums = new Set<number>();
+    for (const d of detail.days) dayNums.add(d.dayNumber ?? d.index);
+    for (const e of detail.etapes) dayNums.add(e.dayNumber);
+    const sorted = Array.from(dayNums).sort((a, b) => a - b);
+
+    return sorted.map((num) => {
+      const d = detail.days.find((x) => (x.dayNumber ?? x.index) === num);
+      const e = detail.etapes.find((x) => x.dayNumber === num);
+      const km = e?.distanceKm ?? d?.distanceKm ?? 0;
+      const elev = e?.elevationM ?? d?.elevationM ?? 0;
+      const hours = d?.durationS
+        ? Number((d.durationS / 3600).toFixed(2))
+        : parseDurationHours(e?.durationText);
+      const effortKm = Math.round(km + elev / 100);
+      return {
+        label: `J${num}`,
+        km: Number(km.toFixed(1)),
+        elev: Math.round(elev),
+        hours,
+        effortKm,
+      };
+    });
   }, [detail.days, detail.etapes]);
 
+  const totalHours = useMemo(
+    () => dayMetrics.reduce((s, d) => s + d.hours, 0),
+    [dayMetrics],
+  );
+  const totalKm = useMemo(() => {
+    const sumSteps = dayMetrics.reduce((s, d) => s + d.km, 0);
+    return detail.distanceKm && detail.distanceKm > 0 ? detail.distanceKm : sumSteps;
+  }, [dayMetrics, detail.distanceKm]);
+  const totalElev = useMemo(() => {
+    const sumSteps = dayMetrics.reduce((s, d) => s + d.elev, 0);
+    return detail.elevationM && detail.elevationM > 0 ? detail.elevationM : sumSteps;
+  }, [dayMetrics, detail.elevationM]);
+
+  const copySummary = () => {
+    const lines = [
+      `${detail.title}`,
+      `Distance : ${Math.round(totalKm)} km · D+ : +${Math.round(totalElev)} m`,
+      totalHours > 0 ? `Temps de marche : ${formatHoursLabel(totalHours)}` : null,
+      detail.kit.totalWeightG
+        ? `Sac : ${(detail.kit.totalWeightG / 1000).toFixed(1)} kg`
+        : null,
+    ].filter(Boolean);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      void navigator.clipboard.writeText(lines.join(' · '));
+      toast.success('Bilan d’expédition copié');
+    }
+  };
+
   if (lensId === 'distance') {
-    const totalKm = detail.distanceKm ? Math.round(detail.distanceKm) : null;
     const daysCount = Math.max(1, dayMetrics.length || detail.days.length);
-    const avgKm = detail.distanceKm ? Number((detail.distanceKm / daysCount).toFixed(1)) : null;
+    const avgKm = totalKm > 0 ? Number((totalKm / daysCount).toFixed(1)) : null;
     const maxDay = dayMetrics.reduce(
       (best, cur) => (cur.km > best.km ? cur : best),
       { label: '—', km: 0 },
     );
+    const effortTotal = Math.round(totalKm + totalElev / 100);
+    const density = totalKm > 0 ? Math.round(totalElev / totalKm) : 0;
 
     return (
       <StaggerList className="lkdv-carnet-drawer-pane">
         <StaggerCard className="lkdv-carnet-kpi-hero">
-          <div className="lkdv-carnet-kpi-hero-top">
-            <span className="lkdv-carnet-kpi-ico">
-              <Route size={16} aria-hidden="true" />
-            </span>
-            <span className="lkdv-carnet-kit-eyebrow">Distance totale</span>
+          <div
+            className="lkdv-carnet-kpi-hero-top"
+            style={{ justifyContent: 'space-between', width: '100%' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="lkdv-carnet-kpi-ico">
+                <Route size={16} aria-hidden="true" />
+              </span>
+              <span className="lkdv-carnet-kit-eyebrow">Distance totale</span>
+            </div>
+            <button
+              type="button"
+              className="lkdv-carnet-btn-soft"
+              style={{ height: 28, padding: '0 10px', fontSize: 11 }}
+              onClick={copySummary}
+            >
+              <Copy size={11} />
+              <span>Copier bilan</span>
+            </button>
           </div>
           <div className="lkdv-carnet-kpi-hero-val">
-            <AnimatedNumber value={totalKm} suffix=" km" />
+            <AnimatedNumber value={Math.round(totalKm)} suffix=" km" />
           </div>
           <div className="lkdv-carnet-kpi-subrow">
             <span>
@@ -69,9 +137,30 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
             </span>
             {maxDay.km > 0 ? (
               <span>
-                Record : <b>{maxDay.label} ({maxDay.km} km)</b>
+                Étape reine : <b>{maxDay.label} ({maxDay.km} km)</b>
               </span>
             ) : null}
+          </div>
+        </StaggerCard>
+
+        <StaggerCard className="lkdv-carnet-kpi-grid-3">
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Km-effort</small>
+            <b>
+              <AnimatedNumber value={effortTotal} suffix=" km" />
+            </b>
+          </div>
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Dénivelé / km</small>
+            <b>
+              <AnimatedNumber value={density} prefix="+" suffix=" m/km" />
+            </b>
+          </div>
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Allure moy.</small>
+            <b>
+              {totalHours > 0 ? `${(totalKm / totalHours).toFixed(1)} km/h` : '—'}
+            </b>
           </div>
         </StaggerCard>
 
@@ -116,13 +205,14 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
   }
 
   if (lensId === 'denivele') {
-    const totalElev = detail.elevationM ? Math.round(detail.elevationM) : null;
     const daysCount = Math.max(1, dayMetrics.length || detail.days.length);
-    const avgElev = detail.elevationM ? Math.round(detail.elevationM / daysCount) : null;
+    const avgElev = totalElev > 0 ? Math.round(totalElev / daysCount) : null;
     const maxDay = dayMetrics.reduce(
       (best, cur) => (cur.elev > best.elev ? cur : best),
       { label: '—', elev: 0 },
     );
+    const vam = totalHours > 0 ? Math.round(totalElev / totalHours) : null;
+    const eiffel = Number((totalElev / 330).toFixed(1));
 
     return (
       <StaggerList className="lkdv-carnet-drawer-pane">
@@ -134,7 +224,7 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
             <span className="lkdv-carnet-kit-eyebrow">Dénivelé positif</span>
           </div>
           <div className="lkdv-carnet-kpi-hero-val">
-            <AnimatedNumber value={totalElev} prefix="+" suffix=" m" />
+            <AnimatedNumber value={Math.round(totalElev)} prefix="+" suffix=" m" />
           </div>
           <div className="lkdv-carnet-kpi-subrow">
             <span>
@@ -145,6 +235,21 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                 Plus forte étape : <b>{maxDay.label} (+{maxDay.elev} m)</b>
               </span>
             ) : null}
+          </div>
+        </StaggerCard>
+
+        <StaggerCard className="lkdv-carnet-kpi-grid-3">
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Vitesse asc.</small>
+            <b>{vam ? `${vam} m/h` : '—'}</b>
+          </div>
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Tours Eiffel</small>
+            <b>{eiffel} ×</b>
+          </div>
+          <div className="lkdv-carnet-kpi-mini">
+            <small>Jours actifs</small>
+            <b>{daysCount} j</b>
           </div>
         </StaggerCard>
 
@@ -189,9 +294,10 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
   }
 
   if (lensId === 'duree') {
-    const daysCount = detail.days.length || detail.etapes.length || 1;
-    const totalHours = dayMetrics.reduce((s, d) => s + d.hours, 0);
+    const daysCount = Math.max(1, dayMetrics.length || detail.days.length);
     const maxHours = Math.max(1, ...dayMetrics.map((d) => d.hours));
+    const avgHours = totalHours > 0 ? totalHours / daysCount : 0;
+    const estCalories = totalHours > 0 ? Math.round(totalHours * 520) : 0;
 
     return (
       <StaggerList className="lkdv-carnet-drawer-pane">
@@ -200,22 +306,49 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
             <span className="lkdv-carnet-kpi-ico">
               <Timer size={16} aria-hidden="true" />
             </span>
-            <span className="lkdv-carnet-kit-eyebrow">Durée d’expédition</span>
+            <span className="lkdv-carnet-kit-eyebrow">Durée & Rythme</span>
           </div>
           <div className="lkdv-carnet-kpi-hero-val">
-            <AnimatedNumber value={daysCount} suffix={daysCount > 1 ? ' jours' : ' jour'} />
+            {totalHours > 0 ? (
+              <span>{formatHoursLabel(totalHours)}</span>
+            ) : (
+              <AnimatedNumber value={daysCount} suffix={daysCount > 1 ? ' jours' : ' jour'} />
+            )}
           </div>
           <div className="lkdv-carnet-kpi-subrow">
             <span>
-              Temps actif mesuré :{' '}
-              <b>{totalHours > 0 ? `${totalHours.toFixed(1)} h` : 'Non chronométré'}</b>
+              Étapes : <b>{daysCount} jours</b>
             </span>
+            {avgHours > 0 ? (
+              <span>
+                Moyenne : <b>{formatHoursLabel(avgHours)}/j</b>
+              </span>
+            ) : null}
           </div>
         </StaggerCard>
 
+        {estCalories > 0 ? (
+          <StaggerCard className="lkdv-carnet-kpi-grid-3">
+            <div className="lkdv-carnet-kpi-mini">
+              <small>Énergie est.</small>
+              <b>
+                <AnimatedNumber value={estCalories} suffix=" kcal" />
+              </b>
+            </div>
+            <div className="lkdv-carnet-kpi-mini">
+              <small>Allure</small>
+              <b>{(totalKm / totalHours).toFixed(1)} km/h</b>
+            </div>
+            <div className="lkdv-carnet-kpi-mini">
+              <small>Plus longue</small>
+              <b>{formatHoursLabel(maxHours)}</b>
+            </div>
+          </StaggerCard>
+        ) : null}
+
         {dayMetrics.some((d) => d.hours > 0) ? (
           <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Effort par journée</span>
+            <span className="lkdv-carnet-kit-eyebrow">Temps de marche par étape</span>
             <div className="lkdv-carnet-kit-bars">
               {dayMetrics.map((d, idx) => (
                 <div key={d.label} className="lkdv-carnet-kit-bar-row">
@@ -231,7 +364,7 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                       style={{ background: CHART_COLORS[idx % CHART_COLORS.length] }}
                     />
                   </div>
-                  <span className="lkdv-carnet-kit-bar-val">{d.hours} h</span>
+                  <span className="lkdv-carnet-kit-bar-val">{formatHoursLabel(d.hours)}</span>
                 </div>
               ))}
             </div>
@@ -243,7 +376,7 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
 
   // lensId === 'budget'
   if (detail.budget) {
-    const currency = detail.budget.currency ?? '€';
+    const currency = detail.budget.currency === 'EUR' ? '€' : detail.budget.currency ?? '€';
     const total =
       typeof detail.budget.total === 'number'
         ? detail.budget.total
@@ -251,10 +384,36 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
           ? Math.round(detail.budget.totalCents / 100)
           : 0;
     const participantCount = Math.max(1, detail.participants.length);
+    const daysCount = Math.max(1, dayMetrics.length || detail.days.length);
     const perPerson =
       typeof detail.budget.perPersonCents === 'number'
         ? Math.round(detail.budget.perPersonCents / 100)
         : Math.round(total / participantCount);
+    const perDay = Math.round(total / daysCount);
+
+    // Balance per participant (Tricount style)
+    const paidByUser = new Map<string, number>();
+    for (const item of detail.budget.items) {
+      const uid = item.paidByUserId ?? detail.author?.id ?? 'author';
+      const amt =
+        typeof item.amount === 'number'
+          ? item.amount
+          : typeof item.amountCents === 'number'
+            ? item.amountCents / 100
+            : 0;
+      paidByUser.set(uid, (paidByUser.get(uid) ?? 0) + amt);
+    }
+
+    const balances = detail.participants.map((p) => {
+      const paid = Math.round(paidByUser.get(p.userId) ?? 0);
+      const net = Math.round(paid - perPerson);
+      return {
+        userId: p.userId,
+        name: p.name?.split(' ')[0] || p.handle || 'Voyageur',
+        paid,
+        net,
+      };
+    });
 
     const byCategory = Array.from(
       detail.budget.items.reduce((acc, item) => {
@@ -287,10 +446,32 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
               Par personne : <b>{perPerson} {currency}</b>
             </span>
             <span>
-              Dépenses : <b>{detail.budget.items.length}</b>
+              Par jour : <b>{perDay} {currency}/j</b>
             </span>
           </div>
         </StaggerCard>
+
+        {balances.length > 1 ? (
+          <StaggerCard className="lkdv-carnet-chart-card">
+            <span className="lkdv-carnet-kit-eyebrow">
+              <Users size={11} style={{ display: 'inline', marginRight: 4 }} />
+              Équilibre du groupe
+            </span>
+            <div className="lkdv-carnet-cards-col">
+              {balances.map((b) => (
+                <div key={b.userId} className="lkdv-carnet-budget-row">
+                  <div>
+                    <b>{b.name}</b>
+                    <small>Avancé : {b.paid} {currency}</small>
+                  </div>
+                  <b style={{ color: b.net >= 0 ? '#15803d' : '#b45309' }}>
+                    {b.net >= 0 ? `+${b.net}` : b.net} {currency}
+                  </b>
+                </div>
+              ))}
+            </div>
+          </StaggerCard>
+        ) : null}
 
         {byCategory.length > 0 && canObserveResize ? (
           <StaggerCard className="lkdv-carnet-chart-card">
@@ -306,7 +487,7 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                   <YAxis
                     type="category"
                     dataKey="name"
-                    width={82}
+                    width={92}
                     tick={{ fontSize: 11, fill: '#111827' }}
                     axisLine={false}
                     tickLine={false}
@@ -350,7 +531,7 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
 
   return (
     <div className="lkdv-carnet-empty-card">
-      <BarChart size={22} aria-hidden="true" />
+      <Flame size={22} aria-hidden="true" />
       <b>Aucune donnée disponible</b>
       <p>Les statistiques apparaîtront dès que les données de sortie seront enregistrées.</p>
     </div>

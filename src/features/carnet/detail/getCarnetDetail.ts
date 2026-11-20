@@ -556,7 +556,7 @@ export async function getCarnetDetail(id: string) {
     isCarnetParticipant && carnet.trip_id
       ? supabase
           .from('trip_expenses')
-          .select('id, label, amount_cents, currency, category, paid_by_user_id, date')
+          .select('id, title, amount, currency, category, payer_id, expense_date')
           .eq('trip_id', carnet.trip_id)
       : Promise.resolve({ data: [] }),
   ]);
@@ -666,29 +666,37 @@ export async function getCarnetDetail(id: string) {
   let budget: CarnetBudget | null = null;
   const budgetRows = (budgetRes?.data ?? []) as Array<{
     id: string;
-    label: string;
-    amount_cents: number;
+    title: string;
+    amount: number;
     currency: string;
     category: string | null;
-    paid_by_user_id: string | null;
-    date: string | null;
+    payer_id: string | null;
+    expense_date: string | null;
   }>;
   if (isCarnetParticipant && budgetRows.length > 0) {
-    const totalCents = budgetRows.reduce((sum, item) => sum + (item.amount_cents ?? 0), 0);
+    const totalCents = budgetRows.reduce(
+      (sum, item) => sum + Math.round((Number(item.amount) || 0) * 100),
+      0,
+    );
     const participantCount = Math.max(1, participants.length);
     budget = {
       totalCents,
+      total: Math.round(totalCents / 100),
       currency: budgetRows[0]?.currency ?? 'EUR',
       perPersonCents: Math.round(totalCents / participantCount),
-      items: budgetRows.map((b) => ({
-        id: b.id,
-        label: b.label,
-        amountCents: b.amount_cents,
-        currency: b.currency,
-        category: b.category,
-        paidByUserId: b.paid_by_user_id,
-        date: b.date,
-      })),
+      items: budgetRows.map((b) => {
+        const cents = Math.round((Number(b.amount) || 0) * 100);
+        return {
+          id: b.id,
+          label: b.title,
+          amountCents: cents,
+          amount: Number(b.amount) || 0,
+          currency: b.currency,
+          category: b.category,
+          paidByUserId: b.payer_id,
+          date: b.expense_date,
+        };
+      }),
     };
   }
 
