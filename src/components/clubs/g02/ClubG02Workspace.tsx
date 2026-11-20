@@ -460,8 +460,8 @@ export function ClubG02Workspace({
             nowIso={nowIso}
             shareUrl={
               typeof window !== 'undefined'
-                ? `${window.location.origin}/sorties/${eventDetailData.event.id}`
-                : `/sorties/${eventDetailData.event.id}`
+                ? `${window.location.origin}/sorties/${eventDetailData.event.id}?source=club`
+                : `/sorties/${eventDetailData.event.id}?source=club`
             }
             latestRevision={eventDetailData.latestRevision}
             routeSyncState={eventDetailData.routeSyncState}
@@ -483,6 +483,9 @@ export function ClubG02Workspace({
               })
             }
             onSyncRoute={() => eventAction(eventDetailData.event.id, { action: 'sync_route' })}
+            onDecideRoute={(revision, adopt) => eventAction(eventDetailData.event.id, {
+              action: 'decide_route', revision, adopt,
+            })}
             onCopyShareUrl={async (url) => {
               if (typeof navigator !== 'undefined' && navigator.clipboard) {
                 await navigator.clipboard.writeText(url);

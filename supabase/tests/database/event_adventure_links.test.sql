@@ -118,6 +118,8 @@ SELECT lives_ok(format('SELECT public.set_event_trip(%L, %L, NULL)', 'club_event
 SELECT is((SELECT count(*) FROM public.resolve_event_trip('club_event', :'event')), 0::bigint, 'Le lien retiré ne résout plus rien');
 
 RESET ROLE;
+\ir ../../migrations_down/20261119205238_decide_club_event_route.down.sql
+\ir ../../migrations_down/20261119204829_publish_club_event_route.down.sql
 \ir ../../migrations_down/20261119202544_cancel_club_event.down.sql
 \ir ../../migrations_down/20261119195142_link_events_to_canonical_trips.down.sql
 SELECT ok(to_regclass('trip_private.event_trip_links') IS NULL

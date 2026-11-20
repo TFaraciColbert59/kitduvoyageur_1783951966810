@@ -246,6 +246,13 @@
   transform: scale(0.96);
 }
 
+#parcours { scroll-margin-top: var(--space-4); }
+.lkdv-event-route-map {
+  height: min(46svh, 280px);
+  overflow: hidden;
+  border-radius: var(--lkv-radius-card);
+}
+
 .lkdv-event-hub-form {
   display: grid;
   gap: 8px;

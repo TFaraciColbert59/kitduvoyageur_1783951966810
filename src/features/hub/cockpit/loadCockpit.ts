@@ -10,13 +10,21 @@ import { buildCockpitReservations } from './booking';
 import { buildCockpit, type CockpitData } from './model';
 import { momentClock } from './day';
 
+type ClubRouteUpdateRow = {
+  event_id: string;
+  event_title: string;
+  revision: number;
+  adopted_revision: number | null;
+  decision_pending: boolean;
+};
+
 export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> {
   const cockpit = buildCockpit(data);
   const { trip } = data;
   if (!trip) return cockpit;
 
   const supabase = await createClient();
-  const [session, profiles, bookings, carnets, kit] = await Promise.all([
+  const [session, profiles, bookings, carnets, kit, clubRouteUpdates] = await Promise.all([
     supabase.auth.getUser(),
     fetchPublicProfilesWith(supabase, cockpit.people.map(({ id }) => id)),
     trip.permissions.canEdit
@@ -25,6 +33,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
     supabase.from('carnets').select('id,author_id').eq('trip_id', trip.id)
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
     trip.kit_id ? supabase.from('materiel_kits').select('name').eq('id', trip.kit_id).eq('is_trashed', false).maybeSingle() : null,
+    supabase.rpc('get_trip_club_route_updates', { p_trip_id: trip.id }),
   ]);
   const viewer = session.data.user;
   const selectedCarnet = carnets.data;
@@ -35,8 +44,19 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
       : null,
   ]) : [null, null];
 
+  const clubRouteUpdateRows: ClubRouteUpdateRow[] = Array.isArray(clubRouteUpdates.data)
+    ? (clubRouteUpdates.data as ClubRouteUpdateRow[])
+    : [];
+
   return {
     ...cockpit,
+    clubRouteUpdates: clubRouteUpdateRows.map((row) => ({
+      eventId: row.event_id,
+      title: row.event_title,
+      revision: row.revision,
+      adoptedRevision: row.adopted_revision,
+      decisionPending: row.decision_pending,
+    })),
     people: cockpit.people.map((person) => {
       const profile = profiles[person.id];
       return {

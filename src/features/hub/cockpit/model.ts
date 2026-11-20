@@ -75,6 +75,13 @@ export interface CockpitData {
     expenses: CockpitExpense[];
   } | null;
   route: Coordinate[][];
+  clubRouteUpdates?: {
+    eventId: string;
+    title: string;
+    revision: number;
+    adoptedRevision: number | null;
+    decisionPending: boolean;
+  }[];
   distance: number | null;
   elevation: number | null;
   steps: CockpitStep[];

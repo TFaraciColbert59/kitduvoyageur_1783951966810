@@ -336,6 +336,13 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       case 'carte':
         return <>
           <Map data={dayMap} fixture={fixture} onStep={(step) => go({ widget: 'carte', detail: step.id })} />
+          {data.clubRouteUpdates?.map((update) => (
+            <Action key={update.eventId} href={`/sorties/${update.eventId}?source=club#parcours`}>
+              {update.title} · {update.decisionPending ? 'Parcours à valider'
+                : update.adoptedRevision != null ? `Tracé adopté · R${update.adoptedRevision}`
+                  : `Parcours publié · R${update.revision}`}
+            </Action>
+          ))}
           {daySteps.length > 0 && <div className={styles.rows}>{stepRows('carte')}</div>}
           {!fixture && <Action href={"/hub/itineraire?jour=" + day}>Ouvrir l’itinéraire</Action>}
         </>;

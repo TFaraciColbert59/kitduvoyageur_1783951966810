@@ -7,6 +7,7 @@ import type { EventAdventureRef } from '@/features/hub/context/eventAdventureRef
 import { listOwnedTripLinkChoices } from '@/features/trips/server/discoverTrips';
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
 import EventHubLink from './EventHubLink';
+import ClubEventRouteProposal from './ClubEventRouteProposal';
 import './event-detail.css';
 
 export const dynamic = 'force-dynamic';
@@ -71,7 +72,12 @@ export default async function SortiePage({ params, searchParams }: {
   const cancelled = event.status === 'cancelled' || (isClubEventOnly && Boolean(asString(event.cancelled_at)));
   const isOrganizer = Boolean(user && user.id === event.organizer_id);
   const canLink = isOrganizer && !cancelled;
-  const [{ data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow }, linked, ownChoices] =
+  const revision = asNumber(event.route_revision);
+  const canLoadRoute = Boolean(user && isClubEventOnly && !cancelled && revision && revision > 0);
+  const [
+    { data: organizerRow }, { data: participantRows }, { data: clubRow }, { data: kitRow },
+    linked, ownChoices, { data: proposal }, { data: routeDecision }, { data: routeState },
+  ] =
     await Promise.all([
       organizerId
         ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
@@ -91,6 +97,18 @@ export default async function SortiePage({ params, searchParams }: {
         : Promise.resolve({ data: null }),
       user ? resolveEventAdventure(eventRef) : null,
       canLink && user ? listOwnedTripLinkChoices(user.id) : null,
+      canLoadRoute
+        ? supabase.from('club_event_route_revisions').select('route_name,meeting_point,distance_m,elevation_gain_m')
+          .eq('event_id', id).eq('revision', revision).not('canonical_revision_id', 'is', null).maybeSingle()
+        : { data: null },
+      canLoadRoute && user
+        ? supabase.from('club_event_route_decisions').select('adopted')
+          .eq('event_id', id).eq('user_id', user.id).eq('revision', revision).maybeSingle()
+        : { data: null },
+      canLoadRoute && user
+        ? supabase.from('club_event_route_sync').select('adopted_revision')
+          .eq('event_id', id).eq('user_id', user.id).maybeSingle()
+        : { data: null },
     ]);
 
   const participantsRaw = (participantRows ?? []) as Row[];
@@ -216,6 +234,20 @@ export default async function SortiePage({ params, searchParams }: {
       key={eventRef.kind + '/' + id}
       event={data}
       signedIn={Boolean(user)}
+      routeProposal={proposal && revision != null ? (
+        <ClubEventRouteProposal
+          key={revision}
+          eventId={id}
+          revision={revision}
+          routeName={asString(proposal.route_name)}
+          meetingPoint={asString(proposal.meeting_point)}
+          distanceM={asNumber(proposal.distance_m)}
+          elevationGainM={asNumber(proposal.elevation_gain_m)}
+          canDecide={myStatus === 'registered'}
+          decision={typeof routeDecision?.adopted === 'boolean' ? routeDecision.adopted : null}
+          adoptedRevision={asNumber(routeState?.adopted_revision)}
+        />
+      ) : null}
       hubLink={linkedChoice || choices.length > 0
         ? <EventHubLink eventRef={eventRef} linked={linkedChoice} choices={choices} />
         : null}

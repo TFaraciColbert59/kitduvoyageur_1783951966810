@@ -103,10 +103,12 @@ export default function EventDetailClient({
   event,
   signedIn,
   hubLink,
+  routeProposal,
 }: {
   event: EventDetailData;
   signedIn: boolean;
   hubLink?: React.ReactNode;
+  routeProposal?: React.ReactNode;
 }) {
   const router = useRouter();
   const { haptic } = useHapticFeedback();
@@ -426,6 +428,7 @@ export default function EventDetailClient({
       </section>
 
       {!cancelled && hubLink}
+      {!cancelled && routeProposal}
 
       <section className="lkdv-event-meta" aria-label="Détails de la sortie">
         {event.level ? (

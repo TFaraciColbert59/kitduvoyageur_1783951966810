@@ -291,7 +291,10 @@ export interface RouteRevisionSnapshot {
   revision: number;
   checksum: string;
   distanceM: number;
-  elevationGainM: number;
+  elevationGainM: number | null;
+  canonicalRevisionId?: string | null;
+  routeName?: string | null;
+  meetingPoint?: string | null;
   updatedBy: string;
   updatedAt: string;
   requiresParticipantDecision: boolean;
@@ -301,6 +304,7 @@ export interface ParticipantRouteSyncState {
   eventId: string;
   userId: string;
   lastSyncedRevision: number;
+  adoptedRevision?: number | null;
   pendingRevision: number | null;
   decisionRequired: boolean;
   revoked: boolean;
