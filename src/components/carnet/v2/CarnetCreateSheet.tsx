@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { ChevronLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { OverlaySheet } from '@/components/compte/overlay/OverlaySheet';
 import { ActionPill } from '@/components/ui/ActionPill';
 import {
@@ -15,6 +17,11 @@ import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
 import { useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
 import { formatClock } from '@/features/carnet/detail/useVoiceRecorder';
+
+const CommunityCreateSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/CreateSheetV2').then((m) => ({ default: m.CreateSheetV2 })),
+  { ssr: false },
+);
 
 /** Textes d'aide de la maquette (`PLACEH`). */
 const PLACEHOLDERS: Record<MomentType, string> = {
@@ -62,6 +69,7 @@ export function CarnetCreateSheet({
   onSubmit,
   onClose,
 }: CarnetCreateSheetProps) {
+  const { user } = useAuth();
   const [type, setType] = useState<MomentType | null>(initialType);
   const [place, setPlace] = useState(defaultPlace);
   const [main, setMain] = useState('');
@@ -129,6 +137,26 @@ export function CarnetCreateSheet({
     setMessage({ text: 'Moment ajouté.', ok: true });
     window.setTimeout(onClose, 600);
   };
+
+  if (type === 'photo' || type === 'video' || type === 'text') {
+    return (
+      <CommunityCreateSheetV2
+        open
+        initialKind="post"
+        initialPrefill={{
+          format: type === 'text' ? 'billet' : 'photo',
+          location: defaultPlace,
+          step: 1,
+        }}
+        user={user ?? null}
+        onClose={onClose}
+        onCreated={() => {
+          onClose();
+        }}
+        onRequireAuth={onClose}
+      />
+    );
+  }
 
   return (
     <OverlaySheet
