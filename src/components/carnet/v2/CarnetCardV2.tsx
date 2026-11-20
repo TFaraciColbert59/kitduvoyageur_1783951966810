@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
 import { Check, Radio } from 'lucide-react';
@@ -14,7 +15,7 @@ export interface CarnetCardV2Props {
     slot: 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage',
     lensIndex?: number
   ) => void;
-  onOpenStories: () => void;
+  onOpenStories: (startIndex?: number) => void;
   onSelectMoment: (moment: CarnetMomentItem, index: number) => void;
   onPeekMoment?: (moment: CarnetMomentItem) => void;
   isEditing?: boolean;
@@ -34,6 +35,7 @@ export function CarnetCardV2({
 }: CarnetCardV2Props) {
   const { haptic } = useHapticFeedback();
   const [failedCoverUrl, setFailedCoverUrl] = useState<string | null>(null);
+  const [seenHighlights, setSeenHighlights] = useState<ReadonlySet<string>>(() => new Set());
   const hasValidCover = Boolean(detail.coverImage && detail.coverImage !== failedCoverUrl);
   const coverInitials = (detail.title || detail.author?.name || 'LK')
     .trim()
@@ -82,27 +84,87 @@ export function CarnetCardV2({
     return { state: 'live' as const, label: `En route · J${dayNumber} sur ${daysCount}` };
   }, [daysCount, daysLabel, detail.endDate, detail.liveSharing, detail.startDate]);
 
-  // Highlight stories pills (up to 5 items)
-  const highlights = useMemo(() => {
-    const list = [];
-    // Include participants as highlights
-    for (const p of detail.participants.slice(0, 3)) {
+  // Utilisateurs du carnet affichés avec la pilule utilisateur de base (.lkdv-post-author)
+  const carnetUsers = useMemo(() => {
+    const seen = new Set<string>();
+    const list: Array<{
+      id: string;
+      userId: string | null;
+      name: string;
+      avatarUrl: string | null;
+      meta: string;
+      badge?: string;
+    }> = [];
+
+    const roleLabel = (role?: string) => {
+      if (role === 'author' || role === 'owner') return 'Auteur';
+      if (role === 'collaborator' || role === 'contributor') return 'Membre';
+      return 'Participant';
+    };
+
+    if (detail.author) {
+      const key = detail.author.id || detail.author.name;
+      seen.add(key);
       list.push({
-        id: `crew-${p.userId || p.name}`,
-        title: (p.name || 'Voyageur').split(' ')[0],
-        image: p.avatarUrl || detail.coverImage,
+        id: key,
+        userId: detail.author.id || null,
+        name: detail.author.name || 'Voyageur LKDV',
+        avatarUrl: detail.author.avatarUrl || null,
+        meta: detail.author.handle ? `@${detail.author.handle.replace(/^@/, '')}` : 'Auteur du carnet',
+        badge: 'Auteur',
       });
     }
-    // Include key photos
-    for (const m of detail.photoMoments.slice(0, 5 - list.length)) {
+
+    for (const p of detail.participants) {
+      const key = p.userId || p.id || p.name;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
       list.push({
-        id: `moment-${m.id}`,
-        title: m.caption || `J${m.dayNumber}`,
-        image: m.imageUrl || detail.coverImage,
+        id: key,
+        userId: p.userId || null,
+        name: p.name || 'Voyageur LKDV',
+        avatarUrl: p.avatarUrl || null,
+        meta: p.handle ? `@${p.handle.replace(/^@/, '')}` : roleLabel(p.role),
+        badge: roleLabel(p.role),
       });
     }
+
     return list;
-  }, [detail.coverImage, detail.participants, detail.photoMoments]);
+  }, [detail.author, detail.participants]);
+
+  // Stories À la une : uniquement les stories du carnet (groupées par jour ou par moment photo)
+  const highlights = useMemo(() => {
+    const photos = detail.photoMoments.filter((m) => Boolean(m.imageUrl));
+    if (photos.length === 0) return [];
+
+    const byDay = new Map<number, CarnetMomentItem[]>();
+    for (const m of photos) {
+      const arr = byDay.get(m.dayNumber) ?? [];
+      arr.push(m);
+      byDay.set(m.dayNumber, arr);
+    }
+
+    if (byDay.size > 1) {
+      return Array.from(byDay.entries())
+        .sort(([a], [b]) => a - b)
+        .slice(0, 5)
+        .map(([dayNum, items]) => {
+          const dayInfo = detail.days.find((d) => d.dayNumber === dayNum);
+          const first = items[0];
+          return {
+            id: `day-${dayNum}`,
+            title: dayInfo?.title?.trim() || `Jour ${dayNum}`,
+            image: first.imageUrl || detail.coverImage,
+          };
+        });
+    }
+
+    return photos.slice(0, 5).map((m) => ({
+      id: `moment-${m.id}`,
+      title: m.caption || m.title || `J${m.dayNumber}`,
+      image: m.imageUrl || detail.coverImage,
+    }));
+  }, [detail.coverImage, detail.days, detail.photoMoments]);
 
   return (
     <div className="lkdv-carnet-card" id="card" role="region" aria-label="En-tête du carnet">
@@ -216,16 +278,70 @@ export function CarnetCardV2({
           </div>
         ) : null}
 
+        {carnetUsers.length > 0 ? (
+          <div className="lkdv-carnet-users-row" role="group" aria-label="Membres du carnet">
+            {carnetUsers.map((u) => {
+              const inner = (
+                <>
+                  {u.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="lkdv-post-author-av" src={u.avatarUrl} alt="" />
+                  ) : (
+                    <span className="lkdv-post-author-av pmi-author-initial" aria-hidden="true">
+                      {u.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="lkdv-post-author-txt">
+                    <span className="lkdv-post-author-line">
+                      <b>{u.name}</b>
+                      {u.badge ? <span className="lkdv-post-author-badge">{u.badge}</span> : null}
+                    </span>
+                    <span className="lkdv-post-author-meta">{u.meta}</span>
+                  </span>
+                </>
+              );
+              return u.userId ? (
+                <Link
+                  key={u.id}
+                  href={`/profil/${u.userId}`}
+                  className="lkdv-post-author"
+                  aria-label={`${u.name} — ${u.meta}`}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <button
+                  key={u.id}
+                  type="button"
+                  className="lkdv-post-author"
+                  aria-label={`${u.name} — ${u.meta}`}
+                  onClick={() => {
+                    haptic('light');
+                    onOpenDrawerSlot('equipage', 0);
+                  }}
+                >
+                  {inner}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
         {highlights.length > 0 ? (
-          <div className="lkdv-ig-hl-row" role="group" aria-label="Sélection à la une">
-            {highlights.map((hl) => (
+          <div className="lkdv-ig-hl-row" role="group" aria-label="Stories à la une">
+            {highlights.map((hl, idx) => (
               <button
                 key={hl.id}
                 type="button"
-                className="lkdv-ig-hl"
+                className={`lkdv-ig-hl${seenHighlights.has(hl.id) ? ' seen' : ''}`}
                 onClick={() => {
                   haptic('light');
-                  onOpenStories();
+                  setSeenHighlights((prev) => {
+                    const next = new Set(prev);
+                    next.add(hl.id);
+                    return next;
+                  });
+                  onOpenStories(idx);
                 }}
                 aria-label={`Voir ${hl.title}`}
               >

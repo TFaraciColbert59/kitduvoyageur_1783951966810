@@ -124,6 +124,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     ? elevationProfile[elevationProfile.length - 1].distanceKm
     : null;
   const [storiesOpen, setStoriesOpen] = useState(false);
+  const [storyStartIndex, setStoryStartIndex] = useState(0);
   /* J'aime des stories : ce sont les j'aime des moments (`carnet_moment_likes`), les mêmes que ceux du post. */
   const [likedStories, setLikedStories] = useState<ReadonlySet<string>>(
     () =>
@@ -629,44 +630,45 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     return () => document.removeEventListener('keydown', onKey);
   }, [doUndo, maxDay, overlayOpen]);
 
-  // Prepare Stories users grouped by author
+  // Prepare Stories highlights loop (matching CarnetCardV2 "À la une" albums & Compte StoriesViewer)
   const storyUsers: StoryUser[] = useMemo(() => {
-    const byAuthor = new Map<
-      string,
-      { id: string; name: string; avatarUrl?: string; slides: StorySlide[] }
-    >();
+    const photos = detail.photoMoments.filter((m) => Boolean(m.imageUrl));
+    if (photos.length === 0) return [];
 
-    const defaultAuthor = {
-      id: detail.author?.id || 'owner',
-      name: detail.author?.name || 'Voyageur',
-      avatarUrl: detail.author?.avatarUrl || undefined,
-      slides: [] as StorySlide[],
-    };
-    byAuthor.set(defaultAuthor.id, defaultAuthor);
+    const toSlide = (moment: (typeof photos)[number]): StorySlide => ({
+      image: moment.imageUrl!,
+      caption: moment.caption || moment.title || undefined,
+      storyId: moment.id,
+      mediaType: 'image',
+    });
 
-    for (const moment of detail.photoMoments) {
-      if (!moment.imageUrl) continue;
-      const authorId = moment.authorId || defaultAuthor.id;
-      let userEntry = byAuthor.get(authorId);
-      if (!userEntry) {
-        const participant = detail.participants.find((p) => p.id === authorId);
-        userEntry = {
-          id: authorId,
-          name: participant?.name || 'Compagnon',
-          avatarUrl: participant?.avatarUrl || undefined,
-          slides: [],
-        };
-        byAuthor.set(authorId, userEntry);
-      }
-      userEntry.slides.push({
-        image: moment.imageUrl,
-        caption: moment.caption || moment.title || undefined,
-        storyId: moment.id,
-        mediaType: 'image',
-      });
+    const byDay = new Map<number, typeof photos>();
+    for (const m of photos) {
+      const arr = byDay.get(m.dayNumber) ?? [];
+      arr.push(m);
+      byDay.set(m.dayNumber, arr);
     }
 
-    return Array.from(byAuthor.values()).filter((u) => u.slides.length > 0);
+    if (byDay.size > 1) {
+      return Array.from(byDay.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([dayNum, items]) => {
+          const dayInfo = detail.days.find((d) => d.dayNumber === dayNum);
+          return {
+            id: detail.author?.id || `day-${dayNum}`,
+            name: dayInfo?.title?.trim() || `Jour ${dayNum}`,
+            avatarUrl: items[0].imageUrl || detail.author?.avatarUrl || undefined,
+            slides: items.map(toSlide),
+          };
+        });
+    }
+
+    return photos.map((m) => ({
+      id: m.authorId || detail.author?.id || `moment-${m.id}`,
+      name: m.caption || m.title || detail.author?.name || `Jour ${m.dayNumber}`,
+      avatarUrl: m.imageUrl || detail.author?.avatarUrl || undefined,
+      slides: [toSlide(m)],
+    }));
   }, [detail]);
 
   const handleStoryReply = useCallback(
@@ -849,9 +851,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           activeDay={activeDay}
           onDayChange={(day) => setActiveDay(day)}
           onOpenDrawerSlot={handleOpenDrawerSlot}
-          onOpenStories={() => {
-            if (storyUsers.length > 0) setStoriesOpen(true);
-            else showIsland('Aucune story disponible pour ce carnet');
+          onOpenStories={(startIdx = 0) => {
+            if (storyUsers.length > 0) {
+              setStoryStartIndex(Math.max(0, Math.min(startIdx, storyUsers.length - 1)));
+              setStoriesOpen(true);
+            } else {
+              showIsland('Aucune story disponible pour ce carnet');
+            }
           }}
           onSelectMoment={(moment) => openPost(moment)}
           onPeekMoment={(moment) => {
@@ -1185,7 +1191,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
       {storiesOpen && storyUsers.length > 0 ? (
         <StoriesViewer
           users={storyUsers}
-          startUser={0}
+          startUser={storyStartIndex}
           onClose={() => setStoriesOpen(false)}
           onReply={handleStoryReply}
           onToggleLike={(slide, wasLiked) => void handleStoryLike(slide, wasLiked)}
