@@ -9,18 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import {
-  ArrowRight,
-  BedDouble,
-  ChevronRight,
-  CloudSun,
-  Compass,
-  Flag,
-  Home,
-  Moon,
-  Mountain,
-  Tent,
-} from 'lucide-react';
+import { CloudSun, Flag, Moon, Mountain } from 'lucide-react';
 import type {
   CarnetDetail,
   CarnetEtapeDay,
@@ -28,28 +17,17 @@ import type {
 } from '@/features/carnet/detail/types';
 import { elevationProfileGain } from '@/features/carnet/detail/elevationProfile';
 import { CarnetAltitude } from './CarnetAltitude';
-import { AnimatedNumber, StaggerCard, StaggerList } from './CarnetDrawerMotion';
+import { AnimatedNumber } from './CarnetDrawerMotion';
+import {
+  CarnetHorizontalTimeline,
+  type HorizontalTimelineDayGroup,
+} from './CarnetHorizontalTimeline';
 
 interface CarnetRouteDrawerBodyProps {
   detail: CarnetDetail;
   lensId: string;
   onSelectEtape: (etape: CarnetEtapeDay) => void;
   onSelectNight: (night: CarnetNightItem) => void;
-}
-
-function nightIcon(type: CarnetNightItem['type']) {
-  switch (type) {
-    case 'refuge':
-      return <Home size={16} aria-hidden="true" />;
-    case 'bivouac':
-    case 'camping':
-      return <Tent size={16} aria-hidden="true" />;
-    case 'gite':
-    case 'hotel':
-      return <BedDouble size={16} aria-hidden="true" />;
-    default:
-      return <Moon size={16} aria-hidden="true" />;
-  }
 }
 
 const NIGHT_TYPE_LABELS: Record<CarnetNightItem['type'], string> = {
@@ -100,56 +78,39 @@ export function CarnetRouteDrawerBody({
         <div className="lkdv-carnet-empty-card">
           <Flag size={22} aria-hidden="true" />
           <b>Aucune étape renseignée</b>
-          <p>Le roadbook jour par jour apparaîtra ici dès qu’une étape sera ajoutée.</p>
+          <p>Le roadbook jour par jour apparaîtra ici sur la frise horizontale.</p>
         </div>
       );
     }
 
-    return (
-      <StaggerList className="lkdv-carnet-cards-col">
-        {detail.etapes.map((e) => (
-          <StaggerCard
-            key={e.id}
-            asButton
-            className="lkdv-carnet-roadbook-card"
-            onClick={() => onSelectEtape(e)}
-          >
-            <div className="lkdv-carnet-roadbook-top">
-              <span className="lkdv-carnet-day-badge">J{e.dayNumber}</span>
-              <div className="lkdv-carnet-roadbook-title">
-                <b>{e.label || `Jour ${e.dayNumber}`}</b>
-                {e.from || e.to ? (
-                  <small className="lkdv-carnet-roadbook-route">
-                    <span>{e.from || 'Départ'}</span>
-                    <ArrowRight size={11} aria-hidden="true" />
-                    <span>{e.to || 'Arrivée'}</span>
-                  </small>
-                ) : null}
-              </div>
-              <ChevronRight size={15} className="lkdv-carnet-chevron" />
-            </div>
+    const groups: HorizontalTimelineDayGroup[] = detail.etapes.map((e) => ({
+      day: e.dayNumber,
+      meta: e.weather ? e.weather.split('·')[0].trim() : undefined,
+      events: [
+        {
+          id: `et-${e.id}`,
+          day: e.dayNumber,
+          kind: 'perf',
+          badge: `Étape J${e.dayNumber}`,
+          timeLabel: e.durationText || `J${e.dayNumber}`,
+          title: e.from && e.to ? `${e.from} → ${e.to}` : e.label,
+          subtitle: [
+            e.distanceKm ? `${Number(e.distanceKm).toFixed(1)} km` : null,
+            e.elevationM ? `+${Math.round(e.elevationM)} m` : null,
+            e.note,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+          onClick: () => onSelectEtape(e),
+        },
+      ],
+    }));
 
-            <div className="lkdv-carnet-roadbook-pills">
-              {e.distanceKm ? (
-                <span className="lkdv-carnet-metric-pill">
-                  {Number(e.distanceKm).toFixed(1)} km
-                </span>
-              ) : null}
-              {e.elevationM ? (
-                <span className="lkdv-carnet-metric-pill">+{Math.round(e.elevationM)} m</span>
-              ) : null}
-              {e.durationText ? (
-                <span className="lkdv-carnet-metric-pill">{e.durationText}</span>
-              ) : null}
-              {e.overnight ? (
-                <span className="lkdv-carnet-metric-pill is-night">
-                  <Moon size={10} /> {e.overnight}
-                </span>
-              ) : null}
-            </div>
-          </StaggerCard>
-        ))}
-      </StaggerList>
+    return (
+      <CarnetHorizontalTimeline
+        groups={groups}
+        ariaLabel="Frise horizontale des étapes"
+      />
     );
   }
 
@@ -260,36 +221,32 @@ export function CarnetRouteDrawerBody({
         <div className="lkdv-carnet-empty-card">
           <Moon size={22} aria-hidden="true" />
           <b>Aucun hébergement renseigné</b>
-          <p>Les refuges, bivouacs et gîtes de la sortie s’afficheront ici.</p>
+          <p>Les refuges, bivouacs et gîtes défileront ici par jour.</p>
         </div>
       );
     }
 
+    const groups: HorizontalTimelineDayGroup[] = nights.map((n) => ({
+      day: n.dayNumber,
+      events: [
+        {
+          id: `night-${n.id}`,
+          day: n.dayNumber,
+          kind: 'night',
+          badge: NIGHT_TYPE_LABELS[n.type],
+          timeLabel: n.altitudeM ? `${n.altitudeM} m` : `J${n.dayNumber}`,
+          title: n.name,
+          subtitle: n.infos || undefined,
+          onClick: () => onSelectNight(n),
+        },
+      ],
+    }));
+
     return (
-      <StaggerList className="lkdv-carnet-cards-col">
-        {nights.map((n) => (
-          <StaggerCard
-            key={n.id}
-            asButton
-            className="lkdv-carnet-night-card"
-            onClick={() => onSelectNight(n)}
-          >
-            <span className="lkdv-carnet-night-ico">{nightIcon(n.type)}</span>
-            <div className="lkdv-carnet-night-info">
-              <div className="lkdv-carnet-night-meta">
-                <span className="lkdv-carnet-chip-dark">J{n.dayNumber}</span>
-                <span className="lkdv-carnet-chip-soft">{NIGHT_TYPE_LABELS[n.type]}</span>
-                {n.altitudeM ? (
-                  <span className="lkdv-carnet-chip-soft">{n.altitudeM} m</span>
-                ) : null}
-              </div>
-              <b>{n.name}</b>
-              {n.infos ? <p>{n.infos}</p> : null}
-            </div>
-            <ChevronRight size={15} className="lkdv-carnet-chevron" />
-          </StaggerCard>
-        ))}
-      </StaggerList>
+      <CarnetHorizontalTimeline
+        groups={groups}
+        ariaLabel="Frise horizontale des hébergements"
+      />
     );
   }
 
@@ -300,28 +257,31 @@ export function CarnetRouteDrawerBody({
       <div className="lkdv-carnet-empty-card">
         <CloudSun size={22} aria-hidden="true" />
         <b>Bulletin météo non renseigné</b>
-        <p>Les conditions rencontrées chaque jour apparaîtront ici dès qu’elles seront saisies.</p>
+        <p>Les conditions rencontrées chaque jour défileront ici sur la frise.</p>
       </div>
     );
   }
 
+  const weatherGroups: HorizontalTimelineDayGroup[] = weatherEtapes.map((e) => ({
+    day: e.dayNumber,
+    events: [
+      {
+        id: `meteo-${e.id}`,
+        day: e.dayNumber,
+        kind: 'meteo',
+        badge: 'Météo',
+        timeLabel: `Jour ${e.dayNumber}`,
+        title: e.label || `Jour ${e.dayNumber}`,
+        subtitle: e.weather || undefined,
+        onClick: () => onSelectEtape(e),
+      },
+    ],
+  }));
+
   return (
-    <StaggerList className="lkdv-carnet-cards-col">
-      {weatherEtapes.map((e) => (
-        <StaggerCard key={e.id} className="lkdv-carnet-weather-card">
-          <span className="lkdv-carnet-weather-ico">
-            <CloudSun size={18} aria-hidden="true" />
-          </span>
-          <div className="lkdv-carnet-weather-body">
-            <div className="lkdv-carnet-weather-head">
-              <b>Jour {e.dayNumber}</b>
-              {e.label ? <small>{e.label}</small> : null}
-            </div>
-            <p>{e.weather}</p>
-          </div>
-          <Compass size={14} className="lkdv-carnet-chevron" />
-        </StaggerCard>
-      ))}
-    </StaggerList>
+    <CarnetHorizontalTimeline
+      groups={weatherGroups}
+      ariaLabel="Frise horizontale météo"
+    />
   );
 }

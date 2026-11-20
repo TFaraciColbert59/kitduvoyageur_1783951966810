@@ -3845,3 +3845,13 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.lkdv-carnet-hdot.is-meteo {
+  background: #0284c7;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.25);
+}
+
+.lkdv-carnet-hbadge.is-meteo {
+  background: rgba(2, 132, 199, 0.12);
+  color: #0369a1;
+}
