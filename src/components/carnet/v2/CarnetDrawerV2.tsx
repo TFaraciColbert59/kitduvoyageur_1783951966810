@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import type { KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
+import { KitProductSheetV2 } from '@/features/community/v2/create/kit/KitProductSheetV2';
+import type { PickerProduct } from '@/features/community/create/kit/types';
+import '@/features/community/v2/create/create-v2.css';
 import {
   Compass,
   MapPin,
@@ -153,6 +157,7 @@ export function CarnetDrawerV2({
   });
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
+  const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
   const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
@@ -825,15 +830,10 @@ export function CarnetDrawerV2({
             initialUserId={kitJumpUserId}
             verdictFilter={verdictFilter}
             onVerdictFilterChange={setVerdictFilter}
-            onSelectItem={(item) =>
-              pushStack({
-                type: 'item',
-                itemId: item.id,
-                name: item.name,
-                weightG: item.weightG,
-                detailText: item.detail,
-              })
-            }
+            onSelectItem={(item) => {
+              const idx = detail.kit.findIndex((k) => k.id === item.id);
+              setSelectedKitProductIndex(idx >= 0 ? idx : 0);
+            }}
             onForkAll={(ids) => {
               void forkAllItems(ids);
             }}
@@ -982,6 +982,70 @@ export function CarnetDrawerV2({
           <span>Reprendre</span>
         </button>
       ) : null}
+
+      {selectedKitProductIndex !== null &&
+      detail.kit[selectedKitProductIndex] &&
+      typeof document !== 'undefined'
+        ? createPortal(
+            (() => {
+              const item = detail.kit[selectedKitProductIndex];
+              const totalKitWeightG = detail.kit.reduce(
+                (sum, k) => sum + (Number(k.weightG) || 0),
+                0
+              );
+              const product: PickerProduct = {
+                key: item.id,
+                source: 'inventory',
+                id: item.id,
+                name: item.name,
+                brand: null,
+                category: item.category ?? null,
+                weightG: item.weightG ?? null,
+                image: item.image ?? null,
+                wear: null,
+                conditionLabel: item.verdict ?? null,
+                description: item.detail ?? null,
+                priceLabel: null,
+                owner: detail.author
+                  ? {
+                      id: detail.author.id,
+                      name: detail.author.name,
+                      avatarUrl: detail.author.avatarUrl ?? null,
+                      trustScore: null,
+                    }
+                  : null,
+                cartable: null,
+                ownershipId: null,
+                productId: null,
+              };
+              return (
+                <KitProductSheetV2
+                  product={product}
+                  initialCategory={item.category ?? undefined}
+                  currentKitWeightG={totalKitWeightG}
+                  alreadyInKit={false}
+                  positionLabel={`${selectedKitProductIndex + 1} / ${detail.kit.length}`}
+                  hasPrev={selectedKitProductIndex > 0}
+                  hasNext={selectedKitProductIndex < detail.kit.length - 1}
+                  onPrev={() =>
+                    setSelectedKitProductIndex((i) => (i !== null && i > 0 ? i - 1 : i))
+                  }
+                  onNext={() =>
+                    setSelectedKitProductIndex((i) =>
+                      i !== null && i < detail.kit.length - 1 ? i + 1 : i
+                    )
+                  }
+                  onClose={() => setSelectedKitProductIndex(null)}
+                  onAdd={(prod) => {
+                    void forkSingleItem(prod.id);
+                    setSelectedKitProductIndex(null);
+                  }}
+                />
+              );
+            })(),
+            document.body
+          )
+        : null}
     </div>
   );
 }
