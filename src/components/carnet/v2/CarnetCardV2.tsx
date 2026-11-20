@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import type { CarnetDetail, CarnetMomentItem } from '@/features/carnet/detail/types';
 import { CarnetDaySwipeView } from './CarnetDaySwipeView';
-import { Check, ChevronRight, Radio } from 'lucide-react';
+import { Check, Radio } from 'lucide-react';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 export interface CarnetCardV2Props {
@@ -207,27 +207,14 @@ export function CarnetCardV2({
           </span>
         </div>
 
-        <div className="lkdv-ig-actions">
-          {liveStatus ? (
+        {liveStatus ? (
+          <div className="lkdv-ig-actions">
             <span className="lkdv-ig-live" data-state={liveStatus.state}>
               <Radio size={13} aria-hidden="true" />
               <span>{liveStatus.label}</span>
             </span>
-          ) : (
-            <span />
-          )}
-          <button
-            type="button"
-            className="lkdv-ig-open"
-            onClick={() => {
-              haptic('light');
-              onOpenDrawerSlot('fil');
-            }}
-          >
-            <span>Ouvrir le carnet</span>
-            <ChevronRight size={15} aria-hidden="true" />
-          </button>
-        </div>
+          </div>
+        ) : null}
 
         {highlights.length > 0 ? (
           <div className="lkdv-ig-hl-row" role="group" aria-label="Sélection à la une">
