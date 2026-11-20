@@ -1078,7 +1078,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   text-align: center;
 }
 
-/* Floating "Reprendre ce kit" pill — même niveau et design Liquid Glass que .lkdv-lens-tabs en bas à droite */
+/* Floating "Reprendre ce kit" / "Reprendre le tracé" pill — même verre Liquid Glass que .lkdv-lens-tabs */
 .lkdv-pill-reprendre {
   position: absolute;
   left: 10px;
@@ -1090,18 +1090,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)),
-    rgba(23, 29, 26, 0.76);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
-    0 10px 30px rgba(0, 0, 0, 0.24);
+  border: 0;
+  background: var(--lg-bar-bg, rgba(255, 255, 255, 0.78));
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%));
+  backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%));
+  box-shadow: var(--lg-bar-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.1));
   font: 600 12px var(--font-sans, sans-serif);
-  color: #d8f3de;
+  color: var(--lg-on, #102a1d);
   cursor: pointer;
   transition: transform 0.12s;
 }
