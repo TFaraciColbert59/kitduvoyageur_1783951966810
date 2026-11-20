@@ -108,6 +108,7 @@ export interface CarnetDrawerV2Props {
   onSelectMoment?: (moment: CarnetMomentItem, index: number) => void;
   onOpenStories?: () => void;
   isAccountDrawer?: boolean;
+  onObserveSpecies?: (species: { name: string; latin: string }) => void;
 }
 
 type StackView =
@@ -136,6 +137,7 @@ export function CarnetDrawerV2({
   onSelectMoment,
   onOpenStories,
   isAccountDrawer = false,
+  onObserveSpecies,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
   const [lensIndexBySlot, setLensIndexBySlot] = useState<Record<CarnetSlotId, number>>({
@@ -814,7 +816,13 @@ export function CarnetDrawerV2({
           />
         );
       case 'route':
-        return <CarnetPokedexDrawerBody detail={detail} lensId={lens.id} />;
+        return (
+          <CarnetPokedexDrawerBody
+            detail={detail}
+            lensId={lens.id}
+            onObserveSpecies={onObserveSpecies}
+          />
+        );
       case 'sac':
         return (
           <CarnetKitDrawerBody

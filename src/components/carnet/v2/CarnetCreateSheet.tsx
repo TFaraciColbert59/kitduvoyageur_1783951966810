@@ -44,6 +44,8 @@ export interface CarnetCreateSheetProps {
   kitItems: CarnetKitItemRow[];
   /** Type ouvert d'emblée (« + Ajouter une rencontre » → `meet`). */
   initialType?: MomentType | null;
+  initialSpeciesName?: string;
+  initialSpeciesLatin?: string;
   onSubmit: (input: unknown, file: File | null) => Promise<CreateMomentResult>;
   onClose: () => void;
 }
@@ -66,6 +68,8 @@ export function CarnetCreateSheet({
   defaultPlace = '',
   kitItems,
   initialType = null,
+  initialSpeciesName = '',
+  initialSpeciesLatin = '',
   onSubmit,
   onClose,
 }: CarnetCreateSheetProps) {
@@ -157,6 +161,8 @@ export function CarnetCreateSheet({
           location: defaultPlace,
           step: 1,
         }}
+        initialSpeciesName={initialSpeciesName}
+        initialSpeciesLatin={initialSpeciesLatin}
         day={day}
         defaultPlace={defaultPlace}
         user={user ?? null}

@@ -82,7 +82,11 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   /* Le mode modification n'existe que pour un participant (spec § 7). */
   const isEditing = editRequested && isParticipant;
   const { isOnline } = useOnlineStatus();
-  const [createSheet, setCreateSheet] = useState<{ type: MomentType | null } | null>(null);
+  const [createSheet, setCreateSheet] = useState<{
+    type: MomentType | null;
+    speciesName?: string;
+    speciesLatin?: string;
+  } | null>(null);
   const [hlEdit, setHlEdit] = useState<CarnetHighlight | null>(null);
   const [editTarget, setEditTarget] = useState<CarnetEditTarget | null>(null);
   const detailRef = useRef(detail);
@@ -1039,6 +1043,18 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           }))
         }
         onDeleted={() => router.push('/compte')}
+        onObserveSpecies={(sp) => {
+          if (!isParticipant) {
+            requireAuth();
+            return;
+          }
+          setDrawerOpen(false);
+          setCreateSheet({
+            type: 'species',
+            speciesName: sp.name,
+            speciesLatin: sp.latin,
+          });
+        }}
       />
 
       {/* Peek & Pop d'un moment (appui long 460 ms) */}
@@ -1122,6 +1138,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
           kitItems={detail.kit.items}
           initialType={createSheet.type}
+          initialSpeciesName={createSheet.speciesName}
+          initialSpeciesLatin={createSheet.speciesLatin}
           onSubmit={async (input, file) => {
             if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
             return edits.createMoment(input, file);

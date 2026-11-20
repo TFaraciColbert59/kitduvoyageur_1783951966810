@@ -33,6 +33,7 @@ import { createKindConfig, stepAriaLabel } from '@/features/community/v2/create/
 import type { CreateKindV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import { formatClock, useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
+import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
 
 const PostFormV2 = dynamic(
   () => import('@/features/community/v2/create/forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
@@ -61,6 +62,8 @@ const CARNET_CREATE_TABS: ReadonlyArray<{
 interface CarnetCommunityCreateBridgeProps {
   initialTab?: CarnetCreateTabId;
   initialPrefill?: Record<string, unknown> | null;
+  initialSpeciesName?: string;
+  initialSpeciesLatin?: string;
   day: number;
   defaultPlace?: string;
   user: User | null;
@@ -72,6 +75,8 @@ interface CarnetCommunityCreateBridgeProps {
 export function CarnetCommunityCreateBridge({
   initialTab = 'post',
   initialPrefill = null,
+  initialSpeciesName = '',
+  initialSpeciesLatin = '',
   day,
   defaultPlace = '',
   user,
@@ -93,13 +98,41 @@ export function CarnetCommunityCreateBridge({
 
   // Carnet-specific moment fields (voice, meet, species, inc)
   const [place, setPlace] = useState(defaultPlace);
-  const [caption, setCaption] = useState('');
+  const [caption, setCaption] = useState(initialSpeciesName);
   const [who, setWho] = useState('');
-  const [latin, setLatin] = useState('');
+  const [latin, setLatin] = useState(initialSpeciesLatin);
+  const [speciesSuggestions, setSpeciesSuggestions] = useState<PokedexApiSpecies[]>([]);
   const [ambiance, setAmbiance] = useState(false);
   const [momentBusy, setMomentBusy] = useState(false);
   const [momentError, setMomentError] = useState<string | null>(null);
   const voice = useVoiceRecorder();
+
+  useEffect(() => {
+    if (activeTab !== 'species') {
+      setSpeciesSuggestions([]);
+      return;
+    }
+    const q = caption.trim();
+    if (q.length < 2) {
+      setSpeciesSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      fetch(`/api/pokedex/species?q=${encodeURIComponent(q)}`)
+        .then((res) => res.json())
+        .then((data: { species?: PokedexApiSpecies[] }) => {
+          if (!cancelled && Array.isArray(data.species)) {
+            setSpeciesSuggestions(data.species.slice(0, 5));
+          }
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [activeTab, caption]);
 
   const recordedUrl = useMemo(
     () => (voice.recording ? URL.createObjectURL(voice.recording.file) : null),
@@ -388,17 +421,46 @@ export function CarnetCommunityCreateBridge({
       ) : null}
 
       {kind === 'species' ? (
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Nom scientifique (optionnel)</span>
-          <input
-            type="text"
-            className="lkdv-cv2-input"
-            value={latin}
-            maxLength={80}
-            placeholder="Capra ibex…"
-            onChange={(e) => setLatin(e.target.value)}
-          />
-        </div>
+        <>
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Nom scientifique (optionnel)</span>
+            <input
+              type="text"
+              className="lkdv-cv2-input"
+              value={latin}
+              maxLength={80}
+              placeholder="Capra ibex…"
+              onChange={(e) => setLatin(e.target.value)}
+            />
+          </div>
+          {speciesSuggestions.length > 0 ? (
+            <div className="lkdv-carnet-filter-rail" style={{ paddingBottom: 2 }}>
+              {speciesSuggestions.map((sp) => (
+                <button
+                  key={sp.taxonId}
+                  type="button"
+                  className="lkdv-carnet-filter-pill"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 4 }}
+                  onClick={() => {
+                    setCaption(sp.name);
+                    setLatin(sp.latin);
+                    setSpeciesSuggestions([]);
+                  }}
+                >
+                  {sp.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={sp.imageUrl}
+                      alt=""
+                      style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
+                    />
+                  ) : null}
+                  <span>{sp.name}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </>
       ) : null}
 
       <div className="lkdv-cv2-field">

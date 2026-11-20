@@ -267,26 +267,35 @@ function PokedexHoloCard({
 interface CarnetPokedexDrawerBodyProps {
   detail: CarnetDetail;
   lensId: string;
+  onObserveSpecies?: (species: { name: string; latin: string }) => void;
 }
 
-export function CarnetPokedexDrawerBody({ detail, lensId }: CarnetPokedexDrawerBodyProps) {
+export function CarnetPokedexDrawerBody({
+  detail,
+  lensId,
+  onObserveSpecies,
+}: CarnetPokedexDrawerBodyProps) {
   const [kingdomFilter, setKingdomFilter] = useState<'all' | PokedexKingdom>('all');
   const [query, setQuery] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<PokedexEntry | null>(null);
   const [apiSpecies, setApiSpecies] = useState<PokedexApiSpecies[]>([]);
+  const [searchSpecies, setSearchSpecies] = useState<PokedexApiSpecies[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
+
+  const fallbackLat = detail.place?.lat ?? detail.nights?.[0]?.lat ?? null;
+  const fallbackLng = detail.place?.lng ?? detail.nights?.[0]?.lng ?? null;
 
   useEffect(() => {
     let cancelled = false;
     const params = new URLSearchParams();
     if (
-      typeof detail.place?.lat === 'number' &&
-      typeof detail.place?.lng === 'number' &&
-      Number.isFinite(detail.place.lat) &&
-      Number.isFinite(detail.place.lng)
+      typeof fallbackLat === 'number' &&
+      typeof fallbackLng === 'number' &&
+      Number.isFinite(fallbackLat) &&
+      Number.isFinite(fallbackLng)
     ) {
-      params.set('lat', String(detail.place.lat));
-      params.set('lng', String(detail.place.lng));
+      params.set('lat', String(fallbackLat));
+      params.set('lng', String(fallbackLng));
     }
 
     fetch(`/api/pokedex/species?${params.toString()}`)
@@ -306,7 +315,40 @@ export function CarnetPokedexDrawerBody({ detail, lensId }: CarnetPokedexDrawerB
     return () => {
       cancelled = true;
     };
-  }, [detail.place?.lat, detail.place?.lng]);
+  }, [fallbackLat, fallbackLng]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 3) {
+      setSearchSpecies([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ q: trimmed });
+      if (
+        typeof fallbackLat === 'number' &&
+        typeof fallbackLng === 'number' &&
+        Number.isFinite(fallbackLat) &&
+        Number.isFinite(fallbackLng)
+      ) {
+        params.set('lat', String(fallbackLat));
+        params.set('lng', String(fallbackLng));
+      }
+      fetch(`/api/pokedex/species?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data: { species?: PokedexApiSpecies[] }) => {
+          if (!cancelled && Array.isArray(data.species)) {
+            setSearchSpecies(data.species);
+          }
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, fallbackLat, fallbackLng]);
 
   const entries = useMemo<PokedexEntry[]>(() => {
     const natureMoments = detail.moments.filter(
@@ -321,8 +363,8 @@ export function CarnetPokedexDrawerBody({ detail, lensId }: CarnetPokedexDrawerB
     const usedMomentIds = new Set<string>();
     const byLatin = new Map<string, PokedexEntry>();
 
-    // 1. Espèces locales réelles depuis iNaturalist
-    for (const sp of apiSpecies) {
+    // 1. Espèces locales réelles depuis iNaturalist (+ résultats de recherche)
+    for (const sp of [...apiSpecies, ...searchSpecies]) {
       const escapedLatin = sp.latin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedName = sp.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const kw = new RegExp(`${escapedName}|${escapedLatin}`, 'i');
@@ -409,7 +451,7 @@ export function CarnetPokedexDrawerBody({ detail, lensId }: CarnetPokedexDrawerB
         ...entry,
         dexNumber: `#${String(idx + 1).padStart(3, '0')}`,
       }));
-  }, [apiSpecies, detail.moments, detail.place?.locality]);
+  }, [apiSpecies, searchSpecies, detail.moments, detail.place?.locality]);
 
   const discoveredCount = useMemo(
     () => entries.filter((e) => e.discovered).length,
@@ -509,6 +551,20 @@ export function CarnetPokedexDrawerBody({ detail, lensId }: CarnetPokedexDrawerB
               <span>Fiche encyclopédique</span>
               <ExternalLink size={12} aria-hidden="true" />
             </a>
+          ) : null}
+
+          {!selectedEntry.discovered && onObserveSpecies ? (
+            <button
+              type="button"
+              className="lkdv-carnet-btn-primary"
+              style={{ alignSelf: 'flex-start', marginTop: 2 }}
+              onClick={() =>
+                onObserveSpecies({ name: selectedEntry.name, latin: selectedEntry.latin })
+              }
+            >
+              <Binoculars size={14} aria-hidden="true" />
+              <span>J’ai observé cette espèce</span>
+            </button>
           ) : null}
         </div>
 
