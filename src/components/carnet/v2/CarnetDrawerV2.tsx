@@ -55,7 +55,7 @@ import {
   StackSlideView,
 } from './CarnetDrawerMotion';
 import { CarnetFilDrawerBody } from './CarnetFilDrawerBody';
-import { CarnetRouteDrawerBody } from './CarnetRouteDrawerBody';
+import { CarnetAltitudeDrawerBody } from './CarnetAltitudeDrawerBody';
 import { CarnetPokedexDrawerBody } from './CarnetPokedexDrawerBody';
 import { CarnetKitDrawerBody } from './CarnetKitDrawerBody';
 import { CarnetChiffresDrawerBody } from './CarnetChiffresDrawerBody';
@@ -793,20 +793,8 @@ export function CarnetDrawerV2({
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
-        if (
-          lens.id === 'etapes' ||
-          lens.id === 'altitude' ||
-          lens.id === 'nuits' ||
-          lens.id === 'meteo'
-        ) {
-          return (
-            <CarnetRouteDrawerBody
-              detail={detail}
-              lensId={lens.id}
-              onSelectEtape={(etape) => pushStack({ type: 'etape', etape })}
-              onSelectNight={(night) => pushStack({ type: 'night', night })}
-            />
-          );
+        if (lens.id === 'altitude') {
+          return <CarnetAltitudeDrawerBody detail={detail} onFocusMap={onFocusMap} />;
         }
         return (
           <CarnetFilDrawerBody

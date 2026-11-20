@@ -3855,3 +3855,32 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   background: rgba(2, 132, 199, 0.12);
   color: #0369a1;
 }
+
+.lkdv-carnet-alt-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(27, 67, 50, 0.14);
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 16px rgba(16, 32, 25, 0.12);
+}
+
+.lkdv-carnet-alt-tooltip b {
+  font-size: 13px;
+  color: #1b4332;
+}
+
+.lkdv-carnet-alt-tooltip span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.lkdv-carnet-alt-tooltip small {
+  font-size: 10px;
+  color: var(--label2, #56665d);
+}
