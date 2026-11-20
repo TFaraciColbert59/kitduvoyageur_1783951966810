@@ -3240,3 +3240,101 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   font-style: italic;
   color: var(--label, #111827);
 }
+
+.lkdv-carnet-pokedex-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(27, 67, 50, 0.14);
+  color: var(--label2, #56665d);
+}
+
+.lkdv-carnet-pokedex-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 12.5px;
+  color: var(--label, #111827);
+}
+
+.lkdv-carnet-pokedex-card {
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+
+.lkdv-carnet-pokedex-card.is-holo {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(243, 232, 255, 0.72) 50%,
+    rgba(254, 243, 199, 0.75) 100%
+  );
+}
+
+.lkdv-carnet-pokedex-holo-sheen {
+  position: absolute;
+  inset: -40%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(168, 85, 247, 0.18) 52%,
+    transparent 70%
+  );
+  animation: lkdv-pokedex-sheen 4.5s ease-in-out infinite;
+}
+
+@keyframes lkdv-pokedex-sheen {
+  0%,
+  100% {
+    transform: translateX(-35%) rotate(8deg);
+  }
+  50% {
+    transform: translateX(35%) rotate(8deg);
+  }
+}
+
+.lkdv-carnet-pokedex-thumb img.is-silhouette-photo,
+.lkdv-carnet-pokedex-hero-img.is-silhouette-photo {
+  filter: grayscale(1) contrast(1.05) opacity(0.55);
+}
+
+.lkdv-carnet-pokedex-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.lkdv-carnet-pokedex-foot .lkdv-carnet-pokedex-rarity {
+  margin-top: 0;
+}
+
+.lkdv-carnet-pokedex-obs {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+  font-variant-numeric: tabular-nums;
+}
+
+.lkdv-carnet-pokedex-wiki {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.09);
+  color: #1b4332;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
