@@ -1,4 +1,6 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
+import { createClient as createSupabasePublicClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getServiceSupabase } from '@/lib/ai/serviceClient';
 import type {
@@ -10,17 +12,11 @@ import type {
 import { hashSessionForRgpd } from '@/features/affiliation/engine/affiliateEngine';
 import type { AffiliatePostbackPayload } from '@/features/affiliation/schemas/affiliate.schema';
 
-/**
- * Récupère les liens d'affiliation actifs pour un pays ou une catégorie
- */
-export async function getAffiliateLinks(options?: {
-  countryCode?: string;
-  category?: AffiliateCategory;
-  limit?: number;
-  maxAltitudeM?: number;
-}): Promise<AffiliateLink[]> {
-  const supabase = await createClient();
-
+async function fetchActiveAffiliateLinksRaw(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  countryCode?: string,
+  category?: AffiliateCategory,
+): Promise<AffiliateLink[]> {
   let query = supabase
     .from('affiliate_links')
     .select(`
@@ -30,19 +26,15 @@ export async function getAffiliateLinks(options?: {
     `)
     .eq('is_active', true);
 
-  if (options?.countryCode) {
-    query = query.eq('country_code', options.countryCode.toUpperCase());
+  if (countryCode) {
+    query = query.eq('country_code', countryCode.toUpperCase());
   }
 
-  if (options?.category) {
-    query = query.eq('category', options.category);
+  if (category) {
+    query = query.eq('category', category);
   }
 
   query = query.order('created_at', { ascending: false });
-
-  if (options?.limit && !options.maxAltitudeM) {
-    query = query.limit(options.limit);
-  }
 
   const { data, error } = await query;
 
@@ -51,7 +43,7 @@ export async function getAffiliateLinks(options?: {
     return [];
   }
 
-  let results: AffiliateLink[] = (data || []).map((row: any) => {
+  return (data || []).map((row: any) => {
     const partnerData = Array.isArray(row.partner) ? row.partner[0] : row.partner;
     return {
       id: row.id,
@@ -69,6 +61,50 @@ export async function getAffiliateLinks(options?: {
       updated_at: row.updated_at,
     };
   });
+}
+
+const getCachedPublicAffiliateLinks = unstable_cache(
+  async (countryKey: string, categoryKey: string): Promise<AffiliateLink[]> => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return [];
+    const publicClient = createSupabasePublicClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as unknown as Awaited<ReturnType<typeof createClient>>;
+    return fetchActiveAffiliateLinksRaw(
+      publicClient,
+      countryKey || undefined,
+      (categoryKey || undefined) as AffiliateCategory | undefined,
+    );
+  },
+  ['affiliate-links-active-v1'],
+  { revalidate: 300 },
+);
+
+/**
+ * Récupère les liens d'affiliation actifs pour un pays ou une catégorie
+ */
+export async function getAffiliateLinks(options?: {
+  countryCode?: string;
+  category?: AffiliateCategory;
+  limit?: number;
+  maxAltitudeM?: number;
+}): Promise<AffiliateLink[]> {
+  let results: AffiliateLink[];
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      results = await getCachedPublicAffiliateLinks(
+        options?.countryCode?.toUpperCase() ?? '',
+        options?.category ?? '',
+      );
+    } else {
+      const supabase = await createClient();
+      results = await fetchActiveAffiliateLinksRaw(supabase, options?.countryCode, options?.category);
+    }
+  } catch {
+    const supabase = await createClient();
+    results = await fetchActiveAffiliateLinksRaw(supabase, options?.countryCode, options?.category);
+  }
 
   // Découplage D2 : Si voyage de plaine ou basse/moyenne altitude (< 2400m), filtrer les offres haute montagne
   if (typeof options?.maxAltitudeM === 'number' && options.maxAltitudeM <= 2400) {

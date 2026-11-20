@@ -121,24 +121,53 @@ export function FloatingLiquidTabBar() {
 
   useEffect(() => {
     const w = window as unknown as {
-      requestIdleCallback?: (cb: () => void) => number;
+      requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
       cancelIdleCallback?: (id: number) => void;
     };
-    // Au repos, seulement si la politique réseau autorise le préchargement de données (4G connue, sans
-    // économie de données) : on ne précharge que la LISTE des reels, jamais les fichiers vidéo. Le
-    // viewer met en tampon les vidéos à l'ouverture ; le préchauffage de page ne doit pas télécharger
-    // 21,6 Mo de WebM pour un écran non ouvert.
+    // Préchargement des autres onglets uniquement APRÈS `window.load` + délai calme
+    // de 1,2 s et échelonnement afin de ne jamais concurrencer le LCP/hydratation de
+    // la page courante sur 4G lente, tout en préchauffant la barre avant le premier tap.
+    let idleHandle: number | null = null;
+    let delayTimer: number | null = null;
+    const staggerTimers: number[] = [];
     const warmIfAllowed = () => {
-      if (evaluateCurrentPrefetchPolicy().allowData) warmFreedom();
+      const policy = evaluateCurrentPrefetchPolicy();
+      if (policy.allow) {
+        const targets = DESTINATIONS.filter((dest) => dest.href !== pathname);
+        targets.forEach((dest, idx) => {
+          const id = window.setTimeout(() => {
+            try {
+              router.prefetch(dest.href);
+            } catch {}
+          }, idx * 120);
+          staggerTimers.push(id);
+        });
+      }
+      if (policy.allowData) {
+        staggerTimers.push(window.setTimeout(() => warmFreedom(), 650));
+      }
     };
-    const handle = w.requestIdleCallback
-      ? w.requestIdleCallback(warmIfAllowed)
-      : window.setTimeout(warmIfAllowed, 1200);
+    const scheduleWarm = () => {
+      delayTimer = window.setTimeout(() => {
+        if (w.requestIdleCallback) {
+          idleHandle = w.requestIdleCallback(warmIfAllowed, { timeout: 1500 });
+        } else {
+          warmIfAllowed();
+        }
+      }, 1200);
+    };
+    if (document.readyState === 'complete') {
+      scheduleWarm();
+    } else {
+      window.addEventListener('load', scheduleWarm, { once: true });
+    }
     return () => {
-      if (w.cancelIdleCallback && w.requestIdleCallback) w.cancelIdleCallback(handle);
-      else window.clearTimeout(handle);
+      window.removeEventListener('load', scheduleWarm);
+      if (delayTimer !== null) window.clearTimeout(delayTimer);
+      if (idleHandle !== null && w.cancelIdleCallback) w.cancelIdleCallback(idleHandle);
+      for (const id of staggerTimers) window.clearTimeout(id);
     };
-  }, [warmFreedom]);
+  }, [warmFreedom, pathname, router]);
 
   const triggerHubSwitcher = useCallback(() => {
     try {
@@ -238,7 +267,21 @@ export function FloatingLiquidTabBar() {
                 }
                 aria-current={active ? 'page' : undefined}
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
-                onPointerDown={() => handlePointerDown(destination.id)}
+                onPointerEnter={() => {
+                  if (!active) {
+                    try {
+                      router.prefetch(destination.href);
+                    } catch {}
+                  }
+                }}
+                onPointerDown={() => {
+                  if (!active) {
+                    try {
+                      router.prefetch(destination.href);
+                    } catch {}
+                  }
+                  handlePointerDown(destination.id);
+                }}
                 onPointerUp={clearLongPress}
                 onPointerLeave={clearLongPress}
                 onContextMenu={(e) => {

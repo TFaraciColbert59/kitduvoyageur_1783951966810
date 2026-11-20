@@ -46,10 +46,10 @@ const config: CapacitorConfig = {
       },
   plugins: {
     SplashScreen: {
-      // Le logo reste affiché jusqu'à ce que l'app soit prête
-      // (NativeAppBootstrap masque l'écran dès la première page peinte) ;
-      // 4 s au plus si la page tarde, jamais d'écran blanc entre les deux.
-      launchShowDuration: 4000,
+      // Le logo reste affiché jusqu'au premier rendu utile
+      // (NativeAppBootstrap masque l'écran dès le premier paint) ;
+      // 1,5 s au plus pour tenir la cible démarrage à froid < 1,5 s.
+      launchShowDuration: 1500,
       launchAutoHide: true,
       backgroundColor: "#17402C",
       androidSplashResourceName: "splash",

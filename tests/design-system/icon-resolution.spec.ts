@@ -9,6 +9,7 @@ import {
   SVG_MASK_ICON_NAMES,
 } from '@/components/ui/Icon/registry';
 import { HERO_OUTLINE, HERO_SOLID } from '@/components/ui/Icon/heroicons.generated';
+import { LUCIDE_ICONS } from '@/components/ui/Icon/lucide.generated';
 
 const REPO_ROOT = process.cwd();
 const ICONS_DIR = path.join(REPO_ROOT, 'public', 'icons');
@@ -139,5 +140,15 @@ describe('Design system — résolution des glyphes (P5)', () => {
       return !HERO_OUTLINE[name] && !HERO_SOLID[name] && !HERO_OUTLINE[base] && !HERO_SOLID[base];
     });
     expect(missing).toEqual([]);
+  });
+
+  it('TEST-ICON-RESOLVE-10: la table Lucide générée reste élaguée (aucun import * wildcard)', () => {
+    const iconSource = fs.readFileSync(path.join(SRC_DIR, 'components', 'ui', 'Icon', 'Icon.tsx'), 'utf8');
+    const barrelSource = fs.readFileSync(path.join(SRC_DIR, 'components', 'ui', 'Icon', 'index.ts'), 'utf8');
+    expect(iconSource).not.toMatch(/import\s+\*\s+as\s+\w+\s+from\s+['"]lucide-react['"]/);
+    expect(barrelSource).not.toMatch(/export\s+\*\s+from\s+['"]lucide-react['"]/);
+    const lucideCount = Object.keys(LUCIDE_ICONS).length;
+    expect(lucideCount).toBeGreaterThan(80);
+    expect(lucideCount).toBeLessThanOrEqual(260);
   });
 });

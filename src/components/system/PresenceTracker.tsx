@@ -61,6 +61,7 @@ export default function PresenceTracker() {
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
+      window.clearTimeout(firstBeat);
       document.removeEventListener('visibilitychange', onVisibility);
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = null;

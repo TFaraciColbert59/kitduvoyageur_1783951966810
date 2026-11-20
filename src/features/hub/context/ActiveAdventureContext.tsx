@@ -1,7 +1,19 @@
 'use client';
 
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { useActiveTrip } from '@/features/trips/context/ActiveTripContext';
+
+function shouldAutoLoadAdventures(pathname: string | null): boolean {
+  if (!pathname || pathname === '/') return true;
+  return (
+    pathname.startsWith('/hub') ||
+    pathname.startsWith('/compas') ||
+    pathname.startsWith('/voyages') ||
+    pathname.startsWith('/kit-studio') ||
+    pathname.startsWith('/recette-hub')
+  );
+}
 import { useAuth } from '@/contexts/AuthContext';
 import type { HubUserTripLite } from '../server/getHubAdventureData';
 import type { ActiveAdventureData } from './adventureSchema';
@@ -135,6 +147,7 @@ export function ActiveAdventureProvider({ initialAdventure = null, children }: A
 }
 
 function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: ActiveAdventureProviderProps & { userId: string | null }) {
+  const pathname = usePathname();
   const { userTrips, reloadUserTrips } = useActiveTrip();
   const [activeAdventure, setActiveAdventureState] = useState<ActiveAdventureData | null>(null);
   const [cache, setCache] = useState<AdventuresCache>(EMPTY_CACHE);
@@ -236,8 +249,29 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
   }, [userId, userTrips, cache.trips, initialAdventure]);
 
   useEffect(() => {
+    if (!shouldAutoLoadAdventures(pathname)) {
+      if (cacheKey) {
+        try {
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setCache({
+              trips: Array.isArray(parsed?.trips) ? parsed.trips : [],
+              groups: Array.isArray(parsed?.groups) ? parsed.groups : [],
+              possession: {
+                itemsCount: Number(parsed?.possession?.itemsCount ?? 0),
+                loansCount: Number(parsed?.possession?.loansCount ?? 0),
+                alertsCount: Number(parsed?.possession?.alertsCount ?? 0),
+              },
+              pendingInvites: Number(parsed?.pendingInvites ?? 0),
+            });
+          }
+        } catch {}
+      }
+      return;
+    }
     reloadAdventures();
-  }, [reloadAdventures]);
+  }, [reloadAdventures, pathname, cacheKey]);
 
   const groups: AdventureGroups = useMemo(
     () => groupAdventures(cache.trips, cache.groups, cache.possession),

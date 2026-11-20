@@ -57,7 +57,11 @@ jobs:
           mkdir -p .lighthouseci
           npx --yes lighthouse@13.5.0 http://localhost:4028/ \
             --output=json \
-            --output-path=.lighthouseci/report.json \
+            --output-path=.lighthouseci/report-home.json \
+            --chrome-flags="--headless --no-sandbox"
+          npx --yes lighthouse@13.5.0 http://localhost:4028/manifeste \
+            --output=json \
+            --output-path=.lighthouseci/report-manifeste.json \
             --chrome-flags="--headless --no-sandbox"
 
       - name: Upload Lighthouse results
@@ -69,31 +73,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Summarize Lighthouse results
-        if: always()
+      - name: Enforce Lighthouse thresholds (.lighthouserc.json)
         run: |
-          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
-          const fs = require('node:fs');
-          const path = '.lighthouseci/report.json';
-          console.log('## Lighthouse results\n');
-          if (!fs.existsSync(path)) {
-            console.log('No report was produced. Check the build, server, and Lighthouse steps.');
-            process.exit(0);
-          }
-          const report = JSON.parse(fs.readFileSync(path, 'utf8'));
-          console.log(`URL: ${report.finalUrl || report.requestedUrl || 'unknown'}\n`);
-          console.log('| Category | Score |\n| --- | ---: |');
-          for (const [id, label] of [
-            ['performance', 'Performance'],
-            ['accessibility', 'Accessibility'],
-            ['best-practices', 'Best practices'],
-            ['seo', 'SEO'],
-          ]) {
-            const score = report.categories?.[id]?.score;
-            console.log(`| ${label} | ${typeof score === 'number' ? `${Math.round(score * 100)}/100` : 'n/a'} |`);
-          }
-          console.log('\nScores are informational; this workflow does not enforce score thresholds.');
-          NODE
+          node scripts/perf/assert-lighthouse.mjs \
+            .lighthouseci/report-home.json \
+            .lighthouseci/report-manifeste.json \
+            --config .lighthouserc.json \
+            --summary "$GITHUB_STEP_SUMMARY"
 
   bundle-analysis:
     runs-on: ubuntu-latest
@@ -118,6 +104,9 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'https://kitduvoyag4153.builtwithrocket.new' }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ci-build-placeholder.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaS1idWlsZC1wbGFjZWhvbGRlciIsInJvbGUiOiJhbm9uIiwiaWF0IjowfQ.cGxhY2Vob2xkZXI' }}
+
+      - name: Enforce bundle JS budget (npm run perf:budget)
+        run: npm run perf:budget
 
       - name: Analyze bundle size
         run: |

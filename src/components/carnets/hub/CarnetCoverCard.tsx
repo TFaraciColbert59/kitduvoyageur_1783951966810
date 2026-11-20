@@ -26,6 +26,8 @@ export interface CarnetCoverCardProps {
   item: CarnetHubItem;
   /** Envoi du j'aime en cours : bouton occupé, pas de double envoi. */
   likeBusy?: boolean;
+  /** Première carte visible au-dessus de la ligne de flottaison (image LCP). */
+  priority?: boolean;
   onLike: (item: CarnetHubItem) => void;
 }
 
@@ -34,7 +36,7 @@ function tracePath(trace: ReadonlyArray<[number, number]>): string {
   return trace.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ');
 }
 
-export function CarnetCoverCard({ item, likeBusy = false, onLike }: CarnetCoverCardProps) {
+export function CarnetCoverCard({ item, likeBusy = false, priority = false, onLike }: CarnetCoverCardProps) {
   const live = liveStatusLabel(item);
   const days = daysMetricLabel(item);
   const km = kmMetricLabel(item);
@@ -65,6 +67,7 @@ export function CarnetCoverCard({ item, likeBusy = false, onLike }: CarnetCoverC
               src={item.coverImage}
               alt={item.destination ? `${item.title} — ${item.destination}` : item.title}
               fill
+              priority={priority}
               sizes="(max-width: 520px) 100vw, 500px"
               className="lkdh-cover-img"
             />
@@ -80,6 +83,7 @@ export function CarnetCoverCard({ item, likeBusy = false, onLike }: CarnetCoverC
                         : ''
                     }
                     fill
+                    priority={priority && index === 0}
                     sizes="(max-width: 520px) 60vw, 320px"
                     className="lkdh-mosaic-img"
                   />

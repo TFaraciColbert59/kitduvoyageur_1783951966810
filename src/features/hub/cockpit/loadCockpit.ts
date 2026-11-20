@@ -24,8 +24,11 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
   if (!trip) return cockpit;
 
   const supabase = await createClient();
+  const hasCachedViewer = data.viewer !== undefined;
   const [session, profiles, bookings, carnets, kit, clubRouteUpdates] = await Promise.all([
-    supabase.auth.getUser(),
+    hasCachedViewer
+      ? Promise.resolve({ data: { user: data.viewer } })
+      : supabase.auth.getUser(),
     fetchPublicProfilesWith(supabase, cockpit.people.map(({ id }) => id)),
     trip.permissions.canEdit
       ? listBookings(supabase as unknown as BookingStore, trip.id)

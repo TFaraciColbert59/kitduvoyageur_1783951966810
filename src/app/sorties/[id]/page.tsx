@@ -53,12 +53,14 @@ export default async function SortiePage({ params, searchParams }: {
   }
 
   const supabase = await createClient();
+  const requestedClubEvent = query?.source === 'club';
   const [{ data: eventRow, error }, { data: clubEventRow }, { data: { user } }] = await Promise.all([
-    supabase.from('events').select('*').eq('id', id).maybeSingle(),
+    requestedClubEvent
+      ? Promise.resolve({ data: null, error: null })
+      : supabase.from('events').select('*').eq('id', id).maybeSingle(),
     supabase.from('club_events').select('*').eq('id', id).maybeSingle(),
     supabase.auth.getUser(),
   ]);
-  const requestedClubEvent = query?.source === 'club';
   const selected = requestedClubEvent ? clubEventRow : eventRow ?? clubEventRow;
   if (!selected || (error && !clubEventRow)) notFound();
 
@@ -80,13 +82,13 @@ export default async function SortiePage({ params, searchParams }: {
   ] =
     await Promise.all([
       organizerId
-        ? supabase.from('public_profiles').select('*').eq('id', organizerId).maybeSingle()
+        ? supabase.from('public_profiles').select('id,full_name,handle,avatar_url').eq('id', organizerId).maybeSingle()
         : Promise.resolve({ data: null }),
       isClubEventOnly
         ? user
-          ? supabase.from('club_event_registrations_effective').select('*').eq('event_id', id).neq('status', 'cancelled')
+          ? supabase.from('club_event_registrations_effective').select('user_id,status').eq('event_id', id).neq('status', 'cancelled')
           : Promise.resolve({ data: [] })
-        : supabase.from('event_participants').select('*').eq('event_id', id),
+        : supabase.from('event_participants').select('user_id,status').eq('event_id', id),
       clubId ? supabase.from('clubs').select('id,slug,name').eq('id', clubId).maybeSingle() : Promise.resolve({ data: null }),
       kitId
         ? supabase
@@ -117,7 +119,7 @@ export default async function SortiePage({ params, searchParams }: {
     .filter((value): value is string => Boolean(value));
   const { data: participantProfiles } =
     participantIds.length > 0
-      ? await supabase.from('public_profiles').select('*').in('id', participantIds)
+      ? await supabase.from('public_profiles').select('id,full_name,handle,avatar_url').in('id', participantIds)
       : { data: [] as Row[] };
 
   const profilesById = new Map<string, Row>();

@@ -1153,7 +1153,10 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 }
 .xp-pin {
   position: absolute;
+  left: 0;
+  top: 0;
   transform: translate(-50%, -50%);
+  will-change: transform;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1202,7 +1205,10 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
 }
 .xp-me {
   position: absolute;
+  left: 0;
+  top: 0;
   transform: translate(-50%, -50%);
+  will-change: transform;
   width: 14px;
   height: 14px;
   border-radius: 999px;

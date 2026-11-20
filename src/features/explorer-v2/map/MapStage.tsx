@@ -1624,7 +1624,12 @@ export default function MapStage({
         {meScreen ? (
           <>
             <span className="xp-me-halo" style={{ left: meScreen.x, top: meScreen.y }} aria-hidden="true" />
-            <span className="xp-me" style={{ left: meScreen.x, top: meScreen.y }} aria-label="Ma position" role="img" />
+            <span
+              className="xp-me"
+              style={{ transform: `translate3d(${meScreen.x}px, ${meScreen.y}px, 0) translate(-50%, -50%)` }}
+              aria-label="Ma position"
+              role="img"
+            />
           </>
         ) : null}
         {clusters.map((cluster) => (
@@ -1666,7 +1671,7 @@ export default function MapStage({
             className="xp-pin"
             data-pin={pin.id}
             data-selected={pin.id === selectedId ? 'true' : 'false'}
-            style={{ left: x, top: y }}
+            style={{ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)` }}
             onClick={(event) => {
               event.stopPropagation();
               onPinClick?.(pin);

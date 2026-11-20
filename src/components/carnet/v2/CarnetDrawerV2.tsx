@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import type { KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
-import { KitProductSheetV2 } from '@/features/community/v2/create/kit/KitProductSheetV2';
 import type { PickerProduct } from '@/features/community/create/kit/types';
 import '@/features/community/v2/create/create-v2.css';
 import {
@@ -62,11 +62,31 @@ import {
   StackSlideView,
 } from './CarnetDrawerMotion';
 import { CarnetFilDrawerBody } from './CarnetFilDrawerBody';
-import { CarnetAltitudeDrawerBody } from './CarnetAltitudeDrawerBody';
-import { CarnetPokedexDrawerBody } from './CarnetPokedexDrawerBody';
-import { CarnetKitDrawerBody } from './CarnetKitDrawerBody';
-import { CarnetChiffresDrawerBody } from './CarnetChiffresDrawerBody';
-import { CarnetEquipageDrawerBody } from './CarnetEquipageDrawerBody';
+
+const KitProductSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
+  { ssr: false }
+);
+const CarnetAltitudeDrawerBody = dynamic(
+  () => import('./CarnetAltitudeDrawerBody').then((m) => m.CarnetAltitudeDrawerBody),
+  { ssr: false }
+);
+const CarnetPokedexDrawerBody = dynamic(
+  () => import('./CarnetPokedexDrawerBody').then((m) => m.CarnetPokedexDrawerBody),
+  { ssr: false }
+);
+const CarnetKitDrawerBody = dynamic(
+  () => import('./CarnetKitDrawerBody').then((m) => m.CarnetKitDrawerBody),
+  { ssr: false }
+);
+const CarnetChiffresDrawerBody = dynamic(
+  () => import('./CarnetChiffresDrawerBody').then((m) => m.CarnetChiffresDrawerBody),
+  { ssr: false }
+);
+const CarnetEquipageDrawerBody = dynamic(
+  () => import('./CarnetEquipageDrawerBody').then((m) => m.CarnetEquipageDrawerBody),
+  { ssr: false }
+);
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
 export type StackIntent = { type: string; [key: string]: unknown };

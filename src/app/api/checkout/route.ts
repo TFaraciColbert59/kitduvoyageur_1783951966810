@@ -57,25 +57,46 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
   const supabase = getServiceClient();
   const errors: string[] = [];
   const validatedItems: ValidatedItem[] = [];
+  if (items.length === 0) return { valid: true, errors, validatedItems };
+
+  const uniqueIds = Array.from(new Set(items.map((item) => item.id)));
+  const [{ data: canonicalRows, error: canonicalError }, { data: productRows }, { data: kitRows }] =
+    await Promise.all([
+      supabase.from('shop_products').select('id').in('id', uniqueIds),
+      supabase.from('products').select('id, price_eur, name, is_active, available').in('id', uniqueIds),
+      supabase.from('kits').select('id, prix_cents, nom').in('id', uniqueIds),
+    ]);
+
+  const canonicalIds = new Set(
+    canonicalError ? [] : ((canonicalRows ?? []) as Array<{ id: string }>).map((r) => r.id),
+  );
+  const activeProductById = new Map<string, { price_eur: unknown; name: string | null }>();
+  const availableProductById = new Map<string, { price_eur: unknown; name: string | null }>();
+  for (const row of (productRows ?? []) as Array<{
+    id: string;
+    price_eur: unknown;
+    name: string | null;
+    is_active?: boolean | null;
+    available?: boolean | null;
+  }>) {
+    if (row.is_active) activeProductById.set(row.id, row);
+    if (row.available) availableProductById.set(row.id, row);
+  }
+  const kitById = new Map<string, { prix_cents: number; nom: string | null }>();
+  for (const row of (kitRows ?? []) as Array<{ id: string; prix_cents: number; nom: string | null }>) {
+    kitById.set(row.id, row);
+  }
 
   for (const item of items) {
     // The order_items foreign key and stock journal use shop_products. Never
     // charge an otherwise valid legacy kit/catalog row that cannot be fulfilled.
-    const { data: canonical, error: canonicalError } = await supabase
-      .from('shop_products').select('id').eq('id', item.id).maybeSingle();
-    if (canonicalError || !canonical) {
+    if (!canonicalIds.has(item.id)) {
       errors.push(`Cet article est temporairement indisponible : ${item.name}`);
       continue;
     }
-    // Try to find in products table
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('price_eur, name')
-      .eq('id', item.id)
-      .eq('is_active', true)
-      .single();
 
-    if (!productError && product) {
+    const product = activeProductById.get(item.id);
+    if (product) {
       const serverPrice = Number(product.price_eur);
       if (Math.abs(serverPrice - item.priceEur) > 0.01) {
         errors.push(`Prix incorrect pour "${item.name}". Attendu: ${serverPrice}€, reçu: ${item.priceEur}€`);
@@ -90,14 +111,8 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
       continue;
     }
 
-    // Try to find in kits table
-    const { data: kit, error: kitError } = await supabase
-      .from('kits')
-      .select('prix_cents, nom')
-      .eq('id', item.id)
-      .single();
-
-    if (!kitError && kit) {
+    const kit = kitById.get(item.id);
+    if (kit) {
       const serverPriceCents = kit.prix_cents;
       const clientPriceCents = Math.round(item.priceEur * 100);
       if (Math.abs(serverPriceCents - clientPriceCents) > 1) {
@@ -114,15 +129,8 @@ async function validatePrices(items: CartItem[]): Promise<{ valid: boolean; erro
       continue;
     }
 
-    // Try products for marketplace items
-    const { data: shopProduct, error: shopError } = await supabase
-      .from('products')
-      .select('price_eur, name')
-      .eq('id', item.id)
-      .eq('available', true)
-      .single();
-
-    if (!shopError && shopProduct) {
+    const shopProduct = availableProductById.get(item.id);
+    if (shopProduct) {
       const serverPrice = Number(shopProduct.price_eur);
       if (Math.abs(serverPrice - item.priceEur) > 0.01) {
         errors.push(`Prix incorrect pour "${item.name}". Attendu: ${serverPrice}€, reçu: ${item.priceEur}€`);

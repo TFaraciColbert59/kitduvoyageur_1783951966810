@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { notFound, redirect } from 'next/navigation';
-import CarnetScreen from '@/components/carnet/profile/CarnetScreen';
 import { CarnetScreenV2 } from '@/components/carnet/v2/CarnetScreenV2';
 import { getCarnetDetail } from '@/features/carnet/detail/getCarnetDetail';
 import { buildCarnetJsonLd, serializeJsonLd } from '@/features/carnet/detail/jsonld';
@@ -69,6 +68,9 @@ export default async function CarnetDetailPage({ params }: Props) {
   if (!detail) notFound();
 
   const isV2 = process.env.NEXT_PUBLIC_CARNET_V2 !== 'false';
+  const LegacyCarnetScreen = isV2
+    ? null
+    : (await import('@/components/carnet/profile/CarnetScreen')).default;
 
   return (
     <>
@@ -78,7 +80,11 @@ export default async function CarnetDetailPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCarnetJsonLd(detail, siteUrl)) }}
         />
       ) : null}
-      {isV2 ? <CarnetScreenV2 detail={detail} /> : <CarnetScreen detail={detail} />}
+      {isV2 || !LegacyCarnetScreen ? (
+        <CarnetScreenV2 detail={detail} />
+      ) : (
+        <LegacyCarnetScreen detail={detail} />
+      )}
     </>
   );
 }

@@ -21,9 +21,11 @@ export default function PageTransition({ children }: { children: React.ReactNode
   const pathname = usePathname();
   const instant = pathname ? TAB_ROOTS.has(pathname) : false;
 
+  // Les 5 onglets de la barre du bas partagent une clé stable pour éviter le
+  // démontage/remontage complet de la coque DOM à chaque bascule (< 100 ms).
   return (
     <div
-      key={pathname}
+      key={instant ? 'tab-root' : pathname}
       data-page-root=""
       className={`w-full h-full min-h-full${instant ? '' : ' lkv-page-fade'}`}
     >

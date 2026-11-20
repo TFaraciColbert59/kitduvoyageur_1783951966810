@@ -833,6 +833,8 @@ body {
   height: 100dvh;
   pointer-events: none;
   user-select: none;
+  contain: strict;
+  transform: translateZ(0);
   background-color: var(--lkv-app-bg-fallback);
   /* Phase 3 — TOILE UNIQUE : paysage forêt/montagne, portrait sur mobile et
      paysage dès que l'écran est plus large que haut. Voile sombre pour que le

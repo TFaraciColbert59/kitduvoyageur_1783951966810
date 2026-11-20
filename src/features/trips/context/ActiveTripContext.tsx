@@ -3,9 +3,24 @@
 import { fetchMyTripsCached, getMyTripsSessionGeneration, isMyTripsSessionCurrent } from '@/features/trips/client/fetchMyTrips';
 
 import React, { createContext, useContext, useState, useTransition, useCallback, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import type { ActiveTripData, TripLite } from './activeTripSchema';
 import { setActiveTripAction, clearActiveTripAction } from './activeTripServer';
 import { useAuth } from '@/contexts/AuthContext';
+
+/** Routes qui consomment la liste des voyages au montage. Sur les autres onglets
+ * (`/explorer`, `/communaute`, `/messagerie`, `/compte`), on évite un appel réseau
+ * concurrent au premier affichage tout en gardant le cache localStorage et `reloadUserTrips()`. */
+function shouldAutoLoadTrips(pathname: string | null): boolean {
+  if (!pathname || pathname === '/') return true;
+  return (
+    pathname.startsWith('/hub') ||
+    pathname.startsWith('/compas') ||
+    pathname.startsWith('/voyages') ||
+    pathname.startsWith('/kit-studio') ||
+    pathname.startsWith('/recette-hub')
+  );
+}
 
 export interface ActiveTripContextValue {
   activeTrip: ActiveTripData | null;
@@ -82,6 +97,7 @@ export function ActiveTripProvider({ initialTrip = null, children }: ActiveTripP
 }
 
 function ActiveTripProviderForUser({ userId, initialTrip, children }: ActiveTripProviderProps & { userId: string | null }) {
+  const pathname = usePathname();
   const [activeTrip, setActiveTripState] = useState<ActiveTripData | null>(null);
   const [userTrips, setUserTrips] = useState<TripLite[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -146,8 +162,20 @@ function ActiveTripProviderForUser({ userId, initialTrip, children }: ActiveTrip
   }, [userId, tripsKey, initialTrip]);
 
   useEffect(() => {
+    if (!shouldAutoLoadTrips(pathname)) {
+      if (tripsKey) {
+        try {
+          const cached = localStorage.getItem(tripsKey);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed?.trips)) setUserTrips(parsed.trips);
+          }
+        } catch {}
+      }
+      return;
+    }
     reloadUserTrips();
-  }, [reloadUserTrips]);
+  }, [reloadUserTrips, pathname, tripsKey]);
 
   const setActiveTrip = useCallback(async (trip: ActiveTripData): Promise<boolean> => {
     if (!activeKey || !mountedRef.current) return false;

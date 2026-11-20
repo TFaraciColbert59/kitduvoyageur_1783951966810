@@ -77,7 +77,7 @@
     "icons:build": "node scripts/icons/build-sprite.mjs",
     "icons:codemod": "node scripts/icons/codemod-lucide-to-icon.mjs",
     "icons:instagram": "node scripts/icons/build-instagram-map.mjs",
-    "prebuild": "node scripts/generate-design-bank.mjs && node scripts/icons/build-sprite.mjs && node scripts/icons/build-heroicons-map.mjs && node scripts/atlas/copy-maplibre-worker.mjs && node scripts/verify/traveller_privacy.mjs && node scripts/verify/hub_no_mockup.mjs",
+    "prebuild": "node scripts/generate-design-bank.mjs && node scripts/icons/build-sprite.mjs && node scripts/icons/build-heroicons-map.mjs && node scripts/icons/build-lucide-map.mjs && node scripts/atlas/copy-maplibre-worker.mjs && node scripts/verify/traveller_privacy.mjs && node scripts/verify/hub_no_mockup.mjs",
     "test:a11y": "playwright test --config=playwright.a11y.config.ts",
     "test:glass": "playwright test --config=playwright.glass.config.ts",
     "test:compas-full": "node scripts/compas/run-bench.mjs",

@@ -115,6 +115,8 @@ export interface HubHikingContext {
 }
 
 export interface HubAdventureData extends HubAdventureLists {
+  /** Utilisateur déjà authentifié par `getHubAdventureData` (évite un second `auth.getUser()`). */
+  viewer?: { id: string; is_anonymous?: boolean } | null;
   adventure: ActiveAdventureData;
   /** Entrée moteur (compteurs résolus, enabledSections = base serveur). */
   input: HubAdventureInput;
@@ -580,6 +582,9 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
     traceStage('auth.getUser', () => supabase.auth.getUser()),
     getActiveAdventure(),
   ]);
+  const viewer = user
+    ? { id: user.id, is_anonymous: (user as { is_anonymous?: boolean }).is_anonymous }
+    : null;
   // Sans aventure choisie (pas de cookie), on ouvre par défaut sur le voyage
   // géolocalisé le plus récent : le hub montre alors la carte globe et
   // l'itinéraire réel. Un choix explicite (cookie) reste prioritaire.
@@ -617,6 +622,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
       );
       return {
         ...lists,
+        viewer,
         adventure,
         input: {
           kind: 'sortie',

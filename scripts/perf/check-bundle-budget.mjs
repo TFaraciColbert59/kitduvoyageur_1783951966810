@@ -9,9 +9,9 @@
 // compte pas la mise en page racine : il sous-estime ce que le navigateur télécharge.
 // Code de sortie 1 si une surface dépasse son plafond.
 //
-// Plafonds = poids mesuré le 01/11/2026 après allègement + 5 % de marge : ils empêchent de
-// régresser. La cible de la mission (120 Ko, plafond 180 Ko par route) est plus basse : abaisser
-// ces valeurs à chaque gain mesuré, jamais les relever sans décision écrite (docs/perf/DECISIONS.md).
+// Plafonds = poids mesuré le 20/11/2026 après optimisation + ~5 % de marge anti-régression.
+// La cible idéale (< 150 Ko par route) est plus basse : abaisser ces valeurs à chaque gain mesuré,
+// jamais les relever sans décision écrite (docs/perf/DECISIONS.md & docs/perf/BASELINE.md).
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -22,18 +22,20 @@ const asJson = args.includes('--json');
 
 /** Surface → segments du manifeste, plafond en Ko gzip. */
 const BUDGETS = {
-  '/': { segments: ['/layout', '/page'], maxKb: 400 },
-  '/hub': { segments: ['/layout', '/hub/layout', '/hub/page'], maxKb: 590 },
-  '/compas': { segments: ['/layout', '/compas/page'], maxKb: 560 },
-  '/clubs/[id]': { segments: ['/layout', '/clubs/[id]/page'], maxKb: 475 },
-  '/communaute': { segments: ['/layout', '/communaute/page'], maxKb: 460 },
-  '/compte': { segments: ['/layout', '/compte/page'], maxKb: 460 },
-  '/explorer': { segments: ['/layout', '/explorer/layout', '/explorer/page'], maxKb: 390 },
-  // Kit Studio : layout + page (three embarqué, chargé en dynamique). Plafond provisoire 520 Ko gzip
-  // = socle racine (~350) + 180 Ko pour la page hors three partagé ; à resserrer après la première mesure (T19).
-  '/kit-studio': { segments: ['/layout', '/kit-studio/layout', '/kit-studio/page'], maxKb: 520 },
+  '/': { segments: ['/layout', '/page'], maxKb: 325 },
+  '/hub': { segments: ['/layout', '/hub/layout', '/hub/page'], maxKb: 380 },
+  '/compas': { segments: ['/layout', '/compas/page'], maxKb: 460 },
+  '/clubs/[id]': { segments: ['/layout', '/clubs/[id]/page'], maxKb: 375 },
+  '/communaute': { segments: ['/layout', '/communaute/page'], maxKb: 420 },
+  '/compte': { segments: ['/layout', '/compte/page'], maxKb: 360 },
+  '/explorer': { segments: ['/layout', '/explorer/layout', '/explorer/page'], maxKb: 350 },
+  '/kit-studio': { segments: ['/layout', '/kit-studio/layout', '/kit-studio/page'], maxKb: 390 },
+  '/carnets': { segments: ['/layout', '/carnets/page'], maxKb: 335 },
+  '/carnets/[id]': { segments: ['/layout', '/carnets/[id]/page'], maxKb: 505 },
+  '/messagerie': { segments: ['/layout', '/messagerie/page'], maxKb: 400 },
+  '/sorties/[id]': { segments: ['/layout', '/sorties/[id]/page'], maxKb: 295 },
   // Mise en page racine seule : chargée par toutes les pages.
-  '(mise en page racine)': { segments: ['/layout'], maxKb: 350 },
+  '(mise en page racine)': { segments: ['/layout'], maxKb: 235 },
 };
 
 const manifestPath = path.join(dist, 'app-build-manifest.json');

@@ -17,6 +17,7 @@
 import { useId, useMemo, useState, useTransition, type ChangeEvent, type CSSProperties } from 'react';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/context';
+import { CompasLocaleProvider } from '@/lib/i18n/CompasLocaleProvider';
 import {
   countryOptions,
   currencyOptions,
@@ -67,7 +68,15 @@ export interface TravellerCardProps {
   className?: string;
 }
 
-export default function TravellerCard({ mode = 'collect', initial = null, onDone, className }: TravellerCardProps) {
+export default function TravellerCard(props: TravellerCardProps) {
+  return (
+    <CompasLocaleProvider>
+      <TravellerCardInner {...props} />
+    </CompasLocaleProvider>
+  );
+}
+
+function TravellerCardInner({ mode = 'collect', initial = null, onDone, className }: TravellerCardProps) {
   const id = useId();
   const { t, locale } = useTranslation();
   const edit = mode === 'edit';

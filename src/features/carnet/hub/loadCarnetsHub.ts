@@ -279,38 +279,36 @@ export async function loadCarnetsHub(options: LoadCarnetsHubOptions = {}): Promi
     viewerId = null;
   }
 
-  // 2. Les carnets publics : lecture principale, seule juge de l'état d'erreur.
-  const publicResult = await readCarnets(client, (query) =>
-    query.eq('visibility', 'public').order('updated_at', { ascending: false }).limit(PUBLIC_LIMIT),
-  );
+  // 2-4. Parallélisation de la vague 1 : carnets publics, abonnements et mes carnets
+  // ne dépendent que de `viewerId` et s'exécutent en un seul aller-retour DB.
+  const [publicResult, follows, mineResult] = await Promise.all([
+    readCarnets(client, (query) =>
+      query.eq('visibility', 'public').order('updated_at', { ascending: false }).limit(PUBLIC_LIMIT),
+    ),
+    viewerId
+      ? safeRows<{ following_id: string | null }>(
+          client
+            .from('user_follows')
+            .select('following_id')
+            .eq('follower_id', viewerId)
+            .limit(FOLLOWED_MAX),
+        )
+      : Promise.resolve([] as Array<{ following_id: string | null }>),
+    viewerId
+      ? readCarnets(client, (query) =>
+          query.eq('author_id', viewerId).order('updated_at', { ascending: false }).limit(MINE_LIMIT),
+        )
+      : Promise.resolve({ ok: true, rows: [] as CarnetRow[] }),
+  ]);
   if (!publicResult.ok) {
     return { viewerId, items: [], mineCount: 0, followedCount: 0, error: true };
   }
 
-  // 3. Personnes suivies (RLS : la relation est déjà bornée au lecteur).
-  let followingIds: string[] = [];
-  if (viewerId) {
-    const follows = await safeRows<{ following_id: string | null }>(
-      client
-        .from('user_follows')
-        .select('following_id')
-        .eq('follower_id', viewerId)
-        .limit(FOLLOWED_MAX),
-    );
-    followingIds = follows
-      .map((row) => row.following_id)
-      .filter((id): id is string => typeof id === 'string' && id.length > 0);
-  }
+  const followingIds = follows
+    .map((row) => row.following_id)
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
   const following = new Set(followingIds);
-
-  // 4. Mes carnets (privés compris : la RLS les rend à leur auteur).
-  let mineRows: CarnetRow[] = [];
-  if (viewerId) {
-    const result = await readCarnets(client, (query) =>
-      query.eq('author_id', viewerId).order('updated_at', { ascending: false }).limit(MINE_LIMIT),
-    );
-    mineRows = result.rows;
-  }
+  const mineRows = mineResult.rows;
 
   // 5. Les carnets des personnes suivies.
   let followedRows: CarnetRow[] = [];
@@ -330,16 +328,37 @@ export async function loadCarnetsHub(options: LoadCarnetsHubOptions = {}): Promi
   }
   const carnetIds = rows.map((row) => row.id);
 
-  // 6. Photos de repli : 3 dernières images de moments par carnet.
-  const moments = await safeRows<MomentRow>(
-    client
-      .from('carnet_moments')
-      .select('carnet_id, image_url, created_at')
-      .in('carnet_id', carnetIds)
-      .not('image_url', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(MOMENTS_LIMIT),
-  );
+  // 6-7. Parallélisation de la vague 2 : photos de moments, voyageurs et j'aime
+  // ne dépendent que de `carnetIds` (+ `viewerId`).
+  const [moments, collaborators, likes] = await Promise.all([
+    safeRows<MomentRow>(
+      client
+        .from('carnet_moments')
+        .select('carnet_id, image_url, created_at')
+        .in('carnet_id', carnetIds)
+        .not('image_url', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(MOMENTS_LIMIT),
+    ),
+    safeRows<CollaboratorRow>(
+      client
+        .from('carnet_collaborators')
+        .select('carnet_id, user_id, role, created_at')
+        .in('carnet_id', carnetIds)
+        .order('created_at', { ascending: true })
+        .limit(COLLABORATORS_LIMIT),
+    ),
+    viewerId
+      ? safeRows<{ carnet_id: string | null }>(
+          client
+            .from('carnet_likes')
+            .select('carnet_id')
+            .eq('user_id', viewerId)
+            .in('carnet_id', carnetIds),
+        )
+      : Promise.resolve([] as Array<{ carnet_id: string | null }>),
+  ]);
+
   const coverPhotos = new Map<string, string[]>();
   for (const moment of moments) {
     const carnetId = moment.carnet_id;
@@ -351,15 +370,6 @@ export async function loadCarnetsHub(options: LoadCarnetsHubOptions = {}): Promi
     coverPhotos.set(carnetId, list);
   }
 
-  // 7. Voyageurs (collaborateurs) et j'aime du lecteur.
-  const collaborators = await safeRows<CollaboratorRow>(
-    client
-      .from('carnet_collaborators')
-      .select('carnet_id, user_id, role, created_at')
-      .in('carnet_id', carnetIds)
-      .order('created_at', { ascending: true })
-      .limit(COLLABORATORS_LIMIT),
-  );
   const collaboratorsByCarnet = new Map<string, string[]>();
   for (const collaborator of collaborators) {
     const carnetId = collaborator.carnet_id;
@@ -370,21 +380,11 @@ export async function loadCarnetsHub(options: LoadCarnetsHubOptions = {}): Promi
     collaboratorsByCarnet.set(carnetId, list);
   }
 
-  let likedCarnetIds = new Set<string>();
-  if (viewerId) {
-    const likes = await safeRows<{ carnet_id: string | null }>(
-      client
-        .from('carnet_likes')
-        .select('carnet_id')
-        .eq('user_id', viewerId)
-        .in('carnet_id', carnetIds),
-    );
-    likedCarnetIds = new Set(
-      likes
-        .map((like) => like.carnet_id)
-        .filter((id): id is string => typeof id === 'string' && id.length > 0),
-    );
-  }
+  const likedCarnetIds = new Set(
+    likes
+      .map((like) => like.carnet_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
 
   // 8. Auteurs et voyageurs en une lecture (`public_profiles`, borné à 200 ids).
   const profileIds = [
