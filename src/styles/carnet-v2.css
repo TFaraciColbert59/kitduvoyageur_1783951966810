@@ -1513,11 +1513,26 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   box-shadow: 0 1px 6px rgba(255, 255, 255, 0.4);
 }
 
-/* Le SlotShell occupe la feuille, sans déborder, avec les mêmes marges que /communaute. */
+/* Le SlotShell occupe 100% de la feuille ; le contenu défile sous les boutons haut et bas. */
 .lkdv-carnet-drawer > .lkdv-slot-shell {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
-  padding: 6px 14px 48px !important;
+  padding: 0 14px 0 !important;
+}
+
+.lkdv-carnet-drawer > .lkdv-slot-shell > .lkdv-slot-topnav {
+  position: absolute !important;
+  top: 4px;
+  left: 14px;
+  right: 14px;
+  width: auto !important;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.lkdv-carnet-drawer > .lkdv-slot-shell > .lkdv-slot-topnav > * {
+  pointer-events: auto;
 }
 
 .lkdv-carnet-drawer .lkdv-slot-topnav .lkdv-capsule {
@@ -1987,9 +2002,10 @@ html:has(.lkdv-carnet-v2-root) {
   transition: opacity 0.2s ease;
 }
 
-/* Le contenu du tiroir laisse la place à la mini-capsule des lentilles (30). */
+/* Le contenu du tiroir défile sur 100% de la hauteur en passant sous les boutons haut et bas. */
 .lkdv-carnet-drawer .lkdv-lens-pane {
-  padding-bottom: 44px !important;
+  padding-top: 66px !important;
+  padding-bottom: 56px !important;
 }
 
 /* Badges de nuit N1/N2/N3 sur la carte (maquette `.mk.nbadge`). */
