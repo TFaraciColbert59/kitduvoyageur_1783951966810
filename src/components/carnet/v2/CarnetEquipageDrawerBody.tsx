@@ -140,17 +140,6 @@ export function CarnetEquipageDrawerBody({
                 </div>
                 <ChevronRight size={15} className="lkdv-carnet-chevron" />
               </button>
-
-              {hasKitItems && onJumpToParticipantKit ? (
-                <button
-                  type="button"
-                  className="lkdv-carnet-crew-kit-btn"
-                  onClick={() => onJumpToParticipantKit(p.userId)}
-                >
-                  <Package size={12} aria-hidden="true" />
-                  <span>Voir son kit</span>
-                </button>
-              ) : null}
             </StaggerCard>
           );
         })}

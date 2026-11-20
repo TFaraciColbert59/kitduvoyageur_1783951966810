@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import {
   Bar,
   BarChart,
@@ -314,27 +315,36 @@ export function CarnetKitDrawerBody({
         </div>
       </div>
       <div className="lkdv-carnet-kit-weight-side">
-        <div className="lkdv-carnet-kit-layers" role="group" aria-label="Sac en couches">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }} role="group" aria-label="Répartition du poids">
           {([
-            ['porte', 'Porté'],
-            ['sac', 'Sac'],
-            ['conso', 'Consommable'],
-          ] as const).map(([key, label]) => (
-            <span key={key} className="lkdv-carnet-kit-layer" data-layer={key}>
-              <motion.i
-                aria-hidden="true"
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.round((layers[key] / layerTotal) * 100)}%` }}
-                transition={CARNET_SPRING}
-              />
-              <b>{label}</b>
-              <small>{formatKg(layers[key])}</small>
-            </span>
-          ))}
+            ['porte', 'Porté sur soi', '#40916c'],
+            ['sac', 'Dans le sac', '#1b4332'],
+            ['conso', 'Consommables', '#74c69d'],
+          ] as const).map(([key, label, color]) => {
+            const pct = Math.round((layers[key] / layerTotal) * 100);
+            return (
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '11.5px' }}>
+                  <b style={{ color: 'var(--label, #172b24)', fontWeight: 600 }}>{label}</b>
+                  <small style={{ color: 'var(--label2, #56665d)', fontVariantNumeric: 'tabular-nums' }}>
+                    {formatKg(layers[key])} ({pct} %)
+                  </small>
+                </div>
+                <div style={{ width: '100%', height: '5px', borderRadius: '999px', background: 'rgba(23, 43, 36, 0.08)', overflow: 'hidden' }}>
+                  <motion.div
+                    aria-hidden="true"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={CARNET_SPRING}
+                    style={{ height: '100%', borderRadius: '999px', background: color }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <small>
-          {activeKit.items.length} objet{activeKit.items.length > 1 ? 's' : ''} · {formatKg(totalWeightG)}
-          {activeKit.kitName ? ` · ${activeKit.kitName}` : ''}
+        <small style={{ marginTop: '4px', display: 'block', color: 'var(--label2, #56665d)', fontSize: '11px' }}>
+          {activeKit.items.length} objet{activeKit.items.length > 1 ? 's' : ''} · Poids total {formatKg(totalWeightG)}
         </small>
       </div>
     </div>
@@ -396,9 +406,20 @@ export function CarnetKitDrawerBody({
                           onClick={() => onSelectItem(item)}
                         >
                           <div className="lkdv-carnet-kit-mini-tile-top">
-                            <span className="lkdv-carnet-kit-mini-ico" aria-hidden="true">
-                              {renderCategoryIcon(category, 13)}
-                            </span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={generatedProductImage(item.name, category)}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              style={{
+                                width: '34px',
+                                height: '34px',
+                                borderRadius: '8px',
+                                objectFit: 'cover',
+                                background: 'rgba(23, 64, 44, 0.06)',
+                              }}
+                            />
                             {qty > 1 ? (
                               <span className="lkdv-carnet-kit-mini-qty">×{qty}</span>
                             ) : null}

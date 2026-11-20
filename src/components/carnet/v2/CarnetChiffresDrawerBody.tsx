@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   Cell,
@@ -41,6 +43,9 @@ interface CarnetChiffresDrawerBodyProps {
 
 export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawerBodyProps) {
   const canObserveResize = typeof ResizeObserver !== 'undefined';
+  const [distFocus, setDistFocus] = useState<'km' | 'effortKm' | 'density' | 'speed'>('km');
+  const [elevFocus, setElevFocus] = useState<'elev' | 'vam' | 'eiffel'>('elev');
+  const [timeFocus, setTimeFocus] = useState<'hours' | 'kcal' | 'pace'>('hours');
 
   const dayMetrics = useMemo(() => {
     const dayNums = new Set<number>();
@@ -79,6 +84,30 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
     const sumSteps = dayMetrics.reduce((s, d) => s + d.elev, 0);
     return detail.elevationM && detail.elevationM > 0 ? detail.elevationM : sumSteps;
   }, [dayMetrics, detail.elevationM]);
+
+  const cumulativeMetrics = useMemo(() => {
+    let cumKm = 0;
+    let cumElev = 0;
+    let cumHours = 0;
+    return dayMetrics.map((d) => {
+      cumKm += d.km;
+      cumElev += d.elev;
+      cumHours += d.hours;
+      return {
+        ...d,
+        cumKm: Number(cumKm.toFixed(1)),
+        cumElev: Math.round(cumElev),
+        cumHours: Number(cumHours.toFixed(2)),
+        timeLabel: cumHours > 0 ? formatHoursLabel(cumHours) : d.label,
+        density: d.km > 0 ? Math.round(d.elev / d.km) : 0,
+        speed: d.hours > 0 ? Number((d.km / d.hours).toFixed(1)) : 0,
+        vam: d.hours > 0 ? Math.round(d.elev / d.hours) : 0,
+        eiffel: Number((d.elev / 330).toFixed(1)),
+        kcal: Math.round(d.hours * 520),
+        pace: d.hours > 0 ? Number((d.km / d.hours).toFixed(1)) : 0,
+      };
+    });
+  }, [dayMetrics]);
 
   const copySummary = () => {
     const lines = [
@@ -141,35 +170,71 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
               </span>
             ) : null}
           </div>
+          {cumulativeMetrics.some((d) => d.cumKm > 0) && canObserveResize ? (
+            <div style={{ width: '100%', height: 96, marginTop: 8 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cumulativeMetrics} margin={{ top: 4, right: 6, left: -24, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="carnetDistGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#1b4332" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#1b4332" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="timeLabel" tick={{ fontSize: 10, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(27,67,50,.14)', background: 'rgba(255,255,255,.95)', fontSize: '11.5px' }}
+                    formatter={(v) => [`${v} km`, 'Cumul']}
+                  />
+                  <Area type="monotone" dataKey="cumKm" stroke="#1b4332" strokeWidth={2} fill="url(#carnetDistGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
         </StaggerCard>
 
         <StaggerCard className="lkdv-carnet-kpi-grid-3">
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Km-effort</small>
-            <b>
-              <AnimatedNumber value={effortTotal} suffix=" km" />
-            </b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Dénivelé / km</small>
-            <b>
-              <AnimatedNumber value={density} prefix="+" suffix=" m/km" />
-            </b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Allure moy.</small>
-            <b>
-              {totalHours > 0 ? `${(totalKm / totalHours).toFixed(1)} km/h` : '—'}
-            </b>
-          </div>
+          {([
+            ['effortKm', 'Km-effort', <AnimatedNumber key="e" value={effortTotal} suffix=" km" />],
+            ['density', 'Dénivelé / km', <AnimatedNumber key="d" value={density} prefix="+" suffix=" m/km" />],
+            ['speed', 'Allure moy.', totalHours > 0 ? `${(totalKm / totalHours).toFixed(1)} km/h` : '—'],
+          ] as const).map(([key, label, val]) => {
+            const active = distFocus === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                className="lkdv-carnet-kpi-mini"
+                aria-pressed={active}
+                onClick={() => setDistFocus(active ? 'km' : key)}
+                style={{
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: active ? '1.5px solid #1b4332' : undefined,
+                  background: active ? 'rgba(27, 67, 50, 0.06)' : undefined,
+                }}
+              >
+                <small>{label}</small>
+                <b>{val}</b>
+              </button>
+            );
+          })}
         </StaggerCard>
 
-        {dayMetrics.some((d) => d.km > 0) && canObserveResize ? (
+        {cumulativeMetrics.some((d) => d.km > 0) && canObserveResize ? (
           <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Distance par journée (km)</span>
+            <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 6, display: 'block' }}>
+              {distFocus === 'effortKm'
+                ? 'Km-effort par journée'
+                : distFocus === 'density'
+                  ? 'Dénivelé / km par étape (m/km)'
+                  : distFocus === 'speed'
+                    ? 'Allure moyenne par étape (km/h)'
+                    : 'Distance par journée (km)'}
+            </span>
             <div style={{ width: '100%', height: 150 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dayMetrics} margin={{ top: 8, right: 6, left: -20, bottom: 0 }}>
+                <BarChart data={cumulativeMetrics} margin={{ top: 8, right: 6, left: -20, bottom: 0 }}>
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 11, fill: '#56665d' }}
@@ -188,10 +253,17 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                       background: 'rgba(255, 255, 255, 0.94)',
                       fontSize: '12px',
                     }}
-                    formatter={(v) => [`${v} km`, 'Distance']}
+                    formatter={(v) => [
+                      distFocus === 'density'
+                        ? `+${v} m/km`
+                        : distFocus === 'speed'
+                          ? `${v} km/h`
+                          : `${v} km`,
+                      distFocus === 'effortKm' ? 'Km-effort' : distFocus === 'density' ? 'D+/km' : distFocus === 'speed' ? 'Allure' : 'Distance',
+                    ]}
                   />
-                  <Bar dataKey="km" radius={[8, 8, 0, 0]} barSize={22}>
-                    {dayMetrics.map((_, idx) => (
+                  <Bar dataKey={distFocus} radius={[8, 8, 0, 0]} barSize={22}>
+                    {cumulativeMetrics.map((_, idx) => (
                       <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
                     ))}
                   </Bar>
@@ -236,29 +308,69 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
               </span>
             ) : null}
           </div>
+          {cumulativeMetrics.some((d) => d.cumElev > 0) && canObserveResize ? (
+            <div style={{ width: '100%', height: 96, marginTop: 8 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cumulativeMetrics} margin={{ top: 4, right: 6, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="carnetElevGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2d6a4f" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#2d6a4f" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="timeLabel" tick={{ fontSize: 10, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(27,67,50,.14)', background: 'rgba(255,255,255,.95)', fontSize: '11.5px' }}
+                    formatter={(v) => [`+${v} m`, 'D+ cumulé']}
+                  />
+                  <Area type="monotone" dataKey="cumElev" stroke="#2d6a4f" strokeWidth={2} fill="url(#carnetElevGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
         </StaggerCard>
 
         <StaggerCard className="lkdv-carnet-kpi-grid-3">
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Vitesse asc.</small>
-            <b>{vam ? `${vam} m/h` : '—'}</b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Tours Eiffel</small>
-            <b>{eiffel} ×</b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Jours actifs</small>
-            <b>{daysCount} j</b>
-          </div>
+          {([
+            ['vam', 'Vitesse asc.', vam ? `${vam} m/h` : '—'],
+            ['eiffel', 'Tours Eiffel', `${eiffel} ×`],
+            ['elev', 'Jours actifs', `${daysCount} j`],
+          ] as const).map(([key, label, val]) => {
+            const active = elevFocus === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                className="lkdv-carnet-kpi-mini"
+                aria-pressed={active}
+                onClick={() => setElevFocus(key)}
+                style={{
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: active ? '1.5px solid #1b4332' : undefined,
+                  background: active ? 'rgba(27, 67, 50, 0.06)' : undefined,
+                }}
+              >
+                <small>{label}</small>
+                <b>{val}</b>
+              </button>
+            );
+          })}
         </StaggerCard>
 
-        {dayMetrics.some((d) => d.elev > 0) && canObserveResize ? (
+        {cumulativeMetrics.some((d) => d.elev > 0) && canObserveResize ? (
           <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Dénivelé par journée (m)</span>
+            <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 6, display: 'block' }}>
+              {elevFocus === 'vam'
+                ? 'Vitesse ascensionnelle par étape (m/h)'
+                : elevFocus === 'eiffel'
+                  ? 'Équivalent Tours Eiffel par étape'
+                  : 'Dénivelé par journée (m)'}
+            </span>
             <div style={{ width: '100%', height: 150 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dayMetrics} margin={{ top: 8, right: 6, left: -16, bottom: 0 }}>
+                <BarChart data={cumulativeMetrics} margin={{ top: 8, right: 6, left: -16, bottom: 0 }}>
                   <XAxis
                     dataKey="label"
                     tick={{ fontSize: 11, fill: '#56665d' }}
@@ -277,10 +389,13 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                       background: 'rgba(255, 255, 255, 0.94)',
                       fontSize: '12px',
                     }}
-                    formatter={(v) => [`+${v} m`, 'D+']}
+                    formatter={(v) => [
+                      elevFocus === 'vam' ? `${v} m/h` : elevFocus === 'eiffel' ? `${v} ×` : `+${v} m`,
+                      elevFocus === 'vam' ? 'VAM' : elevFocus === 'eiffel' ? 'Tours Eiffel' : 'D+',
+                    ]}
                   />
-                  <Bar dataKey="elev" radius={[8, 8, 0, 0]} barSize={22}>
-                    {dayMetrics.map((_, idx) => (
+                  <Bar dataKey={elevFocus} radius={[8, 8, 0, 0]} barSize={22}>
+                    {cumulativeMetrics.map((_, idx) => (
                       <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
                     ))}
                   </Bar>
@@ -325,48 +440,101 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
               </span>
             ) : null}
           </div>
+          {cumulativeMetrics.some((d) => d.cumHours > 0) && canObserveResize ? (
+            <div style={{ width: '100%', height: 96, marginTop: 8 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cumulativeMetrics} margin={{ top: 4, right: 6, left: -24, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="carnetTimeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#40916c" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#40916c" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: '1px solid rgba(27,67,50,.14)', background: 'rgba(255,255,255,.95)', fontSize: '11.5px' }}
+                    formatter={(v) => [formatHoursLabel(Number(v)), 'Temps cumulé']}
+                  />
+                  <Area type="monotone" dataKey="cumHours" stroke="#40916c" strokeWidth={2} fill="url(#carnetTimeGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null}
         </StaggerCard>
 
         {estCalories > 0 ? (
           <StaggerCard className="lkdv-carnet-kpi-grid-3">
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Énergie est.</small>
-              <b>
-                <AnimatedNumber value={estCalories} suffix=" kcal" />
-              </b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Allure</small>
-              <b>{(totalKm / totalHours).toFixed(1)} km/h</b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Plus longue</small>
-              <b>{formatHoursLabel(maxHours)}</b>
-            </div>
+            {([
+              ['kcal', 'Énergie est.', <AnimatedNumber key="k" value={estCalories} suffix=" kcal" />],
+              ['pace', 'Allure', `${(totalKm / totalHours).toFixed(1)} km/h`],
+              ['hours', 'Plus longue', formatHoursLabel(maxHours)],
+            ] as const).map(([key, label, val]) => {
+              const active = timeFocus === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className="lkdv-carnet-kpi-mini"
+                  aria-pressed={active}
+                  onClick={() => setTimeFocus(key)}
+                  style={{
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    border: active ? '1.5px solid #1b4332' : undefined,
+                    background: active ? 'rgba(27, 67, 50, 0.06)' : undefined,
+                  }}
+                >
+                  <small>{label}</small>
+                  <b>{val}</b>
+                </button>
+              );
+            })}
           </StaggerCard>
         ) : null}
 
-        {dayMetrics.some((d) => d.hours > 0) ? (
+        {cumulativeMetrics.some((d) => d.hours > 0) ? (
           <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Temps de marche par étape</span>
+            <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 10, display: 'block' }}>
+              {timeFocus === 'kcal'
+                ? 'Énergie estimée par étape (kcal)'
+                : timeFocus === 'pace'
+                  ? 'Allure par étape (km/h)'
+                  : 'Temps de marche par étape'}
+            </span>
             <div className="lkdv-carnet-kit-bars">
-              {dayMetrics.map((d, idx) => (
-                <div key={d.label} className="lkdv-carnet-kit-bar-row">
-                  <span className="lkdv-carnet-kit-bar-label">{d.label}</span>
-                  <div className="lkdv-carnet-kit-bar-track">
-                    <motion.div
-                      className="lkdv-carnet-kit-bar-fill"
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${Math.max(8, Math.round((d.hours / maxHours) * 100))}%`,
-                      }}
-                      transition={CARNET_SPRING}
-                      style={{ background: CHART_COLORS[idx % CHART_COLORS.length] }}
-                    />
+              {cumulativeMetrics.map((d, idx) => {
+                const rawVal = timeFocus === 'kcal' ? d.kcal : timeFocus === 'pace' ? d.pace : d.hours;
+                const maxVal = Math.max(
+                  1,
+                  ...cumulativeMetrics.map((m) =>
+                    timeFocus === 'kcal' ? m.kcal : timeFocus === 'pace' ? m.pace : m.hours,
+                  ),
+                );
+                const labelVal =
+                  timeFocus === 'kcal'
+                    ? `${d.kcal} kcal`
+                    : timeFocus === 'pace'
+                      ? `${d.pace} km/h`
+                      : formatHoursLabel(d.hours);
+                return (
+                  <div key={d.label} className="lkdv-carnet-kit-bar-row">
+                    <span className="lkdv-carnet-kit-bar-label">{d.label}</span>
+                    <div className="lkdv-carnet-kit-bar-track">
+                      <motion.div
+                        className="lkdv-carnet-kit-bar-fill"
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${Math.max(8, Math.round((rawVal / maxVal) * 100))}%`,
+                        }}
+                        transition={CARNET_SPRING}
+                        style={{ background: CHART_COLORS[idx % CHART_COLORS.length] }}
+                      />
+                    </div>
+                    <span className="lkdv-carnet-kit-bar-val">{labelVal}</span>
                   </div>
-                  <span className="lkdv-carnet-kit-bar-val">{formatHoursLabel(d.hours)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </StaggerCard>
         ) : null}
@@ -432,22 +600,53 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
     return (
       <StaggerList className="lkdv-carnet-drawer-pane">
         <StaggerCard className="lkdv-carnet-kpi-hero">
-          <div className="lkdv-carnet-kpi-hero-top">
-            <span className="lkdv-carnet-kpi-ico">
-              <Wallet size={16} aria-hidden="true" />
-            </span>
-            <span className="lkdv-carnet-kit-eyebrow">Budget total</span>
-          </div>
-          <div className="lkdv-carnet-kpi-hero-val">
-            <AnimatedNumber value={total} suffix={` ${currency}`} />
-          </div>
-          <div className="lkdv-carnet-kpi-subrow">
-            <span>
-              Par personne : <b>{perPerson} {currency}</b>
-            </span>
-            <span>
-              Par jour : <b>{perDay} {currency}/j</b>
-            </span>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 140px', minWidth: 0 }}>
+              <div className="lkdv-carnet-kpi-hero-top">
+                <span className="lkdv-carnet-kpi-ico">
+                  <Wallet size={16} aria-hidden="true" />
+                </span>
+                <span className="lkdv-carnet-kit-eyebrow">Budget total</span>
+              </div>
+              <div className="lkdv-carnet-kpi-hero-val">
+                <AnimatedNumber value={total} suffix={` ${currency}`} />
+              </div>
+              <div className="lkdv-carnet-kpi-subrow">
+                <span>
+                  Par pers. : <b>{perPerson} {currency}</b>
+                </span>
+                <span>
+                  Par jour : <b>{perDay} {currency}/j</b>
+                </span>
+              </div>
+            </div>
+            {byCategory.length > 0 && canObserveResize ? (
+              <div style={{ flex: '1 1 160px', minWidth: 150, height: Math.max(86, byCategory.length * 24) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={byCategory}
+                    layout="vertical"
+                    margin={{ top: 2, right: 10, left: 0, bottom: 0 }}
+                  >
+                    <XAxis type="number" hide />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      width={78}
+                      tick={{ fontSize: 10.5, fill: '#111827' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip formatter={(v) => [`${v} ${currency}`, 'Montant']} />
+                    <Bar dataKey="amount" radius={[0, 6, 6, 0]} barSize={12}>
+                      {byCategory.map((_, idx) => (
+                        <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : null}
           </div>
         </StaggerCard>
 
@@ -469,37 +668,6 @@ export function CarnetChiffresDrawerBody({ detail, lensId }: CarnetChiffresDrawe
                   </b>
                 </div>
               ))}
-            </div>
-          </StaggerCard>
-        ) : null}
-
-        {byCategory.length > 0 && canObserveResize ? (
-          <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Répartition par poste ({currency})</span>
-            <div style={{ width: '100%', height: Math.max(90, byCategory.length * 28) }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={byCategory}
-                  layout="vertical"
-                  margin={{ top: 4, right: 14, left: 0, bottom: 0 }}
-                >
-                  <XAxis type="number" hide />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={92}
-                    tick={{ fontSize: 11, fill: '#111827' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip formatter={(v) => [`${v} ${currency}`, 'Montant']} />
-                  <Bar dataKey="amount" radius={[0, 6, 6, 0]} barSize={14}>
-                    {byCategory.map((_, idx) => (
-                      <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
             </div>
           </StaggerCard>
         ) : null}

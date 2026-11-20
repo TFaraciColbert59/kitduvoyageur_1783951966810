@@ -42,6 +42,7 @@ import {
 import LikeIcon from '@/components/social-kit/LikeIcon';
 import { SlotShell, type SlotId, type SlotLens } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
+import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import type {
   CarnetDetail,
   CarnetEtapeDay,
@@ -159,6 +160,7 @@ export function CarnetDrawerV2({
   });
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
+  const [selectedParticipant, setSelectedParticipant] = useState<CarnetDetail['participants'][number] | null>(null);
   const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
   const sacKitItems = useMemo(() => {
     if (detail.kit?.items?.length) return detail.kit.items;
@@ -224,9 +226,10 @@ export function CarnetDrawerV2({
     setStack((prev) => prev.slice(0, -1));
   }, [haptic]);
 
-  // Reset stack on slot change
+  // Reset stack and selected participant on slot change
   useEffect(() => {
     setStack([]);
+    setSelectedParticipant(null);
   }, [activeSlot]);
 
   // Main 5 slots configuration
@@ -268,13 +271,22 @@ export function CarnetDrawerV2({
           ? [{ id: 'budget', label: 'Budget', icon: <Wallet size={15} /> }]
           : []),
       ],
-      equipage: [
-        { id: 'participants', label: 'Participants', icon: <Users size={15} /> },
-        { id: 'reactions', label: 'Réactions', icon: <LikeIcon size={15} /> },
-        { id: 'suivre', label: 'Suivre', icon: <Radio size={15} /> },
-      ],
+      equipage: selectedParticipant
+        ? [
+            { id: 'p-perf', label: 'Perf & Stats', icon: <TrendingUp size={15} /> },
+            { id: 'p-pokedex', label: 'Pokédex', icon: <Leaf size={15} /> },
+            { id: 'p-kit', label: 'Sac', icon: <Package size={15} /> },
+            ...((!isVisitor || detail.budgetPublic) && detail.budget
+              ? [{ id: 'p-budget', label: 'Dépenses', icon: <Wallet size={15} /> }]
+              : []),
+          ]
+        : [
+            { id: 'participants', label: 'Participants', icon: <Users size={15} /> },
+            { id: 'reactions', label: 'Réactions', icon: <LikeIcon size={15} /> },
+            { id: 'suivre', label: 'Suivre', icon: <Radio size={15} /> },
+          ],
     };
-  }, [detail.budget, detail.budgetPublic, detail.viewerRole]);
+  }, [detail.budget, detail.budgetPublic, detail.viewerRole, selectedParticipant]);
 
   // Account / Settings Tabs
   const accountTabs = useMemo(() => {
@@ -852,6 +864,233 @@ export function CarnetDrawerV2({
       case 'chiffres':
         return <CarnetChiffresDrawerBody detail={detail} lensId={lens.id} />;
       case 'equipage':
+        if (selectedParticipant) {
+          const p = selectedParticipant;
+          const pName = p.name?.trim() || p.handle?.trim() || 'Voyageur';
+          const pMoments = detail.moments.filter(
+            (m) => m.authorId === p.userId || m.authorName === p.name
+          );
+          const pPhotos = detail.photoMoments.filter(
+            (m) => m.authorId === p.userId || m.authorName === p.name
+          );
+          const pSpecies = detail.moments.filter(
+            (m) =>
+              m.type === 'species' &&
+              (m.authorId === p.userId || m.authorName === p.name || (!m.authorId && p.userId === detail.author?.id))
+          );
+          const pKit =
+            detail.memberKits?.[p.userId] ??
+            (p.userId === detail.author?.id ? detail.kit : { totalWeightG: null, items: [] });
+          const pKitItems = pKit?.items ?? [];
+          const pWeightG =
+            typeof pKit?.totalWeightG === 'number' && pKit.totalWeightG > 0
+              ? pKit.totalWeightG
+              : pKitItems.reduce((s, it) => s + (it.weightG ?? 0) * (it.quantity ?? 1), 0);
+          const pExpenses = (detail.budget?.items ?? []).filter(
+            (it) => it.paidByUserId === p.userId || (!it.paidByUserId && p.userId === detail.author?.id)
+          );
+          const pPaid = pExpenses.reduce(
+            (s, it) => s + (typeof it.amount === 'number' ? it.amount : (it.amountCents ?? 0) / 100),
+            0
+          );
+          const currency = detail.budget?.currency === 'EUR' ? '€' : detail.budget?.currency ?? '€';
+          const share = detail.budget
+            ? Math.round(
+                (typeof detail.budget.perPersonCents === 'number'
+                  ? detail.budget.perPersonCents / 100
+                  : (detail.budget.total ?? 0) / Math.max(1, detail.participants.length))
+              )
+            : 0;
+          const net = Math.round(pPaid - share);
+
+          return (
+            <div className="lkdv-carnet-drawer-pane" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '16px',
+                  background: 'var(--drawer-card-bg)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  {p.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.avatarUrl} alt="" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--fill)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
+                      {pName.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ minWidth: 0 }}>
+                    <b style={{ display: 'block', fontSize: 14, color: 'var(--label)' }}>{pName}</b>
+                    {p.role ? <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{roleLabel(p.role)}</small> : null}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+                  onClick={() => {
+                    setSelectedParticipant(null);
+                    setLensIndexBySlot((prev) => ({ ...prev, equipage: 0 }));
+                  }}
+                >
+                  <ChevronLeft size={13} />
+                  <span>Équipage</span>
+                </button>
+              </div>
+
+              {lens.id === 'p-perf' ? (
+                <>
+                  <div className="lkdv-carnet-kpi-grid-3">
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Distance</small>
+                      <b>{detail.distanceKm ? `${Math.round(detail.distanceKm)} km` : '—'}</b>
+                    </div>
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Dénivelé +</small>
+                      <b>{detail.elevationM ? `+${Math.round(detail.elevationM)} m` : '—'}</b>
+                    </div>
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Moments</small>
+                      <b>{pMoments.length}</b>
+                    </div>
+                  </div>
+                  {pPhotos.length > 0 ? (
+                    <>
+                      <span className="lkdv-carnet-kit-eyebrow">Médias publiés ({pPhotos.length})</span>
+                      <div className="lkdv-ig-grid">
+                        {pPhotos.map((m, idx) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className="lkdv-ig-tile"
+                            onClick={() => onSelectMoment?.(m, idx)}
+                          >
+                            {m.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={m.imageUrl} alt="" loading="lazy" />
+                            ) : null}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucun média partagé pour ce voyageur.</p>
+                  )}
+                </>
+              ) : null}
+
+              {lens.id === 'p-pokedex' ? (
+                pSpecies.length > 0 ? (
+                  <div className="lkdv-carnet-cards-col">
+                    {pSpecies.map((sp) => (
+                      <div key={sp.id} className="lkdv-carnet-budget-row">
+                        <div>
+                          <b>{sp.speciesName || sp.title || 'Observation'}</b>
+                          {sp.speciesLatin ? <small style={{ fontStyle: 'italic' }}>{sp.speciesLatin}</small> : null}
+                        </div>
+                        <small>J{sp.dayNumber}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucune observation naturaliste enregistrée pour ce voyageur.</p>
+                )
+              ) : null}
+
+              {lens.id === 'p-kit' ? (
+                pKitItems.length > 0 ? (
+                  <>
+                    <div className="lkdv-carnet-kpi-grid-3">
+                      <div className="lkdv-carnet-kpi-mini">
+                        <small>Objets</small>
+                        <b>{pKitItems.length}</b>
+                      </div>
+                      <div className="lkdv-carnet-kpi-mini">
+                        <small>Poids sac</small>
+                        <b>{(pWeightG / 1000).toFixed(1).replace('.', ',')} kg</b>
+                      </div>
+                      <div className="lkdv-carnet-kpi-mini">
+                        <small>Base</small>
+                        <b>{pWeightG > 0 ? `${Math.round(pWeightG)} g` : '—'}</b>
+                      </div>
+                    </div>
+                    <div className="lkdv-carnet-kit-plus-row">
+                      {pKitItems.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="lkdv-carnet-kit-mini-tile"
+                          onClick={() => {
+                            const idx = sacKitItems.findIndex((k) => k.id === item.id);
+                            setSelectedKitProductIndex(idx >= 0 ? idx : 0);
+                          }}
+                        >
+                          <div className="lkdv-carnet-kit-mini-tile-top">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={generatedProductImage(item.name, item.category || 'Divers')}
+                              alt=""
+                              loading="lazy"
+                              style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }}
+                            />
+                          </div>
+                          <b title={item.name}>{item.name}</b>
+                          <div className="lkdv-carnet-kit-mini-tile-foot">
+                            <small>{item.weightG ? `${item.weightG} g` : '—'}</small>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucun kit partagé pour ce voyageur.</p>
+                )
+              ) : null}
+
+              {lens.id === 'p-budget' && detail.budget ? (
+                <>
+                  <div className="lkdv-carnet-kpi-grid-3">
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Avancé</small>
+                      <b>{Math.round(pPaid)} {currency}</b>
+                    </div>
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Part</small>
+                      <b>{share} {currency}</b>
+                    </div>
+                    <div className="lkdv-carnet-kpi-mini">
+                      <small>Solde</small>
+                      <b style={{ color: net >= 0 ? '#15803d' : '#b45309' }}>
+                        {net >= 0 ? `+${net}` : net} {currency}
+                      </b>
+                    </div>
+                  </div>
+                  {pExpenses.length > 0 ? (
+                    <div className="lkdv-carnet-cards-col">
+                      {pExpenses.map((exp) => (
+                        <div key={exp.id} className="lkdv-carnet-budget-row">
+                          <div>
+                            <b>{exp.label}</b>
+                            {exp.category ? <small>{exp.category}</small> : null}
+                          </div>
+                          <b>{Math.round(exp.amount ?? (exp.amountCents ?? 0) / 100)} {currency}</b>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucune dépense avancée par ce voyageur.</p>
+                  )}
+                </>
+              ) : null}
+            </div>
+          );
+        }
         return (
           <CarnetEquipageDrawerBody
             detail={detail}
@@ -862,7 +1101,10 @@ export function CarnetDrawerV2({
             reactions={reactions}
             newCommentText={newCommentText}
             onNewCommentTextChange={setNewCommentText}
-            onSelectParticipant={(participant) => pushStack({ type: 'participant', participant })}
+            onSelectParticipant={(participant) => {
+              setSelectedParticipant(participant);
+              setLensIndexBySlot((prev) => ({ ...prev, equipage: 0 }));
+            }}
             onJumpToParticipantKit={(uid) => {
               setKitJumpUserId(uid);
               onSlotChange('sac');
@@ -980,14 +1222,14 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
-      {/* Pilule « Reprendre le tracé » en bas à droite (au même niveau que le sélecteur) -> Compas / Itinéraire */}
+      {/* Pilule « Reprendre le tracé » tout en bas à gauche -> Compas / Itinéraire */}
       {activeSlot === 'chiffres' ? (
         <button
           type="button"
           className="lkdv-pill-reprendre"
           style={{
-            right: currentSlotLenses.length >= 4 ? '192px' : '150px',
-            left: 'auto',
+            left: '10px',
+            right: 'auto',
             bottom: '10px',
             zIndex: 20,
           }}
