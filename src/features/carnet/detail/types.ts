@@ -245,6 +245,7 @@ export interface CarnetKitItemRow {
   verdict?: KitVerdictType | null;
   verdictNote?: string | null;
   joursUtilises?: number[];
+  image?: string | null;
 }
 
 export interface CarnetKit {

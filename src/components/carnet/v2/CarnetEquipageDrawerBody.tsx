@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import LikeIcon from '@/components/social-kit/LikeIcon';
+import { CarnetCommentsPane } from '@/components/carnet/profile/panes/CarnetCommentsPane';
 import type { CarnetDetail, CarnetParticipant } from '@/features/carnet/detail/types';
 import {
   AnimatedNumber,
@@ -47,6 +48,7 @@ interface CarnetEquipageDrawerBodyProps {
   onNewCommentTextChange: (val: string) => void;
   onSelectParticipant: (p: CarnetParticipant) => void;
   onJumpToParticipantKit?: (userId: string) => void;
+  onSelectDay?: (dayNumber: number) => void;
   onRequireAuth?: () => void;
   onIsland?: (msg: string) => void;
 }
@@ -67,7 +69,7 @@ export function CarnetEquipageDrawerBody({
   newCommentText,
   onNewCommentTextChange,
   onSelectParticipant,
-  onJumpToParticipantKit,
+  onSelectDay,
   onRequireAuth,
   onIsland,
 }: CarnetEquipageDrawerBodyProps) {
@@ -149,113 +151,115 @@ export function CarnetEquipageDrawerBody({
 
   if (lensId === 'reactions') {
     const days = detail.days.length > 0 ? detail.days : [{ index: 1, dayNumber: 1 }];
+    const paneComments = reactions.comments.map((c) => ({
+      id: c.id,
+      authorId: c.authorId ?? null,
+      authorName: c.authorName,
+      authorAvatarUrl: null,
+      content: c.content,
+      createdAt: '',
+    }));
 
     return (
-      <div className="lkdv-carnet-drawer-pane">
-        <div className="lkdv-carnet-filter-rail" role="group" aria-label="Jour des réactions">
+      <div className="lkdv-carnet-drawer-pane" style={{ gap: '12px' }}>
+        <div
+          role="group"
+          aria-label="Jours des réactions"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(94px, 1fr))',
+            gap: '8px',
+          }}
+        >
           {days.map((d) => {
             const n = d.dayNumber ?? d.index ?? 1;
-            const on = n === reactionDay;
+            const dayReact = detail.dayReactions?.[n];
+            const isCurrent = n === reactionDay;
+            const liked = isCurrent ? reactions.liked : Boolean(dayReact?.userLiked);
+            const count = isCurrent ? reactions.likesCount : (dayReact?.likesCount ?? 0);
+
             return (
-              <button
+              <div
                 key={n}
-                type="button"
-                aria-pressed={on}
-                className={`lkdv-carnet-filter-pill${on ? ' is-active' : ''}`}
-                onClick={() => onReactionDayChange(n)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  aspectRatio: '1 / 0.86',
+                  padding: '10px',
+                  borderRadius: '16px',
+                  background: isCurrent ? 'rgba(23, 64, 44, 0.06)' : 'var(--drawer-card-bg, #fff)',
+                  border: isCurrent
+                    ? '1.5px solid rgba(23, 64, 44, 0.28)'
+                    : '1px solid rgba(23, 43, 36, 0.08)',
+                  boxShadow: '0 2px 8px rgba(16, 32, 25, 0.04)',
+                }}
               >
-                {on ? (
-                  <motion.span
-                    layoutId="carnet-reaction-day-pill"
-                    className="lkdv-carnet-filter-pill-bg"
-                    transition={CARNET_SPRING}
-                  />
-                ) : null}
-                <span className="lkdv-carnet-filter-pill-label">Jour {n}</span>
-              </button>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.86 }}
+                  onClick={() => {
+                    if (!isCurrent) onReactionDayChange(n);
+                    reactions.toggleLike();
+                  }}
+                  aria-pressed={liked}
+                  aria-label={liked ? `Retirer mon j’aime du jour ${n}` : `J’aime le jour ${n}`}
+                  style={{
+                    border: 0,
+                    background: 'transparent',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: liked ? '#e11d48' : '#17402c',
+                  }}
+                >
+                  <LikeIcon size={22} active={liked} />
+                </motion.button>
+
+                <button
+                  type="button"
+                  onClick={() => onSelectDay?.(n)}
+                  aria-label={`Aller au jour ${n}`}
+                  style={{
+                    border: 0,
+                    background: 'transparent',
+                    padding: '4px 2px',
+                    cursor: 'pointer',
+                    textAlign: 'right',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: '2px',
+                  }}
+                >
+                  <b style={{ fontSize: '15px', color: 'var(--label, #172b24)', lineHeight: 1.1 }}>
+                    J{n}
+                  </b>
+                  <small style={{ fontSize: '10.5px', color: 'var(--label2, #56665d)' }}>
+                    {count}
+                  </small>
+                </button>
+              </div>
             );
           })}
         </div>
 
-        <div className="lkdv-carnet-kudos-card">
-          <div>
-            <b>Jour {reactionDay}</b>
-            <p>
-              <AnimatedNumber value={reactions.likesCount} /> mention
-              {reactions.likesCount > 1 ? 's' : ''} J’aime
-            </p>
-          </div>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            className={`lkdv-carnet-like-btn${reactions.liked ? ' is-liked' : ''}`}
-            onClick={reactions.toggleLike}
-            aria-pressed={reactions.liked}
-            aria-label={reactions.liked ? 'Retirer mon j’aime du jour' : 'J’aime ce jour'}
-          >
-            <LikeIcon size={15} active={reactions.liked} />
-            <span>{reactions.liked ? 'Aimé' : 'J’aime'}</span>
-          </motion.button>
-        </div>
-
-        <span className="lkdv-carnet-kit-eyebrow" style={{ marginTop: 4 }}>
-          Commentaires ({reactions.comments.length})
-        </span>
-
-        <StaggerList className="lkdv-carnet-cards-col">
-          {reactions.comments.length === 0 ? (
-            <div className="lkdv-carnet-empty-card" style={{ padding: '16px' }}>
-              <p style={{ margin: 0 }}>Soyez le premier à encourager l’équipage sur ce jour.</p>
-            </div>
-          ) : (
-            reactions.comments.map((c) => (
-              <StaggerCard key={c.id} className="lkdv-carnet-comment-bubble">
-                <div className="lkdv-carnet-comment-head">
-                  <b>{c.authorName}</b>
-                  {userId && c.authorId === userId ? (
-                    <button
-                      type="button"
-                      className="lkdv-carnet-comment-del"
-                      onClick={() => reactions.deleteComment(c.id)}
-                      aria-label="Supprimer mon commentaire"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  ) : null}
-                </div>
-                <p>{c.content}</p>
-              </StaggerCard>
-            ))
-          )}
-        </StaggerList>
-
-        <div className="lkdv-carnet-comment-composer">
-          <input
-            type="text"
-            placeholder="Écrire un mot d’encouragement…"
-            value={newCommentText}
-            onChange={(e) => onNewCommentTextChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && newCommentText.trim()) {
-                void reactions.addComment(newCommentText);
-                onNewCommentTextChange('');
-              }
-            }}
-          />
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={() => {
-              if (newCommentText.trim()) {
-                void reactions.addComment(newCommentText);
-                onNewCommentTextChange('');
-              }
-            }}
-            aria-label="Envoyer le commentaire"
-          >
-            <Send size={15} />
-          </motion.button>
-        </div>
+        <CarnetCommentsPane
+          comments={paneComments}
+          loading={false}
+          canWrite={Boolean(userId)}
+          currentUserId={userId ?? null}
+          onSend={async (content) => {
+            await reactions.addComment(content);
+            return true;
+          }}
+          onRemove={async (commentId) => {
+            await reactions.deleteComment(commentId);
+            return true;
+          }}
+          onRequireAuth={onRequireAuth ?? (() => {})}
+        />
       </div>
     );
   }

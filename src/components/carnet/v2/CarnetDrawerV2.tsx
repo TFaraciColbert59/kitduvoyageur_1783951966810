@@ -118,6 +118,7 @@ export interface CarnetDrawerV2Props {
   onOpenStories?: () => void;
   isAccountDrawer?: boolean;
   onObserveSpecies?: (species: { name: string; latin: string }) => void;
+  onDayPick?: (day: number) => void;
 }
 
 type StackView =
@@ -148,6 +149,7 @@ export function CarnetDrawerV2({
   onOpenStories,
   isAccountDrawer = false,
   onObserveSpecies,
+  onDayPick,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
   const router = useRouter();
@@ -259,7 +261,6 @@ export function CarnetDrawerV2({
       ],
       sac: [
         { id: 'kit', label: 'Kit', icon: <Package size={15} /> },
-        { id: 'verdicts', label: 'Verdicts', icon: <Award size={15} /> },
         { id: 'poids', label: 'Poids', icon: <Scale size={15} /> },
       ],
       chiffres: [
@@ -840,6 +841,7 @@ export function CarnetDrawerV2({
           <CarnetPokedexDrawerBody
             detail={detail}
             lensId={lens.id}
+            currentUserId={userId}
             onObserveSpecies={onObserveSpecies}
             onZoneProgressChange={setPokedexProgress}
           />
@@ -1005,49 +1007,83 @@ export function CarnetDrawerV2({
 
               {lens.id === 'p-kit' ? (
                 pKitItems.length > 0 ? (
-                  <>
-                    <div className="lkdv-carnet-kpi-grid-3">
-                      <div className="lkdv-carnet-kpi-mini">
-                        <small>Objets</small>
-                        <b>{pKitItems.length}</b>
-                      </div>
-                      <div className="lkdv-carnet-kpi-mini">
-                        <small>Poids sac</small>
-                        <b>{(pWeightG / 1000).toFixed(1).replace('.', ',')} kg</b>
-                      </div>
-                      <div className="lkdv-carnet-kpi-mini">
-                        <small>Base</small>
-                        <b>{pWeightG > 0 ? `${Math.round(pWeightG)} g` : '—'}</b>
-                      </div>
-                    </div>
-                    <div className="lkdv-carnet-kit-plus-row">
-                      {pKitItems.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className="lkdv-carnet-kit-mini-tile"
-                          onClick={() => {
-                            const idx = sacKitItems.findIndex((k) => k.id === item.id);
-                            setSelectedKitProductIndex(idx >= 0 ? idx : 0);
-                          }}
-                        >
-                          <div className="lkdv-carnet-kit-mini-tile-top">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={generatedProductImage(item.name, item.category || 'Divers')}
-                              alt=""
-                              loading="lazy"
-                              style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'cover' }}
-                            />
+                  <div className="lkdv-carnet-kit-groups">
+                    {Array.from(
+                      pKitItems.reduce((acc, item) => {
+                        const cat = item.category?.trim() || 'Divers';
+                        const arr = acc.get(cat) ?? [];
+                        arr.push(item);
+                        acc.set(cat, arr);
+                        return acc;
+                      }, new Map<string, typeof pKitItems>())
+                    ).map(([category, groupItems]) => {
+                      const catWeightG = groupItems.reduce(
+                        (sum, item) => sum + (item.weightG ?? 0) * (item.quantity ?? 1),
+                        0
+                      );
+                      return (
+                        <section key={category} className="lkdv-carnet-kit-group">
+                          <div className="lkdv-carnet-kit-group-head">
+                            <Package size={14} aria-hidden="true" />
+                            <span>{category}</span>
+                            <small>
+                              {groupItems.length} ·{' '}
+                              {catWeightG >= 1000
+                                ? `${(catWeightG / 1000).toFixed(1).replace('.', ',')} kg`
+                                : `${Math.round(catWeightG)} g`}
+                            </small>
                           </div>
-                          <b title={item.name}>{item.name}</b>
-                          <div className="lkdv-carnet-kit-mini-tile-foot">
-                            <small>{item.weightG ? `${item.weightG} g` : '—'}</small>
+                          <div className="lkdv-carnet-kit-plus-row">
+                            {groupItems.map((item) => {
+                              const qty = item.quantity ?? 1;
+                              const wG = (item.weightG ?? 0) * qty;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  className="lkdv-carnet-kit-mini-tile"
+                                  onClick={() => {
+                                    const idx = sacKitItems.findIndex((k) => k.id === item.id);
+                                    setSelectedKitProductIndex(idx >= 0 ? idx : 0);
+                                  }}
+                                >
+                                  <div className="lkdv-carnet-kit-mini-tile-top">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={item.image || generatedProductImage(item.name, category)}
+                                      alt=""
+                                      loading="lazy"
+                                      decoding="async"
+                                      style={{
+                                        width: 34,
+                                        height: 34,
+                                        borderRadius: 8,
+                                        objectFit: 'cover',
+                                        background: 'rgba(23, 64, 44, 0.06)',
+                                      }}
+                                    />
+                                    {qty > 1 ? (
+                                      <span className="lkdv-carnet-kit-mini-qty">×{qty}</span>
+                                    ) : null}
+                                  </div>
+                                  <b title={item.name}>{item.name}</b>
+                                  <div className="lkdv-carnet-kit-mini-tile-foot">
+                                    <small>
+                                      {wG > 0
+                                        ? wG >= 1000
+                                          ? `${(wG / 1000).toFixed(1).replace('.', ',')} kg`
+                                          : `${Math.round(wG)} g`
+                                        : '—'}
+                                    </small>
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  </>
+                        </section>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucun kit partagé pour ce voyageur.</p>
                 )
@@ -1108,6 +1144,10 @@ export function CarnetDrawerV2({
             onJumpToParticipantKit={(uid) => {
               setKitJumpUserId(uid);
               onSlotChange('sac');
+            }}
+            onSelectDay={(dayNum) => {
+              onDayPick?.(dayNum);
+              onClose();
             }}
             onRequireAuth={onRequireAuth}
             onIsland={onIsland}
@@ -1261,7 +1301,7 @@ export function CarnetDrawerV2({
                 brand: null,
                 category: item.category ?? null,
                 weightG: item.weightG ?? null,
-                image: null,
+                image: item.image ?? null,
                 wear: null,
                 conditionLabel: item.verdict ?? null,
                 description: item.detail ?? null,

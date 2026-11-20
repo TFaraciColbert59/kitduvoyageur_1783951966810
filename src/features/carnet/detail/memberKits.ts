@@ -127,24 +127,52 @@ export async function loadCarnetMemberKits(params: {
     if (kitIdsToLoad.length > 0) {
       const { data: itemsData } = await client
         .from('materiel_kit_items')
-        .select('id, kit_id, name, category, weight_g, quantity, carry_mode, reason')
+        .select('id, kit_id, name, category, weight_g, quantity, carry_mode, reason, product_id')
         .in('kit_id', kitIdsToLoad)
         .order('slot_order', { ascending: true })
         .order('created_at', { ascending: true });
 
+      const rawRows = (itemsData ?? []) as Array<MaterielKitItemRow & { product_id?: string | null }>;
+      const productIds = [...new Set(rawRows.map((r) => r.product_id).filter((v): v is string => Boolean(v)))];
+      const itemNames = [...new Set(rawRows.map((r) => r.name?.trim()).filter((v): v is string => Boolean(v)))];
+      const imageByProductId = new Map<string, string>();
+      const imageByName = new Map<string, string>();
+      if (productIds.length > 0 || itemNames.length > 0) {
+        const [byIdRes, byNameRes] = await Promise.all([
+          productIds.length > 0
+            ? client.from('shop_products').select('id, image').in('id', productIds)
+            : Promise.resolve({ data: [] }),
+          itemNames.length > 0
+            ? client.from('shop_products').select('name, image').in('name', itemNames)
+            : Promise.resolve({ data: [] }),
+        ]);
+        for (const p of (byIdRes.data ?? []) as Array<{ id: string; image?: string | null }>) {
+          if (p.image) imageByProductId.set(p.id, p.image);
+        }
+        for (const p of (byNameRes.data ?? []) as Array<{ name: string; image?: string | null }>) {
+          if (p.image && p.name) imageByName.set(p.name.trim().toLowerCase(), p.image);
+        }
+      }
+
       const itemsByKit = new Map<string, CarnetKitItemRow[]>();
-      for (const row of (itemsData ?? []) as MaterielKitItemRow[]) {
+      for (const row of rawRows) {
         const list = itemsByKit.get(row.kit_id) ?? [];
         const qty = row.quantity && row.quantity > 0 ? row.quantity : 1;
+        const cleanName = row.name?.trim() || 'Élément sans nom';
+        const realImage =
+          (row.product_id ? imageByProductId.get(row.product_id) : undefined) ??
+          imageByName.get(cleanName.toLowerCase()) ??
+          null;
         list.push({
           id: row.id,
-          name: row.name?.trim() || 'Élément sans nom',
+          name: cleanName,
           detail: row.reason?.trim() || null,
           weightG: typeof row.weight_g === 'number' ? row.weight_g : null,
           color: null,
           category: row.category ?? null,
           quantity: qty,
           carryMode: normalizeCarryMode(row.carry_mode),
+          image: realImage,
         });
         itemsByKit.set(row.kit_id, list);
       }

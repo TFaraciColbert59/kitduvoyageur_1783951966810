@@ -810,6 +810,25 @@ export async function getCarnetDetail(id: string) {
     detail.memberKits = memberKits;
   }
 
+  if (detail.kit.items.length > 0) {
+    const names = [...new Set(detail.kit.items.map((it) => it.name.trim()).filter(Boolean))];
+    if (names.length > 0) {
+      const { data: prodImgs } = await sessionClient
+        .from('shop_products')
+        .select('name, image')
+        .in('name', names);
+      const imgMap = new Map<string, string>();
+      for (const p of (prodImgs ?? []) as Array<{ name: string; image?: string | null }>) {
+        if (p.image && p.name) imgMap.set(p.name.trim().toLowerCase(), p.image);
+      }
+      for (const it of detail.kit.items) {
+        if (!it.image) {
+          it.image = imgMap.get(it.name.trim().toLowerCase()) ?? null;
+        }
+      }
+    }
+  }
+
   /* Le profil altimétrique manque partout en production : `elevationM` n'est
      renseigné par aucune sortie. `enrichCarnetElevation` demande l'altitude des
      points du tracé au MNT d'Open-Meteo (cache 1 h, 3 s de délai maximum) et

@@ -39,6 +39,7 @@ export interface PokedexEntry {
   wikipediaUrl?: string | null;
   moment?: CarnetMomentItem;
   imageUrl?: string | null;
+  discoverers?: Array<{ userId: string; name: string; avatarUrl: string | null }>;
 }
 
 const ALPINE_DEX_CATALOG: Array<Omit<PokedexEntry, 'discovered' | 'moment' | 'imageUrl'>> = [
@@ -222,11 +223,58 @@ function PokedexHoloCard({
 
       <div className="lkdv-carnet-pokedex-card-head">
         <span className="lkdv-carnet-pokedex-num">{entry.dexNumber}</span>
-        {entry.discovered ? (
-          <CheckCircle2 size={14} color="#1b4332" aria-label="Découvert" />
-        ) : (
-          <Lock size={12} color="#6b7280" aria-label="Non découvert" />
-        )}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          {entry.discoverers && entry.discoverers.length > 0 ? (
+            <span
+              style={{ display: 'inline-flex', alignItems: 'center' }}
+              title={`Découvert par ${entry.discoverers.map((d) => d.name).join(', ')}`}
+            >
+              {entry.discoverers.slice(0, 3).map((d, i) =>
+                d.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={d.userId}
+                    src={d.avatarUrl}
+                    alt={d.name}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1.5px solid #fff',
+                      marginLeft: i > 0 ? -5 : 0,
+                      boxShadow: '0 1px 3px rgba(0,0,0,.18)',
+                    }}
+                  />
+                ) : (
+                  <span
+                    key={d.userId}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      background: '#1b4332',
+                      color: '#fff',
+                      fontSize: 9,
+                      fontWeight: 700,
+                      display: 'inline-grid',
+                      placeItems: 'center',
+                      border: '1.5px solid #fff',
+                      marginLeft: i > 0 ? -5 : 0,
+                    }}
+                  >
+                    {d.name.slice(0, 1).toUpperCase()}
+                  </span>
+                ),
+              )}
+            </span>
+          ) : null}
+          {entry.discovered ? (
+            <CheckCircle2 size={14} color="#1b4332" aria-label="Découvert" />
+          ) : (
+            <Lock size={12} color="#6b7280" aria-label="Non découvert" />
+          )}
+        </span>
       </div>
 
       <div className="lkdv-carnet-pokedex-thumb">
@@ -267,6 +315,7 @@ function PokedexHoloCard({
 interface CarnetPokedexDrawerBodyProps {
   detail: CarnetDetail;
   lensId: string;
+  currentUserId?: string | null;
   onObserveSpecies?: (species: { name: string; latin: string }) => void;
   onZoneProgressChange?: (progress: { discovered: number; total: number }) => void;
 }
@@ -274,6 +323,7 @@ interface CarnetPokedexDrawerBodyProps {
 export function CarnetPokedexDrawerBody({
   detail,
   lensId,
+  currentUserId = null,
   onObserveSpecies,
   onZoneProgressChange,
 }: CarnetPokedexDrawerBodyProps) {
@@ -369,13 +419,41 @@ export function CarnetPokedexDrawerBody({
     const usedMomentIds = new Set<string>();
     const byLatin = new Map<string, PokedexEntry>();
 
+    const resolveDiscoverers = (matches: CarnetMomentItem[]) => {
+      const seen = new Set<string>();
+      const list: Array<{ userId: string; name: string; avatarUrl: string | null }> = [];
+      for (const m of matches) {
+        const uid = m.authorId || m.authorName || 'auteur';
+        if (seen.has(uid)) continue;
+        seen.add(uid);
+        const participant =
+          detail.participants.find((p) => p.userId === m.authorId || p.name === m.authorName) ??
+          (detail.author && (detail.author.id === m.authorId || detail.author.name === m.authorName)
+            ? { userId: detail.author.id, name: detail.author.name, avatarUrl: detail.author.avatarUrl ?? null }
+            : null);
+        list.push({
+          userId: participant?.userId ?? uid,
+          name: participant?.name || m.authorName || 'Voyageur',
+          avatarUrl: participant?.avatarUrl ?? null,
+        });
+      }
+      return list;
+    };
+
     // 1. Espèces locales réelles depuis iNaturalist (+ résultats de recherche)
     for (const sp of [...apiSpecies, ...searchSpecies]) {
       const escapedLatin = sp.latin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedName = sp.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const kw = new RegExp(`${escapedName}|${escapedLatin}`, 'i');
-      const match = natureMoments.find((m) => kw.test(`${m.quote ?? ''} ${m.place ?? ''}`));
-      if (match) usedMomentIds.add(match.id);
+      const matches = natureMoments.filter((m) =>
+        kw.test(`${m.speciesName ?? ''} ${m.speciesLatin ?? ''} ${m.quote ?? ''} ${m.place ?? ''}`),
+      );
+      for (const m of matches) usedMomentIds.add(m.id);
+      const match = matches[0];
+      const discoverers = resolveDiscoverers(matches);
+      const discoveredByMe = Boolean(
+        currentUserId && matches.some((m) => m.authorId === currentUserId),
+      );
 
       byLatin.set(sp.latin.toLowerCase(), {
         dexNumber: sp.dexNumber,
@@ -394,7 +472,8 @@ export function CarnetPokedexDrawerBody({
           altitude: 75,
         },
         keywords: kw,
-        discovered: Boolean(match),
+        discovered: discoveredByMe,
+        discoverers,
         observationsCount: sp.observationsCount,
         wikipediaUrl: sp.wikipediaUrl,
         moment: match,
@@ -405,22 +484,29 @@ export function CarnetPokedexDrawerBody({
     // 2. Catalogue alpin de référence (complète si absent d'iNaturalist)
     for (const item of ALPINE_DEX_CATALOG) {
       const key = item.latin.toLowerCase();
-      const match = natureMoments.find((m) =>
-        item.keywords.test(`${m.quote ?? ''} ${m.place ?? ''}`),
+      const matches = natureMoments.filter((m) =>
+        item.keywords.test(`${m.speciesName ?? ''} ${m.speciesLatin ?? ''} ${m.quote ?? ''} ${m.place ?? ''}`),
       );
-      if (match) usedMomentIds.add(match.id);
+      for (const m of matches) usedMomentIds.add(m.id);
+      const match = matches[0];
+      const discoverers = resolveDiscoverers(matches);
+      const discoveredByMe = Boolean(
+        currentUserId && matches.some((m) => m.authorId === currentUserId),
+      );
 
       const existing = byLatin.get(key);
       if (existing) {
-        if (match && !existing.discovered) {
-          existing.discovered = true;
-          existing.moment = match;
-          existing.imageUrl = match.imageUrl ?? existing.imageUrl;
+        if (matches.length > 0) {
+          existing.discoverers = discoverers;
+          if (discoveredByMe) existing.discovered = true;
+          existing.moment = match ?? existing.moment;
+          existing.imageUrl = match?.imageUrl ?? existing.imageUrl;
         }
       } else {
         byLatin.set(key, {
           ...item,
-          discovered: Boolean(match),
+          discovered: discoveredByMe,
+          discoverers,
           moment: match,
           imageUrl: match?.imageUrl ?? null,
         });
@@ -592,7 +678,9 @@ export function CarnetPokedexDrawerBody({
         </div>
 
         <div className="lkdv-carnet-chart-card">
-          <span className="lkdv-carnet-kit-eyebrow">Indice d’observation</span>
+          <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 10, display: 'block' }}>
+            Indice d’observation
+          </span>
           <div className="lkdv-carnet-kit-bars">
             {(
               [

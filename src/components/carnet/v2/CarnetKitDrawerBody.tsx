@@ -274,14 +274,48 @@ export function CarnetKitDrawerBody({
               type="button"
               role="tab"
               aria-selected={active}
-              className={`lkdv-carnet-kit-user-pill${active ? ' is-active' : ''}`}
+              className="lkdv-post-author"
               onClick={() => setSelectedUserId(p.userId)}
+              style={{
+                flex: '0 0 auto',
+                background: active
+                  ? 'linear-gradient(180deg, rgba(23, 64, 44, 0.92), rgba(23, 64, 44, 0.85))'
+                  : 'var(--lg-bar-bg, rgba(255, 255, 255, 0.78))',
+                WebkitBackdropFilter: 'var(--lg-bar-blur, blur(28px) saturate(180%))',
+                backdropFilter: 'var(--lg-bar-blur, blur(28px) saturate(180%))',
+                boxShadow: 'var(--lg-bar-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 14px rgba(23, 43, 36, 0.1))',
+                color: active ? '#ffffff' : 'var(--lg-on, #17402c)',
+                border: active ? '1px solid rgba(255, 255, 255, 0.28)' : '0',
+                cursor: 'pointer',
+              }}
             >
-              <span className="lkdv-carnet-kit-user-avatar" aria-hidden="true">
-                {p.avatarUrl ? <img src={p.avatarUrl} alt="" /> : initial}
+              {p.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="lkdv-post-author-av" src={p.avatarUrl} alt="" />
+              ) : (
+                <span className="lkdv-post-author-av pmi-author-initial" aria-hidden="true">
+                  {initial}
+                </span>
+              )}
+              <span className="lkdv-post-author-txt">
+                <span className="lkdv-post-author-line">
+                  <b>{displayName}</b>
+                  {pWeight ? (
+                    <span
+                      className="lkdv-post-author-badge"
+                      style={active ? { background: 'rgba(255, 255, 255, 0.2)', color: '#fff' } : undefined}
+                    >
+                      {pWeight}
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  className="lkdv-post-author-meta"
+                  style={{ color: active ? 'rgba(255, 255, 255, 0.78)' : 'var(--lg-ink, #56665d)' }}
+                >
+                  {pKit?.items.length ?? 0} objet{(pKit?.items.length ?? 0) > 1 ? 's' : ''}
+                </span>
               </span>
-              <span className="lkdv-carnet-kit-user-name">{shortName}</span>
-              {pWeight ? <span className="lkdv-carnet-kit-user-wt">{pWeight}</span> : null}
             </button>
           );
         })}
@@ -408,7 +442,7 @@ export function CarnetKitDrawerBody({
                           <div className="lkdv-carnet-kit-mini-tile-top">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={generatedProductImage(item.name, category)}
+                              src={item.image || generatedProductImage(item.name, category)}
                               alt=""
                               loading="lazy"
                               decoding="async"
@@ -605,26 +639,36 @@ export function CarnetKitDrawerBody({
           </StaggerCard>
         ) : null}
 
-        {heaviestItems.length > 0 ? (
+        {activeKit.items.length > 0 ? (
           <StaggerCard className="lkdv-carnet-chart-card">
-            <span className="lkdv-carnet-kit-eyebrow">Top 3 objets les plus lourds</span>
-            <div className="lkdv-carnet-cards-col">
-              {heaviestItems.map((item, idx) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="lkdv-carnet-budget-row"
-                  style={{ width: '100%', border: 0, cursor: 'pointer', textAlign: 'left' }}
-                  onClick={() => onSelectItem(item)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="lkdv-carnet-chip-dark">#{idx + 1}</span>
-                    <b>{item.name}</b>
-                  </div>
-                  <b>{formatWeight((item.weightG ?? 0) * (item.quantity ?? 1))}</b>
-                </button>
-              ))}
+            <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 8, display: 'block' }}>
+              Statistiques du kit
+            </span>
+            <div className="lkdv-carnet-kpi-grid-3">
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Poids moy. / objet</small>
+                <b>
+                  {formatWeight(
+                    Math.round(totalWeightG / Math.max(1, activeKit.items.length)),
+                  )}
+                </b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Catégories</small>
+                <b>{groupedItems.length}</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Poids de base</small>
+                <b>{formatKg(layers.sac + layers.porte)}</b>
+              </div>
             </div>
+            {heaviestItems[0] ? (
+              <div className="lkdv-carnet-kpi-subrow" style={{ marginTop: 8 }}>
+                <span>
+                  Plus lourd : <b>{heaviestItems[0].name} ({formatWeight((heaviestItems[0].weightG ?? 0) * (heaviestItems[0].quantity ?? 1))})</b>
+                </span>
+              </div>
+            ) : null}
           </StaggerCard>
         ) : null}
       </div>
