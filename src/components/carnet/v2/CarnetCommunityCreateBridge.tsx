@@ -33,7 +33,7 @@ import { createKindConfig, stepAriaLabel } from '@/features/community/v2/create/
 import type { CreateKindV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import { formatClock, useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
-import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
+import { CarnetSpeciesCreatePane } from './CarnetSpeciesCreatePane';
 
 const PostFormV2 = dynamic(
   () => import('@/features/community/v2/create/forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
@@ -101,38 +101,12 @@ export function CarnetCommunityCreateBridge({
   const [caption, setCaption] = useState(initialSpeciesName);
   const [who, setWho] = useState('');
   const [latin, setLatin] = useState(initialSpeciesLatin);
-  const [speciesSuggestions, setSpeciesSuggestions] = useState<PokedexApiSpecies[]>([]);
+  const [speciesFile, setSpeciesFile] = useState<File | null>(null);
+  const [speciesNote, setSpeciesNote] = useState('');
   const [ambiance, setAmbiance] = useState(false);
   const [momentBusy, setMomentBusy] = useState(false);
   const [momentError, setMomentError] = useState<string | null>(null);
   const voice = useVoiceRecorder();
-
-  useEffect(() => {
-    if (activeTab !== 'species') {
-      setSpeciesSuggestions([]);
-      return;
-    }
-    const q = caption.trim();
-    if (q.length < 2) {
-      setSpeciesSuggestions([]);
-      return;
-    }
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      fetch(`/api/pokedex/species?q=${encodeURIComponent(q)}`)
-        .then((res) => res.json())
-        .then((data: { species?: PokedexApiSpecies[] }) => {
-          if (!cancelled && Array.isArray(data.species)) {
-            setSpeciesSuggestions(data.species.slice(0, 5));
-          }
-        })
-        .catch(() => {});
-    }, 250);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [activeTab, caption]);
 
   const recordedUrl = useMemo(
     () => (voice.recording ? URL.createObjectURL(voice.recording.file) : null),
@@ -239,12 +213,21 @@ export function CarnetCommunityCreateBridge({
       if (ambiance) input.ambiance = true;
     }
     if (activeTab === 'meet') input.who = who;
-    if (activeTab === 'species') input.latin = latin;
+    if (activeTab === 'species') {
+      input.latin = latin;
+      if (speciesNote.trim()) {
+        input.caption = `${caption.trim() || 'Espèce'} — ${speciesNote.trim()}`;
+      }
+    }
 
-    const result = await onSubmitMoment(
-      input,
-      activeTab === 'voice' ? (voice.recording?.file ?? null) : null,
-    );
+    const attachedFile =
+      activeTab === 'voice'
+        ? (voice.recording?.file ?? null)
+        : activeTab === 'species'
+          ? speciesFile
+          : null;
+
+    const result = await onSubmitMoment(input, attachedFile);
     setMomentBusy(false);
     if (!result.ok) {
       setMomentError(result.error);
@@ -496,6 +479,24 @@ export function CarnetCommunityCreateBridge({
   const panes = CARNET_CREATE_TABS.map((t) => {
     if (t.id === 'post' || t.id === 'story') {
       return <div key={t.id} className="lkdv-cv2c-pane" />;
+    }
+    if (t.id === 'species') {
+      return (
+        <CarnetSpeciesCreatePane
+          key="species"
+          day={day}
+          place={place}
+          onPlaceChange={setPlace}
+          caption={caption}
+          onCaptionChange={setCaption}
+          latin={latin}
+          onLatinChange={setLatin}
+          speciesFile={speciesFile}
+          onSpeciesFileChange={setSpeciesFile}
+          note={speciesNote}
+          onNoteChange={setSpeciesNote}
+        />
+      );
     }
     return <React.Fragment key={t.id}>{renderMomentForm(t.id)}</React.Fragment>;
   });
