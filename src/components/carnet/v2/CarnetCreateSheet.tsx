@@ -138,16 +138,29 @@ export function CarnetCreateSheet({
     window.setTimeout(onClose, 600);
   };
 
-  if (type === 'photo' || type === 'video' || type === 'text') {
+  if (
+    type === 'photo' ||
+    type === 'video' ||
+    type === 'text' ||
+    type === 'voice' ||
+    type === 'meet' ||
+    type === 'species' ||
+    type === 'inc'
+  ) {
+    const initialTab =
+      type === 'photo' || type === 'video' || type === 'text' ? 'post' : type;
     return (
       <CommunityCreateSheetV2
-        initialKind="post"
+        initialTab={initialTab}
         initialPrefill={{
           format: type === 'text' ? 'billet' : 'photo',
           location: defaultPlace,
           step: 1,
         }}
+        day={day}
+        defaultPlace={defaultPlace}
         user={user ?? null}
+        onSubmitMoment={onSubmit}
         onClose={onClose}
         onCreated={() => {
           onClose();
