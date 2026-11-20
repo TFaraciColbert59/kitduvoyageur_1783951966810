@@ -3525,7 +3525,7 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-carnet-pokedex-floating-bar {
   position: sticky;
   bottom: 6px;
-  align-self: flex-end;
+  align-self: flex-start;
   z-index: 15;
   display: inline-flex;
   align-items: center;
