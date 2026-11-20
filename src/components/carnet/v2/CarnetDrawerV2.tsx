@@ -229,10 +229,7 @@ export function CarnetDrawerV2({
     return {
       fil: [
         { id: 'moments', label: 'Global', icon: <Clock size={15} /> },
-        { id: 'medias', label: 'Médias', icon: <ImageIcon size={15} /> },
-        { id: 'meteo', label: 'Météo', icon: <CloudSun size={15} /> },
         { id: 'altitude', label: 'Altitude', icon: <Mountain size={15} /> },
-        { id: 'rencontres', label: 'Rencontres', icon: <Quote size={15} /> },
       ],
       route: [
         { id: 'pokedex', label: 'Pokédex', icon: <Leaf size={15} /> },
