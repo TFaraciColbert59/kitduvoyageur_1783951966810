@@ -5,6 +5,7 @@ import type { ElevationPoint } from '@/features/carnet/detail/types';
 
 export interface CarnetAltitudeProps {
   points: ElevationPoint[];
+  elevationM?: number | null;
   height?: number;
   interactive?: boolean;
   onScrub?: (point: ElevationPoint | null) => void;

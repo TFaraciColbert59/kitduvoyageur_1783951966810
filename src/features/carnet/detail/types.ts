@@ -160,6 +160,10 @@ export interface CarnetMomentItem {
   authorId?: string | null;
   /** Données structurées du type (montant, citation, objet du kit…). */
   meta?: import('./momentTypes').MomentMeta | null;
+  quote?: string | null;
+  source?: string | null;
+  speciesName?: string | null;
+  speciesLatin?: string | null;
 }
 
 /** Un point GPS d'un jour : sa coordonnée réelle et son heure réelle. */
@@ -181,6 +185,7 @@ export interface CarnetDay {
   /** Numéro du jour tel que le carnet le numérote, à partir de 1. */
   index: number;
   dayNumber?: number;
+  title?: string | null;
   /** `YYYY-MM-DD`, ou `null` quand aucune date réelle ne peut être établie. */
   date: string | null;
   /** Longueur haversine des segments du jour, `null` sous deux points. */
@@ -249,6 +254,7 @@ export interface CarnetKitItemRow {
 }
 
 export interface CarnetKit {
+  title?: string | null;
   /** Somme des poids connus. `null` si aucun poids n'est renseigné. */
   totalWeightG: number | null;
   items: CarnetKitItemRow[];

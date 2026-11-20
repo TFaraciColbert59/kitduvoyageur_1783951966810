@@ -104,7 +104,7 @@ export function CarnetAltitudeDrawerBody({
       }
     }
 
-    const gain = Math.round(elevationProfileGain(pts));
+    const gain = Math.round(elevationProfileGain(pts) ?? 0);
     const totalDist = Number((pts[pts.length - 1]?.distanceKm ?? 0).toFixed(1));
     const effortKm = Math.round(totalDist + gain / 100);
     const eiffelCount = Number((gain / 330).toFixed(1));

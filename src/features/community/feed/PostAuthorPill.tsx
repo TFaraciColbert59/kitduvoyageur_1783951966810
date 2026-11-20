@@ -27,8 +27,56 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
   const meta = metaOverride ?? [location, place, timeAgo(post.created_at)].filter(Boolean).join(' · ');
   const trust = typeof author?.trust_score === 'number' ? author.trust_score : null;
 
-  return <IdentityPill name={name} avatarUrl={author?.avatar_url} meta={meta || timeAgo(post.created_at)}
-    trust={trust} badge={badge} href={href} onClick={onClick} />;
+  const pillEl = (
+    <IdentityPill
+      name={name}
+      avatarUrl={author?.avatar_url}
+      meta={meta || timeAgo(post.created_at)}
+      trust={trust}
+      badge={badge}
+      href={href}
+      onClick={onClick}
+    />
+  );
+
+  const contextLink = post.clubContext
+    ? {
+        href: `/clubs/${post.clubContext.slug}`,
+        label: post.clubContext.name,
+        kind: 'club' as const,
+      }
+    : post.carnetContext
+      ? {
+          href: `/carnets/${post.carnetContext.id}`,
+          label: post.carnetContext.title,
+          kind: 'carnet' as const,
+        }
+      : null;
+
+  if (!contextLink) return pillEl;
+
+  return (
+    <div className="lkdv-post-author-stack">
+      {pillEl}
+      <Link
+        href={contextLink.href}
+        className="lkdv-post-context-pill"
+        onClick={(event) => event.stopPropagation()}
+        aria-label={
+          contextLink.kind === 'club'
+            ? `Ouvrir le club ${contextLink.label}`
+            : `Ouvrir le carnet ${contextLink.label}`
+        }
+      >
+        {contextLink.kind === 'club' ? (
+          <Users size={11} aria-hidden="true" />
+        ) : (
+          <BookOpen size={11} aria-hidden="true" />
+        )}
+        <span>{contextLink.label}</span>
+      </Link>
+    </div>
+  );
 }
 
 export function IdentityPill({ name, avatarUrl, meta, trust, badge, href, onClick, itemId }: {
@@ -72,54 +120,12 @@ export function IdentityPill({ name, avatarUrl, meta, trust, badge, href, onClic
     </>
   );
 
-  const contextLink = post.clubContext
-    ? {
-        href: `/clubs/${post.clubContext.slug}`,
-        label: post.clubContext.name,
-        kind: 'club' as const,
-      }
-    : post.carnetContext
-      ? {
-          href: `/carnets/${post.carnetContext.id}`,
-          label: post.carnetContext.title,
-          kind: 'carnet' as const,
-        }
-      : null;
-
-  const pillEl = onClick ? (
-    <button type="button" className="lkdv-post-author" aria-label={label} onClick={onClick}>
-      {body}
-    </button>
-  ) : (
-    <Link href={href} className="lkdv-post-author" aria-label={label}>
-      {body}
-    </Link>
+  if (onClick) return (
+    <button type="button" className={`lkdv-post-author${itemId ? ' lkdv-account-glass' : ''}`} aria-label={label} data-hub-item={itemId}
+      onClick={(event) => onClick(event.currentTarget)}>{body}</button>
   );
-
-  if (!contextLink) return pillEl;
-
-  return (
-    <div className="lkdv-post-author-stack">
-      {pillEl}
-      <Link
-        href={contextLink.href}
-        className="lkdv-post-context-pill"
-        onClick={(event) => event.stopPropagation()}
-        aria-label={
-          contextLink.kind === 'club'
-            ? `Ouvrir le club ${contextLink.label}`
-            : `Ouvrir le carnet ${contextLink.label}`
-        }
-      >
-        {contextLink.kind === 'club' ? (
-          <Users size={11} aria-hidden="true" />
-        ) : (
-          <BookOpen size={11} aria-hidden="true" />
-        )}
-        <span>{contextLink.label}</span>
-      </Link>
-    </div>
-  );
+  if (href) return <Link href={href} className="lkdv-post-author" aria-label={label}>{body}</Link>;
+  return <span className="lkdv-post-author">{body}</span>;
 }
 
 export default PostAuthorPill;

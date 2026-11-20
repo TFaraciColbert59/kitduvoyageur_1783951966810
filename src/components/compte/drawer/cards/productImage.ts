@@ -21,11 +21,12 @@ function escapeXml(value: string): string {
   });
 }
 
-export function generatedProductImage(name: string, size = 96): string {
+export function generatedProductImage(name: string, size: number | string = 96): string {
+  const px = typeof size === 'number' ? size : 96;
   const label = name.trim() || 'Kit';
   const initial = escapeXml(label.charAt(0).toUpperCase());
   const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 96 96">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 96 96">`,
     '<defs>',
     '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">',
     '<stop offset="0" stop-color="#F5F9F2"/>',

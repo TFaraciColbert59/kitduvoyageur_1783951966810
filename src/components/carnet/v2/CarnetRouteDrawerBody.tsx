@@ -67,7 +67,7 @@ export function CarnetRouteDrawerBody({
     const totalDist = pts[pts.length - 1]?.distanceKm ?? 0;
     return {
       maxAlt: Number.isFinite(maxAlt) ? Math.round(maxAlt) : null,
-      gain: Math.round(gain),
+      gain: Math.round(gain ?? 0),
       distKm: Number(totalDist.toFixed(1)),
     };
   }, [detail.elevationProfile]);

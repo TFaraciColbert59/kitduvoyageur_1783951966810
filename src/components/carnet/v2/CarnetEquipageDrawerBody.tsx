@@ -33,8 +33,8 @@ interface CarnetDayReactionsView {
     authorName: string;
     content: string;
   }>;
-  addComment: (text: string) => Promise<void> | void;
-  deleteComment: (commentId: string) => Promise<void> | void;
+  addComment: (text: string) => Promise<unknown> | void;
+  deleteComment: (commentId: string) => Promise<unknown> | void;
 }
 
 interface CarnetEquipageDrawerBodyProps {
@@ -155,7 +155,7 @@ export function CarnetEquipageDrawerBody({
       id: c.id,
       authorId: c.authorId ?? null,
       authorName: c.authorName,
-      authorAvatarUrl: null,
+      authorAvatar: null,
       content: c.content,
       createdAt: '',
     }));

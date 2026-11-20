@@ -145,13 +145,14 @@ export function CarnetCreateSheet({
   };
 
   if (
-    type === 'photo' ||
-    type === 'video' ||
-    type === 'text' ||
-    type === 'voice' ||
-    type === 'meet' ||
-    type === 'species' ||
-    type === 'inc'
+    !embedded &&
+    (type === 'photo' ||
+      type === 'video' ||
+      type === 'text' ||
+      type === 'voice' ||
+      type === 'meet' ||
+      type === 'species' ||
+      type === 'inc')
   ) {
     const initialTab =
       type === 'photo' || type === 'video' || type === 'text' ? 'post' : type;
@@ -177,35 +178,29 @@ export function CarnetCreateSheet({
     );
   }
 
-  return (
-    <OverlaySheet
-      title={type ? MOMENT_TYPE_LABELS[type] : 'Créer'}
-      subtitle={type ? undefined : `Ajouter un moment à J${day}`}
-      onClose={onClose}
-      headerRight={
-        type ? (
-          <ActionPill
-            className="lkdv-create-back"
-            label="Tous les types"
-            icon={<ChevronLeft />}
-            onClick={back}
-          />
-        ) : undefined
-      }
-      footer={
-        type ? (
-          <button
-            type="button"
-            className="lkdv-carnet-create-cta"
-            data-testid="create-submit"
-            disabled={busy}
-            onClick={() => void submit()}
-          >
-            Ajouter le moment
-          </button>
-        ) : undefined
-      }
+  const backButton = type ? (
+    <ActionPill
+      className="lkdv-create-back"
+      label="Tous les types"
+      icon={<ChevronLeft />}
+      onClick={back}
+    />
+  ) : undefined;
+
+  const submitButton = type ? (
+    <button
+      type="button"
+      className="lkdv-carnet-create-cta"
+      data-testid="create-submit"
+      disabled={busy}
+      onClick={() => void submit()}
     >
+      Ajouter le moment
+    </button>
+  ) : undefined;
+
+  const form = (
+    <>
       {!type ? (
         <div className="lkdv-create-catalog" role="group" aria-label="Type de moment">
           {MOMENT_TYPES.map((key) => {

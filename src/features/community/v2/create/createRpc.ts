@@ -467,7 +467,7 @@ export async function createClubWithAdminV2(
     const cover = avatar?.status === 'uploaded' && avatar.url ? avatar : banner;
     const coverUrl = cover?.status === 'uploaded' && cover.url ? cover.url : null;
     await callRpc<CreatePostResultV2>('create_community_post', {
-      content: [values.name.trim(), values.zoneLabel.trim()].filter(Boolean).join(' · '),
+      content: [values.name.trim(), values.locationLabel.trim()].filter(Boolean).join(' · '),
       post_type: 'share',
       audience: 'club',
       club_id: result.id,
@@ -478,8 +478,8 @@ export async function createClubWithAdminV2(
         club_id: result.id,
         club_slug: result.slug || slug,
         club_name: values.name.trim(),
-        club_category: values.category,
-        club_zone: values.zoneLabel.trim() || null,
+        club_category: values.activities[0] ?? null,
+        club_zone: values.locationLabel.trim() || null,
         club_privacy: values.privacy,
         club_cover: coverUrl,
       },
@@ -655,16 +655,15 @@ export async function createCarnetV2(
     'create_carnet_v2',
     buildCarnetPayload(values, options),
   );
-  if (values.visibility !== 'only_me') {
+  if (values.visibility !== 'private') {
     try {
       const photos = carnetPhotos(values);
-      const uploadedCover = values.cover[0]?.status === 'uploaded' ? values.cover[0] : photos[0];
-      const coverUrl = uploadedCover?.status === 'uploaded' && uploadedCover.url ? uploadedCover.url : null;
+      const coverUrl = photos[0] ?? null;
       await callRpc<CreatePostResultV2>('create_community_post', {
         content: [values.title.trim(), values.destination.trim()].filter(Boolean).join(' · '),
         post_type: 'share',
         audience:
-          values.visibility === 'followers'
+          values.visibility === 'friends'
             ? 'abonnies'
             : values.visibility === 'club'
               ? 'club'

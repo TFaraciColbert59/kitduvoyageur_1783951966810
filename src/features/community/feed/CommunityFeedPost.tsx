@@ -42,7 +42,8 @@ function FeedCarnetCommentsPanel({
   onRequireAuth: () => void;
   onCommentsCountChange: (count: number) => void;
 }) {
-  const { comments, loading, canWrite, send, remove } = useCarnetComments({ carnetId, user });
+  const { comments, loading, send, remove } = useCarnetComments({ carnetId, user });
+  const canWrite = Boolean(user);
   useEffect(() => {
     if (!loading) onCommentsCountChange(comments.length);
   }, [comments.length, loading, onCommentsCountChange]);

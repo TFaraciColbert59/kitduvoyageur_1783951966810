@@ -6,7 +6,7 @@ import AppImage from '@/components/ui/AppImage';
 import { ClubCrest } from '../../shared/ClubCrest';
 import { activityLabel } from '../../data/communityFeedMappers';
 import type { ClubCardVM, MemberStatus } from '../../shared/types';
-import { formatCountFr } from '../../shared/format';
+import { formatCountFr, formatRelativeTime } from '../../shared/format';
 import { ExploreIcon } from '../ExploreIcons';
 import { useLongPress } from '../useLongPress';
 

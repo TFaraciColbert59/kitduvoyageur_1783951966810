@@ -29,18 +29,26 @@ import {
   Timer,
   Wallet,
   Radio,
+  Share2,
   ChevronLeft,
+  ChevronRight,
+  Download,
   Bookmark,
+  Copy,
+  Check,
   Send,
   Trash2,
 } from 'lucide-react';
 import LikeIcon from '@/components/social-kit/LikeIcon';
-import { SlotShell, type SlotLens } from '@/components/compte/drawer/SlotShell';
+import { SlotShell, type SlotId, type SlotLens } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import type {
   CarnetDetail,
+  CarnetEtapeDay,
+  CarnetNightItem,
   CarnetMomentItem,
+  CarnetParticipant,
   KitVerdictType,
 } from '@/features/carnet/detail/types';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -61,6 +69,20 @@ import { CarnetChiffresDrawerBody } from './CarnetChiffresDrawerBody';
 import { CarnetEquipageDrawerBody } from './CarnetEquipageDrawerBody';
 
 export type CarnetSlotId = 'fil' | 'route' | 'sac' | 'chiffres' | 'equipage';
+export type StackIntent = { type: string; [key: string]: unknown };
+
+/** Seuil (px) au-delà duquel la descente dans une lentille est mémorisée. */
+/** Rôles du carnet : les données serveur sont en anglais, l'interface en français. */
+function roleLabel(role: string): string {
+  if (role === 'author') return 'auteur';
+  if (role === 'collaborator') return 'contributeur';
+  if (role === 'participant') return 'participant';
+  return role;
+}
+
+const RESUME_MEMO_MIN = 20;
+/** Seuil (px) sous lequel la lentille est considérée « en haut ». */
+const RESUME_TOP_MAX = 10;
 
 /**
  * Cascade des lignes du tiroir — maquette `.ds-row` (`sheetRowIn`) :
@@ -97,77 +119,29 @@ export interface CarnetDrawerV2Props {
   onOpenStories?: () => void;
   isAccountDrawer?: boolean;
   onObserveSpecies?: (species: { name: string; latin: string }) => void;
+  isEditing?: boolean;
+  onCreate?: (...args: any[]) => void;
+  pinnedIds?: ReadonlySet<string>;
+  onContextChange?: (context: any) => void;
+  intent?: { nonce: number; view: StackIntent } | null;
+  forceError?: unknown;
+  onEdit?: (target: any) => void;
+  onSettingsSaved?: (changes: Record<string, unknown>) => void;
+  onDeleted?: () => void;
   onDayPick?: (day: number) => void;
 }
 
-export type StackIntent =
-  | { type: 'lens'; slot: CarnetSlotId; index: number }
-  | { type: 'participant'; userId: string }
-  | { type: 'etape'; etapeId: string };
-
 type StackView =
-  | { type: 'etape'; etapeId: string }
-  | { type: 'night'; nightId: string }
-  | { type: 'item'; itemId: string }
-  | { type: 'participant'; userId: string };
-
-/** « + Ajouter … » du mode modification (maquette `edcap`). */
-function AddCaption({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <div className="lkdv-ed">
-      <button type="button" className="lkdv-edcap" aria-label={label} onClick={onClick}>
-        + {label}
-      </button>
-    </div>
-  );
-}
-
-/** Carte d'état vide ou d'erreur d'une lentille (`.empty`). */
-function LensState({
-  tone = 'empty',
-  title,
-  hint,
-  action,
-}: {
-  tone?: 'empty' | 'error';
-  title: string;
-  hint?: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="lkdv-lens-state" data-tone={tone} role={tone === 'error' ? 'alert' : 'status'}>
-      <span className="lkdv-lens-state-gl" aria-hidden="true">
-        {tone === 'error' ? '!' : '○'}
-      </span>
-      <b>{title}</b>
-      {hint ? <p>{hint}</p> : null}
-      {action}
-    </div>
-  );
-}
-
-/** Une lentille qui plante n'emporte pas les autres : état d'erreur + « Réessayer ». */
-class LensBoundary extends React.Component<
-  { resetKey: string; fallback: React.ReactNode; children: React.ReactNode },
-  { crashed: boolean }
-> {
-  state = { crashed: false };
-  static getDerivedStateFromError() {
-    return { crashed: true };
-  }
-  componentDidUpdate(prev: { resetKey: string }) {
-    if (prev.resetKey !== this.props.resetKey && this.state.crashed) {
-      this.setState({ crashed: false });
+  | { type: 'etape'; etape: CarnetEtapeDay }
+  | { type: 'night'; night: CarnetNightItem }
+  | {
+      type: 'item';
+      itemId: string;
+      name: string;
+      weightG: number | null;
+      detailText?: string | null;
     }
-  }
-  render() {
-    return this.state.crashed ? this.props.fallback : this.props.children;
-  }
-}
-
-function Boom(): React.ReactElement {
-  throw new Error('lentille simulée en échec');
-}
+  | { type: 'participant'; participant: CarnetParticipant };
 
 export function CarnetDrawerV2({
   isOpen,
@@ -182,6 +156,7 @@ export function CarnetDrawerV2({
   userId,
   onRequireAuth,
   onSelectMoment,
+  onOpenStories,
   isAccountDrawer = false,
   onObserveSpecies,
   onDayPick,
@@ -195,6 +170,7 @@ export function CarnetDrawerV2({
     chiffres: 0,
     equipage: 0,
   });
+  const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
   const [selectedParticipant, setSelectedParticipant] = useState<CarnetDetail['participants'][number] | null>(null);
   const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
@@ -229,24 +205,12 @@ export function CarnetDrawerV2({
   });
 
   // Kit fork hook
-  const { isForked, forkAllItems } = useKitFork({
+  const { isForked, forkItem, forkAllItems } = useKitFork({
     carnetId: detail.id,
     userId,
     onRequireAuth,
     onIsland,
   });
-
-  const voice = useVoicePlayer(() => onIsland?.('Aucun enregistrement à écouter pour cette note'));
-  const [notifPref, setNotifPref] = useNotifPref(detail.id);
-  /* Propositions n° 20 et 41 : suivre le carnet (pas seulement la personne) et
-     garder la fréquence de notification sur le compte. Repli local honnête
-     quand la table n'est pas encore appliquée ou quand on est invité. */
-  const carnetFollow = useCarnetFollow({
-    carnetId: detail.id,
-    userId,
-    isParticipant: isParticipantRole(detail.viewerRole),
-  });
-  const serverNotif = carnetFollow.persisted && !isParticipantRole(detail.viewerRole);
 
   // Focus piégé, Échap, retour de focus, verrou de scroll (socle §7.2).
   const dialogRef = useCarnetDialog(isOpen, onClose);
@@ -294,7 +258,7 @@ export function CarnetDrawerV2({
 
   // Lenses for each slot
   const slotLenses: Record<CarnetSlotId, SlotLens[]> = useMemo(() => {
-    const isViewerParticipant = isParticipantRole(detail.viewerRole);
+    const isVisitor = detail.viewerRole === 'visitor';
     return {
       fil: [
         { id: 'moments', label: 'Global', icon: <Clock size={15} /> },
@@ -363,156 +327,66 @@ export function CarnetDrawerV2({
     [dialogRef]
   );
 
-  /* Contexte lu par la carte du bas : slot + lentille actifs (couches réduites). */
-  const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id ?? '';
   useEffect(() => {
-    if (!onContextChange) return;
-    if (!isOpen) {
-      onContextChange(null);
+    if (!isOpen || !activeLensKey) {
+      setResumePill(null);
       return;
     }
-    onContextChange({ slot: isAccountDrawer ? 'account' : activeSlot, lensId: activeLensId });
-  }, [activeLensId, activeSlot, isAccountDrawer, isOpen, onContextChange]);
+    const root = paneRootRef.current;
+    if (!root) return;
 
-  /* Ouverture demandée par une pastille « À la une » : fiche voyageur ou étape. */
-  const lastIntent = useRef(0);
-  useEffect(() => {
-    if (!isOpen || !intent || intent.nonce === lastIntent.current) return;
-    lastIntent.current = intent.nonce;
-    if (intent.view.type === 'lens') {
-      const target = intent.view;
-      setLensIndexBySlot((prev) => ({ ...prev, [target.slot]: target.index }));
-    } else if (intent.view.type === 'participant') {
-      const userIdWanted = intent.view.userId;
-      if (detail.participants.some((p) => p.userId === userIdWanted)) {
-        setStack([{ type: 'participant', userId: userIdWanted }]);
-      }
-    } else {
-      const etapeId = intent.view.etapeId;
-      if (detail.etapes.some((e) => e.id === etapeId)) setStack([{ type: 'etape', etapeId }]);
-    }
-  }, [detail.etapes, detail.participants, intent, isOpen]);
+    const readPane = () =>
+      root.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
 
-  /* « Reprendre » : le kit entier, annulable par l'île. Visible dans le slot Sac
-     et sur la fiche d'un objet seulement (maquette `syncKitPill`). */
-  const kitIds = useMemo(() => detail.kit.items.map((item) => item.id), [detail.kit.items]);
-  const kitSaved = kitIds.length > 0 && kitIds.every((id) => isForked(id));
-  const slotErrored = Boolean(forceError?.slot) && slotRetry === 0;
-  const topOfStack = stack[stack.length - 1];
-  const showKitPill =
-    isOpen &&
-    !isAccountDrawer &&
-    kitIds.length > 0 &&
-    !slotErrored &&
-    (topOfStack ? topOfStack.type === 'item' : activeSlot === 'sac');
-  const saveKit = useCallback(async () => {
-    if (kitSaved) {
-      onIsland?.('Kit enregistré dans ton Compas');
-      return;
-    }
-    await forkAllItems(kitIds);
-  }, [forkAllItems, kitIds, kitSaved, onIsland]);
+    const syncPill = (key: string, top: number) => {
+      const saved = scrollMemoRef.current[key] ?? 0;
+      // Nulle, ou déjà à la position mémorisée : pas de pilule.
+      const visible = saved > 0 && top < RESUME_TOP_MAX && Math.abs(saved - top) > RESUME_TOP_MAX;
+      setResumePill((prev) => {
+        if (!visible) return prev === null ? prev : null;
+        if (prev && prev.key === key && prev.top === saved) return prev;
+        return { key, top: saved };
+      });
+    };
 
-  const kitPillNode = showKitPill ? (
-    <button
-      type="button"
-      className="lkdv-pill-reprendre"
-      id="kitpill"
-      aria-pressed={kitSaved}
-      aria-label={kitSaved ? 'Kit enregistré dans ton Compas' : 'Reprendre ce kit'}
-      title="Reprendre ce kit"
-      onClick={() => void saveKit()}
-    >
-      <Bookmark size={15} aria-hidden="true" fill={kitSaved ? 'currentColor' : 'none'} />
-      <span>Reprendre</span>
-    </button>
-  ) : null;
+    syncPill(activeLensKey, readPane()?.scrollTop ?? 0);
+
+    const onScroll = (event: Event) => {
+      const pane = event.target as HTMLElement | null;
+      if (!pane || typeof pane.classList === 'undefined') return;
+      if (!pane.classList.contains('lkdv-lens-pane')) return;
+      const lensId = pane.getAttribute('data-lens');
+      if (!lensId) return;
+      const key = `${activeSlot}:${lensId}`;
+      if (pane.scrollTop > RESUME_MEMO_MIN) scrollMemoRef.current[key] = pane.scrollTop;
+      syncPill(key, pane.scrollTop);
+    };
+
+    root.addEventListener('scroll', onScroll, true);
+    return () => root.removeEventListener('scroll', onScroll, true);
+  }, [isOpen, activeLensKey, activeSlot]);
+
+  const resumeReading = useCallback(() => {
+    if (!resumePill) return;
+    const root = paneRootRef.current;
+    const pane = root?.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+    const manualReduce = Boolean(root?.closest('[data-reduce-motion="true"]'));
+    const systemReduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = manualReduce || systemReduce;
+    pane?.scrollTo({ top: resumePill.top, behavior: reduce ? 'auto' : 'smooth' });
+    haptic('selection');
+    setResumePill(null);
+  }, [haptic, resumePill]);
 
   if (!isOpen) return null;
 
-  // Fiches empilées (étape, nuit, objet, voyageur) : relues depuis `detail` à
-  // chaque rendu, pour refléter une modification faite depuis la fiche.
+  // Render Stack Views (Fiches)
   const currentStackItem = stack[stack.length - 1];
 
   if (currentStackItem) {
-    const dateOfDay = (day: number): string | null =>
-      detail.days.find((d) => (d.dayNumber ?? d.index) === day)?.date ?? null;
-    let title = '';
-    let body: React.ReactNode = null;
-    if (currentStackItem.type === 'etape') {
-      const etape = detail.etapes.find((e) => e.id === currentStackItem.etapeId);
-      if (etape) {
-        title = [etape.from, etape.to].filter(Boolean).join(' → ') || etape.label;
-        const day = detail.days.find((d) => (d.dayNumber ?? d.index) === etape.dayNumber);
-        const lastPoint = day?.points.slice(-1)[0];
-        /* Même repli que la liste : les chiffres du jour complètent l'étape
-           quand la ligne d'étape n'en porte pas (sinon « — » pour tout). */
-        const etapeWithStats = {
-          ...etape,
-          distanceKm: etape.distanceKm ?? day?.distanceKm ?? null,
-          elevationM: etape.elevationM ?? day?.elevationM ?? null,
-          durationText: etape.durationText ?? formatDuration(day?.durationS ?? null),
-        };
-        body = (
-          <EtapeFiche
-            etape={etapeWithStats}
-            canEdit={canEdit}
-            onShowOnMap={lastPoint ? () => onFocusMap?.(lastPoint.lat, lastPoint.lng, 12) : undefined}
-            onEdit={() => onEdit?.({ kind: 'etape', etape, day: etape.dayNumber })}
-          />
-        );
-      }
-    } else if (currentStackItem.type === 'night') {
-      const night = (detail.nights ?? []).find((n) => n.id === currentStackItem.nightId);
-      if (night) {
-        title = night.name;
-        body = (
-          <NightFiche
-            night={night}
-            date={dateOfDay(night.dayNumber)}
-            canEdit={canEdit}
-            onShowOnMap={
-              night.lat != null && night.lng != null
-                ? () => {
-                    onFocusMap?.(night.lat as number, night.lng as number, 13);
-                    onIsland?.('Caméra centrée sur la nuit');
-                  }
-                : undefined
-            }
-            onEdit={() => onEdit?.({ kind: 'nuit', night, day: night.dayNumber })}
-          />
-        );
-      }
-    } else if (currentStackItem.type === 'item') {
-      const item = detail.kit.items.find((i) => i.id === currentStackItem.itemId);
-      if (item) {
-        title = item.name;
-        body = (
-          <ItemFiche
-            item={item}
-            days={item.joursUtilises ?? []}
-            canEdit={canEdit}
-            onEdit={() => onEdit?.({ kind: 'verdict', itemId: item.id })}
-          />
-        );
-      }
-    } else {
-      const participant = detail.participants.find((p) => p.userId === currentStackItem.userId);
-      if (participant) {
-        title = participant.name || participant.handle || 'Voyageur';
-        body = (
-          <ParticipantFiche
-            detail={detail}
-            participant={participant}
-            canEdit={canEdit}
-            pinnedIds={pinnedIds}
-            onSelectMoment={(m, idx) => onSelectMoment?.(m, idx)}
-            onEdit={() => onEdit?.({ kind: 'voyageur', participant })}
-          />
-        );
-      }
-    }
-
     return (
       <div
         ref={dialogRef}
@@ -527,11 +401,17 @@ export function CarnetDrawerV2({
             <ChevronLeft size={16} />
             <span>Retour</span>
           </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--tint)' }}>{title}</b>
+          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>
+            {currentStackItem.type === 'etape' && (currentStackItem.etape.label || 'Étape')}
+            {currentStackItem.type === 'night' && currentStackItem.night.name}
+            {currentStackItem.type === 'item' && currentStackItem.name}
+            {currentStackItem.type === 'participant' && currentStackItem.participant.name}
+          </b>
         </div>
+
         <div className="lkdv-stack-body">
           <CarnetMotionRoot>
-            <StackSlideView stackKey={`${currentStackItem.type}-${stack.length}`}>
+            <StackSlideView stackKey={`account-${stack.length}`}>
           {currentStackItem.type === 'etape' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div
@@ -773,12 +653,11 @@ export function CarnetDrawerV2({
             </StackSlideView>
           </CarnetMotionRoot>
         </div>
-        {kitPillNode}
       </div>
     );
   }
 
-  // Tiroir « Carnet » (bouton curseurs de la barre)
+  // Render Secondary Account Drawer
   if (isAccountDrawer) {
     return (
       <div
@@ -820,7 +699,7 @@ export function CarnetDrawerV2({
 
         <div className="lkdv-stack-body">
           <CarnetMotionRoot>
-            <StackSlideView stackKey={`${currentStackItem.type}-${stack.length}`}>
+            <StackSlideView stackKey={`account-${stack.length}`}>
           {accountTab === 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div
@@ -952,25 +831,6 @@ export function CarnetDrawerV2({
   }
 
   // Render Main Slot Content (by Slot and Lens)
-  const dateOfDay = (day: number): string | null => {
-    const iso = detail.days.find((d) => (d.dayNumber ?? d.index) === day)?.date ?? null;
-    return iso
-      ? new Date(`${iso}T12:00:00Z`).toLocaleDateString('fr-FR', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-          timeZone: 'UTC',
-        })
-      : null;
-  };
-  const stackWrap: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    padding: '6px 14px',
-  };
-  const nextDay = activeDay > 0 ? activeDay : Math.max(1, ...detail.days.map((d) => d.dayNumber ?? d.index)) || 1;
-
   const renderCurrentSlotContent = (lens: SlotLens) => {
     switch (activeSlot) {
       case 'fil':
@@ -1312,7 +1172,7 @@ export function CarnetDrawerV2({
 
   return (
     <div
-      ref={dialogRef}
+      ref={attachPaneRoot}
       className="lkdv-carnet-drawer"
       role="dialog"
       aria-modal="true"
@@ -1332,9 +1192,6 @@ export function CarnetDrawerV2({
         lenses={currentSlotLenses}
         activeLensIndex={activeLensIndex}
         onLensChange={handleLensChange}
-        state={slotErrored ? 'error' : 'ready'}
-        errorLabel="Impossible de charger ce carnet."
-        onRetry={() => setSlotRetry((n) => n + 1)}
         selector={
           <CapsuleTabs
             items={slotTabs}
@@ -1490,7 +1347,7 @@ export function CarnetDrawerV2({
                   }
                   onClose={() => setSelectedKitProductIndex(null)}
                   onAdd={(prod) => {
-                    void forkSingleItem(prod.id);
+                    void forkItem(prod.id);
                     setSelectedKitProductIndex(null);
                   }}
                 />

@@ -103,6 +103,9 @@ export function CarnetCommunityCreateBridge({
   const [latin, setLatin] = useState(initialSpeciesLatin);
   const [speciesFile, setSpeciesFile] = useState<File | null>(null);
   const [speciesNote, setSpeciesNote] = useState('');
+  const [speciesSuggestions, setSpeciesSuggestions] = useState<
+    Array<{ taxonId: number | string; name: string; latin: string; imageUrl?: string | null }>
+  >([]);
   const [ambiance, setAmbiance] = useState(false);
   const [momentBusy, setMomentBusy] = useState(false);
   const [momentError, setMomentError] = useState<string | null>(null);
@@ -162,6 +165,7 @@ export function CarnetCommunityCreateBridge({
         onCreated();
       },
       requestCreate: () => {},
+      requireAuth: () => {},
       registerDirty: () => () => {},
       registerFlush: () => () => {},
       setPreviewCollapsed: () => {},
@@ -176,14 +180,14 @@ export function CarnetCommunityCreateBridge({
   const mini = useMemo(() => {
     if (!activeCommunityKind || !activeNav) return null;
     const cfg = createKindConfig(activeCommunityKind);
-    const pages = cfg.steps.map((step, index) => (
+    const pages = cfg.steps.map((step, index) => [
       <div
         key={`${activeCommunityKind}-step-${index}`}
         className="lkdv-cv2c-step-host"
         ref={registerStepHost(activeCommunityKind, index)}
         data-step-title={step.label}
-      />
-    ));
+      />,
+    ]);
     return {
       items: cfg.steps.map((step, index) => ({
         id: `cv2c-step-${index}`,
