@@ -279,6 +279,7 @@ export function CarnetPokedexDrawerBody({
   const [query, setQuery] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<PokedexEntry | null>(null);
   const [apiSpecies, setApiSpecies] = useState<PokedexApiSpecies[]>([]);
+  const [totalInZone, setTotalInZone] = useState<number | null>(null);
   const [searchSpecies, setSearchSpecies] = useState<PokedexApiSpecies[]>([]);
   const [apiLoading, setApiLoading] = useState(true);
 
@@ -300,9 +301,12 @@ export function CarnetPokedexDrawerBody({
 
     fetch(`/api/pokedex/species?${params.toString()}`)
       .then((res) => res.json())
-      .then((data: { species?: PokedexApiSpecies[] }) => {
+      .then((data: { species?: PokedexApiSpecies[]; totalResults?: number }) => {
         if (!cancelled && Array.isArray(data.species)) {
           setApiSpecies(data.species);
+          if (typeof data.totalResults === 'number' && data.totalResults > 0) {
+            setTotalInZone(data.totalResults);
+          }
         }
       })
       .catch(() => {
@@ -457,15 +461,11 @@ export function CarnetPokedexDrawerBody({
     () => entries.filter((e) => e.discovered).length,
     [entries],
   );
-  const progressPct = Math.round((discoveredCount / Math.max(1, entries.length)) * 100);
-  const rankLabel =
-    discoveredCount >= 7
-      ? 'Naturaliste Alpin'
-      : discoveredCount >= 4
-        ? 'Pisteur Confirmé'
-        : discoveredCount >= 1
-          ? 'Explorateur Curieux'
-          : 'Apprenti';
+  const zoneTotal = totalInZone ?? entries.length;
+  const progressPct = Math.min(
+    100,
+    Math.max(discoveredCount > 0 ? 4 : 0, Math.round((discoveredCount / Math.max(1, zoneTotal)) * 100)),
+  );
 
   const visibleEntries = useMemo(() => {
     let base = entries;
@@ -636,39 +636,18 @@ export function CarnetPokedexDrawerBody({
   }
 
   return (
-    <div className="lkdv-carnet-drawer-pane">
-      <div className="lkdv-carnet-pokedex-banner">
-        <div className="lkdv-carnet-pokedex-banner-top">
-          <div className="lkdv-carnet-pokedex-rank">
-            <Binoculars size={15} aria-hidden="true" />
-            <span>{rankLabel}</span>
-          </div>
-          <b className="lkdv-carnet-pokedex-score">
-            <AnimatedNumber value={discoveredCount} /> / {entries.length}
-          </b>
-        </div>
-        <div className="lkdv-carnet-pokedex-progress-track">
-          <motion.div
-            className="lkdv-carnet-pokedex-progress-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPct}%` }}
-            transition={CARNET_SPRING}
-          />
-        </div>
-        <small>
-          {apiLoading
-            ? 'Chargement de la biodiversité locale (iNaturalist)…'
-            : `Biodiversité locale iNaturalist · ${entries.length} espèces répertoriées`}
-        </small>
-      </div>
-
+    <div className="lkdv-carnet-drawer-pane" style={{ paddingBottom: '64px' }}>
       <div className="lkdv-carnet-pokedex-search">
         <Search size={14} aria-hidden="true" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher une espèce (ex. Bouquetin, Chamois…)"
+          placeholder={
+            apiLoading
+              ? 'Chargement de la zone…'
+              : 'Rechercher une espèce (ex. Bouquetin, Chamois…)'
+          }
           aria-label="Rechercher une espèce"
         />
       </div>
@@ -716,6 +695,23 @@ export function CarnetPokedexDrawerBody({
           />
         ))}
       </StaggerList>
+
+      <div
+        className="lkdv-carnet-pokedex-floating-bar"
+        aria-label={`${discoveredCount} espèces trouvées sur ${zoneTotal} présentes dans la zone`}
+      >
+        <div className="lkdv-carnet-pokedex-floating-track">
+          <motion.div
+            className="lkdv-carnet-pokedex-floating-fill"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPct}%` }}
+            transition={CARNET_SPRING}
+          />
+        </div>
+        <span className="lkdv-carnet-pokedex-floating-count">
+          <AnimatedNumber value={discoveredCount} /> / <AnimatedNumber value={zoneTotal} />
+        </span>
+      </div>
     </div>
   );
 }

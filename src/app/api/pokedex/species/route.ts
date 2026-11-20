@@ -97,7 +97,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const payload = (await res.json()) as { results?: INatSpeciesCountResult[] };
+    const payload = (await res.json()) as {
+      total_results?: number;
+      results?: INatSpeciesCountResult[];
+    };
     const results = payload.results ?? [];
 
     const species: PokedexApiSpecies[] = results
@@ -127,7 +130,15 @@ export async function GET(req: NextRequest) {
       });
 
     return NextResponse.json(
-      { species, source: 'inaturalist', hasCoords },
+      {
+        species,
+        totalResults:
+          typeof payload.total_results === 'number' && payload.total_results > 0
+            ? payload.total_results
+            : species.length,
+        source: 'inaturalist',
+        hasCoords,
+      },
       {
         status: 200,
         headers: {
