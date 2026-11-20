@@ -818,6 +818,8 @@ export function CarnetDrawerV2({
             detail={detail}
             lensId={lens.id}
             onSelectMoment={onSelectMoment}
+            onSelectEtape={(etape) => pushStack({ type: 'etape', etape })}
+            onSelectNight={(night) => pushStack({ type: 'night', night })}
           />
         );
       case 'route':

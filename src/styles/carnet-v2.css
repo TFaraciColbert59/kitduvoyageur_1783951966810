@@ -3563,3 +3563,285 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Frise chronologique horizontale alternée (Fil de bord › Moments)
+   ========================================================================== */
+.lkdv-carnet-htimeline {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 4px 10px;
+}
+
+.lkdv-carnet-htimeline::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-carnet-htimeline-track {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 100%;
+  padding: 4px 6px;
+}
+
+.lkdv-carnet-htimeline-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    90deg,
+    rgba(27, 67, 50, 0.08),
+    rgba(27, 67, 50, 0.24) 10%,
+    rgba(27, 67, 50, 0.24) 90%,
+    rgba(27, 67, 50, 0.08)
+  );
+  z-index: 0;
+}
+
+.lkdv-carnet-hday-sep {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+}
+
+.lkdv-carnet-hday-sep::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  width: 1px;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(27, 67, 50, 0.22) 0 4px,
+    transparent 4px 8px
+  );
+  z-index: 0;
+}
+
+.lkdv-carnet-hday-pill {
+  position: relative;
+  z-index: 1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #1b4332;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 10px rgba(27, 67, 50, 0.22);
+}
+
+.lkdv-carnet-hday-meta {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--label2, #56665d);
+  font-size: 9.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lkdv-carnet-hevent {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 182px;
+  width: 182px;
+  display: grid;
+  grid-template-rows: 136px 14px 136px;
+  align-items: center;
+}
+
+.lkdv-carnet-hevent-half {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-carnet-hevent-half.is-upper {
+  justify-content: flex-end;
+}
+
+.lkdv-carnet-hevent-half.is-lower {
+  justify-content: flex-start;
+}
+
+.lkdv-carnet-hevent-time-Opposite {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  margin: 4px 0;
+}
+
+.lkdv-carnet-hstem {
+  width: 2px;
+  height: 12px;
+  background: rgba(27, 67, 50, 0.24);
+  flex: none;
+}
+
+.lkdv-carnet-haxis-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
+}
+
+.lkdv-carnet-hdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #1b4332;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(27, 67, 50, 0.22);
+}
+
+.lkdv-carnet-hdot.is-pokedex {
+  background: #7e22ce;
+  box-shadow: 0 0 0 2px rgba(126, 34, 206, 0.25);
+}
+
+.lkdv-carnet-hdot.is-perf {
+  background: #0369a1;
+  box-shadow: 0 0 0 2px rgba(3, 105, 161, 0.25);
+}
+
+.lkdv-carnet-hdot.is-rencontre {
+  background: #b45309;
+  box-shadow: 0 0 0 2px rgba(180, 83, 9, 0.25);
+}
+
+.lkdv-carnet-hdot.is-night {
+  background: #1e3a8a;
+  box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.25);
+}
+
+.lkdv-carnet-hcard {
+  width: 100%;
+  max-height: 120px;
+  padding: 9px 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(27, 67, 50, 0.13);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 4px 14px rgba(16, 32, 25, 0.08);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.lkdv-carnet-hcard-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.lkdv-carnet-hbadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-hbadge.is-pokedex {
+  background: rgba(126, 34, 206, 0.12);
+  color: #7e22ce;
+}
+
+.lkdv-carnet-hbadge.is-perf {
+  background: rgba(3, 105, 161, 0.12);
+  color: #0369a1;
+}
+
+.lkdv-carnet-hbadge.is-rencontre {
+  background: rgba(180, 83, 9, 0.12);
+  color: #b45309;
+}
+
+.lkdv-carnet-hbadge.is-night {
+  background: rgba(30, 58, 138, 0.12);
+  color: #1e3a8a;
+}
+
+.lkdv-carnet-htime {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+  flex: none;
+}
+
+.lkdv-carnet-hcard-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.lkdv-carnet-hthumb {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex: none;
+}
+
+.lkdv-carnet-hcard-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lkdv-carnet-hcard-text b {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.2;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-carnet-hcard-text p {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: var(--label2, #56665d);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
