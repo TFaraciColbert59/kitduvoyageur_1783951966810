@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import type { KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import { KitProductSheetV2 } from '@/features/community/v2/create/kit/KitProductSheetV2';
 import type { PickerProduct } from '@/features/community/create/kit/types';
@@ -148,6 +149,7 @@ export function CarnetDrawerV2({
   onObserveSpecies,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
+  const router = useRouter();
   const [lensIndexBySlot, setLensIndexBySlot] = useState<Record<CarnetSlotId, number>>({
     fil: 0,
     route: 0,
@@ -831,8 +833,7 @@ export function CarnetDrawerV2({
             verdictFilter={verdictFilter}
             onVerdictFilterChange={setVerdictFilter}
             onSelectItem={(item) => {
-              const allItems = detail.kit?.items ?? [];
-              const idx = allItems.findIndex((k) => k.id === item.id);
+              const idx = sacKitItems.findIndex((k) => k.id === item.id);
               setSelectedKitProductIndex(idx >= 0 ? idx : 0);
             }}
             onForkAll={(ids) => {
@@ -865,6 +866,15 @@ export function CarnetDrawerV2({
     }
     return null;
   };
+
+  const sacKitItems = useMemo(() => {
+    if (detail.kit?.items?.length) return detail.kit.items;
+    const memberLists = Object.values(detail.memberKits ?? {});
+    for (const mk of memberLists) {
+      if (mk?.items?.length) return mk.items;
+    }
+    return [];
+  }, [detail.kit, detail.memberKits]);
 
   const currentSlotLenses = slotLenses[activeSlot] || [];
   const currentSlotIndex = slotTabs.findIndex((t) => t.id === activeSlot);
@@ -940,14 +950,14 @@ export function CarnetDrawerV2({
       ) : null}
 
       {/* Pilule « Reprendre ce kit » tout en bas à gauche du drawer Sac / Kit */}
-      {activeSlot === 'sac' && activeLensId === 'kit' && (detail.kit?.items?.length ?? 0) > 0 ? (
+      {activeSlot === 'sac' && activeLensId === 'kit' ? (
         <button
           type="button"
           className="lkdv-pill-reprendre"
+          style={{ left: '10px', right: 'auto', bottom: '10px', zIndex: 20 }}
           onClick={() => {
-            const kitItems = detail.kit?.items ?? [];
             if (onOpenKitCreate) {
-              const items: KitItemV2[] = kitItems.map((k, idx) => ({
+              const items: KitItemV2[] = sacKitItems.map((k, idx) => ({
                 id: k.id || `carnet-kit-${idx}`,
                 name: k.name,
                 category: k.category || 'Divers',
@@ -962,7 +972,7 @@ export function CarnetDrawerV2({
                 items,
               });
             } else {
-              void forkAllItems(kitItems.map((k) => k.id));
+              void forkAllItems(sacKitItems.map((k) => k.id));
             }
           }}
         >
@@ -971,12 +981,28 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
+      {/* Pilule « Reprendre le tracé » dans le volet Chiffres -> redirige vers Compas / Itinéraire */}
+      {activeSlot === 'chiffres' ? (
+        <button
+          type="button"
+          className="lkdv-pill-reprendre"
+          style={{ right: '10px', left: 'auto', bottom: '46px', zIndex: 20 }}
+          onClick={() => {
+            onClose();
+            router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
+          }}
+        >
+          <Route size={14} aria-hidden="true" />
+          <span>Reprendre le tracé</span>
+        </button>
+      ) : null}
+
       {/* Reprise de lecture — au-dessus de la pilule « Reprendre ce kit » (30). */}
       {resumePill && resumePill.key === activeLensKey ? (
         <button
           type="button"
           className="lkdv-pill-reprendre lkdv-pill-resume"
-          style={{ left: '10px', bottom: '48px', zIndex: 16 }}
+          style={{ left: '10px', bottom: '48px', zIndex: 21 }}
           onClick={resumeReading}
           aria-label="Reprendre la lecture"
         >
@@ -986,13 +1012,12 @@ export function CarnetDrawerV2({
       ) : null}
 
       {selectedKitProductIndex !== null &&
-      detail.kit?.items?.[selectedKitProductIndex] &&
+      sacKitItems[selectedKitProductIndex] &&
       typeof document !== 'undefined'
         ? createPortal(
             (() => {
-              const kitItems = detail.kit.items;
-              const item = kitItems[selectedKitProductIndex];
-              const totalKitWeightG = kitItems.reduce(
+              const item = sacKitItems[selectedKitProductIndex];
+              const totalKitWeightG = sacKitItems.reduce(
                 (sum, k) => sum + (Number(k.weightG) || 0),
                 0
               );
@@ -1027,15 +1052,15 @@ export function CarnetDrawerV2({
                   initialCategory={item.category ?? undefined}
                   currentKitWeightG={totalKitWeightG}
                   alreadyInKit={false}
-                  positionLabel={`${selectedKitProductIndex + 1} / ${kitItems.length}`}
+                  positionLabel={`${selectedKitProductIndex + 1} / ${sacKitItems.length}`}
                   hasPrev={selectedKitProductIndex > 0}
-                  hasNext={selectedKitProductIndex < kitItems.length - 1}
+                  hasNext={selectedKitProductIndex < sacKitItems.length - 1}
                   onPrev={() =>
                     setSelectedKitProductIndex((i) => (i !== null && i > 0 ? i - 1 : i))
                   }
                   onNext={() =>
                     setSelectedKitProductIndex((i) =>
-                      i !== null && i < kitItems.length - 1 ? i + 1 : i
+                      i !== null && i < sacKitItems.length - 1 ? i + 1 : i
                     )
                   }
                   onClose={() => setSelectedKitProductIndex(null)}
