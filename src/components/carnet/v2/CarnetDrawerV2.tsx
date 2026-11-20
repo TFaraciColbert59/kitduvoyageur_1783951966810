@@ -831,7 +831,8 @@ export function CarnetDrawerV2({
             verdictFilter={verdictFilter}
             onVerdictFilterChange={setVerdictFilter}
             onSelectItem={(item) => {
-              const idx = detail.kit.findIndex((k) => k.id === item.id);
+              const allItems = detail.kit?.items ?? [];
+              const idx = allItems.findIndex((k) => k.id === item.id);
               setSelectedKitProductIndex(idx >= 0 ? idx : 0);
             }}
             onForkAll={(ids) => {
@@ -939,13 +940,14 @@ export function CarnetDrawerV2({
       ) : null}
 
       {/* Pilule « Reprendre ce kit » tout en bas à gauche du drawer Sac / Kit */}
-      {activeSlot === 'sac' && activeLensId === 'kit' && detail.kit.length > 0 ? (
+      {activeSlot === 'sac' && activeLensId === 'kit' && (detail.kit?.items?.length ?? 0) > 0 ? (
         <button
           type="button"
           className="lkdv-pill-reprendre"
           onClick={() => {
+            const kitItems = detail.kit?.items ?? [];
             if (onOpenKitCreate) {
-              const items: KitItemV2[] = detail.kit.map((k, idx) => ({
+              const items: KitItemV2[] = kitItems.map((k, idx) => ({
                 id: k.id || `carnet-kit-${idx}`,
                 name: k.name,
                 category: k.category || 'Divers',
@@ -956,11 +958,11 @@ export function CarnetDrawerV2({
                 isChecked: true,
               }));
               onOpenKitCreate({
-                name: detail.title ? `Kit · ${detail.title}` : 'Kit du carnet',
+                name: detail.kit?.title || (detail.title ? `Kit · ${detail.title}` : 'Kit du carnet'),
                 items,
               });
             } else {
-              void forkAllItems(detail.kit.map((k) => k.id));
+              void forkAllItems(kitItems.map((k) => k.id));
             }
           }}
         >
@@ -984,12 +986,13 @@ export function CarnetDrawerV2({
       ) : null}
 
       {selectedKitProductIndex !== null &&
-      detail.kit[selectedKitProductIndex] &&
+      detail.kit?.items?.[selectedKitProductIndex] &&
       typeof document !== 'undefined'
         ? createPortal(
             (() => {
-              const item = detail.kit[selectedKitProductIndex];
-              const totalKitWeightG = detail.kit.reduce(
+              const kitItems = detail.kit.items;
+              const item = kitItems[selectedKitProductIndex];
+              const totalKitWeightG = kitItems.reduce(
                 (sum, k) => sum + (Number(k.weightG) || 0),
                 0
               );
@@ -1001,7 +1004,7 @@ export function CarnetDrawerV2({
                 brand: null,
                 category: item.category ?? null,
                 weightG: item.weightG ?? null,
-                image: item.image ?? null,
+                image: null,
                 wear: null,
                 conditionLabel: item.verdict ?? null,
                 description: item.detail ?? null,
@@ -1024,15 +1027,15 @@ export function CarnetDrawerV2({
                   initialCategory={item.category ?? undefined}
                   currentKitWeightG={totalKitWeightG}
                   alreadyInKit={false}
-                  positionLabel={`${selectedKitProductIndex + 1} / ${detail.kit.length}`}
+                  positionLabel={`${selectedKitProductIndex + 1} / ${kitItems.length}`}
                   hasPrev={selectedKitProductIndex > 0}
-                  hasNext={selectedKitProductIndex < detail.kit.length - 1}
+                  hasNext={selectedKitProductIndex < kitItems.length - 1}
                   onPrev={() =>
                     setSelectedKitProductIndex((i) => (i !== null && i > 0 ? i - 1 : i))
                   }
                   onNext={() =>
                     setSelectedKitProductIndex((i) =>
-                      i !== null && i < detail.kit.length - 1 ? i + 1 : i
+                      i !== null && i < kitItems.length - 1 ? i + 1 : i
                     )
                   }
                   onClose={() => setSelectedKitProductIndex(null)}
