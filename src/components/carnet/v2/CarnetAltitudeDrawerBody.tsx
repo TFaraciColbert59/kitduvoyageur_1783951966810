@@ -319,10 +319,12 @@ export function CarnetAltitudeDrawerBody({
         <span className="lkdv-carnet-kit-eyebrow">Étages alpins parcourus</span>
         <div className="lkdv-carnet-kit-bars">
           {stats.bands.map((b) => (
-            <div key={b.label} className="lkdv-carnet-kit-bar-row">
-              <span className="lkdv-carnet-kit-bar-label" style={{ width: 138 }}>
-                {b.label}
-              </span>
+            <div
+              key={b.label}
+              className="lkdv-carnet-kit-bar-row"
+              style={{ gridTemplateColumns: '150px minmax(0, 1fr) 42px' }}
+            >
+              <span className="lkdv-carnet-kit-bar-label">{b.label}</span>
               <div className="lkdv-carnet-kit-bar-track">
                 <motion.div
                   className="lkdv-carnet-kit-bar-fill"
