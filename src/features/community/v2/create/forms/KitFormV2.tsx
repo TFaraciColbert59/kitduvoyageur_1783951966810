@@ -1563,6 +1563,8 @@ function KitBody({
   inventoryLoading,
   inventoryError,
   onRetry,
+  prefill,
+  prefillNonce = 0,
 }: {
   api: CreateFormEngineApiV2<KitFormValuesV2>;
   user: User | null;
@@ -1570,7 +1572,24 @@ function KitBody({
   inventoryLoading: boolean;
   inventoryError: string | null;
   onRetry: () => void;
+  prefill?: Record<string, unknown> | null;
+  prefillNonce?: number;
 }) {
+  const appliedPrefillRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!prefill || appliedPrefillRef.current === prefillNonce) return;
+    appliedPrefillRef.current = prefillNonce;
+    if (typeof prefill.name === 'string' && prefill.name.trim()) {
+      api.form.setValue('name', prefill.name.trim(), { shouldDirty: true, shouldValidate: true });
+    }
+    if (Array.isArray(prefill.items) && prefill.items.length > 0) {
+      api.form.setValue('items', prefill.items as KitItemV2[], {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [api.form, prefill, prefillNonce]);
+
   const values = api.form.watch();
   const items = values.items ?? [];
   const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active);
@@ -1624,7 +1643,13 @@ function KitBody({
  * avec retour. Le sélecteur de produit reste un sous-tiroir empilé ; l'envoi
  * est toujours `create_kit_with_items` (poids calculé en SQL).
  */
-export function KitFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
+export function KitFormV2({
+  active,
+  onNavChange,
+  stepHosts,
+  prefill,
+  prefillNonce,
+}: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef({ ...createDefaultsV2('kit'), units: readStoredUnitsV2() }).current;
   const { inventory, loading, error, retry } = useInventory(user);
@@ -1656,6 +1681,8 @@ export function KitFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props)
           inventoryLoading={loading}
           inventoryError={error}
           onRetry={retry}
+          prefill={prefill}
+          prefillNonce={prefillNonce}
         />
       )}
     </CreateFormEngineV2>

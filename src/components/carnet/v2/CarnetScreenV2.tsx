@@ -45,6 +45,13 @@ import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
 import { momentPosition, selectMapLayers, type MapContext } from '@/features/carnet/detail/mapLayers';
 import type { MomentType } from '@/features/carnet/detail/momentTypes';
 import type { StackIntent } from './CarnetDrawerV2';
+import type { KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
+import dynamic from 'next/dynamic';
+
+const CommunityCreateKitSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/CreateSheetV2'),
+  { ssr: false }
+);
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -125,6 +132,10 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     : null;
   const [storiesOpen, setStoriesOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
+  const [kitClonePrefill, setKitClonePrefill] = useState<{
+    name: string;
+    items: KitItemV2[];
+  } | null>(null);
   /* J'aime des stories : ce sont les j'aime des moments (`carnet_moment_likes`), les mêmes que ceux du post. */
   const [likedStories, setLikedStories] = useState<ReadonlySet<string>>(
     () =>
@@ -1033,6 +1044,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         onContextChange={setDrawerContext}
         onDayPick={(day) => setActiveDay(day)}
         intent={drawerIntent}
+        onOpenKitCreate={(prefill) => {
+          if (!canWrite) {
+            requireAuth();
+            return;
+          }
+          setKitClonePrefill(prefill);
+        }}
         forceError={simulate}
         onEdit={isParticipant ? (target) => setEditTarget(target) : undefined}
         onSettingsSaved={(changes) =>
@@ -1219,6 +1237,20 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
       ) : null}
 
       {/* Report Sheet */}
+      {kitClonePrefill ? (
+        <CommunityCreateKitSheetV2
+          open
+          initialKind="kit"
+          initialPrefill={kitClonePrefill}
+          user={user}
+          onClose={() => setKitClonePrefill(null)}
+          onCreated={() => {
+            setKitClonePrefill(null);
+            showIsland('Kit créé à partir du carnet');
+          }}
+          onRequireAuth={requireAuth}
+        />
+      ) : null}
       {reportOpen && reportTarget ? (
         <ReportSheet
           isOpen={reportOpen}

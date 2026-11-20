@@ -416,18 +416,6 @@ export function CarnetKitDrawerBody({
             })}
           </div>
         </div>
-
-        <button
-          type="button"
-          className="lkdv-pill-reprendre"
-          onClick={() => {
-            const ids = activeKit.items.map((i) => i.id);
-            onForkAll(ids);
-          }}
-        >
-          <Package size={14} />
-          <span>Reprendre le kit</span>
-        </button>
       </div>
     );
   }

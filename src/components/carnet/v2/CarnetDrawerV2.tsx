@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+import type { KitItemV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import {
   Compass,
   MapPin,
@@ -103,6 +104,7 @@ export interface CarnetDrawerV2Props {
   onSlotChange: (slot: CarnetSlotId) => void;
   activeDay: number;
   onFocusMap?: (lat: number, lng: number, zoom?: number) => void;
+  onOpenKitCreate?: (prefill: { name: string; items: KitItemV2[] }) => void;
   onIsland?: (message: string, undo?: () => void) => void;
   userId: string | null;
   onRequireAuth?: () => void;
@@ -132,6 +134,7 @@ export function CarnetDrawerV2({
   onSlotChange,
   activeDay,
   onFocusMap,
+  onOpenKitCreate,
   onIsland,
   userId,
   onRequireAuth,
@@ -935,7 +938,38 @@ export function CarnetDrawerV2({
         </div>
       ) : null}
 
-      {/* Reprise de lecture — au-dessus de la pilule « Reprendre le kit » (30). */}
+      {/* Pilule « Reprendre ce kit » tout en bas à gauche du drawer Sac / Kit */}
+      {activeSlot === 'sac' && activeLensId === 'kit' && detail.kit.length > 0 ? (
+        <button
+          type="button"
+          className="lkdv-pill-reprendre"
+          onClick={() => {
+            if (onOpenKitCreate) {
+              const items: KitItemV2[] = detail.kit.map((k, idx) => ({
+                id: k.id || `carnet-kit-${idx}`,
+                name: k.name,
+                category: k.category || 'Divers',
+                weightG: Number(k.weightG) || 0,
+                quantity: 1,
+                productId: null,
+                ownershipId: null,
+                isChecked: true,
+              }));
+              onOpenKitCreate({
+                name: detail.title ? `Kit · ${detail.title}` : 'Kit du carnet',
+                items,
+              });
+            } else {
+              void forkAllItems(detail.kit.map((k) => k.id));
+            }
+          }}
+        >
+          <Package size={14} aria-hidden="true" />
+          <span>Reprendre ce kit</span>
+        </button>
+      ) : null}
+
+      {/* Reprise de lecture — au-dessus de la pilule « Reprendre ce kit » (30). */}
       {resumePill && resumePill.key === activeLensKey ? (
         <button
           type="button"
