@@ -1,0 +1,693 @@
+t_s;nature;force;mesure;temps;ecart_grille_ms
+0.009;grosse caisse (35-120 Hz);0.63;1;1;+36
+0.619;grosse caisse (35-120 Hz);0.90;1;2;-1
+0.628;caisse claire / claquement (1,5-6 kHz);0.79;1;2;+8
+1.141;caisse claire / claquement (1,5-6 kHz);0.66;1;3;-125
+1.147;grosse caisse (35-120 Hz);0.93;1;3;-119
+1.247;caisse claire / claquement (1,5-6 kHz);1.00;1;3;-19
+1.254;grosse caisse (35-120 Hz);0.86;1;3;-12
+1.927;caisse claire / claquement (1,5-6 kHz);0.75;1;4;+14
+1.938;grosse caisse (35-120 Hz);0.92;1;4;+25
+2.548;caisse claire / claquement (1,5-6 kHz);0.64;2;1;-11
+2.574;grosse caisse (35-120 Hz);0.83;2;1;+15
+3.212;grosse caisse (35-120 Hz);0.87;2;2;+6
+3.213;caisse claire / claquement (1,5-6 kHz);0.78;2;2;+7
+3.720;caisse claire / claquement (1,5-6 kHz);0.64;2;3;-132
+3.740;grosse caisse (35-120 Hz);0.81;2;3;-113
+3.839;caisse claire / claquement (1,5-6 kHz);1.00;2;3;-13
+3.840;grosse caisse (35-120 Hz);0.83;2;3;-12
+4.515;caisse claire / claquement (1,5-6 kHz);0.77;2;4;+16
+4.539;grosse caisse (35-120 Hz);0.64;2;4;+40
+5.163;grosse caisse (35-120 Hz);0.76;3;1;+18
+5.790;grosse caisse (35-120 Hz);0.99;3;2;-2
+5.801;caisse claire / claquement (1,5-6 kHz);0.82;3;2;+9
+6.323;caisse claire / claquement (1,5-6 kHz);0.60;3;3;-116
+6.425;caisse claire / claquement (1,5-6 kHz);1.00;3;3;-13
+6.425;grosse caisse (35-120 Hz);0.98;3;3;-13
+7.096;grosse caisse (35-120 Hz);0.87;3;4;+11
+7.100;caisse claire / claquement (1,5-6 kHz);0.80;3;4;+15
+7.738;caisse claire / claquement (1,5-6 kHz);0.60;4;1;+7
+7.750;grosse caisse (35-120 Hz);0.91;4;1;+19
+8.372;caisse claire / claquement (1,5-6 kHz);0.86;4;2;-6
+8.384;grosse caisse (35-120 Hz);0.80;4;2;+6
+8.893;caisse claire / claquement (1,5-6 kHz);0.70;4;3;-132
+8.906;grosse caisse (35-120 Hz);0.92;4;3;-119
+9.012;caisse claire / claquement (1,5-6 kHz);1.00;4;3;-12
+9.012;grosse caisse (35-120 Hz);0.88;4;3;-12
+9.687;caisse claire / claquement (1,5-6 kHz);0.69;4;4;+16
+9.710;grosse caisse (35-120 Hz);0.83;4;4;+39
+10.964;grosse caisse (35-120 Hz);0.76;5;2;-0
+10.973;caisse claire / claquement (1,5-6 kHz);0.84;5;2;+9
+11.513;grosse caisse (35-120 Hz);0.81;5;3;-98
+11.599;grosse caisse (35-120 Hz);0.83;5;3;-12
+12.039;charley / cymbale (6-16 kHz);0.75;5;4;-219
+12.259;caisse claire / claquement (1,5-6 kHz);0.71;5;4;+2
+12.261;grosse caisse (35-120 Hz);0.79;5;4;+4
+12.901;caisse claire / claquement (1,5-6 kHz);0.64;6;1;-3
+12.919;grosse caisse (35-120 Hz);0.68;6;1;+15
+13.558;caisse claire / claquement (1,5-6 kHz);0.77;6;2;+8
+13.567;grosse caisse (35-120 Hz);0.75;6;2;+17
+14.007;charley / cymbale (6-16 kHz);0.75;6;3;-190
+14.080;grosse caisse (35-120 Hz);0.82;6;3;-117
+14.185;grosse caisse (35-120 Hz);0.80;6;3;-12
+14.196;caisse claire / claquement (1,5-6 kHz);0.89;6;3;-1
+14.572;charley / cymbale (6-16 kHz);0.74;6;4;-272
+14.846;grosse caisse (35-120 Hz);0.78;6;4;+3
+14.859;caisse claire / claquement (1,5-6 kHz);0.72;6;4;+15
+15.520;grosse caisse (35-120 Hz);0.69;7;1;+29
+16.130;caisse claire / claquement (1,5-6 kHz);0.83;7;2;-7
+16.135;grosse caisse (35-120 Hz);0.83;7;2;-2
+16.634;charley / cymbale (6-16 kHz);0.76;7;3;-149
+16.755;caisse claire / claquement (1,5-6 kHz);1.00;7;3;-28
+16.770;grosse caisse (35-120 Hz);1.00;7;3;-13
+17.180;charley / cymbale (6-16 kHz);0.84;7;4;-250
+17.433;grosse caisse (35-120 Hz);0.79;7;4;+4
+17.446;caisse claire / claquement (1,5-6 kHz);0.79;7;4;+16
+18.102;grosse caisse (35-120 Hz);0.66;8;1;+25
+18.720;caisse claire / claquement (1,5-6 kHz);0.65;8;2;-3
+18.728;grosse caisse (35-120 Hz);0.77;8;2;+5
+19.151;charley / cymbale (6-16 kHz);0.68;8;3;-219
+19.253;grosse caisse (35-120 Hz);0.83;8;3;-116
+19.343;caisse claire / claquement (1,5-6 kHz);1.00;8;3;-27
+19.357;grosse caisse (35-120 Hz);0.84;8;3;-13
+19.740;charley / cymbale (6-16 kHz);0.73;8;4;-276
+20.018;grosse caisse (35-120 Hz);0.80;8;4;+2
+20.038;caisse claire / claquement (1,5-6 kHz);0.66;8;4;+21
+20.686;grosse caisse (35-120 Hz);0.65;9;1;+23
+21.839;grosse caisse (35-120 Hz);0.76;9;3;-116
+21.960;grosse caisse (35-120 Hz);0.70;9;3;+4
+22.613;grosse caisse (35-120 Hz);0.74;9;4;+10
+23.268;grosse caisse (35-120 Hz);0.68;10;1;+19
+24.546;grosse caisse (35-120 Hz);0.71;10;3;+4
+25.839;grosse caisse (35-120 Hz);0.95;11;1;+4
+26.481;grosse caisse (35-120 Hz);0.80;11;2;-1
+27.115;grosse caisse (35-120 Hz);0.99;11;3;-13
+27.127;caisse claire / claquement (1,5-6 kHz);0.66;11;3;-1
+27.787;caisse claire / claquement (1,5-6 kHz);0.62;11;4;+12
+28.429;grosse caisse (35-120 Hz);0.72;12;1;+8
+28.575;grosse caisse (35-120 Hz);0.66;12;1;+154
+29.074;grosse caisse (35-120 Hz);0.77;12;2;+6
+29.703;grosse caisse (35-120 Hz);0.84;12;3;-12
+29.713;caisse claire / claquement (1,5-6 kHz);0.77;12;3;-1
+30.382;grosse caisse (35-120 Hz);0.65;12;4;+21
+30.504;grosse caisse (35-120 Hz);0.68;12;4;+143
+31.395;grosse caisse (35-120 Hz);0.63;13;2;-259
+32.186;grosse caisse (35-120 Hz);0.83;13;3;-115
+32.289;grosse caisse (35-120 Hz);0.81;13;3;-12
+32.948;grosse caisse (35-120 Hz);0.95;13;4;+1
+33.615;grosse caisse (35-120 Hz);0.75;14;1;+21
+34.872;caisse claire / claquement (1,5-6 kHz);0.69;14;3;-15
+34.876;grosse caisse (35-120 Hz);0.81;14;3;-11
+36.183;grosse caisse (35-120 Hz);0.82;15;1;+3
+36.825;grosse caisse (35-120 Hz);0.74;15;2;-1
+37.460;grosse caisse (35-120 Hz);0.89;15;3;-13
+38.122;caisse claire / claquement (1,5-6 kHz);0.68;15;4;+3
+38.123;grosse caisse (35-120 Hz);0.76;15;4;+4
+38.791;grosse caisse (35-120 Hz);0.66;16;1;+25
+39.415;caisse claire / claquement (1,5-6 kHz);0.63;16;2;+3
+39.421;grosse caisse (35-120 Hz);0.75;16;2;+9
+39.553;charley / cymbale (6-16 kHz);0.71;16;2;+141
+39.940;grosse caisse (35-120 Hz);1.00;16;3;-119
+40.037;caisse claire / claquement (1,5-6 kHz);0.68;16;3;-22
+40.047;grosse caisse (35-120 Hz);0.85;16;3;-12
+40.109;charley / cymbale (6-16 kHz);0.71;16;3;+50
+40.709;grosse caisse (35-120 Hz);0.78;16;4;+3
+40.714;caisse claire / claquement (1,5-6 kHz);0.61;16;4;+8
+40.795;charley / cymbale (6-16 kHz);0.75;16;4;+90
+41.363;grosse caisse (35-120 Hz);0.70;17;1;+11
+41.993;caisse claire / claquement (1,5-6 kHz);0.85;17;2;-6
+41.998;grosse caisse (35-120 Hz);0.75;17;2;-0
+42.633;grosse caisse (35-120 Hz);0.82;17;3;-12
+42.645;caisse claire / claquement (1,5-6 kHz);0.68;17;3;-0
+43.296;grosse caisse (35-120 Hz);0.78;17;4;+4
+43.308;caisse claire / claquement (1,5-6 kHz);0.70;17;4;+16
+43.385;caisse claire / claquement (1,5-6 kHz);0.65;17;4;+94
+43.960;grosse caisse (35-120 Hz);0.69;18;1;+22
+44.529;charley / cymbale (6-16 kHz);0.71;18;2;-56
+44.556;caisse claire / claquement (1,5-6 kHz);0.75;18;2;-29
+44.599;grosse caisse (35-120 Hz);0.83;18;2;+14
+44.707;charley / cymbale (6-16 kHz);0.63;18;2;+123
+44.849;caisse claire / claquement (1,5-6 kHz);0.62;18;2;+264
+45.118;grosse caisse (35-120 Hz);0.83;18;3;-113
+45.205;caisse claire / claquement (1,5-6 kHz);0.66;18;3;-26
+45.221;grosse caisse (35-120 Hz);0.82;18;3;-10
+45.307;charley / cymbale (6-16 kHz);0.82;18;3;+76
+45.881;grosse caisse (35-120 Hz);0.80;18;4;+3
+45.894;caisse claire / claquement (1,5-6 kHz);0.77;18;4;+16
+46.554;grosse caisse (35-120 Hz);0.67;19;1;+30
+47.170;grosse caisse (35-120 Hz);0.80;19;2;-1
+47.805;grosse caisse (35-120 Hz);0.88;19;3;-12
+48.164;grosse caisse (35-120 Hz);0.73;19;4;-300
+48.377;charley / cymbale (6-16 kHz);0.61;19;4;-87
+48.539;grosse caisse (35-120 Hz);0.64;19;4;+75
+49.056;charley / cymbale (6-16 kHz);0.95;20;1;-54
+49.135;grosse caisse (35-120 Hz);0.67;20;1;+25
+49.676;charley / cymbale (6-16 kHz);0.72;20;2;-81
+49.756;caisse claire / claquement (1,5-6 kHz);0.65;20;2;-1
+49.764;grosse caisse (35-120 Hz);0.74;20;2;+7
+49.999;charley / cymbale (6-16 kHz);0.66;20;2;+242
+50.392;grosse caisse (35-120 Hz);0.84;20;3;-11
+50.748;grosse caisse (35-120 Hz);0.65;20;4;-303
+51.071;caisse claire / claquement (1,5-6 kHz);0.61;20;4;+21
+51.573;grosse caisse (35-120 Hz);0.65;21;1;-124
+51.693;grosse caisse (35-120 Hz);0.70;21;1;-4
+51.712;caisse claire / claquement (1,5-6 kHz);0.62;21;1;+16
+51.860;grosse caisse (35-120 Hz);0.61;21;1;+163
+52.352;caisse claire / claquement (1,5-6 kHz);0.84;21;2;+9
+52.359;grosse caisse (35-120 Hz);0.79;21;2;+16
+52.677;charley / cymbale (6-16 kHz);0.69;21;3;-313
+52.886;grosse caisse (35-120 Hz);0.74;21;3;-104
+52.964;caisse claire / claquement (1,5-6 kHz);0.87;21;3;-26
+52.979;grosse caisse (35-120 Hz);0.78;21;3;-11
+53.317;charley / cymbale (6-16 kHz);0.95;21;4;-320
+53.342;grosse caisse (35-120 Hz);0.76;21;4;-295
+53.642;caisse claire / claquement (1,5-6 kHz);0.61;21;4;+6
+53.792;grosse caisse (35-120 Hz);0.65;21;4;+155
+54.118;grosse caisse (35-120 Hz);0.70;22;1;-165
+54.263;caisse claire / claquement (1,5-6 kHz);0.61;22;1;-20
+54.276;charley / cymbale (6-16 kHz);0.64;22;1;-7
+55.153;charley / cymbale (6-16 kHz);0.63;22;2;+223
+55.178;caisse claire / claquement (1,5-6 kHz);0.68;22;2;+248
+55.474;grosse caisse (35-120 Hz);0.67;22;3;-102
+55.582;grosse caisse (35-120 Hz);0.79;22;3;+6
+55.895;charley / cymbale (6-16 kHz);1.00;22;3;+319
+55.925;grosse caisse (35-120 Hz);0.79;22;4;-298
+56.233;caisse claire / claquement (1,5-6 kHz);0.73;22;4;+11
+56.297;grosse caisse (35-120 Hz);0.77;22;4;+74
+56.505;charley / cymbale (6-16 kHz);0.64;22;4;+282
+56.872;grosse caisse (35-120 Hz);0.70;23;1;+3
+58.150;grosse caisse (35-120 Hz);0.84;23;3;-12
+58.491;charley / cymbale (6-16 kHz);0.61;23;4;-318
+58.813;grosse caisse (35-120 Hz);0.83;23;4;+5
+59.187;grosse caisse (35-120 Hz);0.62;24;1;-269
+59.452;grosse caisse (35-120 Hz);0.81;24;1;-3
+60.466;caisse claire / claquement (1,5-6 kHz);0.61;24;3;-283
+60.634;grosse caisse (35-120 Hz);0.71;24;3;-114
+60.722;caisse claire / claquement (1,5-6 kHz);0.74;24;3;-26
+60.737;grosse caisse (35-120 Hz);0.86;24;3;-11
+60.984;charley / cymbale (6-16 kHz);0.63;24;3;+236
+61.090;grosse caisse (35-120 Hz);0.88;24;4;-305
+62.066;grosse caisse (35-120 Hz);0.67;25;1;+24
+62.705;grosse caisse (35-120 Hz);0.77;25;2;+16
+63.227;grosse caisse (35-120 Hz);0.76;25;3;-107
+63.323;grosse caisse (35-120 Hz);0.75;25;3;-12
+63.671;grosse caisse (35-120 Hz);0.83;25;4;-310
+63.993;grosse caisse (35-120 Hz);0.64;25;4;+11
+65.287;grosse caisse (35-120 Hz);0.78;26;2;+12
+65.822;grosse caisse (35-120 Hz);0.69;26;3;-98
+65.915;grosse caisse (35-120 Hz);0.76;26;3;-6
+66.254;grosse caisse (35-120 Hz);0.84;26;4;-313
+66.713;grosse caisse (35-120 Hz);0.67;26;4;+146
+67.162;grosse caisse (35-120 Hz);0.67;27;1;-51
+68.030;caisse claire / claquement (1,5-6 kHz);0.61;27;2;+170
+68.485;caisse claire / claquement (1,5-6 kHz);0.64;27;3;-22
+68.512;grosse caisse (35-120 Hz);0.82;27;3;+5
+68.850;grosse caisse (35-120 Hz);0.65;27;4;-303
+69.159;grosse caisse (35-120 Hz);0.73;27;4;+5
+69.532;grosse caisse (35-120 Hz);0.63;28;1;-268
+69.797;grosse caisse (35-120 Hz);0.77;28;1;-3
+70.791;caisse claire / claquement (1,5-6 kHz);0.63;28;3;-302
+70.997;grosse caisse (35-120 Hz);0.69;28;3;-97
+71.082;grosse caisse (35-120 Hz);0.87;28;3;-12
+71.425;grosse caisse (35-120 Hz);0.75;28;4;-315
+72.410;grosse caisse (35-120 Hz);0.66;29;1;+24
+73.049;grosse caisse (35-120 Hz);0.81;29;2;+16
+73.576;grosse caisse (35-120 Hz);0.74;29;3;-104
+73.668;grosse caisse (35-120 Hz);0.76;29;3;-12
+74.023;charley / cymbale (6-16 kHz);0.61;29;4;-303
+74.028;grosse caisse (35-120 Hz);0.75;29;4;-298
+74.338;grosse caisse (35-120 Hz);0.67;29;4;+12
+74.988;grosse caisse (35-120 Hz);0.61;30;1;+15
+75.632;grosse caisse (35-120 Hz);0.78;30;2;+13
+76.256;grosse caisse (35-120 Hz);0.81;30;3;-10
+76.618;grosse caisse (35-120 Hz);0.68;30;4;-294
+77.058;grosse caisse (35-120 Hz);0.64;30;4;+146
+78.198;grosse caisse (35-120 Hz);0.63;31;2;-7
+78.840;grosse caisse (35-120 Hz);0.80;31;3;-12
+79.284;charley / cymbale (6-16 kHz);0.76;31;4;-214
+79.500;caisse claire / claquement (1,5-6 kHz);0.77;31;4;+2
+79.501;grosse caisse (35-120 Hz);0.90;31;4;+3
+80.170;grosse caisse (35-120 Hz);0.66;32;1;+25
+80.786;caisse claire / claquement (1,5-6 kHz);0.79;32;2;-5
+80.808;grosse caisse (35-120 Hz);0.70;32;2;+17
+81.248;charley / cymbale (6-16 kHz);0.73;32;3;-190
+81.322;grosse caisse (35-120 Hz);0.85;32;3;-116
+81.426;grosse caisse (35-120 Hz);0.83;32;3;-12
+81.437;caisse claire / claquement (1,5-6 kHz);0.85;32;3;-1
+81.811;charley / cymbale (6-16 kHz);0.73;32;4;-273
+82.087;grosse caisse (35-120 Hz);0.80;32;4;+3
+82.101;caisse claire / claquement (1,5-6 kHz);0.75;32;4;+17
+82.742;grosse caisse (35-120 Hz);0.68;33;1;+11
+83.377;grosse caisse (35-120 Hz);0.76;33;2;-0
+83.388;caisse claire / claquement (1,5-6 kHz);0.87;33;2;+10
+83.927;grosse caisse (35-120 Hz);0.79;33;3;-97
+84.008;caisse claire / claquement (1,5-6 kHz);0.97;33;3;-16
+84.013;grosse caisse (35-120 Hz);0.81;33;3;-11
+84.423;charley / cymbale (6-16 kHz);0.83;33;4;-248
+84.675;grosse caisse (35-120 Hz);0.81;33;4;+4
+84.686;caisse claire / claquement (1,5-6 kHz);0.73;33;4;+16
+85.340;grosse caisse (35-120 Hz);0.65;34;1;+23
+85.972;grosse caisse (35-120 Hz);0.83;34;2;+8
+86.391;charley / cymbale (6-16 kHz);0.67;34;3;-220
+86.493;grosse caisse (35-120 Hz);0.85;34;3;-117
+86.599;caisse claire / claquement (1,5-6 kHz);0.97;34;3;-11
+86.599;grosse caisse (35-120 Hz);0.81;34;3;-11
+86.983;charley / cymbale (6-16 kHz);0.71;34;4;-273
+87.261;grosse caisse (35-120 Hz);0.77;34;4;+4
+87.272;caisse claire / claquement (1,5-6 kHz);0.68;34;4;+15
+89.190;grosse caisse (35-120 Hz);0.66;35;3;-6
+89.854;grosse caisse (35-120 Hz);0.70;35;4;+11
+90.509;grosse caisse (35-120 Hz);0.63;36;1;+20
+91.787;grosse caisse (35-120 Hz);0.69;36;3;+5
+93.111;grosse caisse (35-120 Hz);0.67;37;1;+36
+93.723;grosse caisse (35-120 Hz);0.76;37;2;+1
+94.262;grosse caisse (35-120 Hz);0.76;37;3;-107
+94.343;caisse claire / claquement (1,5-6 kHz);0.73;37;3;-26
+94.358;grosse caisse (35-120 Hz);0.81;37;3;-11
+96.315;grosse caisse (35-120 Hz);0.82;38;2;+7
+96.929;caisse claire / claquement (1,5-6 kHz);0.72;38;3;-26
+96.944;grosse caisse (35-120 Hz);0.80;38;3;-11
+98.255;grosse caisse (35-120 Hz);0.67;39;1;+7
+99.529;grosse caisse (35-120 Hz);0.97;39;3;-12
+100.190;grosse caisse (35-120 Hz);0.89;39;4;+3
+100.839;grosse caisse (35-120 Hz);0.73;40;1;+5
+102.008;grosse caisse (35-120 Hz);0.73;40;3;-119
+102.116;grosse caisse (35-120 Hz);0.81;40;3;-11
+103.428;grosse caisse (35-120 Hz);0.78;41;1;+7
+104.067;grosse caisse (35-120 Hz);0.75;41;2;-0
+104.616;grosse caisse (35-120 Hz);0.82;41;3;-97
+104.703;grosse caisse (35-120 Hz);0.81;41;3;-11
+105.364;grosse caisse (35-120 Hz);0.73;41;4;+3
+106.029;grosse caisse (35-120 Hz);0.63;42;1;+22
+106.653;grosse caisse (35-120 Hz);0.82;42;2;-1
+107.183;grosse caisse (35-120 Hz);0.83;42;3;-116
+107.290;grosse caisse (35-120 Hz);0.79;42;3;-9
+107.950;grosse caisse (35-120 Hz);0.78;42;4;+3
+109.241;grosse caisse (35-120 Hz);0.77;43;2;+1
+109.860;caisse claire / claquement (1,5-6 kHz);0.81;43;3;-26
+109.873;grosse caisse (35-120 Hz);0.90;43;3;-13
+110.013;grosse caisse (35-120 Hz);0.61;43;3;+127
+110.537;grosse caisse (35-120 Hz);0.76;43;4;+4
+110.555;caisse claire / claquement (1,5-6 kHz);0.68;43;4;+22
+111.204;grosse caisse (35-120 Hz);0.65;44;1;+25
+111.833;grosse caisse (35-120 Hz);0.75;44;2;+7
+111.835;caisse claire / claquement (1,5-6 kHz);0.81;44;2;+9
+112.342;caisse claire / claquement (1,5-6 kHz);0.66;44;3;-130
+112.354;grosse caisse (35-120 Hz);1.00;44;3;-118
+112.453;caisse claire / claquement (1,5-6 kHz);1.00;44;3;-19
+112.461;grosse caisse (35-120 Hz);0.86;44;3;-11
+113.122;grosse caisse (35-120 Hz);0.79;44;4;+3
+113.135;caisse claire / claquement (1,5-6 kHz);0.70;44;4;+16
+113.468;caisse claire / claquement (1,5-6 kHz);0.75;45;1;-297
+113.483;charley / cymbale (6-16 kHz);0.77;45;1;-282
+113.776;grosse caisse (35-120 Hz);0.64;45;1;+11
+114.429;grosse caisse (35-120 Hz);0.73;45;2;+17
+115.046;caisse claire / claquement (1,5-6 kHz);0.89;45;3;-13
+115.047;grosse caisse (35-120 Hz);0.81;45;3;-11
+115.709;grosse caisse (35-120 Hz);0.80;45;4;+4
+115.726;caisse claire / claquement (1,5-6 kHz);0.69;45;4;+21
+116.359;caisse claire / claquement (1,5-6 kHz);0.68;46;1;+7
+116.374;grosse caisse (35-120 Hz);0.67;46;1;+23
+117.005;caisse claire / claquement (1,5-6 kHz);0.76;46;2;+7
+117.005;grosse caisse (35-120 Hz);0.83;46;2;+7
+117.514;caisse claire / claquement (1,5-6 kHz);0.61;46;3;-131
+117.528;grosse caisse (35-120 Hz);0.89;46;3;-117
+117.634;caisse claire / claquement (1,5-6 kHz);1.00;46;3;-11
+117.634;grosse caisse (35-120 Hz);0.81;46;3;-11
+118.295;grosse caisse (35-120 Hz);0.77;46;4;+4
+118.308;caisse claire / claquement (1,5-6 kHz);0.79;46;4;+17
+118.533;charley / cymbale (6-16 kHz);0.75;46;4;+242
+118.968;grosse caisse (35-120 Hz);0.68;47;1;+30
+119.584;grosse caisse (35-120 Hz);0.79;47;2;+0
+120.205;caisse claire / claquement (1,5-6 kHz);0.84;47;3;-26
+120.219;grosse caisse (35-120 Hz);0.90;47;3;-12
+120.880;grosse caisse (35-120 Hz);0.83;47;4;+3
+120.894;caisse claire / claquement (1,5-6 kHz);0.77;47;4;+17
+121.530;caisse claire / claquement (1,5-6 kHz);0.64;48;1;+6
+121.548;grosse caisse (35-120 Hz);0.65;48;1;+24
+122.177;caisse claire / claquement (1,5-6 kHz);0.79;48;2;+7
+122.177;grosse caisse (35-120 Hz);0.73;48;2;+7
+122.684;caisse claire / claquement (1,5-6 kHz);0.66;48;3;-133
+122.698;grosse caisse (35-120 Hz);1.00;48;3;-119
+122.791;caisse claire / claquement (1,5-6 kHz);1.00;48;3;-26
+122.806;grosse caisse (35-120 Hz);0.86;48;3;-11
+123.467;grosse caisse (35-120 Hz);0.80;48;4;+4
+124.121;grosse caisse (35-120 Hz);0.66;49;1;+11
+124.757;grosse caisse (35-120 Hz);0.78;49;2;+0
+125.306;grosse caisse (35-120 Hz);0.81;49;3;-97
+125.377;caisse claire / claquement (1,5-6 kHz);0.84;49;3;-26
+125.392;grosse caisse (35-120 Hz);0.81;49;3;-11
+126.055;grosse caisse (35-120 Hz);0.78;49;4;+5
+126.720;grosse caisse (35-120 Hz);0.66;50;1;+24
+127.351;grosse caisse (35-120 Hz);0.79;50;2;+8
+127.978;grosse caisse (35-120 Hz);0.82;50;3;-11
+128.641;grosse caisse (35-120 Hz);0.76;50;4;+5
+128.873;caisse claire / claquement (1,5-6 kHz);0.67;50;4;+237
+129.310;grosse caisse (35-120 Hz);0.65;51;1;+28
+130.565;grosse caisse (35-120 Hz);0.90;51;3;-10
+131.230;grosse caisse (35-120 Hz);0.84;51;4;+8
+131.892;grosse caisse (35-120 Hz);0.78;52;1;+24
+133.047;grosse caisse (35-120 Hz);0.88;52;3;-115
+133.154;grosse caisse (35-120 Hz);0.91;52;3;-7
+133.857;grosse caisse (35-120 Hz);0.61;52;4;+49
+134.494;grosse caisse (35-120 Hz);0.78;53;1;+40
+135.106;grosse caisse (35-120 Hz);0.78;53;2;+5
+135.645;grosse caisse (35-120 Hz);0.84;53;3;-103
+135.742;grosse caisse (35-120 Hz);0.93;53;3;-6
+136.434;grosse caisse (35-120 Hz);0.61;53;4;+40
+137.699;grosse caisse (35-120 Hz);0.93;54;2;+12
+138.226;grosse caisse (35-120 Hz);0.81;54;3;-108
+138.327;grosse caisse (35-120 Hz);0.91;54;3;-7
+139.132;grosse caisse (35-120 Hz);0.60;54;4;+151
+140.444;grosse caisse (35-120 Hz);0.61;55;2;+170
+140.907;grosse caisse (35-120 Hz);0.88;55;3;-13
+141.569;grosse caisse (35-120 Hz);0.86;55;4;+3
+142.219;grosse caisse (35-120 Hz);0.75;56;1;+6
+143.389;grosse caisse (35-120 Hz);0.84;56;3;-117
+143.496;grosse caisse (35-120 Hz);0.89;56;3;-10
+144.198;grosse caisse (35-120 Hz);0.60;56;4;+46
+144.828;grosse caisse (35-120 Hz);0.66;57;1;+28
+145.448;grosse caisse (35-120 Hz);0.79;57;2;+3
+145.995;grosse caisse (35-120 Hz);0.85;57;3;-97
+146.067;caisse claire / claquement (1,5-6 kHz);0.65;57;3;-25
+146.082;grosse caisse (35-120 Hz);0.79;57;3;-10
+146.774;grosse caisse (35-120 Hz);0.60;57;4;+35
+148.730;caisse claire / claquement (1,5-6 kHz);0.64;58;3;+51
+149.995;grosse caisse (35-120 Hz);0.75;59;1;+23
+150.310;charley / cymbale (6-16 kHz);0.82;59;2;-308
+150.619;grosse caisse (35-120 Hz);0.81;59;2;+0
+151.067;caisse claire / claquement (1,5-6 kHz);0.71;59;3;-198
+151.232;charley / cymbale (6-16 kHz);0.71;59;3;-32
+151.253;grosse caisse (35-120 Hz);0.90;59;3;-12
+151.916;grosse caisse (35-120 Hz);0.83;59;4;+4
+152.010;charley / cymbale (6-16 kHz);0.61;59;4;+98
+152.317;caisse claire / claquement (1,5-6 kHz);0.68;60;1;-241
+152.585;grosse caisse (35-120 Hz);0.68;60;1;+27
+153.200;grosse caisse (35-120 Hz);0.87;60;2;-5
+153.217;caisse claire / claquement (1,5-6 kHz);0.69;60;2;+12
+153.567;charley / cymbale (6-16 kHz);1.00;60;3;-284
+153.733;grosse caisse (35-120 Hz);0.99;60;3;-118
+153.840;grosse caisse (35-120 Hz);0.84;60;3;-11
+154.045;charley / cymbale (6-16 kHz);0.80;60;3;+194
+154.502;grosse caisse (35-120 Hz);0.79;60;4;+4
+154.517;caisse claire / claquement (1,5-6 kHz);0.65;60;4;+19
+155.155;grosse caisse (35-120 Hz);0.68;61;1;+11
+155.792;grosse caisse (35-120 Hz);0.76;61;2;+1
+155.801;caisse claire / claquement (1,5-6 kHz);0.83;61;2;+10
+156.042;caisse claire / claquement (1,5-6 kHz);0.62;61;2;+252
+156.341;grosse caisse (35-120 Hz);0.76;61;3;-96
+156.427;grosse caisse (35-120 Hz);0.81;61;3;-11
+156.541;charley / cymbale (6-16 kHz);0.81;61;3;+104
+156.661;charley / cymbale (6-16 kHz);0.75;61;3;+224
+156.787;grosse caisse (35-120 Hz);0.76;61;4;-297
+157.100;caisse claire / claquement (1,5-6 kHz);0.73;61;4;+16
+157.120;grosse caisse (35-120 Hz);0.69;61;4;+36
+157.125;charley / cymbale (6-16 kHz);0.73;61;4;+41
+157.241;grosse caisse (35-120 Hz);0.65;61;4;+157
+157.674;charley / cymbale (6-16 kHz);0.62;62;1;-57
+157.734;grosse caisse (35-120 Hz);0.70;62;1;+4
+158.369;caisse claire / claquement (1,5-6 kHz);0.73;62;2;-8
+158.372;grosse caisse (35-120 Hz);0.76;62;2;-5
+159.015;grosse caisse (35-120 Hz);0.78;62;3;-9
+159.019;caisse claire / claquement (1,5-6 kHz);1.00;62;3;-5
+159.060;charley / cymbale (6-16 kHz);0.65;62;3;+36
+159.339;charley / cymbale (6-16 kHz);0.67;62;3;+316
+159.359;grosse caisse (35-120 Hz);0.78;62;4;-311
+159.687;caisse claire / claquement (1,5-6 kHz);0.65;62;4;+17
+159.744;grosse caisse (35-120 Hz);0.83;62;4;+74
+160.193;grosse caisse (35-120 Hz);0.68;63;1;-123
+160.313;grosse caisse (35-120 Hz);0.75;63;1;-4
+160.982;grosse caisse (35-120 Hz);0.63;63;2;+19
+161.315;charley / cymbale (6-16 kHz);0.75;63;3;-294
+161.611;caisse claire / claquement (1,5-6 kHz);0.63;63;3;+1
+161.617;grosse caisse (35-120 Hz);0.74;63;3;+7
+161.956;grosse caisse (35-120 Hz);0.68;63;4;-300
+162.262;grosse caisse (35-120 Hz);0.67;63;4;+6
+162.477;charley / cymbale (6-16 kHz);0.61;63;4;+221
+162.634;grosse caisse (35-120 Hz);0.88;64;1;-268
+162.897;grosse caisse (35-120 Hz);0.65;64;1;-6
+163.471;charley / cymbale (6-16 kHz);0.66;64;2;-78
+163.866;charley / cymbale (6-16 kHz);0.73;64;2;+316
+164.098;grosse caisse (35-120 Hz);0.84;64;3;-98
+164.170;caisse claire / claquement (1,5-6 kHz);0.60;64;3;-26
+164.186;grosse caisse (35-120 Hz);0.81;64;3;-10
+164.538;grosse caisse (35-120 Hz);0.68;64;4;-304
+164.864;grosse caisse (35-120 Hz);0.60;64;4;+22
+165.490;caisse claire / claquement (1,5-6 kHz);0.62;65;1;+1
+165.527;grosse caisse (35-120 Hz);0.65;65;1;+38
+166.144;caisse claire / claquement (1,5-6 kHz);0.67;65;2;+9
+166.149;grosse caisse (35-120 Hz);0.72;65;2;+14
+166.380;charley / cymbale (6-16 kHz);0.62;65;2;+245
+166.686;grosse caisse (35-120 Hz);0.76;65;3;-96
+166.771;grosse caisse (35-120 Hz);0.78;65;3;-11
+166.779;caisse claire / claquement (1,5-6 kHz);0.61;65;3;-3
+167.011;charley / cymbale (6-16 kHz);0.89;65;3;+230
+167.026;caisse claire / claquement (1,5-6 kHz);0.62;65;3;+245
+167.131;grosse caisse (35-120 Hz);0.75;65;4;-297
+167.435;caisse claire / claquement (1,5-6 kHz);0.66;65;4;+6
+167.441;grosse caisse (35-120 Hz);0.66;65;4;+13
+168.279;charley / cymbale (6-16 kHz);0.69;66;1;+204
+169.047;charley / cymbale (6-16 kHz);0.85;66;3;-321
+169.280;caisse claire / claquement (1,5-6 kHz);0.64;66;3;-88
+169.303;charley / cymbale (6-16 kHz);0.86;66;3;-65
+169.486;charley / cymbale (6-16 kHz);0.70;66;3;+118
+169.749;caisse claire / claquement (1,5-6 kHz);0.70;66;4;-265
+169.749;charley / cymbale (6-16 kHz);0.68;66;4;-265
+170.033;charley / cymbale (6-16 kHz);0.96;66;4;+18
+170.686;grosse caisse (35-120 Hz);0.67;67;1;+25
+171.004;charley / cymbale (6-16 kHz);0.69;67;2;-303
+171.306;grosse caisse (35-120 Hz);0.66;67;2;-2
+171.318;caisse claire / claquement (1,5-6 kHz);0.81;67;2;+10
+171.646;charley / cymbale (6-16 kHz);0.68;67;3;-308
+171.872;caisse claire / claquement (1,5-6 kHz);0.71;67;3;-82
+171.943;grosse caisse (35-120 Hz);0.94;67;3;-11
+172.136;caisse claire / claquement (1,5-6 kHz);0.67;67;3;+182
+172.307;grosse caisse (35-120 Hz);0.65;67;4;-293
+172.604;caisse claire / claquement (1,5-6 kHz);0.68;67;4;+3
+172.677;grosse caisse (35-120 Hz);0.61;67;4;+76
+172.952;charley / cymbale (6-16 kHz);0.73;68;1;-295
+173.084;grosse caisse (35-120 Hz);0.75;68;1;-164
+173.245;grosse caisse (35-120 Hz);0.65;68;1;-2
+173.601;charley / cymbale (6-16 kHz);0.67;68;2;-292
+173.905;caisse claire / claquement (1,5-6 kHz);0.84;68;2;+11
+173.908;grosse caisse (35-120 Hz);0.77;68;2;+14
+174.243;charley / cymbale (6-16 kHz);0.68;68;3;-297
+174.426;caisse claire / claquement (1,5-6 kHz);0.65;68;3;-115
+174.435;grosse caisse (35-120 Hz);0.81;68;3;-106
+174.530;grosse caisse (35-120 Hz);0.82;68;3;-10
+174.675;charley / cymbale (6-16 kHz);0.65;68;3;+135
+174.839;caisse claire / claquement (1,5-6 kHz);0.64;68;3;+298
+174.891;grosse caisse (35-120 Hz);0.73;68;4;-296
+175.207;caisse claire / claquement (1,5-6 kHz);0.62;68;4;+20
+175.328;caisse claire / claquement (1,5-6 kHz);0.62;68;4;+142
+175.670;grosse caisse (35-120 Hz);0.80;69;1;-164
+175.791;grosse caisse (35-120 Hz);0.61;69;1;-43
+176.189;charley / cymbale (6-16 kHz);0.61;69;2;-291
+176.482;grosse caisse (35-120 Hz);0.76;69;2;+2
+176.491;caisse claire / claquement (1,5-6 kHz);0.84;69;2;+11
+176.832;charley / cymbale (6-16 kHz);0.68;69;3;-294
+177.338;caisse claire / claquement (1,5-6 kHz);0.81;69;3;+211
+177.344;charley / cymbale (6-16 kHz);1.00;69;3;+217
+177.476;grosse caisse (35-120 Hz);0.71;69;4;-298
+177.668;caisse claire / claquement (1,5-6 kHz);0.67;69;4;-105
+177.791;caisse claire / claquement (1,5-6 kHz);0.71;69;4;+18
+177.930;grosse caisse (35-120 Hz);0.63;69;4;+156
+178.028;caisse claire / claquement (1,5-6 kHz);0.76;69;4;+255
+178.424;grosse caisse (35-120 Hz);0.77;70;1;+5
+178.610;grosse caisse (35-120 Hz);0.64;70;1;+190
+178.774;charley / cymbale (6-16 kHz);0.70;70;2;-293
+179.062;grosse caisse (35-120 Hz);0.73;70;2;-4
+179.074;caisse claire / claquement (1,5-6 kHz);0.75;70;2;+8
+179.319;charley / cymbale (6-16 kHz);0.75;70;2;+252
+179.703;grosse caisse (35-120 Hz);0.82;70;3;-10
+180.033;charley / cymbale (6-16 kHz);0.77;70;3;+320
+180.049;grosse caisse (35-120 Hz);0.79;70;4;-310
+180.368;charley / cymbale (6-16 kHz);0.81;70;4;+9
+180.370;caisse claire / claquement (1,5-6 kHz);0.66;70;4;+11
+180.883;grosse caisse (35-120 Hz);0.73;71;1;-123
+180.947;charley / cymbale (6-16 kHz);0.75;71;1;-59
+181.003;grosse caisse (35-120 Hz);0.86;71;1;-3
+181.642;caisse claire / claquement (1,5-6 kHz);0.74;71;2;-10
+181.680;grosse caisse (35-120 Hz);0.60;71;2;+28
+182.029;caisse claire / claquement (1,5-6 kHz);0.61;71;3;-270
+182.171;caisse claire / claquement (1,5-6 kHz);0.68;71;3;-128
+182.274;caisse claire / claquement (1,5-6 kHz);0.80;71;3;-25
+182.289;grosse caisse (35-120 Hz);0.94;71;3;-10
+182.652;grosse caisse (35-120 Hz);0.69;71;4;-294
+182.949;caisse claire / claquement (1,5-6 kHz);0.60;71;4;+4
+182.953;grosse caisse (35-120 Hz);0.69;71;4;+8
+183.250;charley / cymbale (6-16 kHz);0.69;71;4;+304
+183.324;grosse caisse (35-120 Hz);0.82;72;1;-268
+183.601;caisse claire / claquement (1,5-6 kHz);0.64;72;1;+9
+184.778;grosse caisse (35-120 Hz);0.85;72;3;-107
+184.860;caisse claire / claquement (1,5-6 kHz);0.79;72;3;-25
+184.875;grosse caisse (35-120 Hz);0.77;72;3;-10
+185.208;caisse claire / claquement (1,5-6 kHz);0.64;72;3;+323
+185.220;charley / cymbale (6-16 kHz);0.82;72;4;-312
+185.235;grosse caisse (35-120 Hz);0.74;72;4;-297
+186.197;caisse claire / claquement (1,5-6 kHz);0.63;73;1;+19
+186.198;grosse caisse (35-120 Hz);0.71;73;1;+20
+186.219;charley / cymbale (6-16 kHz);1.00;73;1;+41
+186.455;charley / cymbale (6-16 kHz);0.99;73;1;+277
+186.732;caisse claire / claquement (1,5-6 kHz);0.68;73;2;-93
+186.738;charley / cymbale (6-16 kHz);1.00;73;2;-87
+186.826;grosse caisse (35-120 Hz);0.69;73;2;+2
+187.362;grosse caisse (35-120 Hz);0.79;73;3;-109
+187.461;grosse caisse (35-120 Hz);0.76;73;3;-10
+187.822;grosse caisse (35-120 Hz);0.66;73;4;-296
+188.107;charley / cymbale (6-16 kHz);0.80;73;4;-10
+188.123;caisse claire / claquement (1,5-6 kHz);0.60;73;4;+6
+188.459;charley / cymbale (6-16 kHz);0.75;74;1;-306
+189.407;grosse caisse (35-120 Hz);0.78;74;2;-3
+189.956;charley / cymbale (6-16 kHz);0.76;74;3;-101
+190.031;caisse claire / claquement (1,5-6 kHz);0.93;74;3;-26
+190.047;grosse caisse (35-120 Hz);0.78;74;3;-10
+190.387;grosse caisse (35-120 Hz);0.89;74;4;-317
+190.696;caisse claire / claquement (1,5-6 kHz);0.63;74;4;-8
+190.779;grosse caisse (35-120 Hz);0.83;74;4;+75
+191.036;caisse claire / claquement (1,5-6 kHz);0.75;75;1;-315
+191.054;charley / cymbale (6-16 kHz);0.80;75;1;-297
+191.348;grosse caisse (35-120 Hz);0.82;75;1;-2
+191.920;caisse claire / claquement (1,5-6 kHz);0.87;75;2;-77
+192.220;charley / cymbale (6-16 kHz);0.67;75;2;+223
+192.228;caisse claire / claquement (1,5-6 kHz);0.83;75;2;+231
+192.514;caisse claire / claquement (1,5-6 kHz);0.70;75;3;-129
+192.535;charley / cymbale (6-16 kHz);0.68;75;3;-108
+192.619;charley / cymbale (6-16 kHz);0.66;75;3;-24
+192.620;caisse claire / claquement (1,5-6 kHz);0.83;75;3;-23
+192.633;grosse caisse (35-120 Hz);0.94;75;3;-10
+192.997;grosse caisse (35-120 Hz);0.68;75;4;-293
+193.298;grosse caisse (35-120 Hz);0.72;75;4;+8
+193.307;caisse claire / claquement (1,5-6 kHz);0.73;75;4;+17
+193.622;caisse claire / claquement (1,5-6 kHz);0.62;76;1;-315
+193.623;charley / cymbale (6-16 kHz);0.71;76;1;-314
+193.669;grosse caisse (35-120 Hz);0.86;76;1;-268
+193.945;caisse claire / claquement (1,5-6 kHz);0.63;76;1;+8
+193.966;grosse caisse (35-120 Hz);0.60;76;1;+29
+194.489;caisse claire / claquement (1,5-6 kHz);0.79;76;2;-94
+194.494;charley / cymbale (6-16 kHz);0.67;76;2;-89
+194.803;charley / cymbale (6-16 kHz);0.65;76;2;+220
+194.810;caisse claire / claquement (1,5-6 kHz);0.74;76;2;+227
+195.124;grosse caisse (35-120 Hz);0.78;76;3;-106
+195.205;caisse claire / claquement (1,5-6 kHz);1.00;76;3;-24
+195.219;grosse caisse (35-120 Hz);0.79;76;3;-11
+195.231;charley / cymbale (6-16 kHz);1.00;76;3;+1
+195.419;charley / cymbale (6-16 kHz);0.70;76;3;+189
+195.554;caisse claire / claquement (1,5-6 kHz);0.67;76;4;-323
+195.562;charley / cymbale (6-16 kHz);0.98;76;4;-314
+195.583;grosse caisse (35-120 Hz);0.79;76;4;-294
+195.880;caisse claire / claquement (1,5-6 kHz);0.64;76;4;+3
+195.889;charley / cymbale (6-16 kHz);0.78;76;4;+12
+196.227;charley / cymbale (6-16 kHz);0.90;77;1;-296
+196.542;grosse caisse (35-120 Hz);0.71;77;1;+19
+197.180;caisse claire / claquement (1,5-6 kHz);0.86;77;2;+10
+197.184;grosse caisse (35-120 Hz);0.73;77;2;+14
+197.206;charley / cymbale (6-16 kHz);0.61;77;2;+36
+197.806;grosse caisse (35-120 Hz);0.76;77;3;-10
+197.812;caisse claire / claquement (1,5-6 kHz);0.64;77;3;-4
+198.145;charley / cymbale (6-16 kHz);0.87;77;4;-318
+198.149;caisse claire / claquement (1,5-6 kHz);0.74;77;4;-314
+198.167;grosse caisse (35-120 Hz);0.66;77;4;-296
+198.475;caisse claire / claquement (1,5-6 kHz);0.79;77;4;+12
+198.476;grosse caisse (35-120 Hz);0.63;77;4;+13
+198.489;charley / cymbale (6-16 kHz);0.74;77;4;+26
+198.813;charley / cymbale (6-16 kHz);0.79;78;1;-296
+199.793;caisse claire / claquement (1,5-6 kHz);0.80;78;2;+37
+200.462;caisse claire / claquement (1,5-6 kHz);0.68;78;3;+60
+200.464;charley / cymbale (6-16 kHz);1.00;78;3;+62
+201.049;caisse claire / claquement (1,5-6 kHz);0.78;78;4;+0
+201.469;charley / cymbale (6-16 kHz);0.97;79;1;-226
+201.472;caisse claire / claquement (1,5-6 kHz);0.73;79;1;-223
+201.720;grosse caisse (35-120 Hz);0.68;79;1;+25
+201.722;caisse claire / claquement (1,5-6 kHz);0.60;79;1;+27
+202.059;charley / cymbale (6-16 kHz);0.86;79;2;-283
+202.334;caisse claire / claquement (1,5-6 kHz);0.76;79;2;-8
+202.341;grosse caisse (35-120 Hz);0.69;79;2;-1
+202.368;charley / cymbale (6-16 kHz);0.67;79;2;+26
+202.978;grosse caisse (35-120 Hz);0.85;79;3;-11
+203.115;grosse caisse (35-120 Hz);0.61;79;3;+127
+203.419;charley / cymbale (6-16 kHz);0.72;79;4;-216
+203.638;caisse claire / claquement (1,5-6 kHz);0.78;79;4;+3
+203.639;grosse caisse (35-120 Hz);0.81;79;4;+4
+204.297;caisse claire / claquement (1,5-6 kHz);0.61;80;1;+15
+204.307;grosse caisse (35-120 Hz);0.65;80;1;+25
+204.926;caisse claire / claquement (1,5-6 kHz);0.77;80;2;-2
+204.946;grosse caisse (35-120 Hz);0.69;80;2;+18
+205.387;charley / cymbale (6-16 kHz);0.76;80;3;-187
+205.457;grosse caisse (35-120 Hz);1.00;80;3;-117
+205.565;grosse caisse (35-120 Hz);0.86;80;3;-10
+205.574;caisse claire / claquement (1,5-6 kHz);0.90;80;3;-1
+205.952;charley / cymbale (6-16 kHz);0.74;80;4;-269
+206.226;grosse caisse (35-120 Hz);0.78;80;4;+5
+206.238;caisse claire / claquement (1,5-6 kHz);0.73;80;4;+17
+206.880;grosse caisse (35-120 Hz);0.67;81;1;+12
+207.514;caisse claire / claquement (1,5-6 kHz);0.88;81;2;+0
+207.515;grosse caisse (35-120 Hz);0.79;81;2;+1
+208.065;grosse caisse (35-120 Hz);0.76;81;3;-96
+208.151;grosse caisse (35-120 Hz);0.80;81;3;-10
+208.154;caisse claire / claquement (1,5-6 kHz);1.00;81;3;-7
+208.561;charley / cymbale (6-16 kHz);0.85;81;4;-246
+208.813;grosse caisse (35-120 Hz);0.79;81;4;+6
+208.824;caisse claire / claquement (1,5-6 kHz);0.71;81;4;+17
+209.478;grosse caisse (35-120 Hz);0.65;82;1;+24
+210.099;caisse claire / claquement (1,5-6 kHz);0.65;82;2;-2
+210.114;grosse caisse (35-120 Hz);0.80;82;2;+14
+210.529;charley / cymbale (6-16 kHz);0.69;82;3;-218
+210.630;grosse caisse (35-120 Hz);0.93;82;3;-117
+210.738;grosse caisse (35-120 Hz);0.82;82;3;-9
+210.742;caisse claire / claquement (1,5-6 kHz);1.00;82;3;-5
+211.106;charley / cymbale (6-16 kHz);0.76;82;4;-287
+211.399;grosse caisse (35-120 Hz);0.73;82;4;+5
+211.407;caisse claire / claquement (1,5-6 kHz);0.67;82;4;+14
+213.338;grosse caisse (35-120 Hz);0.72;83;3;+5
+213.992;grosse caisse (35-120 Hz);0.69;83;4;+12
+214.647;grosse caisse (35-120 Hz);0.64;84;1;+21
+215.926;grosse caisse (35-120 Hz);0.67;84;3;+7
+217.215;grosse caisse (35-120 Hz);0.71;85;1;+3
+217.860;grosse caisse (35-120 Hz);0.77;85;2;+1
+218.481;caisse claire / claquement (1,5-6 kHz);0.72;85;3;-25
+218.495;grosse caisse (35-120 Hz);0.82;85;3;-10
+220.454;grosse caisse (35-120 Hz);0.85;86;2;+9
+221.066;caisse claire / claquement (1,5-6 kHz);0.73;86;3;-26
+221.083;grosse caisse (35-120 Hz);0.83;86;3;-9
+222.393;grosse caisse (35-120 Hz);0.64;87;1;+8
+223.667;grosse caisse (35-120 Hz);0.98;87;3;-11
+224.328;grosse caisse (35-120 Hz);0.91;87;4;+4
+224.990;grosse caisse (35-120 Hz);0.69;88;1;+19
+226.254;grosse caisse (35-120 Hz);0.88;88;3;-10
+226.264;caisse claire / claquement (1,5-6 kHz);0.66;88;3;-0
+226.956;grosse caisse (35-120 Hz);0.62;88;4;+46
+227.566;grosse caisse (35-120 Hz);0.79;89;1;+9
+228.212;grosse caisse (35-120 Hz);0.77;89;2;+9
+228.755;grosse caisse (35-120 Hz);0.78;89;3;-95
+228.840;grosse caisse (35-120 Hz);0.81;89;3;-10
+229.502;grosse caisse (35-120 Hz);0.81;89;4;+6
+230.161;grosse caisse (35-120 Hz);0.66;90;1;+18
+230.792;grosse caisse (35-120 Hz);0.78;90;2;+3
+231.321;grosse caisse (35-120 Hz);0.73;90;3;-115
+231.428;grosse caisse (35-120 Hz);0.80;90;3;-8
+232.088;grosse caisse (35-120 Hz);0.80;90;4;+5
+232.761;grosse caisse (35-120 Hz);0.66;91;1;+32
+233.378;grosse caisse (35-120 Hz);0.78;91;2;+2
+234.010;grosse caisse (35-120 Hz);1.00;91;3;-12
+234.674;grosse caisse (35-120 Hz);0.81;91;4;+5
+235.343;grosse caisse (35-120 Hz);0.62;92;1;+27
+235.971;grosse caisse (35-120 Hz);0.75;92;2;+9
+236.494;grosse caisse (35-120 Hz);0.90;92;3;-114
+236.599;grosse caisse (35-120 Hz);0.86;92;3;-9
+237.260;grosse caisse (35-120 Hz);0.79;92;4;+5
+237.914;grosse caisse (35-120 Hz);0.66;93;1;+12
+238.551;grosse caisse (35-120 Hz);0.76;93;2;+2
+239.099;grosse caisse (35-120 Hz);0.82;93;3;-96
+239.185;grosse caisse (35-120 Hz);0.81;93;3;-10
+239.848;grosse caisse (35-120 Hz);0.75;93;4;+6
+240.512;grosse caisse (35-120 Hz);0.64;94;1;+24
+241.143;grosse caisse (35-120 Hz);0.76;94;2;+8
+241.772;grosse caisse (35-120 Hz);0.85;94;3;-10
+242.434;grosse caisse (35-120 Hz);0.72;94;4;+6
+243.101;grosse caisse (35-120 Hz);0.61;95;1;+27
+243.721;grosse caisse (35-120 Hz);0.97;95;2;+0
+244.357;grosse caisse (35-120 Hz);0.99;95;3;-11
+245.678;grosse caisse (35-120 Hz);0.70;96;1;+17
+246.852;grosse caisse (35-120 Hz);0.64;96;3;-101
+246.951;grosse caisse (35-120 Hz);0.65;96;3;-3

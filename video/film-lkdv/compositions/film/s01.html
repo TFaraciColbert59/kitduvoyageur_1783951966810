@@ -1,0 +1,70 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
+  </style>
+  <div id="root" data-composition-id="s01" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s01-ri">
+      <div class="vw" id="s01-sunw"><video id="s01-sun" class="clip full" src="assets/footage/sunrise-ridge.mp4" muted playsinline data-start="0.0" data-duration="5.625" data-media-start="0" data-track-index="1"></video></div>
+      <div class="wash" id="s01-dk" style="background:#0b1f17; opacity:0"></div>
+      <div class="wash" style="background: linear-gradient(90deg, rgba(11,31,23,0.55) 0%, rgba(11,31,23,0.25) 40%, rgba(11,31,23,0) 62%)"></div>
+      <div class="ttl sh" id="s01-t" style="left:110px; top:520px; font-size:104px; color:#faf8f5; "><span class="w s01-t-a">Là</span> <span class="w s01-t-a">où</span> <span class="w s01-t-a">la</span> <span class="w s01-t-a">carte</span><br /><em><span class="w s01-t-b">se</span> <span class="w s01-t-b">termine.</span></em></div>
+      <div class="pw" id="s01-p" style="left:1080px; top:0px"><div class="phone"><div class="screen"><div class="cam" id="s01-p-cam"><img id="s01-p-i0" src="assets/app/feed-1.jpg" alt="" /><img id="s01-p-i1" src="assets/app/feed-3.jpg" alt="" style="opacity:0" /><img id="s01-p-i2" src="assets/app/carnet-semaine.jpg" alt="" style="opacity:0" /></div></div></div></div>
+      <div class="chap" id="s01-t2-ch" style="left:1334px; top:354px; ">Explorer</div>
+      <div class="ttl sh" id="s01-t2" style="left:1330px; top:400px; font-size:76px; color:#faf8f5; "><span class="w s01-t2-a">Un</span> <span class="w s01-t2-a">carnet,</span><br /><em><span class="w s01-t2-b">qui</span> <span class="w s01-t2-b">donne</span> <span class="w s01-t2-b">envie</span></em></div>
+      <div class="cap" id="s01-cap2" style="left:1334px; top:610px"><i></i>Hautes Fagnes · 2 jours</div>
+      <div class="touch" id="s01-tap" style="left:620px; top:540px"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s01-sunw", { scale: 1 }, { scale: 1.05, duration: 3.75, ease: "none" }, 0.0);
+      tl.to("#s01-sunw", { scale: 1.22, duration: 0.85, ease: "power2.inOut" }, 3.75);
+      tl.fromTo("#s01-dk", { opacity: 0 }, { opacity: 0.62, duration: 0.85, ease: "power2.inOut" }, 3.75);
+      tl.to([".s01-t-a", ".s01-t-b"], { opacity: 0, filter: "blur(8px)", duration: 0.18, stagger: 0.02, ease: "power2.in" }, 3.5);
+      tl.fromTo("#s01-p", { x: 0, y: 1180, scale: 0.82, rotationX: 32, transformOrigin: "50% 50%", transformPerspective: 1800 }, { x: 0, y: 330, scale: 0.82, rotationX: 10, duration: 0.9, ease: "expo.out" }, 1.875);
+      tl.to("#s01-p-i0", { y: -896, duration: 0.35, ease: "power3.inOut" }, 2.85);
+      tl.fromTo("#s01-p-i1", { y: 896, opacity: 1 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.inOut" }, 2.85);
+      tl.fromTo("#s01-p-i1", { filter: "blur(0px)" }, { filter: "blur(8px)", duration: 0.05, ease: "power1.in", immediateRender: false }, 3.7);
+      tl.fromTo("#s01-p-i2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(8px)", duration: 0.001, ease: "none" }, 3.75);
+      tl.to("#s01-p-i2", { filter: "blur(0px)", duration: 0.08, ease: "power2.out" }, 3.751);
+      tl.to("#s01-p", { x: -475.776, y: 124.672, scale: 2, rotationX: 0, duration: 0.85, ease: "power2.inOut" }, 3.75);
+      tl.fromTo("#s01-t2-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 3.95);
+      tl.fromTo(".s01-t2-a", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.05, ease: "power2.out" }, 4.0);
+      tl.fromTo(".s01-t2-b", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 4.11);
+      tl.fromTo("#s01-cap2", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 4.27);
+      tl.fromTo("#s01-tap", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.14, ease: "power2.out" }, 5.075);
+      tl.to("#s01-tap", { scale: 0.8, duration: 0.08, ease: "power2.in" }, 5.235);
+      tl.to("#s01-tap", { opacity: 0, scale: 1, duration: 0.14, ease: "power2.out" }, 5.355);
+      tl.to("#s01-ri", { filter: "blur(14px)", duration: 0.35, ease: "power2.in" }, 5.275);
+      window.__timelines["s01"] = tl;
+    })();
+  </script>
+</template>

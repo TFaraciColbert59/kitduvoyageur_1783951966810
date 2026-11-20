@@ -1,0 +1,55 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
+  </style>
+  <div id="root" data-composition-id="s19" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s19-ri">
+      <div class="vw"><img id="s19-bg" class="full" src="assets/img/mountain-1.jpg" alt="" /></div><div class="wash" style="background:linear-gradient(270deg, rgba(11,31,23,0.75) 0%, rgba(11,31,23,0.35) 60%, rgba(11,31,23,0.2) 100%)"></div>
+      <div class="pw" id="s19-p" style="left:330px; top:76px"><div class="phone"><div class="screen"><div class="cam" id="s19-p-cam"><img src="assets/app/carnet-tmb.jpg" alt="" /></div></div></div></div>
+      <div class="chap" id="s19-t-ch" style="left:1014px; top:284px; ">Carnets</div>
+      <div class="ttl sh" id="s19-t" style="left:1010px; top:330px; font-size:100px; color:#faf8f5; "><span class="w s19-t-a">À</span> <span class="w s19-t-a">six,</span><br /><em><span class="w s19-t-b">un</span> <span class="w s19-t-b">autre</span> <span class="w s19-t-b">carnet</span></em></div>
+      <div class="cap" id="s19-cap" style="left:1014px; top:590px"><i></i>6 voyageurs</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s19-ri", { x: 1920, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.34, ease: "power3.inOut" }, 0.0);
+      tl.fromTo("#s19-bg", { scale: 1.06 }, { scale: 1, duration: 2.475, ease: "none" }, 0.0);
+      tl.fromTo("#s19-p", { rotationY: 34, scale: 0.95, transformOrigin: "50% 50%", transformPerspective: 1800 }, { rotationY: -10, duration: 2.475, ease: "sine.inOut" }, 0.0);
+      tl.fromTo("#s19-t-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 0.21);
+      tl.fromTo(".s19-t-a", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.26);
+      tl.fromTo(".s19-t-b", { opacity: 0, color: "#9fb59a" }, { opacity: 1, color: "inherit", duration: 0.14, stagger: 0.04, ease: "power1.out" }, 0.37);
+      tl.fromTo("#s19-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.62);
+      tl.to("#s19-ri", { y: -1080, filter: "blur(20px)", duration: 0.3, ease: "power3.in" }, 2.175);
+      window.__timelines["s19"] = tl;
+    })();
+  </script>
+</template>

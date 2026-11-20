@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p05 · On le fait ?</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: #c9d3bd; }
+  #head { left: 60px; top: 230px; height: 140px; padding: 0 44px 0 18px; background: rgba(250,248,245,0.78); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 20px 50px rgba(11,31,23,0.15); }
+  #head .stack { display: flex; }
+  #head .stack img { width: 100px; height: 100px; border: 4px solid #fff; margin-right: -30px; }
+  #head b { font-size: 46px; font-weight: 700; color: #1f2a24; display: block; margin-left: 46px; }
+  #head span { font-size: 36px; color: var(--label2); margin-left: 46px; }
+  #today { left: 410px; top: 430px; height: 64px; padding: 0 28px; background: rgba(250,248,245,0.85); font-size: 34px; font-weight: 600; color: #3b4a42; }
+  #bubble { right: 60px; top: 530px; width: 900px; padding: 50px 60px 34px; border-radius: 60px 60px 16px 60px; background: rgba(236,243,230,0.92); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 30px 70px rgba(11,31,23,0.18); transform: rotate(-2deg); }
+  #bubble .w { white-space: nowrap; font-size: 150px; font-weight: 900; letter-spacing: -0.04em; color: var(--forest); line-height: 0.95; }
+  #bubble .q { color: var(--brass); position: relative; display: inline-block; transform: scale(1.12); }
+  #bubble .qg { position: absolute; left: 14px; top: -8px; opacity: 0.35; color: var(--forest); filter: blur(2px); }
+  #bubble .t { text-align: right; font-size: 34px; color: #5b6a62; margin-top: 18px; }
+  .rep { left: 60px; height: 150px; gap: 26px; }
+  .rep img { width: 130px; height: 130px; border: 5px solid #fff; box-shadow: 0 12px 30px rgba(11,31,23,0.2); }
+  .rep .b { height: 140px; padding: 0 56px; border-radius: 70px 70px 70px 16px; background: rgba(250,248,245,0.95); font-size: 76px; font-weight: 800; color: var(--forest); display: flex; align-items: center; box-shadow: 0 20px 50px rgba(11,31,23,0.16); }
+  #r1 { top: 1050px; transform: rotate(2deg) scale(1.04); }
+  #r2 { top: 1250px; transform: rotate(-1deg) scale(0.92); transform-origin: 0 50%; }
+  #r2 .b { filter: blur(0.5px); }
+</style></head>
+<body><div id="frame">
+  <img class="fill cover" src="assets/plates/bg-msg.jpg">
+  <div id="head" class="abs pill"><div class="stack"><img class="av" src="assets/avatars/lea.jpg"><img class="av" src="assets/avatars/camille.jpg"><img class="av" src="assets/avatars/a04.jpg"></div><div><b>Le W · fin novembre</b><span>3 membres</span></div></div>
+  <div id="today" class="abs pill">Aujourd'hui</div>
+  <div id="bubble" class="abs"><div class="w">On le fait <span class="q">?<span class="qg">?</span></span></div><div class="t">22:06 ✓</div></div>
+  <div id="r1" class="abs rep pill"><img class="av" src="assets/avatars/camille.jpg"><div class="b">Go</div></div>
+  <div id="r2" class="abs rep pill"><img class="av" src="assets/avatars/a04.jpg"><div class="b">J'en suis</div></div>
+</div>
+<script src="icons.js"></script>
+</body></html>

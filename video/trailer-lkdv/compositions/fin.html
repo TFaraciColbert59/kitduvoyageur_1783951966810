@@ -1,0 +1,134 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    #f-bg {
+      position: absolute;
+      inset: 0;
+    }
+    #f-bg img {
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #f-shade {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 31, 23, 0.5);
+    }
+    #f-claim {
+      position: absolute;
+      left: 120px;
+      top: 330px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 132px;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+    }
+    #f-claim .w {
+      display: inline-block;
+    }
+    #f-claim em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    #f-lock {
+      position: absolute;
+      left: 330px;
+      top: 300px;
+      width: 1260px;
+      height: 420px;
+    }
+    #f-badge {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 420px;
+      height: 420px;
+      filter: drop-shadow(0 26px 50px rgba(0, 0, 0, 0.45));
+    }
+    #f-badge img {
+      width: 420px;
+      height: 420px;
+    }
+    #f-word {
+      position: absolute;
+      left: 480px;
+      top: 92px;
+      color: #faf8f5;
+      white-space: nowrap;
+    }
+    #f-name {
+      font-size: 104px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    #f-name em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    #f-motto {
+      margin-top: 26px;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #dfe8dc;
+    }
+    #f-cta {
+      position: absolute;
+      left: 717px;
+      top: 800px;
+      padding: 24px 46px;
+      border-radius: 999px;
+      background: #faf8f5;
+      color: #17402c;
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      box-shadow: 0 18px 40px rgba(11, 31, 23, 0.35);
+    }
+  </style>
+  <div id="root" data-composition-id="fin" data-width="1920" data-height="1080">
+    <div id="f-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="f-shade"></div>
+    <div id="f-claim"><span class="w">Une</span> <span class="w">phrase.</span><br /><span class="w">Tout</span> <span class="w">le</span> <span class="w"><em>voyage.</em></span></div>
+    <div id="f-lock">
+      <div id="f-badge"><img src="assets/img/lkdv-badge.png" alt="Badge LKDV, Le Kit du Voyageur" /></div>
+      <div id="f-word">
+        <div id="f-name">Le Kit du <em>Voyageur</em></div>
+        <div id="f-motto">Préparer · Explorer · Partager</div>
+      </div>
+    </div>
+    <div id="f-cta">lekitduvoyageur.fr</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#f-bg", { filter: "blur(14px)", scale: 1.08 }, { filter: "blur(0px)", scale: 1, duration: 0.6, ease: "expo.out" }, 0);
+      tl.fromTo("#f-shade", { opacity: 0.4 }, { opacity: 1, duration: 0.6 }, 0);
+
+      // Claim : mot à mot, du gris clair à l'encre, sans déplacement.
+      tl.fromTo("#f-claim .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.12 }, 0.25);
+      tl.to("#f-claim", { opacity: 0, filter: "blur(10px)", duration: 0.22 }, 2.65);
+
+      // Le badge arrive comme une boussole qui se cale (ressort amorti 0,8), à 59,60 s du film.
+      tl.fromTo("#f-badge", { opacity: 0, scale: 0.55, rotation: -120 }, { opacity: 1, scale: 1, rotation: 0, duration: 1.1, ease: "back.out(1.25)" }, 2.88);
+      // Le nom s'essuie à côté, de gauche à droite.
+      tl.fromTo("#f-word", { clipPath: "inset(0% 100% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.7, ease: "power3.out" }, 3.55);
+      tl.fromTo("#f-motto", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.1);
+      tl.fromTo("#f-cta", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.55, ease: "expo.out" }, 4.55);
+      window.__timelines["fin"] = tl;
+    })();
+  </script>
+</template>

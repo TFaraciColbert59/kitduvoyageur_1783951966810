@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p17 · Kit souche : Léa</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--stone); }
+  #grp { left: 60px; top: 236px; height: 150px; padding: 0 44px 0 20px; gap: 0; background: #fff; box-shadow: 0 20px 50px rgba(11,31,23,0.15); }
+  #grp img { width: 116px; height: 116px; border: 6px solid #fff; margin-right: -34px; }
+  #grp div { margin-left: 56px; }
+  #grp b { display: block; font-size: 46px; color: var(--forest); font-weight: 800; }
+  #grp span { font-size: 34px; color: var(--label2); }
+  #tile { left: 60px; top: 418px; width: 960px; padding: 44px 46px; border-radius: 56px; background: #fff; box-shadow: 0 0 0 5px var(--brass), 0 40px 90px rgba(11,31,23,0.22); transform: rotate(-2deg); }
+  .eb { font-size: 32px; font-weight: 700; letter-spacing: 0.14em; color: var(--sage); text-transform: uppercase; }
+  .chain { display: flex; align-items: center; margin: 20px 0 18px; }
+  .node { text-align: center; width: 230px; }
+  .node img { width: 140px; height: 140px; margin: 0 auto; border: 6px solid var(--stone); box-shadow: 0 10px 26px rgba(11,31,23,0.2); }
+  .node b { display: block; font-size: 40px; color: var(--forest); margin-top: 10px; }
+  .node span { font-size: 34px; color: var(--label2); }
+  .link { flex: 1; height: 8px; background: linear-gradient(90deg, var(--brass), var(--sage)); border-radius: 8px; position: relative; margin-bottom: 70px; }
+  .link:after { content: ""; position: absolute; right: -6px; top: -14px; border-left: 30px solid var(--sage); border-top: 18px solid transparent; border-bottom: 18px solid transparent; }
+  .badges { display: flex; gap: 14px; flex-wrap: wrap; }
+  .badges span { height: 70px; padding: 0 26px; border-radius: 999px; font-size: 34px; font-weight: 700; display: inline-flex; align-items: center; }
+  .b1 { background: #E1EBDE; color: #3D7A52; } .b2 { background: #F1EEE8; color: #56665D; }
+  #take { margin-top: 30px; height: 110px; padding: 0 44px; gap: 18px; background: var(--forest); color: #fff; font-size: 44px; font-weight: 700; }
+  #l1 { left: 58px; top: 1176px; color: var(--forest); }
+  #l2 { left: 54px; top: 1282px; color: var(--brass); }
+  #l2g { left: 80px; top: 1268px; color: var(--forest); filter: blur(3px); }
+</style></head>
+<body><div id="frame">
+  <div id="grp" class="abs pill"><img class="av" src="assets/avatars/a13.jpg"><img class="av" src="assets/avatars/a10.jpg"><img class="av" src="assets/avatars/a17.jpg"><img class="av" src="assets/avatars/a12.jpg"><div><b>Le W · fin novembre</b><span>Groupe · 4 voyageurs</span></div></div>
+  <div id="tile" class="abs">
+    <div class="eb">Lignée de kit</div>
+    <div class="chain">
+      <div class="node"><img class="av" src="assets/avatars/lea.jpg"><b>Léa</b><span>kit souche</span></div>
+      <div class="link"></div>
+      <div class="node"><img class="av" src="assets/avatars/a13.jpg"><b>Tom</b><span>reprise</span></div>
+    </div>
+    <div class="badges"><span class="b1">Kit souche : Léa</span><span class="b2">Génération 2</span><span class="b2">lignée jeune</span></div>
+    <span id="take" class="pill"><i data-ic="package" data-s="50" data-c="#fff" data-w="2.2"></i>Reprendre ce kit</span>
+  </div>
+  <div id="l1" class="abs slam" data-fit="960" data-max="150">KIT SOUCHE :</div>
+  <div id="l2g" class="abs slam ghost" style="font-size:260px">LÉA</div>
+  <div id="l2" class="abs slam" style="font-size:260px">LÉA</div>
+</div>
+<script src="icons.js"></script><script src="fit.js"></script>
+</body></html>

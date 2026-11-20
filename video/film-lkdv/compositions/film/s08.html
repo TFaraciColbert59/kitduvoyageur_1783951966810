@@ -1,0 +1,67 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
+  </style>
+  <div id="root" data-composition-id="s08" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s08-ri">
+      <div class="wash" style="background:radial-gradient(120% 120% at 40% 50%, #faf8f5 0%, #efebe4 55%, #e2ddd3 100%)"></div>
+      <div class="gc" id="s08-box" style="left:340px; top:330px; width:1234px; height:566px; padding:0"></div>
+      <img id="s08-ent" src="assets/cut/sac-entete.jpg" alt="" style="position:absolute; left:360px; top:350px; width:1194px; height:99px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-ann" src="assets/cut/sac-anneau.jpg" alt="" style="position:absolute; left:360px; top:463px; width:416px; height:413px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-l0" src="assets/cut/sac-l1.jpg" alt="" style="position:absolute; left:792px; top:493px; width:759px; height:73px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-l1" src="assets/cut/sac-l2.jpg" alt="" style="position:absolute; left:792px; top:570px; width:759px; height:73px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-l2" src="assets/cut/sac-l3.jpg" alt="" style="position:absolute; left:792px; top:647px; width:759px; height:73px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-l3" src="assets/cut/sac-l4.jpg" alt="" style="position:absolute; left:792px; top:724px; width:759px; height:73px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <img id="s08-l4" src="assets/cut/sac-l5.jpg" alt="" style="position:absolute; left:792px; top:801px; width:759px; height:73px; border-radius:20px; box-shadow:0 24px 60px rgba(11,31,23,0.35)" />
+      <div class="chap" id="s08-t-ch" style="left:344px; top:104px; color:#5b7f55;">Sac</div>
+      <div class="ttl" id="s08-t" style="left:340px; top:150px; font-size:84px; color:#17402c; "><span class="w s08-t-a">Ton</span> <span class="w s08-t-a">sac,</span> <em><span class="w s08-t-b">2,9</span> <span class="w s08-t-b">kg</span> <span class="w s08-t-b">pour</span> <span class="w s08-t-b">5</span> <span class="w s08-t-b">jours</span></em></div>
+      <div class="cap" id="s08-cap" style="left:1384px; top:926px"><i></i>14 objets</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s08-ri", { y: 1080, filter: "blur(14px)" }, { y: 0, filter: "blur(0px)", duration: 0.34, ease: "power3.inOut" }, 0.0);
+      tl.fromTo("#s08-box", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }, 0.2);
+      tl.fromTo("#s08-ent", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 0.25);
+      tl.fromTo("#s08-ann", { opacity: 0, scale: 0.82 }, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }, 0.32);
+      tl.fromTo("#s08-l0", { opacity: 0, y: -46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 0.4);
+      tl.fromTo("#s08-l1", { opacity: 0, y: -46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 0.7516);
+      tl.fromTo("#s08-l2", { opacity: 0, y: -46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 1.1031);
+      tl.fromTo("#s08-l3", { opacity: 0, y: -46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 1.4547);
+      tl.fromTo("#s08-l4", { opacity: 0, y: -46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, 1.8063);
+      tl.fromTo("#s08-t-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 0.21);
+      tl.fromTo(".s08-t-a", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.05, ease: "power2.out" }, 0.26);
+      tl.fromTo(".s08-t-b", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 0.37);
+      tl.fromTo("#s08-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.45, ease: "expo.out" }, 0.62);
+      window.__timelines["s08"] = tl;
+    })();
+  </script>
+</template>

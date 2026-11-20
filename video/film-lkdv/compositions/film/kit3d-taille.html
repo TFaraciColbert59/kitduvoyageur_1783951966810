@@ -1,0 +1,400 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: radial-gradient(140% 110% at 64% 38%, #f8f6f2 0%, #efebe4 46%, #e3ded5 100%);
+    }
+    #kt-floor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      bottom: 0;
+      background: radial-gradient(70% 80% at 64% 20%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 70%);
+    }
+    #kt-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    #kt-kicker {
+      position: absolute;
+      left: 124px;
+      top: 300px;
+      color: #5b7f55;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    #kt-title {
+      position: absolute;
+      left: 120px;
+      top: 346px;
+      width: 760px;
+      color: #17402c;
+      font-weight: 800;
+      font-size: 104px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #kt-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    #kt-title .w {
+      display: inline-block;
+    }
+    #kt-cap {
+      position: absolute;
+      left: 124px;
+      top: 880px;
+      width: 470px;
+      height: 76px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 40px rgba(11, 31, 23, 0.14);
+      overflow: hidden;
+    }
+    #kt-cap i {
+      position: absolute;
+      left: 30px;
+      top: 31px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b7f55;
+    }
+    .kt-c {
+      position: absolute;
+      left: 60px;
+      top: 0;
+      height: 76px;
+      line-height: 76px;
+      color: #17402c;
+      font-size: 32px;
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0;
+    }
+  </style>
+  <div id="root" data-composition-id="kit3dTaille" data-width="1920" data-height="1080" data-layout-allow-overlap>
+    <div id="kt-floor"></div>
+    <canvas id="kt-canvas" width="1920" height="1080"></canvas>
+    <div id="kt-kicker">Kit Studio</div>
+    <div id="kt-title"><span class="w kt-w">Ton</span> <span class="w kt-w">sac,</span><br /><em><span class="w kt-w">à</span> <span class="w kt-w">ta</span> <span class="w kt-w">taille</span></em></div>
+    <div id="kt-cap"><i></i><span class="kt-c" id="kt-c45">45 L · 1,2 kg · 471 €</span><span class="kt-c" id="kt-c60">60 L · 1,5 kg · 501 €</span><span class="kt-c" id="kt-c80">80 L · 2,0 kg · 541 €</span></div>
+  </div>
+  <script>
+    (function () {
+      const ID = "kit3dTaille";
+      const DUR = 3.75;
+      const BEAT = 0.46875;
+      // Événements (secondes locales, calés sur les temps à 128 BPM)
+      const T_M04 = BEAT; // mesure 1, temps 2 : la poche se clipse
+      const T_M13 = 3 * BEAT; // mesure 1, temps 4 : le porte-piolets se clipse
+      const T_60 = 4 * BEAT; // mesure 2, temps 1 : 60 L
+      const T_80 = 5 * BEAT; // mesure 2, temps 2 : 80 L
+      const SWAPS = [0, T_60, T_80];
+
+      const root = document.querySelector('[data-composition-id="' + ID + '"]');
+      const canvas = root.querySelector("#kt-canvas");
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+
+      const FORET = 0x2d482a; // coloris Forêt (Kit Studio, COLORWAYS.foret.body)
+
+      const ready = (async () => {
+        const base = new URL("assets/", document.baseURI).href;
+        const THREE = await import(base + "lib/three-bundle.js");
+        const { GLTFLoader, RoomEnvironment, MeshoptDecoder } = THREE;
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+        renderer.setPixelRatio(1);
+        renderer.setSize(1920, 1080, false);
+        renderer.setClearColor(0x000000, 0);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        scene.environmentIntensity = 0.6;
+
+        // Studio doux : clé haute à gauche (ombre portée vers l'arrière droit), contre-jour froid, ciel/sol.
+        const key = new THREE.DirectionalLight(0xfff1dc, 2.3);
+        key.position.set(-1.5, 2.8, 1.7);
+        key.castShadow = true;
+        key.shadow.mapSize.set(2048, 2048);
+        Object.assign(key.shadow.camera, { left: -0.9, right: 0.9, top: 0.9, bottom: -0.9, near: 0.5, far: 7 });
+        key.shadow.bias = -0.0004;
+        key.shadow.normalBias = 0.01;
+        key.shadow.radius = 6;
+        scene.add(key);
+        const rim = new THREE.DirectionalLight(0xdfe9ff, 1.4);
+        rim.position.set(1.8, 1.5, -2.0);
+        scene.add(rim);
+        scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c8, 0.55));
+
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ color: 0x0b1f17, opacity: 0.2 }));
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Ombre de contact (occlusion au sol), calculée une fois.
+        const sc = document.createElement("canvas");
+        sc.width = sc.height = 256;
+        const g = sc.getContext("2d");
+        const grd = g.createRadialGradient(128, 128, 6, 128, 128, 128);
+        grd.addColorStop(0, "rgba(11,31,23,0.5)");
+        grd.addColorStop(0.5, "rgba(11,31,23,0.16)");
+        grd.addColorStop(1, "rgba(11,31,23,0)");
+        g.fillStyle = grd;
+        g.fillRect(0, 0, 256, 256);
+        const contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
+        contact.rotation.x = -Math.PI / 2;
+        contact.position.y = 0.002;
+        scene.add(contact);
+
+        const camera = new THREE.PerspectiveCamera(26, 1920 / 1080, 0.05, 30);
+        // Le sac vit dans la moitié droite : on décale la fenêtre de vue, pas l'objet.
+        camera.setViewOffset(1920, 1080, -300, -10, 1920, 1080);
+
+        const loader = new GLTFLoader();
+        await MeshoptDecoder.ready;
+        loader.setMeshoptDecoder(MeshoptDecoder);
+        const load = (u) => new Promise((res, rej) => loader.load(base + u, res, undefined, rej));
+        const texLoader = new THREE.TextureLoader();
+        const loadTex = (u) => new Promise((res, rej) => texLoader.load(base + u, res, undefined, rej));
+
+        const SIZES = ["45", "60", "80"];
+        const [g45, g60, g80, z45, z60, z80, m04G, m13G] = await Promise.all([
+          load("3d/lkdv-one-45.glb"),
+          load("3d/lkdv-one-60.glb"),
+          load("3d/lkdv-one-80.glb"),
+          loadTex("3d/lkdv-one-45.zones.webp"),
+          loadTex("3d/lkdv-one-60.zones.webp"),
+          loadTex("3d/lkdv-one-80.zones.webp"),
+          load("3d/lkdv-m04.glb"),
+          load("3d/lkdv-m13.glb"),
+        ]);
+
+        // Teinte du Kit Studio (scene/bag/atlas.ts) : la couleur du coloris multiplie la luminance de
+        // l'albédo sur les zones textiles (canal R de la carte de zones). « flash » = éclat bref au changement.
+        const tintColor = { value: new THREE.Color(FORET) };
+        const flashes = [{ value: 0 }, { value: 0 }, { value: 0 }];
+        const bodies = [g45, g60, g80].map((gl, i) => {
+          const zones = [z45, z60, z80][i];
+          zones.flipY = false;
+          zones.colorSpace = THREE.NoColorSpace;
+          gl.scene.traverse((n) => {
+            if (!n.isMesh) return;
+            n.castShadow = true;
+            n.receiveShadow = false;
+            const m = n.material;
+            if (!m || !m.map || n.name === "LKDV_LOGO" || n.name === "LKDV_ECUSSON_SUPPORT" || m.name === "LKDV_MARQUAGE_PIERRE" || m.name === "LKDV_Ecusson_Tisse") return;
+            m.customProgramCacheKey = () => "lkdv-film-tint";
+            m.onBeforeCompile = (sh) => {
+              sh.uniforms.zonesMap = { value: zones };
+              sh.uniforms.tintColor = tintColor;
+              sh.uniforms.flash = flashes[i];
+              sh.fragmentShader = sh.fragmentShader
+                .replace("#include <uv_pars_fragment>", "#include <uv_pars_fragment>\nuniform sampler2D zonesMap;\nuniform vec3 tintColor;\nuniform float flash;")
+                .replace(
+                  "#include <map_fragment>",
+                  "#include <map_fragment>\n#ifdef USE_MAP\n{ float z = texture2D(zonesMap, vMapUv).r; float lum = dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722)); diffuseColor.rgb = mix(diffuseColor.rgb, tintColor * lum * 2.2, z); diffuseColor.rgb *= 1.0 + flash; }\n#endif",
+                );
+            };
+            m.needsUpdate = true;
+          });
+          return gl.scene;
+        });
+
+        const pickMeshes = (obj) => {
+          const out = [];
+          obj.traverse((n) => n.isMesh && out.push(n));
+          return out;
+        };
+        const ray = new THREE.Raycaster();
+        const V = (x, y, z) => new THREE.Vector3(x, y, z);
+        // Point le plus saillant de la surface sur une zone (rayons parallèles à la normale de pose).
+        function surface(body, axis, a0, a1, b0, b1) {
+          body.updateMatrixWorld(true);
+          const meshes = pickMeshes(body);
+          let best = -Infinity;
+          for (let i = 0; i <= 6; i++) {
+            for (let j = 0; j <= 4; j++) {
+              const y = a0 + ((a1 - a0) * i) / 6;
+              const s = b0 + ((b1 - b0) * j) / 4;
+              const o = axis === "z" ? V(s, y, 2) : V(2, y, s);
+              const d = axis === "z" ? V(0, 0, -1) : V(-1, 0, 0);
+              ray.set(o, d);
+              const hit = ray.intersectObjects(meshes, false)[0];
+              if (hit) best = Math.max(best, axis === "z" ? hit.point.z : hit.point.x);
+            }
+          }
+          return best;
+        }
+
+        // Points de pose : porte-piolets (M13) sur la façade, poche (M04) sur le flanc droit.
+        // Le 80 L reprend ses deux ancres auditées (bagAnchorsTable.ts : façade 0,362 m ; flanc droit 0,476 m / z 0,092).
+        const POSE = {
+          "45": { m13y: 0.33, m04y: 0.3, m04z: 0.02 },
+          "60": { m13y: 0.38, m04y: 0.34, m04z: 0.03 },
+          "80": { m13y: 0.362, m04y: 0.476, m04z: 0.092 },
+        };
+        const heights = [];
+        const seats = bodies.map((body, i) => {
+          const box = new THREE.Box3().setFromObject(body);
+          heights.push(box.max.y);
+          const p = POSE[SIZES[i]];
+          const fz = surface(body, "z", p.m13y - 0.18, p.m13y + 0.18, -0.03, 0.03);
+          const fx = surface(body, "x", p.m04y - 0.08, p.m04y + 0.08, p.m04z - 0.05, p.m04z + 0.05);
+          return {
+            m13: V(0, p.m13y - 0.225, fz + 0.0415 - 0.006),
+            m04: V(fx + 0.038 - 0.006, p.m04y - 0.1, p.m04z),
+            w: box.max.x - box.min.x,
+            d: box.max.z - box.min.z,
+          };
+        });
+
+        const rig = new THREE.Group();
+        scene.add(rig);
+        bodies.forEach((b) => rig.add(b));
+        const m04 = m04G.scene;
+        const m13 = m13G.scene;
+        [m04, m13].forEach((m) =>
+          m.traverse((n) => {
+            if (n.isMesh) n.castShadow = true;
+          }),
+        );
+        rig.add(m04);
+        rig.add(m13);
+
+        const clamp01 = (x) => Math.min(1, Math.max(0, x));
+        const seg = (t, a, d) => clamp01((t - a) / d);
+        const inOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+        const backOut = (x) => {
+          const c1 = 1.9, c3 = c1 + 1;
+          return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+        };
+        const lerp = (a, b, k) => a + (b - a) * k;
+
+        // Clip mécanique : approche qui accélère (0,18 s), contact sur le temps, enfoncement de ~1 cm puis retour.
+        const APP = 0.18;
+        function clip(t, T) {
+          if (t < T) {
+            const p = seg(t, T - APP, APP);
+            return { k: 1 - p * p * p, d: 0, tilt: (1 - p) * (1 - p) };
+          }
+          const u = t - T;
+          const d = u < 0.4 ? Math.sin((u * Math.PI) / 0.1) * Math.exp(-u / 0.07) : 0;
+          return { k: 0, d, tilt: 0 };
+        }
+
+        function bodyIndex(t) {
+          return t < T_60 ? 0 : t < T_80 ? 1 : 2;
+        }
+        // Hauteur cadrée : glisse en douceur de la taille précédente à la nouvelle (0,42 s).
+        function framedHeight(t) {
+          let h = heights[0];
+          for (let i = 1; i < SWAPS.length; i++) {
+            h = lerp(h, heights[i], inOut(seg(t, SWAPS[i] + 0.02, 0.42)));
+          }
+          return h;
+        }
+
+        const AZ0 = (22 * Math.PI) / 180;
+        const AZ1 = (47 * Math.PI) / 180;
+        const EL = (10 * Math.PI) / 180;
+
+        function render(t) {
+          const bi = bodyIndex(t);
+          bodies.forEach((b, i) => (b.visible = i === bi));
+          flashes.forEach((f) => (f.value = 0));
+
+          // Changement de corps : poussée verticale 0,955 → 1 (léger dépassement), la matière s'éclaire puis se pose (≈ 2 images, même teinte).
+          const ts = SWAPS[bi];
+          if (bi > 0) {
+            const q = seg(t, ts, 0.22);
+            const s = backOut(q);
+            rig.scale.set(lerp(1.02, 1, s), lerp(0.955, 1, s), lerp(1.02, 1, s));
+            flashes[bi].value = 0.6 * Math.pow(1 - seg(t, ts, 0.08), 2);
+          } else {
+            rig.scale.set(1, 1, 1);
+          }
+
+          const seat = seats[bi];
+          // Poche multifonction : arrive depuis la droite (axe +X), un peu d'en haut.
+          const a = clip(t, T_M04);
+          m04.visible = t >= T_M04 - APP;
+          m04.position.set(seat.m04.x + a.k * 0.3 - a.d * 0.01, seat.m04.y + a.k * 0.08, seat.m04.z);
+          m04.rotation.set(0, Math.PI / 2, -a.tilt * 0.12);
+          // Porte-piolets : descend sur la façade (axe +Z), depuis le haut.
+          const b = clip(t, T_M13);
+          m13.visible = t >= T_M13 - APP;
+          m13.position.set(seat.m13.x, seat.m13.y + b.k * 0.16, seat.m13.z + b.k * 0.22 - b.d * 0.01);
+          m13.rotation.set(-b.tilt * 0.14, 0, 0);
+
+          const sw = seat.w * rig.scale.x;
+          contact.scale.set(sw * 1.55, seat.d * 1.9, 1);
+
+          // Orbite continue (≈ 25°) et cadrage qui suit la hauteur du corps.
+          const h = framedHeight(t);
+          const az = lerp(AZ0, AZ1, t / DUR);
+          const dist = h * 2.95;
+          const ty = h * 0.47;
+          camera.position.set(Math.sin(az) * Math.cos(EL) * dist, ty + Math.sin(EL) * dist, Math.cos(az) * Math.cos(EL) * dist);
+          camera.lookAt(0, ty, 0);
+
+          renderer.render(scene, camera);
+        }
+
+        // Compile tous les corps (sinon le premier affichage du 60/80 L compilerait pendant le rendu).
+        bodies.forEach((b) => (b.visible = true));
+        await renderer.compileAsync(scene, camera);
+        render(0);
+        render(T_60 + 0.01);
+        render(T_80 + 0.01);
+        render(0);
+        return render;
+      })();
+      window.__hf.buildReady[ID] = ready;
+
+      ready.then((render) => {
+        const tl = gsap.timeline({ paused: true });
+        const clock = { t: 0 };
+        tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+
+        // Titre : posé dès 0,1 s, mot par mot, flou 8 → 0 (complet à 0,38 s).
+        tl.fromTo("#kt-kicker", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.1);
+        tl.fromTo(".kt-w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.03, ease: "power2.out" }, 0.1);
+
+        // Pastille de légende : suit la taille, bascule sur les temps du changement de corps.
+        tl.fromTo("#kt-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.4, ease: "expo.out" }, 0.2);
+        tl.fromTo("#kt-c45", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.25);
+        const swap = (from, to, at) => {
+          tl.to(from, { opacity: 0, y: -44, duration: 0.07, ease: "power2.in" }, at - 0.05);
+          tl.fromTo(to, { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.18, ease: "power3.out" }, at);
+        };
+        swap("#kt-c45", "#kt-c60", T_60);
+        swap("#kt-c60", "#kt-c80", T_80);
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines[ID] = tl;
+      });
+    })();
+  </script>
+</template>

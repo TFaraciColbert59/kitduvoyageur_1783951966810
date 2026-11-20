@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p06 · Une phrase</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--forest); }
+  #bg { background: radial-gradient(80% 50% at 50% 45%, #1d4d35 0%, #17402C 60%, #10301f 100%); }
+  #title { left: 62px; top: 360px; font-size: 80px; font-weight: 800; color: var(--stone); letter-spacing: -0.02em; }
+  #bar { left: -420px; top: 570px; width: 1460px; height: 220px; border-radius: 999px; background: var(--stone); box-shadow: 0 40px 90px rgba(6,18,12,0.5); transform: rotate(-6deg); display: flex; align-items: center; justify-content: flex-end; padding-right: 22px; }
+  #bar .txt { font-size: 84px; font-weight: 600; color: #1f2a24; white-space: nowrap; margin-right: 30px; letter-spacing: -0.01em; }
+  #bar .txt em { font-style: normal; color: var(--bronze); font-weight: 800; }
+  #bar .caret { display: inline-block; width: 6px; height: 90px; background: var(--forest); vertical-align: middle; margin-left: 6px; }
+  #bar .go { width: 176px; height: 176px; border-radius: 50%; background: var(--forest); display: flex; align-items: center; justify-content: center; flex: none; }
+  #chips { left: 62px; top: 900px; width: 960px; display: flex; flex-wrap: wrap; gap: 18px; transform: rotate(-6deg); transform-origin: 0 0; }
+  #chips span { height: 82px; padding: 0 32px; border-radius: 999px; background: rgba(250,248,245,0.12); border: 2px solid rgba(250,248,245,0.3); color: var(--stone); font-size: 38px; font-weight: 600; display: inline-flex; align-items: center; gap: 12px; }
+  #chips span i { font-style: normal; color: rgba(250,248,245,0.6); font-weight: 500; }
+  #chips span.on { background: rgba(208,160,112,0.2); border-color: var(--brass); }
+  #word { left: 56px; top: 1150px; color: var(--brass); line-height: 0.86; }
+  #wordg { left: 80px; top: 1136px; color: var(--stone); filter: blur(3px); line-height: 0.86; }
+  #nv { left: 520px; top: 228px; height: 100px; padding: 0 36px 0 26px; gap: 18px; background: rgba(6,18,12,0.55); border: 2px solid rgba(118,185,0,0.7); box-shadow: 0 0 40px rgba(118,185,0,0.35); color: var(--stone); font-size: 36px; font-weight: 600; }
+  #nv img { height: 54px; }
+</style></head>
+<body><div id="frame">
+  <div id="bg" class="fill"></div>
+  <div id="nv" class="abs pill"><img src="../../assets/logos/nvidia-green.svg">Je lis ta phrase…</div>
+  <div id="title" class="abs">Où veux-tu aller ?</div>
+  <div id="bar" class="abs"><span class="txt">Le W, 5 jours à 3, <em>fin novembre</em><span class="caret"></span></span><div class="go"><i data-ic="arrow" data-s="90" data-c="#FAF8F5" data-w="2.6"></i></div></div>
+  <div id="chips" class="abs"><span><i>Lieu</i> Le W</span><span><i>Durée</i> 5 jours</span><span><i>Groupe</i> 3</span><span class="on"><i>Quand</i> fin novembre</span></div>
+  <div id="wordg" class="abs slam ghost" data-fit="960" data-max="280">FIN<br>NOVEMBRE</div>
+  <div id="word" class="abs slam" data-fit="960" data-max="280" data-ghost="wordg">FIN<br>NOVEMBRE</div>
+</div>
+<script src="icons.js"></script><script src="fit.js"></script>
+</body></html>

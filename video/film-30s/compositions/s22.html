@@ -1,0 +1,88 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s22-abs { position:absolute; }
+    #s22-all { position:absolute; inset:0; background:#06120C; opacity:0; }
+    #s22-shake { position:absolute; inset:0; }
+    #s22-cam { position:absolute; inset:0; }
+    #s22-glow { position:absolute; inset:0; background:radial-gradient(50% 30% at 50% 36%, rgba(208,160,112,0.16), rgba(208,160,112,0) 70%); opacity:0; }
+    #s22-ring { left:120px; top:210px; width:840px; height:840px; opacity:0; }
+    #s22-nd { position:absolute; left:0; top:0; }
+    #s22-flash { position:absolute; inset:0; background:#D0A070; opacity:0; }
+    .s22-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; font-size:158px; color:#FAF8F5; opacity:0; transform-origin:20% 60%; left:60px; }
+    #s22-l1 { top:1040px; } #s22-l2 { top:1185px; } #s22-l3 { top:1330px; }
+    #s22-l3g { top:1316px; left:82px; color:#D0A070; }
+    #s22-l3 span { color:#D0A070; }
+  </style>
+  <div id="root" data-composition-id="s22" data-width="1080" data-height="1920">
+    <div id="s22-all">
+      <div id="s22-shake">
+        <div id="s22-cam">
+          <div id="s22-glow"></div>
+          <img id="s22-ring" class="s22-abs" src="assets/img/badge-anneau.png" alt="">
+          <svg id="s22-nd" width="1080" height="1920">
+            <defs>
+              <linearGradient id="s22-gn" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+              <linearGradient id="s22-gs" x1="0" x2="1"><stop offset="0" stop-color="#3a3a32"/><stop offset="0.5" stop-color="#2a2a24"/><stop offset="0.5" stop-color="#1c1c18"/><stop offset="1" stop-color="#121210"/></linearGradient>
+            </defs>
+            <g id="s22-needle">
+              <path d="M540 300 L590 690 L490 690 Z" fill="url(#s22-gn)"/>
+              <path d="M540 960 L590 690 L490 690 Z" fill="url(#s22-gs)" stroke="#9E7243" stroke-width="3"/>
+              <circle cx="540" cy="690" r="26" fill="#06120C" stroke="#D0A070" stroke-width="8"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+      <div id="s22-l1" class="s22-abs s22-slam">LÀ OÙ</div>
+      <div id="s22-l2" class="s22-abs s22-slam">LA CARTE</div>
+      <div id="s22-l3g" class="s22-abs s22-slam">SE TERMINE.</div>
+      <div id="s22-l3" class="s22-abs s22-slam">SE TERMINE<span>.</span></div>
+      <div id="s22-flash"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // Plan 22 · bible 28,448 → 30,000 ; hôte à 28,248 : local = film − 28,248.
+      const F = 1 / 30;
+      const L = (T) => +(T - 28.248).toFixed(4);
+      const tl = gsap.timeline({ paused: true });
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+      // Le plan 21 replie tout en aiguille jusqu'à 28,448 : ce plan reste invisible pendant l'avance.
+      const tI = 0.2; // IMPACT FINAL 28,448
+      tl.set("#s22-all", { opacity: 1 }, tI);
+      // Flash laiton 2 images.
+      tl.set("#s22-flash", { opacity: 0.8 }, tI);
+      tl.set("#s22-flash", { opacity: 0.35 }, tI + F);
+      tl.set("#s22-flash", { opacity: 0 }, tI + 2 * F);
+      // L'aiguille claque et se cale : ressort de 8 images (−24° → +4° → −1,5° → 0°).
+      gsap.set("#s22-needle", { rotation: -24, svgOrigin: "540 690" });
+      tl.fromTo("#s22-needle", { rotation: -24, scale: 1.14 }, { rotation: 4, scale: 0.98, duration: 3 * F, ease: "power3.out", svgOrigin: "540 690", immediateRender: false }, tI);
+      tl.to("#s22-needle", { rotation: -1.5, scale: 1, duration: 3 * F, ease: "sine.inOut", svgOrigin: "540 690" }, tI + 3 * F);
+      tl.to("#s22-needle", { rotation: 0, duration: 2 * F, ease: "sine.out", svgOrigin: "540 690" }, tI + 6 * F);
+      // Secousse 4 images (14 → 6 px) sur l'impact.
+      [1, -0.7, 0.43, -0.2, 0].forEach((m, i) => tl.to("#s22-shake", { x: 14 * m, y: -8 * m, duration: F, ease: "none" }, tI + i * F));
+      // L'anneau du badge s'allume 0,4 s à 18 %, puis s'éteint.
+      tl.set(["#s22-ring", "#s22-glow"], { opacity: 0.18 }, tI);
+      tl.set("#s22-glow", { opacity: 1 }, tI);
+      tl.fromTo("#s22-ring", { scale: 0.94 }, { scale: 1, duration: 0.3, ease: "expo.out", immediateRender: false }, tI);
+      tl.to(["#s22-ring", "#s22-glow"], { opacity: 0, duration: 0.15, ease: "power1.in" }, tI + 0.4);
+      // Poussée de caméra de 2 % jusqu'à la fin (plan de l'aiguille ; les mots restent immobiles).
+      tl.fromTo("#s22-cam", { scale: 1, transformOrigin: "540px 690px" }, { scale: 1.02, duration: 1.752 - tI, ease: "none", immediateRender: false }, tI);
+      // Les mots claquent et tiennent jusqu'à 30,000.
+      slam("#s22-l1", null, tI);
+      slam("#s22-l2", null, L(28.61));
+      slam("#s22-l3", "#s22-l3g", L(28.771));
+      tl.set({}, {}, 1.752);
+      window.__timelines["s22"] = tl;
+    })();
+  </script>
+</template>

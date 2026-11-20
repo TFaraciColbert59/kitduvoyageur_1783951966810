@@ -1,0 +1,133 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    #t-bg {
+      position: absolute;
+      inset: 0;
+    }
+    #t-bg img {
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #t-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 31, 23, 0.72) 0%, rgba(11, 31, 23, 0.4) 50%, rgba(11, 31, 23, 0.1) 100%);
+    }
+    #t-phone {
+      position: absolute;
+      left: 1180px;
+      top: 70px;
+      width: 444px;
+      height: 940px;
+      border-radius: 70px;
+      background: #0b1f17;
+      padding: 16px;
+      box-shadow: 0 40px 90px rgba(11, 31, 23, 0.55), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    }
+    #t-screen {
+      position: relative;
+      width: 412px;
+      height: 908px;
+      border-radius: 56px;
+      overflow: hidden;
+      background: #faf8f5;
+    }
+    .t-shot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 412px;
+      height: 908px;
+      object-fit: cover;
+      object-position: top;
+    }
+    #t-title {
+      position: absolute;
+      left: 120px;
+      top: 300px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 96px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #t-title .w {
+      display: inline-block;
+    }
+    #t-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    .t-cap {
+      position: absolute;
+      left: 124px;
+      top: 560px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 28px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.88);
+      backdrop-filter: blur(24px) saturate(1.5);
+      color: #17402c;
+      font-size: 34px;
+      font-weight: 700;
+    }
+    .t-cap i {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b7f55;
+    }
+  </style>
+  <div id="root" data-composition-id="terrain" data-width="1920" data-height="1080">
+    <div id="t-bg"><img src="assets/img/adventure-hiking.jpg" alt="" /></div>
+    <div id="t-shade"></div>
+    <div id="t-title"><span class="w">Sur</span> <span class="w">le</span> <span class="w">sentier,</span><br /><span class="w"><em>même</em></span> <span class="w">sans</span> <span class="w">réseau</span></div>
+    <div class="t-cap" id="t-cap1"><i></i>Randonnée suivie en direct</div>
+    <div class="t-cap" id="t-cap2"><i></i>Refuges et points d’eau</div>
+    <div class="t-cap" id="t-cap3"><i></i>Zone téléchargée hors ligne</div>
+    <div class="t-cap" id="t-cap4"><i></i>Profil · 9,1 km</div>
+    <div id="t-phone">
+      <div id="t-screen">
+        <img class="t-shot" id="t-s1" src="assets/shots/rando-live.png" alt="" />
+        <img class="t-shot" id="t-s2" src="assets/shots/refuge.png" alt="" />
+        <img class="t-shot" id="t-s3" src="assets/shots/hors-ligne.png" alt="" />
+        <img class="t-shot" id="t-s4" src="assets/shots/rando-profil.png" alt="" />
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Arrivée en fouet horizontal : le monde du sentier entre par la droite.
+      tl.fromTo("#t-bg", { x: 700, filter: "blur(18px)" }, { x: 0, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, 0);
+      tl.fromTo("#t-shade", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+      tl.fromTo("#t-phone", { y: 1000 }, { y: 0, duration: 0.7, ease: "expo.out" }, 0.15);
+      tl.fromTo("#t-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.07 }, 0.4);
+
+      // Écrans réels, changés sur les mesures (locales : 3,74 · 5,63 · 7,50).
+      const caps = ["#t-cap1", "#t-cap2", "#t-cap3", "#t-cap4"];
+      const shots = ["#t-s1", "#t-s2", "#t-s3", "#t-s4"];
+      const at = [0.8, 3.74, 5.63, 7.5];
+      shots.forEach((id, i) => {
+        if (i > 0) tl.fromTo(id, { y: 908 }, { y: 0, duration: 0.42, ease: "expo.out" }, at[i] - 0.1);
+        else tl.fromTo(id, { y: 0 }, { y: 0, duration: 0.01 }, 0);
+      });
+      caps.forEach((id, i) => {
+        tl.fromTo(id, { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, at[i]);
+        if (i < caps.length - 1) tl.to(id, { opacity: 0, filter: "blur(6px)", duration: 0.13 }, at[i + 1] - 0.15);
+      });
+      window.__timelines["terrain"] = tl;
+    })();
+  </script>
+</template>

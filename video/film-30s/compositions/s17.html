@@ -1,0 +1,176 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s17-abs { position:absolute; }
+    #s17-whip { position:absolute; inset:0; }
+    #s17-flood { position:absolute; inset:0; background:#FAF8F5; clip-path:circle(0px at 300px 311px); }
+    #s17-shake { position:absolute; inset:0; }
+    #s17-cam { position:absolute; inset:0; }
+    #s17-grp { left:60px; top:236px; width:930px; height:150px; border-radius:999px; background:#fff; box-shadow:0 20px 50px rgba(11,31,23,0.15); opacity:0; }
+    #s17-grpt { left:486px; top:262px; opacity:0; white-space:nowrap; }
+    #s17-grpt b { display:block; font-size:46px; color:#17402C; font-weight:800; line-height:1.15; }
+    #s17-grpt span { font-size:34px; color:#56665D; }
+    .s17-av { width:116px; height:116px; border-radius:50%; border:6px solid #fff; object-fit:cover; display:block; opacity:0; box-shadow:0 8px 20px rgba(11,31,23,0.18); }
+    #s17-tile { left:60px; top:430px; width:960px; padding:44px 46px; border-radius:56px; background:#fff; box-shadow:0 0 0 5px #D0A070, 0 40px 90px rgba(11,31,23,0.22); opacity:0; }
+    #s17-tile .s17-eb { font-size:34px; font-weight:700; letter-spacing:0.14em; color:#5B7F55; text-transform:uppercase; }
+    .s17-chain { display:flex; align-items:center; margin:20px 0 18px; }
+    .s17-node { text-align:center; width:230px; }
+    .s17-node img { width:140px; height:140px; border-radius:50%; object-fit:cover; margin:0 auto; display:block; border:6px solid #FAF8F5; box-shadow:0 10px 26px rgba(11,31,23,0.2); }
+    .s17-node b { display:block; font-size:42px; color:#17402C; margin-top:10px; }
+    .s17-node span { font-size:34px; color:#56665D; }
+    .s17-link { flex:1; height:8px; background:linear-gradient(90deg,#D0A070,#5B7F55); border-radius:8px; position:relative; margin-bottom:70px; transform-origin:0 50%; }
+    .s17-link i { position:absolute; right:-6px; top:-14px; border-left:30px solid #5B7F55; border-top:18px solid transparent; border-bottom:18px solid transparent; }
+    .s17-badges { display:flex; gap:14px; flex-wrap:wrap; }
+    .s17-badges span { height:70px; padding:0 26px; border-radius:999px; font-size:34px; font-weight:700; display:inline-flex; align-items:center; }
+    .s17-b1 { background:#E1EBDE; color:#2f6a43; } .s17-b2 { background:#F1EEE8; color:#56665D; }
+    #s17-take { margin-top:30px; height:110px; padding:0 44px; gap:18px; border-radius:999px; background:#17402C; color:#fff; font-size:44px; font-weight:700; display:inline-flex; align-items:center; }
+    .s17-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; }
+    #s17-w0 { left:60px; top:1170px; color:#17402C; font-size:144px; opacity:0; transform-origin:50% 60%; }
+    #s17-w0 span { color:#D0A070; }
+    #s17-w0g { left:84px; top:1156px; color:#D0A070; font-size:144px; opacity:0; transform-origin:50% 60%; }
+    #s17-l1 { left:58px; top:1118px; color:#17402C; font-size:148px; opacity:0; transform-origin:30% 60%; }
+    #s17-l2 { left:54px; top:1292px; color:#9E7243; font-size:250px; opacity:0; transform-origin:20% 60%; }
+    #s17-l2g { left:80px; top:1278px; color:#17402C; font-size:250px; opacity:0; transform-origin:20% 60%; }
+    #s17-replay { position:absolute; inset:0; background:#17402C; clip-path:circle(0px at 370px 1020px); }
+    #s17-map { position:absolute; inset:0; opacity:0; }
+    #s17-map img { position:absolute; left:-396px; top:-300px; width:1920px; height:3120px; }
+    #s17-map .s17-dim { position:absolute; inset:0; background:rgba(6,18,12,0.25); }
+    #s17-q { left:60px; top:620px; font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; font-size:84px; color:#FAF8F5; white-space:nowrap; }
+    #s17-bar { left:40px; top:760px; width:1000px; height:190px; border-radius:999px; background:#FAF8F5; box-shadow:0 30px 80px rgba(6,18,12,0.45);
+      display:flex; align-items:center; padding:0 30px 0 56px; gap:20px; }
+    #s17-bar span { flex:1; font-size:58px; font-weight:800; color:#17402C; letter-spacing:-0.02em; white-space:nowrap; }
+    #s17-bar i { width:130px; height:130px; border-radius:50%; background:#D0A070; display:flex; align-items:center; justify-content:center; }
+  </style>
+  <div id="root" data-composition-id="s17" data-width="1080" data-height="1920">
+    <div id="s17-whip">
+      <div id="s17-flood"></div>
+      <div id="s17-shake">
+        <div id="s17-cam">
+          <div id="s17-gw" class="s17-abs" style="left:0; top:0; width:1080px; height:1920px">
+          <div id="s17-grp" class="s17-abs"></div>
+          <div id="s17-grpt" class="s17-abs"><b>Le W · fin novembre</b><span>Groupe · 4 voyageurs</span></div>
+          <img id="s17-a0" class="s17-av s17-abs" src="assets/avatars/a13.jpg" alt="" style="left:80px; top:253px">
+          <img id="s17-a1" class="s17-av s17-abs" src="assets/avatars/a10.jpg" alt="" style="left:162px; top:253px">
+          <img id="s17-a2" class="s17-av s17-abs" src="assets/avatars/a17.jpg" alt="" style="left:244px; top:253px">
+          <img id="s17-a3" class="s17-av s17-abs" src="assets/avatars/a12.jpg" alt="" style="left:326px; top:253px">
+          </div>
+          <div id="s17-tile" class="s17-abs">
+            <div class="s17-eb">Lignée de kit</div>
+            <div class="s17-chain">
+              <div class="s17-node" id="s17-n1"><img src="assets/avatars/lea.jpg" alt=""><b>Léa</b><span>kit souche</span></div>
+              <div class="s17-link" id="s17-link"><i></i></div>
+              <div class="s17-node" id="s17-n2"><img src="assets/avatars/a13.jpg" alt=""><b>Tom</b><span>reprise</span></div>
+            </div>
+            <div class="s17-badges"><span class="s17-b1" id="s17-bd1">Kit souche : Léa</span><span class="s17-b2" id="s17-bd2">Génération 2</span><span class="s17-b2" id="s17-bd3">lignée jeune</span></div>
+            <span id="s17-take"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg>Reprendre ce kit</span>
+          </div>
+        </div>
+        <div id="s17-w0g" class="s17-abs s17-slam">UN GROUPE.</div>
+        <div id="s17-w0" class="s17-abs s17-slam">UN GROUPE<span>.</span></div>
+        <div id="s17-l1" class="s17-abs s17-slam">KIT SOUCHE :</div>
+        <div id="s17-l2g" class="s17-abs s17-slam">LÉA</div>
+        <div id="s17-l2" class="s17-abs s17-slam">LÉA</div>
+      </div>
+      <div id="s17-replay">
+        <div id="s17-map"><img src="assets/sat/sat-w.jpg" alt=""><div class="s17-dim"></div>
+          <svg class="s17-abs" style="left:0;top:0" width="1080" height="1920"><polyline id="s17-w" points="" fill="none" stroke="#D0A070" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/></svg>
+        </div>
+        <div id="s17-q" class="s17-abs">Où veux-tu aller ?</div>
+        <div id="s17-bar" class="s17-abs"><span>Le W, 5 jours à 3, fin novembre</span><i><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></i></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // Plan 17 · bible 20,690 → 22,629 ; hôte à 20,490 : local = film − 20,49.
+      const F = 1 / 30;
+      const L = (T) => +(T - 20.49).toFixed(4);
+      const tl = gsap.timeline({ paused: true });
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+      function shake(el, t, a) {
+        [1, -0.7, 0.43, -0.2, 0].forEach((m, i) => tl.to(el, { x: a * m, y: -a * m * 0.6, duration: F, ease: "none" }, t + i * F));
+      }
+
+      // Raccord (0 → 0,2) : la Pierre envahit le cadre depuis le groupe ; les avatars de la plan 16
+      // (Tom en haut, Lou, Nadia, Sam à gauche) volent vers la pastille du groupe et s'y soudent.
+      tl.to("#s17-flood", { clipPath: "circle(1900px at 300px 311px)", duration: 0.18, ease: "power2.in" }, 0.0);
+      // positions de départ (centres, plan 16 en fin de plan) → centres d'arrivée dans la pastille
+      const start = { a0: [645, 190], a3: [91, 973], a1: [77, 1078], a2: [128, 1185] };
+      const slot = { a0: [138, 311], a1: [220, 311], a2: [302, 311], a3: [384, 311] };
+      const land = { a0: L(20.701), a1: L(20.906), a2: L(21.009), a3: L(20.701) };
+      Object.keys(start).forEach((k, i) => {
+        const el = "#s17-" + k, s = start[k], e = slot[k];
+        const t0 = 0.0, t1 = land[k];
+        tl.set(el, { opacity: 1 }, t0);
+        tl.fromTo(el, { x: s[0] - e[0], y: s[1] - e[1], scale: k === "a0" ? 150 / 116 : 84 / 116 },
+          { x: 0, y: 0, scale: 1.14, duration: t1 - t0, ease: "power3.inOut", immediateRender: false }, t0);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "back.out(3)" }, t1);
+      });
+      // Le groupe soudé remplit le cadre : les quatre avatars ×2,4 au centre (la caméra pousse),
+      // puis ils remontent former la pastille du groupe juste avant la tuile lignée (21,344).
+      const tBack = L(21.344) - 0.2;
+      tl.fromTo("#s17-gw", { x: 0, y: 0, scale: 1, transformOrigin: "261px 311px" }, { x: 279, y: 489, scale: 2.4, duration: 0.3, ease: "power3.out", immediateRender: false }, 0.04);
+      tl.to("#s17-gw", { x: 0, y: 0, scale: 1, duration: 0.2, ease: "power3.inOut" }, tBack);
+      tl.fromTo("#s17-grp", { opacity: 0, scaleX: 0.4, transformOrigin: "10% 50%" }, { opacity: 1, scaleX: 1, duration: 0.12, ease: "expo.out", immediateRender: false }, tBack + 0.14);
+      tl.fromTo("#s17-grpt", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.12, ease: "power2.out", immediateRender: false }, tBack + 0.16);
+      // « UN GROUPE. » claque sur la mesure 20,690, sort (3 images) avant la tuile lignée.
+      slam("#s17-w0", "#s17-w0g", L(20.69));
+      tl.to("#s17-w0", { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, tBack - 3 * F);
+      // Caméra : poussée sur le groupe, retour au cadre large pour la tuile, puis dérive lente.
+      tl.fromTo("#s17-cam", { scale: 1, rotation: 0, transformOrigin: "50% 40%" }, { scale: 1.07, rotation: 0.8, duration: tBack - 0.2, ease: "power1.inOut", immediateRender: false }, 0.2);
+      tl.to("#s17-cam", { scale: 1, rotation: 0, duration: 0.2, ease: "power3.inOut" }, tBack);
+      tl.to("#s17-cam", { scale: 1.025, rotation: -0.6, duration: 2.139 - tBack - 0.2, ease: "none" }, tBack + 0.2);
+
+      // 21,344 : la tuile lignée claque (coup de poing : chute + rotation), secousse.
+      const tT = L(21.344);
+      tl.set("#s17-tile", { opacity: 1 }, tT);
+      tl.fromTo("#s17-tile", { y: -140, rotation: -8, scale: 1.12, transformOrigin: "50% 40%" }, { y: 0, rotation: -2, scale: 0.97, duration: 3 * F, ease: "power3.out", immediateRender: false }, tT);
+      tl.to("#s17-tile", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, tT + 3 * F);
+      shake("#s17-shake", tT + F, 14);
+      tl.fromTo("#s17-link", { scaleX: 0 }, { scaleX: 1, duration: 0.16, ease: "power3.out" }, tT + 2 * F);
+      tl.fromTo("#s17-n2", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.2, ease: "back.out(2.4)" }, tT + 5 * F);
+      ["#s17-bd1", "#s17-bd2", "#s17-bd3"].forEach((b, i) =>
+        tl.fromTo(b, { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.18, ease: "back.out(2.6)" }, tT + (4 + i * 2) * F));
+      tl.fromTo("#s17-take", { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.2, ease: "back.out(2)" }, tT + 8 * F);
+
+      // « KIT SOUCHE : » (21,507) puis « LÉA » (21,660), en laiton.
+      slam("#s17-l1", null, L(21.507));
+      slam("#s17-l2", "#s17-l2g", L(21.66));
+
+      // 21,972 : appui « Reprendre ce kit ».
+      const tP = L(21.972);
+      tl.to("#s17-take", { scale: 0.9, duration: 2 * F, ease: "power2.out" }, tP);
+      tl.to("#s17-take", { scale: 1.03, duration: 3 * F, ease: "power2.out" }, tP + 2 * F);
+
+      // Replay éclair du Compas : iris depuis le bouton (22,09), la phrase, puis la carte en 6 images.
+      const tI = L(22.09);
+      tl.to("#s17-replay", { clipPath: "circle(2300px at 370px 1020px)", duration: 4 * F, ease: "power2.in" }, tI);
+      tl.fromTo("#s17-bar", { scale: 1.25, rotation: -2 }, { scale: 1, rotation: -6, duration: 0.2, ease: "expo.out" }, tI);
+      tl.fromTo("#s17-q", { opacity: 0 }, { opacity: 1, duration: 2 * F, ease: "none" }, tI + 2 * F);
+      const tM = L(22.245);
+      tl.to(["#s17-bar", "#s17-q"], { scale: 0.18, opacity: 0, x: 120, y: -40, duration: 4 * F, ease: "power3.in" }, tM);
+      tl.fromTo("#s17-map", { opacity: 0, scale: 1.6, transformOrigin: "60% 45%" }, { opacity: 1, scale: 1, duration: 6 * F, ease: "expo.out" }, tM + F);
+      tl.to("#s17-w", { strokeDashoffset: 0, duration: 6 * F, ease: "power2.out" }, tM + 2 * F);
+
+      // Sortie : whip pan à droite (les 6 dernières images, sous l'entrée du plan 18).
+      tl.to("#s17-whip", { x: 900, duration: 0.2, ease: "power3.in" }, 1.939);
+      tl.fromTo("#s17-whip", { filter: "blur(0px)" }, { filter: "blur(40px)", duration: 0.2, ease: "power2.in" }, 1.939);
+
+      // Tracé réel du W (OpenStreetMap), même calage que la carte du replay (×1,2).
+      const W = [[1078.9,701.2],[1082.4,716.8],[1093.3,727.5],[1105.8,734.1],[1114.1,744.7],[1120.0,779.9],[1113.2,809.0],[1105.8,824.7],[1104.3,869.6],[1095.0,882.2],[1089.3,883.3],[1085.7,888.0],[1084.4,897.3],[1073.4,903.9],[1066.9,917.7],[1033.1,934.8],[1006.2,963.2],[1004.7,969.7],[1001.0,970.8],[997.9,978.0],[986.4,985.6],[979.4,997.4],[965.7,1005.0],[957.0,1013.8],[950.2,1016.3],[921.8,1040.9],[913.9,1045.7],[906.2,1045.2],[901.3,1051.0],[869.4,1055.6],[864.2,1059.1],[855.8,1056.0],[840.0,1057.0],[834.4,1049.8],[826.7,1053.3],[818.1,1049.3],[810.5,1049.3],[800.5,1054.3],[785.6,1055.0],[764.8,1045.9],[753.9,1054.2],[738.4,1054.0],[727.0,1058.6],[722.8,1058.6],[721.1,1055.3],[715.5,1058.6],[693.1,1062.5],[675.0,1068.8],[671.2,1067.4],[667.7,1071.1],[663.7,1069.1],[659.9,1072.4],[655.2,1071.4],[655.1,1079.6],[643.5,1090.7],[627.2,1089.0],[611.6,1108.8],[585.9,1127.5],[579.2,1138.8],[567.4,1147.8],[551.3,1165.0],[549.3,1172.5],[542.7,1179.2],[538.2,1189.3],[541.0,1200.7],[537.7,1213.8],[522.8,1232.3],[521.1,1243.7],[517.8,1243.6],[514.1,1260.3],[515.3,1272.8],[512.0,1291.0],[502.5,1294.4],[501.0,1296.8],[479.6,1300.3],[477.3,1313.1]];
+      document.getElementById("s17-w").setAttribute("points", W.map(([x, y]) => (x * 1.2 - 396).toFixed(1) + "," + (y * 1.2 - 300).toFixed(1)).join(" "));
+
+      tl.set({}, {}, 2.139);
+      window.__timelines["s17"] = tl;
+    })();
+  </script>
+</template>

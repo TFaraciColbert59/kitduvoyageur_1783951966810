@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p07 · Plongée et sources</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: #04080b; }
+  .gl { position: absolute; left: 50%; top: 50%; width: 2900px; height: 2900px; margin: -1450px 0 0 -1450px; }
+  #g0 { transform: translate(40px, -420px); }
+  #g1 { transform: translate(40px, -420px) scale(1.06); opacity: 0.35; filter: blur(6px); }
+  #g2 { transform: translate(40px, -420px) scale(1.14); opacity: 0.18; filter: blur(14px); }
+  #rad { background: radial-gradient(circle at 540px 860px, rgba(4,8,11,0) 0, rgba(4,8,11,0) 360px, rgba(4,8,11,0.55) 900px); }
+  .logo { position: absolute; height: 150px; padding: 0 40px; border-radius: 44px; background: #fff; display: flex; align-items: center; gap: 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.45); white-space: nowrap; transform: translate(-50%, -50%); }
+  .logo b { font-size: 44px; font-weight: 800; color: #1f2a24; letter-spacing: -0.01em; }
+  .logo img { height: 92px; }
+  .logo.dk { background: #0b2d4f; }
+  .trail { position: absolute; height: 16px; border-radius: 16px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(208,160,112,0), rgba(208,160,112,0.75)); }
+  #pt { left: 520px; top: 840px; width: 40px; height: 40px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 0 14px rgba(208,160,112,0.3), 0 0 60px rgba(208,160,112,0.9); }
+</style></head>
+<body><div id="frame">
+  <img id="g2" class="gl" src="assets/sat/globe-patagonie.png">
+  <img id="g1" class="gl" src="assets/sat/globe-patagonie.png">
+  <img id="g0" class="gl" src="assets/sat/globe-patagonie.png">
+  <div id="rad" class="fill"></div>
+  <div id="trails"></div>
+  <div id="pt" class="abs"></div>
+  <div id="logos"></div>
+</div>
+<script>
+  // 7,80 s : six logos réels jaillissent du globe en couronne (image 2 sur 8 de leur sortie).
+  const c = { x: 540, y: 860 };
+  const L = [
+    ['../../assets/logos/openstreetmap-color.svg', 'OpenStreetMap', 540, 420, 92, ''],
+    ['../../assets/logos/met-norway.svg', '', 300, 690, 96, ''],
+    ['../../assets/logos/geonames.svg', '', 780, 690, 74, 'dark'],
+    ['../../assets/logos/nasa-color.svg', 'NASA', 300, 1050, 96, ''],
+    ['../../assets/logos/esri-color.svg', 'Esri', 780, 1050, 86, ''],
+    ['../../assets/logos/wikimediacommons-color.svg', 'Wikimedia Commons', 540, 1310, 88, ''],
+  ];
+  L.forEach(([src, name, x, y, h, tone], i) => {
+    const t = document.createElement('div'); t.className = 'trail';
+    const ang = Math.atan2(y - c.y, x - c.x);
+    t.style.left = (c.x + Math.cos(ang) * 50) + 'px'; t.style.top = (c.y + Math.sin(ang) * 50 - 8) + 'px';
+    t.style.width = Math.hypot(x - c.x, y - c.y) - 120 + 'px'; t.style.transform = `rotate(${ang}rad)`;
+    document.getElementById('trails').appendChild(t);
+    const d = document.createElement('div'); d.className = 'logo' + (tone ? ' dk' : '');
+    d.innerHTML = `<img src="${src}" style="height:${h}px">` + (name ? `<b>${name}</b>` : '');
+    d.style.left = x + 'px'; d.style.top = y + 'px';
+    d.style.transform = `translate(-50%, -50%) rotate(${(i % 2 ? 3 : -3)}deg) scale(${1 + (i % 3) * 0.04})`;
+    document.getElementById('logos').appendChild(d);
+  });
+</script>
+</body></html>

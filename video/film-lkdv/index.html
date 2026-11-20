@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>LKDV — Le W (film 60 s)</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0b1f17; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0b1f17; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="60" data-width="1920" data-height="1080">
+      <video id="flight" class="clip" src="assets/map/w-patagonie.mp4" muted playsinline data-start="10.9" data-duration="5.0" data-track-index="5" style="position:absolute; left:0; top:0; width:1920px; height:1080px; object-fit:cover; z-index: 19"></video>
+      <img id="flight-end" class="clip" src="assets/map/w-patagonie-end.jpg" alt="" data-start="15.85" data-duration="1.025" data-track-index="6" style="position:absolute; left:0; top:0; width:1920px; height:1080px; object-fit:cover; z-index: 19" />
+      <div id="s01" class="clip" data-composition-id="s01" data-composition-src="compositions/film/s01.html" data-start="0.0" data-duration="5.625" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 12"></div>
+      <div id="s03" class="clip" data-composition-id="s03" data-composition-src="compositions/film/s03.html" data-start="5.275" data-duration="2.225" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 16"></div>
+      <div id="s04" class="clip" data-composition-id="s04" data-composition-src="compositions/film/s04.html" data-start="7.2" data-duration="2.175" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 18"></div>
+      <div id="s05" class="clip" data-composition-id="s05" data-composition-src="compositions/film/s05.html" data-start="9.075" data-duration="2.175" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 100"></div>
+      <div id="s06" class="clip" data-composition-id="s06" data-composition-src="compositions/film/s06.html" data-start="10.9" data-duration="2.225" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 22"></div>
+      <div id="s07" class="clip" data-composition-id="s07" data-composition-src="compositions/film/s07.html" data-start="13.125" data-duration="3.75" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 24"></div>
+      <div id="s08" class="clip" data-composition-id="s08" data-composition-src="compositions/film/s08.html" data-start="16.575" data-duration="2.175" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 26"></div>
+      <div id="s09" class="clip" data-composition-id="s09" data-composition-src="compositions/film/s09.html" data-start="18.4" data-duration="2.525" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 28"></div>
+      <div id="s11" class="clip" data-composition-id="s11" data-composition-src="compositions/film/s11.html" data-start="24.075" data-duration="2.175" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 32"></div>
+      <div id="s12" class="clip" data-composition-id="s12" data-composition-src="compositions/film/s12.html" data-start="25.95" data-duration="2.175" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 34"></div>
+      <div id="s13" class="clip" data-composition-id="s13" data-composition-src="compositions/film/s13.html" data-start="28.125" data-duration="1.875" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 36"></div>
+      <div id="s14" class="clip" data-composition-id="s14" data-composition-src="compositions/film/s14.html" data-start="30.0" data-duration="1.875" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 38"></div>
+      <div id="s15" class="clip" data-composition-id="s15" data-composition-src="compositions/film/s15.html" data-start="31.575" data-duration="2.175" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 40"></div>
+      <div id="s16" class="clip" data-composition-id="s16" data-composition-src="compositions/film/s16.html" data-start="33.75" data-duration="5.625" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 42"></div>
+      <div id="s17" class="clip" data-composition-id="s17" data-composition-src="compositions/film/s17.html" data-start="39.075" data-duration="2.175" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 44"></div>
+      <div id="s18" class="clip" data-composition-id="s18" data-composition-src="compositions/film/s18.html" data-start="40.95" data-duration="2.175" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 46"></div>
+      <div id="s19" class="clip" data-composition-id="s19" data-composition-src="compositions/film/s19.html" data-start="42.825" data-duration="2.475" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 48"></div>
+      <div id="s21" class="clip" data-composition-id="s21" data-composition-src="compositions/film/s21.html" data-start="46.575" data-duration="2.175" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 52"></div>
+      <div id="s22" class="clip" data-composition-id="s22" data-composition-src="compositions/film/s22.html" data-start="48.4" data-duration="5.975" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 54"></div>
+      <div id="s23" class="clip" data-composition-id="s23" data-composition-src="compositions/film/s23.html" data-start="54.375" data-duration="5.625" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 56"></div>
+      <div id="kit3dTaille" class="clip" data-composition-id="kit3dTaille" data-composition-src="compositions/film/kit3d-taille.html" data-start="20.625" data-duration="3.75" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 27"></div>
+      <div id="kit3dCouleur" class="clip" data-composition-id="kit3dCouleur" data-composition-src="compositions/film/kit3d-couleur.html" data-start="45.0" data-duration="1.875" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 47"></div>
+      <div id="wTrace" class="clip" data-composition-id="wTrace" data-composition-src="compositions/film/w-trace.html" data-start="13.375" data-duration="3.5" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 23"></div>
+      <audio id="music" class="clip" src="assets/audio/ambient-uplift.mp3" data-start="0.000" data-duration="32.812" data-media-start="15.000" data-timeline-role="music" data-fade-in="0.3" data-fade-out="0.25" data-track-index="20" data-volume="0.496"></audio>
+      <audio id="t-tap2" class="clip" src="assets/audio/sfx-click-soft.mp3" data-start="5.298" data-duration="0.220" data-media-start="0.030" data-track-index="21" data-volume="0.558"></audio>
+      <audio id="t-whip4" class="clip" src="assets/audio/sfx-whoosh-short.mp3" data-start="7.280" data-duration="0.410" data-media-start="0.040" data-track-index="21" data-volume="0.161"></audio>
+      <audio id="t-typing5" class="clip" src="assets/audio/sfx-typing.mp3" data-start="9.428" data-duration="0.993" data-media-start="0.400" data-fade-out="0.06" data-track-index="21" data-volume="0.868"></audio>
+      <audio id="t-iris6" class="clip" src="assets/audio/sfx-whoosh-cinematic.mp3" data-start="10.995" data-duration="2.198" data-media-start="2.152" data-fade-in="0.05" data-fade-out="0.4" data-track-index="21" data-volume="0.31"></audio>
+      <audio id="t-click5" class="clip" src="assets/audio/sfx-click-soft.mp3" data-start="11.018" data-duration="0.220" data-media-start="0.030" data-track-index="22" data-volume="0.62"></audio>
+      <audio id="t-step7-0" class="clip" src="assets/audio/sfx-pop.mp3" data-start="13.398" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.26"></audio>
+      <audio id="t-step7-1" class="clip" src="assets/audio/sfx-pop.mp3" data-start="14.804" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.279"></audio>
+      <audio id="t-step7-2" class="clip" src="assets/audio/sfx-pop.mp3" data-start="15.273" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.31"></audio>
+      <audio id="t-step7-3" class="clip" src="assets/audio/sfx-pop.mp3" data-start="15.742" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.341"></audio>
+      <audio id="t-count9" class="clip" src="assets/audio/sfx-typing.mp3" data-start="18.803" data-duration="0.800" data-media-start="0.400" data-fade-out="0.45" data-track-index="21" data-volume="0.868"></audio>
+      <audio id="t-retrait10" class="clip" src="assets/audio/sfx-whoosh-short.mp3" data-start="20.725" data-duration="0.410" data-media-start="0.040" data-track-index="21" data-volume="0.186"></audio>
+      <audio id="t-clip10-0" class="clip" src="assets/audio/sfx-click-soft.mp3" data-start="21.117" data-duration="0.220" data-media-start="0.030" data-track-index="22" data-volume="0.806"></audio>
+      <audio id="t-clip10-1" class="clip" src="assets/audio/sfx-click-soft.mp3" data-start="22.054" data-duration="0.220" data-media-start="0.030" data-track-index="21" data-volume="0.775"></audio>
+      <audio id="t-body10-0" class="clip" src="assets/audio/sfx-pop.mp3" data-start="22.523" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.31"></audio>
+      <audio id="t-body10-1" class="clip" src="assets/audio/sfx-pop.mp3" data-start="22.992" data-duration="0.350" data-media-start="0.100" data-track-index="21" data-volume="0.341"></audio>
+      <audio id="t-whip12" class="clip" src="assets/audio/sfx-whoosh-short.mp3" data-start="26.030" data-duration="0.410" data-media-start="0.040" data-track-index="21" data-volume="0.136"></audio>
+      <audio id="music2" class="clip" src="assets/audio/ambient-uplift.mp3" data-start="33.750" data-duration="26.250" data-media-start="48.750" data-timeline-role="music" data-fade-in="0.03" data-fade-out="1.8" data-track-index="20" data-volume="0.496"></audio>
+      <audio id="t-rise18" class="clip" src="assets/audio/sfx-whoosh-short.mp3" data-start="41.030" data-duration="0.410" data-media-start="0.040" data-track-index="21" data-volume="0.161"></audio>
+      <audio id="t-color20-0" class="clip" src="assets/audio/sfx-key-press.mp3" data-start="45.492" data-duration="0.190" data-media-start="0.060" data-track-index="21" data-volume="0.868"></audio>
+      <audio id="t-color20-1" class="clip" src="assets/audio/sfx-key-press.mp3" data-start="45.961" data-duration="0.190" data-media-start="0.060" data-track-index="21" data-volume="0.806"></audio>
+      <audio id="t-riser" class="clip" src="assets/audio/sfx-riser.mp3" data-start="52.350" data-duration="2.055" data-media-start="2.130" data-fade-in="0.2" data-fade-out="0.03" data-track-index="21" data-volume="0.248"></audio>
+      <audio id="t-impact" class="clip" src="assets/audio/sfx-impact-bass-1.mp3" data-start="54.565" data-duration="2.075" data-media-start="0.040" data-fade-out="0.5" data-track-index="21" data-volume="0.248"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

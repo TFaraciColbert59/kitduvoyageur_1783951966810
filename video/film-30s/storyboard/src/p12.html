@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p12 · En route</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--deep); }
+  #ground { left: -400px; top: 860px; width: 1880px; height: 1800px; transform: perspective(900px) rotateX(68deg); transform-origin: 50% 0; }
+  #trace { left: 0; top: 0; }
+  #pt { left: 512px; top: 1440px; width: 56px; height: 56px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 0 16px rgba(208,160,112,0.2), 0 0 70px rgba(208,160,112,0.8); }
+  #l1 { left: 60px; top: 330px; color: var(--stone); }
+  #l2 { left: 60px; top: 540px; color: var(--stone); }
+  #l2 .last { color: var(--brass); display: inline-block; transform: scale(1.1) translate(4px, -4px); transform-origin: 0 100%; }
+  #l2g { left: 60px; top: 540px; color: var(--stone); }
+  #l2g span { visibility: hidden; }
+  #l2g .last { visibility: visible; display: inline-block; transform: scale(1.3) translate(-6px, -14px); transform-origin: 0 100%; opacity: 0.35; filter: blur(4px); color: var(--brass); }
+</style></head>
+<body><div id="frame">
+  <svg id="ground" class="abs" viewBox="0 0 1880 1800">
+    <g fill="none" stroke="rgba(91,127,85,0.35)" stroke-width="3">
+      <path d="M0 200 C 400 120, 700 300, 1000 220 S 1600 120, 1880 240"/><path d="M0 420 C 380 340, 760 520, 1060 430 S 1620 330, 1880 460"/>
+      <path d="M0 660 C 420 560, 720 760, 1040 650 S 1600 560, 1880 690"/><path d="M0 920 C 400 820, 740 1020, 1080 900 S 1620 820, 1880 960"/>
+      <path d="M0 1200 C 420 1100, 760 1300, 1060 1180 S 1600 1100, 1880 1240"/><path d="M0 1500 C 400 1400, 760 1600, 1080 1480 S 1620 1400, 1880 1540"/>
+    </g>
+    <path d="M940 1800 C 930 1500, 1010 1300, 960 1050 S 880 600, 990 300 S 1000 80, 960 0" fill="none" stroke="rgba(208,160,112,0.25)" stroke-width="40" stroke-linecap="round"/>
+    <path d="M940 1800 C 930 1500, 1010 1300, 960 1050 S 880 600, 990 300 S 1000 80, 960 0" fill="none" stroke="#D0A070" stroke-width="12" stroke-linecap="round"/>
+  </svg>
+  <div id="l1" class="abs slam" style="font-size:250px">EN</div>
+  <div id="l2g" class="abs slam" style="font-size:250px"><span>ROUT</span><span class="last">E</span></div>
+  <div id="l2" class="abs slam" style="font-size:250px">ROUT<span class="last">E</span></div>
+  <div id="pt" class="abs"></div>
+</div>
+</body></html>

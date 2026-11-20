@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p22 · Là où la carte se termine</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--deep); }
+  #glow { background: radial-gradient(50% 30% at 50% 36%, rgba(208,160,112,0.16), rgba(208,160,112,0) 70%); }
+  #ring { left: 120px; top: 210px; width: 840px; height: 840px; opacity: 0.18; }
+  #nd { left: 0; top: 0; }
+  .l { left: 60px; color: var(--stone); }
+  #l1 { top: 1030px; } #l2 { top: 1170px; } #l3 { top: 1310px; }
+  #l3 .t { color: var(--stone); }
+</style></head>
+<body><div id="frame">
+  <div id="glow" class="fill"></div>
+  <img id="ring" class="abs" src="assets/img/badge-anneau.png">
+  <svg id="nd" class="abs" width="1080" height="1920">
+    <defs>
+      <linearGradient id="n" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+      <linearGradient id="s" x1="0" x2="1"><stop offset="0" stop-color="#3a3a32"/><stop offset="0.5" stop-color="#2a2a24"/><stop offset="0.5" stop-color="#1c1c18"/><stop offset="1" stop-color="#121210"/></linearGradient>
+    </defs>
+    <g transform="rotate(4 540 690)">
+      <path d="M540 300 L590 690 L490 690 Z" fill="url(#n)"/>
+      <path d="M540 960 L590 690 L490 690 Z" fill="url(#s)" stroke="#9E7243" stroke-width="3"/>
+      <circle cx="540" cy="690" r="26" fill="#06120C" stroke="#D0A070" stroke-width="8"/>
+    </g>
+  </svg>
+  <div id="l1" class="abs slam l" data-fit="960" data-max="300">LÀ OÙ</div>
+  <div id="l2" class="abs slam l" data-fit="960" data-max="300">LA CARTE</div>
+  <div id="l3" class="abs slam l" data-fit="960" data-max="300">SE TERMINE<span class="dot">.</span></div>
+</div>
+<script src="fit.js"></script>
+<script>
+  // Une seule taille pour les trois lignes : celle de la plus longue (« SE TERMINE. »).
+  document.fonts.ready.then(() => setTimeout(() => {
+    const s = Math.min(...['l1', 'l2', 'l3'].map((i) => +document.getElementById(i).dataset.size));
+    ['l1', 'l2', 'l3'].forEach((i, k) => { const e = document.getElementById(i); e.style.fontSize = s + 'px'; e.style.top = (1040 + k * s * 0.92) + 'px'; });
+    console.log('fit final', s);
+  }, 50));
+</script>
+</body></html>

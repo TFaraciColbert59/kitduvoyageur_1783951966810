@@ -1,0 +1,175 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#07130d; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s19-abs { position:absolute; }
+    #s19-shake { position:absolute; inset:0; }
+    #s19-cam { position:absolute; inset:0; }
+    #s19-map { position:absolute; left:-1401.84px; top:-402.16px; width:2880px; height:4680px; }
+    #s19-dim { position:absolute; inset:-200px; background:#06120C; opacity:0.55; }
+    #s19-svg { position:absolute; left:0; top:0; }
+    .s19-dot { width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; border:6px solid #FAF8F5; box-shadow:0 0 0 10px rgba(250,248,245,0.18), 0 6px 18px rgba(6,18,12,0.5); left:0; top:0; }
+    #s19-df { background:#226148; }
+    #s19-db { background:#D0A070; }
+    #s19-ring1 { left:140px; top:460px; width:800px; height:800px; border-radius:50%; border:22px solid rgba(255,255,255,0.95);
+      box-shadow:0 0 60px rgba(255,255,255,0.8), inset 0 0 60px rgba(255,255,255,0.6); opacity:0; }
+    #s19-ring2 { left:320px; top:640px; width:440px; height:440px; border-radius:50%; border:10px solid #D0A070; opacity:0; }
+    #s19-ring3 { left:390px; top:710px; width:300px; height:300px; border-radius:50%; border:6px solid #D0A070; opacity:0; }
+    #s19-glow { left:390px; top:710px; width:300px; height:300px; border-radius:50%;
+      background:radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.7) 22%, rgba(208,160,112,0.45) 45%, rgba(208,160,112,0) 70%); opacity:0; }
+    #s19-core { left:522px; top:842px; width:36px; height:36px; border-radius:50%; background:#D0A070; border:6px solid #FAF8F5;
+      box-shadow:0 0 0 12px rgba(208,160,112,0.25), 0 0 40px rgba(208,160,112,0.7); opacity:0; }
+    .s19-sh { overflow:hidden; border:5px solid #fff; box-shadow:0 20px 40px rgba(0,0,0,0.5); opacity:0; }
+    .s19-sh img { width:100%; height:100%; object-fit:cover; display:block; }
+    #s19-flash { position:absolute; inset:0; background:#FFFFFF; opacity:0; }
+    #s19-gar { left:62px; top:1196px; font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; font-size:76px; color:rgba(250,248,245,0.9); white-space:nowrap; opacity:0; transform-origin:0% 60%; }
+    .s19-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; font-size:154px; }
+    #s19-word { left:56px; top:1286px; color:#FAF8F5; opacity:0; transform-origin:50% 60%; }
+    #s19-word span { color:#D0A070; }
+    #s19-wordg { left:80px; top:1270px; color:#D0A070; opacity:0; transform-origin:50% 60%; }
+  </style>
+  <div id="root" data-composition-id="s19" data-width="1080" data-height="1920">
+    <div id="s19-shake">
+      <div id="s19-cam">
+        <img id="s19-map" src="assets/sat/sat-w.jpg" alt="">
+        <div id="s19-dim"></div>
+        <svg id="s19-svg" width="1080" height="1920">
+          <defs><linearGradient id="s19-gb" gradientUnits="userSpaceOnUse" x1="940" y1="300" x2="540" y2="860"><stop offset="0" stop-color="#D0A070" stop-opacity="0"/><stop offset="1" stop-color="#D0A070"/></linearGradient></defs>
+          <polyline id="s19-tf" points="" fill="none" stroke="#3D7A52" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+          <line id="s19-tb" x1="940" y1="300" x2="940" y2="300" stroke="url(#s19-gb)" stroke-width="12" stroke-linecap="round"/>
+        </svg>
+        <div id="s19-df" class="s19-dot s19-abs"></div>
+        <div id="s19-db" class="s19-dot s19-abs"></div>
+        <div id="s19-glow" class="s19-abs"></div>
+        <div id="s19-ring2" class="s19-abs"></div>
+        <div id="s19-ring3" class="s19-abs"></div>
+        <div id="s19-ring1" class="s19-abs"></div>
+        <div id="s19-core" class="s19-abs"></div>
+      </div>
+      <div id="s19-shards">
+        <div id="s19-sh0" class="s19-sh s19-abs"><img src="assets/photos/tdp-mirador-base.jpg" alt=""></div>
+        <div id="s19-sh1" class="s19-sh s19-abs"><img src="assets/photos/tdp-cuernos-01.jpg" alt=""></div>
+        <div id="s19-sh2" class="s19-sh s19-abs"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+        <div id="s19-sh3" class="s19-sh s19-abs"><img src="assets/photos/tdp-sunrise-szekely.jpg" alt=""></div>
+        <div id="s19-sh4" class="s19-sh s19-abs"><img src="assets/photos/tdp-mirador-base.jpg" alt=""></div>
+        <div id="s19-sh5" class="s19-sh s19-abs"><img src="assets/photos/tdp-cuernos-01.jpg" alt=""></div>
+        <div id="s19-sh6" class="s19-sh s19-abs"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+        <div id="s19-sh7" class="s19-sh s19-abs"><img src="assets/photos/tdp-sunrise-szekely.jpg" alt=""></div>
+        <div id="s19-sh8" class="s19-sh s19-abs"><img src="assets/photos/tdp-mirador-base.jpg" alt=""></div>
+        <div id="s19-sh9" class="s19-sh s19-abs"><img src="assets/photos/tdp-cuernos-01.jpg" alt=""></div>
+        <div id="s19-sh10" class="s19-sh s19-abs"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+        <div id="s19-sh11" class="s19-sh s19-abs"><img src="assets/photos/tdp-sunrise-szekely.jpg" alt=""></div>
+        <div id="s19-sh12" class="s19-sh s19-abs"><img src="assets/photos/tdp-mirador-base.jpg" alt=""></div>
+        <div id="s19-sh13" class="s19-sh s19-abs"><img src="assets/photos/tdp-amanecer-06.jpg" alt=""></div>
+      </div>
+    </div>
+    <div id="s19-flash"></div>
+    <div id="s19-gar" class="s19-abs">une</div>
+    <div id="s19-wordg" class="s19-abs s19-slam">RENCONTRE.</div>
+    <div id="s19-word" class="s19-abs s19-slam">RENCONTRE<span>.</span></div>
+  </div>
+  <script>
+    (function () {
+      // Plan 19 · bible 24,565 → 25,862 ; hôte à 24,365 : local = film − 24,365.
+      const F = 1 / 30;
+      const L = (T) => +(T - 24.365).toFixed(4);
+      const tl = gsap.timeline({ paused: true });
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+      // secousse maximale : 4 images, 26 → 10 px, avec un peu de roulis
+      function shake(el, t, a) {
+        [1, -0.75, 0.5, -0.25, 0].forEach((m, i) => tl.to(el, { x: a * m, y: -a * m * 0.7, rotation: m * 1.4, duration: F, ease: "none" }, t + i * F));
+      }
+
+      // ---- Même carte et même mouvement des deux points que le plan 18 (fonction du temps du film).
+      const K = 1.8, OX = -1401.84, OY = -402.16, C = [540, 860], A0 = [940, 300];
+      const T0 = 24.13, TC = 24.565;
+      const W = [[1078.9,701.2],[1082.4,716.8],[1093.3,727.5],[1105.8,734.1],[1114.1,744.7],[1120.0,779.9],[1113.2,809.0],[1105.8,824.7],[1104.3,869.6],[1095.0,882.2],[1089.3,883.3],[1085.7,888.0],[1084.4,897.3],[1073.4,903.9],[1066.9,917.7],[1033.1,934.8],[1006.2,963.2],[1004.7,969.7],[1001.0,970.8],[997.9,978.0],[986.4,985.6],[979.4,997.4],[965.7,1005.0],[957.0,1013.8],[950.2,1016.3],[921.8,1040.9],[913.9,1045.7],[906.2,1045.2],[901.3,1051.0],[869.4,1055.6],[864.2,1059.1],[855.8,1056.0],[840.0,1057.0]];
+      const P = W.slice().reverse().map(([x, y]) => [x * K + OX, y * K + OY]);
+      const cum = [0];
+      for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+      const LEN = cum[cum.length - 1];
+      const F25 = cum[7] / LEN;
+      function at(f) {
+        const d = f * LEN; let i = 1;
+        while (i < cum.length - 1 && cum[i] < d) i++;
+        const u = (d - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
+        return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * u, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * u];
+      }
+      document.getElementById("s19-tf").setAttribute("points", P.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "));
+      const st = { T: 24.365 };
+      const df = document.getElementById("s19-df"), db = document.getElementById("s19-db");
+      const tf = document.getElementById("s19-tf"), tb = document.getElementById("s19-tb");
+      function draw() {
+        const q = Math.min(1, Math.max(0, (st.T - T0) / (TC - T0)));
+        const p = q * q * q;
+        const f = F25 + (1 - F25) * p;
+        const pf = at(f);
+        gsap.set(df, { x: pf[0], y: pf[1] });
+        tf.setAttribute("stroke-dashoffset", (1 - f).toFixed(4));
+        const bx = A0[0] + (C[0] - A0[0]) * p, by = A0[1] + (C[1] - A0[1]) * p;
+        gsap.set(db, { x: bx, y: by });
+        tb.setAttribute("x2", bx.toFixed(1)); tb.setAttribute("y2", by.toFixed(1));
+      }
+      draw();
+      tl.to(st, { T: TC, duration: 0.2, ease: "none", onUpdate: draw }, 0);
+
+      // ---- 24,565 : collision. Flash blanc 2 images, onde de choc, éclats de photos, secousse maximale.
+      const tH = 0.2;
+      tl.set(["#s19-df", "#s19-db"], { opacity: 0 }, tH);
+      tl.set("#s19-flash", { opacity: 1 }, tH);
+      tl.set("#s19-flash", { opacity: 0.5 }, tH + F);
+      tl.set("#s19-flash", { opacity: 0 }, tH + 2 * F);
+      tl.fromTo("#s19-ring1", { opacity: 1, scale: 0.12 }, { opacity: 0, scale: 1.7, duration: 0.5, ease: "expo.out", immediateRender: false }, tH);
+      tl.fromTo("#s19-ring2", { opacity: 0.95, scale: 0.2 }, { opacity: 0, scale: 1.25, duration: 0.65, ease: "expo.out", immediateRender: false }, tH + F);
+      tl.fromTo("#s19-glow", { opacity: 1, scale: 0.4 }, { opacity: 0.55, scale: 1.5, duration: 0.3, ease: "expo.out", immediateRender: false }, tH);
+      tl.to("#s19-glow", { opacity: 0.35, scale: 0.8, duration: 0.6, ease: "power2.inOut" }, tH + 0.3);
+      tl.set("#s19-core", { opacity: 1 }, tH);
+      tl.fromTo("#s19-core", { scale: 1.8 }, { scale: 1, duration: 0.25, ease: "back.out(2)", immediateRender: false }, tH);
+      shake("#s19-shake", tH, 26);
+      // caméra : poussée sur l'impact, puis recul (le dézoom brutal du plan 20 le prolonge)
+      tl.fromTo("#s19-cam", { scale: 1, transformOrigin: "540px 860px" }, { scale: 1.06, duration: 0.3, ease: "expo.out", immediateRender: false }, tH);
+      tl.to("#s19-cam", { scale: 1, duration: 0.4, ease: "power2.in" }, 0.85);
+      tl.to("#s19-svg", { opacity: 0, duration: 0.35, ease: "power1.in" }, 0.6);
+
+      // éclats : 14 photos, trajectoires fixées par une graine (vers la caméra puis hors cadre)
+      let seed = 19;
+      const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2 + (rnd() - 0.5) * 0.5;
+        const r1 = 300 + rnd() * 170, w = 120 + rnd() * 70, h = w * 0.8, rot = (rnd() - 0.5) * 50;
+        const s1 = 1 + rnd() * 0.9;
+        const el = document.getElementById("s19-sh" + i);
+        el.style.left = (C[0] - w / 2) + "px"; el.style.top = (C[1] - h / 2) + "px";
+        el.style.width = w + "px"; el.style.height = h + "px";
+        el.style.clipPath = i % 2 ? "polygon(0 10%, 100% 0, 85% 100%, 10% 85%)" : "polygon(15% 0, 100% 20%, 90% 90%, 0 100%)";
+        const x1 = Math.cos(a) * r1, y1 = Math.sin(a) * r1 * 1.05;
+        tl.set(el, { opacity: 1 }, tH);
+        tl.fromTo(el, { x: 0, y: 0, scale: 0.2, rotation: 0 }, { x: x1, y: y1, scale: s1, rotation: rot, duration: 7 * F, ease: "expo.out", immediateRender: false }, tH);
+        tl.to(el, { x: x1 * 2.6, y: y1 * 2.6, scale: s1 * 1.8, rotation: rot * 1.6, duration: 0.55, ease: "power2.in" }, tH + 7 * F);
+        tl.set(el, { opacity: 0 }, tH + 7 * F + 0.55);
+      }
+
+      // « une » (24,565) puis « RENCONTRE. » (24,904) ; écho sur la grosse caisse 25,290.
+      slam("#s19-gar", null, tH);
+      slam("#s19-word", "#s19-wordg", L(24.904));
+      const tE = L(25.29);
+      tl.fromTo("#s19-ring3", { opacity: 0.9, scale: 0.4 }, { opacity: 0, scale: 1.8, duration: 0.4, ease: "expo.out", immediateRender: false }, tE);
+      tl.to("#s19-word", { x: 5, duration: F, ease: "none" }, tE);
+      tl.to("#s19-word", { x: 0, duration: F, ease: "none" }, tE + F);
+      // sortie des mots avant l'entrée du plan 20 (3 images, flou)
+      tl.to(["#s19-word", "#s19-gar"], { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, L(25.53));
+      tl.to("#s19-glow", { opacity: 0, duration: 0.2, ease: "power1.in" }, L(25.5));
+
+      tl.set({}, {}, 1.497);
+      window.__timelines["s19"] = tl;
+    })();
+  </script>
+</template>

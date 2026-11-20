@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p04 · Reprendre le kit</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--stone); }
+  #stage { position: absolute; inset: 0; perspective: 1400px; perspective-origin: 540px 1100px; }
+  #drawer { position: absolute; left: -40px; top: 120px; width: 1160px; height: 1300px; padding: 70px 90px; transform: rotateX(18deg) scale(1.05); transform-origin: 50% 100%; filter: blur(1.5px); }
+  #drawer h3 { font-size: 64px; font-weight: 800; color: #1f2a24; margin-bottom: 26px; display: flex; justify-content: space-between; align-items: baseline; }
+  #drawer h3 span { font-size: 40px; font-weight: 500; color: var(--label2); }
+  .filters { display: flex; gap: 14px; margin-bottom: 30px; }
+  .filters span { height: 70px; padding: 0 28px; border-radius: 999px; background: rgba(23,64,44,0.08); color: var(--forest); font-size: 36px; font-weight: 600; display: inline-flex; align-items: center; }
+  .filters span.on { background: var(--forest); color: #fff; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 30px 36px; border-radius: 40px; background: rgba(255,255,255,0.82); margin-bottom: 18px; }
+  .row b { font-size: 44px; color: #1f2a24; }
+  .vd { padding: 8px 22px; border-radius: 999px; font-size: 32px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ess { background: #E1EBDE; color: #3D7A52; }
+  .ut { background: rgba(23,43,36,0.06); color: #4B6B7C; }
+  .row p { font-size: 34px; color: var(--label2); margin-top: 6px; }
+  /* le bouton qui éclate */
+  #btn { left: 250px; top: 1040px; width: 580px; height: 150px; border-radius: 999px; background: var(--forest); color: #fff; font-size: 52px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 22px; transform: scale(0.9); box-shadow: 0 0 0 26px rgba(208,160,112,0.28), 0 0 0 60px rgba(208,160,112,0.1); }
+  .frag { position: absolute; background: var(--forest); }
+  .chip { position: absolute; height: 110px; padding: 0 40px 0 28px; border-radius: 999px; background: #fff; color: var(--forest); font-size: 44px; font-weight: 700; display: flex; align-items: center; gap: 18px; white-space: nowrap; box-shadow: 0 24px 50px rgba(11,31,23,0.25); border: 3px solid rgba(208,160,112,0.8); }
+  #pin { left: 780px; top: 260px; width: 230px; height: 230px; transform: rotate(14deg); filter: drop-shadow(0 18px 30px rgba(11,31,23,0.35)); }
+</style></head>
+<body><div id="frame">
+  <div id="stage"><div id="drawer" class="glass">
+    <h3>Sac · le kit de Maya <span>14 objets</span></h3>
+    <div class="filters"><span>Tous</span><span class="on">Essentiel</span><span>Utile</span><span>Jamais servi</span></div>
+    <div class="row"><div><b>Veste imperméable</b><p>« Trois jours de pluie sur cinq. »</p></div><span class="vd ess">Essentiel</span></div>
+    <div class="row"><div><b>Frontale</b><p>« Départ à 4 h pour les tours. »</p></div><span class="vd ess">Essentiel</span></div>
+    <div class="row"><div><b>Bâtons</b></div><span class="vd ut">Utile</span></div>
+  </div></div>
+  <div id="chips"></div>
+  <div id="btn" class="abs"><i data-ic="package" data-s="56" data-c="#fff" data-w="2.2"></i>Reprendre le kit</div>
+  <div id="pin" class="abs" style="background: var(--brass); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display:flex; align-items:center; justify-content:center;"><svg width="140" height="140" viewBox="0 0 32 32" fill="none" style="transform: rotate(45deg)"><path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#17402C" stroke-width="2.2" stroke-linejoin="round"/><path d="M2 24 L30 24" stroke="#17402C" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="9" r="1.8" fill="#17402C"/></svg></div>
+</div>
+<script src="icons.js"></script>
+<script>
+  // Image 2 de l'éclatement (3,773 s) : 10 objets du kit partent vers la caméra.
+  const items = [["Veste imperméable",-520,-430,1.25,-8],["Frontale",300,-560,1.1,6],["Réchaud",-560,200,1.3,-10],["Gourde",380,240,1.35,8],["Bâtons",-170,-700,0.95,-4],["Doudoune",80,520,1.45,5],["Couverture de survie",-420,-120,0.85,-6],["Trousse de secours",130,-330,0.9,4],["Lunettes cat. 4",-300,420,1.0,-3],["Sac de couchage",420,-120,0.92,7]];
+  const ic = ["shield","bell","flag","msg","route","bag","shield","plus","search","bag"];
+  const root = document.getElementById('chips');
+  items.forEach(([n,dx,dy,s,r],i) => {
+    const d = document.createElement('div'); d.className = 'chip';
+    d.innerHTML = icon('package', 44, '#D0A070', 2.4) + n;
+    d.style.left = (540 + dx) + 'px'; d.style.top = (1115 + dy) + 'px';
+    d.style.transform = `translate(-50%,-50%) rotate(${r}deg) scale(${s})`;
+    if (s > 1.2) d.style.filter = 'blur(2px)';
+    root.appendChild(d);
+  });
+</script>
+</body></html>

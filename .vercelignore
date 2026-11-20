@@ -26,3 +26,6 @@
 /.next-build-check
 /.next-dev
 /.next-e2e
+
+# Projets vidéo HyperFrames (rendus hors Vercel, jamais importés par l application).
+/video
