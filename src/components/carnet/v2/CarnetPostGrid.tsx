@@ -128,7 +128,6 @@ export function CarnetPostGrid({
               <CarnetMomentTileBody moment={moment} type={type} />
               {pinned ? <CarnetTilePinned /> : null}
               <CarnetTileTypeBadge type={type} />
-              {moment.time ? <span className="lkdv-ig-tile-h">{moment.time}</span> : null}
             </button>
           );
         })}

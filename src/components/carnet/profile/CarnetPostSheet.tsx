@@ -273,26 +273,12 @@ export function CarnetPostSheet({
         }}
       />
     ),
-    footer:
-      meta || moment?.caption ? (
-        <>
-          {meta ? <p className="lkdv-post-likes">{meta}</p> : null}
-          {moment?.caption ? (
-            <p className="lkdv-post-caption">
-              {author?.name ? <b className="ckp-post-pseudo">{author.name}</b> : null}
-              {author?.name ? ' ' : null}
-              {moment.caption}
-            </p>
-          ) : null}
-        </>
-      ) : undefined,
   };
 
   return (
     <PostSheet
-      title={author?.name ?? 'Moment du carnet'}
+      title={author?.name ?? 'Publication'}
       onClose={onClose}
-      className="ckp-post-sheet"
     >
       <CommunityFeedPost
         embedded
