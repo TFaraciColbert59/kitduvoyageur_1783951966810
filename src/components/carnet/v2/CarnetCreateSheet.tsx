@@ -19,7 +19,7 @@ import { useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
 import { formatClock } from '@/features/carnet/detail/useVoiceRecorder';
 
 const CommunityCreateSheetV2 = dynamic(
-  () => import('@/features/community/v2/create/CreateSheetV2').then((m) => ({ default: m.CreateSheetV2 })),
+  () => import('./CarnetCommunityCreateBridge').then((m) => ({ default: m.CarnetCommunityCreateBridge })),
   { ssr: false },
 );
 
@@ -141,7 +141,6 @@ export function CarnetCreateSheet({
   if (type === 'photo' || type === 'video' || type === 'text') {
     return (
       <CommunityCreateSheetV2
-        open
         initialKind="post"
         initialPrefill={{
           format: type === 'text' ? 'billet' : 'photo',
@@ -153,7 +152,6 @@ export function CarnetCreateSheet({
         onCreated={() => {
           onClose();
         }}
-        onRequireAuth={onClose}
       />
     );
   }
