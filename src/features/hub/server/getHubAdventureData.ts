@@ -244,6 +244,12 @@ async function loadLists(userId: string | undefined): Promise<HubAdventureLists>
   return out;
 }
 
+export async function getHubAdventureLists(): Promise<HubAdventureLists> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return loadLists(user?.id);
+}
+
 function possessionInput(lists: HubAdventureLists, hasDepartEnCours = false): HubAdventureInput {
   return {
     kind: 'possession',

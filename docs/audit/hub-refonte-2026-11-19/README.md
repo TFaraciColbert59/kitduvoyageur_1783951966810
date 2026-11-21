@@ -529,3 +529,18 @@ d’une nouvelle coupure.
 
 Le démarrage en mode avion, le fond de carte téléchargé, le guidage terrain
 et le calcul des impacts du changement de parcours restent à vérifier.
+
+### P02-13 · Chargement du sélecteur
+
+Le sélecteur appelle la vue liste de l’API des aventures. Cette vue conserve
+les mêmes sorties accessibles, groupes, invitations et compteurs que la
+réponse complète. Le Camp de base utilise toujours la réponse qui inclut
+le titre et le tracé actifs.
+
+**Recette authentifiée.** WebKit a chargé le HUB avec la vue liste.
+Sept requêtes chaudes par vue, alternées sur le même compte en recette
+locale, ont donné 88 ms en médiane pour la liste et 1 100 ms pour
+la réponse avec le voyage actif. La comparaison a vérifié l’égalité des
+champs communs. Ce chronométrage mesure l’API du sélecteur. Le résumé
+versionné du cockpit, la pagination des détails et le budget global du
+chargement initial restent à valider.

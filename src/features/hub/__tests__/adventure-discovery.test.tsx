@@ -51,5 +51,5 @@ it('alimente le sélecteur avec les sorties du HUB, dont les voyages partagés',
 
   expect(await screen.findByText('Voyage partagé')).toBeDefined();
   expect(screen.queryByText('Voyage historique')).toBeNull();
-  expect(fetchList).toHaveBeenCalledWith('/api/hub/adventures', { cache: 'no-store' });
+  expect(fetchList).toHaveBeenCalledWith('/api/hub/adventures?view=list', { cache: 'no-store' });
 });

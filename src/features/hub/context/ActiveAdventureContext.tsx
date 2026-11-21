@@ -188,7 +188,7 @@ function ActiveAdventureProviderForUser({ userId, initialAdventure, children }: 
     const tripsReload = reloadUserTrips();
     const hubReload = (async () => {
       try {
-        const res = await fetch('/api/hub/adventures', { cache: 'no-store' });
+        const res = await fetch('/api/hub/adventures?view=list', { cache: 'no-store' });
         if (!res.ok) throw new Error('Adventures unavailable');
         const data = await res.json();
         if (data?.error || data?.tripsUnavailable) throw new Error('Adventures unavailable');

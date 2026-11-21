@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getHubAdventureData } from '@/features/hub/server/getHubAdventureData';
+import { getHubAdventureData, getHubAdventureLists, type HubAdventureLists } from '@/features/hub/server/getHubAdventureData';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,24 +26,27 @@ function extractRealRouteCoords(
   return [];
 }
 
-/**
- * H2.2/H3.1 — Aventures de l'utilisateur pour le sélecteur (`AdventureSwitcher`) et le Camp de base.
- * Délègue à `getHubAdventureData` (source unique, partagée avec le layout /hub).
- * Payload : sorties accessibles, groupes, invitations, compteurs possession,
- * tracé réel éventuel.
- * Non connecté → zéros/vides (jamais 401, zéro donnée fictive).
- */
-export async function GET() {
+function listPayload(data: HubAdventureLists) {
+  return {
+    trips: data.trips.map(({ id, slug, title, status, primary_activity, start_date }) => ({
+      id, slug, title, status, primary_activity, start_date,
+    })),
+    tripsUnavailable: data.tripsUnavailable ?? false,
+    groups: data.groups,
+    pendingInvites: data.pendingInvites,
+    possession: data.possession,
+  };
+}
+
+/** Le sélecteur lit ses listes. Le Camp de base peut aussi synchroniser son tracé. */
+export async function GET(request: Request) {
+  const listOnly = new URL(request.url).searchParams.get('view') === 'list';
   try {
+    if (listOnly) return NextResponse.json(listPayload(await getHubAdventureLists()));
+
     const data = await getHubAdventureData();
     return NextResponse.json({
-      trips: data.trips.map(({ id, slug, title, status, primary_activity, start_date }) => ({
-        id, slug, title, status, primary_activity, start_date,
-      })),
-      tripsUnavailable: data.tripsUnavailable ?? false,
-      groups: data.groups,
-      pendingInvites: data.pendingInvites,
-      possession: data.possession,
+      ...listPayload(data),
       activeTripTitle: data.trip?.title ?? null,
       activeRouteCoords: extractRealRouteCoords(data.trip, data.hiking),
     });

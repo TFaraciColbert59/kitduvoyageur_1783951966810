@@ -47,7 +47,7 @@ describe('adventure reload concurrency and identity', () => {
     mocks.reloadUserTrips.mockReturnValue(trips.promise);
     const view = render(<App />);
     expect(mocks.reloadUserTrips).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledWith('/api/hub/adventures', { cache: 'no-store' });
+    expect(fetch).toHaveBeenCalledWith('/api/hub/adventures?view=list', { cache: 'no-store' });
     await act(async () => { trips.resolve(); });
     expect(current.groups.collectifs[0]?.id).toBe('initial');
     view.unmount();
