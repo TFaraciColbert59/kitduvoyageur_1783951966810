@@ -122,18 +122,24 @@ export function CarnetCommunityCreateBridge({
     [recordedUrl],
   );
 
+  const stepHostCallbacksRef = useRef<Map<string, (el: HTMLDivElement | null) => void>>(new Map());
   const registerStepHost = useCallback((kind: CreateKindV2, stepIndex: number) => {
-    return (el: HTMLDivElement | null) => {
-      const key = `${kind}:${stepIndex}`;
-      if (el) {
-        if (stepHostRefs.current.get(key) !== el) {
-          stepHostRefs.current.set(key, el);
+    const key = `${kind}:${stepIndex}`;
+    let cb = stepHostCallbacksRef.current.get(key);
+    if (!cb) {
+      cb = (el: HTMLDivElement | null) => {
+        if (el) {
+          if (stepHostRefs.current.get(key) !== el) {
+            stepHostRefs.current.set(key, el);
+            setStepHostsVersion((v) => v + 1);
+          }
+        } else if (stepHostRefs.current.delete(key)) {
           setStepHostsVersion((v) => v + 1);
         }
-      } else if (stepHostRefs.current.delete(key)) {
-        setStepHostsVersion((v) => v + 1);
-      }
-    };
+      };
+      stepHostCallbacksRef.current.set(key, cb);
+    }
+    return cb;
   }, []);
 
   const stepHostsFor = useCallback(
