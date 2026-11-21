@@ -103,6 +103,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const dailyBudget = data.budget && cockpitDayBudget(data.budget, data.startDate, day, data.dayCount, clock?.date ?? normalizeCivilDateString());
   const expenses = dailyBudget?.expenses ?? [];
   const reservations = data.reservations ?? [];
+  const peopleStatus = data.peopleUnavailable ? 'Membres momentanément indisponibles'
+    : data.pending > 0 ? `${data.pending} invitation${data.pending > 1 ? 's' : ''} en attente`
+    : 'Aucun membre actif';
   const daySteps = useMemo(() => data.steps.filter((step) => step.day === day), [data.steps, day]);
   const dayMap = useMemo(() => ({
     ...data, steps: daySteps, route: cockpitDayRoute(data.route, daySteps, day, data.dayCount),
@@ -384,8 +387,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
         </>;
       case 'groupe':
         return <>
-          {data.people.length ? <div className={styles.rows}>{peopleRows()}</div> : <Status>Aucun membre actif à afficher.</Status>}
-          {data.pending > 0 && <p>{data.pending} invitation{data.pending > 1 ? 's' : ''} en attente</p>}
+          {data.people.length > 0 && <div className={styles.rows}>{peopleRows()}</div>}
+          {(!data.people.length || data.pending > 0) && <Status>{peopleStatus}</Status>}
           {!fixture && <Action href="/hub/groupe">Gérer le groupe</Action>}
           {!fixture && data.trip && <Action href="/hub/securite">Sécurité</Action>}
         </>;

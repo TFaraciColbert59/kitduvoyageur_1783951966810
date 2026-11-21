@@ -90,6 +90,7 @@ export interface CockpitData {
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
   people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null }[];
   peopleCount: number | null;
+  peopleUnavailable?: boolean;
   pending: number;
   trip: boolean;
   collective: boolean;

@@ -18,8 +18,51 @@ type ClubRouteUpdateRow = {
   decision_pending: boolean;
 };
 
+const COLLECTIVE_ROLES: Record<string, string> = {
+  organizer: 'Responsable',
+  co_organizer: 'Co-organisateur',
+  member: 'Membre',
+  observer: 'Observateur',
+};
+
+async function loadCollectiveCockpit(
+  data: HubAdventureData,
+  cockpit: CockpitData,
+  groupId: string,
+): Promise<CockpitData> {
+  const group = data.groups.find((entry) => entry.id === groupId);
+  if (!group) return { ...cockpit, collective: false, title: 'Mes aventures' };
+
+  const supabase = await createClient();
+  const { data: rows, error } = await supabase.from('group_members')
+    .select('user_id,role,status')
+    .eq('group_id', group.id)
+    .in('status', ['active', 'pending'])
+    .order('joined_at', { ascending: true })
+    .order('user_id');
+  if (error) return { ...cockpit, peopleUnavailable: true };
+  const active = (rows ?? []).filter((member) => member.status === 'active' && member.user_id);
+  const profiles = await fetchPublicProfilesWith(supabase, active.map((member) => member.user_id));
+  return {
+    ...cockpit,
+    people: active.map((member) => {
+      const profile = profiles[member.user_id];
+      return {
+        id: member.user_id,
+        name: profile?.full_name ?? profile?.handle ?? null,
+        avatar: profile?.avatar_url,
+        handle: profile?.handle,
+        role: COLLECTIVE_ROLES[member.role] ?? 'Membre',
+      };
+    }),
+    peopleCount: active.length,
+    pending: (rows ?? []).filter((member) => member.status === 'pending').length,
+  };
+}
+
 export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> {
   const cockpit = buildCockpit(data);
+  if (data.adventure.nature === 'collectif') return loadCollectiveCockpit(data, cockpit, data.adventure.id);
   const { trip } = data;
   if (!trip) return cockpit;
 

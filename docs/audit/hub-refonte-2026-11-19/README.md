@@ -560,3 +560,16 @@ dans PostgreSQL avec l’heure, le jour, le fuseau et l’instant attendus.
 Les 14 cas de la suite d’interface Carnet qui échouent étaient déjà en
 échec avant ce changement. L’upload photo avec stockage réel et la reprise
 du brouillon après fermeture en mode avion restent à vérifier.
+
+### P07-48 / P07-49 · Membres du collectif
+
+Le HUB charge les membres du collectif actif depuis `group_members` et
+leurs profils depuis `public_profiles`. Les pastilles reprennent le nom,
+l’avatar et le rôle, puis ouvrent la fiche de la personne. Les membres en
+attente sont comptés à part. Le HUB affiche un état explicite si la lecture
+échoue.
+
+**Recette WebKit authentifiée.** Deux membres actifs d’un collectif privé,
+l’avatar lu en base et l’ouverture de la fiche ont été contrôlés. Un
+compte invité en attente n’a pas accès au rail. Le tri par progression,
+les positions consenties et les scénarios avec 50 membres restent ouverts.
