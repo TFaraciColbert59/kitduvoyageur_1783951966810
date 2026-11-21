@@ -713,3 +713,17 @@ branchées sur PostgreSQL dans les tiroirs :
   Verdict mesuré et documenté : le noyau TypeScript suffit largement sur la
   cible mesurée ; un portage Rust/WASM n’apporte pas de gain end-to-end
   démontrable à ce stade (et la toolchain Cargo n’est pas requise en CI).
+- **P01-10 / P01-15 / P02-09 / P05-10 / P05-13 / P07-25 / P07-36..38 · Migration
+  `20261121130000_hub_retention_and_shared_gear.sql` & modules terrain.**
+  - Index FK ciblés sur `trip_lifecycle_events(actor_id)`,
+    `trip_safety_contacts(owner_id)`, `hub_field_reports(trip_id)`.
+  - `get_trip_effective_party_size` (taille de groupe canonique dédupliquée
+    sans invitations en attente), `assign_trip_shared_item` (attribution d’objet
+    partagé réservée aux éditeurs) et `purge_expired_hub_ephemeral_data`
+    (purge éphémère réservée à `service_role`, révoquée pour `anon`/`authenticated`).
+  - `etaEngine.ts`, `consumablesTracker.ts` et `localDataProtection.ts`
+    (effacement atomique des données locales sensibles à la déconnexion).
+  - **pgTAP · PASS** : **125 suites, 2 143 assertions** vertes + rollback SQL
+    exercé en transaction. **Vitest · PASS** : 14 fichiers, 67 assertions.
+  - **WebKit mobile authentifié · PASS** : `verify-hub-field-report.cjs` et
+    `verify-hub-lifecycle-safety.cjs` verts sur `127.0.0.1:4103/hub`.
