@@ -391,21 +391,6 @@ export function KitProductSheetV2({
     [loanOffers, selectedLoanId]
   );
 
-  const heroGallery = useMemo(() => {
-    const raw = [
-      product.image && /^https?:\/\//.test(product.image) ? product.image : null,
-      shopOffer?.image && /^https?:\/\//.test(shopOffer.image) ? shopOffer.image : null,
-      ...variantImages,
-      selectedLocation?.image && /^https?:\/\//.test(selectedLocation.image) ? selectedLocation.image : null,
-      selectedOccasion?.image && /^https?:\/\//.test(selectedOccasion.image) ? selectedOccasion.image : null,
-      selectedLoan?.image && /^https?:\/\//.test(selectedLoan.image) ? selectedLoan.image : null,
-    ].filter((u): u is string => Boolean(u));
-    const unique = Array.from(new Set(raw));
-    return unique.length > 0 ? unique : [imgSrc];
-  }, [imgSrc, product.image, selectedLoan?.image, selectedLocation?.image, selectedOccasion?.image, shopOffer?.image, variantImages]);
-
-  const activeHeroImg = heroGallery[activeImageIdx] ?? heroGallery[0] ?? imgSrc;
-
   const sendMarketplaceRequest = async (
     offer: CommunityOffer,
     mode: 'pret' | 'location' | 'vente'
@@ -519,6 +504,22 @@ export function KitProductSheetV2({
   };
 
   const imgSrc = product.image || generatedProductImage(product.name, 256);
+
+  const heroGallery = useMemo(() => {
+    const raw = [
+      product.image && /^https?:\/\//.test(product.image) ? product.image : null,
+      shopOffer?.image && /^https?:\/\//.test(shopOffer.image) ? shopOffer.image : null,
+      ...variantImages,
+      selectedLocation?.image && /^https?:\/\//.test(selectedLocation.image) ? selectedLocation.image : null,
+      selectedOccasion?.image && /^https?:\/\//.test(selectedOccasion.image) ? selectedOccasion.image : null,
+      selectedLoan?.image && /^https?:\/\//.test(selectedLoan.image) ? selectedLoan.image : null,
+    ].filter((u): u is string => Boolean(u));
+    const unique = Array.from(new Set(raw));
+    return unique.length > 0 ? unique : [imgSrc];
+  }, [imgSrc, product.image, selectedLoan?.image, selectedLocation?.image, selectedOccasion?.image, shopOffer?.image, variantImages]);
+
+  const activeHeroImg = heroGallery[activeImageIdx] ?? heroGallery[0] ?? imgSrc;
+
   const effectiveAddWeight = Math.max(0, weightG) * quantity;
   const projectedTotalG = alreadyInKit ? currentKitWeightG : currentKitWeightG + effectiveAddWeight;
   const kitSharePct =
