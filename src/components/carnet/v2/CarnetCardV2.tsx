@@ -339,14 +339,9 @@ export function CarnetCardV2({
               <button
                 key={hl.id}
                 type="button"
-                className={`lkdv-ig-hl${seenHighlights.has(hl.id) ? ' seen' : ''}`}
+                className="lkdv-ig-hl"
                 onClick={() => {
                   haptic('light');
-                  setSeenHighlights((prev) => {
-                    const next = new Set(prev);
-                    next.add(hl.id);
-                    return next;
-                  });
                   onOpenStories(idx);
                 }}
                 aria-label={`Voir ${hl.title}`}
