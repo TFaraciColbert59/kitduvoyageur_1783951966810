@@ -598,7 +598,6 @@ export function KitProductSheetV2({
               {heroPanel === 'occasion' || heroPanel === 'location' ? (() => {
                 const isLocation = heroPanel === 'location';
                 const listOffers = isLocation ? locationOffers : occasionOffers;
-                const modeParam = isLocation ? 'location' : 'occasion';
                 return (
                 <div
                   style={{
@@ -648,59 +647,94 @@ export function KitProductSheetV2({
                       </p>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                        gap: '8px',
+                      }}
+                    >
                       {listOffers.map((offer) => {
                         const isPicked = isLocation
                           ? selectedLocation?.id === offer.id
                           : selectedOccasion?.id === offer.id;
+                        const offerImg = offer.image || imgSrc;
                         return (
-                          <div
+                          <button
                             key={offer.id}
+                            type="button"
                             onClick={() => {
                               if (isLocation) setSelectedLocationId(offer.id);
                               else setSelectedOccasionId(offer.id);
                             }}
                             style={{
                               display: 'flex',
-                              alignItems: 'center',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
                               justifyContent: 'space-between',
-                              gap: 8,
-                              padding: '8px 10px',
-                              borderRadius: 12,
-                              background: isPicked ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
-                              border: isPicked ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                              gap: 6,
+                              padding: '8px',
+                              borderRadius: 14,
+                              aspectRatio: '1 / 1',
+                              background: isPicked ? 'rgba(23, 64, 44, 0.06)' : '#ffffff',
+                              border: isPicked ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.12)',
+                              textAlign: 'left',
                               cursor: 'pointer',
+                              minWidth: 0,
+                              overflow: 'hidden',
                             }}
                           >
-                            <div style={{ minWidth: 0 }}>
-                              <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
-                                {offer.ownerName}
-                              </b>
-                              <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
-                                {offer.condition || 'Bon état'}
-                                {offer.priceEur !== null ? ` · ${offer.priceEur} €` : ''}
-                              </small>
-                            </div>
-                            <Link
-                              href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=${modeParam}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onClose();
-                              }}
+                            <div
                               style={{
-                                padding: '5px 10px',
-                                borderRadius: 999,
-                                background: '#17402c',
-                                color: '#fff',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                textDecoration: 'none',
+                                width: 38,
+                                height: 38,
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                background: '#f2f6f3',
                                 flex: 'none',
                               }}
                             >
-                              Voir
-                            </Link>
-                          </div>
+                              {/* eslint-disable-next-line @next/next/no-img-element -- photo offre */}
+                              <img
+                                src={offerImg}
+                                alt=""
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                              />
+                            </div>
+                            <div style={{ width: '100%', minWidth: 0 }}>
+                              <b
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.72rem',
+                                  lineHeight: 1.2,
+                                  color: '#172b24',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {offer.ownerName}
+                              </b>
+                              <small
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.68rem',
+                                  color: '#17402c',
+                                  fontWeight: 700,
+                                  marginTop: 2,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {offer.priceEur !== null
+                                  ? isLocation
+                                    ? `${offer.priceEur} € / j`
+                                    : `${offer.priceEur} €`
+                                  : offer.condition || 'Bon état'}
+                              </small>
+                            </div>
+                          </button>
                         );
                       })}
                     </div>
