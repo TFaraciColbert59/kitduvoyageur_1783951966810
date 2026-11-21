@@ -48,6 +48,8 @@ const BudgetDrawerTools = dynamic(() => import('./BudgetDrawerTools').then((m) =
 const FieldReportForm = dynamic(() => import('./FieldReportForm').then((m) => m.FieldReportForm), { ssr: false });
 const TripLifecycleBar = dynamic(() => import('./TripLifecycleBar').then((m) => m.TripLifecycleBar), { ssr: false });
 const SafetyContactsPanel = dynamic(() => import('./SafetyContactsPanel').then((m) => m.SafetyContactsPanel), { ssr: false });
+const PaperasseQuickAdd = dynamic(() => import('./PaperasseQuickAdd').then((m) => m.PaperasseQuickAdd), { ssr: false });
+const OfficialAlertsPanel = dynamic(() => import('./OfficialAlertsPanel').then((m) => m.OfficialAlertsPanel), { ssr: false });
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
   ssr: false, loading: () => <p className={styles.mapStatus} role="status">Chargement de la carte</p>,
@@ -129,6 +131,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const [carnet, setCarnet] = useState(data.carnet);
   const [savedSteps, setSavedSteps] = useState<Record<string, StepExecution>>({});
   const [addedExpenses, setAddedExpenses] = useState<CockpitExpense[]>([]);
+  const [addedDocuments, setAddedDocuments] = useState<NonNullable<CockpitData['documents']>>([]);
   const [kitOverrides, setKitOverrides] = useState<Record<string, boolean>>({});
   const [groupPage, setGroupPage] = useState(0);
   const [mapPack, setMapPack] = useState<OfflineMapPack | null>(null);
@@ -509,6 +512,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             </div>
           )}
           {forecast?.days.length ? <div className={styles.rows}>{weatherDays()}</div> : <Status>Prévisions journalières indisponibles.</Status>}
+          {!fixture && isOnline && <OfficialAlertsPanel point={data.weatherPoint} />}
         </>;
       }
       case 'budget': {
@@ -708,18 +712,24 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           ))}</ul>}
           {!fixture && data.kitId && <Action href="/hub/kit-voyage">Gérer le kit</Action>}
         </>;
-      case 'paperasse':
+      case 'paperasse': {
+        const allDocs = data.documents ? [...addedDocuments, ...data.documents] : null;
         return <>
           {reservations.length ? <div className={styles.rows}>{reservationRows()}</div>
             : <Status>{data.reservations === null ? (data.canEdit ? 'Réservations momentanément indisponibles.' : 'Accès aux réservations limité.') : 'Aucune réservation à traiter.'}</Status>}
-          {!!data.documents?.length && <div className={styles.rows}>{data.documents.map((document) => {
+          {!!allDocs?.length && <div className={styles.rows}>{allDocs.map((document) => {
             const expiry = evaluateDocumentExpiry(document.expiration, activeDateIso);
             return <Pill key={document.id} itemId={`doc-${document.id}`} title={document.title}
               meta={expiry.health === 'no_expiry' ? dateLabel(document.expiration) : expiry.label}
               onClick={(element) => go({ widget: 'paperasse', detail: `doc-${document.id}` }, element)} />;
           })}</div>}
+          {!fixture && data.canEdit && data.trip && (
+            <PaperasseQuickAdd tripId={data.key} isOnline={isOnline}
+              onAdded={(doc) => setAddedDocuments((prev) => [doc, ...prev])} />
+          )}
           {!fixture && data.documents !== null && <Action href="/hub/documents">Gérer les documents</Action>}
         </>;
+      }
       case 'groupe': {
         const clampedPage = Math.min(groupPage, Math.max(0, memberChunks.length - 1));
         const visibleMembers = memberChunks[clampedPage] ?? [];

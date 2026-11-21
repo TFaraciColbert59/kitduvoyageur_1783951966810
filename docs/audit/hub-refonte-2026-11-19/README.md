@@ -742,3 +742,21 @@ branchées sur PostgreSQL dans les tiroirs :
   - **Recette WebKit collectif 50 membres (`verify-hub-50-members.cjs`) · PASS** :
     50 membres réels en base affichés en 17 blocs glissants de 3 avec navigation
     `Suivants` / `Précédents` fluide sur iPhone 14.
+- **Décisions produit & connecteurs officiels sans clé (P00-02, P03-19, P03-20, P04, P07-15/33/45).**
+  - **P00-02** : décision explicite de Tony de conserver le projet Supabase
+    hébergé unique (sans création de projet Preview), tout en maintenant toutes
+    les écritures et recettes sur la VM locale isolée (`127.0.0.1:38423` / `5437`).
+  - **P03-19 & P03-20** : branchement en direct sur les flux publics officiels
+    sans clé API via `/api/hub/official-alerts` (`officialAlertsServer.ts`,
+    `OfficialAlertsPanel.tsx` dans le tiroir Météo) : **MeteoAlarm CAP 1.2**
+    (alertes officielles Météo-France / EUMETNET, CC BY 4.0) et **NASA EONET v3**
+    (feux actifs officiels filtrés par distance haversine autour du voyage).
+    Tests unitaires (`official-alerts.test.ts`) et appel HTTP réel verts.
+  - **P04** : décision validée par Tony de suivre la recommandation technique
+    mesurée : le noyau TypeScript sur TypedArrays (`geoKernelContract.ts`,
+    100 000 points en 1,126 ms p50 / 2,432 ms p95 < 16,7 ms) est retenu sans
+    introduire de chaîne de compilation Rust/WASM.
+  - **P03-08..10 / P07-15 / P07-33 / P07-45** : `corridorPoiActions.ts`
+    (requête `geo_pois` eau/abris/campings avec caveat OSM), `storySummary.ts`
+    (export récit sans notes internes éditeur) et `PaperasseQuickAdd.tsx`
+    (ajout rapide de confirmation/billet persisté dans `trip_documents`).
