@@ -227,7 +227,7 @@ export function CarnetCommunityCreateBridge({
     if (activeTab === 'voice') return ['Enregistrement', 'Lieu & Note'];
     if (activeTab === 'meet') return ['Voyageur', 'Lieu & Échange'];
     if (activeTab === 'species') return ['Espèce'];
-    if (activeTab === 'inc') return ['Lieu', 'Description'];
+    if (activeTab === 'inc') return ['Incident'];
     return [];
   }, [activeTab]);
 
@@ -620,9 +620,6 @@ export function CarnetCommunityCreateBridge({
         <div key="inc-s0" className="lkdv-cv2c-pane">
           {incPreview}
           <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
-        </div>,
-        <div key="inc-s1" className="lkdv-cv2c-pane">
-          {incPreview}
           <div className="lkdv-cv2-field">
             <span className="lkdv-cv2-field-label">Ce qui s’est passé</span>
             <textarea
