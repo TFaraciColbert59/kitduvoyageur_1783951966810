@@ -983,7 +983,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
 
         {sharePanelOpen ? (
           <div
-            className="lkdv-feed-panel-surface"
+            className="lkdv-feed-panel-surface lkdv-carnet-share-overlay"
             style={{
               position: 'absolute',
               inset: 10,
@@ -992,10 +992,37 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
+              background: 'rgba(247, 250, 247, 0.96)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              color: '#111827',
+              paddingTop: 48,
             }}
             role="dialog"
             aria-label="Partager ce carnet"
           >
+            <button
+              type="button"
+              onClick={() => setSharePanelOpen(false)}
+              aria-label="Fermer le partage"
+              style={{
+                position: 'absolute',
+                top: 12,
+                left: 14,
+                zIndex: 5,
+                height: 32,
+                padding: '0 12px',
+                borderRadius: 999,
+                border: '1px solid rgba(23, 43, 36, 0.14)',
+                background: 'rgba(255, 255, 255, 0.9)',
+                color: '#172b24',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Fermer
+            </button>
             <PostSharePanel
               post={shareCarnetPost}
               user={user}

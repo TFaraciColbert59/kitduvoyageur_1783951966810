@@ -3671,6 +3671,24 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   text-overflow: ellipsis;
 }
 
+.lkdv-carnet-share-overlay .lkdv-share-conv b {
+  color: #111827 !important;
+}
+
+.lkdv-carnet-share-overlay .lkdv-share-conv small {
+  color: #56665d !important;
+}
+
+.lkdv-carnet-share-overlay .lkdv-post-panel {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.lkdv-carnet-share-overlay .lkdv-share-list {
+  padding-top: 8px;
+}
+
 .lkdv-carnet-pokedex-floating-bar {
   position: absolute;
   left: 10px;
