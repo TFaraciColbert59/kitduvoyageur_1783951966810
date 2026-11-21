@@ -480,6 +480,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       const person = data.people.find((item) => item.id === detailId);
       return person ? { title: person.name ?? 'Participant', content: <>
         <IdentityPill name={person.name ?? 'Participant'} avatarUrl={person.avatar} meta={person.role} href={fixture ? undefined : `/profil/${encodeURIComponent(person.id)}`} />
+        {person.confirmed && <p className={styles.meta}>Participation confirmée</p>}
         {!fixture && <Action href="/hub/groupe">Ouvrir le groupe</Action>}
       </> } : null;
     }

@@ -573,3 +573,9 @@ attente sont comptés à part. Le HUB affiche un état explicite si la lecture
 l’avatar lu en base et l’ouverture de la fiche ont été contrôlés. Un
 compte invité en attente n’a pas accès au rail. Le tri par progression,
 les positions consenties et les scénarios avec 50 membres restent ouverts.
+
+Pour une sortie, le chargeur ajoute les inscriptions confirmées de
+`trip_participants` aux membres déjà connus. Un collaborateur conserve
+son rôle et sa fiche indique « Participation confirmée » quand sa ligne
+l’atteste. La recette WebKit a confirmé l’affichage depuis le rail du HUB
+puis dans le sous-tiroir d’une personne inscrite en base.

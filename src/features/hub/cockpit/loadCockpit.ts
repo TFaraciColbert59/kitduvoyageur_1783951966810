@@ -68,11 +68,15 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
 
   const supabase = await createClient();
   const hasCachedViewer = data.viewer !== undefined;
-  const [session, profiles, bookings, carnets, kit, clubRouteUpdates] = await Promise.all([
+  const [session, participants, bookings, carnets, kit, clubRouteUpdates] = await Promise.all([
     hasCachedViewer
       ? Promise.resolve({ data: { user: data.viewer } })
       : supabase.auth.getUser(),
-    fetchPublicProfilesWith(supabase, cockpit.people.map(({ id }) => id)),
+    trip.user_role || trip.confirmed_participant
+      ? supabase.from('trip_participants').select('user_id,role')
+          .eq('trip_id', trip.id).eq('status', 'confirmed')
+          .order('joined_at', { ascending: true }).order('user_id')
+      : null,
     trip.permissions.canEdit
       ? listBookings(supabase as unknown as BookingStore, trip.id)
       : null,
@@ -83,12 +87,20 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
   ]);
   const viewer = session.data.user;
   const selectedCarnet = carnets.data;
-  const [moments, collaboration] = selectedCarnet ? await Promise.all([
-    readMoments(supabase, selectedCarnet.id),
-    viewer && viewer.id !== selectedCarnet.author_id
+  const people = new Map(cockpit.people.map((person) => [person.id, person]));
+  for (const participant of participants?.data ?? []) {
+    const existing = people.get(participant.user_id);
+    const role = participant.role === 'owner' || participant.role === 'organizer' ? 'Responsable' : 'Participant';
+    people.set(participant.user_id, { ...existing, id: participant.user_id,
+      name: existing?.name ?? null, role: existing?.role ?? role, confirmed: true });
+  }
+  const [profiles, moments, collaboration] = await Promise.all([
+    fetchPublicProfilesWith(supabase, [...people.keys()]),
+    selectedCarnet ? readMoments(supabase, selectedCarnet.id) : null,
+    selectedCarnet && viewer && viewer.id !== selectedCarnet.author_id
       ? supabase.rpc('is_carnet_editor', { p_carnet: selectedCarnet.id })
       : null,
-  ]) : [null, null];
+  ]);
 
   const clubRouteUpdateRows: ClubRouteUpdateRow[] = Array.isArray(clubRouteUpdates.data)
     ? (clubRouteUpdates.data as ClubRouteUpdateRow[])
@@ -103,7 +115,8 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
       adoptedRevision: row.adopted_revision,
       decisionPending: row.decision_pending,
     })),
-    people: cockpit.people.map((person) => {
+    peopleCount: cockpit.peopleCount == null ? null : Math.max(cockpit.peopleCount, people.size),
+    people: [...people.values()].map((person) => {
       const profile = profiles[person.id];
       return {
         ...person,

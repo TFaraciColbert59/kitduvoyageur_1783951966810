@@ -88,7 +88,7 @@ export interface CockpitData {
   notes: { id: string; title: string | null; content: string; day: number | null }[];
   kit: { id: string; title: string; amount: number; packed: boolean; day?: number | null }[];
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
-  people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null }[];
+  people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null; confirmed?: boolean }[];
   peopleCount: number | null;
   peopleUnavailable?: boolean;
   pending: number;
@@ -159,7 +159,7 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
   if (trip) people.set(trip.user_id, { id: trip.user_id, name: null, role: 'Responsable' });
   if (trip?.confirmed_participant) {
     const { userId } = trip.confirmed_participant;
-    people.set(userId, { id: userId, name: null, role: 'Participant' });
+    people.set(userId, { id: userId, name: null, role: 'Participant', confirmed: true });
   }
   for (const member of trip?.collaborators ?? []) {
     const role = member.user_id === trip?.user_id || member.role === 'owner' ? 'Responsable' : 'Collaborateur';
