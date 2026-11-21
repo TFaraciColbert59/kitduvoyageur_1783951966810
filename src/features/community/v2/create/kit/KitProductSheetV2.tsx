@@ -339,18 +339,9 @@ export function KitProductSheetV2({
 
   const bestMode = useMemo<ObtainMode>(() => {
     if (loanOffers.length > 0) return 'pret';
-    const candidates: Array<{ mode: ObtainMode; price: number }> = [];
-    const bestLoc = cheapestOffer(locationOffers);
-    if (bestLoc) candidates.push({ mode: 'location', price: bestLoc.priceEur ?? 999999 });
-    const bestOcc = cheapestOffer(occasionOffers);
-    if (bestOcc) candidates.push({ mode: 'occasion', price: bestOcc.priceEur ?? 999999 });
-    if (shopOffer?.inStock) {
-      candidates.push({ mode: 'achat', price: shopOffer.priceEur > 0 ? shopOffer.priceEur : 999999 });
-    }
-    if (candidates.length === 0) return 'achat';
-    candidates.sort((a, b) => a.price - b.price);
-    return candidates[0].mode;
-  }, [loanOffers.length, locationOffers, occasionOffers, shopOffer]);
+    if (shopOffer?.inStock) return 'achat';
+    return 'occasion';
+  }, [loanOffers.length, shopOffer]);
 
   useEffect(() => {
     if (!offersLoading && !userPickedMode) {
@@ -1212,7 +1203,11 @@ export function KitProductSheetV2({
                       fontWeight: 700,
                     }}
                   >
-                    Le moins cher · plus avantageux
+                    {selectedMode === 'pret'
+                      ? 'Emprunt prioritaire'
+                      : selectedMode === 'achat'
+                        ? 'Boutique LKDV · En stock'
+                        : 'Meilleure alternative'}
                   </span>
                 ) : null}
               </div>
