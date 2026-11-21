@@ -1062,9 +1062,9 @@ export function KitProductSheetV2({
             selectedMode === 'pret'
               ? Boolean(selectedLoan) && !loanSending
               : selectedMode === 'location'
-                ? true
+                ? Boolean(selectedLocation)
                 : selectedMode === 'occasion'
-                  ? true
+                  ? Boolean(selectedOccasion)
                   : Boolean(shopOffer?.inStock);
 
           const ctaText =
@@ -1075,9 +1075,7 @@ export function KitProductSheetV2({
               : selectedMode === 'location'
                 ? `Louer${selectedLocation?.priceEur != null ? ` · ${selectedLocation.priceEur} € / j` : ''}`
                 : selectedMode === 'occasion'
-                  ? selectedOccasion
-                    ? `Ajouter au panier${selectedOccasion.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
-                    : 'Voir les occasions'
+                  ? `Ajouter au panier${selectedOccasion?.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
                   : shopOffer?.inStock
                     ? `Ajouter au panier${shopOffer.priceEur > 0 ? ` · ${shopOffer.priceEur} €` : ''}`
                     : 'Indisponible en neuf';
