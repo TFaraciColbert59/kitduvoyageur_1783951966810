@@ -199,23 +199,24 @@ export function CarnetCommunityCreateBridge({
     setPostVoiceMode(next);
   }, []);
 
+  const openDetail = useCallback((req: CreateDetailRequest) => setDetail(req), []);
+  const closeDetail = useCallback(() => setDetail(null), []);
+  const reportCreated = useCallback(() => {
+    toast.success('Publié avec succès');
+    onCreated();
+  }, [onCreated]);
+  const noop = useCallback(() => {}, []);
+
   const contextValue = useMemo<CreateSheetContextValue>(
     () => ({
       user,
-      activeKind: activeTab === 'story' ? 'story' : 'post',
-      openDetail: (req) => setDetail(req),
-      closeDetail: () => setDetail(null),
-      reportCreated: () => {
-        toast.success('Publié avec succès');
-        onCreated();
-      },
-      requestCreate: () => {},
-      requireAuth: () => {},
-      registerDirty: () => () => {},
-      registerFlush: () => () => {},
-      setPreviewCollapsed: () => {},
+      requireAuth: noop,
+      reportCreated,
+      openDetail,
+      closeDetail,
+      requestCreate: noop,
     }),
-    [activeTab, onCreated, user],
+    [closeDetail, noop, openDetail, reportCreated, user],
   );
 
   const activeCommunityKind: CreateKindV2 | null =
@@ -954,16 +955,23 @@ export function CarnetCommunityCreateBridge({
           <motion.div
             layout
             className="lkdv-cv2c-footbar-row lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact"
+            transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
           >
             <AnimatePresence initial={false} mode="popLayout">
               {activeNav.canBack ? (
                 <motion.button
                   key="back"
+                  layout
                   type="button"
                   className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
                   aria-label="Retour"
                   onClick={activeNav.goBack}
                   disabled={activeNav.busy || momentBusy}
+                  initial={{ opacity: 0, x: 34, scale: 0.6 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 34, scale: 0.6 }}
+                  transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ position: 'relative', zIndex: 1 }}
                 >
                   <ChevronLeft size={16} aria-hidden="true" />
                 </motion.button>
@@ -971,6 +979,7 @@ export function CarnetCommunityCreateBridge({
             </AnimatePresence>
             <motion.button
               key="next"
+              layout="position"
               type="button"
               className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
               onClick={() => {
@@ -981,6 +990,8 @@ export function CarnetCommunityCreateBridge({
                 activeNav.goNext();
               }}
               disabled={activeNav.busy || momentBusy || !user}
+              transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: 'relative', zIndex: 2 }}
             >
               {momentBusy || activeNav.busy
                 ? 'Envoi…'
