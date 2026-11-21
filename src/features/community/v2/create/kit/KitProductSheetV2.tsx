@@ -650,7 +650,7 @@ export function KitProductSheetV2({
             onExpand={() => setPreviewCollapsed(false)}
             title={product.name}
             subtitle={`${fmtItem(weightG)} · ${singleHeroBadge}`}
-            avatarUrl={imgSrc}
+            avatarUrl={activeHeroImg}
           >
             <div className="lkdv-cv2c-ps-hero" data-zoomed={zoomed || undefined}>
               {heroPanel === 'occasion' || heroPanel === 'location' ? (() => {
@@ -1213,26 +1213,26 @@ export function KitProductSheetV2({
                   ? 'Occasion communauté'
                   : 'Achat neuf';
 
-          const specs: Array<{ label: string; value: string; uppercase?: boolean; trustScore?: number | null }> =
+          const specs: Array<{ label: string; value: string; uppercase?: boolean; trustScore?: number | null; href?: string | null }> =
             selectedMode === 'pret'
               ? [
                   { label: 'Coût', value: 'Gratuit (0 €)' },
                   { label: 'Casse / perte', value: `${loanBreakageEuro} €` },
-                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur', trustScore: selectedLoan?.ownerTrustScore ?? null },
+                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur', trustScore: selectedLoan?.ownerTrustScore ?? null, href: selectedLoan?.ownerId ? `/profil/${selectedLoan.ownerId}` : null },
                   { label: 'État', value: selectedLoan?.condition ?? 'Bon état', uppercase: true },
                 ]
               : selectedMode === 'location'
                 ? [
                     { label: 'Tarif', value: selectedLocation?.priceEur != null ? `${selectedLocation.priceEur} € / j` : 'Sur demande' },
                     { label: 'État', value: selectedLocation?.condition ?? 'Bon état', uppercase: true },
-                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté', trustScore: selectedLocation?.ownerTrustScore ?? null },
+                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté', trustScore: selectedLocation?.ownerTrustScore ?? null, href: selectedLocation?.ownerId ? `/profil/${selectedLocation.ownerId}` : null },
                     { label: 'Dispos', value: `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}` },
                   ]
                 : selectedMode === 'occasion'
                   ? [
                       { label: 'Prix', value: selectedOccasion?.priceEur != null ? `${selectedOccasion.priceEur} €` : 'À négocier' },
                       { label: 'État', value: selectedOccasion?.condition ?? 'Bon état', uppercase: true },
-                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté', trustScore: selectedOccasion?.ownerTrustScore ?? null },
+                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté', trustScore: selectedOccasion?.ownerTrustScore ?? null, href: selectedOccasion?.ownerId ? `/profil/${selectedOccasion.ownerId}` : null },
                       { label: 'Dispos', value: `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}` },
                     ]
                   : [
@@ -1347,56 +1347,67 @@ export function KitProductSheetV2({
                   gap: 6,
                 }}
               >
-                {specs.map((spec) => (
-                  <div
-                    key={spec.label}
-                    style={{
-                      padding: '6px 9px',
-                      borderRadius: 10,
-                      background: '#f8faf8',
-                      border: '1px solid rgba(23, 64, 44, 0.08)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 1,
-                    }}
-                  >
-                    <small style={{ fontSize: '0.66rem', color: '#64748b' }}>{spec.label}</small>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-                      <b
-                        style={{
-                          fontSize: '0.76rem',
-                          color: '#172b24',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          textTransform: spec.uppercase ? 'uppercase' : undefined,
-                        }}
-                      >
-                        {spec.value}
-                      </b>
-                      {spec.trustScore != null ? (
-                        <span
+                {specs.map((spec) => {
+                  const inner = (
+                    <>
+                      <small style={{ fontSize: '0.66rem', color: '#64748b' }}>{spec.label}</small>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                        <b
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            padding: '1px 6px',
-                            borderRadius: 999,
-                            background: 'rgba(22, 163, 74, 0.12)',
-                            color: '#15803d',
-                            fontSize: '0.64rem',
-                            fontWeight: 700,
-                            flex: 'none',
+                            fontSize: '0.76rem',
+                            color: '#172b24',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            textTransform: spec.uppercase ? 'uppercase' : undefined,
                           }}
-                          title="Score de confiance"
                         >
-                          <ShieldCheck size={10} aria-hidden="true" />
-                          {spec.trustScore}
-                        </span>
-                      ) : null}
+                          {spec.value}
+                        </b>
+                        {spec.trustScore != null ? (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              padding: '1px 6px',
+                              borderRadius: 999,
+                              background: 'rgba(22, 163, 74, 0.12)',
+                              color: '#15803d',
+                              fontSize: '0.64rem',
+                              fontWeight: 700,
+                              flex: 'none',
+                            }}
+                            title="Score de confiance"
+                          >
+                            <ShieldCheck size={10} aria-hidden="true" />
+                            {spec.trustScore}
+                          </span>
+                        ) : null}
+                        {spec.href ? <ChevronRight size={12} color="#64748b" style={{ marginLeft: 'auto', flex: 'none' }} aria-hidden="true" /> : null}
+                      </div>
+                    </>
+                  );
+                  const boxStyle = {
+                    padding: '6px 9px',
+                    borderRadius: 10,
+                    background: '#f8faf8',
+                    border: '1px solid rgba(23, 64, 44, 0.08)',
+                    display: 'flex',
+                    flexDirection: 'column' as const,
+                    gap: 1,
+                    textDecoration: 'none',
+                  };
+                  return spec.href ? (
+                    <Link key={spec.label} href={spec.href} onClick={onClose} style={boxStyle}>
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div key={spec.label} style={boxStyle}>
+                      {inner}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <button
