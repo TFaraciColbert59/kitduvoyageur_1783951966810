@@ -38,6 +38,7 @@ export interface CarnetTopBarV2Props {
   onOpenSettings: () => void;
   onOpenNotifications?: () => void;
   onCreateMoment?: () => void;
+  onCreateEditorial?: () => void;
   onToggleOutdoor?: () => void;
   isOutdoor?: boolean;
   /** Réduction manuelle des animations de la fiche (popover Affichage). */
@@ -67,6 +68,7 @@ export function CarnetTopBarV2({
   onOpenSettings,
   onOpenNotifications,
   onCreateMoment,
+  onCreateEditorial,
   onShare,
   onReport,
   onCopyLink,
@@ -229,9 +231,20 @@ export function CarnetTopBarV2({
             type="button"
             className="lkdv-gbtn"
             onClick={onCreateMoment}
-            aria-label="Ajouter un moment"
+            aria-label="Ajouter une dépense ou un objet du kit"
           >
             <Plus size={18} />
+          </button>
+        ) : null}
+
+        {isParticipant && onCreateEditorial ? (
+          <button
+            type="button"
+            className="lkdv-gbtn"
+            onClick={onCreateEditorial}
+            aria-label="Créer une publication, story, vocal, rencontre, espèce ou incident"
+          >
+            <Pencil size={16} />
           </button>
         ) : null}
 

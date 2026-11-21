@@ -87,6 +87,13 @@ const PostSharePanel = dynamic(
     })),
   { ssr: false }
 );
+const CarnetLogCreateSheet = dynamic(
+  () =>
+    import('./CarnetLogCreateSheet').then((m) => ({
+      default: m.CarnetLogCreateSheet,
+    })),
+  { ssr: false }
+);
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -931,7 +938,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             setDrawerOpen(true);
           }}
           onOpenNotifications={() => setNotificationsOpen(true)}
-          onCreateMoment={() => openCreate()}
+          onCreateMoment={() => setCreateSheet({ type: 'spend' })}
+          onCreateEditorial={() => setCreateSheet({ type: 'photo' })}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
           reduceMotion={reduceMotion}
@@ -1318,24 +1326,38 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         />
       ) : null}
 
-      {/* Feuille « Créer » (mode modification, participant) */}
+      {/* Feuille « Créer » (séparée : Dépense/Kit via '+', Publication/Story/Vocal/Rencontre/Espèce/Incident via crayon) */}
       {createSheet && isParticipant ? (
-        <CarnetCreateSheet
-          day={createDay}
-          defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
-          kitItems={detail.kit.items}
-          initialType={createSheet.type}
-          initialSpeciesName={createSheet.speciesName}
-          initialSpeciesLatin={createSheet.speciesLatin}
-          discoveredSpecies={discoveredSpecies}
-          nearbyLat={detail.place?.lat ?? detail.nights?.[0]?.lat ?? null}
-          nearbyLng={detail.place?.lng ?? detail.nights?.[0]?.lng ?? null}
-          onSubmit={async (input, file) => {
-            if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
-            return edits.createMoment(input, file);
-          }}
-          onClose={() => setCreateSheet(null)}
-        />
+        createSheet.type === 'spend' || createSheet.type === 'kit' ? (
+          <CarnetLogCreateSheet
+            initialTab={createSheet.type}
+            day={createDay}
+            defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
+            kitItems={detail.kit.items}
+            onSubmit={async (input, file) => {
+              if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
+              return edits.createMoment(input, file);
+            }}
+            onClose={() => setCreateSheet(null)}
+          />
+        ) : (
+          <CarnetCreateSheet
+            day={createDay}
+            defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
+            kitItems={detail.kit.items}
+            initialType={createSheet.type ?? 'photo'}
+            initialSpeciesName={createSheet.speciesName}
+            initialSpeciesLatin={createSheet.speciesLatin}
+            discoveredSpecies={discoveredSpecies}
+            nearbyLat={detail.place?.lat ?? detail.nights?.[0]?.lat ?? null}
+            nearbyLng={detail.place?.lng ?? detail.nights?.[0]?.lng ?? null}
+            onSubmit={async (input, file) => {
+              if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
+              return edits.createMoment(input, file);
+            }}
+            onClose={() => setCreateSheet(null)}
+          />
+        )
       ) : null}
 
       {/* Feuille d'édition : étape, nuit, verdict, voyageur, texte d'un moment */}
