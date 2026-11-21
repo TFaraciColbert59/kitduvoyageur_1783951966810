@@ -727,3 +727,18 @@ branchées sur PostgreSQL dans les tiroirs :
     exercé en transaction. **Vitest · PASS** : 14 fichiers, 67 assertions.
   - **WebKit mobile authentifié · PASS** : `verify-hub-field-report.cjs` et
     `verify-hub-lifecycle-safety.cjs` verts sur `127.0.0.1:4103/hub`.
+- **P01-14 / P02-01 / P02-06 / P02-14 / P04 / P06-02..03 / P07-21 / P07-48 /
+  P08-03 / P08-06 / P09-01 · Contrats noyau et matrice de recette.**
+  - `normalization.ts` (IANA, dates civiles, ISO-4217, centimes, km/m),
+    `adventureRef.ts` (`sortie`/`collectif`/`activite_libre` + `SharedMutationEnvelope`),
+    `geoKernelContract.ts` (ABI TypedArray `Float64Array`/`Float32Array`,
+    anti-méridien, trous d’altitude, projection avec ambiguïté),
+    `hubObservability.ts` (télémétrie par domaine sans PII + propositions
+    réversibles `apply`/`revert`).
+  - **Vitest · PASS** : **15 fichiers, 71 assertions** vertes.
+  - **Recette WebKit matrice multi-durées (`verify-hub-matrix-durations-50.cjs`) · PASS** :
+    sorties de **2 h (1 j)**, **2 j** et **30 j** rendues avec 8 widgets, zéro
+    débordement horizontal, pastille `J30` et fermeture clavier `Escape`.
+  - **Recette WebKit collectif 50 membres (`verify-hub-50-members.cjs`) · PASS** :
+    50 membres réels en base affichés en 17 blocs glissants de 3 avec navigation
+    `Suivants` / `Précédents` fluide sur iPhone 14.
