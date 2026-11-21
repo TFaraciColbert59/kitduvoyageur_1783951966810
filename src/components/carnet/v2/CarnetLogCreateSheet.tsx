@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { Backpack, ChevronLeft, ChevronRight, Euro } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Backpack, ChevronLeft, ChevronRight, Euro, Search } from 'lucide-react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -9,11 +9,9 @@ import '@/styles/communaute-v2.css';
 import '@/styles/communaute-v2-shell.css';
 import '@/features/community/v2/create/create-v2.css';
 import { CommunitySheetShell } from '@/features/community/v2/shared/CommunitySheetShell';
-import {
-  MOMENT_EXPENSE_CATEGORIES,
-} from '@/features/carnet/detail/momentTypes';
+import { MOMENT_EXPENSE_CATEGORIES } from '@/features/carnet/detail/momentTypes';
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
-import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
+import type { CarnetKitItemRow, CarnetParticipant } from '@/features/carnet/detail/types';
 import { CarnetPlaceSearchField } from './CarnetPlaceSearchField';
 
 export type CarnetLogTabId = 'spend' | 'kit';
@@ -23,6 +21,8 @@ export interface CarnetLogCreateSheetProps {
   day: number;
   defaultPlace?: string;
   kitItems: CarnetKitItemRow[];
+  participants?: CarnetParticipant[];
+  onKitItemAdded?: (item: CarnetKitItemRow) => void;
   onSubmit: (input: unknown, file: File | null) => Promise<CreateMomentResult>;
   onClose: () => void;
 }
@@ -37,13 +37,17 @@ const LOG_TABS: ReadonlyArray<{
 ];
 
 /**
- * Tiroir « Dépense / Objet du kit » dans la coque CommunitySheetShell (style unifié avec les autres drawers).
+ * Tiroir « Dépense / Objet du kit » dans la coque CommunitySheetShell.
+ * Pour « Objet du kit », permet d'ajouter un produit acheté/ajouté en cours de route
+ * dans le kit d'un participant, de l'afficher dans la timeline ET de l'imputer au budget.
  */
 export function CarnetLogCreateSheet({
   initialTab = 'spend',
   day,
   defaultPlace = '',
   kitItems,
+  participants = [],
+  onKitItemAdded,
   onSubmit,
   onClose,
 }: CarnetLogCreateSheetProps) {
@@ -53,13 +57,61 @@ export function CarnetLogCreateSheet({
   const [stepIndex, setStepIndex] = useState(0);
   const activeTab: CarnetLogTabId = LOG_TABS[tabIndex]?.id ?? 'spend';
 
+  // Dépense
   const [place, setPlace] = useState(defaultPlace);
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string>(MOMENT_EXPENSE_CATEGORIES[0]);
   const [spendNote, setSpendNote] = useState('');
-  const [itemId, setItemId] = useState(kitItems[0]?.id ?? '');
+
+  // Objet du kit en cours de route (couplé au budget)
+  const [kitParticipantId, setKitParticipantId] = useState<string>(
+    () =>
+      participants.find((p) => p.userId === user?.id)?.userId ??
+      participants[0]?.userId ??
+      'self',
+  );
+  const [kitProductName, setKitProductName] = useState('');
+  const [kitSelectedId, setKitSelectedId] = useState<string>('');
+  const [kitPrice, setKitPrice] = useState('');
+  const [kitWeight, setKitWeight] = useState('');
+  const [kitSuggestions, setKitSuggestions] = useState<
+    Array<{ id: string; label: string; sublabel: string }>
+  >([]);
+  const [kitDropdownOpen, setKitDropdownOpen] = useState(false);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'kit' || !kitDropdownOpen) return;
+    const q = kitProductName.trim();
+    if (q.length < 2) {
+      setKitSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      fetch(`/api/materiel/search?q=${encodeURIComponent(q)}`)
+        .then((res) => res.json())
+        .then((data: { results?: Array<{ id: string; type: string; label: string; sublabel: string }> }) => {
+          if (!cancelled && Array.isArray(data.results)) {
+            setKitSuggestions(
+              data.results
+                .filter((r) => r.type === 'item')
+                .map((r) => ({ id: r.id, label: r.label, sublabel: r.sublabel })),
+            );
+          }
+        })
+        .catch(() => {});
+    }, 220);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [activeTab, kitDropdownOpen, kitProductName]);
+
+  const selectedParticipant =
+    participants.find((p) => p.userId === kitParticipantId) ?? participants[0] ?? null;
 
   const submit = async () => {
     if (busy) return;
@@ -92,39 +144,85 @@ export function CarnetLogCreateSheet({
       return;
     }
 
-    const selected = kitItems.find((i) => i.id === itemId);
-    if (!selected) {
-      setError('Aucun objet du kit disponible à associer.');
+    const trimmedProduct = kitProductName.trim();
+    if (!trimmedProduct) {
+      setError('Indique le nom du produit ajouté au kit.');
       return;
     }
+    const parsedPrice = kitPrice.trim() ? Number(kitPrice.replace(',', '.')) : 0;
+    if (kitPrice.trim() && (!Number.isFinite(parsedPrice) || parsedPrice < 0)) {
+      setError('Indique un prix valide.');
+      return;
+    }
+    const parsedWeight = kitWeight.trim() ? Number(kitWeight.replace(',', '.')) : 0;
+    const itemId = kitSelectedId || `kit-route-${Date.now()}`;
+    const ownerLabel = selectedParticipant?.name ? ` · Kit de ${selectedParticipant.name}` : '';
+    const priceLabel = parsedPrice > 0 ? ` · ${parsedPrice % 1 === 0 ? parsedPrice.toFixed(0) : parsedPrice.toFixed(2).replace('.', ',')} €` : '';
+
     setBusy(true);
     setError(null);
-    const res = await onSubmit(
+
+    const kitRes = await onSubmit(
       {
         type: 'kit',
         day,
         place,
-        itemId: selected.id,
-        caption: selected.name,
+        itemId,
+        caption: `${trimmedProduct}${ownerLabel}${priceLabel}`,
       },
       null,
     );
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
+    if (!kitRes.ok) {
+      setBusy(false);
+      setError(kitRes.error);
       return;
     }
-    toast('Objet du kit ajouté au carnet', 'success');
+
+    onKitItemAdded?.({
+      id: itemId,
+      name: trimmedProduct,
+      detail: selectedParticipant?.name ? `Ajouté en route · ${selectedParticipant.name}` : 'Ajouté en route',
+      weightG: Number.isFinite(parsedWeight) && parsedWeight > 0 ? Math.round(parsedWeight) : null,
+      color: null,
+      category: 'Matériel',
+      verdict: null,
+    });
+
+    if (parsedPrice > 0) {
+      await onSubmit(
+        {
+          type: 'spend',
+          day,
+          place,
+          amountEur: parsedPrice,
+          category: 'Matériel',
+          caption: `${trimmedProduct}${ownerLabel}`,
+        },
+        null,
+      );
+    }
+
+    setBusy(false);
+    toast(
+      parsedPrice > 0
+        ? 'Produit ajouté au kit, timeline et budget'
+        : 'Produit ajouté au kit et à la timeline',
+      'success',
+    );
     onClose();
   };
-
-  const selectedKitItem = kitItems.find((i) => i.id === itemId) ?? null;
 
   const parsedAmount = Number(amount.replace(',', '.'));
   const formattedAmount =
     amount.trim() && Number.isFinite(parsedAmount)
       ? `${parsedAmount % 1 === 0 ? parsedAmount.toFixed(0) : parsedAmount.toFixed(2).replace('.', ',')} €`
       : '0 €';
+
+  const parsedKitPrice = Number(kitPrice.replace(',', '.'));
+  const formattedKitPrice =
+    kitPrice.trim() && Number.isFinite(parsedKitPrice) && parsedKitPrice > 0
+      ? `${parsedKitPrice % 1 === 0 ? parsedKitPrice.toFixed(0) : parsedKitPrice.toFixed(2).replace('.', ',')} €`
+      : null;
 
   const spendPreview = (
     <div
@@ -242,7 +340,7 @@ export function CarnetLogCreateSheet({
           }}
         >
           <Backpack size={12} aria-hidden="true" />
-          <span>Équipement</span>
+          <span>{selectedParticipant ? `Kit · ${selectedParticipant.name}` : 'Équipement'}</span>
         </span>
         <span
           style={{
@@ -269,7 +367,7 @@ export function CarnetLogCreateSheet({
               whiteSpace: 'nowrap',
             }}
           >
-            {selectedKitItem?.name ?? 'Aucun objet'}
+            {kitProductName.trim() || 'Nouveau produit…'}
           </div>
           <div
             style={{
@@ -281,27 +379,29 @@ export function CarnetLogCreateSheet({
               whiteSpace: 'nowrap',
             }}
           >
-            {place.trim() || `Utilisé à J${day}`}
+            {place.trim() || `Ajouté à J${day}`}
+            {kitWeight.trim() ? ` · ${kitWeight.trim()} g` : ''}
           </div>
         </div>
-        {selectedKitItem?.weightG ? (
+        {formattedKitPrice ? (
           <div
             style={{
-              fontSize: 16,
-              fontWeight: 700,
+              fontSize: 20,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
               fontVariantNumeric: 'tabular-nums',
               color: '#1b4332',
               flexShrink: 0,
             }}
           >
-            {selectedKitItem.weightG} g
+            {formattedKitPrice}
           </div>
         ) : null}
       </div>
     </div>
   );
 
-  const stepLabels = activeTab === 'spend' ? ['Montant', 'Lieu & Libellé'] : ['Équipement', 'Lieu'];
+  const stepLabels = activeTab === 'spend' ? ['Montant', 'Lieu & Libellé'] : ['Produit & Kit', 'Lieu'];
 
   const mini = useMemo(
     () => ({
@@ -365,25 +465,117 @@ export function CarnetLogCreateSheet({
         [
           <div key="kit-s1" className="lkdv-cv2c-pane">
             {kitPreview}
-            <div className="lkdv-cv2-field">
-              <span className="lkdv-cv2-field-label">Objet du kit</span>
-              {kitItems.length > 0 ? (
+            {participants.length > 0 ? (
+              <div className="lkdv-cv2-field">
+                <span className="lkdv-cv2-field-label">Kit du participant</span>
                 <select
                   className="lkdv-cv2-input"
-                  value={itemId}
-                  onChange={(e) => setItemId(e.target.value)}
+                  value={kitParticipantId}
+                  onChange={(e) => setKitParticipantId(e.target.value)}
                 >
-                  {kitItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
+                  {participants.map((p) => (
+                    <option key={p.userId} value={p.userId}>
+                      {p.name}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <p className="lkdv-cv2-field-hint">
-                  Aucun objet dans le kit de ce carnet pour le moment.
-                </p>
-              )}
+              </div>
+            ) : null}
+
+            <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
+              <span className="lkdv-cv2-field-label">Produit acheté / ajouté</span>
+              <div className="lkdv-carnet-pokedex-search">
+                <Search size={14} aria-hidden="true" />
+                <input
+                  type="search"
+                  value={kitProductName}
+                  maxLength={80}
+                  autoComplete="off"
+                  placeholder="Cartouche de gaz, chaussettes, bâton…"
+                  onFocus={() => setKitDropdownOpen(true)}
+                  onChange={(e) => {
+                    setKitProductName(e.target.value);
+                    setKitSelectedId('');
+                    setKitDropdownOpen(true);
+                  }}
+                />
+              </div>
+              {kitDropdownOpen && (kitSuggestions.length > 0 || kitItems.length > 0) ? (
+                <div
+                  role="listbox"
+                  aria-label="Produits existants"
+                  style={{
+                    marginTop: 6,
+                    borderRadius: 16,
+                    border: '1px solid rgba(27, 67, 50, 0.14)',
+                    background: 'rgba(255, 255, 255, 0.96)',
+                    boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
+                    overflow: 'hidden',
+                    maxHeight: 140,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {(kitSuggestions.length > 0
+                    ? kitSuggestions
+                    : kitItems.slice(0, 6).map((i) => ({ id: i.id, label: i.name, sublabel: 'Kit du carnet' }))
+                  ).map((item, idx) => (
+                    <button
+                      key={`${item.id}-${idx}`}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => {
+                        setKitProductName(item.label);
+                        setKitSelectedId(item.id);
+                        setKitDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        padding: '8px 12px',
+                        border: 0,
+                        borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
+                        background: 'transparent',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{item.label}</span>
+                      <span style={{ fontSize: 11, color: '#56665d' }}>{item.sublabel}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="lkdv-cv2c-row-2">
+              <div className="lkdv-cv2-field">
+                <span className="lkdv-cv2-field-label">Coût (€ · budget)</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="lkdv-cv2-input"
+                  value={kitPrice}
+                  maxLength={12}
+                  placeholder="25,00"
+                  onChange={(e) => setKitPrice(e.target.value)}
+                />
+              </div>
+              <div className="lkdv-cv2-field">
+                <span className="lkdv-cv2-field-label">Poids (g)</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="lkdv-cv2-input"
+                  value={kitWeight}
+                  maxLength={8}
+                  placeholder="230"
+                  onChange={(e) => setKitWeight(e.target.value)}
+                />
+              </div>
             </div>
           </div>,
           <div key="kit-s2" className="lkdv-cv2c-pane">
@@ -394,7 +586,23 @@ export function CarnetLogCreateSheet({
       ],
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeTab, stepIndex, amount, category, spendNote, place, itemId, day, kitItems],
+    [
+      activeTab,
+      stepIndex,
+      amount,
+      category,
+      spendNote,
+      place,
+      day,
+      kitItems,
+      participants,
+      kitParticipantId,
+      kitProductName,
+      kitPrice,
+      kitWeight,
+      kitDropdownOpen,
+      kitSuggestions,
+    ],
   );
 
   const panes = [
@@ -431,7 +639,7 @@ export function CarnetLogCreateSheet({
             key="next"
             type="button"
             className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-            disabled={busy || (isLastStep && activeTab === 'kit' && kitItems.length === 0)}
+            disabled={busy}
             onClick={() => {
               if (!isLastStep) {
                 setError(null);

@@ -217,6 +217,7 @@ function ensureSource(
   id: string,
   data: ReturnType<typeof tracksCollection> | ReturnType<typeof pointsCollection>
 ) {
+  if (!map.isStyleLoaded()) return;
   const source = map.getSource(id) as GeoJSONSource | undefined;
   if (source) {
     source.setData(data);
@@ -226,6 +227,7 @@ function ensureSource(
 }
 
 function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
+  if (!map.isStyleLoaded()) return;
   if (!map.getLayer(id)) create();
 }
 
@@ -720,6 +722,19 @@ export function CompteMap({
      halo vert, ligne encre), mais la donnée vient de la fiche, pas du compte. */
   useEffect(() => {
     if (!map || !ready || !isCarnet) return;
+    if (!map.isStyleLoaded()) {
+      const onStyle = () => {
+        ensureSource(
+          map,
+          'compte-carnet-trace',
+          carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
+        );
+      };
+      map.once('styledata', onStyle);
+      return () => {
+        map.off('styledata', onStyle);
+      };
+    }
     ensureSource(
       map,
       'compte-carnet-trace',
@@ -772,6 +787,19 @@ export function CompteMap({
      trace touchable : toucher la trace d'un jour change de jour. */
   useEffect(() => {
     if (!map || !ready || !isCarnet) return;
+    if (!map.isStyleLoaded()) {
+      const onStyle = () => {
+        ensureSource(
+          map,
+          'compte-carnet-trace',
+          carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
+        );
+      };
+      map.once('styledata', onStyle);
+      return () => {
+        map.off('styledata', onStyle);
+      };
+    }
     const collection = {
       type: 'FeatureCollection' as const,
       features: (dayTraces ?? []).map((trace) => ({
@@ -850,6 +878,19 @@ export function CompteMap({
 
   useEffect(() => {
     if (!map || !ready || !isCarnet) return;
+    if (!map.isStyleLoaded()) {
+      const onStyle = () => {
+        ensureSource(
+          map,
+          'compte-carnet-trace',
+          carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
+        );
+      };
+      map.once('styledata', onStyle);
+      return () => {
+        map.off('styledata', onStyle);
+      };
+    }
     const layer = 'compte-carnet-days-hit';
     if (!map.getLayer(layer)) return;
     const onClick = (event: MapLayerMouseEvent) => {
@@ -1116,6 +1157,19 @@ export function CompteMap({
 
   useEffect(() => {
     if (!map || !ready || !isCarnet) return;
+    if (!map.isStyleLoaded()) {
+      const onStyle = () => {
+        ensureSource(
+          map,
+          'compte-carnet-trace',
+          carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
+        );
+      };
+      map.once('styledata', onStyle);
+      return () => {
+        map.off('styledata', onStyle);
+      };
+    }
     for (const m of carnetMarkerRefs.current) m.remove();
     carnetMarkerRefs.current = [];
 

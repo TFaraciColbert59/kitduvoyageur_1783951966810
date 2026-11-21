@@ -1371,6 +1371,16 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             day={createDay}
             defaultPlace={detail.etapes.find((e) => e.dayNumber === createDay)?.to ?? ''}
             kitItems={detail.kit.items}
+            participants={detail.participants}
+            onKitItemAdded={(newItem) => {
+              setDetail((prev) => ({
+                ...prev,
+                kit: {
+                  ...prev.kit,
+                  items: [newItem, ...prev.kit.items],
+                },
+              }));
+            }}
             onSubmit={async (input, file) => {
               if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
               return edits.createMoment(input, file);
