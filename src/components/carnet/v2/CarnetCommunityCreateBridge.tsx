@@ -479,6 +479,67 @@ export function CarnetCommunityCreateBridge({
 
     return (
       <div className="lkdv-cv2c-pane">
+        {kind === 'voice' ? (
+          <div
+            className="lkdv-carnet-species-preview"
+            style={{ marginBottom: 4 }}
+            aria-label="Aperçu du mémo vocal"
+          >
+            <div
+              className="lkdv-carnet-species-preview-media"
+              style={{
+                background: ambiance
+                  ? 'linear-gradient(135deg, rgba(27, 67, 50, 0.16), rgba(16, 185, 129, 0.14))'
+                  : 'rgba(27, 67, 50, 0.08)',
+              }}
+            >
+              <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
+                <Mic size={24} aria-hidden="true" />
+                <span>{voice.recording?.durationLabel || (voice.state === 'recording' ? formatClock(voice.seconds) : '0:00')}</span>
+              </div>
+              <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+              {ambiance ? (
+                <span className="lkdv-carnet-species-preview-rarity">Ambiance</span>
+              ) : null}
+            </div>
+            <div className="lkdv-carnet-species-preview-body">
+              <div className="lkdv-carnet-species-preview-title">
+                <b>{momentCaptions.voice.trim() || (ambiance ? 'Son d’ambiance' : 'Mémo vocal')}</b>
+                <i>{place.trim() || `Lieu non défini · J${day}`}</i>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {kind === 'inc' ? (
+          <div
+            className="lkdv-carnet-species-preview"
+            style={{
+              marginBottom: 4,
+              borderColor: 'rgba(180, 83, 9, 0.24)',
+              background: 'rgba(254, 243, 199, 0.38)',
+            }}
+            aria-label="Aperçu de l’incident"
+          >
+            <div
+              className="lkdv-carnet-species-preview-media"
+              style={{ background: 'rgba(217, 119, 6, 0.14)' }}
+            >
+              <div className="lkdv-carnet-species-preview-empty" style={{ color: '#b45309' }}>
+                <AlertTriangle size={24} aria-hidden="true" />
+                <span>Incident</span>
+              </div>
+              <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+            </div>
+            <div className="lkdv-carnet-species-preview-body">
+              <div className="lkdv-carnet-species-preview-title">
+                <b>{momentCaptions.inc.trim() || 'Signalement terrain…'}</b>
+                <i>{place.trim() || `Lieu non défini · J${day}`}</i>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {kind === 'meet' ? (
           <div
             className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile${

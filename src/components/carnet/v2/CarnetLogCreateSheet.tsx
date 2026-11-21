@@ -116,8 +116,29 @@ export function CarnetLogCreateSheet({
     onClose();
   };
 
+  const selectedKitItem = kitItems.find((i) => i.id === itemId) ?? null;
+
   const panes = [
     <div key="spend" className="lkdv-cv2c-pane">
+      <div className="lkdv-carnet-species-preview" aria-label="Aperçu de la dépense">
+        <div
+          className="lkdv-carnet-species-preview-media"
+          style={{ background: 'rgba(27, 67, 50, 0.08)' }}
+        >
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
+            <Euro size={24} aria-hidden="true" />
+            <span>{amount.trim() ? `${amount.trim()} €` : '0,00 €'}</span>
+          </div>
+          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+        </div>
+        <div className="lkdv-carnet-species-preview-body">
+          <div className="lkdv-carnet-species-preview-title">
+            <b>{spendNote.trim() || category}</b>
+            <i>{place.trim() ? `${category} · ${place.trim()}` : category}</i>
+          </div>
+        </div>
+      </div>
+
       <CarnetPlaceSearchField
         label={`Lieu (Jour ${day})`}
         value={place}
@@ -164,6 +185,27 @@ export function CarnetLogCreateSheet({
       </div>
     </div>,
     <div key="kit" className="lkdv-cv2c-pane">
+      <div className="lkdv-carnet-species-preview" aria-label="Aperçu de l’objet du kit">
+        <div
+          className="lkdv-carnet-species-preview-media"
+          style={{ background: 'rgba(27, 67, 50, 0.08)' }}
+        >
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
+            <Backpack size={24} aria-hidden="true" />
+            <span>
+              {selectedKitItem?.weightG ? `${selectedKitItem.weightG} g` : 'Kit'}
+            </span>
+          </div>
+          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+        </div>
+        <div className="lkdv-carnet-species-preview-body">
+          <div className="lkdv-carnet-species-preview-title">
+            <b>{selectedKitItem?.name ?? 'Aucun objet'}</b>
+            <i>{place.trim() || `Utilisé à J${day}`}</i>
+          </div>
+        </div>
+      </div>
+
       <CarnetPlaceSearchField
         label={`Lieu (Jour ${day})`}
         value={place}
