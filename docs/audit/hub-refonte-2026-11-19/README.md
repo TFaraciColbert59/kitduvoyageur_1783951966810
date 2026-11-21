@@ -544,3 +544,19 @@ la réponse avec le voyage actif. La comparaison a vérifié l’égalité des
 champs communs. Ce chronométrage mesure l’API du sélecteur. Le résumé
 versionné du cockpit, la pagination des détails et le budget global du
 chargement initial restent à valider.
+
+### P07-28 / P07-29 · Heure des moments
+
+Lors de l’ajout d’un fichier dans le Carnet du HUB, le formulaire conserve
+le jour sélectionné, l’instant et le fuseau du téléphone. La ligne garde
+ces valeurs si l’ajout se termine après minuit. Pour un texte, l’instant
+est fixé à l’envoi. L’horodatage du fichier importé indique sa sélection
+dans le formulaire.
+
+**Recette.** Le test du formulaire sélectionne une photo à 23 h 59,
+passe au jour suivant et vérifie les valeurs envoyées en base. Dans
+WebKit authentifié, une note texte créée via le HUB a été lue directement
+dans PostgreSQL avec l’heure, le jour, le fuseau et l’instant attendus.
+Les 14 cas de la suite d’interface Carnet qui échouent étaient déjà en
+échec avant ce changement. L’upload photo avec stockage réel et la reprise
+du brouillon après fermeture en mode avion restent à vérifier.

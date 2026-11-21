@@ -13,6 +13,7 @@ import {
   type MomentType,
 } from '@/features/carnet/detail/momentTypes';
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
+import { momentCapture, type MomentCapture } from '@/features/carnet/detail/createMoment';
 import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
 import { useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
@@ -46,7 +47,7 @@ export interface CarnetCreateSheetProps {
   initialType?: MomentType | null;
   initialSpeciesName?: string;
   initialSpeciesLatin?: string;
-  onSubmit: (input: unknown, file: File | null) => Promise<CreateMomentResult>;
+  onSubmit: (input: unknown, file: File | null, capture?: MomentCapture) => Promise<CreateMomentResult>;
   onClose: () => void;
   embedded?: boolean;
 }
@@ -84,7 +85,8 @@ export function CarnetCreateSheet({
   const [amount, setAmount] = useState(embedded ? '' : '12');
   const [category, setCategory] = useState<string>(MOMENT_EXPENSE_CATEGORIES[0]);
   const [itemId, setItemId] = useState(kitItems[0]?.id ?? '');
-  const [file, setFile] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<{ file: File; day: number; capture: MomentCapture } | null>(null);
+  const file = attachment?.file ?? null;
   const [ambiance, setAmbiance] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -101,22 +103,28 @@ export function CarnetCreateSheet({
     [recordedUrl]
   );
 
-  const preview = useMemo(
-    () => (file && file.type.startsWith('image/') ? URL.createObjectURL(file) : null),
-    [file]
-  );
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    const url = file?.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+    setPreview(url);
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [file]);
 
   const back = () => {
     setType(null);
+    setAttachment(null);
     setMessage(null);
   };
 
   const submit = async () => {
-    if (!type || busy) return;
+    if (!type || busy || message?.ok) return;
     const selectedItem = kitItems.find((item) => item.id === itemId);
+    const visual = type === 'photo' || type === 'video' ? attachment : null;
     const input: Record<string, unknown> = {
       type,
-      day,
+      day: visual?.day ?? day,
       place,
       caption: type === 'kit' ? selectedItem?.name : main,
     };
@@ -134,14 +142,20 @@ export function CarnetCreateSheet({
 
     setBusy(true);
     setMessage(null);
-    const result = await onSubmit(input, type === 'voice' ? (voice.recording?.file ?? null) : file);
-    setBusy(false);
-    if (!result.ok) {
-      setMessage({ text: result.error, ok: false });
-      return;
+    try {
+      const result = await onSubmit(input, type === 'voice' ? (voice.recording?.file ?? null) : visual?.file ?? null,
+        visual?.capture);
+      if (!result.ok) {
+        setMessage({ text: result.error, ok: false });
+        return;
+      }
+      setMessage({ text: 'Moment ajouté.', ok: true });
+      window.setTimeout(onClose, 600);
+    } catch {
+      setMessage({ text: 'Le moment n’a pas pu être ajouté.', ok: false });
+    } finally {
+      setBusy(false);
     }
-    setMessage({ text: 'Moment ajouté.', ok: true });
-    window.setTimeout(onClose, 600);
   };
 
   if (
@@ -192,7 +206,7 @@ export function CarnetCreateSheet({
       type="button"
       className="lkdv-carnet-create-cta"
       data-testid="create-submit"
-      disabled={busy}
+      disabled={busy || message?.ok}
       onClick={() => void submit()}
     >
       Ajouter le moment
@@ -242,7 +256,10 @@ export function CarnetCreateSheet({
                 <input
                   type="file"
                   accept={type === 'photo' ? 'image/*' : 'video/*'}
-                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  onChange={(event) => {
+                    const next = event.currentTarget.files?.[0];
+                    setAttachment(next ? { file: next, day, capture: momentCapture() } : null);
+                  }}
                 />
               </Field>
               <Field label="Légende">

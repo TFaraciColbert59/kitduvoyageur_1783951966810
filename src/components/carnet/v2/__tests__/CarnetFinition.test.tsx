@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { CarnetScreenV2 } from '../CarnetScreenV2';
+import { CarnetCreateSheet } from '../CarnetCreateSheet';
+import { momentInsertRow, validateMomentInput, type MomentCapture } from '@/features/carnet/detail/createMoment';
 import { CarnetPostGrid, TILE_LONG_PRESS_MS } from '../CarnetPostGrid';
 import { buildEcrinsDetail } from '@/features/carnet/detail/fixtures/ecrinsDetail';
 
@@ -418,4 +420,44 @@ describe('À la une et pastille titre', () => {
     expect(screen.queryByText('Modifier la sélection')).toBeNull();
     vi.useRealTimers();
   });
+});
+
+it('conserve le jour et l’heure du fichier ajouté au HUB avant minuit', async () => {
+  const attached = new Date(2026, 10, 21, 23, 59);
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  vi.useFakeTimers();
+  vi.setSystemTime(attached);
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL() { return 'blob:recette'; }
+    static revokeObjectURL() {}
+  });
+  const file = new File(['photo'], 'refuge.jpg', { type: 'image/jpeg' });
+  const onSubmit = vi.fn(async (input: unknown, media: File | null, capture?: MomentCapture) => {
+    expect(media).toBe(file);
+    const value = validateMomentInput(input);
+    if (!value.ok || !capture) throw new Error('La capture devrait avoir une date');
+    const row = momentInsertRow(value.value, {
+      carnetId: 'carnet-1', userId: 'user-1', authorName: null, imageUrl: null,
+      now: capture.at, timeZone: capture.timeZone,
+    });
+    expect(row).toMatchObject({
+      jour_numero: 1, heure: '23:59', moment_timestamp: attached.toISOString(), moment_meta: { timeZone },
+    });
+    return { ok: false as const, error: 'Recette terminée.' };
+  });
+  const onClose = vi.fn();
+  try {
+    const props = { defaultPlace: 'Refuge', kitItems: [], onSubmit, onClose, embedded: true };
+    const view = render(<CarnetCreateSheet {...props} day={1} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Photo$/ }));
+    fireEvent.change(screen.getByLabelText('Image'), { target: { files: [file] } });
+    vi.setSystemTime(new Date(2026, 10, 22, 0, 2));
+    view.rerender(<CarnetCreateSheet {...props} day={2} />);
+    await act(async () => { fireEvent.click(screen.getByTestId('create-submit')); });
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('alert').textContent).toBe('Recette terminée.');
+  } finally {
+    cleanup();
+    vi.unstubAllGlobals();
+  }
 });

@@ -5,9 +5,11 @@ import { createClient } from '@/lib/supabase/client';
 import { deleteMomentAction } from './editActions';
 import { stripImageMetadata } from '@/lib/media/stripImageMetadata';
 import {
+  momentCapture,
   momentInsertRow,
   momentItemFromRow,
   validateMomentInput,
+  type MomentCapture,
   type MomentInput,
 } from './createMoment';
 import type { CarnetMomentItem } from './types';
@@ -94,11 +96,12 @@ export function useCarnetEdits({
   );
 
   const createMoment = useCallback(
-    async (input: unknown, file?: File | null): Promise<CreateMomentResult> => {
+    async (input: unknown, file?: File | null, capture?: MomentCapture): Promise<CreateMomentResult> => {
       if (!userId) return { ok: false, error: 'Connexion requise.' };
       const checked = validateMomentInput(input);
       if (!checked.ok) return checked;
       const value: MomentInput = checked.value;
+      const captured = capture ?? momentCapture();
 
       let imageUrl: string | null = null;
       let audioUrl: string | undefined;
@@ -133,7 +136,8 @@ export function useCarnetEdits({
         userId,
         authorName,
         imageUrl,
-        now: new Date(),
+        now: captured.at,
+        timeZone: captured.timeZone,
       });
 
       let result = await supabase.from('carnet_moments').insert(row).select('id').single();

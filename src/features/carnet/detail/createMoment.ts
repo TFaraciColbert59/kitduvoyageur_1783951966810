@@ -123,23 +123,35 @@ export function metaOf(value: MomentInput): MomentMeta | null {
   }
 }
 
+export interface MomentCapture {
+  at: Date;
+  timeZone: string;
+}
+
+export function momentCapture(): MomentCapture {
+  return { at: new Date(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+}
+
 export interface MomentInsertContext {
   carnetId: string;
   userId: string;
   authorName: string | null;
   imageUrl: string | null;
   now: Date;
+  timeZone?: string;
 }
 
 /** Ligne `carnet_moments` à écrire (colonnes de la v2 comprises). */
 export function momentInsertRow(value: MomentInput, ctx: MomentInsertContext) {
-  const hh = String(ctx.now.getHours()).padStart(2, '0');
-  const mm = String(ctx.now.getMinutes()).padStart(2, '0');
-  const meta = metaOf(value);
+  const clock = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: ctx.timeZone,
+  }).format(ctx.now);
+  const existingMeta = metaOf(value);
+  const meta = ctx.timeZone ? { ...existingMeta, timeZone: ctx.timeZone } : existingMeta;
   return {
     carnet_id: ctx.carnetId,
     jour_numero: value.day,
-    heure: `${hh}:${mm}`,
+    heure: clock,
     citation: value.caption ?? '',
     auteur_nom: ctx.authorName,
     auteur_id: ctx.userId,

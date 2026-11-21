@@ -80,6 +80,7 @@ export interface MomentMeta {
   itemId?: string;
   latin?: string;
   durationLabel?: string;
+  timeZone?: string;
   /** URL publique de la note vocale enregistrée (https seulement). */
   audioUrl?: string;
   /**
@@ -112,7 +113,7 @@ export function parseMomentMeta(raw: unknown): MomentMeta | null {
   if (typeof source.amountEur === 'number' && Number.isFinite(source.amountEur)) {
     meta.amountEur = source.amountEur;
   }
-  for (const key of ['category', 'who', 'itemId', 'latin', 'durationLabel'] as const) {
+  for (const key of ['category', 'who', 'itemId', 'latin', 'durationLabel', 'timeZone'] as const) {
     const value = source[key];
     if (typeof value === 'string' && value.trim()) meta[key] = value.trim().slice(0, 120);
   }
