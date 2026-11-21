@@ -122,7 +122,7 @@ export function CarnetPostSheet({
 
   const matchedPokedexEntry = useMemo<PokedexEntry | null>(() => {
     if (!moment) return null;
-    const text = `${moment.speciesName ?? ''} ${moment.speciesLatin ?? ''} ${moment.quote ?? ''} ${moment.place ?? ''}`;
+    const text = `${moment.speciesName ?? ''} ${moment.speciesLatin ?? ''} ${moment.meta?.latin ?? ''} ${moment.title ?? ''} ${moment.caption ?? ''} ${moment.quote ?? ''} ${moment.place ?? ''}`;
     const catalogMatch = ALPINE_DEX_CATALOG.find((item) => item.keywords.test(text));
     if (catalogMatch) {
       return {
@@ -132,14 +132,21 @@ export function CarnetPostSheet({
         imageUrl: moment.imageUrl ?? null,
       };
     }
+    const src = moment.source?.toLowerCase() ?? '';
     const isNatureKind =
-      moment.kind === 'espece' || moment.kind === 'nature' || Boolean(moment.speciesName);
+      moment.type === 'species' ||
+      src.includes('nature') ||
+      src.includes('species') ||
+      src.includes('pokedex') ||
+      Boolean(moment.speciesName) ||
+      Boolean(moment.speciesLatin) ||
+      Boolean(moment.meta?.latin);
     if (!isNatureKind) return null;
     return {
       dexNumber: '#DEX',
       id: `moment-${moment.id}`,
       name: moment.speciesName?.trim() || moment.place?.trim() || 'Observation naturaliste',
-      latin: moment.speciesLatin?.trim() || 'Spécimen du carnet',
+      latin: moment.speciesLatin?.trim() || moment.meta?.latin?.trim() || 'Spécimen du carnet',
       kingdom: 'faune',
       rarity: 'Peu commun',
       altitudeRange: moment.place || 'En chemin',

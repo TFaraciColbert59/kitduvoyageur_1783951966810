@@ -9,15 +9,23 @@ import {
   Moon,
   Route,
   Users,
+  Wallet,
 } from 'lucide-react';
 
 export type HorizontalTimelineKind =
   | 'moment'
   | 'pokedex'
   | 'rencontre'
+  | 'spend'
   | 'perf'
   | 'night'
   | 'meteo';
+
+export interface HorizontalTimelineUserPill {
+  name: string;
+  avatarUrl?: string | null;
+  meta?: string | null;
+}
 
 export interface HorizontalTimelineEvent {
   id: string;
@@ -28,6 +36,7 @@ export interface HorizontalTimelineEvent {
   title: string;
   subtitle?: string;
   imageUrl?: string | null;
+  userPill?: HorizontalTimelineUserPill | null;
   onClick?: () => void;
 }
 
@@ -45,6 +54,8 @@ function eventIcon(kind: HorizontalTimelineKind) {
       return <Route size={11} aria-hidden="true" />;
     case 'rencontre':
       return <Users size={11} aria-hidden="true" />;
+    case 'spend':
+      return <Wallet size={11} aria-hidden="true" />;
     case 'night':
       return <Moon size={11} aria-hidden="true" />;
     case 'meteo':
@@ -99,19 +110,43 @@ export function CarnetHorizontalTimeline({
                       <span className="lkdv-carnet-htime">{ev.timeLabel}</span>
                     </div>
                     <div className="lkdv-carnet-hcard-body">
-                      {ev.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={ev.imageUrl}
-                          alt=""
-                          loading="lazy"
-                          className="lkdv-carnet-hthumb"
-                        />
-                      ) : null}
-                      <div className="lkdv-carnet-hcard-text">
-                        <b>{ev.title}</b>
-                        {ev.subtitle ? <p>{ev.subtitle}</p> : null}
-                      </div>
+                      {ev.userPill ? (
+                        <div className="lkdv-carnet-huser-pill">
+                          {ev.userPill.avatarUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={ev.userPill.avatarUrl}
+                              alt=""
+                              loading="lazy"
+                              className="lkdv-carnet-huser-avi"
+                            />
+                          ) : (
+                            <span className="lkdv-carnet-huser-avi is-fallback" aria-hidden="true">
+                              {ev.userPill.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          <span className="lkdv-carnet-huser-info">
+                            <b>{ev.userPill.name}</b>
+                            {ev.userPill.meta ? <small>{ev.userPill.meta}</small> : null}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          {ev.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={ev.imageUrl}
+                              alt=""
+                              loading="lazy"
+                              className="lkdv-carnet-hthumb"
+                            />
+                          ) : null}
+                          <div className="lkdv-carnet-hcard-text">
+                            <b>{ev.title}</b>
+                            {ev.subtitle ? <p>{ev.subtitle}</p> : null}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </motion.button>
                 );

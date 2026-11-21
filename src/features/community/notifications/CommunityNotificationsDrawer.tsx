@@ -63,10 +63,6 @@ export function CommunityNotificationsDrawer({
   return createPortal(
     <div
       className="lkdv-communaute-v2 lkdv-cv2-layer lkdv-notif-standalone"
-      style={{ pointerEvents: 'auto' }}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
     >
       <div
         className="lkdv-cv2-wrap"
@@ -91,6 +87,7 @@ export function CommunityNotificationsDrawer({
                 tabs={tabs}
                 activeIndex={0}
                 onIndexChange={() => {}}
+                customTopNav={<></>}
                 secondary={{
                   items: NOTIFICATION_FILTERS,
                   active: filter,
@@ -114,9 +111,10 @@ export function CommunityNotificationsDrawer({
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(11, 31, 23, 0.34);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
 }
 .lkdv-notif-standalone .lkdv-cv2-wrap {
   width: min(100%, 520px);
@@ -124,6 +122,10 @@ export function CommunityNotificationsDrawer({
   display: flex;
   flex-direction: column;
   padding: 0 6px 6px;
+  pointer-events: auto;
+}
+.lkdv-notif-standalone .lkdv-drawer-topnav {
+  display: none;
 }
 .lkdv-notif-standalone .lkdv-cv2-sheet {
   position: relative;
@@ -166,7 +168,10 @@ export function CommunityNotificationsDrawer({
   height: 100%;
 }
 ${DRAWER_SHELL_CSS}
-${COMPTE_CSS}`,
+${COMPTE_CSS}
+.lkdv-notif-standalone .lkdv-drawer-topnav {
+  display: none !important;
+}`,
             }}
           />
         </div>

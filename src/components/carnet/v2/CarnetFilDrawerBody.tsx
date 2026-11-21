@@ -35,7 +35,36 @@ const SPECIES_MATCHERS: Array<{ re: RegExp; label: string }> = [
 ];
 
 function classifyMoment(m: CarnetMomentItem): { kind: HorizontalTimelineKind; badge: string } {
-  const text = `${m.quote ?? ''} ${m.place ?? ''}`;
+  const mType = m.type;
+  if (mType === 'spend' || typeof m.meta?.amountEur === 'number') {
+    return {
+      kind: 'spend',
+      badge: m.meta?.category ? `Dépense · ${m.meta.category}` : 'Dépense',
+    };
+  }
+  if (mType === 'meet') {
+    return { kind: 'rencontre', badge: 'Rencontre' };
+  }
+  if (mType === 'species') {
+    return {
+      kind: 'pokedex',
+      badge: m.speciesName ? `Pokédex · ${m.speciesName}` : 'Pokédex',
+    };
+  }
+  if (mType === 'kit') {
+    return { kind: 'moment', badge: 'Kit' };
+  }
+  if (mType === 'voice') {
+    return { kind: 'moment', badge: 'Vocal' };
+  }
+  if (mType === 'inc') {
+    return { kind: 'moment', badge: 'Incident' };
+  }
+  if (mType === 'text') {
+    return { kind: 'moment', badge: 'Note' };
+  }
+
+  const text = `${m.quote ?? ''} ${m.caption ?? ''} ${m.place ?? ''}`;
   for (const sp of SPECIES_MATCHERS) {
     if (sp.re.test(text)) {
       return { kind: 'pokedex', badge: sp.label };
@@ -47,10 +76,27 @@ function classifyMoment(m: CarnetMomentItem): { kind: HorizontalTimelineKind; ba
   ) {
     return { kind: 'pokedex', badge: 'Pokédex' };
   }
-  if (/croisé|rencontré|traileur|randonneur|refuge|échange/i.test(text)) {
+  if (/croisé|rencontré|traileur|randonneur|échange/i.test(text)) {
     return { kind: 'rencontre', badge: 'Rencontre' };
   }
   return { kind: 'moment', badge: m.imageUrl ? 'Photo' : 'Moment' };
+}
+
+function resolveMeetUserPill(m: CarnetMomentItem, detail: CarnetDetail) {
+  const whoName = (m.meta?.who || m.authorName || '').trim() || 'Voyageur rencontré';
+  const lower = whoName.toLowerCase();
+  const matchedParticipant = (detail.participants ?? []).find(
+    (p) => p.name?.trim().toLowerCase() === lower,
+  );
+  const avatarUrl =
+    matchedParticipant?.avatarUrl ??
+    (detail.author?.name?.trim().toLowerCase() === lower ? detail.author.avatarUrl : null) ??
+    null;
+  return {
+    name: whoName,
+    avatarUrl,
+    meta: m.place?.trim() || undefined,
+  };
 }
 
 export function CarnetFilDrawerBody({
@@ -103,15 +149,24 @@ export function CarnetFilDrawerBody({
 
       dayMoments.forEach((m, idx) => {
         const { kind, badge } = classifyMoment(m);
+        const isSpend = kind === 'spend';
+        const isMeet = kind === 'rencontre';
+        const amount = m.meta?.amountEur;
+        const spendTitle =
+          typeof amount === 'number'
+            ? `${amount.toLocaleString('fr-FR')} €`
+            : m.place || 'Dépense';
+        const spendSub = [m.place, m.quote || m.caption].filter(Boolean).join(' · ') || undefined;
         events.push({
           id: `m-${m.id}`,
           day,
           kind,
           badge,
           timeLabel: m.time || `J${day}`,
-          title: m.place || m.authorName || 'Sur le sentier',
-          subtitle: m.quote || undefined,
-          imageUrl: m.imageUrl,
+          title: isSpend ? spendTitle : m.place || m.authorName || 'Sur le sentier',
+          subtitle: isSpend ? spendSub : m.quote || m.caption || undefined,
+          imageUrl: isMeet || isSpend ? null : m.imageUrl,
+          userPill: isMeet ? resolveMeetUserPill(m, detail) : null,
           onClick: onSelectMoment ? () => onSelectMoment(m, idx) : undefined,
         });
       });
@@ -213,11 +268,7 @@ export function CarnetFilDrawerBody({
     const days = availableDays.length > 0 ? availableDays : [1];
     const rencontreGroups: HorizontalTimelineDayGroup[] = days.map((day) => {
       const items = detail.moments
-        .filter(
-          (m) =>
-            m.dayNumber === day &&
-            (Boolean(m.quote?.trim()) || Boolean(m.authorName?.trim())),
-        )
+        .filter((m) => m.dayNumber === day && classifyMoment(m).kind === 'rencontre')
         .slice()
         .sort((a, b) => (a.time ?? '12:00').localeCompare(b.time ?? '12:00'));
       return {
@@ -226,11 +277,12 @@ export function CarnetFilDrawerBody({
           id: `ren-${m.id}`,
           day,
           kind: 'rencontre',
-          badge: m.authorName || 'Rencontre',
+          badge: 'Rencontre',
           timeLabel: m.time || `J${day}`,
           title: m.place || 'Sur le sentier',
           subtitle: m.quote ? `« ${m.quote} »` : undefined,
-          imageUrl: m.imageUrl,
+          imageUrl: null,
+          userPill: resolveMeetUserPill(m, detail),
           onClick: onSelectMoment ? () => onSelectMoment(m, idx) : undefined,
         })),
       };
