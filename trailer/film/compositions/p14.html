@@ -1,0 +1,99 @@
+<!-- P14 (images 823–876, 53 images) — landscape-director. Triptyque img11 (Sami | Inès | Tom, bandes 0–640, 640–1280,
+     1280–1920, séparateurs sombres d'origine). Volets qui S'OUVRENT : chaque bande s'ouvre depuis son axe vertical
+     (outExpo, ~7 images) sur les demi-temps de la musique (temps = 26,3 images ; temps entiers à P14 + 1,7 et + 28,0,
+     drop 1 à l'image 325) : Sami à 0, Inès à 14,85, Tom à 28,0. Micro-mouvement propre à chaque bande (Sami : poussée ;
+     Inès : montée lente ; Tom : poussée + remontée vers le poing), toujours à l'intérieur de sa bande source (aucune bande
+     ne déborde sur sa voisine, aucun bord découvert). Volets qui se REFERMENT en sortie (inExpo, décalés de 2 images,
+     à partir de 41,15 = demi-temps), fond encre. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p14-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p14-shot, .p14-shot-inner { position: absolute; inset: 0; }
+    .p14-shot { opacity: 0; }
+    .p14-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p14-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p14" data-width="1920" data-height="1080" data-duration="0.8833333333333333">
+    <div id="p14-frame" class="p14-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p14-shot-1" class="p14-shot" data-src="img11" data-seq="0" data-seq-count="1">
+        <div id="p14-shot-1-inner" class="p14-shot-inner">
+          <img id="p14-shot-1-img" class="p14-shot-img" src="assets/footage/img11.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p14-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var W = 1920, H = 1080, INK = "#0B1F17";
+      var img = document.getElementById("p14-shot-1-img");
+      var ctx = document.getElementById("p14-canvas").getContext("2d");
+      function hand(f, amp, seed) {
+        // Tremblement de main : bruit lent + frisson rapide, à graine (fonction du temps).
+        return (FX.noise2(f * 0.09, 1.7, seed) - 0.5) * amp + (FX.noise2(f * 0.45, 5.3, seed + 7) - 0.5) * amp * 0.3;
+      }
+
+      var N = 53;
+      // Correction 1 (REVIEW P0) : les trois volets sont pleins dès la première image (cascade de 4 images
+      // amorcée avant le plan, dans la fermeture des volets de P13 côté encre) et ne se referment que sur les
+      // 8 dernières images (45 → 53). Encre ≤ 15 % du cadre hors de ces 8 images.
+      var OPEN = [-6, -5, -4], CLOSE = [45, 45.8, 46.6], OPEN_LEN = 4, CLOSE_LEN = 6.3;
+      var GAP = 4;
+      function band(i, f) {
+        var o = FX.ease.outExpo(FX.clamp((f - OPEN[i]) / OPEN_LEN, 0, 1));
+        var c = FX.ease.inExpo(FX.clamp((f - CLOSE[i]) / CLOSE_LEN, 0, 1));
+        var open = o * (1 - c);
+        var age = Math.max(f - OPEN[i], 0) / 26.3;
+        var bx = 640 * i, S, ox = 0, oy = 0;
+        var landing = 0.10 * (1 - o); // la bande arrive un peu grande et se pose
+        if (i === 0) { S = 1.07 + 0.05 * age + landing; ox = -4 * age; oy = -6 * age; }
+        else if (i === 1) { S = 1.08 + 0.02 * age + landing; oy = -22 * age; }
+        else { S = 1.07 + 0.045 * age + landing; ox = 3 * age; oy = -16 * age; }
+        ox += hand(f, 3, 161 + i * 4);
+        oy += hand(f, 3, 163 + i * 4);
+        // Bridage : la source vue reste dans la bande [bx, bx + 640] et dans l'image.
+        var hw = 320 / S, hh = 540 / S;
+        var cx = FX.clamp(bx + 320 + ox, bx + hw + 1, bx + 640 - hw - 1);
+        var cy = FX.clamp(540 + oy, hh + 1, H - hh - 1);
+        return { open: open, S: S, cx: cx, cy: cy, bx: bx };
+      }
+      var clock = FX.bindClock("p14", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = INK;
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        for (var i = 0; i < 3; i++) {
+          var b = band(i, f);
+          if (b.open <= 0.001) continue;
+          var half = (320 - GAP / 2) * b.open;
+          var mid = b.bx + 320;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(mid - half, 0, half * 2, H);
+          ctx.clip();
+          ctx.setTransform(b.S, 0, 0, b.S, mid - b.S * b.cx, 540 - b.S * b.cy);
+          ctx.drawImage(img, 0, 0, W, H);
+          ctx.restore();
+          // Lèvres des volets : liseré crème à peine marqué pendant le mouvement.
+          var moving = Math.min(b.open, 1 - b.open) * 2;
+          if (moving > 0.02) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalAlpha = 0.35 * moving;
+            ctx.fillStyle = "#FAF8F5";
+            ctx.fillRect(mid - half - 1, 0, 2, H);
+            ctx.fillRect(mid + half - 1, 0, 2, H);
+            ctx.globalAlpha = 1;
+          }
+        }
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p14"] = clock.tl;
+    })();
+  </script>
+</template>

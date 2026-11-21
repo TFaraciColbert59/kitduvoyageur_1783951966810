@@ -1,0 +1,86 @@
+<!-- P10 (images 560–614, 54 images) — landscape-director. Le rêve devient réel : drone au ras de l'eau (img09) qui
+     file vers les falaises. Parallaxe 2,5D en deux plans séparés à l'horizon de l'eau (y ≈ 588 d'img09, fondu de 46 px) :
+     l'eau grossit plus vite que les falaises (S falaises 1,08 → 1,36 ; eau jusqu'à +14 %). Légère inclinaison FPV,
+     flou de zoom qui part de celui de la fin de P09 et remonte avec la vitesse. Première image = img09 plein cadre à 1,08
+     (= dernière image de P09). Sortie en coupe sèche au plus rapide. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p10-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p10-shot, .p10-shot-inner { position: absolute; inset: 0; }
+    .p10-shot { opacity: 0; }
+    .p10-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p10-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p10" data-width="1920" data-height="1080" data-duration="0.9">
+    <div id="p10-frame" class="p10-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p10-shot-1" class="p10-shot" data-src="img09" data-seq="0" data-seq-count="1">
+        <div id="p10-shot-1-inner" class="p10-shot-inner">
+          <img id="p10-shot-1-img" class="p10-shot-img" src="assets/footage/img09.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p10-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var N = 54, W = 1920, H = 1080, HZ = 588, FEATHER = 46;
+      var img = document.getElementById("p10-shot-1-img");
+      var ctx = document.getElementById("p10-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var wat = FX.canvas(W, H), wx = wat.getContext("2d");
+      function place(c, s, cx, cy, roll, ay) {
+        // Échelle s autour du point visé (cx, cy), roulis autour du centre de l'écran ; ay = ancrage vertical
+        // (l'eau est mise à l'échelle depuis l'horizon pour rester collée aux falaises).
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.translate(W / 2, H / 2);
+        c.rotate(roll);
+        c.translate(-W / 2, -H / 2);
+        c.transform(s, 0, 0, s, W / 2 - s * cx, ay - s * cy);
+      }
+      var clock = FX.bindClock("p10", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var run = 0.55 * u + 0.45 * u * u; // vitesse qui monte jusqu'à la coupe
+        var sm = 1.08 + 0.28 * run;
+        var sw = sm * (1 + 0.14 * run);
+        var cx = 960 + 40 * run, cy = 540 - 25 * run;
+        cx = FX.clamp(cx, W / 2 / sm + 12, W - W / 2 / sm - 12);
+        cy = FX.clamp(cy, H / 2 / sm + 12, H - H / 2 / sm - 12);
+        if (f === 0) { cx = 960; cy = 540; }
+        var roll = (Math.PI / 180) * 0.7 * Math.sin(Math.PI * u) * (FX.noise2(u * 2, 4.2, 101) - 0.2);
+        // Plan lointain : falaises et rive.
+        place(bx, sm, cx, cy, roll, H / 2);
+        bx.drawImage(img, 0, 0, W, H);
+        // Plan proche : l'eau, ancrée sur l'horizon.
+        var hy = H / 2 + sm * (HZ - cy);
+        wx.setTransform(1, 0, 0, 1, 0, 0);
+        wx.clearRect(0, 0, W, H);
+        place(wx, sw, cx, HZ, roll, hy);
+        wx.drawImage(img, 0, 0, W, H);
+        wx.setTransform(1, 0, 0, 1, 0, 0);
+        var g = wx.createLinearGradient(0, hy - 6, 0, hy + FEATHER);
+        g.addColorStop(0, "rgba(0,0,0,0)");
+        g.addColorStop(1, "rgba(0,0,0,1)");
+        wx.globalCompositeOperation = "destination-in";
+        wx.fillStyle = g;
+        wx.fillRect(0, 0, W, H);
+        wx.globalCompositeOperation = "source-over";
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        bx.drawImage(wat, 0, 0);
+        // Flou de vitesse : reprend celui de la fin de P09, retombe, puis remonte avec la course.
+        var amount = 0.05 * Math.exp(-f / 4) + 0.035 * run;
+        FX.zoomBlur(ctx, buf, 960 + sm * (1000 - cx), hy, amount, 8, W, H);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p10"] = clock.tl;
+    })();
+  </script>
+</template>

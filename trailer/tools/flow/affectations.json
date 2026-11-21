@@ -1,0 +1,37 @@
+{
+ "_lisezmoi": "Décisions prises à l'œil quand l'identification automatique ne suffit pas. 'image' force l'image source (donc le plan) ; 'note' s'ajoute aux alertes. Clés = nom du fichier d'origine dans flow/clips/.",
+ "Hands_holding_green_screen_phone_ff9180f8_1080p.mp4": {
+  "image": "img43",
+  "note": "la première image ne ressemble à aucune image source (écart auto 55, img43 à 73) ; contenu de la fiche P17 (macro, pouce qui appuie sur un écran vert, manche crème, taches de rousseur) mais cadrage différent de img43 (téléphone en bas, pouce venant du haut) ; vu à l'œil : tache blanchâtre sur le vert après l'appui (dès n°32)"
+ },
+ "Hands_holding_phone_with_green_a5e92ac5_1080p.mp4": {
+  "image": "img43",
+  "note": "reprise de P17 demandée dans flow/REPRISES-1.md (déposée le 14/11 à 14:59 avec les quatre autres reprises) ; comme la première prise, la première image ne ressemble à aucune image source (écart auto 55) : Flow a encore recadré img43 ; rattachée à P17 par l'orchestrateur d'après le nom et le lot"
+ },
+ "Drone_flying_over_alpine_lake_170193d3_1080p.mp4": {
+  "note": "part de img09b (Sorapis, fiche P30) alors que le nom Flow évoque le survol en drone de la fiche P10 (img09) : probablement le prompt P10 lancé avec la mauvaise image ; P10 reste sans vidéo"
+ },
+ "Man_pulls_woman_onto_summit_608a3332_1080p.mp4": {
+  "note": "première image retouchée par Flow par rapport à img20 (ciel bleu au lieu de rose, tours plus proches) : même scène, même cadrage"
+ },
+ "Woman_using_phone_at_night_f676d63f_1080p.mp4": {
+  "note": "première image retouchée par Flow par rapport à img37 (bonnet et couverture ajoutés) : même scène, même cadrage"
+ },
+ "Woman_taking_photo_of_lake_2a9c0b5c_1080p.mp4": {
+  "note": "vu à l'œil : la hausse de surface verte vient de la poussée vers le téléphone, écran vert intact sur les 12 images"
+ },
+ "Young_man_staring_at_phone_a2e24403_1080p.mp4": {
+  "note": "vu à l'œil : la hausse de surface verte vient de la poussée, écran vert intact sur les 12 images"
+ },
+ "People_camping_beneath_Milky_Way_0bd00ac2_1080p.mp4": {
+  "note": "vu à l'œil : recul très lent sur une image très sombre (luminance 15), le campement rapetisse un peu ; « figée » vient surtout de l'obscurité"
+ },
+ "Friends_camping_under_starry_sky_7604b3b1_1080p.mp4": {
+  "note": "vu à l'œil : plan fixe en accéléré attendu (nuit qui tombe), finit sur img35b"
+ },
+ "_verifications_visuelles": [
+  "Correspondances vérifiées côte à côte (source | 1re image | 2e candidate) : p06, p07, p11, p12, p13, p17, p22, p26, p27, p28, p29, p30, p30-2, p31, p36, p41-2, p46, p47, p48, p50, p51 (21 sur 45), dont toutes les douteuses (p17, p28, p48, p50) et les paires proches img07/img43, img40/img41, img35a/img35b/img49, img19/img46, img09/img09b/img22.",
+  "Planches regardées en entier : p13, p17, p31, p46, p48, p50, p51 (lisibles, légendes et temps corrects).",
+  "Les planches dépassent la limite de 350 Ko à qualité normale (grain du film) : qualité JPEG abaissée jusqu'à 20 pour certaines, encore lisibles."
+ ]
+}

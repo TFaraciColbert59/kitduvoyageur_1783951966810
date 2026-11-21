@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0B1F17; }
+      #root { position: relative; width: 100%; height: 100%; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10.50" data-width="1920" data-height="1080">
+      <div id="pl-front" data-composition-id="pl-front" data-composition-src="compositions/pl-front.html" data-start="0.00" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-flat" data-composition-id="pl-flat" data-composition-src="compositions/pl-flat.html" data-start="1.50" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-macro" data-composition-id="pl-macro" data-composition-src="compositions/pl-macro.html" data-start="3.00" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-strap" data-composition-id="pl-strap" data-composition-src="compositions/pl-strap.html" data-start="4.50" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-front-white" data-composition-id="pl-front-white" data-composition-src="compositions/pl-front-white.html" data-start="6.00" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-img40" data-composition-id="pl-img40" data-composition-src="compositions/pl-img40.html" data-start="7.50" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+      <div id="pl-img43" data-composition-id="pl-img43" data-composition-src="compositions/pl-img43.html" data-start="9.00" data-duration="1.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,116 @@
+<!-- P08 (images 482–508, 26 images) — landscape-director. Très gros plan de l'œil (img08), un seul temps :
+     impact (coup de zoom 1,22 → 1,10 en 5 images, flou de zoom et secousse qui retombent), puis micro-poussée vers
+     la pupille (1,10 → 1,20) ; le reflet turquoise du lac (pupille, ~1012–1112 × 497–575) s'allume d'un halo doux
+     qui gonfle jusqu'à la coupe (raccord « rond de la pupille »). -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p08-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p08-shot, .p08-shot-inner { position: absolute; inset: 0; }
+    .p08-shot { opacity: 0; }
+    .p08-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p08-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p08" data-width="1920" data-height="1080" data-duration="0.43333333333333335">
+    <div id="p08-frame" class="p08-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p08-shot-1" class="p08-shot" data-src="img08" data-seq="0" data-seq-count="1">
+        <div id="p08-shot-1-inner" class="p08-shot-inner">
+          <img id="p08-shot-1-img" class="p08-shot-img" src="assets/footage/img08.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p08-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var N = 26, W = 1920, H = 1080;
+      var PX = 1062, PY = 536; // reflet dans la pupille
+      var img = document.getElementById("p08-shot-1-img");
+      var ctx = document.getElementById("p08-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      /* Corrections-2 : le reflet est la photo du lac (img09), bombée (miroir convexe de la cornée), bords doux,
+       * ~2,1× l'ancien reflet. Précalculée une fois au chargement (fonction pure, sans aléatoire). */
+      var RW = 224, RH = 168; // taille du reflet à l'écran avant poussée (ancien : ~100 × 77)
+      var lake = new Image();
+      var refl = null;
+      function prepRefl() {
+        if (refl || !lake.complete || !lake.naturalWidth) return;
+        var src = FX.canvas(RW * 2, RH * 2), sx = src.getContext("2d");
+        // Recadrage centré sur l'aiguille et le lac (même cadrage que la photo plein cadre de P09/P10).
+        var cw = lake.naturalHeight * RW / RH; // recadrage 4:3 sans déformation
+        sx.drawImage(lake, (lake.naturalWidth - cw) / 2, 0, cw, lake.naturalHeight, 0, 0, RW * 2, RH * 2);
+        var out = FX.canvas(RW * 2, RH * 2), ox = out.getContext("2d");
+        try {
+          var s = sx.getImageData(0, 0, RW * 2, RH * 2), o = ox.createImageData(RW * 2, RH * 2);
+          var w = RW * 2, h = RH * 2, sd = s.data, od = o.data;
+          for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+            var nx = (x + 0.5) / w * 2 - 1, ny = (y + 0.5) / h * 2 - 1, r = Math.sqrt(nx * nx + ny * ny);
+            var j = (y * w + x) * 4;
+            if (r >= 1) { od[j + 3] = 0; continue; }
+            var k = 0.62 + 0.38 * r * r; // centre grossi, bords comprimés
+            var px = Math.min(w - 1, Math.max(0, Math.round((nx * k + 1) / 2 * w)));
+            var py = Math.min(h - 1, Math.max(0, Math.round((ny * k + 1) / 2 * h)));
+            var i = (py * w + px) * 4;
+            var a = FX.smooth(1, 0.62, r); // bords doux
+            od[j] = sd[i]; od[j + 1] = sd[i + 1]; od[j + 2] = sd[i + 2]; od[j + 3] = Math.round(255 * a);
+          }
+          ox.putImageData(o, 0, 0);
+        } catch (e) {
+          ox.save();
+          ox.beginPath(); ox.ellipse(RW, RH, RW, RH, 0, 0, Math.PI * 2); ox.clip();
+          ox.drawImage(src, 0, 0);
+          ox.restore();
+        }
+        refl = out;
+      }
+      var clock = FX.bindClock("p08", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var hit = Math.exp(-f / 2.2);
+        var S = 1.10 + 0.12 * hit + 0.10 * FX.ease.inQuad(u);
+        var shake = 7 * hit;
+        var cx = FX.lerp(1000, PX, u) + (FX.hash2(f, 1, 81) - 0.5) * 2 * shake;
+        var cy = PY + (FX.hash2(f, 2, 82) - 0.5) * 2 * shake;
+        cx = FX.clamp(cx, W / 2 / S, W - W / 2 / S);
+        cy = FX.clamp(cy, H / 2 / S, H - H / 2 / S);
+        bx.setTransform(S, 0, 0, S, W / 2 - S * cx, H / 2 - S * cy);
+        bx.drawImage(img, 0, 0, W, H);
+        // Reflet : la photo du lac bombée, posée sur la pupille (couvre l'ancien reflet), puis un halo doux.
+        prepRefl();
+        if (refl) {
+          bx.globalAlpha = 0.92;
+          bx.drawImage(refl, PX - RW / 2, PY - RH / 2 - 4, RW, RH);
+          bx.globalAlpha = 1;
+        }
+        var glow = 0.25 + 0.55 * FX.ease.inQuad(u);
+        var r = 90 + 60 * u;
+        var g = bx.createRadialGradient(PX, PY, 4, PX, PY, r);
+        g.addColorStop(0, "rgba(90,220,225," + (0.22 * glow).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(90,220,225,0)");
+        bx.globalCompositeOperation = "lighter";
+        bx.fillStyle = g;
+        bx.fillRect(PX - r, PY - r, 2 * r, 2 * r);
+        bx.globalCompositeOperation = "source-over";
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        var sx = 960 + S * (PX - cx), sy = 540 + S * (PY - cy);
+        FX.zoomBlur(ctx, buf, sx, sy, 0.06 * hit + 0.02 * u * u, 8, W, H);
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+      window.__hf.buildReady["p08-lake"] = new Promise(function (resolve) {
+        lake.onload = function () { refl = null; prepRefl(); clock.redraw(); resolve(); };
+        lake.onerror = function () { resolve(); };
+        lake.src = "assets/footage/img09.png";
+      });
+      window.__timelines["p08"] = clock.tl;
+    })();
+  </script>
+</template>

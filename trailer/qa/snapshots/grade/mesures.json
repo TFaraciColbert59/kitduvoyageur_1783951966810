@@ -1,0 +1,1472 @@
+[
+ {
+  "id": "astronaut",
+  "variant": "60",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   2,
+   9,
+   6
+  ],
+  "brightBefore": [
+   253,
+   252,
+   251
+  ],
+  "brightAfter": [
+   252,
+   250,
+   248
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 18212,
+  "skinHueShift": 0.05840333614242507,
+  "skinDE": 0.7715511002567723,
+  "oliveN": 2,
+  "oliveHueShift": 0.2385277167346942,
+  "oliveDE": 0.944502380921306,
+  "meanDE": 1.1596879639460713,
+  "p95DE": 3.3685314038935856,
+  "modelDE": 0.381149438077406
+ },
+ {
+  "id": "coffee",
+  "variant": "60",
+  "darkBefore": [
+   16,
+   3,
+   1
+  ],
+  "darkAfter": [
+   26,
+   14,
+   9
+  ],
+  "brightBefore": [
+   248,
+   246,
+   243
+  ],
+  "brightAfter": [
+   248,
+   246,
+   243
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 213550,
+  "skinHueShift": 0.00309188036105586,
+  "skinDE": 0.6432023609416969,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.7976934605699634,
+  "p95DE": 2.7209599203963335,
+  "modelDE": 0.3268901447517584
+ },
+ {
+  "id": "rocket",
+  "variant": "60",
+  "darkBefore": [
+   9,
+   5,
+   8
+  ],
+  "darkAfter": [
+   18,
+   16,
+   18
+  ],
+  "brightBefore": [
+   238,
+   213,
+   160
+  ],
+  "brightAfter": [
+   239,
+   215,
+   163
+  ],
+  "greenN": 7,
+  "greenChromaRatio": 0.9179283307913353,
+  "skinN": 11573,
+  "skinHueShift": 0.03971817579848363,
+  "skinDE": 0.9616350467645229,
+  "oliveN": 76,
+  "oliveHueShift": -0.12989323062602035,
+  "oliveDE": 1.4257335085866003,
+  "meanDE": 0.6841015958190351,
+  "p95DE": 2.1861548017655092,
+  "modelDE": 0.489313725087939
+ },
+ {
+  "id": "hubble",
+  "variant": "60",
+  "darkBefore": [
+   5,
+   5,
+   4
+  ],
+  "darkAfter": [
+   14,
+   16,
+   14
+  ],
+  "brightBefore": [
+   191,
+   202,
+   203
+  ],
+  "brightAfter": [
+   195,
+   204,
+   206
+  ],
+  "greenN": 120,
+  "greenChromaRatio": 0.8828523375586885,
+  "skinN": 1062,
+  "skinHueShift": 0.11386627464818982,
+  "skinDE": 1.0563265949317573,
+  "oliveN": 4,
+  "oliveHueShift": -1.3116175981093825,
+  "oliveDE": 2.3219785005469937,
+  "meanDE": 2.401214142558631,
+  "p95DE": 3.5771895388728883,
+  "modelDE": 0.6680889330701014
+ },
+ {
+  "id": "chelsea",
+  "variant": "60",
+  "darkBefore": [
+   25,
+   16,
+   9
+  ],
+  "darkAfter": [
+   30,
+   22,
+   14
+  ],
+  "brightBefore": [
+   201,
+   180,
+   178
+  ],
+  "brightAfter": [
+   204,
+   182,
+   180
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 324633,
+  "skinHueShift": -0.009825738452729424,
+  "skinDE": 0.5834646686320942,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.5874792827975643,
+  "p95DE": 0.9982354015941837,
+  "modelDE": 0.35207800405040407
+ },
+ {
+  "id": "sac-planche",
+  "variant": "60",
+  "darkBefore": [
+   10,
+   11,
+   11
+  ],
+  "darkAfter": [
+   18,
+   20,
+   19
+  ],
+  "brightBefore": [
+   177,
+   180,
+   116
+  ],
+  "brightAfter": [
+   180,
+   183,
+   118
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 31002,
+  "oliveHueShift": 0.001356191124620687,
+  "oliveDE": 0.622262171940878,
+  "meanDE": 0.6754225111118243,
+  "p95DE": 0.9420353655644749,
+  "modelDE": 0.10370087003500059
+ },
+ {
+  "id": "sac-40",
+  "variant": "60",
+  "darkBefore": [
+   25,
+   24,
+   23
+  ],
+  "darkAfter": [
+   27,
+   27,
+   26
+  ],
+  "brightBefore": [
+   186,
+   189,
+   120
+  ],
+  "brightAfter": [
+   188,
+   191,
+   123
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 46352,
+  "oliveHueShift": -0.005380659451371814,
+  "oliveDE": 0.6370561563691352,
+  "meanDE": 0.6216355021687832,
+  "p95DE": 0.7031566884959839,
+  "modelDE": 0.09189378402543914
+ },
+ {
+  "id": "nuancier",
+  "variant": "60",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   2,
+   9,
+   6
+  ],
+  "brightBefore": [
+   255,
+   255,
+   255
+  ],
+  "brightAfter": [
+   253,
+   251,
+   250
+  ],
+  "greenN": 86256,
+  "greenChromaRatio": 0.9425291747944516,
+  "skinN": 68976,
+  "skinHueShift": 0.17706543830342547,
+  "skinDE": 0.39561552285874807,
+  "oliveN": 34560,
+  "oliveHueShift": 0.6992721455968928,
+  "oliveDE": 0.8514382122315177,
+  "meanDE": 0.7599554086353776,
+  "p95DE": 2.4216962711390972,
+  "modelDE": 0.17150251843267267
+ },
+ {
+  "id": "aube-rose",
+  "variant": "60",
+  "darkBefore": [
+   15,
+   22,
+   36
+  ],
+  "darkAfter": [
+   18,
+   25,
+   40
+  ],
+  "brightBefore": [
+   230,
+   176,
+   169
+  ],
+  "brightAfter": [
+   232,
+   178,
+   171
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 57,
+  "skinHueShift": -0.002208457527529324,
+  "skinDE": 0.5008000551067777,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.5480840355415791,
+  "p95DE": 0.7390328864465777,
+  "modelDE": 0.12377153605909101
+ },
+ {
+  "id": "midi-lac",
+  "variant": "60",
+  "darkBefore": [
+   25,
+   128,
+   130
+  ],
+  "darkAfter": [
+   26,
+   128,
+   130
+  ],
+  "brightBefore": [
+   240,
+   236,
+   228
+  ],
+  "brightAfter": [
+   241,
+   237,
+   231
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.5749407478084589,
+  "p95DE": 0.9723781912535071,
+  "modelDE": 0.11817087896495249
+ },
+ {
+  "id": "heure-doree",
+  "variant": "60",
+  "darkBefore": [
+   52,
+   44,
+   29
+  ],
+  "darkAfter": [
+   50,
+   42,
+   28
+  ],
+  "brightBefore": [
+   237,
+   223,
+   193
+  ],
+  "brightAfter": [
+   237,
+   225,
+   200
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 36283,
+  "skinHueShift": 0.000009740939351955729,
+  "skinDE": 0.00036070304267347633,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.4240426052606503,
+  "p95DE": 0.6717002115114057,
+  "modelDE": 0.10583612859840985
+ },
+ {
+  "id": "feu-nuit",
+  "variant": "60",
+  "darkBefore": [
+   3,
+   5,
+   10
+  ],
+  "darkAfter": [
+   12,
+   16,
+   23
+  ],
+  "brightBefore": [
+   223,
+   149,
+   67
+  ],
+  "brightAfter": [
+   225,
+   151,
+   70
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 16289,
+  "skinHueShift": -0.00052731314233924,
+  "skinDE": 0.32298573194218627,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.544529287189672,
+  "p95DE": 2.8891539658085588,
+  "modelDE": 0.29544816276494384
+ },
+ {
+  "id": "voie-lactee",
+  "variant": "60",
+  "darkBefore": [
+   3,
+   6,
+   10
+  ],
+  "darkAfter": [
+   11,
+   17,
+   21
+  ],
+  "brightBefore": [
+   104,
+   111,
+   125
+  ],
+  "brightAfter": [
+   104,
+   111,
+   124
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.4725316430347681,
+  "p95DE": 3.0006798204158525,
+  "modelDE": 0.2963994690464972
+ },
+ {
+  "id": "interieur",
+  "variant": "60",
+  "darkBefore": [
+   41,
+   28,
+   20
+  ],
+  "darkAfter": [
+   41,
+   28,
+   20
+  ],
+  "brightBefore": [
+   209,
+   193,
+   167
+  ],
+  "brightAfter": [
+   211,
+   195,
+   169
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 90736,
+  "skinHueShift": 0.0005888713648880851,
+  "skinDE": 0.1624795524178732,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.29235217925296675,
+  "p95DE": 0.7824864295431975,
+  "modelDE": 0.14332841057268667
+ },
+ {
+  "id": "astronaut",
+  "variant": "100",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   4,
+   15,
+   10
+  ],
+  "brightBefore": [
+   253,
+   252,
+   251
+  ],
+  "brightAfter": [
+   251,
+   249,
+   246
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 18212,
+  "skinHueShift": 0.09273336818802562,
+  "skinDE": 1.0743475694840536,
+  "oliveN": 2,
+  "oliveHueShift": -0.02512107255883933,
+  "oliveDE": 1.293093019062379,
+  "meanDE": 1.8134886593085684,
+  "p95DE": 5.597112850934154,
+  "modelDE": 0.3716350394165578
+ },
+ {
+  "id": "coffee",
+  "variant": "100",
+  "darkBefore": [
+   16,
+   3,
+   1
+  ],
+  "darkAfter": [
+   35,
+   20,
+   13
+  ],
+  "brightBefore": [
+   248,
+   246,
+   243
+  ],
+  "brightAfter": [
+   248,
+   246,
+   243
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 213550,
+  "skinHueShift": -0.011235397733903682,
+  "skinDE": 0.8844887641903375,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.1843042527273548,
+  "p95DE": 4.482548437222992,
+  "modelDE": 0.33865723990791974
+ },
+ {
+  "id": "rocket",
+  "variant": "100",
+  "darkBefore": [
+   9,
+   5,
+   8
+  ],
+  "darkAfter": [
+   25,
+   23,
+   24
+  ],
+  "brightBefore": [
+   238,
+   213,
+   160
+  ],
+  "brightAfter": [
+   240,
+   216,
+   165
+  ],
+  "greenN": 7,
+  "greenChromaRatio": 0.8797849018087869,
+  "skinN": 11573,
+  "skinHueShift": 0.03685419477332094,
+  "skinDE": 1.1577798565508746,
+  "oliveN": 76,
+  "oliveHueShift": 0.023484920487097657,
+  "oliveDE": 1.6144088118462832,
+  "meanDE": 0.958721860943458,
+  "p95DE": 2.94937387081196,
+  "modelDE": 0.5149534551856707
+ },
+ {
+  "id": "hubble",
+  "variant": "100",
+  "darkBefore": [
+   5,
+   5,
+   4
+  ],
+  "darkAfter": [
+   20,
+   24,
+   21
+  ],
+  "brightBefore": [
+   191,
+   202,
+   203
+  ],
+  "brightAfter": [
+   197,
+   205,
+   207
+  ],
+  "greenN": 120,
+  "greenChromaRatio": 0.8668066904198117,
+  "skinN": 1062,
+  "skinHueShift": 0.10282441779284314,
+  "skinDE": 1.2742029230165612,
+  "oliveN": 4,
+  "oliveHueShift": -0.9973291817548322,
+  "oliveDE": 2.425819236079918,
+  "meanDE": 4.118854876806983,
+  "p95DE": 6.399227384023844,
+  "modelDE": 0.7170124167181348
+ },
+ {
+  "id": "chelsea",
+  "variant": "100",
+  "darkBefore": [
+   25,
+   16,
+   9
+  ],
+  "darkAfter": [
+   33,
+   25,
+   17
+  ],
+  "brightBefore": [
+   201,
+   180,
+   178
+  ],
+  "brightAfter": [
+   206,
+   184,
+   182
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 324633,
+  "skinHueShift": -0.023197854794776145,
+  "skinDE": 0.774411417801592,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.7982137578157666,
+  "p95DE": 1.3244210022594767,
+  "modelDE": 0.35543827329227656
+ },
+ {
+  "id": "sac-planche",
+  "variant": "100",
+  "darkBefore": [
+   10,
+   11,
+   11
+  ],
+  "darkAfter": [
+   23,
+   26,
+   25
+  ],
+  "brightBefore": [
+   177,
+   180,
+   116
+  ],
+  "brightAfter": [
+   181,
+   184,
+   120
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 31002,
+  "oliveHueShift": 0.007735318972989317,
+  "oliveDE": 0.905655170656518,
+  "meanDE": 1.0224182020922696,
+  "p95DE": 1.2371871454606698,
+  "modelDE": 0.09083108959085977
+ },
+ {
+  "id": "sac-40",
+  "variant": "100",
+  "darkBefore": [
+   25,
+   24,
+   23
+  ],
+  "darkAfter": [
+   29,
+   29,
+   27
+  ],
+  "brightBefore": [
+   186,
+   189,
+   120
+  ],
+  "brightAfter": [
+   190,
+   193,
+   124
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 46352,
+  "oliveHueShift": 0.0037703744019519946,
+  "oliveDE": 0.9430216208830163,
+  "meanDE": 0.9234544218345415,
+  "p95DE": 1.0205344711567685,
+  "modelDE": 0.07532742268106334
+ },
+ {
+  "id": "nuancier",
+  "variant": "100",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   4,
+   15,
+   10
+  ],
+  "brightBefore": [
+   255,
+   255,
+   255
+  ],
+  "brightAfter": [
+   251,
+   249,
+   246
+  ],
+  "greenN": 86256,
+  "greenChromaRatio": 0.9018013280532389,
+  "skinN": 68976,
+  "skinHueShift": 0.06280657075333806,
+  "skinDE": 0.7224830456314716,
+  "oliveN": 34560,
+  "oliveHueShift": 0.9089026930073623,
+  "oliveDE": 1.3423364772622732,
+  "meanDE": 1.2889942746493788,
+  "p95DE": 3.4478740103763585,
+  "modelDE": 0.18801557900881774
+ },
+ {
+  "id": "aube-rose",
+  "variant": "100",
+  "darkBefore": [
+   15,
+   22,
+   36
+  ],
+  "darkAfter": [
+   20,
+   27,
+   42
+  ],
+  "brightBefore": [
+   230,
+   176,
+   169
+  ],
+  "brightAfter": [
+   234,
+   180,
+   173
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 57,
+  "skinHueShift": -0.004350188214137287,
+  "skinDE": 0.9969817016903892,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.9254302547565718,
+  "p95DE": 1.1934639852281637,
+  "modelDE": 0.16605074068664474
+ },
+ {
+  "id": "midi-lac",
+  "variant": "100",
+  "darkBefore": [
+   25,
+   128,
+   130
+  ],
+  "darkAfter": [
+   26,
+   129,
+   131
+  ],
+  "brightBefore": [
+   240,
+   236,
+   228
+  ],
+  "brightAfter": [
+   241,
+   238,
+   233
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.971996895324904,
+  "p95DE": 1.482829522872213,
+  "modelDE": 0.156006037642193
+ },
+ {
+  "id": "heure-doree",
+  "variant": "100",
+  "darkBefore": [
+   52,
+   44,
+   29
+  ],
+  "darkAfter": [
+   49,
+   41,
+   27
+  ],
+  "brightBefore": [
+   237,
+   223,
+   193
+  ],
+  "brightAfter": [
+   237,
+   226,
+   204
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 36283,
+  "skinHueShift": -0.2573303936439664,
+  "skinDE": 0.33356014497672476,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.809334402075862,
+  "p95DE": 1.0874446489414928,
+  "modelDE": 0.18330857890169175
+ },
+ {
+  "id": "feu-nuit",
+  "variant": "100",
+  "darkBefore": [
+   3,
+   5,
+   10
+  ],
+  "darkAfter": [
+   17,
+   24,
+   31
+  ],
+  "brightBefore": [
+   223,
+   149,
+   67
+  ],
+  "brightAfter": [
+   226,
+   153,
+   71
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 16289,
+  "skinHueShift": -0.21152461327578298,
+  "skinDE": 0.594207367011668,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 2.8039385224940956,
+  "p95DE": 5.657228413459758,
+  "modelDE": 0.3507261797126076
+ },
+ {
+  "id": "voie-lactee",
+  "variant": "100",
+  "darkBefore": [
+   3,
+   6,
+   10
+  ],
+  "darkAfter": [
+   16,
+   25,
+   29
+  ],
+  "brightBefore": [
+   104,
+   111,
+   125
+  ],
+  "brightAfter": [
+   103,
+   110,
+   124
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 2.811963208942428,
+  "p95DE": 6.115543204772985,
+  "modelDE": 0.29942627376089254
+ },
+ {
+  "id": "interieur",
+  "variant": "100",
+  "darkBefore": [
+   41,
+   28,
+   20
+  ],
+  "darkAfter": [
+   41,
+   28,
+   20
+  ],
+  "brightBefore": [
+   209,
+   193,
+   167
+  ],
+  "brightAfter": [
+   213,
+   197,
+   171
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 90736,
+  "skinHueShift": -0.33518852959473916,
+  "skinDE": 0.43216090186103134,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.5420345212465183,
+  "p95DE": 1.0901131346146906,
+  "modelDE": 0.1936737701067208
+ },
+ {
+  "id": "astronaut",
+  "variant": "130",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   8,
+   26,
+   19
+  ],
+  "brightBefore": [
+   253,
+   252,
+   251
+  ],
+  "brightAfter": [
+   250,
+   248,
+   245
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 18212,
+  "skinHueShift": 0.07975798316196457,
+  "skinDE": 1.2858005938109873,
+  "oliveN": 2,
+  "oliveHueShift": 0.22679512980923988,
+  "oliveDE": 1.5993404636405777,
+  "meanDE": 3.0172403754433264,
+  "p95DE": 11.030993782539358,
+  "modelDE": 0.3738238222974468
+ },
+ {
+  "id": "coffee",
+  "variant": "130",
+  "darkBefore": [
+   16,
+   3,
+   1
+  ],
+  "darkAfter": [
+   44,
+   35,
+   27
+  ],
+  "brightBefore": [
+   248,
+   246,
+   243
+  ],
+  "brightAfter": [
+   248,
+   246,
+   243
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 213550,
+  "skinHueShift": 0.027101452087541573,
+  "skinDE": 1.068521866873901,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.9466014555396507,
+  "p95DE": 8.426044181673428,
+  "modelDE": 0.345630182418305
+ },
+ {
+  "id": "rocket",
+  "variant": "130",
+  "darkBefore": [
+   9,
+   5,
+   8
+  ],
+  "darkAfter": [
+   34,
+   37,
+   37
+  ],
+  "brightBefore": [
+   238,
+   213,
+   160
+  ],
+  "brightAfter": [
+   240,
+   216,
+   167
+  ],
+  "greenN": 7,
+  "greenChromaRatio": 0.8654934780766318,
+  "skinN": 11573,
+  "skinHueShift": 0.052836685470278186,
+  "skinDE": 1.3106865591062435,
+  "oliveN": 76,
+  "oliveHueShift": 0.009752763826477806,
+  "oliveDE": 1.7160654416112937,
+  "meanDE": 1.9217826605347863,
+  "p95DE": 6.970506653917017,
+  "modelDE": 0.4867545972178058
+ },
+ {
+  "id": "hubble",
+  "variant": "130",
+  "darkBefore": [
+   5,
+   5,
+   4
+  ],
+  "darkAfter": [
+   28,
+   38,
+   33
+  ],
+  "brightBefore": [
+   191,
+   202,
+   203
+  ],
+  "brightAfter": [
+   198,
+   206,
+   208
+  ],
+  "greenN": 120,
+  "greenChromaRatio": 0.8248357332605792,
+  "skinN": 1062,
+  "skinHueShift": 0.14218798928074586,
+  "skinDE": 1.4477058596981642,
+  "oliveN": 4,
+  "oliveHueShift": -0.7273416418502734,
+  "oliveDE": 2.6495909788947904,
+  "meanDE": 8.46235176287793,
+  "p95DE": 10.596750421970906,
+  "modelDE": 0.6312530924540456
+ },
+ {
+  "id": "chelsea",
+  "variant": "130",
+  "darkBefore": [
+   25,
+   16,
+   9
+  ],
+  "darkAfter": [
+   45,
+   39,
+   30
+  ],
+  "brightBefore": [
+   201,
+   180,
+   178
+  ],
+  "brightAfter": [
+   207,
+   185,
+   183
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 324633,
+  "skinHueShift": 0.0007437248137376526,
+  "skinDE": 0.9175532922048785,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.0094009157134387,
+  "p95DE": 1.6078237874596608,
+  "modelDE": 0.3547608533998995
+ },
+ {
+  "id": "sac-planche",
+  "variant": "130",
+  "darkBefore": [
+   10,
+   11,
+   11
+  ],
+  "darkAfter": [
+   33,
+   41,
+   37
+  ],
+  "brightBefore": [
+   177,
+   180,
+   116
+  ],
+  "brightAfter": [
+   182,
+   185,
+   120
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 31002,
+  "oliveHueShift": 0.019647091512402813,
+  "oliveDE": 1.1113660177349065,
+  "meanDE": 1.5241133357077352,
+  "p95DE": 2.255923514195369,
+  "modelDE": 0.07855071005267134
+ },
+ {
+  "id": "sac-40",
+  "variant": "130",
+  "darkBefore": [
+   25,
+   24,
+   23
+  ],
+  "darkAfter": [
+   39,
+   42,
+   40
+  ],
+  "brightBefore": [
+   186,
+   189,
+   120
+  ],
+  "brightAfter": [
+   191,
+   194,
+   125
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 46352,
+  "oliveHueShift": 0.005561528903148811,
+  "oliveDE": 1.1590245051406163,
+  "meanDE": 1.2753829547105138,
+  "p95DE": 1.3162438886808998,
+  "modelDE": 0.0659338298886556
+ },
+ {
+  "id": "nuancier",
+  "variant": "130",
+  "darkBefore": [
+   0,
+   0,
+   0
+  ],
+  "darkAfter": [
+   8,
+   26,
+   19
+  ],
+  "brightBefore": [
+   255,
+   255,
+   255
+  ],
+  "brightAfter": [
+   250,
+   248,
+   245
+  ],
+  "greenN": 86256,
+  "greenChromaRatio": 0.8834855870186208,
+  "skinN": 68976,
+  "skinHueShift": 0.07379218822230703,
+  "skinDE": 0.9475940556813504,
+  "oliveN": 34560,
+  "oliveHueShift": 1.2691027030137374,
+  "oliveDE": 1.7686290969831766,
+  "meanDE": 2.1499598492384853,
+  "p95DE": 8.079553540653338,
+  "modelDE": 0.1709809191819701
+ },
+ {
+  "id": "aube-rose",
+  "variant": "130",
+  "darkBefore": [
+   15,
+   22,
+   36
+  ],
+  "darkAfter": [
+   33,
+   41,
+   56
+  ],
+  "brightBefore": [
+   230,
+   176,
+   169
+  ],
+  "brightAfter": [
+   235,
+   181,
+   174
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 57,
+  "skinHueShift": -0.005396700371195712,
+  "skinDE": 1.2433625780850484,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.5526159261276349,
+  "p95DE": 4.145636548729096,
+  "modelDE": 0.19644150816394693
+ },
+ {
+  "id": "midi-lac",
+  "variant": "130",
+  "darkBefore": [
+   25,
+   128,
+   130
+  ],
+  "darkAfter": [
+   27,
+   130,
+   131
+  ],
+  "brightBefore": [
+   240,
+   236,
+   228
+  ],
+  "brightAfter": [
+   241,
+   238,
+   234
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.2387697690713706,
+  "p95DE": 1.6602248639506343,
+  "modelDE": 0.16446726581164048
+ },
+ {
+  "id": "heure-doree",
+  "variant": "130",
+  "darkBefore": [
+   52,
+   44,
+   29
+  ],
+  "darkAfter": [
+   54,
+   46,
+   32
+  ],
+  "brightBefore": [
+   237,
+   223,
+   193
+  ],
+  "brightAfter": [
+   237,
+   227,
+   207
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 36283,
+  "skinHueShift": -0.028727134178695053,
+  "skinDE": 0.32160623472342664,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 0.9814066547629325,
+  "p95DE": 1.3517937150938741,
+  "modelDE": 0.18759018961237242
+ },
+ {
+  "id": "feu-nuit",
+  "variant": "130",
+  "darkBefore": [
+   3,
+   5,
+   10
+  ],
+  "darkAfter": [
+   27,
+   37,
+   43
+  ],
+  "brightBefore": [
+   223,
+   149,
+   67
+  ],
+  "brightAfter": [
+   227,
+   154,
+   72
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 16289,
+  "skinHueShift": -0.1393854024258849,
+  "skinDE": 0.7251102332645729,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 6.843053516477365,
+  "p95DE": 10.470801510171636,
+  "modelDE": 0.35800449680384305
+ },
+ {
+  "id": "voie-lactee",
+  "variant": "130",
+  "darkBefore": [
+   3,
+   6,
+   10
+  ],
+  "darkAfter": [
+   27,
+   38,
+   40
+  ],
+  "brightBefore": [
+   104,
+   111,
+   125
+  ],
+  "brightAfter": [
+   103,
+   110,
+   124
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 0,
+  "skinHueShift": null,
+  "skinDE": null,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 6.1480358410319695,
+  "p95DE": 10.656679739934972,
+  "modelDE": 0.34051024863270246
+ },
+ {
+  "id": "interieur",
+  "variant": "130",
+  "darkBefore": [
+   41,
+   28,
+   20
+  ],
+  "darkAfter": [
+   53,
+   39,
+   32
+  ],
+  "brightBefore": [
+   209,
+   193,
+   167
+  ],
+  "brightAfter": [
+   214,
+   198,
+   172
+  ],
+  "greenN": 0,
+  "greenChromaRatio": null,
+  "skinN": 90736,
+  "skinHueShift": -0.1396688452655324,
+  "skinDE": 0.5037718292338005,
+  "oliveN": 0,
+  "oliveHueShift": null,
+  "oliveDE": null,
+  "meanDE": 1.2077952187807384,
+  "p95DE": 3.6876629337961506,
+  "modelDE": 0.23069959801480242
+ }
+]

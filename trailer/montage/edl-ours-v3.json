@@ -1,0 +1,70 @@
+{
+  "titre": "Ours v3 — l'ours v2 avec les écrans de téléphone incrustés (vraies captures de l'app) et trois plans recadrés",
+  "version": "v3 : identique à la v2 (mêmes plans, entrées, durées, vitesses) ; les 14 plans à téléphone lisent flow/clips/incrustes/ (tools/incrustation/, qa/INCRUSTATION-VIDEO.md) ; P09, P15 et P49 sont recadrés plus serré sur le téléphone pour ne plus sauter sur place après le plan qui reprend leur cadre.",
+  "note": "Liste de montage écrite par l'orchestrateur d'après DECOUPAGE-24.md et les relectures qa/FLOW-RELECTURE-1/2/3.md. Les coupes tombent sur les temps du film : temps n = image arrondie de n × 0,437965 s × 24 (les valeurs de qa/mix-v4.beats.json font foi). 'debut' et 'temps' sont en temps de musique depuis l'image 0. 'entree' est le numéro d'image (base 0, à 24 i/s) dans la vidéo source où le plan commence ; jamais 0 (la première image de chaque vidéo Flow saute). 'vitesse' : 1 = temps réel ; 2 = deux fois plus vite.",
+  "ips": 24,
+  "images_total": 1440,
+  "musique": "qa/mix-v4.wav",
+  "temps_musique": "qa/mix-v4.beats.json",
+  "dossier_videos": "flow/clips/plans",
+  "plans": [
+    { "plan": "COSMOS", "section": "cosmos", "debut": 0, "temps": 12, "source": "ouverture", "note": "Rendu de ouverture-lab : ouverture-lab/renders/ouverture-v3.mp4 (126 images, vidéo seule)." },
+
+    { "plan": "P06", "section": "declic", "debut": 12, "temps": 6, "source": "p06.mp4", "entree": 8, "vitesse": 1 },
+    { "plan": "P07", "section": "declic", "debut": 18, "temps": 4, "source": "p07.mp4", "entree": 8, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P08", "section": "declic", "debut": 22, "temps": 1, "source": "p08.mp4", "entree": 40, "vitesse": 1 },
+    { "plan": "P09", "section": "declic", "debut": 23, "temps": 1, "source": "p07.mp4", "entree": 80, "vitesse": 1, "dossier": "flow/clips/incrustes", "recadrage": { "zoom": 1.3, "cx": 950, "cy": 540 } },
+    { "plan": "P10", "section": "declic", "debut": 24, "temps": 4, "source": "p10.mp4", "entree": 30, "vitesse": 1, "note": "Survol au ras de l'eau, images 30 à 71." },
+
+    { "plan": "P11", "section": "decision", "debut": 28, "temps": 2, "source": "p11.mp4", "entree": 2, "vitesse": 1 },
+    { "plan": "P12", "section": "decision", "debut": 30, "temps": 2, "source": "p12.mp4", "entree": 24, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P13", "section": "decision", "debut": 32, "temps": 2, "source": "p13.mp4", "entree": 20, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P14", "section": "decision", "debut": 34, "temps": 2, "source": "p14.mp4", "entree": 4, "vitesse": 1 },
+    { "plan": "P15", "section": "decision", "debut": 36, "temps": 1, "source": "p13.mp4", "entree": 98, "vitesse": 1, "dossier": "flow/clips/incrustes", "recadrage": { "zoom": 1.3, "cx": 1080, "cy": 495 } },
+    { "plan": "P16", "section": "decision", "debut": 37, "temps": 3, "source": "p16.mp4", "entree": 8, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P17", "section": "decision", "debut": 40, "temps": 1, "source": "p17.mp4", "entree": 16, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P18", "section": "decision", "debut": 41, "temps": 2, "source": "p18.mp4", "entree": 17, "vitesse": 1 },
+    { "plan": "P19", "section": "decision", "debut": 43, "temps": 1, "source": "p19.mp4", "entree": 20, "vitesse": 1 },
+
+    { "plan": "P20", "section": "depart", "debut": 44, "temps": 1, "source": "p20.mp4", "entree": 13, "vitesse": 1 },
+    { "plan": "P21", "section": "depart", "debut": 45, "temps": 2, "source": "p21.mp4", "entree": 6, "vitesse": 1 },
+    { "plan": "P22", "section": "depart", "debut": 47, "temps": 2, "source": "p22.mp4", "entree": 36, "vitesse": 1 },
+    { "plan": "P23", "section": "depart", "debut": 49, "temps": 4, "source": "p23.mp4", "entree": 1, "vitesse": 1 },
+    { "plan": "P24", "section": "depart", "debut": 53, "temps": 2, "source": "p24.mp4", "entree": 4, "vitesse": 1 },
+    { "plan": "P25", "section": "depart", "debut": 55, "temps": 1, "source": "p25.mp4", "entree": 14, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+
+    { "plan": "P26", "section": "montagne", "debut": 56, "temps": 4, "source": "p26-2.mp4", "entree": 6, "vitesse": 1, "note": "Le drop 1 tombe sur la première image de ce plan." },
+    { "plan": "P27", "section": "montagne", "debut": 60, "temps": 4, "source": "p27.mp4", "entree": 72, "vitesse": 1 },
+    { "plan": "P28", "section": "montagne", "debut": 64, "temps": 2, "source": "p28-2.mp4", "entree": 32, "vitesse": 1, "note": "Ciel d'aube : ne rien prendre avant l'image 28 (le ciel y vire du bleu au rose)." },
+    { "plan": "P29", "section": "montagne", "debut": 66, "temps": 2, "source": "p29.mp4", "entree": 20, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P30", "section": "montagne", "debut": 68, "temps": 4, "source": "p30-2.mp4", "entree": 28, "vitesse": 1 },
+    { "plan": "P31", "section": "montagne", "debut": 72, "temps": 2, "source": "p31.mp4", "entree": 45, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P32", "section": "montagne", "debut": 74, "temps": 2, "source": "p32.mp4", "entree": 1, "vitesse": 1 },
+
+    { "plan": "P33", "section": "coureur-cycliste", "debut": 76, "temps": 2, "source": "p33.mp4", "entree": 6, "vitesse": 1, "note": "Le drop 2 tombe sur la première image de ce plan." },
+    { "plan": "P34", "section": "coureur-cycliste", "debut": 78, "temps": 1, "source": "p34.mp4", "entree": 40, "vitesse": 1 },
+    { "plan": "P35", "section": "coureur-cycliste", "debut": 79, "temps": 2, "source": "p35.mp4", "entree": 4, "vitesse": 1 },
+    { "plan": "P36", "section": "coureur-cycliste", "debut": 81, "temps": 1, "source": "p36.mp4", "entree": 1, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P37", "section": "coureur-cycliste", "debut": 82, "temps": 2, "source": "p37-2.mp4", "entree": 3, "vitesse": 2.4, "note": "Vol au ralenti dans la prise : images 3 à 53 accélérées (réception à l'image 13 de la source)." },
+    { "plan": "P38", "section": "coureur-cycliste", "debut": 84, "temps": 4, "source": "p38.mp4", "entree": 12, "vitesse": 1 },
+    { "plan": "P39", "section": "coureur-cycliste", "debut": 88, "temps": 2, "source": "p39.mp4", "entree": 2, "vitesse": 1 },
+    { "plan": "P40", "section": "coureur-cycliste", "debut": 90, "temps": 3, "source": "p40.mp4", "entree": 72, "vitesse": 1 },
+    { "plan": "P41", "section": "coureur-cycliste", "debut": 93, "temps": 1, "source": "p41-2.mp4", "entree": 6, "vitesse": 1 },
+    { "plan": "P42", "section": "coureur-cycliste", "debut": 94, "temps": 3, "source": "p42.mp4", "entree": 2, "vitesse": 1 },
+    { "plan": "P43", "section": "coureur-cycliste", "debut": 97, "temps": 3, "source": "p43.mp4", "entree": 12, "vitesse": 1 },
+    { "plan": "P44", "section": "coureur-cycliste", "debut": 100, "temps": 2, "source": "p44.mp4", "entree": 2, "vitesse": 1 },
+    { "plan": "P45", "section": "coureur-cycliste", "debut": 102, "temps": 2, "source": "p45.mp4", "entree": 8, "vitesse": 1 },
+
+    { "plan": "P46", "section": "bivouac", "debut": 104, "temps": 4, "source": "p46.mp4", "entree": 18, "vitesse": 1.62, "note": "La nuit tombe : images 18 à 86 accélérées pour tenir en 4 temps." },
+    { "plan": "P47", "section": "bivouac", "debut": 108, "temps": 4, "source": "p47.mp4", "entree": 1, "vitesse": 1, "note": "Ne pas dépasser l'image 46 de la source (la coiffure d'Inès change à partir de 47)." },
+    { "plan": "P48", "section": "bivouac", "debut": 112, "temps": 3, "source": "p48-2.mp4", "entree": 34, "vitesse": 1, "note": "Écran libre de tout doigt à partir de l'image 34. Léa porte un bonnet (absent en P47) : nouvelle reprise proposée à Tony.", "dossier": "flow/clips/incrustes" },
+    { "plan": "P49", "section": "bivouac", "debut": 115, "temps": 1, "source": "p48-2.mp4", "entree": 20, "vitesse": 1, "note": "Le pouce se relève vers l'image 29.", "dossier": "flow/clips/incrustes", "recadrage": { "zoom": 1.45, "cx": 1180, "cy": 535 } },
+    { "plan": "P50", "section": "bivouac", "debut": 116, "temps": 4, "source": "p50.mp4", "entree": 12, "vitesse": 2.5, "note": "Recul de drone trop lent en temps réel : images 12 à 118 accélérées." },
+
+    { "plan": "P51", "section": "final", "debut": 120, "temps": 3, "source": "p51.mp4", "entree": 12, "vitesse": 1, "dossier": "flow/clips/incrustes" },
+    { "plan": "P52", "section": "final", "debut": 123, "temps": 4, "source": "code", "note": "Remontée à l'envers de la ville à l'orbite. Provisoire accepté : la descente de l'ouverture (ville → nuages → Terre) lue à l'envers." },
+    { "plan": "P53", "section": "final", "debut": 127, "temps": 5, "source": "code", "note": "Les tracés qui s'allument et convergent (film/compositions/p53.html, à 60 i/s). Provisoire accepté si le rendu de l'ancienne composition échoue." },
+
+    { "plan": "P54", "section": "logo", "debut": 132, "temps": null, "source": "code", "note": "Le logo, de l'impact (image 1387) à 1440 (film/compositions/p54.html). Provisoire accepté si le rendu de l'ancienne composition échoue." }
+  ]
+}

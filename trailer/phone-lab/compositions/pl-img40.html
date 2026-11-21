@@ -1,0 +1,44 @@
+<template>
+  <link rel="stylesheet" href="lib/phone/phone.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+  </style>
+  <div id="root" data-composition-id="pl-img40" data-width="1920" data-height="1080" data-layout-allow-overflow>
+    <div id="pl-img40-cam" class="ph-cam">
+      <div id="pl-img40-screen" class="ph-screen" data-phone='{"corners":[[986.857,271.871],[1168.828,272],[1168.821,675.808],[983.425,677.045]],"radius":21.04,"blur":0.69,"ambient":{"rgb":[0.3848,0.2872,0.2226],"luminance":0.3033}}'>
+        <img id="pl-img40-s0" class="ph-layer" src="assets/screens/E02a-compas-ou-vide.png" alt="" style="opacity:1" />
+        <img id="pl-img40-s1" class="ph-layer" src="assets/screens/E02b-compas-ou-saisi.png" alt="" style="opacity:0" />
+        <div class="ph-tint"></div>
+        <div class="ph-glare"></div>
+      </div>
+      <img id="pl-img40-plate" class="ph-plate" src="assets/plates/img40.keyed.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var D = 1.5, CX = 1077.0, CY = 474.2;
+      var cam = document.getElementById('pl-img40-cam');
+      var scr = document.getElementById('pl-img40-screen');
+      var timing = { states: [{"sel":"#pl-img40-s1","from":0.3,"to":0.7}] };
+      function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+      function pose(t) {
+        var p = ease(Math.max(0, Math.min(1, t / D)));
+        return { s: 1 + 0.07 * p, r: -1.4 * p, x: -26 * p, y: -10 * p };
+      }
+      function apply(t) {
+        var a = pose(t), b = pose(Math.max(0, t - 1 / 60));
+        cam.style.transformOrigin = CX + 'px ' + CY + 'px';
+        cam.style.transform = 'translate(' + a.x.toFixed(2) + 'px,' + a.y.toFixed(2) + 'px) rotate(' + a.r.toFixed(3) + 'deg) scale(' + a.s.toFixed(4) + ')';
+        var speed = Math.hypot(a.x - b.x, a.y - b.y, (a.s - b.s) * 900, (a.r - b.r) * 15) * 60;
+        window.LKDVPhone.render(scr, t, { x: a.x, y: a.y, speed: speed }, timing);
+      }
+      var st = { t: 0 };
+      var tl = gsap.timeline({ paused: true });
+      tl.fromTo(st, { t: 0 }, { t: D, duration: D, ease: 'none', onUpdate: function () { apply(st.t); } }, 0);
+      apply(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines['pl-img40'] = tl;
+    })();
+  </script>
+</template>

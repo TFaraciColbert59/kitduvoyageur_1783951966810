@@ -1,0 +1,87 @@
+{
+ "note": "Interrupteurs du motion design v6 (true = posé). Après un changement : node motion-lab/v6/render-v6.mjs, puis node tools/montage/build-ours.mjs montage/edl-ours-v6.json --reutiliser-segments. Socle commun aux niveaux minimal et équilibré : cadre, fil, logo_fil, point_soleil. Niveau équilibré, à brancher : iris (4), point_qui_vit (2), constellation (6), nom_sous_logo (variante C de 10).",
+ "interrupteurs": {
+  "cadre": true,
+  "fil": true,
+  "logo_fil": true,
+  "point_soleil": true,
+  "nom_sous_logo": false,
+  "iris": false,
+  "point_qui_vit": false,
+  "constellation": false
+ },
+ "cadre": {
+  "note": "Bandes 2,39:1 (138 px), couleur encre verte de la marque. ouverture/fermeture/reouverture = [image de départ, durée en images]. Fermée de 0 à 588 ; s'ouvre sur le drop (589, temps 56) ; se referme sur la reprise (1261, P51 : Noah rêve comme Léa au début) ; se rouvre sur le coup du logo (1387).",
+  "couleur": "#0B1F17",
+  "ouverture": [
+   589,
+   8
+  ],
+  "fermeture": [
+   1261,
+   12
+  ],
+  "reouverture": [
+   1387,
+   8
+  ]
+ },
+ "fil": {
+  "note": "Images du film. in0→in1 : la tête file ; out0→out1 : la queue rattrape la tête et le trait s'éteint. Calé sur les temps de qa/mix-v4.beats.json (images 32, 589, 598…).",
+  "soleil": {
+   "in0": 33,
+   "in1": 41,
+   "out0": 40,
+   "out1": 46
+  },
+  "p26": {
+   "in0": 598,
+   "in1": 612,
+   "out0": 615,
+   "out1": 624,
+   "ecartSujet": 26
+  },
+  "p35": {
+   "in0": 836,
+   "in1": 842,
+   "out0": 843,
+   "out1": 847,
+   "fade": 70
+  },
+  "p38": {
+   "in0": 894,
+   "in1": 910,
+   "out0": 915,
+   "out1": 924,
+   "fade": 80,
+   "ecartSujet": 22
+  },
+  "p42": {
+   "in0": 990,
+   "in1": 1006,
+   "out0": 1009,
+   "out1": 1019,
+   "fade": 110,
+   "width": 2.75,
+   "shadow": 0.45,
+   "ecartSujet": 40
+  }
+ },
+ "logo": {
+  "note": "Le fil dessine le contour du logo (trace0→trace1) ; à partir de 'pose', le trait s'épaissit en 'epaissir' images jusqu'au trait du logo, plein sur le coup de 1387 (pose + epaissir), sans dépassement ; l'étincelle arrive au soleil du logo en dernier (point).",
+  "trace0": 1349,
+  "trace1": 1380,
+  "pose": 1381,
+  "epaissir": 6,
+  "point": {
+   "depart": 1389,
+   "arrivee": 1398,
+   "grossir": 6,
+   "anneau": 16
+  },
+  "nom": {
+   "in0": 1408,
+   "in1": 1418
+  }
+ }
+}
