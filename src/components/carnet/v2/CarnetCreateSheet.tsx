@@ -165,6 +165,14 @@ export function CarnetCreateSheet({
     }
   };
 
+  const bridgePrefill = useMemo(
+    () => ({
+      format: type === 'text' ? 'billet' : 'photo',
+      location: defaultPlace,
+    }),
+    [type, defaultPlace],
+  );
+
   if (
     !embedded &&
     (type === 'photo' ||
@@ -180,11 +188,7 @@ export function CarnetCreateSheet({
     return (
       <CommunityCreateSheetV2
         initialTab={initialTab}
-        initialPrefill={{
-          format: type === 'text' ? 'billet' : 'photo',
-          location: defaultPlace,
-          step: 1,
-        }}
+        initialPrefill={bridgePrefill}
         initialSpeciesName={initialSpeciesName}
         initialSpeciesLatin={initialSpeciesLatin}
         discoveredSpecies={discoveredSpecies}
@@ -195,9 +199,7 @@ export function CarnetCreateSheet({
         user={user ?? null}
         onSubmitMoment={onSubmit}
         onClose={onClose}
-        onCreated={() => {
-          onClose();
-        }}
+        onCreated={onClose}
       />
     );
   }

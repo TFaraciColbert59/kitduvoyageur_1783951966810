@@ -277,17 +277,23 @@ export function CarnetCommunityCreateBridge({
     [day, onSubmitMoment, place],
   );
 
+  const communityStepPages = useMemo(() => {
+    if (!activeCommunityKind) return null;
+    const cfg = createKindConfig(activeCommunityKind);
+    const stepHosts = cfg.steps.map((step, index) => (
+      <div
+        key={`${activeCommunityKind}-step-${index}`}
+        className="lkdv-cv2c-step-host"
+        ref={registerStepHost(activeCommunityKind, index)}
+        data-step-title={step.label}
+      />
+    ));
+    return CARNET_CREATE_TABS.map((t) => (t.id === activeCommunityKind ? stepHosts : []));
+  }, [activeCommunityKind, registerStepHost]);
+
   const mini = useMemo(() => {
-    if (activeCommunityKind && activeNav) {
+    if (activeCommunityKind && activeNav && communityStepPages) {
       const cfg = createKindConfig(activeCommunityKind);
-      const stepPages = cfg.steps.map((step, index) => [
-        <div
-          key={`${activeCommunityKind}-step-${index}`}
-          className="lkdv-cv2c-step-host"
-          ref={registerStepHost(activeCommunityKind, index)}
-          data-step-title={step.label}
-        />,
-      ]);
       return {
         items: cfg.steps.map((step, index) => ({
           id: `cv2c-step-${index}`,
@@ -297,7 +303,7 @@ export function CarnetCommunityCreateBridge({
         active: activeNav.stepIndex,
         onChange: (index: number) => activeNav.goToStep(index),
         label: `Étapes de la création : ${activeTab === 'story' ? 'Story' : 'Publication'}`,
-        pages: stepPages,
+        pages: communityStepPages,
       };
     }
     if (activeCommunityKind) return null;
@@ -671,7 +677,7 @@ export function CarnetCommunityCreateBridge({
     activeCommunityKind,
     activeNav,
     activeTab,
-    registerStepHost,
+    communityStepPages,
     momentStepLabels,
     momentStepIndex,
     ambiance,
