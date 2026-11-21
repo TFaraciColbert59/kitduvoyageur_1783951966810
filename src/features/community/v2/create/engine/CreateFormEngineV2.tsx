@@ -278,6 +278,9 @@ export function CreateFormEngineV2<T extends FieldValues>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `steps` est dérivé de `kind`
   }, [form, kind, liveValidation, schema, step]);
 
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+
   const submitAll = useCallback(() => {
     void form.handleSubmit(
       async (values) => {
@@ -291,7 +294,7 @@ export function CreateFormEngineV2<T extends FieldValues>({
         setBusy(true);
         setServerError(null);
         try {
-          await onSubmit(values);
+          await onSubmitRef.current(values);
           setQueued(false);
           haptic('success');
           draft.clear();
@@ -339,7 +342,6 @@ export function CreateFormEngineV2<T extends FieldValues>({
     focusField,
     form,
     haptic,
-    onSubmit,
     queueWhenOffline,
     uploadState.pending,
   ]);

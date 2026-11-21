@@ -170,12 +170,11 @@ export function CarnetCommunityCreateBridge({
         cur.stepIndex === nav.stepIndex &&
         cur.stepCount === nav.stepCount &&
         cur.busy === nav.busy &&
+        cur.busyLabel === nav.busyLabel &&
         cur.canBack === nav.canBack &&
         cur.finalLabel === nav.finalLabel &&
         cur.serverError === nav.serverError &&
-        cur.goBack === nav.goBack &&
-        cur.goNext === nav.goNext &&
-        cur.goToStep === nav.goToStep
+        cur.hasContent === nav.hasContent
       ) {
         return prev;
       }
