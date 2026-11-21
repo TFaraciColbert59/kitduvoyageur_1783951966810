@@ -738,408 +738,311 @@ export function CarnetDrawerV2({
     );
   }
 
-  // Render Secondary Account / Carnet Settings Drawer (Design System LKDV V2)
+  // Render Secondary Account / Carnet Settings Drawer (100% identique au shell SlotShell des autres drawers)
   if (isAccountDrawer) {
     const safeTabIdx = Math.min(accountTab, accountTabs.length - 1);
-    const activeAccountTabId = accountTabs[safeTabIdx]?.id ?? 'partage';
     const shareHref = typeof window !== 'undefined' ? window.location.href : '';
     const totalMoments = detail.moments.length;
     const totalSpecies = detail.pokedexEntries?.length ?? 0;
     const totalGear = detail.kit?.items?.length ?? 0;
     const isPublicCarnet = detail.isPublic !== false && detail.visibility !== 'private';
 
+    const accountLenses: SlotLens[] = accountTabs.map((t) => ({
+      id: t.id,
+      label: t.label,
+      icon: t.icon,
+    }));
+
+    const renderAccountLens = (lens: SlotLens) => {
+      if (lens.id === 'partage') {
+        return (
+          <div className="lkdv-carnet-drawer-pane" style={{ paddingBottom: 24 }}>
+            <div className="lkdv-carnet-cards-col" style={{ gap: 10 }}>
+              <div className="lkdv-carnet-budget-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <small style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label2)' }}>
+                    Carnet d’expédition
+                  </small>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: isPublicCarnet ? 'rgba(22, 163, 74, 0.12)' : 'rgba(100, 116, 139, 0.14)',
+                      color: isPublicCarnet ? '#15803d' : '#475569',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {isPublicCarnet ? <Globe size={11} aria-hidden="true" /> : <Lock size={11} aria-hidden="true" />}
+                    {isPublicCarnet ? 'Public' : 'Privé'}
+                  </span>
+                </div>
+                <b style={{ fontSize: '14px', color: 'var(--label)' }}>{detail.title}</b>
+                <small style={{ color: 'var(--label2)' }}>
+                  {detail.etapes.length} étape{detail.etapes.length > 1 ? 's' : ''} · {detail.participants.length} participant{detail.participants.length > 1 ? 's' : ''}
+                  {detail.distanceKm ? ` · ${Math.round(detail.distanceKm)} km` : ''}
+                </small>
+              </div>
+
+              <div className="lkdv-carnet-budget-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                <small style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label2)' }}>
+                  Lien de partage
+                </small>
+                <div
+                  style={{
+                    padding: '7px 10px',
+                    borderRadius: 10,
+                    background: 'rgba(23, 64, 44, 0.05)',
+                    fontSize: '11.5px',
+                    color: 'var(--label2)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {shareHref || `/carnets/${detail.id}`}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-primary"
+                    style={{ justifyContent: 'center', width: '100%' }}
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        void navigator.clipboard.writeText(window.location.href);
+                        onIsland?.('Lien copié dans le presse-papier');
+                      }
+                    }}
+                  >
+                    <Copy size={13} aria-hidden="true" />
+                    <span>Copier le lien</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-secondary"
+                    style={{ justifyContent: 'center', width: '100%' }}
+                    onClick={() => {
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        void navigator.share({ title: detail.title, url: shareHref }).catch(() => {});
+                      } else if (typeof window !== 'undefined') {
+                        void navigator.clipboard.writeText(window.location.href);
+                        onIsland?.('Lien copié dans le presse-papier');
+                      }
+                    }}
+                  >
+                    <Share2 size={13} aria-hidden="true" />
+                    <span>Partager</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="lkdv-carnet-budget-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                <small style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label2)' }}>
+                  Réutiliser l’itinéraire
+                </small>
+                <small style={{ color: 'var(--label2)' }}>
+                  Ouvrez ce tracé dans le Compas pour planifier votre propre départ.
+                </small>
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-secondary"
+                  style={{ justifyContent: 'center', width: '100%' }}
+                  onClick={() => {
+                    onClose();
+                    router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
+                  }}
+                >
+                  <Route size={14} aria-hidden="true" />
+                  <span>Reprendre dans le Compas</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (lens.id === 'affichage') {
+        return (
+          <div className="lkdv-carnet-drawer-pane" style={{ paddingBottom: 24 }}>
+            <div className="lkdv-carnet-cards-col" style={{ gap: 10 }}>
+              <div className="lkdv-carnet-budget-row" style={{ justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <b>Mode plein soleil</b>
+                  <small>Contraste renforcé, texte plus lisible en extérieur</small>
+                </div>
+                <Switch
+                  checked={isOutdoor}
+                  onCheckedChange={() => {
+                    haptic('selection');
+                    onToggleOutdoor?.();
+                  }}
+                  aria-label="Mode plein soleil"
+                />
+              </div>
+
+              <div className="lkdv-carnet-budget-row" style={{ justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <b>Réduire les animations</b>
+                  <small>Transitions simplifiées et économie de batterie</small>
+                </div>
+                <Switch
+                  checked={reduceMotion}
+                  onCheckedChange={() => {
+                    haptic('selection');
+                    onToggleReduceMotion?.();
+                  }}
+                  aria-label="Réduire les animations"
+                />
+              </div>
+
+              <div className="lkdv-carnet-kpi-grid-3">
+                <div className="lkdv-carnet-kpi-mini">
+                  <small>Distance</small>
+                  <b>km</b>
+                </div>
+                <div className="lkdv-carnet-kpi-mini">
+                  <small>Dénivelé</small>
+                  <b>m D+</b>
+                </div>
+                <div className="lkdv-carnet-kpi-mini">
+                  <small>Poids</small>
+                  <b>kg / g</b>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="lkdv-carnet-drawer-pane" style={{ paddingBottom: 24 }}>
+          <div className="lkdv-carnet-cards-col" style={{ gap: 10 }}>
+            <div className="lkdv-carnet-kpi-grid-3" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Moments</small>
+                <b>{totalMoments}</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Espèces</small>
+                <b>{totalSpecies}</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Équipement</small>
+                <b>{totalGear} objets</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Visibilité</small>
+                <b>{isPublicCarnet ? 'Public' : 'Privé'}</b>
+              </div>
+            </div>
+
+            <div className="lkdv-carnet-budget-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              <small style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label2)' }}>
+                Exporter
+              </small>
+              <button
+                type="button"
+                className="lkdv-carnet-btn-primary"
+                style={{ justifyContent: 'center', width: '100%' }}
+                onClick={() => {
+                  const blob = new Blob([JSON.stringify(detail, null, 2)], {
+                    type: 'application/json',
+                  });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `carnet-${detail.id}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  onIsland?.('Carnet exporté en JSON');
+                }}
+              >
+                <Download size={14} aria-hidden="true" />
+                <span>Télécharger le JSON complet</span>
+              </button>
+
+              {(() => {
+                const t = detail.trace as { type?: string; coordinates?: unknown; geometry?: { coordinates?: unknown }; features?: Array<{ geometry?: { coordinates?: unknown } }> } | null;
+                const rawCoords = Array.isArray(t?.coordinates)
+                  ? t.coordinates
+                  : Array.isArray(t?.geometry?.coordinates)
+                    ? t.geometry.coordinates
+                    : Array.isArray(t?.features?.[0]?.geometry?.coordinates)
+                      ? t.features[0].geometry.coordinates
+                      : null;
+                if (!Array.isArray(rawCoords) || rawCoords.length === 0) return null;
+                return (
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-secondary"
+                    style={{ justifyContent: 'center', width: '100%' }}
+                    onClick={() => {
+                      const pts = rawCoords
+                        .filter((c): c is [number, number] => Array.isArray(c) && c.length >= 2)
+                        .map((pt) => `<trkpt lat="${pt[1]}" lon="${pt[0]}"></trkpt>`)
+                        .join('');
+                      const gpx = `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Le Kit du Voyageur"><trk><name>${detail.title.replace(/[<>&]/g, '')}</name><trkseg>${pts}</trkseg></trk></gpx>`;
+                      const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `trace-${detail.id}.gpx`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      onIsland?.('Trace GPX téléchargée');
+                    }}
+                  >
+                    <Route size={14} aria-hidden="true" />
+                    <span>Télécharger la trace GPX</span>
+                  </button>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div
-        ref={dialogRef}
-        className="lkdv-stack-sheet lkdv-cv2c-ps-sheet"
+        ref={attachPaneRoot}
+        className="lkdv-carnet-drawer"
         role="dialog"
         aria-modal="true"
         aria-label="Paramètres du carnet"
         tabIndex={-1}
-        style={{ background: '#f6f8f7' }}
       >
-        <div className="lkdv-cv2c-ps-head">
-          <button
-            type="button"
-            className="lkdv-cv2c-ps-close"
-            onClick={onClose}
-            aria-label="Fermer les paramètres"
-          >
-            <X size={16} aria-hidden="true" />
-          </button>
-          <span
-            className="lkdv-cv2c-ps-head-title"
-            style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: '0.92rem', color: '#172b24' }}
-          >
-            Paramètres du carnet
-          </span>
-          <span style={{ width: 34, flexShrink: 0 }} aria-hidden="true" />
-        </div>
+        <style dangerouslySetInnerHTML={{ __html: DRAWER_MOTION_CSS }} />
 
-        <div style={{ padding: '4px 14px 10px' }}>
-          <CapsuleTabs
-            items={accountTabs.map((t) => ({
-              id: t.id,
-              label: t.label,
-              icon: t.icon,
-            }))}
-            activeId={activeAccountTabId}
-            onChange={(id) => {
-              const idx = accountTabs.findIndex((t) => t.id === id);
-              if (idx >= 0) setAccountTab(idx);
-            }}
-            ariaLabel="Sections des paramètres du carnet"
-          />
-        </div>
+        <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
+          <span />
+        </button>
 
-        <div className="lkdv-cv2c-ps-scroll" style={{ paddingTop: 2 }}>
-          <CarnetMotionRoot>
-            <StackSlideView stackKey={`account-${activeAccountTabId}-${stack.length}`}>
-              {activeAccountTabId === 'partage' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                        Carnet d’expédition
-                      </span>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '2px 8px',
-                          borderRadius: 999,
-                          background: isPublicCarnet ? 'rgba(22, 163, 74, 0.12)' : 'rgba(100, 116, 139, 0.14)',
-                          color: isPublicCarnet ? '#15803d' : '#475569',
-                          fontSize: '0.68rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {isPublicCarnet ? <Globe size={11} aria-hidden="true" /> : <Lock size={11} aria-hidden="true" />}
-                        {isPublicCarnet ? 'Public' : 'Privé'}
-                      </span>
-                    </div>
-                    <b style={{ fontSize: '0.92rem', color: '#172b24', lineHeight: 1.3 }}>{detail.title}</b>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.74rem', color: '#56665d' }}>
-                      <span>{detail.etapes.length} étape{detail.etapes.length > 1 ? 's' : ''}</span>
-                      <span>·</span>
-                      <span>{detail.participants.length} participant{detail.participants.length > 1 ? 's' : ''}</span>
-                      {detail.distanceKm ? (
-                        <>
-                          <span>·</span>
-                          <span>{Math.round(detail.distanceKm)} km</span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Lien de partage
-                    </span>
-                    <div
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: 10,
-                        background: '#f8faf8',
-                        border: '1px solid rgba(23, 64, 44, 0.1)',
-                        fontSize: '0.72rem',
-                        color: '#56665d',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {shareHref || `/carnets/${detail.id}`}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            void navigator.clipboard.writeText(window.location.href);
-                            onIsland?.('Lien copié dans le presse-papier');
-                          }
-                        }}
-                        style={{
-                          height: 36,
-                          borderRadius: 999,
-                          border: 0,
-                          background: '#17402c',
-                          color: '#fff',
-                          fontWeight: 600,
-                          fontSize: '0.78rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Copy size={13} aria-hidden="true" />
-                        <span>Copier le lien</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (typeof navigator !== 'undefined' && navigator.share) {
-                            void navigator.share({ title: detail.title, url: shareHref }).catch(() => {});
-                          } else if (typeof window !== 'undefined') {
-                            void navigator.clipboard.writeText(window.location.href);
-                            onIsland?.('Lien copié dans le presse-papier');
-                          }
-                        }}
-                        style={{
-                          height: 36,
-                          borderRadius: 999,
-                          border: '1px solid rgba(23, 64, 44, 0.18)',
-                          background: '#ffffff',
-                          color: '#17402c',
-                          fontWeight: 600,
-                          fontSize: '0.78rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        <Share2 size={13} aria-hidden="true" />
-                        <span>Partager</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Réutiliser l’itinéraire
-                    </span>
-                    <p style={{ margin: 0, fontSize: '0.76rem', color: '#56665d', lineHeight: 1.4 }}>
-                      Ouvrez ce tracé dans le Compas pour planifier votre propre départ avec ces étapes.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
-                      }}
-                      style={{
-                        height: 36,
-                        borderRadius: 999,
-                        border: '1px solid rgba(23, 64, 44, 0.16)',
-                        background: '#f8faf8',
-                        color: '#17402c',
-                        fontWeight: 600,
-                        fontSize: '0.78rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Route size={14} aria-hidden="true" />
-                      <span>Reprendre dans le Compas</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeAccountTabId === 'affichage' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 12 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Confort de lecture sur le terrain
-                    </span>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <b style={{ display: 'block', fontSize: '0.82rem', color: '#172b24' }}>Mode plein soleil</b>
-                        <small style={{ fontSize: '0.72rem', color: '#56665d' }}>
-                          Contraste renforcé, texte plus lisible en extérieur
-                        </small>
-                      </div>
-                      <Switch
-                        checked={isOutdoor}
-                        onCheckedChange={() => {
-                          haptic('selection');
-                          onToggleOutdoor?.();
-                        }}
-                        aria-label="Mode plein soleil"
-                      />
-                    </div>
-                    <div
-                      style={{
-                        height: 1,
-                        background: 'rgba(23, 64, 44, 0.08)',
-                      }}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <b style={{ display: 'block', fontSize: '0.82rem', color: '#172b24' }}>Réduire les animations</b>
-                        <small style={{ fontSize: '0.72rem', color: '#56665d' }}>
-                          Transitions simplifiées et économie de batterie
-                        </small>
-                      </div>
-                      <Switch
-                        checked={reduceMotion}
-                        onCheckedChange={() => {
-                          haptic('selection');
-                          onToggleReduceMotion?.();
-                        }}
-                        aria-label="Réduire les animations"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Unités actives
-                    </span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
-                      {[
-                        { k: 'Distance', v: 'km' },
-                        { k: 'Dénivelé', v: 'm D+' },
-                        { k: 'Poids', v: 'kg / g' },
-                      ].map((u) => (
-                        <div
-                          key={u.k}
-                          style={{
-                            padding: '8px',
-                            borderRadius: 10,
-                            background: '#f8faf8',
-                            border: '1px solid rgba(23, 64, 44, 0.08)',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <small style={{ display: 'block', fontSize: '0.66rem', color: '#64748b' }}>{u.k}</small>
-                          <b style={{ fontSize: '0.78rem', color: '#172b24' }}>{u.v}</b>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeAccountTabId === 'export' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Données du carnet
-                    </span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
-                      {[
-                        { k: 'Moments', v: String(totalMoments) },
-                        { k: 'Espèces', v: String(totalSpecies) },
-                        { k: 'Équipement', v: `${totalGear} objets` },
-                        { k: 'Visibilité', v: isPublicCarnet ? 'Public' : 'Privé' },
-                      ].map((stat) => (
-                        <div
-                          key={stat.k}
-                          style={{
-                            padding: '7px 10px',
-                            borderRadius: 10,
-                            background: '#f8faf8',
-                            border: '1px solid rgba(23, 64, 44, 0.08)',
-                          }}
-                        >
-                          <small style={{ display: 'block', fontSize: '0.66rem', color: '#64748b' }}>{stat.k}</small>
-                          <b style={{ fontSize: '0.78rem', color: '#172b24' }}>{stat.v}</b>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
-                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
-                      Exporter
-                    </span>
-                    <button
-                      type="button"
-                      style={{
-                        height: 38,
-                        borderRadius: 999,
-                        border: 0,
-                        background: '#17402c',
-                        color: '#fff',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => {
-                        const blob = new Blob([JSON.stringify(detail, null, 2)], {
-                          type: 'application/json',
-                        });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `carnet-${detail.id}.json`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        onIsland?.('Carnet exporté en JSON');
-                      }}
-                    >
-                      <Download size={14} aria-hidden="true" />
-                      <span>Télécharger le JSON complet</span>
-                    </button>
-
-                    {(() => {
-                      const t = detail.trace as { type?: string; coordinates?: unknown; geometry?: { coordinates?: unknown }; features?: Array<{ geometry?: { coordinates?: unknown } }> } | null;
-                      const rawCoords = Array.isArray(t?.coordinates)
-                        ? t.coordinates
-                        : Array.isArray(t?.geometry?.coordinates)
-                          ? t.geometry.coordinates
-                          : Array.isArray(t?.features?.[0]?.geometry?.coordinates)
-                            ? t.features[0].geometry.coordinates
-                            : null;
-                      if (!Array.isArray(rawCoords) || rawCoords.length === 0) return null;
-                      return (
-                        <button
-                          type="button"
-                          style={{
-                            height: 38,
-                            borderRadius: 999,
-                            border: '1px solid rgba(23, 64, 44, 0.18)',
-                            background: '#ffffff',
-                            color: '#17402c',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6,
-                            fontSize: '0.78rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => {
-                            const pts = rawCoords
-                              .filter((c): c is [number, number] => Array.isArray(c) && c.length >= 2)
-                              .map((pt) => `<trkpt lat="${pt[1]}" lon="${pt[0]}"></trkpt>`)
-                              .join('');
-                            const gpx = `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Le Kit du Voyageur"><trk><name>${detail.title.replace(/[<>&]/g, '')}</name><trkseg>${pts}</trkseg></trk></gpx>`;
-                            const blob = new Blob([gpx], { type: 'application/gpx+xml' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `trace-${detail.id}.gpx`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            onIsland?.('Trace GPX téléchargée');
-                          }}
-                        >
-                          <Route size={14} aria-hidden="true" />
-                          <span>Télécharger la trace GPX</span>
-                        </button>
-                      );
-                    })()}
-                  </div>
-                </div>
-              )}
-            </StackSlideView>
-          </CarnetMotionRoot>
-        </div>
+        <SlotShell
+          slot="fil"
+          viewer={detail.viewerRole === 'visitor' ? 'visitor' : 'owner'}
+          title={accountTabs[safeTabIdx]?.label || 'Paramètres'}
+          lenses={accountLenses}
+          activeLensIndex={safeTabIdx}
+          onLensChange={(idx) => setAccountTab(idx)}
+          selector={
+            <CapsuleTabs
+              items={accountTabs}
+              activeIndex={safeTabIdx}
+              onIndexChange={(idx) => setAccountTab(idx)}
+              ariaLabel="Sections des paramètres du carnet"
+              size="default"
+            />
+          }
+          renderLens={(lens) => (
+            <LensTransition transitionKey={`account:${lens.id}`}>
+              {renderAccountLens(lens)}
+            </LensTransition>
+          )}
+        />
       </div>
     );
   }
