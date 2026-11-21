@@ -23,6 +23,7 @@ import type { EditResult, useCarnetStructureEdits } from '@/features/carnet/deta
 
 /** Ce que la feuille d'édition sait modifier ; `null` côté donnée = création. */
 export type CarnetEditTarget =
+  | { kind: 'carnet' }
   | { kind: 'etape'; etape: CarnetEtapeDay | null; day: number }
   | { kind: 'nuit'; night: CarnetNightItem | null; day: number }
   | { kind: 'verdict'; itemId: string | null }
@@ -38,6 +39,14 @@ export interface CarnetEditSheetProps {
   /** Seul l'auteur invite, change le rôle ou retire un voyageur (politique de la base). */
   canManageTravelers: boolean;
   onMomentRemoved: (momentId: string) => void;
+  onCarnetSaved?: (patch: {
+    title: string;
+    description: string | null;
+    destination: string | null;
+    visibility: string;
+    startDate: string | null;
+    endDate: string | null;
+  }) => void;
   onClose: () => void;
 }
 
@@ -62,6 +71,8 @@ function titleOf(target: CarnetEditTarget): string {
       return target.participant ? 'Modifier le voyageur' : 'Inviter un voyageur';
     case 'moment':
       return 'Modifier le moment';
+    case 'carnet':
+      return 'Modifier le carnet';
   }
 }
 
@@ -77,11 +88,20 @@ export function CarnetEditSheet({
   edits,
   canManageTravelers,
   onMomentRemoved,
+  onCarnetSaved,
   onClose,
 }: CarnetEditSheetProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Carnet
+  const [carnetTitle, setCarnetTitle] = useState(detail.title ?? '');
+  const [carnetDesc, setCarnetDesc] = useState(detail.description ?? '');
+  const [carnetDest, setCarnetDest] = useState(detail.destination ?? '');
+  const [carnetVisibility, setCarnetVisibility] = useState<string>(detail.visibility ?? 'public');
+  const [carnetStart, setCarnetStart] = useState(detail.startDate ? detail.startDate.slice(0, 10) : '');
+  const [carnetEnd, setCarnetEnd] = useState(detail.endDate ? detail.endDate.slice(0, 10) : '');
 
   // Étape
   const etape = target.kind === 'etape' ? target.etape : null;
@@ -170,6 +190,35 @@ export function CarnetEditSheet({
             { place, caption },
             { place: target.moment.place, caption: target.moment.caption }
           );
+        case 'carnet': {
+          const trimmedTitle = carnetTitle.trim();
+          if (!trimmedTitle) return { ok: false, error: 'Le titre du carnet est requis.' };
+          const res = await fetch(`/api/carnets/${encodeURIComponent(detail.id)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: trimmedTitle,
+              description: carnetDesc.trim() || null,
+              destination: carnetDest.trim() || null,
+              visibility: carnetVisibility,
+              start_date: carnetStart || null,
+              end_date: carnetEnd || null,
+            }),
+          });
+          const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+          if (!res.ok || !data?.ok) {
+            return { ok: false, error: data?.error || 'Impossible d’enregistrer le carnet.' };
+          }
+          onCarnetSaved?.({
+            title: trimmedTitle,
+            description: carnetDesc.trim() || null,
+            destination: carnetDest.trim() || null,
+            visibility: carnetVisibility,
+            startDate: carnetStart || null,
+            endDate: carnetEnd || null,
+          });
+          return { ok: true };
+        }
       }
     });
 
@@ -186,6 +235,8 @@ export function CarnetEditSheet({
           return target.participant ? edits.removeTraveler(target.participant, role) : { ok: true };
         case 'moment':
           return edits.deleteMoment(target.moment.id, onMomentRemoved);
+        case 'carnet':
+          return { ok: true };
       }
     });
 
@@ -413,6 +464,65 @@ export function CarnetEditSheet({
                 Seul l’auteur du carnet invite, change le rôle ou retire un voyageur.
               </p>
             ) : null}
+          </>
+        ) : null}
+
+        {target.kind === 'carnet' ? (
+          <>
+            <Field label="Titre du carnet">
+              <input
+                type="text"
+                value={carnetTitle}
+                maxLength={120}
+                autoComplete="off"
+                placeholder="Ex. Tour du Mont-Blanc en autonomie"
+                onChange={(e) => setCarnetTitle(e.target.value)}
+              />
+            </Field>
+            <Field label="Destination">
+              <input
+                type="text"
+                value={carnetDest}
+                maxLength={120}
+                autoComplete="off"
+                placeholder="Ex. Chamonix, Alpes"
+                onChange={(e) => setCarnetDest(e.target.value)}
+              />
+            </Field>
+            <Field label="Description">
+              <textarea
+                value={carnetDesc}
+                maxLength={600}
+                placeholder="Quelques lignes sur le parcours, les conditions, l'objectif…"
+                onChange={(e) => setCarnetDesc(e.target.value)}
+              />
+            </Field>
+            <div className="lkdv-carnet-edit-grid">
+              <Field label="Date de départ">
+                <input
+                  type="date"
+                  value={carnetStart}
+                  onChange={(e) => setCarnetStart(e.target.value)}
+                />
+              </Field>
+              <Field label="Date de fin">
+                <input
+                  type="date"
+                  value={carnetEnd}
+                  onChange={(e) => setCarnetEnd(e.target.value)}
+                />
+              </Field>
+            </div>
+            <Field label="Visibilité">
+              <select
+                value={carnetVisibility}
+                onChange={(e) => setCarnetVisibility(e.target.value)}
+              >
+                <option value="public">Public — visible par tous</option>
+                <option value="friends">Équipage & amis</option>
+                <option value="private">Privé — uniquement les participants</option>
+              </select>
+            </Field>
           </>
         ) : null}
 

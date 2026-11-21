@@ -80,6 +80,13 @@ const CommunityNotificationsDrawer = dynamic(
     })),
   { ssr: false }
 );
+const PostSharePanel = dynamic(
+  () =>
+    import('@/features/community/feed/PostSharePanel').then((m) => ({
+      default: m.PostSharePanel,
+    })),
+  { ssr: false }
+);
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -143,6 +150,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const [altitudeExpanded, setAltitudeExpanded] = useState(false);
   const [postMomentId, setPostMomentId] = useState<string | null>(null);
   const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
@@ -771,6 +779,26 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     [detail.id]
   );
 
+  const shareCarnetPost = useMemo(
+    () => ({
+      id: detail.id,
+      title: detail.title,
+      content: detail.description ?? detail.title,
+      location: detail.destination ?? null,
+      image_url: detail.coverImage ?? null,
+      media_urls: detail.coverImage ? [detail.coverImage] : [],
+      author_id: detail.author?.id ?? null,
+      author: {
+        id: detail.author?.id ?? '',
+        full_name: detail.author?.name ?? detail.title,
+        avatar_url: detail.author?.avatarUrl ?? null,
+      },
+      linked_carnet_id: detail.id,
+      carnetContext: { id: detail.id, title: detail.title },
+    }),
+    [detail]
+  );
+
   const handleCopyLink = useCallback(() => {
     if (typeof window !== 'undefined') {
       void navigator.clipboard.writeText(shareUrl);
@@ -857,13 +885,10 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           viewerRole={viewerRole}
           isEditing={isEditing}
           onToggleEdit={() => {
-            const next = !editRequested;
-            setEditRequested(next);
-            showIsland(
-              next ? 'Mode modification activé' : 'Mode modification terminé',
-              undefined,
-              next ? 'Les actions d’édition apparaissent en place.' : undefined
-            );
+            if (!editRequested) {
+              setEditRequested(true);
+            }
+            setEditTarget({ kind: 'carnet' });
           }}
           onOpenSettings={() => {
             setIsAccountDrawer(true);
@@ -875,13 +900,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           isOutdoor={outdoor}
           reduceMotion={reduceMotion}
           onToggleReduceMotion={() => setReduceMotion((prev) => !prev)}
-          onShare={() => {
-            if (navigator.share) {
-              void navigator.share({ title: detail.title, url: shareUrl }).catch(() => {});
-            } else {
-              handleCopyLink();
-            }
-          }}
+          onShare={() => setSharePanelOpen(true)}
           onReport={() => setReportTarget({ kind: 'carnet' })}
           onCopyLink={handleCopyLink}
           onFollow={() => void follow.toggle()}
@@ -917,6 +936,34 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           pinnedIds={pinnedIds}
           zoneLabel={zoneLabel}
         />
+
+        {sharePanelOpen ? (
+          <div
+            className="lkdv-feed-panel-surface"
+            style={{
+              position: 'absolute',
+              inset: 10,
+              zIndex: 30,
+              borderRadius: 26,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            role="dialog"
+            aria-label="Partager ce carnet"
+          >
+            <PostSharePanel
+              post={shareCarnetPost}
+              user={user}
+              permalinkOverride={shareUrl}
+              onClose={() => setSharePanelOpen(false)}
+              onRequireAuth={() => {
+                setSharePanelOpen(false);
+                setIsAccountDrawer(true);
+              }}
+            />
+          </div>
+        ) : null}
       </section>
 
       {/* Bottom Map Section (1fr) */}
@@ -1260,6 +1307,18 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           edits={structure}
           canManageTravelers={detail.isOwner}
           onMomentRemoved={removeMomentLocal}
+          onCarnetSaved={(patch) => {
+            setDetail((prev) => ({
+              ...prev,
+              title: patch.title,
+              description: patch.description,
+              destination: patch.destination,
+              visibility: patch.visibility,
+              startDate: patch.startDate,
+              endDate: patch.endDate,
+            }));
+            showIsland('Carnet mis à jour', undefined, patch.title);
+          }}
           onClose={() => setEditTarget(null)}
         />
       ) : null}
