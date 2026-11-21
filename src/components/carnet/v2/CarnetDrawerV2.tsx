@@ -193,7 +193,6 @@ export function CarnetDrawerV2({
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
   const [selectedParticipant, setSelectedParticipant] = useState<CarnetDetail['participants'][number] | null>(null);
-  const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
   const sacKitItems = useMemo(() => {
     if (detail.kit?.items?.length) return detail.kit.items;
     const memberLists = Object.values(detail.memberKits ?? {});
@@ -202,6 +201,56 @@ export function CarnetDrawerV2({
     }
     return [];
   }, [detail.kit, detail.memberKits]);
+  type SheetKitItem = (typeof sacKitItems)[number];
+  const [selectedKitSheet, setSelectedKitSheet] = useState<{
+    items: SheetKitItem[];
+    index: number;
+    owner?: { id: string; name: string; avatarUrl?: string | null } | null;
+  } | null>(null);
+  const openKitProductSheet = (
+    item: SheetKitItem,
+    preferredItems?: SheetKitItem[],
+    preferredOwner?: { id: string; name: string; avatarUrl?: string | null } | null
+  ) => {
+    if (preferredItems && preferredItems.length > 0) {
+      const idx = preferredItems.findIndex((k) => k.id === item.id);
+      if (idx >= 0) {
+        setSelectedKitSheet({ items: preferredItems, index: idx, owner: preferredOwner ?? null });
+        return;
+      }
+    }
+    const baseIdx = sacKitItems.findIndex((k) => k.id === item.id);
+    if (baseIdx >= 0) {
+      setSelectedKitSheet({
+        items: sacKitItems,
+        index: baseIdx,
+        owner: detail.author
+          ? { id: detail.author.id, name: detail.author.name, avatarUrl: detail.author.avatarUrl ?? null }
+          : null,
+      });
+      return;
+    }
+    for (const [memberId, mk] of Object.entries(detail.memberKits ?? {})) {
+      const items = mk?.items ?? [];
+      const mkIdx = items.findIndex((k) => k.id === item.id);
+      if (mkIdx >= 0) {
+        const part = detail.participants.find((pt) => pt.userId === memberId || pt.id === memberId);
+        setSelectedKitSheet({
+          items,
+          index: mkIdx,
+          owner: part
+            ? {
+                id: part.userId ?? part.id,
+                name: part.name?.trim() || part.handle?.trim() || 'Voyageur',
+                avatarUrl: part.avatarUrl ?? null,
+              }
+            : null,
+        });
+        return;
+      }
+    }
+    setSelectedKitSheet({ items: [item], index: 0, owner: preferredOwner ?? null });
+  };
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
   const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
@@ -884,10 +933,7 @@ export function CarnetDrawerV2({
             initialUserId={kitJumpUserId}
             verdictFilter={verdictFilter}
             onVerdictFilterChange={setVerdictFilter}
-            onSelectItem={(item) => {
-              const idx = sacKitItems.findIndex((k) => k.id === item.id);
-              setSelectedKitProductIndex(idx >= 0 ? idx : 0);
-            }}
+            onSelectItem={(item) => openKitProductSheet(item)}
             onForkAll={(ids) => {
               void forkAllItems(ids);
             }}
@@ -1072,10 +1118,13 @@ export function CarnetDrawerV2({
                                   key={item.id}
                                   type="button"
                                   className="lkdv-carnet-kit-mini-tile"
-                                  onClick={() => {
-                                    const idx = sacKitItems.findIndex((k) => k.id === item.id);
-                                    setSelectedKitProductIndex(idx >= 0 ? idx : 0);
-                                  }}
+                                  onClick={() =>
+                                    openKitProductSheet(item, pKitItems, {
+                                      id: p.userId ?? p.id,
+                                      name: pName,
+                                      avatarUrl: p.avatarUrl ?? null,
+                                    })
+                                  }
                                 >
                                   <div className="lkdv-carnet-kit-mini-tile-top">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1313,16 +1362,25 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
-      {selectedKitProductIndex !== null &&
-      sacKitItems[selectedKitProductIndex] &&
+      {selectedKitSheet &&
+      selectedKitSheet.items[selectedKitSheet.index] &&
       typeof document !== 'undefined'
         ? createPortal(
             (() => {
-              const item = sacKitItems[selectedKitProductIndex];
-              const totalKitWeightG = sacKitItems.reduce(
+              const sheetItems = selectedKitSheet.items;
+              const sheetIdx = selectedKitSheet.index;
+              const item = sheetItems[sheetIdx];
+              const totalKitWeightG = sheetItems.reduce(
                 (sum, k) => sum + (Number(k.weightG) || 0),
                 0
               );
+              const sheetOwner = selectedKitSheet.owner ?? (detail.author
+                ? {
+                    id: detail.author.id,
+                    name: detail.author.name,
+                    avatarUrl: detail.author.avatarUrl ?? null,
+                  }
+                : null);
               const product: PickerProduct = {
                 key: item.id,
                 source: 'inventory',
@@ -1336,11 +1394,11 @@ export function CarnetDrawerV2({
                 conditionLabel: item.verdict ?? null,
                 description: item.detail ?? null,
                 priceLabel: null,
-                owner: detail.author
+                owner: sheetOwner
                   ? {
-                      id: detail.author.id,
-                      name: detail.author.name,
-                      avatarUrl: detail.author.avatarUrl ?? null,
+                      id: sheetOwner.id,
+                      name: sheetOwner.name,
+                      avatarUrl: sheetOwner.avatarUrl ?? null,
                       trustScore: null,
                     }
                   : null,
@@ -1354,21 +1412,25 @@ export function CarnetDrawerV2({
                   initialCategory={item.category ?? undefined}
                   currentKitWeightG={totalKitWeightG}
                   alreadyInKit={false}
-                  positionLabel={`${selectedKitProductIndex + 1} / ${sacKitItems.length}`}
-                  hasPrev={selectedKitProductIndex > 0}
-                  hasNext={selectedKitProductIndex < sacKitItems.length - 1}
+                  positionLabel={`${sheetIdx + 1} / ${sheetItems.length}`}
+                  hasPrev={sheetIdx > 0}
+                  hasNext={sheetIdx < sheetItems.length - 1}
                   onPrev={() =>
-                    setSelectedKitProductIndex((i) => (i !== null && i > 0 ? i - 1 : i))
-                  }
-                  onNext={() =>
-                    setSelectedKitProductIndex((i) =>
-                      i !== null && i < sacKitItems.length - 1 ? i + 1 : i
+                    setSelectedKitSheet((cur) =>
+                      cur && cur.index > 0 ? { ...cur, index: cur.index - 1 } : cur
                     )
                   }
-                  onClose={() => setSelectedKitProductIndex(null)}
+                  onNext={() =>
+                    setSelectedKitSheet((cur) =>
+                      cur && cur.index < cur.items.length - 1
+                        ? { ...cur, index: cur.index + 1 }
+                        : cur
+                    )
+                  }
+                  onClose={() => setSelectedKitSheet(null)}
                   onAdd={(prod) => {
                     void forkItem(prod.id);
-                    setSelectedKitProductIndex(null);
+                    setSelectedKitSheet(null);
                   }}
                 />
               );
