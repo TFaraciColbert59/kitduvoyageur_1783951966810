@@ -580,7 +580,7 @@ function StoryCarnetLink() {
   );
 }
 
-function StoryDiffusionStep() {
+function StoryDiffusionStep({ inCarnet = false }: { inCarnet?: boolean }) {
   const form = useFormContext<StoryFormValuesV2>();
   const values = form.watch();
   const { user, requestCreate } = useCreateSheet();
@@ -603,24 +603,28 @@ function StoryDiffusionStep() {
         clubsError={myClubs.error}
         onCreateClub={() => requestCreate('club')}
       />
-      <div className="lkdv-cv2c-crop-row">
-        <span className="lkdv-cv2-field-label">Réponses</span>
-        <div className="lkdv-cv2-seg lkdv-cv2c-seg" role="group" aria-label="Qui peut répondre">
-          {REPLY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              aria-pressed={values.replyPolicy === option.value}
-              onClick={() =>
-                form.setValue('replyPolicy', option.value, { shouldDirty: true, shouldValidate: true })
-              }
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <StoryCarnetLink />
+      {!inCarnet ? (
+        <>
+          <div className="lkdv-cv2c-crop-row">
+            <span className="lkdv-cv2-field-label">Réponses</span>
+            <div className="lkdv-cv2-seg lkdv-cv2c-seg" role="group" aria-label="Qui peut répondre">
+              {REPLY_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={values.replyPolicy === option.value}
+                  onClick={() =>
+                    form.setValue('replyPolicy', option.value, { shouldDirty: true, shouldValidate: true })
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <StoryCarnetLink />
+        </>
+      ) : null}
       <button
         type="button"
         className="lkdv-cv2c-switch"
@@ -651,6 +655,7 @@ interface StoryBodyProps {
   previewCollapsed: boolean;
   setPreviewCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   savedModifiersRef: React.MutableRefObject<Record<string, PhotoModifiersV2>>;
+  inCarnet?: boolean;
 }
 
 function StoryBody({
@@ -665,6 +670,7 @@ function StoryBody({
   previewCollapsed,
   setPreviewCollapsed,
   savedModifiersRef,
+  inCarnet = false,
 }: StoryBodyProps) {
   const form = api.form;
   const values = form.watch();
@@ -989,12 +995,12 @@ function StoryBody({
         </>
       ) : null}
 
-      {!isEditorOpen && api.step === 1 ? <StoryDiffusionStep /> : null}
+      {!isEditorOpen && api.step === 1 ? <StoryDiffusionStep inCarnet={inCarnet} /> : null}
     </>
   );
 }
 
-export function StoryFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
+export function StoryFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts, inCarnet = false }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('story')).current;
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -1034,6 +1040,7 @@ export function StoryFormV2({ active, prefill, prefillNonce, onNavChange, stepHo
           previewCollapsed={previewCollapsed}
           setPreviewCollapsed={setPreviewCollapsed}
           savedModifiersRef={savedModifiersRef}
+          inCarnet={inCarnet}
         />
       )}
     </CreateFormEngineV2>

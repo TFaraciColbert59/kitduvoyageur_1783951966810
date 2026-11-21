@@ -57,6 +57,7 @@ interface CarnetSpeciesCreatePaneProps {
     species: PokedexApiSpecies,
     file: File,
   ) => Promise<{ ok: boolean; error?: string }>;
+  step?: 0 | 1 | 2;
 }
 
 export function CarnetSpeciesCreatePane({
@@ -75,6 +76,7 @@ export function CarnetSpeciesCreatePane({
   nearbyLat = null,
   nearbyLng = null,
   onValidateDiscovery,
+  step,
 }: CarnetSpeciesCreatePaneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const validationFileRef = useRef<HTMLInputElement | null>(null);
@@ -278,7 +280,8 @@ export function CarnetSpeciesCreatePane({
       </motion.div>
 
       {/* 2. Espèces déjà découvertes + case "+" en pointillé en premier */}
-      <div className="lkdv-cv2-field">
+      {step === undefined || step === 0 ? (
+        <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">
           Mes espèces découvertes ({discoveredList.length})
         </span>
@@ -492,66 +495,73 @@ export function CarnetSpeciesCreatePane({
             Nouvelle espèce : ajoute une photo ci-dessus pour la valider dans ton Pokédex.
           </small>
         ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {/* 3. Effectif & Comportement (2 selects côte à côte) */}
-      <div className="lkdv-cv2c-row-2">
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Effectif</span>
-          <select
-            className="lkdv-cv2-input"
-            value={countLabel}
-            onChange={(e) => setCountLabel(e.target.value)}
-          >
-            {INDIVIDUAL_COUNTS.map((cnt) => (
-              <option key={cnt} value={cnt}>
-                {cnt}
-              </option>
-            ))}
-          </select>
+      {step === undefined || step === 1 ? (
+        <div className="lkdv-cv2c-row-2">
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Effectif</span>
+            <select
+              className="lkdv-cv2-input"
+              value={countLabel}
+              onChange={(e) => setCountLabel(e.target.value)}
+            >
+              {INDIVIDUAL_COUNTS.map((cnt) => (
+                <option key={cnt} value={cnt}>
+                  {cnt}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Comportement</span>
+            <select
+              className="lkdv-cv2-input"
+              value={selectedTag ?? ''}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (!next) {
+                  setSelectedTag(null);
+                  return;
+                }
+                applyTag(next);
+              }}
+            >
+              <option value="">Choisir…</option>
+              {OBSERVATION_TAGS.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Comportement</span>
-          <select
-            className="lkdv-cv2-input"
-            value={selectedTag ?? ''}
-            onChange={(e) => {
-              const next = e.target.value;
-              if (!next) {
-                setSelectedTag(null);
-                return;
-              }
-              applyTag(next);
-            }}
-          >
-            <option value="">Choisir…</option>
-            {OBSERVATION_TAGS.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      ) : null}
 
       {/* 5. Lieu (recherche réelle /api/geocode) & Note de terrain */}
-      <CarnetPlaceSearchField
-        label={`Lieu d’observation (Jour ${day})`}
-        value={place}
-        onChange={onPlaceChange}
-      />
+      {step === undefined || step === 2 ? (
+        <>
+          <CarnetPlaceSearchField
+            label={`Lieu d’observation (Jour ${day})`}
+            value={place}
+            onChange={onPlaceChange}
+          />
 
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Note de terrain</span>
-        <textarea
-          className="lkdv-cv2-input"
-          rows={2}
-          value={note}
-          maxLength={240}
-          placeholder="Conditions, comportement, altitude…"
-          onChange={(e) => onNoteChange(e.target.value)}
-        />
-      </div>
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Note de terrain</span>
+            <textarea
+              className="lkdv-cv2-input"
+              rows={2}
+              value={note}
+              maxLength={240}
+              placeholder="Conditions, comportement, altitude…"
+              onChange={(e) => onNoteChange(e.target.value)}
+            />
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

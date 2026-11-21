@@ -18,6 +18,8 @@ export interface CreateFormV2Props {
    * contenu de chaque étape dans sa page (glisser = étapes, pas de type).
    */
   stepHosts?: (HTMLElement | null)[] | null;
+  /** Masque les options redondantes (lier un carnet, politique de réponses) quand ouvert depuis un carnet. */
+  inCarnet?: boolean;
 }
 
 /** Valeurs de préremplissage connues (lecture sûre, aucune coercition). */

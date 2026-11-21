@@ -97,6 +97,7 @@ export function CarnetCommunityCreateBridge({
     const idx = CARNET_CREATE_TABS.findIndex((t) => t.id === initialTab);
     return idx >= 0 ? idx : 0;
   });
+  const [momentStepIndex, setMomentStepIndex] = useState(0);
   const activeTab = CARNET_CREATE_TABS[tabIndex]?.id ?? 'post';
 
   const [navs, setNavs] = useState<Map<CreateKindV2, CreateNavV2>>(() => new Map());
@@ -212,29 +213,434 @@ export function CarnetCommunityCreateBridge({
     activeTab === 'post' ? 'post' : activeTab === 'story' ? 'story' : null;
   const activeNav = activeCommunityKind ? navs.get(activeCommunityKind) ?? null : null;
 
+  const momentStepLabels = useMemo(() => {
+    if (activeTab === 'voice') return ['Enregistrement', 'Lieu & Note'];
+    if (activeTab === 'meet') return ['Voyageur', 'Lieu & Échange'];
+    if (activeTab === 'species') return ['Espèce', 'Détails', 'Lieu & Note'];
+    if (activeTab === 'inc') return ['Lieu', 'Description'];
+    return [];
+  }, [activeTab]);
+
   const mini = useMemo(() => {
-    if (!activeCommunityKind || !activeNav) return null;
-    const cfg = createKindConfig(activeCommunityKind);
-    const pages = cfg.steps.map((step, index) => [
+    if (activeCommunityKind && activeNav) {
+      const cfg = createKindConfig(activeCommunityKind);
+      const stepPages = cfg.steps.map((step, index) => [
+        <div
+          key={`${activeCommunityKind}-step-${index}`}
+          className="lkdv-cv2c-step-host"
+          ref={registerStepHost(activeCommunityKind, index)}
+          data-step-title={step.label}
+        />,
+      ]);
+      return {
+        items: cfg.steps.map((step, index) => ({
+          id: `cv2c-step-${index}`,
+          label: stepAriaLabel(index, step.label),
+          icon: <span className="lkdv-cv2c-step-num">{index + 1}</span>,
+        })),
+        active: activeNav.stepIndex,
+        onChange: (index: number) => activeNav.goToStep(index),
+        label: `Étapes de la création : ${activeTab === 'story' ? 'Story' : 'Publication'}`,
+        pages: stepPages,
+      };
+    }
+    if (activeCommunityKind) return null;
+
+    const voicePreview = (
       <div
-        key={`${activeCommunityKind}-step-${index}`}
-        className="lkdv-cv2c-step-host"
-        ref={registerStepHost(activeCommunityKind, index)}
-        data-step-title={step.label}
-      />,
-    ]);
+        className="lkdv-carnet-species-preview"
+        style={{ marginBottom: 4 }}
+        aria-label="Aperçu du mémo vocal"
+      >
+        <div
+          className="lkdv-carnet-species-preview-media"
+          style={{
+            background: ambiance
+              ? 'linear-gradient(135deg, rgba(27, 67, 50, 0.16), rgba(16, 185, 129, 0.14))'
+              : 'rgba(27, 67, 50, 0.08)',
+          }}
+        >
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
+            <Mic size={24} aria-hidden="true" />
+            <span>{voice.recording?.durationLabel || (voice.state === 'recording' ? formatClock(voice.seconds) : '0:00')}</span>
+          </div>
+          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+          {ambiance ? (
+            <span className="lkdv-carnet-species-preview-rarity">Ambiance</span>
+          ) : null}
+        </div>
+        <div className="lkdv-carnet-species-preview-body">
+          <div className="lkdv-carnet-species-preview-title">
+            <b>{momentCaptions.voice.trim() || (ambiance ? 'Son d’ambiance' : 'Mémo vocal')}</b>
+            <i>{place.trim() || `Lieu non défini · J${day}`}</i>
+          </div>
+        </div>
+      </div>
+    );
+
+    const incPreview = (
+      <div
+        className="lkdv-carnet-species-preview"
+        style={{
+          marginBottom: 4,
+          borderColor: 'rgba(180, 83, 9, 0.24)',
+          background: 'rgba(254, 243, 199, 0.38)',
+        }}
+        aria-label="Aperçu de l’incident"
+      >
+        <div
+          className="lkdv-carnet-species-preview-media"
+          style={{ background: 'rgba(217, 119, 6, 0.14)' }}
+        >
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#b45309' }}>
+            <AlertTriangle size={24} aria-hidden="true" />
+            <span>Incident</span>
+          </div>
+          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+        </div>
+        <div className="lkdv-carnet-species-preview-body">
+          <div className="lkdv-carnet-species-preview-title">
+            <b>{momentCaptions.inc.trim() || 'Signalement terrain…'}</b>
+            <i>{place.trim() || `Lieu non défini · J${day}`}</i>
+          </div>
+        </div>
+      </div>
+    );
+
+    const heroName = selectedWhoUser?.name || who.trim() || 'Voyageur rencontré…';
+    const heroAvatar = selectedWhoUser?.avatarUrl ?? null;
+    const heroSubtitle =
+      selectedWhoUser?.location ||
+      (place.trim() ? `Rencontré à ${place.trim()}` : 'Rencontre sur le sentier');
+    const meetHero = (
+      <div
+        className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile${
+          heroAvatar ? ' has-cover-bg' : ''
+        }`}
+        style={{ minHeight: 'auto', marginBottom: 4 }}
+      >
+        {heroAvatar ? (
+          <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={heroAvatar} alt="" className="lkdv-cv2x-carnet-bg-img" />
+            <span className="lkdv-cv2x-carnet-bg-scrim" />
+          </span>
+        ) : null}
+        <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
+          <span className="lkdv-ig-header">
+            <span className="lkdv-ig-avi-wrap">
+              <span className="lkdv-ig-avi">
+                {heroAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={heroAvatar} alt="" className="lkdv-cv2x-cover-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span className="lkdv-cv2c-ig-avi-initials">
+                    {heroName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </span>
+            </span>
+            <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
+              <span className="lkdv-ig-stat">
+                <b>{whoStats ? whoStats.posts : '—'}</b>
+                <span>publications</span>
+              </span>
+              <span className="lkdv-ig-stat">
+                <b>{whoStats ? whoStats.followers : '—'}</b>
+                <span>followers</span>
+              </span>
+              <span className="lkdv-ig-stat">
+                <b>{whoStats ? whoStats.following : '—'}</b>
+                <span>suivi(e)s</span>
+              </span>
+            </span>
+          </span>
+          <span className="lkdv-ig-bio">
+            <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{heroName}</span>
+            <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{heroSubtitle}</span>
+          </span>
+        </span>
+      </div>
+    );
+
+    const pagesByTab = CARNET_CREATE_TABS.map((t) => {
+      if (t.id === 'post' || t.id === 'story') return [];
+      if (t.id === 'voice') {
+        return [
+          <div key="voice-s0" className="lkdv-cv2c-pane">
+            {voicePreview}
+            <div className="lkdv-cv2-card" style={{ padding: 14, borderRadius: 22 }}>
+              <span className="lkdv-cv2-field-label">Enregistrement audio</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+                {voice.state === 'recording' ? (
+                  <button
+                    type="button"
+                    className="lkdv-cv2-pill lkdv-cv2-pill--primary"
+                    style={{ background: '#a8443a' }}
+                    onClick={voice.stop}
+                  >
+                    <Square size={13} /> Arrêter · {formatClock(voice.seconds)}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="lkdv-cv2-pill lkdv-cv2-pill--primary"
+                    disabled={!voice.supported}
+                    onClick={() => void voice.start()}
+                  >
+                    <Mic size={14} /> {voice.state === 'ready' ? 'Réenregistrer' : 'Enregistrer'}
+                  </button>
+                )}
+                {voice.state === 'ready' ? (
+                  <button
+                    type="button"
+                    className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
+                    onClick={voice.reset}
+                  >
+                    <Trash2 size={13} /> Effacer
+                  </button>
+                ) : null}
+              </div>
+              {voice.state === 'ready' && voice.recording ? (
+                <audio controls src={recordedUrl ?? undefined} style={{ width: '100%', marginTop: 10 }} />
+              ) : null}
+              <p className="lkdv-cv2-field-hint" style={{ marginTop: 8 }}>
+                {voice.message ??
+                  (voice.supported
+                    ? '3 minutes maximum. Le micro ne s’ouvre qu’à l’appui.'
+                    : 'Enregistrement audio non supporté par ce navigateur.')}
+              </p>
+            </div>
+            <span className="lkdv-cv2c-inert-row">
+              <span>
+                <b>Son d’ambiance</b>
+                <small>Marquer comme ambiance sonore du lieu</small>
+              </span>
+              <button
+                type="button"
+                className="lkdv-cv2c-switch"
+                role="switch"
+                aria-checked={ambiance}
+                onClick={() => setAmbiance((v) => !v)}
+              >
+                <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+                  <span className="lkdv-cv2c-switch-dot" />
+                </span>
+              </button>
+            </span>
+          </div>,
+          <div key="voice-s1" className="lkdv-cv2c-pane">
+            {voicePreview}
+            <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+            <div className="lkdv-cv2-field">
+              <span className="lkdv-cv2-field-label">Note ou légende</span>
+              <textarea
+                className="lkdv-cv2-input"
+                rows={3}
+                value={momentCaptions.voice}
+                maxLength={240}
+                placeholder="Un mot sur cette note…"
+                onChange={(e) => setMomentCaptions((prev) => ({ ...prev, voice: e.target.value }))}
+              />
+            </div>
+          </div>,
+        ];
+      }
+      if (t.id === 'meet') {
+        return [
+          <div key="meet-s0" className="lkdv-cv2c-pane">
+            {meetHero}
+            <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
+              <span className="lkdv-cv2-field-label">Personne rencontrée</span>
+              <input
+                type="text"
+                className="lkdv-cv2-input"
+                value={who}
+                maxLength={60}
+                autoComplete="off"
+                placeholder="Rechercher parmi mes abonnés…"
+                onFocus={() => setWhoDropdownOpen(true)}
+                onChange={(e) => {
+                  setWho(e.target.value);
+                  setSelectedWhoUser(null);
+                  setWhoDropdownOpen(true);
+                }}
+              />
+              {whoDropdownOpen && whoMatches.length > 0 ? (
+                <div
+                  role="listbox"
+                  aria-label="Voyageurs correspondants"
+                  style={{
+                    marginTop: 6,
+                    borderRadius: 16,
+                    border: '1px solid rgba(27, 67, 50, 0.14)',
+                    background: 'rgba(255, 255, 255, 0.96)',
+                    boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
+                    overflow: 'hidden',
+                    maxHeight: 160,
+                    overflowY: 'auto',
+                  }}
+                >
+                  {whoMatches.map((u, idx) => (
+                    <button
+                      key={`${u.id}-${idx}`}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => {
+                        setWho(u.name);
+                        setSelectedWhoUser(u);
+                        setWhoMatches([]);
+                        setWhoDropdownOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '8px 12px',
+                        border: 0,
+                        borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
+                        background: 'transparent',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {u.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={u.avatarUrl}
+                          alt=""
+                          style={{ width: 22, height: 22, borderRadius: 999, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: 999,
+                            background: '#ddebd8',
+                            color: '#17402C',
+                            display: 'grid',
+                            placeItems: 'center',
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {u.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{u.name}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>,
+          <div key="meet-s1" className="lkdv-cv2c-pane">
+            {meetHero}
+            <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+            <div className="lkdv-cv2-field">
+              <span className="lkdv-cv2-field-label">Ce qu’on s’est dit</span>
+              <textarea
+                className="lkdv-cv2-input"
+                rows={3}
+                value={momentCaptions.meet}
+                maxLength={240}
+                placeholder="Un échange sur le sentier…"
+                onChange={(e) => setMomentCaptions((prev) => ({ ...prev, meet: e.target.value }))}
+              />
+            </div>
+          </div>,
+        ];
+      }
+      if (t.id === 'species') {
+        return ([0, 1, 2] as const).map((spStep) => (
+          <CarnetSpeciesCreatePane
+            key={`species-s${spStep}`}
+            step={spStep}
+            day={day}
+            place={place}
+            onPlaceChange={setPlace}
+            caption={speciesCaption}
+            onCaptionChange={setSpeciesCaption}
+            latin={latin}
+            onLatinChange={setLatin}
+            speciesFile={speciesFile}
+            onSpeciesFileChange={setSpeciesFile}
+            note={speciesNote}
+            onNoteChange={setSpeciesNote}
+            discoveredSpecies={discoveredSpecies}
+            nearbyLat={nearbyLat}
+            nearbyLng={nearbyLng}
+            onValidateDiscovery={handleValidateSpeciesDiscovery}
+          />
+        ));
+      }
+      return [
+        <div key="inc-s0" className="lkdv-cv2c-pane">
+          {incPreview}
+          <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+        </div>,
+        <div key="inc-s1" className="lkdv-cv2c-pane">
+          {incPreview}
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Ce qui s’est passé</span>
+            <textarea
+              className="lkdv-cv2-input"
+              rows={3}
+              value={momentCaptions.inc}
+              maxLength={240}
+              placeholder="Ampoule, météo, détour…"
+              onChange={(e) => setMomentCaptions((prev) => ({ ...prev, inc: e.target.value }))}
+            />
+          </div>
+        </div>,
+      ];
+    });
+
     return {
-      items: cfg.steps.map((step, index) => ({
-        id: `cv2c-step-${index}`,
-        label: stepAriaLabel(index, step.label),
+      items: momentStepLabels.map((lbl, index) => ({
+        id: `cv2c-mstep-${index}`,
+        label: stepAriaLabel(index, lbl),
         icon: <span className="lkdv-cv2c-step-num">{index + 1}</span>,
       })),
-      active: activeNav.stepIndex,
-      onChange: (index: number) => activeNav.goToStep(index),
-      label: `Étapes de la création : ${activeTab === 'story' ? 'Story' : 'Publication'}`,
-      pages,
+      active: momentStepIndex,
+      onChange: (index: number) => setMomentStepIndex(index),
+      label: `Étapes de la création : ${activeTab}`,
+      pages: pagesByTab,
     };
-  }, [activeCommunityKind, activeNav, activeTab, registerStepHost]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeCommunityKind,
+    activeNav,
+    activeTab,
+    registerStepHost,
+    momentStepLabels,
+    momentStepIndex,
+    ambiance,
+    voice.state,
+    voice.seconds,
+    voice.recording,
+    voice.supported,
+    voice.message,
+    recordedUrl,
+    day,
+    place,
+    momentCaptions,
+    who,
+    whoDropdownOpen,
+    whoMatches,
+    selectedWhoUser,
+    whoStats,
+    speciesCaption,
+    latin,
+    speciesFile,
+    speciesNote,
+    discoveredSpecies,
+    nearbyLat,
+    nearbyLng,
+  ]);
 
   useEffect(() => {
     if (!whoDropdownOpen || activeTab !== 'meet') return;
@@ -405,6 +811,8 @@ export function CarnetCommunityCreateBridge({
     onCreated();
   };
 
+  const isLastMomentStep = momentStepIndex >= momentStepLabels.length - 1;
+
   const footer = activeCommunityKind ? (
     activeNav ? (
       <div className="lkdv-cv2c-footbar">
@@ -457,17 +865,44 @@ export function CarnetCommunityCreateBridge({
           {momentError}
         </p>
       ) : null}
-      <div className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact">
-        <button
-          type="button"
-          className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-          disabled={momentBusy}
-          onClick={() => void submitCarnetMoment()}
+      <LayoutGroup id="carnet-moment-foot">
+        <motion.div
+          layout
+          className="lkdv-cv2c-footbar-row lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact"
         >
-          {momentBusy ? 'Envoi…' : `Ajouter à J${day}`}
-          <ChevronRight size={15} aria-hidden="true" />
-        </button>
-      </div>
+          <AnimatePresence initial={false} mode="popLayout">
+            {momentStepIndex > 0 ? (
+              <motion.button
+                key="back"
+                type="button"
+                className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
+                aria-label="Retour"
+                onClick={() => setMomentStepIndex((s) => Math.max(0, s - 1))}
+                disabled={momentBusy}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+              </motion.button>
+            ) : null}
+          </AnimatePresence>
+          <motion.button
+            key="next"
+            type="button"
+            className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
+            disabled={momentBusy}
+            onClick={() => {
+              if (!isLastMomentStep) {
+                setMomentError(null);
+                setMomentStepIndex((s) => s + 1);
+                return;
+              }
+              void submitCarnetMoment();
+            }}
+          >
+            {momentBusy ? 'Envoi…' : isLastMomentStep ? `Ajouter à J${day}` : 'Suivant'}
+            <ChevronRight size={15} aria-hidden="true" />
+          </motion.button>
+        </motion.div>
+      </LayoutGroup>
     </div>
   );
 
@@ -848,6 +1283,7 @@ export function CarnetCommunityCreateBridge({
             onChange: (idx) => {
               setDetail(null);
               setMomentError(null);
+              setMomentStepIndex(0);
               setTabIndex(idx);
             },
             ariaLabel: 'Type de moment du carnet',
@@ -878,6 +1314,7 @@ export function CarnetCommunityCreateBridge({
                 prefillNonce={1}
                 onNavChange={(nav) => handleNavChange('story', nav)}
                 stepHosts={stepHostsFor('story')}
+                inCarnet
               />
             </div>
           ) : null}
