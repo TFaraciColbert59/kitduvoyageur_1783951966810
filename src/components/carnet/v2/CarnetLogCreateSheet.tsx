@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { Backpack, ChevronLeft, ChevronRight, Euro, Search } from 'lucide-react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
+import { Backpack, ChevronRight, Euro, Search } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import '@/styles/communaute-v2.css';
@@ -54,7 +53,6 @@ export function CarnetLogCreateSheet({
   const { user } = useAuth();
   const { toast } = useToast();
   const [tabIndex, setTabIndex] = useState(() => (initialTab === 'kit' ? 1 : 0));
-  const [stepIndex, setStepIndex] = useState(0);
   const activeTab: CarnetLogTabId = LOG_TABS[tabIndex]?.id ?? 'spend';
 
   // Dépense
@@ -401,216 +399,168 @@ export function CarnetLogCreateSheet({
     </div>
   );
 
-  const stepLabels = activeTab === 'spend' ? ['Montant', 'Lieu & Libellé'] : ['Produit & Kit', 'Lieu'];
-
-  const mini = useMemo(
-    () => ({
-      items: stepLabels.map((lbl, idx) => ({
-        id: `log-step-${idx}`,
-        label: `Étape ${idx + 1} sur ${stepLabels.length} : ${lbl}`,
-        icon: <span className="lkdv-cv2c-step-num">{idx + 1}</span>,
-      })),
-      active: stepIndex,
-      onChange: (idx: number) => setStepIndex(idx),
-      label: `Étapes de la création : ${activeTab === 'spend' ? 'Dépense' : 'Objet du kit'}`,
-      pages: [
-        [
-          <div key="spend-s1" className="lkdv-cv2c-pane">
-            {spendPreview}
-            <div className="lkdv-cv2c-row-2">
-              <div className="lkdv-cv2-field">
-                <span className="lkdv-cv2-field-label">Montant (€)</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="lkdv-cv2-input"
-                  value={amount}
-                  maxLength={12}
-                  placeholder="12,50"
-                  onChange={(e) => setAmount(e.target.value)}
-                />
-              </div>
-              <div className="lkdv-cv2-field">
-                <span className="lkdv-cv2-field-label">Catégorie</span>
-                <select
-                  className="lkdv-cv2-input"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  {MOMENT_EXPENSE_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>,
-          <div key="spend-s2" className="lkdv-cv2c-pane">
-            {spendPreview}
-            <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
-            <div className="lkdv-cv2-field">
-              <span className="lkdv-cv2-field-label">Libellé</span>
-              <input
-                type="text"
-                className="lkdv-cv2-input"
-                value={spendNote}
-                maxLength={80}
-                placeholder="Casse-croûte, refuge, navette…"
-                onChange={(e) => setSpendNote(e.target.value)}
-              />
-            </div>
-          </div>,
-        ],
-        [
-          <div key="kit-s1" className="lkdv-cv2c-pane">
-            {kitPreview}
-            {participants.length > 0 ? (
-              <div className="lkdv-cv2-field">
-                <span className="lkdv-cv2-field-label">Kit du participant</span>
-                <select
-                  className="lkdv-cv2-input"
-                  value={kitParticipantId}
-                  onChange={(e) => setKitParticipantId(e.target.value)}
-                >
-                  {participants.map((p) => (
-                    <option key={p.userId} value={p.userId}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
-              <span className="lkdv-cv2-field-label">Produit acheté / ajouté</span>
-              <div className="lkdv-carnet-pokedex-search">
-                <Search size={14} aria-hidden="true" />
-                <input
-                  type="search"
-                  value={kitProductName}
-                  maxLength={80}
-                  autoComplete="off"
-                  placeholder="Cartouche de gaz, chaussettes, bâton…"
-                  onFocus={() => setKitDropdownOpen(true)}
-                  onChange={(e) => {
-                    setKitProductName(e.target.value);
-                    setKitSelectedId('');
-                    setKitDropdownOpen(true);
-                  }}
-                />
-              </div>
-              {kitDropdownOpen && (kitSuggestions.length > 0 || kitItems.length > 0) ? (
-                <div
-                  role="listbox"
-                  aria-label="Produits existants"
-                  style={{
-                    marginTop: 6,
-                    borderRadius: 16,
-                    border: '1px solid rgba(27, 67, 50, 0.14)',
-                    background: 'rgba(255, 255, 255, 0.96)',
-                    boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
-                    overflow: 'hidden',
-                    maxHeight: 140,
-                    overflowY: 'auto',
-                  }}
-                >
-                  {(kitSuggestions.length > 0
-                    ? kitSuggestions
-                    : kitItems.slice(0, 6).map((i) => ({ id: i.id, label: i.name, sublabel: 'Kit du carnet' }))
-                  ).map((item, idx) => (
-                    <button
-                      key={`${item.id}-${idx}`}
-                      type="button"
-                      role="option"
-                      aria-selected={false}
-                      onClick={() => {
-                        setKitProductName(item.label);
-                        setKitSelectedId(item.id);
-                        setKitDropdownOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 8,
-                        padding: '8px 12px',
-                        border: 0,
-                        borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
-                        background: 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{item.label}</span>
-                      <span style={{ fontSize: 11, color: '#56665d' }}>{item.sublabel}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
-            <div className="lkdv-cv2c-row-2">
-              <div className="lkdv-cv2-field">
-                <span className="lkdv-cv2-field-label">Coût (€ · budget)</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="lkdv-cv2-input"
-                  value={kitPrice}
-                  maxLength={12}
-                  placeholder="25,00"
-                  onChange={(e) => setKitPrice(e.target.value)}
-                />
-              </div>
-              <div className="lkdv-cv2-field">
-                <span className="lkdv-cv2-field-label">Poids (g)</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="lkdv-cv2-input"
-                  value={kitWeight}
-                  maxLength={8}
-                  placeholder="230"
-                  onChange={(e) => setKitWeight(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>,
-          <div key="kit-s2" className="lkdv-cv2c-pane">
-            {kitPreview}
-            <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
-          </div>,
-        ],
-      ],
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      activeTab,
-      stepIndex,
-      amount,
-      category,
-      spendNote,
-      place,
-      day,
-      kitItems,
-      participants,
-      kitParticipantId,
-      kitProductName,
-      kitPrice,
-      kitWeight,
-      kitDropdownOpen,
-      kitSuggestions,
-    ],
-  );
-
   const panes = [
-    <div key="spend" className="lkdv-cv2c-pane" />,
-    <div key="kit" className="lkdv-cv2c-pane" />,
-  ];
+    <div key="spend" className="lkdv-cv2c-pane">
+      {spendPreview}
+      <div className="lkdv-cv2c-row-2">
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Montant (€)</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="lkdv-cv2-input"
+            value={amount}
+            maxLength={12}
+            placeholder="12,50"
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Catégorie</span>
+          <select
+            className="lkdv-cv2-input"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {MOMENT_EXPENSE_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Libellé</span>
+        <input
+          type="text"
+          className="lkdv-cv2-input"
+          value={spendNote}
+          maxLength={80}
+          placeholder="Casse-croûte, refuge, navette…"
+          onChange={(e) => setSpendNote(e.target.value)}
+        />
+      </div>
+      <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+    </div>,
+    <div key="kit" className="lkdv-cv2c-pane">
+      {kitPreview}
+      {participants.length > 0 ? (
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Kit du participant</span>
+          <select
+            className="lkdv-cv2-input"
+            value={kitParticipantId}
+            onChange={(e) => setKitParticipantId(e.target.value)}
+          >
+            {participants.map((p) => (
+              <option key={p.userId} value={p.userId}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
-  const isLastStep = stepIndex >= stepLabels.length - 1;
+      <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
+        <span className="lkdv-cv2-field-label">Produit acheté / ajouté</span>
+        <div className="lkdv-carnet-pokedex-search">
+          <Search size={14} aria-hidden="true" />
+          <input
+            type="search"
+            value={kitProductName}
+            maxLength={80}
+            autoComplete="off"
+            placeholder="Cartouche de gaz, chaussettes, bâton…"
+            onFocus={() => setKitDropdownOpen(true)}
+            onChange={(e) => {
+              setKitProductName(e.target.value);
+              setKitSelectedId('');
+              setKitDropdownOpen(true);
+            }}
+          />
+        </div>
+        {kitDropdownOpen && (kitSuggestions.length > 0 || kitItems.length > 0) ? (
+          <div
+            role="listbox"
+            aria-label="Produits existants"
+            style={{
+              marginTop: 6,
+              borderRadius: 16,
+              border: '1px solid rgba(27, 67, 50, 0.14)',
+              background: 'rgba(255, 255, 255, 0.96)',
+              boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
+              overflow: 'hidden',
+              maxHeight: 140,
+              overflowY: 'auto',
+            }}
+          >
+            {(kitSuggestions.length > 0
+              ? kitSuggestions
+              : kitItems.slice(0, 6).map((i) => ({ id: i.id, label: i.name, sublabel: 'Kit du carnet' }))
+            ).map((item, idx) => (
+              <button
+                key={`${item.id}-${idx}`}
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => {
+                  setKitProductName(item.label);
+                  setKitSelectedId(item.id);
+                  setKitDropdownOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '8px 12px',
+                  border: 0,
+                  borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
+                  background: 'transparent',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{item.label}</span>
+                <span style={{ fontSize: 11, color: '#56665d' }}>{item.sublabel}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="lkdv-cv2c-row-2">
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Coût (€ · budget)</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            className="lkdv-cv2-input"
+            value={kitPrice}
+            maxLength={12}
+            placeholder="25,00"
+            onChange={(e) => setKitPrice(e.target.value)}
+          />
+        </div>
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Poids (g)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            className="lkdv-cv2-input"
+            value={kitWeight}
+            maxLength={8}
+            placeholder="230"
+            onChange={(e) => setKitWeight(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+    </div>,
+  ];
 
   const footer = (
     <div className="lkdv-cv2c-footbar">
@@ -619,41 +569,17 @@ export function CarnetLogCreateSheet({
           {error}
         </p>
       ) : null}
-      <LayoutGroup id="carnet-log-foot">
-        <motion.div layout className="lkdv-cv2c-footbar-row lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact">
-          <AnimatePresence initial={false} mode="popLayout">
-            {stepIndex > 0 ? (
-              <motion.button
-                key="back"
-                type="button"
-                className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
-                aria-label="Retour"
-                onClick={() => setStepIndex((s) => Math.max(0, s - 1))}
-                disabled={busy}
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </motion.button>
-            ) : null}
-          </AnimatePresence>
-          <motion.button
-            key="next"
-            type="button"
-            className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-            disabled={busy}
-            onClick={() => {
-              if (!isLastStep) {
-                setError(null);
-                setStepIndex((s) => s + 1);
-                return;
-              }
-              void submit();
-            }}
-          >
-            {busy ? 'Envoi…' : isLastStep ? `Ajouter à J${day}` : 'Suivant'}
-            <ChevronRight size={15} aria-hidden="true" />
-          </motion.button>
-        </motion.div>
-      </LayoutGroup>
+      <div className="lkdv-cv2c-foot-actions lkdv-cv2c-foot-actions--compact">
+        <button
+          type="button"
+          className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
+          disabled={busy}
+          onClick={() => void submit()}
+        >
+          {busy ? 'Envoi…' : `Ajouter à J${day}`}
+          <ChevronRight size={15} aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 
@@ -669,12 +595,10 @@ export function CarnetLogCreateSheet({
         active: tabIndex,
         onChange: (idx) => {
           setTabIndex(idx);
-          setStepIndex(0);
           setError(null);
         },
         ariaLabel: 'Type d’ajout',
       }}
-      mini={mini}
       panes={panes}
       resetKey={activeTab}
       footer={footer}
