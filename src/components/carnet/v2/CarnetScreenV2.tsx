@@ -842,6 +842,15 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     return out;
   }, [detail.moments, currentUserId]);
 
+  const handleCloseCreateSheet = useCallback(() => setCreateSheet(null), []);
+  const handleSubmitCreateMoment = useCallback(
+    async (input: unknown, file: File | null) => {
+      if (!isOnline) return { ok: false as const, error: 'Tu es hors ligne : réessaie avec du réseau.' };
+      return edits.createMoment(input, file);
+    },
+    [edits, isOnline],
+  );
+
   const handleCopyLink = useCallback(() => {
     if (typeof window !== 'undefined') {
       void navigator.clipboard.writeText(shareUrl);
@@ -1381,11 +1390,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
                 },
               }));
             }}
-            onSubmit={async (input, file) => {
-              if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
-              return edits.createMoment(input, file);
-            }}
-            onClose={() => setCreateSheet(null)}
+            onSubmit={handleSubmitCreateMoment}
+            onClose={handleCloseCreateSheet}
           />
         ) : (
           <CarnetCreateSheet
@@ -1398,11 +1404,8 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             discoveredSpecies={discoveredSpecies}
             nearbyLat={detail.place?.lat ?? detail.nights?.[0]?.lat ?? null}
             nearbyLng={detail.place?.lng ?? detail.nights?.[0]?.lng ?? null}
-            onSubmit={async (input, file) => {
-              if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
-              return edits.createMoment(input, file);
-            }}
-            onClose={() => setCreateSheet(null)}
+            onSubmit={handleSubmitCreateMoment}
+            onClose={handleCloseCreateSheet}
           />
         )
       ) : null}

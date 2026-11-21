@@ -1383,34 +1383,30 @@ export function CarnetCommunityCreateBridge({
     );
   };
 
-  const panes = CARNET_CREATE_TABS.map((t) => {
-    if (t.id === 'post' || t.id === 'story') {
-      return <div key={t.id} className="lkdv-cv2c-pane" />;
-    }
-    if (t.id === 'species') {
-      return (
-        <CarnetSpeciesCreatePane
-          key="species"
-          day={day}
-          place={place}
-          onPlaceChange={setPlace}
-          caption={speciesCaption}
-          onCaptionChange={setSpeciesCaption}
-          latin={latin}
-          onLatinChange={setLatin}
-          speciesFile={speciesFile}
-          onSpeciesFileChange={setSpeciesFile}
-          note={speciesNote}
-          onNoteChange={setSpeciesNote}
-          discoveredSpecies={discoveredSpecies}
-          nearbyLat={nearbyLat}
-          nearbyLng={nearbyLng}
-          onValidateDiscovery={handleValidateSpeciesDiscovery}
-        />
-      );
-    }
-    return <React.Fragment key={t.id}>{renderMomentForm(t.id)}</React.Fragment>;
-  });
+  // La coque utilise mini.pages (filterMode) pour tous les volets ; panes reste neutre et stable comme CreateSheetV2.
+  const panes = useMemo(
+    () => CARNET_CREATE_TABS.map((t) => <div key={t.id} data-kind={t.id} />),
+    [],
+  );
+
+  const capsule = useMemo(
+    () => ({
+      items: CARNET_CREATE_TABS.map((t) => ({
+        id: t.id,
+        label: t.label,
+        icon: t.icon,
+      })),
+      active: tabIndex,
+      onChange: (idx: number) => {
+        setDetail(null);
+        setMomentError(null);
+        setMomentStepIndex(0);
+        setTabIndex(idx);
+      },
+      ariaLabel: 'Type de moment du carnet',
+    }),
+    [tabIndex],
+  );
 
   const sheetDetail = detail
     ? {
@@ -1433,21 +1429,7 @@ export function CarnetCommunityCreateBridge({
           kind="create"
           guestNotice={!user?.id || user.is_anonymous === true}
           label="Créer dans le carnet"
-          capsule={{
-            items: CARNET_CREATE_TABS.map((t) => ({
-              id: t.id,
-              label: t.label,
-              icon: t.icon,
-            })),
-            active: tabIndex,
-            onChange: (idx) => {
-              setDetail(null);
-              setMomentError(null);
-              setMomentStepIndex(0);
-              setTabIndex(idx);
-            },
-            ariaLabel: 'Type de moment du carnet',
-          }}
+          capsule={capsule}
           mini={detail ? null : mini}
           footer={detail ? null : footer}
           panes={panes}
