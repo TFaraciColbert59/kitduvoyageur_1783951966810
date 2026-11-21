@@ -625,3 +625,51 @@ et les horaires en lecture seule, sans accès aux notes internes.
 Le GPS automatique, le suivi porte-à-porte, les pauses non sportives et la
 reprise hors ligne après redémarrage restent à traiter pour clôturer P02-07 et
 P07-22.
+
+### P05 / P06-06 / P07 · File hors-ligne persistante et interactions des huit tiroirs
+
+Le cockpit du HUB dispose désormais d’une file d’opérations hors-ligne
+persistante dans IndexedDB (`src/features/hub/cockpit/offlineQueue.ts`), d’un
+bandeau discret d’état réseau et synchronisation, et d’interactions réelles
+branchées sur PostgreSQL dans les tiroirs :
+
+- **Hors-ligne & reprise après redémarrage (`offlineQueue.ts`, `StepExecutionDetails.tsx`).**
+  Les actions d’étape, dépenses et coches du kit saisies hors connexion sont
+  conservées en file FIFO idempotente avec `operationId` et rejouées
+  automatiquement au retour du réseau et au redémarrage, avec détection explicite
+  des conflits sans perte silencieuse.
+- **Budget (`BudgetDrawerTools.tsx`, `budgetActions.ts`, `budgetMath.ts`).**
+  Ajout de dépense réelle depuis le tiroir (en ligne ou en file hors-ligne),
+  synthèse par catégorie, projection de fin de voyage et répartition exacte en
+  centimes entiers sans erreur d’arrondi.
+- **Météo (`weatherAdvice.ts`).** Indicateur de fraîcheur du relevé et alertes
+  terrain dérivées uniquement des seuils numériques réels (vent fort, pluie,
+  gel, chaleur) avec liens directs vers Kit ou Étapes.
+- **Kit (`kitActions.ts`, `kitMath.ts`).** Synthèse exacte du poids (base,
+  porté, consommables, total, vitaux à préparer) et bascule `Préparé / À préparer`
+  persistée dans `trip_items` (en ligne ou en file hors-ligne).
+- **Paperasse (`paperasseStatus.ts`).** Évaluation explicite des échéances
+  (`Expiré depuis…`, `Expire aujourd’hui`, `Expire dans…`, `Valide`).
+- **Groupe (`groupProgress.ts`).** Découpage en blocs glissants de 3 membres
+  (testé jusqu’à 50 membres), comparateur de progression relative sur même
+  révision de tracé et accès direct aux secours officiels `tel:112`.
+- **Carte & Carnet (`ElevationStrip.tsx`, `offlineMapPack.ts`, `CarnetDraftStore.ts`).**
+  Profil de dénivelé SVG interactif relié aux étapes du jour, enregistrement et
+  suppression du pack carte hors-ligne dans IndexedDB, et brouillon Carnet
+  hors-ligne conservé au redémarrage.
+
+**Preuves locales.**
+- **Vitest · PASS.** 11 fichiers, 60 assertions vertes dans `src/features/hub/__tests__/`.
+- **Typage et ESLint · PASS.** `npm run type-check` (Node 24, heap 4 Go) et
+  ESLint ciblé verts.
+- **Recette WebKit mobile authentifiée · PASS.**
+  - `verify-hub-step-offline.cjs` : saisie d’étape hors-ligne, rechargement
+    complet après retour réseau et synchronisation automatique vérifiée en
+    PostgreSQL (`status = 'started'`, `version = 1`, note conservée).
+  - `verify-hub-widgets-interactive.cjs` : absence de débordement horizontal
+    sur iPhone 14, ajout de dépense réelle persistée dans `trip_expenses` avec
+    répartition exacte, coche Kit persistée dans `trip_items.is_packed`,
+    statuts expiré/valide dans Paperasse et lien secours 112 dans Groupe.
+  - `verify-hub-map-carnet-offline.cjs` : profil de dénivelé, pack carte
+    hors-ligne persisté après rechargement et brouillon Carnet hors-ligne
+    restauré après redémarrage.

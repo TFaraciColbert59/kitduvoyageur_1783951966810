@@ -32,6 +32,15 @@ import { deriveWeatherAlerts, weatherFreshnessLabel } from './weatherAdvice';
 import { computeKitWeights, formatWeight } from './kitMath';
 import { evaluateDocumentExpiry } from './paperasseStatus';
 import { chunkMembersByThree } from './groupProgress';
+import { ElevationStrip } from './ElevationStrip';
+import {
+  deleteOfflineMapPack,
+  formatPackSize,
+  readOfflineMapPack,
+  saveOfflineMapPack,
+  type OfflineMapPack,
+} from './offlineMapPack';
+import { clearCarnetDraft, loadCarnetDraft, saveCarnetDraft, type CarnetLocalDraft } from './CarnetDraftStore';
 import { newId } from '@/lib/uuid';
 import styles from './cockpit.module.css';
 
@@ -119,6 +128,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const [addedExpenses, setAddedExpenses] = useState<CockpitExpense[]>([]);
   const [kitOverrides, setKitOverrides] = useState<Record<string, boolean>>({});
   const [groupPage, setGroupPage] = useState(0);
+  const [mapPack, setMapPack] = useState<OfflineMapPack | null>(null);
+  const [carnetDraft, setCarnetDraft] = useState<CarnetLocalDraft | null>(null);
+  const [offlineDraftText, setOfflineDraftText] = useState('');
   const [offlineOps, setOfflineOps] = useState<CockpitOfflineOperation[]>([]);
   const [syncingOffline, setSyncingOffline] = useState(false);
   const restore = useRef<{ item: string; top: number } | null>(null);
@@ -327,7 +339,11 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   useEffect(() => {
     void refreshOfflineOps();
-  }, [refreshOfflineOps]);
+    if (!fixture && data.trip) {
+      void readOfflineMapPack(data.key).then(setMapPack);
+      setCarnetDraft(loadCarnetDraft(data.key));
+    }
+  }, [refreshOfflineOps, fixture, data.trip, data.key]);
 
   useEffect(() => {
     if (isOnline) void flushOfflineOps();
@@ -532,6 +548,32 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       case 'carte':
         return <>
           <Map data={dayMap} fixture={fixture} onStep={(step) => go({ widget: 'carte', detail: step.id })} />
+          <ElevationStrip steps={daySteps} onSelectStep={(stepId) => go({ widget: 'carte', detail: stepId })} />
+          {!fixture && data.trip && (
+            <div className={styles.statusBanner} role="region" aria-label="Pack carte hors ligne">
+              <span>
+                {mapPack
+                  ? `Copie hors ligne · ${formatPackSize(mapPack.sizeBytes)}`
+                  : 'Aucune copie hors ligne enregistrée'}
+              </span>
+              {mapPack ? (
+                <button type="button" className="lkdv-cv2-chip" onClick={() => {
+                  void deleteOfflineMapPack(data.key).then(() => setMapPack(null));
+                }}>Supprimer</button>
+              ) : (
+                <button type="button" className="lkdv-cv2-chip" onClick={() => {
+                  void saveOfflineMapPack({
+                    tripId: data.key,
+                    title: data.title,
+                    route: data.route,
+                    steps: data.steps,
+                    distance: data.distance,
+                    elevation: data.elevation,
+                  }).then(setMapPack);
+                }}>Enregistrer hors ligne</button>
+              )}
+            </div>
+          )}
           {data.clubRouteUpdates?.map((update) => (
             <Action key={update.eventId} href={`/sorties/${update.eventId}?source=club#parcours`}>
               {update.title} · {update.decisionPending ? 'Parcours à valider'
@@ -569,6 +611,39 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             data-hub-item="ajouter" onClick={(event) => go({ widget: 'carnet', detail: 'ajouter' }, event.currentTarget)}>
             <Icon name="plus" size={17} /> Ajouter un moment
           </button>
+          {carnetDraft && (
+            <div className={styles.statusBanner} role="region" aria-label="Brouillon local du carnet">
+              <span>Brouillon J{carnetDraft.day} : {carnetDraft.caption.slice(0, 60)}</span>
+              <button type="button" className="lkdv-cv2-chip" onClick={() => {
+                clearCarnetDraft(data.key);
+                setCarnetDraft(null);
+              }}>Effacer</button>
+            </div>
+          )}
+          {!isOnline && !fixture && (
+            <form className={styles.stepExecution} aria-label="Brouillon hors ligne" onSubmit={(event) => {
+              event.preventDefault();
+              if (!offlineDraftText.trim()) return;
+              const saved = saveCarnetDraft({
+                tripId: data.key,
+                day,
+                caption: offlineDraftText.trim(),
+                place: daySteps.find((s) => s.place)?.place ?? data.location ?? '',
+                capturedAt: new Date().toISOString(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris',
+              });
+              setCarnetDraft(saved);
+              setOfflineDraftText('');
+            }}>
+              <label className={styles.stepNote}>
+                Note rapide hors ligne (conservée au redémarrage)
+                <textarea rows={2} maxLength={500} value={offlineDraftText}
+                  onChange={(e) => setOfflineDraftText(e.currentTarget.value)}
+                  placeholder="Garder un moment même sans réseau…" />
+              </label>
+              <button type="submit" className="lkdv-cv2-chip">Garder en brouillon</button>
+            </form>
+          )}
           {dayMoments.length ? <div className={styles.rows}>{momentRows(dayMoments)}</div>
             : !dayNotes.length && <Status>{data.carnetUnavailable ? 'Carnet momentanément indisponible.' : 'Aucun moment enregistré ce jour.'}</Status>}
           {dayNotes.length > 0 && <ul className={styles.list}>{dayNotes.map((note) =>
