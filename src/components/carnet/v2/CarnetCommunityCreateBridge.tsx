@@ -158,13 +158,12 @@ export function CarnetCommunityCreateBridge({
     let cb = stepHostCallbacksRef.current.get(key);
     if (!cb) {
       cb = (el: HTMLDivElement | null) => {
+        if (stepHostRefs.current.get(key) === (el ?? undefined)) return;
         if (el) {
-          if (stepHostRefs.current.get(key) !== el) {
-            stepHostRefs.current.set(key, el);
-            setStepHostsVersion((v) => v + 1);
-          }
-        } else if (stepHostRefs.current.delete(key)) {
-          setStepHostsVersion((v) => v + 1);
+          stepHostRefs.current.set(key, el);
+          queueMicrotask(() => setStepHostsVersion((v) => v + 1));
+        } else {
+          stepHostRefs.current.delete(key);
         }
       };
       stepHostCallbacksRef.current.set(key, cb);
