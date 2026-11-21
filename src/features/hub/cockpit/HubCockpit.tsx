@@ -56,6 +56,7 @@ const TripLifecycleBar = dynamic(() => import('./TripLifecycleBar').then((m) => 
 const SafetyContactsPanel = dynamic(() => import('./SafetyContactsPanel').then((m) => m.SafetyContactsPanel), { ssr: false });
 const PaperasseQuickAdd = dynamic(() => import('./PaperasseQuickAdd').then((m) => m.PaperasseQuickAdd), { ssr: false });
 const OfficialAlertsPanel = dynamic(() => import('./OfficialAlertsPanel').then((m) => m.OfficialAlertsPanel), { ssr: false });
+const CorridorPoisPanel = dynamic(() => import('./CorridorPoisPanel').then((m) => m.CorridorPoisPanel), { ssr: false });
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
   ssr: false, loading: () => <p className={styles.mapStatus} role="status">Chargement de la carte</p>,
@@ -839,6 +840,10 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
                   />
                 ))}
               </DrawerSection>
+            )}
+
+            {!fixture && data.trip && (
+              <CorridorPoisPanel point={data.weatherPoint ?? daySteps.find((s) => s.coordinate)?.coordinate} isOnline={isOnline} />
             )}
 
             {!fixture && data.trip && (
