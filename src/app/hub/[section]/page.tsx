@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui';
+import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import { currentFeatureFlags } from '@/features/hub/server/featureFlags';
 import { HubCampShell } from '@/features/hub/components/HubCampShell';
 import {
@@ -123,7 +124,7 @@ export default async function HubSectionPage({
 
   if (!isHubSectionServable(def, data.adventure.nature)) notFound();
 
-  return (
+  const content = (
     <div className="space-y-2.5">
       <PageHeader title={<span className="sr-only">{def.label}</span>} back={<MenuBack />} />
       {def.id === 'inventaire' && <HubInventaireSection productId={sp.product_id} />}
@@ -143,6 +144,12 @@ export default async function HubSectionPage({
         <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
       )}
     </div>
+  );
+  if (flags) return content;
+  return (
+    <TripAffiliateProvider value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}>
+      {content}
+    </TripAffiliateProvider>
   );
 }
 

@@ -580,7 +580,7 @@ async function resolveDefaultSortie(
   return null;
 }
 
-export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
+export async function getHubAdventureDataInner(view: 'full' | 'cockpit' = 'full'): Promise<HubAdventureData> {
   const supabase = await createClient();
   // P0-2 — Étage 1 parallélisé : auth et cookie d'aventure active sont
   // indépendants (lecture cookies seule pour le second).
@@ -621,8 +621,8 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
           activityType === 'hiking' || hasGeoSteps
             ? loadHikingContext(supabase, trip)
             : Promise.resolve(null),
-          loadChecklist(supabase, trip.id),
-          getTripItemImages(trip.id),
+          view === 'full' ? traceStage('trip.checklist', () => loadChecklist(supabase, trip.id)) : [],
+          view === 'full' ? traceStage('trip.kitImages', () => getTripItemImages(trip.id)) : [],
           loadHubAffiliateLinks(trip.destination_country_code),
         ]),
       );
@@ -646,7 +646,7 @@ export async function getHubAdventureDataInner(): Promise<HubAdventureData> {
         itemImages,
         affiliateLinks,
         bookingByStepId: buildTripBookingByStepId(trip, affiliateLinks),
-        preparation: buildHubPreparationSummary(trip, checklist.length),
+        preparation: view === 'full' ? buildHubPreparationSummary(trip, checklist.length) : null,
       };
     }
     // Repli possession (aventure périmée — jamais de cul-de-sac).
@@ -742,7 +742,10 @@ export function buildHubCounts(data: HubAdventureData): HubCounters {
  * Chargeur unique par requête (layout + pages + API partagent le résultat
  * via React cache — une seule exécution des requêtes par rendu /hub).
  */
-export const getHubAdventureData = cache(getHubAdventureDataInner);
+export const getHubAdventureData = cache(() => getHubAdventureDataInner());
+
+/** Données du premier écran. Les contrôles de préparation et leurs médias sont lus dans leurs sections. */
+export const getHubCockpitAdventureData = cache(() => getHubAdventureDataInner('cockpit'));
 
 /** Stats voyage déduites UNE fois par requête (layout + pages partagent le cache React). */
 export const getHubTripStats = cache((tripId: string) => getTripStats(tripId));

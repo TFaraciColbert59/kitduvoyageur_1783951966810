@@ -7,6 +7,7 @@ const route: Coordinate[] = [
 ];
 
 export const cockpitFixture: CockpitData = {
+  schemaVersion: 1,
   key: 'recette-queyras',
   title: 'Tour du Queyras',
   location: 'Hautes-Alpes, France',

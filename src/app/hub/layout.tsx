@@ -26,21 +26,19 @@ export const dynamic = 'force-dynamic';
  */
 export default function HubLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <Suspense fallback={<RouteLoading label="Chargement de l’aventure…" />}>
-        <HubLayoutAsync>{children}</HubLayoutAsync>
-      </Suspense>
-    </>
+    <Suspense fallback={<RouteLoading label="Chargement de l’aventure…" />}>
+      {process.env.LKDV_HUB_LAYOUT === 'legacy' ? <HubLayoutAsync>{children}</HubLayoutAsync> : children}
+    </Suspense>
   );
 }
 
 async function HubLayoutAsync({ children }: { children: React.ReactNode }) {
   const [flags, data] = await Promise.all([
-    process.env.LKDV_HUB_LAYOUT === 'legacy' ? currentFeatureFlags() : null,
+    currentFeatureFlags(),
     traceStage('layout.adventure', () => getHubAdventureData()),
   ]);
 
-  if (!flags || flags.hub_camp_v1) {
+  if (flags.hub_camp_v1) {
     return (
       <TripAffiliateProvider
         value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}

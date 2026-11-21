@@ -541,9 +541,16 @@ le titre et le tracé actifs.
 Sept requêtes chaudes par vue, alternées sur le même compte en recette
 locale, ont donné 88 ms en médiane pour la liste et 1 100 ms pour
 la réponse avec le voyage actif. La comparaison a vérifié l’égalité des
-champs communs. Ce chronométrage mesure l’API du sélecteur. Le résumé
-versionné du cockpit, la pagination des détails et le budget global du
-chargement initial restent à valider.
+champs communs. Ce chronométrage mesure l’API du sélecteur.
+
+Le cockpit transmet désormais `schemaVersion: 1`. Le layout courant
+laisse la page charger cette projection. La checklist de préparation
+et les images du matériel restent dans les écrans détaillés. Les traces
+SSR d’une session locale confirment que ces deux lectures sont absentes
+de `/hub` et présentes dans `/hub/itineraire`. Les accès authentifiés à
+l’itinéraire, au suivi live et à l’entrée Kit Studio ont été contrôlés.
+La pagination des détails et la mesure du premier écran complet restent
+à traiter.
 
 ### P07-28 / P07-29 · Heure des moments
 

@@ -1,6 +1,7 @@
 import {
   buildHubCounts,
   getHubAdventureData,
+  getHubCockpitAdventureData,
   getHubTripStats,
 } from '@/features/hub/server/getHubAdventureData';
 import { getMaterielSummary } from '@/features/materiel/services/getMaterielSummary';
@@ -14,6 +15,7 @@ import { resolveStudioPageState } from '@/features/kit-studio/server/studioMode'
 import { loadCockpit } from '@/features/hub/cockpit/loadCockpit';
 import { HubCockpit } from '@/features/hub/cockpit/HubCockpit';
 import { AdventureSwitcher } from '@/features/hub/components/AdventureSwitcher';
+import { TripAffiliateProvider } from '@/features/affiliation/components/TripAffiliateProvider';
 import {
   DynamicCollectifMenu,
   DynamicHubCampShell,
@@ -42,17 +44,23 @@ export default async function HubPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [data, sp] = await Promise.all([getHubAdventureData(), searchParams]);
+  const sp = await searchParams;
   const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
 
   if (process.env.LKDV_HUB_LAYOUT !== 'legacy') {
     if (sp.studio === '1' || sp.studio === 'true') {
       redirect(sp.debug === '1' ? '/kit-studio?debug=1' : '/kit-studio');
     }
+    const isDetail = phase === 'live' || phase === 'recount';
+    const data = await (isDetail ? getHubAdventureData() : getHubCockpitAdventureData());
     if (data.trip && phase === 'live') {
       const stats = await getHubTripStats(data.trip.id);
       const details = getTripPhaseDetails(data.trip);
-      return <DynamicPhaseLiveView trip={data.trip} stats={stats} dayIndex={details.dayIndex} totalDays={details.totalDays} />;
+      return (
+        <TripAffiliateProvider value={{ links: data.affiliateLinks, bookingByStepId: data.bookingByStepId }}>
+          <DynamicPhaseLiveView trip={data.trip} stats={stats} dayIndex={details.dayIndex} totalDays={details.totalDays} />
+        </TripAffiliateProvider>
+      );
     }
     if (data.trip && phase === 'recount') {
       return <DynamicPhaseRecountView trip={data.trip} />;
@@ -68,7 +76,7 @@ export default async function HubPage({
     );
   }
 
-  const flags = await currentFeatureFlags();
+  const [flags, data] = await Promise.all([currentFeatureFlags(), getHubAdventureData()]);
 
   if (flags.hub_camp_v1) {
     // P3 : le studio du hub est le studio survivant. Sa donnée réelle est lue ici, côté

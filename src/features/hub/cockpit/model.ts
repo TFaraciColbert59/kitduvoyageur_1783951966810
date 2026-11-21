@@ -53,6 +53,7 @@ export interface CockpitExpense {
 }
 
 export interface CockpitData {
+  schemaVersion: 1;
   key: string;
   title: string;
   location: string | null;
@@ -187,6 +188,7 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
 
   const dayCount = phase?.totalDays ?? steps.at(-1)?.day ?? null;
   return {
+    schemaVersion: 1,
     key: trip?.id ?? (adventure.nature === 'collectif' ? adventure.id : 'possession'),
     title: trip?.title ?? data.groupLabel ?? 'Mes aventures',
     location: trip?.destination_name ?? null,
