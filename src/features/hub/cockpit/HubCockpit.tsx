@@ -46,6 +46,8 @@ import styles from './cockpit.module.css';
 
 const BudgetDrawerTools = dynamic(() => import('./BudgetDrawerTools').then((m) => m.BudgetDrawerTools), { ssr: false });
 const FieldReportForm = dynamic(() => import('./FieldReportForm').then((m) => m.FieldReportForm), { ssr: false });
+const TripLifecycleBar = dynamic(() => import('./TripLifecycleBar').then((m) => m.TripLifecycleBar), { ssr: false });
+const SafetyContactsPanel = dynamic(() => import('./SafetyContactsPanel').then((m) => m.SafetyContactsPanel), { ssr: false });
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
   ssr: false, loading: () => <p className={styles.mapStatus} role="status">Chargement de la carte</p>,
@@ -591,6 +593,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       case 'etapes': {
         const completed = daySteps.filter((step) => executionFor(step.id)?.status === 'completed').length;
         return <>
+          {!fixture && data.trip && (
+            <TripLifecycleBar tripId={data.key} canEdit={Boolean(data.canEdit)} isOnline={isOnline} />
+          )}
           {data.stepExecutions && daySteps.length > 0 && (
             <p className={styles.meta}>{completed}/{daySteps.length} étapes terminées</p>
           )}
@@ -737,6 +742,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             </div>
           )}
           {(!data.people.length || data.pending > 0) && <Status>{peopleStatus}</Status>}
+          {!fixture && data.trip && (
+            <SafetyContactsPanel tripId={data.key} defaultPoint={data.weatherPoint} isOnline={isOnline} />
+          )}
           {!fixture && <Action href="/hub/groupe">Gérer le groupe</Action>}
           {!fixture && data.trip && <Action href="/hub/securite">Sécurité</Action>}
           <a className="lkdv-cv2-chip" href="tel:112">Urgence secours officiels · 112</a>
