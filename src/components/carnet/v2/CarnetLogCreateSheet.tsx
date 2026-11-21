@@ -4,7 +4,10 @@ import React, { useState } from 'react';
 import { Backpack, ChevronRight, Euro } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { CommunitySheetShell } from '@/features/community/v2/create/CommunitySheetShell';
+import '@/styles/communaute-v2.css';
+import '@/styles/communaute-v2-shell.css';
+import '@/features/community/v2/create/create-v2.css';
+import { CommunitySheetShell } from '@/features/community/v2/shared/CommunitySheetShell';
 import {
   MOMENT_EXPENSE_CATEGORIES,
 } from '@/features/carnet/detail/momentTypes';
