@@ -316,6 +316,7 @@ interface CarnetPokedexDrawerBodyProps {
   detail: CarnetDetail;
   lensId: string;
   currentUserId?: string | null;
+  discoveredOnlyForUserId?: string | null;
   onObserveSpecies?: (species: { name: string; latin: string }) => void;
   onZoneProgressChange?: (progress: { discovered: number; total: number }) => void;
 }
@@ -478,6 +479,7 @@ export function CarnetPokedexDrawerBody({
   detail,
   lensId,
   currentUserId = null,
+  discoveredOnlyForUserId = null,
   onObserveSpecies,
   onZoneProgressChange,
 }: CarnetPokedexDrawerBodyProps) {
@@ -605,8 +607,9 @@ export function CarnetPokedexDrawerBody({
       for (const m of matches) usedMomentIds.add(m.id);
       const match = matches[0];
       const discoverers = resolveDiscoverers(matches);
+      const targetUserId = discoveredOnlyForUserId ?? currentUserId;
       const discoveredByMe = Boolean(
-        currentUserId && matches.some((m) => m.authorId === currentUserId),
+        targetUserId && matches.some((m) => m.authorId === targetUserId),
       );
 
       byLatin.set(sp.latin.toLowerCase(), {
@@ -644,8 +647,9 @@ export function CarnetPokedexDrawerBody({
       for (const m of matches) usedMomentIds.add(m.id);
       const match = matches[0];
       const discoverers = resolveDiscoverers(matches);
+      const targetUserId = discoveredOnlyForUserId ?? currentUserId;
       const discoveredByMe = Boolean(
-        currentUserId && matches.some((m) => m.authorId === currentUserId),
+        targetUserId && matches.some((m) => m.authorId === targetUserId),
       );
 
       const existing = byLatin.get(key);
@@ -697,7 +701,7 @@ export function CarnetPokedexDrawerBody({
         ...entry,
         dexNumber: `#${String(idx + 1).padStart(3, '0')}`,
       }));
-  }, [apiSpecies, searchSpecies, detail.moments, detail.place?.locality]);
+  }, [apiSpecies, searchSpecies, detail.moments, detail.place?.locality, currentUserId, discoveredOnlyForUserId]);
 
   const discoveredCount = useMemo(
     () => entries.filter((e) => e.discovered).length,
@@ -711,6 +715,7 @@ export function CarnetPokedexDrawerBody({
 
   const visibleEntries = useMemo(() => {
     let base = entries;
+    if (discoveredOnlyForUserId) base = base.filter((e) => e.discovered);
     if (lensId === 'faune') base = base.filter((e) => e.kingdom === 'faune');
     else if (lensId === 'flore') base = base.filter((e) => e.kingdom !== 'faune');
     else if (kingdomFilter !== 'all') base = base.filter((e) => e.kingdom === kingdomFilter);
@@ -724,7 +729,7 @@ export function CarnetPokedexDrawerBody({
       );
     }
     return base;
-  }, [entries, lensId, kingdomFilter, query]);
+  }, [entries, lensId, kingdomFilter, query, discoveredOnlyForUserId]);
 
   if (selectedEntry) {
     return (

@@ -1309,21 +1309,12 @@ export function CarnetDrawerV2({
               ) : null}
 
               {lens.id === 'p-pokedex' ? (
-                pSpecies.length > 0 ? (
-                  <div className="lkdv-carnet-cards-col">
-                    {pSpecies.map((sp) => (
-                      <div key={sp.id} className="lkdv-carnet-budget-row">
-                        <div>
-                          <b>{sp.speciesName || sp.title || 'Observation'}</b>
-                          {sp.speciesLatin ? <small style={{ fontStyle: 'italic' }}>{sp.speciesLatin}</small> : null}
-                        </div>
-                        <small>J{sp.dayNumber}</small>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>Aucune observation naturaliste enregistrée pour ce voyageur.</p>
-                )
+                <CarnetPokedexDrawerBody
+                  detail={detail}
+                  lensId="pokedex"
+                  currentUserId={userId}
+                  discoveredOnlyForUserId={p.userId ?? p.id}
+                />
               ) : null}
 
               {lens.id === 'p-kit' ? (
