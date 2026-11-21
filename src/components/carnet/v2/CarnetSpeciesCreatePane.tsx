@@ -494,33 +494,7 @@ export function CarnetSpeciesCreatePane({
         ) : null}
       </div>
 
-      {/* 3. Champs Espèce & Nom scientifique */}
-      <div className="lkdv-cv2c-row-2">
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Espèce observée</span>
-          <input
-            type="text"
-            className="lkdv-cv2-input"
-            value={caption}
-            maxLength={80}
-            placeholder="Bouquetin des Alpes…"
-            onChange={(e) => onCaptionChange(e.target.value)}
-          />
-        </div>
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Nom scientifique</span>
-          <input
-            type="text"
-            className="lkdv-cv2-input"
-            value={latin}
-            maxLength={80}
-            placeholder="Capra ibex…"
-            onChange={(e) => onLatinChange(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* 4. Nombre & Contexte d'observation */}
+      {/* 3. Nombre & Contexte d'observation */}
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">Effectif & Comportement</span>
         <div className="lkdv-carnet-filter-rail">
