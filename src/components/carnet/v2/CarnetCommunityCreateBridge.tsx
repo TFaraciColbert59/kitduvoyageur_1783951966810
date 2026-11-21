@@ -239,13 +239,14 @@ export function CarnetCommunityCreateBridge({
   useEffect(() => {
     if (!whoDropdownOpen || activeTab !== 'meet') return;
     const q = who.trim();
-    if (q.length < 2) {
-      setWhoMatches([]);
-      return;
-    }
+    if (q.length === 1) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
-      fetch(`/api/users/search?scope=all&q=${encodeURIComponent(q)}&limit=6`)
+      const url =
+        q.length >= 2
+          ? `/api/users/search?scope=friends&q=${encodeURIComponent(q)}&limit=8`
+          : `/api/users/search?scope=friends&limit=8`;
+      fetch(url)
         .then((res) => res.json())
         .then((data: {
           users?: Array<{
@@ -271,7 +272,7 @@ export function CarnetCommunityCreateBridge({
           }
         })
         .catch(() => {});
-    }, 220);
+    }, q.length === 0 ? 0 : 220);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
@@ -675,7 +676,7 @@ export function CarnetCommunityCreateBridge({
             value={who}
             maxLength={60}
             autoComplete="off"
-            placeholder="Prénom, surnom ou voyageur…"
+            placeholder="Rechercher parmi mes abonnés…"
             onFocus={() => setWhoDropdownOpen(true)}
             onChange={(e) => {
               setWho(e.target.value);
