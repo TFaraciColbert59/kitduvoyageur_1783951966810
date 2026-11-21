@@ -7,15 +7,35 @@ import { normalizeCivilDateString } from '@/features/trips/engine/temporalPhaseE
 import { CarnetClock } from './CarnetClock';
 import { cockpitDayBudget, cockpitDayRoute, currentCockpitDay, momentHour } from './day';
 import { weatherGlyph } from './weatherGlyph';
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, useCallback, type ReactNode } from 'react';
 import Icon from '@/components/ui/Icon';
 import { IdentityPill } from '@/features/community/feed/PostAuthorPill';
 import { CommunitySheetShell } from '@/features/community/v2/shared/CommunitySheetShell';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import type { CockpitData, CockpitWeatherDay } from './model';
+import type { CockpitData, CockpitExpense, CockpitWeatherDay } from './model';
 import { useCockpitWeather } from './useCockpitWeather';
 import { stepStatusLabels, type StepExecution } from './stepExecution';
+import {
+  enqueueOfflineOp,
+  listOfflineOps,
+  removeOfflineOp,
+  replayOfflineOps,
+  type CockpitOfflineOperation,
+  type ExpenseCreatePayload,
+  type KitTogglePayload,
+  type StepExecutionPayload,
+} from './offlineQueue';
+import { recordStepExecution } from './stepExecutionActions';
+import { createCockpitExpense } from './budgetActions';
+import { toggleCockpitKitItem } from './kitActions';
+import { deriveWeatherAlerts, weatherFreshnessLabel } from './weatherAdvice';
+import { computeKitWeights, formatWeight } from './kitMath';
+import { evaluateDocumentExpiry } from './paperasseStatus';
+import { chunkMembersByThree } from './groupProgress';
+import { newId } from '@/lib/uuid';
 import styles from './cockpit.module.css';
+
+const BudgetDrawerTools = dynamic(() => import('./BudgetDrawerTools').then((m) => m.BudgetDrawerTools), { ssr: false });
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
   ssr: false, loading: () => <p className={styles.mapStatus} role="status">Chargement de la carte</p>,
@@ -96,6 +116,11 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const [selection, setSelection] = useState<{ day: number; date: string | undefined } | null>(null);
   const [carnet, setCarnet] = useState(data.carnet);
   const [savedSteps, setSavedSteps] = useState<Record<string, StepExecution>>({});
+  const [addedExpenses, setAddedExpenses] = useState<CockpitExpense[]>([]);
+  const [kitOverrides, setKitOverrides] = useState<Record<string, boolean>>({});
+  const [groupPage, setGroupPage] = useState(0);
+  const [offlineOps, setOfflineOps] = useState<CockpitOfflineOperation[]>([]);
+  const [syncingOffline, setSyncingOffline] = useState(false);
   const restore = useRef<{ item: string; top: number } | null>(null);
   const dayRail = useRef<HTMLDivElement>(null);
   const widget = view?.widget ?? lastWidget;
@@ -103,7 +128,15 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const forecast = weather.forecast;
   const today = !fixture && clock ? currentCockpitDay(data.startDate, data.dayCount, clock.date) : data.today ?? 1;
   const day = selection && selection.date === clock?.date ? selection.day : today;
-  const dailyBudget = data.budget && cockpitDayBudget(data.budget, data.startDate, day, data.dayCount, clock?.date ?? normalizeCivilDateString());
+  const mergedBudget = useMemo(() => {
+    if (!data.budget) return null;
+    if (!addedExpenses.length) return data.budget;
+    const seen = new Set(data.budget.expenses.map((e) => e.id));
+    const extras = addedExpenses.filter((e) => !seen.has(e.id));
+    return { ...data.budget, expenses: [...extras, ...data.budget.expenses] };
+  }, [data.budget, addedExpenses]);
+  const activeDateIso = clock?.date ?? normalizeCivilDateString();
+  const dailyBudget = mergedBudget && cockpitDayBudget(mergedBudget, data.startDate, day, data.dayCount, activeDateIso);
   const expenses = dailyBudget?.expenses ?? [];
   const reservations = data.reservations ?? [];
   const peopleStatus = data.peopleUnavailable ? 'Membres momentanément indisponibles'
@@ -121,8 +154,13 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const hour = day === today && !fixture ? clock?.hour ?? 12
     : dayMoments.reduce((first, moment) => Math.min(first, momentHour(moment.time) ?? 24), 24);
   const clockHour = hour < 24 ? hour : 12;
-  const dayKit = data.kit.filter((item) => item.day == null || item.day === day);
+  const mergedKit = useMemo(() => data.kit.map((item) => (
+    Object.hasOwn(kitOverrides, item.id) ? { ...item, packed: kitOverrides[item.id] } : item
+  )), [data.kit, kitOverrides]);
+  const dayKit = mergedKit.filter((item) => item.day == null || item.day === day);
   const packed = dayKit.filter((item) => item.packed).length;
+  const kitWeights = useMemo(() => computeKitWeights(dayKit), [dayKit]);
+  const memberChunks = useMemo(() => chunkMembersByThree(data.people), [data.people]);
   const days = useMemo(() => {
     const list = new Set([today, ...data.steps.map((step) => step.day), ...archivedSteps.map((step) => step.planned_day_number)]);
     if (data.dayCount) for (let i = 1; i <= data.dayCount; i += 1) list.add(i);
@@ -235,6 +273,88 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
       ? { ...saved, [row.step_id]: row } : saved);
   }
 
+  const refreshOfflineOps = useCallback(async () => {
+    if (fixture || !data.trip) return;
+    const ops = await listOfflineOps(data.key);
+    setOfflineOps(ops);
+  }, [fixture, data.trip, data.key]);
+
+  const flushOfflineOps = useCallback(async () => {
+    if (fixture || !data.trip || !isOnline) return;
+    const pending = await listOfflineOps(data.key);
+    if (!pending.some((op) => op.status === 'pending')) {
+      setOfflineOps(pending);
+      return;
+    }
+    setSyncingOffline(true);
+    try {
+      await replayOfflineOps(data.key, async (op) => {
+        if (op.kind === 'step_execution') {
+          const payload = op.payload as StepExecutionPayload;
+          const res = await recordStepExecution({ ...payload, operationId: op.operationId });
+          if (res.ok) {
+            onStepSaved(res.execution);
+            return { status: 'synced' };
+          }
+          if (res.refresh) return { status: 'conflict', message: res.message };
+          return { status: 'retry', message: res.message };
+        }
+        if (op.kind === 'expense_create') {
+          const payload = op.payload as ExpenseCreatePayload;
+          const res = await createCockpitExpense({ ...payload, operationId: op.operationId });
+          if (res.ok) {
+            setAddedExpenses((prev) => [res.expense, ...prev.filter((e) => e.id !== op.operationId)]);
+            return { status: 'synced' };
+          }
+          return { status: 'retry', message: res.message };
+        }
+        if (op.kind === 'kit_toggle') {
+          const payload = op.payload as KitTogglePayload;
+          const res = await toggleCockpitKitItem(payload);
+          if (res.ok) {
+            setKitOverrides((prev) => ({ ...prev, [res.itemId]: res.packed }));
+            return { status: 'synced' };
+          }
+          return { status: 'retry', message: res.message };
+        }
+        return { status: 'retry', message: 'Type non pris en charge' };
+      });
+    } finally {
+      setSyncingOffline(false);
+      await refreshOfflineOps();
+    }
+  }, [fixture, data.trip, data.key, isOnline, refreshOfflineOps]);
+
+  useEffect(() => {
+    void refreshOfflineOps();
+  }, [refreshOfflineOps]);
+
+  useEffect(() => {
+    if (isOnline) void flushOfflineOps();
+  }, [isOnline, flushOfflineOps]);
+
+  function onStepQueued(payload: StepExecutionPayload) {
+    const now = new Date().toISOString();
+    const existing = executionFor(payload.stepId);
+    const step = data.steps.find((item) => item.id === payload.stepId);
+    const optimistic: StepExecution = {
+      step_id: payload.stepId,
+      status: payload.status,
+      version: (existing?.version ?? payload.expectedVersion) + 1,
+      occurred_at: now,
+      actual_started_at: payload.status === 'started' ? now : (existing?.actual_started_at ?? null),
+      actual_arrived_at: payload.status === 'arrived' ? now : (existing?.actual_arrived_at ?? null),
+      actual_completed_at: payload.status === 'completed' ? now : (existing?.actual_completed_at ?? null),
+      note: payload.note || null,
+      archived: false,
+      planned_title: step?.title ?? existing?.planned_title ?? 'Étape',
+      planned_day_number: step?.day ?? existing?.planned_day_number ?? day,
+      planned_start_time: step?.time ?? existing?.planned_start_time ?? null,
+    };
+    setSavedSteps((saved) => ({ ...saved, [payload.stepId]: optimistic }));
+    void refreshOfflineOps();
+  }
+
   function stepRows(target: 'carte' | 'etapes', showState = false) {
     return daySteps.map((step) => {
       const execution = executionFor(step.id);
@@ -343,23 +463,72 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   function renderPane() {
     switch (widget) {
-      case 'meteo':
+      case 'meteo': {
+        const currentForecastDay = forecast?.days[0];
+        const alerts = deriveWeatherAlerts(currentForecastDay);
+        const freshness = weatherFreshnessLabel(forecast?.observedAt);
         return <>
           {weatherSummary()}
           {!fixture && <button className="lkdv-cv2-chip" type="button" disabled={weather.pending} onClick={() => void weather.locate()}>
             <Icon name="locate" size={16} />{weather.gps ? 'Actualiser ma position' : 'Utiliser ma position'}
           </button>}
           {weather.error && <p role="status" className={styles.meta}>{weather.error} {forecast && 'Dernière prévision affichée.'}</p>}
-          {forecast?.observedAt && <p className={styles.meta}>Prévision · {forecast.observedAt.slice(11, 16)} · {forecast.source}</p>}
+          {forecast?.observedAt && <p className={styles.meta}>Prévision · {forecast.observedAt.slice(11, 16)} · {forecast.source}{freshness ? ` · ${freshness}` : ''}</p>}
+          {alerts.length > 0 && (
+            <div role="region" aria-label="Alertes météo terrain" className={styles.stepExecution}>
+              {alerts.map((alert) => (
+                <div key={alert.id} className={styles.statusBanner}>
+                  <div>
+                    <strong>{alert.title}</strong>
+                    <p className={styles.meta}>{alert.detail}</p>
+                  </div>
+                  <button type="button" className="lkdv-cv2-chip" onClick={() => go({ widget: alert.targetWidget })}>
+                    {alert.targetLabel}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {forecast?.days.length ? <div className={styles.rows}>{weatherDays()}</div> : <Status>Prévisions journalières indisponibles.</Status>}
         </>;
-      case 'budget':
+      }
+      case 'budget': {
+        const defaultCurrency = mergedBudget?.planned?.currency ?? expenses[0]?.currency ?? 'EUR';
         return <>
           {budgetSummary()}
           {dailyBudget?.estimate && <p className={styles.meta}>Budget du jour estimé à partir de l’enveloppe du voyage.</p>}
           {expenses.length > 0 && <div className={styles.rows}>{budgetRows()}</div>}
+          {mergedBudget && (
+            <BudgetDrawerTools
+              tripId={data.key}
+              currency={defaultCurrency}
+              date={activeDateIso}
+              allExpenses={mergedBudget.expenses}
+              plannedEnvelope={mergedBudget.planned?.amount ?? null}
+              day={day}
+              dayCount={data.dayCount}
+              people={data.people}
+              canEdit={Boolean(data.canEdit)}
+              isOnline={isOnline}
+              fixture={fixture}
+              onAdded={(expense) => setAddedExpenses((prev) => [expense, ...prev])}
+              onQueued={(payload, operationId) => {
+                setAddedExpenses((prev) => [{
+                  id: operationId,
+                  title: `${payload.title} (hors ligne)`,
+                  amount: payload.amount,
+                  currency: payload.currency,
+                  date: payload.date,
+                  planned: false,
+                  category: payload.category,
+                }, ...prev]);
+                void refreshOfflineOps();
+              }}
+            />
+          )}
           {!fixture && data.budget && <Action href="/hub/budget">Gérer les dépenses</Action>}
         </>;
+      }
       case 'carte':
         return <>
           <Map data={dayMap} fixture={fixture} onStep={(step) => go({ widget: 'carte', detail: step.id })} />
@@ -411,27 +580,89 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
         return <>
           {data.kitId && !fixture && <KitScene kitId={data.kitId} />}
           {!data.kitId && <Status action={!fixture && <Action href="/hub/kit-voyage">Choisir le kit du voyage</Action>}>Aucun kit affecté au voyage.</Status>}
-          {!!dayKit.length && <ul className={styles.list}>{dayKit.map((item) =>
-            <li key={item.id}><strong>{item.title}{item.amount > 1 && ` × ${item.amount}`}</strong>
-              <p className={styles.meta}>{item.packed ? 'Préparé' : 'À préparer'}</p></li>)}</ul>}
+          {kitWeights.totalWeightGrams > 0 && (
+            <dl className={styles.stepTimes} aria-label="Poids du kit">
+              <div><dt>Poids total</dt><dd>{formatWeight(kitWeights.totalWeightGrams)}</dd></div>
+              <div><dt>Base / Porté / Conso</dt><dd>{formatWeight(kitWeights.baseWeightGrams)} · {formatWeight(kitWeights.wornWeightGrams)} · {formatWeight(kitWeights.consumableWeightGrams)}</dd></div>
+              {kitWeights.vitalUnpackedCount > 0 && <div><dt>Éléments vitaux à préparer</dt><dd>{kitWeights.vitalUnpackedCount}</dd></div>}
+            </dl>
+          )}
+          {!!dayKit.length && <ul className={styles.list}>{dayKit.map((item) => (
+            <li key={item.id}>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: data.canEdit && !fixture ? 'pointer' : 'default' }}>
+                <span>
+                  <strong>{item.title}{item.amount > 1 && ` × ${item.amount}`}</strong>
+                  <span className={styles.meta}>
+                    {' · '}{item.packed ? 'Préparé' : 'À préparer'}
+                    {item.weightGrams ? ` · ${formatWeight(item.weightGrams * item.amount)}` : ''}
+                    {item.shared ? ' · Partagé' : ''}
+                    {item.vital ? ' · Vital' : ''}
+                  </span>
+                </span>
+                {data.canEdit && !fixture && (
+                  <input
+                    type="checkbox"
+                    checked={item.packed}
+                    aria-label={`Marquer ${item.title} comme préparé`}
+                    onChange={(event) => {
+                      const nextPacked = event.currentTarget.checked;
+                      setKitOverrides((prev) => ({ ...prev, [item.id]: nextPacked }));
+                      const payload: KitTogglePayload = { tripId: data.key, itemId: item.id, packed: nextPacked };
+                      if (!isOnline) {
+                        void enqueueOfflineOp({ operationId: newId(), tripId: data.key, kind: 'kit_toggle', payload })
+                          .then(() => refreshOfflineOps());
+                      } else {
+                        void toggleCockpitKitItem(payload).then((res) => {
+                          if (!res.ok) setKitOverrides((prev) => ({ ...prev, [item.id]: !nextPacked }));
+                        });
+                      }
+                    }}
+                  />
+                )}
+              </label>
+            </li>
+          ))}</ul>}
           {!fixture && data.kitId && <Action href="/hub/kit-voyage">Gérer le kit</Action>}
         </>;
       case 'paperasse':
         return <>
           {reservations.length ? <div className={styles.rows}>{reservationRows()}</div>
             : <Status>{data.reservations === null ? (data.canEdit ? 'Réservations momentanément indisponibles.' : 'Accès aux réservations limité.') : 'Aucune réservation à traiter.'}</Status>}
-          {!!data.documents?.length && <div className={styles.rows}>{data.documents.map((document) =>
-            <Pill key={document.id} itemId={`doc-${document.id}`} title={document.title} meta={dateLabel(document.expiration)}
-              onClick={(element) => go({ widget: 'paperasse', detail: `doc-${document.id}` }, element)} />)}</div>}
+          {!!data.documents?.length && <div className={styles.rows}>{data.documents.map((document) => {
+            const expiry = evaluateDocumentExpiry(document.expiration, activeDateIso);
+            return <Pill key={document.id} itemId={`doc-${document.id}`} title={document.title}
+              meta={expiry.health === 'no_expiry' ? dateLabel(document.expiration) : expiry.label}
+              onClick={(element) => go({ widget: 'paperasse', detail: `doc-${document.id}` }, element)} />;
+          })}</div>}
           {!fixture && data.documents !== null && <Action href="/hub/documents">Gérer les documents</Action>}
         </>;
-      case 'groupe':
+      case 'groupe': {
+        const clampedPage = Math.min(groupPage, Math.max(0, memberChunks.length - 1));
+        const visibleMembers = memberChunks[clampedPage] ?? [];
         return <>
-          {data.people.length > 0 && <div className={styles.rows}>{peopleRows()}</div>}
+          {visibleMembers.length > 0 && (
+            <div className={styles.rows}>
+              {visibleMembers.map((person) => (
+                <IdentityPill key={person.id} name={person.name ?? 'Participant'} avatarUrl={person.avatar} meta={person.role}
+                  itemId={person.id} onClick={(element) => go({ widget: 'groupe', detail: person.id }, element)} />
+              ))}
+            </div>
+          )}
+          {memberChunks.length > 1 && (
+            <div className={styles.stepButtons} role="navigation" aria-label="Blocs de participants">
+              <button type="button" className="lkdv-cv2-chip" disabled={clampedPage === 0}
+                onClick={() => setGroupPage((p) => Math.max(0, p - 1))}>Précédents</button>
+              <span className={styles.meta}>Bloc {clampedPage + 1}/{memberChunks.length} ({data.people.length} membres)</span>
+              <button type="button" className="lkdv-cv2-chip" disabled={clampedPage >= memberChunks.length - 1}
+                onClick={() => setGroupPage((p) => Math.min(memberChunks.length - 1, p + 1))}>Suivants</button>
+            </div>
+          )}
           {(!data.people.length || data.pending > 0) && <Status>{peopleStatus}</Status>}
           {!fixture && <Action href="/hub/groupe">Gérer le groupe</Action>}
           {!fixture && data.trip && <Action href="/hub/securite">Sécurité</Action>}
+          <a className="lkdv-cv2-chip" href="tel:112">Urgence secours officiels · 112</a>
         </>;
+      }
     }
   }
 
@@ -485,7 +716,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
         {data.stepExecutions && (
           <StepExecutionDetails key={detailId} tripId={data.key} stepId={detailId} execution={execution}
             planUpdatedAt={step?.planUpdatedAt} canSave={Boolean(step && data.canEdit)} isOnline={isOnline}
-            onSaved={onStepSaved} />
+            pendingOffline={offlineOps.some((op) => op.kind === 'step_execution' && (op.payload as StepExecutionPayload).stepId === detailId)}
+            onSaved={onStepSaved} onQueued={onStepQueued} />
         )}
         {!fixture && step && <Action href={`/hub/itineraire?jour=${stepDay}`}>Ouvrir dans l’itinéraire</Action>}
       </> };
@@ -546,7 +778,28 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
 
   return <LazyMotion features={domMax}><MotionConfig reducedMotion="user"><section className={`lkdv-communaute-v2 ${styles.shell}`} data-hub-cockpit aria-labelledby={id}>
     <h1 id={id} className="sr-only">{data.title}</h1>
-    {!isOnline && <p role="status">Hors connexion</p>}
+    {(!isOnline || offlineOps.length > 0 || syncingOffline) && (
+      <div role="status" className={styles.statusBanner}>
+        <span>
+          {!isOnline
+            ? `Hors connexion${offlineOps.length ? ` · ${offlineOps.length} action${offlineOps.length > 1 ? 's' : ''} en attente` : ''}`
+            : syncingOffline
+              ? 'Synchronisation des actions hors ligne…'
+              : offlineOps.some((op) => op.status === 'conflict')
+                ? `${offlineOps.filter((op) => op.status === 'conflict').length} conflit(s) de synchronisation`
+                : `${offlineOps.length} action${offlineOps.length > 1 ? 's' : ''} en attente de synchronisation`}
+        </span>
+        {isOnline && offlineOps.some((op) => op.status === 'pending') && !syncingOffline && (
+          <button type="button" className="lkdv-cv2-chip" onClick={() => void flushOfflineOps()}>Synchroniser</button>
+        )}
+        {offlineOps.some((op) => op.status === 'conflict') && (
+          <button type="button" className="lkdv-cv2-chip" onClick={() => {
+            void Promise.all(offlineOps.filter((op) => op.status === 'conflict').map((op) => removeOfflineOp(op.operationId)))
+              .then(() => refreshOfflineOps());
+          }}>Ignorer le conflit</button>
+        )}
+      </div>
+    )}
     {!fixture && !data.trip && <Action href="/compas">Préparer une aventure</Action>}
     {(data.trip || data.collective) && <div className={styles.gridSpace}><div className={styles.grid} data-trip={data.trip}>
       {data.trip && <>

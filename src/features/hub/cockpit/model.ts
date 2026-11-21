@@ -90,7 +90,19 @@ export interface CockpitData {
   steps: CockpitStep[];
   stepExecutions?: Record<string, StepExecution> | null;
   notes: { id: string; title: string | null; content: string; day: number | null }[];
-  kit: { id: string; title: string; amount: number; packed: boolean; day?: number | null }[];
+  kit: {
+    id: string;
+    title: string;
+    amount: number;
+    packed: boolean;
+    day?: number | null;
+    weightGrams?: number | null;
+    worn?: boolean;
+    consumable?: boolean;
+    vital?: boolean;
+    shared?: boolean;
+    ownerId?: string | null;
+  }[];
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
   people: { id: string; name: string | null; role: string; avatar?: string | null; handle?: string | null; confirmed?: boolean }[];
   peopleCount: number | null;
@@ -210,8 +222,19 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     } : null,
     notes: (trip?.notes ?? []).map(({ id, title, content, day_number }) =>
       ({ id, title, content: content.slice(0, 500), day: day_number })),
-    kit: (trip?.items ?? []).map(({ id, item_name, quantity, is_packed, day_number }) =>
-      ({ id, title: item_name, amount: quantity, packed: is_packed, day: day_number })),
+    kit: (trip?.items ?? []).map((item) => ({
+      id: item.id,
+      title: item.item_name,
+      amount: item.quantity,
+      packed: item.is_packed,
+      day: item.day_number,
+      weightGrams: item.weight_grams != null ? Number(item.weight_grams) : null,
+      worn: Boolean(item.is_worn),
+      consumable: Boolean(item.is_consumable),
+      vital: Boolean(item.is_vital || item.priority === 'vital'),
+      shared: item.ownership === 'shared',
+      ownerId: item.owner_id ?? null,
+    })),
     documents: trip?.permissions.canViewDocuments ? trip.documents.map(({ id, title, category, expires_at }) =>
       ({ id, title, category, expiration: expires_at })) : null,
     people: Array.from(people.values()),
