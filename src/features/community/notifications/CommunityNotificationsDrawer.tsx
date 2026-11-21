@@ -130,7 +130,9 @@ export function CommunityNotificationsDrawer({
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: min(60dvh, 540px);
+  height: min(62dvh, 540px);
+  min-height: 360px;
+  max-height: min(62dvh, 540px);
   border-radius: 26px;
   overflow: hidden;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(242, 247, 238, 0.96) 45%, rgba(255, 255, 255, 0.98));
@@ -154,7 +156,14 @@ export function CommunityNotificationsDrawer({
 .lkdv-notif-standalone .lkdv-compte-root {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.lkdv-notif-standalone .lkdv-drawer-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
 }
 ${DRAWER_SHELL_CSS}
 ${COMPTE_CSS}`,
