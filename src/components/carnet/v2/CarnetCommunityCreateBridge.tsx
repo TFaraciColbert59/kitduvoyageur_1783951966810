@@ -1418,13 +1418,13 @@ export function CarnetCommunityCreateBridge({
             <div className="lkdv-cv2c-form-mount" data-kind="post">
               <PostFormV2
                 active
-                prefill={initialPrefill}
-                prefillNonce={1}
+                prefill={null}
+                prefillNonce={0}
                 onNavChange={onPostNavChange}
                 stepHosts={stepHostsRef.current}
                 voiceMode={postVoiceMode}
                 onVoiceModeChange={handleVoiceModeChange}
-                voiceStepContent={voiceStepContent}
+                voiceStepContent={postVoiceMode ? voiceStepContent : undefined}
               />
             </div>
           ) : null}
