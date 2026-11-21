@@ -405,6 +405,93 @@ export function KitProductSheetV2({
           </Link>
         ) : null}
 
+        {/* Différentes possibilités d'obtenir cet objet */}
+        <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+          <span className="lkdv-cv2c-ps-label">Obtenir cet objet</span>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: 8,
+            }}
+          >
+            {(
+              [
+                {
+                  id: 'achat',
+                  label: 'Acheter neuf',
+                  sub: product.priceLabel && product.source === 'achat' ? product.priceLabel : 'Boutique LKDV',
+                  Icon: ShoppingBag,
+                },
+                {
+                  id: 'location',
+                  label: 'Louer',
+                  sub: product.priceLabel && product.source === 'location' ? product.priceLabel : 'Pour la durée du trip',
+                  Icon: Calendar,
+                },
+                {
+                  id: 'occasion',
+                  label: 'Occasion',
+                  sub: product.priceLabel && product.source === 'occasion' ? product.priceLabel : 'Seconde main vérifiée',
+                  Icon: Repeat,
+                },
+                {
+                  id: 'pret',
+                  label: 'Emprunter (Prêt)',
+                  sub: 'Entre voyageurs & clubs',
+                  Icon: Handshake,
+                },
+              ] as const
+            ).map(({ id, label, sub, Icon }) => (
+              <Link
+                key={id}
+                href={`/explorer?q=${encodeURIComponent(product.name)}&mode=${id}`}
+                onClick={onClose}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '9px 10px',
+                  borderRadius: 12,
+                  background: '#f8faf8',
+                  border: '1px solid rgba(23, 64, 44, 0.1)',
+                  textDecoration: 'none',
+                  color: '#172b24',
+                }}
+              >
+                <span
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    background: 'rgba(23, 64, 44, 0.08)',
+                    color: '#17402c',
+                    display: 'grid',
+                    placeItems: 'center',
+                    flex: 'none',
+                  }}
+                >
+                  <Icon size={14} aria-hidden="true" />
+                </span>
+                <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>{label}</b>
+                  <small
+                    style={{
+                      fontSize: '0.68rem',
+                      color: '#56665d',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {sub}
+                  </small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Description du produit */}
         {product.description ? (
           <div className="lkdv-cv2c-ps-card">
@@ -507,93 +594,6 @@ export function KitProductSheetV2({
               value={weightG}
               onChange={(e) => setWeightG(Math.max(0, Number(e.target.value) || 0))}
             />
-          </div>
-        </div>
-
-        {/* Différentes possibilités d'obtenir cet objet */}
-        <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
-          <span className="lkdv-cv2c-ps-label">Obtenir cet objet</span>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-              gap: 8,
-            }}
-          >
-            {(
-              [
-                {
-                  id: 'achat',
-                  label: 'Acheter neuf',
-                  sub: product.priceLabel && product.source === 'achat' ? product.priceLabel : 'Boutique LKDV',
-                  Icon: ShoppingBag,
-                },
-                {
-                  id: 'location',
-                  label: 'Louer',
-                  sub: product.priceLabel && product.source === 'location' ? product.priceLabel : 'Pour la durée du trip',
-                  Icon: Calendar,
-                },
-                {
-                  id: 'occasion',
-                  label: 'Occasion',
-                  sub: product.priceLabel && product.source === 'occasion' ? product.priceLabel : 'Seconde main vérifiée',
-                  Icon: Repeat,
-                },
-                {
-                  id: 'pret',
-                  label: 'Emprunter (Prêt)',
-                  sub: 'Entre voyageurs & clubs',
-                  Icon: Handshake,
-                },
-              ] as const
-            ).map(({ id, label, sub, Icon }) => (
-              <Link
-                key={id}
-                href={`/explorer?q=${encodeURIComponent(product.name)}&mode=${id}`}
-                onClick={onClose}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '9px 10px',
-                  borderRadius: 12,
-                  background: '#f8faf8',
-                  border: '1px solid rgba(23, 64, 44, 0.1)',
-                  textDecoration: 'none',
-                  color: '#172b24',
-                }}
-              >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: 'rgba(23, 64, 44, 0.08)',
-                    color: '#17402c',
-                    display: 'grid',
-                    placeItems: 'center',
-                    flex: 'none',
-                  }}
-                >
-                  <Icon size={14} aria-hidden="true" />
-                </span>
-                <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>{label}</b>
-                  <small
-                    style={{
-                      fontSize: '0.68rem',
-                      color: '#56665d',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {sub}
-                  </small>
-                </span>
-              </Link>
-            ))}
           </div>
         </div>
       </div>
