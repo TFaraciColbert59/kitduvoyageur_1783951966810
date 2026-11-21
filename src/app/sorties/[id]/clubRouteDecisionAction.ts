@@ -26,7 +26,7 @@ export async function saveClubRouteDecision(
   const { error } = await client.rpc('save_event_route_state', {
     p_event_id: parsed.data.id, p_revision: parsed.data.revision, p_adopt: adopt,
   });
-  if (error?.code === '40001') {
+  if (error?.code === 'PT409' || error?.code === '40001') {
     revalidatePath('/sorties/' + id);
     return { error: 'Le parcours ou ta décision a changé. Actualise la fiche.' };
   }

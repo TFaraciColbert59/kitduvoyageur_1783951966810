@@ -7,7 +7,7 @@
 \set trip 'bbb31200-4000-4000-8000-000000000001'
 \set canonical_revision 'bbb31200-3000-4000-8000-000000000001'
 BEGIN;
-SELECT plan(35);
+SELECT plan(37);
 
 INSERT INTO auth.users(id,email) VALUES
   (:'owner','rte-owner@example.test'), (:'confirmed','rte-confirmed@example.test'),
@@ -28,6 +28,10 @@ INSERT INTO public.hiking_route_revisions(id,route_id,revision_number,geometry_h
 
 SELECT ok(NOT has_function_privilege('anon', 'public.publish_club_event_route(uuid,integer,bigint,text)', 'EXECUTE'),
   'La publication est réservée à une session');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.club_event_route_sync', 'INSERT, UPDATE'),
+  'La synchronisation reste réservée à la transaction après les optimisations RLS');
+SELECT ok(NOT has_table_privilege('authenticated', 'public.club_event_route_revisions', 'INSERT, UPDATE'),
+  'Le client ne peut pas fabriquer une révision en écrivant dans la table');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'confirmed', true);
 SELECT throws_ok(format('SELECT public.publish_club_event_route(%L,0,925000912,NULL)', :'event'),
@@ -50,7 +54,7 @@ SELECT ok((SELECT canonical_revision_id=:'canonical_revision'::uuid AND distance
 SELECT ok((SELECT meeting_point='Passerelle aval' AND lat IS NULL AND lng IS NULL
   FROM public.club_events WHERE id=:'event'), 'Un déplacement textuel efface les anciennes coordonnées');
 SELECT throws_ok(format('SELECT public.publish_club_event_route(%L,0,925000912,%L)', :'event','Ancienne version du formulaire'),
-  '40001', 'Le parcours a changé. Actualise la fiche avant de publier.', 'Une version concurrente est refusée');
+  'PT409', 'Le parcours a changé. Actualise la fiche avant de publier.', 'Une version concurrente est refusée');
 SELECT is((public.publish_club_event_route(:'event',1,925000912,'Passerelle aval')->'snapshot'->>'revision')::integer, 1,
   'La répétition identique ne republie pas et ne renotifie pas');
 
@@ -97,7 +101,7 @@ SELECT is((SELECT canonical_revision_id FROM public.club_event_route_revisions W
 
 SELECT set_config('request.jwt.claim.sub', :'confirmed', true);
 SELECT throws_ok(format('SELECT public.save_event_route_state(%L,1,true)', :'event'),
-  '40001', 'Le parcours a changé. Actualise la fiche avant de répondre.', 'Une réponse sur la version précédente est refusée');
+  'PT409', 'Le parcours a changé. Actualise la fiche avant de répondre.', 'Une réponse sur la version précédente est refusée');
 SELECT ok((public.save_event_route_state(:'event') @> '{"pending_revision":2,"adopted_revision":1}'),
   'Le participant reçoit la nouvelle version en conservant son ancienne variante');
 SELECT ok((public.save_event_route_state(:'event',2,false) @> '{"pending_revision":null,"adopted_revision":1}'),

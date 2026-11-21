@@ -100,7 +100,7 @@ export default async function SortiePage({ params, searchParams }: {
       user ? resolveEventAdventure(eventRef) : null,
       canLink && user ? listOwnedTripLinkChoices(user.id) : null,
       canLoadRoute
-        ? supabase.from('club_event_route_revisions').select('route_name,meeting_point,distance_m,elevation_gain_m')
+        ? supabase.from('club_event_route_revisions').select('route_name,distance_m,elevation_gain_m')
           .eq('event_id', id).eq('revision', revision).not('canonical_revision_id', 'is', null).maybeSingle()
         : { data: null },
       canLoadRoute && user
@@ -242,7 +242,6 @@ export default async function SortiePage({ params, searchParams }: {
           eventId={id}
           revision={revision}
           routeName={asString(proposal.route_name)}
-          meetingPoint={asString(proposal.meeting_point)}
           distanceM={asNumber(proposal.distance_m)}
           elevationGainM={asNumber(proposal.elevation_gain_m)}
           canDecide={myStatus === 'registered'}

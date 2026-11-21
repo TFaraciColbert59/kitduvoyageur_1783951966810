@@ -303,8 +303,8 @@ le worktree et la base locale de recette.
 
 Les 187 identifiants des deux documents fournis correspondent exactement.
 La copie `LKDV_Audit_Implementation_Hub_Suivi.xlsx` conserve les 11 onglets, les formules, le tableau Excel
-et la validation des statuts. Les 52 lignes annotées indiquent la preuve
-acquise ou la condition qui reste à vérifier. Les 135 autres conservent le
+et la validation des statuts. Les 54 lignes annotées indiquent la preuve
+acquise ou la condition qui reste à vérifier. Les 133 autres conservent le
 statut initial. Les seules lignes clôturées dans cette passe sont P00-01 et
 P01-02. Les gates des dix phases restent à vérifier avec leurs dépendances.
 
@@ -482,3 +482,36 @@ et dix jours de prévision. Le tiroir a affiché « Ma position ». À 390 px,
 la rangée du widget laisse voir environ 3,5 pastilles et défile
 horizontalement jusqu’aux jours suivants. Le GPS de l’iPhone physique et
 la parité avec Compas restent à vérifier.
+
+### P02-12 / P07-19 · Proposition de parcours et décision des inscrits
+
+La publication relie la sortie à une version précise du catalogue. La
+distance provient de la géométrie et le dénivelé apparaît si le catalogue
+le fournit. La transaction conserve le rendez-vous précédent et écrit la
+nouvelle proposition avec une notification pour chaque inscrit éligible.
+La notification ouvre la fiche du bon événement. Les modifications de
+rendez-vous saisies en texte remplacent le libellé courant et retirent
+son ancien repère géographique.
+
+Recevoir une révision laisse la décision en attente. Adopter le nouveau
+tracé ou garder le précédent crée une décision par personne et par version.
+Une ancienne géométrie adoptée reste consultable depuis la fiche. Le tiroir
+Carte du HUB ouvre cette même fiche. Les décisions sont privées, même pour
+deux membres de la même sortie. L’annulation ferme la lecture des
+participants et conserve l’historique en base.
+
+**Recette locale.** 122 suites PostgreSQL et 2 067 assertions passent,
+dont 37 couvrent le cycle de publication, les droits, la géométrie,
+la notification et les décisions simultanées. Les 144 tests
+applicatifs ciblés passent. PostgREST et l’API renvoient HTTP 409
+sur une proposition périmée. Les deux comptes de recette ont enregistré
+des choix distincts sur le même événement avec les révisions 1 et 2
+conservées en base.
+
+Le rejeu des migrations inclut les optimisations RLS intégrées au dépôt.
+Les deux anciennes policies d’écriture restent absentes lorsque la
+synchronisation passe par le RPC. Le retour du changement de code
+d’erreur a aussi été exercé sur la base locale.
+
+La navigation terrain, les impacts du changement de parcours et la
+conservation de la variante hors connexion restent à vérifier.

@@ -36,12 +36,27 @@ ALTER POLICY "club_event_regs_update" ON public."club_event_registrations" USING
 ALTER POLICY "club_event_route_sync_read" ON public."club_event_route_sync" USING (((user_id = (SELECT auth.uid())) OR (EXISTS ( SELECT 1
    FROM club_events e
   WHERE ((e.id = club_event_route_sync.event_id) AND lkdv_is_club_moderator(e.club_id))))));
-ALTER POLICY "club_event_route_sync_update" ON public."club_event_route_sync" USING (((user_id = (SELECT auth.uid())) OR (EXISTS ( SELECT 1
-   FROM club_events e
-  WHERE ((e.id = club_event_route_sync.event_id) AND lkdv_is_club_moderator(e.club_id)))))) WITH CHECK (((user_id = (SELECT auth.uid())) OR (EXISTS ( SELECT 1
-   FROM club_events e
-  WHERE ((e.id = club_event_route_sync.event_id) AND lkdv_is_club_moderator(e.club_id))))));
-ALTER POLICY "club_event_route_sync_write" ON public."club_event_route_sync" WITH CHECK ((user_id = (SELECT auth.uid())));
+-- Les installations où les décisions passent par le RPC ont déjà retiré ces deux policies.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'club_event_route_sync'
+      AND policyname = 'club_event_route_sync_update'
+  ) THEN
+    ALTER POLICY "club_event_route_sync_update" ON public."club_event_route_sync" USING (((user_id = (SELECT auth.uid())) OR (EXISTS ( SELECT 1
+       FROM club_events e
+      WHERE ((e.id = club_event_route_sync.event_id) AND lkdv_is_club_moderator(e.club_id)))))) WITH CHECK (((user_id = (SELECT auth.uid())) OR (EXISTS ( SELECT 1
+       FROM club_events e
+      WHERE ((e.id = club_event_route_sync.event_id) AND lkdv_is_club_moderator(e.club_id))))));
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'club_event_route_sync'
+      AND policyname = 'club_event_route_sync_write'
+  ) THEN
+    ALTER POLICY "club_event_route_sync_write" ON public."club_event_route_sync" WITH CHECK ((user_id = (SELECT auth.uid())));
+  END IF;
+END;
+$$;
 ALTER POLICY "club_invites_creator_insert" ON public."club_invites" WITH CHECK ((created_by = (SELECT auth.uid())));
 ALTER POLICY "club_invites_creator_read" ON public."club_invites" USING (((created_by = (SELECT auth.uid())) OR ((club_id IS NOT NULL) AND lkdv_is_club_moderator(club_id))));
 ALTER POLICY "club_invites_creator_update" ON public."club_invites" USING (((created_by = (SELECT auth.uid())) OR ((club_id IS NOT NULL) AND lkdv_is_club_moderator(club_id)))) WITH CHECK (((created_by = (SELECT auth.uid())) OR ((club_id IS NOT NULL) AND lkdv_is_club_moderator(club_id))));

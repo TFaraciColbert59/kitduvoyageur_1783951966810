@@ -217,7 +217,6 @@ export async function POST(
     if (!bundle) return errorJson('not_found', 404);
     const event = await loadEvent(supabase, eventId, id);
     if (!event) return errorJson('not_found', 404);
-    const nowIso = new Date().toISOString();
     const action = parsed.data;
 
     if (action.action !== 'cancel' && !canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members)) {
@@ -265,7 +264,7 @@ export async function POST(
         p_route_id: action.routeId,
         p_meeting_point: action.meetingPoint ?? null,
       });
-      if (error?.code === '40001') {
+      if (error?.code === 'PT409' || error?.code === '40001') {
         return json({ error: 'revision_conflict', message: 'Le parcours a changé. Actualise la fiche.' }, 409);
       }
       if (error?.code === '22023') {
@@ -282,7 +281,7 @@ export async function POST(
         p_revision: action.action === 'decide_route' ? action.revision : null,
         p_adopt: action.action === 'decide_route' ? action.adopt : null,
       });
-      if (error?.code === '40001') {
+      if (error?.code === 'PT409' || error?.code === '40001') {
         return json({ error: 'revision_conflict', message: 'Le parcours ou ta décision a changé. Actualise la fiche.' }, 409);
       }
       if (error) return dbFailure('POST save route state', error);

@@ -22,7 +22,6 @@ export default function ClubEventRouteProposal({
   eventId,
   revision,
   routeName,
-  meetingPoint,
   distanceM,
   elevationGainM,
   canDecide,
@@ -32,7 +31,6 @@ export default function ClubEventRouteProposal({
   eventId: string;
   revision: number;
   routeName: string | null;
-  meetingPoint: string | null;
   distanceM: number | null;
   elevationGainM: number | null;
   canDecide: boolean;
@@ -81,7 +79,6 @@ export default function ClubEventRouteProposal({
           elevationGainM != null ? formatElevationM(elevationGainM) : null,
         ].filter(Boolean).join(' · ')}
       </p>
-      {meetingPoint && <p className="lkdv-event-text">Rendez-vous · {meetingPoint}</p>}
       <button type="button" className="lkdv-event-secondary" aria-expanded={mapRevision === revision}
         aria-controls={geometryId} disabled={loading} onClick={() => void toggleMap(revision)}>
         {mapRevision === revision ? 'Masquer le tracé' : 'Voir le tracé'}
@@ -93,6 +90,9 @@ export default function ClubEventRouteProposal({
         </button>
       )}
       <div id={geometryId} hidden={mapRevision == null}>
+        {mapRevision != null && mapRevision !== revision && (
+          <p className="lkdv-event-muted">Tracé affiché · révision {mapRevision}</p>
+        )}
         {mapRevision != null && (segments.length > 0 ? (
           <div className="lkdv-event-route-map">
             <HubRouteMap key={mapRevision} routeCoords={EMPTY_ROUTE} routeSegments={segments} interactive />

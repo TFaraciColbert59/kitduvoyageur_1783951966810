@@ -2,9 +2,15 @@
 
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ClubEventDetail } from '../ClubEventDetail';
 import { makeClub, makeEvent, makeMember, makeRegistration, NOW } from './fixtures';
+
+vi.mock('@/features/community/v2/create/carnet/TrailSearchFieldV2', () => ({
+  TrailSearchFieldV2: ({ onPickTrail }: { onPickTrail: (trail: { id: string }) => void }) => (
+    <button type="button" onClick={() => onPickTrail({ id: '925000912' })}>Choisir le tracé du col</button>
+  ),
+}));
 
 afterEach(() => cleanup());
 
@@ -44,33 +50,60 @@ describe('G02 — fiche sortie K5.21/K5.23/S5.14', () => {
     expect(screen.getByText(/lkdv:\/\/event\//)).toBeTruthy();
   });
 
-  it('affiche une décision de tracé et synchronise', () => {
+  it('distingue la réception d’une révision de la décision du participant', async () => {
     const onSyncRoute = vi.fn();
+    const latestRevision = {
+      eventId: makeEvent().id,
+      routeId: '925000912',
+      canonicalRevisionId: 'pinned-route',
+      revision: 2,
+      checksum: 'recorded',
+      distanceM: 4000,
+      elevationGainM: null,
+      updatedBy: 'admin',
+      updatedAt: NOW,
+      requiresParticipantDecision: true,
+    };
+    const first = renderDetail({ latestRevision, onSyncRoute });
+    expect(screen.queryByRole('button', { name: 'Adopter ce tracé' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Recevoir la révision' }));
+    await waitFor(() => expect(onSyncRoute).toHaveBeenCalledTimes(1));
+    first.unmount();
+
+    const onDecideRoute = vi.fn();
     renderDetail({
+      latestRevision,
       routeSyncState: {
         eventId: makeEvent().id,
         userId: 'admin',
-        lastSyncedRevision: 1,
+        lastSyncedRevision: 2,
         pendingRevision: 2,
         decisionRequired: true,
         revoked: false,
         syncedAt: NOW,
       },
-      onSyncRoute,
+      onDecideRoute,
     });
     expect(screen.getByText('Décision requise')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Accepter la nouvelle trace' }));
-    expect(onSyncRoute).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Recevoir la révision' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Garder mon tracé' }));
+    await waitFor(() => expect(onDecideRoute).toHaveBeenCalledWith(2, false));
   });
 
-  it('valide l’identifiant et la distance avant de publier une révision', () => {
+  it('publie le tracé choisi dans le catalogue et la révision attendue', async () => {
     const onPublishRoute = vi.fn();
     renderDetail({ onPublishRoute });
-    fireEvent.change(screen.getByLabelText('Empreinte (checksum)'), { target: { value: 'abc123' } });
-    fireEvent.change(screen.getByLabelText('Distance (km)'), { target: { value: '0' } });
-    fireEvent.submit(screen.getByRole('button', { name: 'Publier la révision' }).closest('form') as HTMLFormElement);
+    const publish = screen.getByRole('button', { name: 'Publier la révision' });
+    fireEvent.click(publish);
     expect(onPublishRoute).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert').textContent).toMatch(/Distance invalide/);
+    expect(screen.getByRole('alert').textContent).toMatch(/Choisis un tracé/);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choisir le tracé du col' }));
+    fireEvent.change(screen.getByLabelText('Rendez-vous'), { target: { value: ' Passerelle aval ' } });
+    fireEvent.click(publish);
+    await waitFor(() => expect(onPublishRoute).toHaveBeenCalledWith({
+      routeId: '925000912', expectedRevision: 1, meetingPoint: 'Passerelle aval',
+    }));
   });
 
   it('cache tout le contenu d’une sortie d’un club fermé à un non-membre', () => {
