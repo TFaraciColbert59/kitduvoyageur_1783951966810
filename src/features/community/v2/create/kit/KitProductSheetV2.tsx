@@ -21,6 +21,8 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { addToCart } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
 import type { PickerProduct, KitSource } from '@/features/community/create/kit/types';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
@@ -44,6 +46,37 @@ interface ShareConv {
   title?: string | null;
   name?: string | null;
   avatar_url?: string | null;
+}
+
+interface ShopOffer {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  priceEur: number;
+  weightG: number;
+  image: string;
+  category: string;
+  inStock: boolean;
+}
+
+interface CommunityOffer {
+  id: string;
+  title: string;
+  priceEur: number | null;
+  condition: string | null;
+  ownerId: string | null;
+  ownerName: string;
+  ownerAvatar: string | null;
+  image: string | null;
+}
+
+function normalizeText(v: string | null | undefined): string {
+  return (v ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 export interface ProductAddOverrides {
@@ -140,6 +173,13 @@ export function KitProductSheetV2({
   const [convSearch, setConvSearch] = useState('');
   const [sendingConvId, setSendingConvId] = useState<string | null>(null);
   const [sentConvIds, setSentConvIds] = useState<string[]>([]);
+  const [heroPanel, setHeroPanel] = useState<'occasion' | 'pret' | null>(null);
+  const [shopOffer, setShopOffer] = useState<ShopOffer | null>(null);
+  const [occasionOffers, setOccasionOffers] = useState<CommunityOffer[]>([]);
+  const [loanOffers, setLoanOffers] = useState<CommunityOffer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+  const [loanSending, setLoanSending] = useState(false);
   const swipeStartY = useRef<number | null>(null);
 
   useEffect(() => {
@@ -149,7 +189,92 @@ export function KitProductSheetV2({
     setWeightG(product.weightG ?? 0);
     setShareOpen(false);
     setPreviewCollapsed(false);
+    setHeroPanel(null);
+    setSelectedLoanId(null);
   }, [product.id, product.weightG, setPreviewCollapsed]);
+
+  useEffect(() => {
+    let alive = true;
+    const needle = normalizeText(product.name);
+    setOffersLoading(true);
+
+    const loadOffers = async () => {
+      try {
+        const sb = createClient();
+        const shopPromise = product.productId
+          ? sb.from('shop_products').select('*').eq('id', product.productId).maybeSingle()
+          : sb.from('shop_products').select('*').ilike('name', product.name).limit(1).maybeSingle();
+
+        const [shopRes, occRes, loanRes] = await Promise.all([
+          shopPromise,
+          fetch('/api/marketplace/listings?mode=vente', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+          fetch('/api/marketplace/listings?mode=pret', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+        ]);
+
+        if (!alive) return;
+
+        const sp = shopRes?.data as Record<string, unknown> | null;
+        if (sp) {
+          const stockNum = typeof sp.stock === 'number' ? sp.stock : typeof sp.stock_qty === 'number' ? sp.stock_qty : 1;
+          setShopOffer({
+            id: String(sp.id),
+            slug: String(sp.slug ?? sp.id),
+            name: String(sp.name ?? product.name),
+            brand: String(sp.brand ?? product.brand ?? ''),
+            priceEur: Number(sp.price_eur ?? sp.price ?? 0) || 0,
+            weightG: Number(sp.weight_g ?? weightG) || 0,
+            image: String(sp.image ?? ''),
+            category: String(sp.category ?? product.category ?? 'Divers'),
+            inStock: sp.in_stock !== false && stockNum > 0,
+          });
+        } else {
+          setShopOffer(null);
+        }
+
+        const mapListings = (raw: unknown): CommunityOffer[] => {
+          const list = Array.isArray((raw as { listings?: unknown[] })?.listings)
+            ? ((raw as { listings: Array<Record<string, unknown>> }).listings)
+            : [];
+          return list
+            .filter((l) => {
+              if (product.productId && l.product_id === product.productId) return true;
+              const title = normalizeText(String(l.title ?? l.product_name ?? ''));
+              return Boolean(needle && title && (title === needle || title.includes(needle) || needle.includes(title)));
+            })
+            .map((l) => {
+              const seller = (l.seller ?? l.owner ?? {}) as Record<string, unknown>;
+              return {
+                id: String(l.id),
+                title: String(l.title ?? l.product_name ?? product.name),
+                priceEur: typeof l.price_eur === 'number' ? l.price_eur : typeof l.price === 'number' ? l.price : null,
+                condition: typeof l.condition === 'string' ? l.condition : null,
+                ownerId: typeof l.user_id === 'string' ? l.user_id : typeof seller.id === 'string' ? seller.id : null,
+                ownerName: String(seller.full_name ?? seller.name ?? 'Voyageur LKDV'),
+                ownerAvatar: typeof seller.avatar_url === 'string' ? seller.avatar_url : null,
+                image: typeof l.image_url === 'string' ? l.image_url : null,
+              };
+            });
+        };
+
+        const occ = mapListings(occRes);
+        const loans = mapListings(loanRes);
+        setOccasionOffers(occ);
+        setLoanOffers(loans);
+        if (loans[0]) setSelectedLoanId(loans[0].id);
+      } finally {
+        if (alive) setOffersLoading(false);
+      }
+    };
+
+    void loadOffers();
+    return () => {
+      alive = false;
+    };
+  }, [product.brand, product.category, product.id, product.name, product.productId, weightG]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -359,17 +484,223 @@ export function KitProductSheetV2({
             avatarUrl={imgSrc}
           >
             <div className="lkdv-cv2c-ps-hero" data-zoomed={zoomed || undefined}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- photo produit */}
-              <img src={imgSrc} alt={product.name} className="lkdv-cv2c-ps-hero-img" />
-              <span className="lkdv-cv2c-ps-badge is-right">{singleHeroBadge}</span>
-              <button
-                type="button"
-                className="lkdv-cv2c-ps-zoom-btn"
-                aria-label={zoomed ? 'Réduire la photo' : 'Zoomer sur la photo'}
-                onClick={() => setZoomed((z) => !z)}
-              >
-                {zoomed ? <Minimize2 size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
-              </button>
+              {heroPanel === 'occasion' ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '12px',
+                    gap: '8px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <b style={{ fontSize: '0.84rem', color: '#172b24' }}>
+                      Occasions ({occasionOffers.length})
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => setHeroPanel(null)}
+                      aria-label="Revenir à la photo"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: 0,
+                        background: 'rgba(23, 64, 44, 0.08)',
+                        color: '#17402c',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  {offersLoading ? (
+                    <p style={{ margin: '12px 0', fontSize: '0.78rem', color: '#56665d' }}>
+                      Recherche des annonces d’occasion…
+                    </p>
+                  ) : occasionOffers.length === 0 ? (
+                    <div style={{ margin: 'auto 0', textAlign: 'center', padding: '12px' }}>
+                      <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: '#56665d' }}>
+                        Aucune annonce d’occasion avec cette référence pour le moment.
+                      </p>
+                      <Link
+                        href={`/explorer?q=${encodeURIComponent(product.name)}&mode=occasion`}
+                        onClick={onClose}
+                        style={{ fontSize: '0.78rem', fontWeight: 600, color: '#17402c' }}
+                      >
+                        Chercher dans Explorer →
+                      </Link>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {occasionOffers.map((offer) => (
+                        <div
+                          key={offer.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            padding: '8px 10px',
+                            borderRadius: 12,
+                            background: '#f8faf8',
+                            border: '1px solid rgba(23, 64, 44, 0.1)',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
+                              {offer.ownerName}
+                            </b>
+                            <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
+                              {offer.condition || 'Bon état'}
+                              {offer.priceEur !== null ? ` · ${offer.priceEur} €` : ''}
+                            </small>
+                          </div>
+                          <Link
+                            href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=occasion`}
+                            onClick={onClose}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: 999,
+                              background: '#17402c',
+                              color: '#fff',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              flex: 'none',
+                            }}
+                          >
+                            Voir
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : heroPanel === 'pret' ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '12px',
+                    gap: '8px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <b style={{ fontSize: '0.84rem', color: '#172b24' }}>
+                      Demander un prêt ({loanOffers.length})
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => setHeroPanel(null)}
+                      aria-label="Revenir à la photo"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: 0,
+                        background: 'rgba(23, 64, 44, 0.08)',
+                        color: '#17402c',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    {loanOffers.map((offer) => {
+                      const active = selectedLoanId === offer.id;
+                      return (
+                        <button
+                          key={offer.id}
+                          type="button"
+                          onClick={() => setSelectedLoanId(offer.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            padding: '8px 10px',
+                            borderRadius: 12,
+                            background: active ? 'rgba(22, 163, 74, 0.1)' : '#f8faf8',
+                            border: active ? '1.5px solid #15803d' : '1px solid rgba(23, 64, 44, 0.1)',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
+                              {offer.ownerName}
+                            </b>
+                            <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
+                              {offer.condition || 'Disponible en prêt'}
+                            </small>
+                          </div>
+                          {active ? <Check size={15} color="#15803d" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!selectedLoanId || loanSending}
+                    onClick={async () => {
+                      const chosen = loanOffers.find((l) => l.id === selectedLoanId);
+                      if (!chosen) return;
+                      setLoanSending(true);
+                      try {
+                        await fetch('/api/marketplace/loans', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ listingId: chosen.id, productName: product.name }),
+                        }).catch(() => null);
+                        toast.success(`Demande de prêt envoyée à ${chosen.ownerName}`);
+                        setHeroPanel(null);
+                      } finally {
+                        setLoanSending(false);
+                      }
+                    }}
+                    style={{
+                      height: 36,
+                      borderRadius: 999,
+                      border: 0,
+                      background: '#15803d',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {loanSending ? 'Envoi…' : 'Envoyer la demande de prêt'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- photo produit */}
+                  <img src={imgSrc} alt={product.name} className="lkdv-cv2c-ps-hero-img" />
+                  <span className="lkdv-cv2c-ps-badge is-right">{singleHeroBadge}</span>
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-ps-zoom-btn"
+                    aria-label={zoomed ? 'Réduire la photo' : 'Zoomer sur la photo'}
+                    onClick={() => setZoomed((z) => !z)}
+                  >
+                    {zoomed ? <Minimize2 size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
+                  </button>
+                </>
+              )}
             </div>
           </CollapsibleHeroPreview>
         </div>
@@ -415,80 +746,201 @@ export function KitProductSheetV2({
               gap: 8,
             }}
           >
-            {(
-              [
-                {
-                  id: 'achat',
-                  label: 'Acheter neuf',
-                  sub: product.priceLabel && product.source === 'achat' ? product.priceLabel : 'Boutique LKDV',
-                  Icon: ShoppingBag,
-                },
-                {
-                  id: 'location',
-                  label: 'Louer',
-                  sub: product.priceLabel && product.source === 'location' ? product.priceLabel : 'Pour la durée du trip',
-                  Icon: Calendar,
-                },
-                {
-                  id: 'occasion',
-                  label: 'Occasion',
-                  sub: product.priceLabel && product.source === 'occasion' ? product.priceLabel : 'Seconde main vérifiée',
-                  Icon: Repeat,
-                },
-                {
-                  id: 'pret',
-                  label: 'Emprunter (Prêt)',
-                  sub: 'Entre voyageurs & clubs',
-                  Icon: Handshake,
-                },
-              ] as const
-            ).map(({ id, label, sub, Icon }) => (
-              <Link
-                key={id}
-                href={`/explorer?q=${encodeURIComponent(product.name)}&mode=${id}`}
-                onClick={onClose}
+            {/* 1. Achat neuf -> ajoute au panier si en stock */}
+            <button
+              type="button"
+              onClick={() => {
+                if (shopOffer?.inStock) {
+                  addToCart({
+                    id: shopOffer.id,
+                    slug: shopOffer.slug,
+                    name: shopOffer.name,
+                    brand: shopOffer.brand,
+                    priceEur: shopOffer.priceEur,
+                    weightG: shopOffer.weightG,
+                    image: shopOffer.image || imgSrc,
+                    imageAlt: shopOffer.name,
+                    quantity,
+                    category: shopOffer.category,
+                  });
+                  toast.success(`${shopOffer.name} ajouté au panier`);
+                } else {
+                  toast.info('Produit indisponible en stock neuf');
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: shopOffer?.inStock ? '#f8faf8' : '#f9fafb',
+                border: '1px solid rgba(23, 64, 44, 0.1)',
+                color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
+                opacity: shopOffer?.inStock === false ? 0.65 : 1,
+              }}
+            >
+              <span
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '9px 10px',
-                  borderRadius: 12,
-                  background: '#f8faf8',
-                  border: '1px solid rgba(23, 64, 44, 0.1)',
-                  textDecoration: 'none',
-                  color: '#172b24',
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
                 }}
               >
-                <span
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    background: 'rgba(23, 64, 44, 0.08)',
-                    color: '#17402c',
-                    display: 'grid',
-                    placeItems: 'center',
-                    flex: 'none',
-                  }}
-                >
-                  <Icon size={14} aria-hidden="true" />
-                </span>
-                <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>{label}</b>
-                  <small
-                    style={{
-                      fontSize: '0.68rem',
-                      color: '#56665d',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {sub}
-                  </small>
-                </span>
-              </Link>
-            ))}
+                <ShoppingBag size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Acheter neuf</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading
+                    ? 'Vérification…'
+                    : shopOffer?.inStock
+                      ? `${shopOffer.priceEur > 0 ? `${shopOffer.priceEur} € · ` : ''}Au panier`
+                      : 'Hors stock'}
+                </small>
+              </span>
+            </button>
+
+            {/* 2. Location */}
+            <Link
+              href={`/explorer?q=${encodeURIComponent(product.name)}&mode=location`}
+              onClick={onClose}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: '#f8faf8',
+                border: '1px solid rgba(23, 64, 44, 0.1)',
+                textDecoration: 'none',
+                color: '#172b24',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Calendar size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Louer</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Pour la durée du trip
+                </small>
+              </span>
+            </Link>
+
+            {/* 3. Occasion -> ouvre le mini drawer à la place de l'image produit */}
+            <button
+              type="button"
+              onClick={() => setHeroPanel((cur) => (cur === 'occasion' ? null : 'occasion'))}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: heroPanel === 'occasion' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: heroPanel === 'occasion' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Repeat size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Occasion</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading ? 'Recherche…' : `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}`}
+                </small>
+              </span>
+            </button>
+
+            {/* 4. Emprunter (Prêt) -> rouge si indisponible, vert si dispo + ouvre sélecteur à la place de l'image */}
+            <button
+              type="button"
+              disabled={!offersLoading && loanOffers.length === 0}
+              onClick={() => {
+                if (loanOffers.length > 0) {
+                  setHeroPanel((cur) => (cur === 'pret' ? null : 'pret'));
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background:
+                  loanOffers.length > 0
+                    ? 'rgba(22, 163, 74, 0.1)'
+                    : 'rgba(220, 38, 38, 0.08)',
+                border:
+                  loanOffers.length > 0
+                    ? '1px solid rgba(22, 163, 74, 0.35)'
+                    : '1px solid rgba(220, 38, 38, 0.28)',
+                color: loanOffers.length > 0 ? '#15803d' : '#b91c1c',
+                textAlign: 'left',
+                cursor: loanOffers.length > 0 ? 'pointer' : 'not-allowed',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background:
+                    loanOffers.length > 0
+                      ? 'rgba(22, 163, 74, 0.14)'
+                      : 'rgba(220, 38, 38, 0.14)',
+                  color: loanOffers.length > 0 ? '#15803d' : '#b91c1c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Handshake size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Emprunter</b>
+                <small style={{ fontSize: '0.68rem', opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading
+                    ? 'Vérification…'
+                    : loanOffers.length > 0
+                      ? `${loanOffers.length} dispo${loanOffers.length > 1 ? 's' : ''}`
+                      : 'Personne ne le prête'}
+                </small>
+              </span>
+            </button>
           </div>
         </div>
 
