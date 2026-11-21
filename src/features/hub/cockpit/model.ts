@@ -1,3 +1,4 @@
+import type { StepExecution } from './stepExecution';
 import { routeLines } from '@/features/explorer-v2/geo/track';
 import type { HubAdventureData } from '../server/getHubAdventureData';
 import type { TripFull } from '@/features/trips/types/trip.types';
@@ -18,6 +19,7 @@ export interface CockpitStep {
   elevation: number | null;
   description: string | null;
   coordinate: Coordinate | null;
+  planUpdatedAt?: string;
 }
 
 export interface CockpitWeatherDay {
@@ -86,6 +88,7 @@ export interface CockpitData {
   distance: number | null;
   elevation: number | null;
   steps: CockpitStep[];
+  stepExecutions?: Record<string, StepExecution> | null;
   notes: { id: string; title: string | null; content: string; day: number | null }[];
   kit: { id: string; title: string; amount: number; packed: boolean; day?: number | null }[];
   documents: { id: string; title: string; category: string; expiration: string | null }[] | null;
@@ -127,6 +130,7 @@ export function buildCockpit(data: HubAdventureData): CockpitData {
     elevation: step.elevation_gain_m,
     description: step.description,
     coordinate: coordinate(step.longitude, step.latitude),
+    planUpdatedAt: step.updated_at,
     order: step.order_index,
   })).sort((a, b) => a.day - b.day || a.order - b.order);
   const forecast = hiking?.weather;

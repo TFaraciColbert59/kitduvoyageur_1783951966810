@@ -14,6 +14,7 @@ import { CommunitySheetShell } from '@/features/community/v2/shared/CommunityShe
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import type { CockpitData, CockpitWeatherDay } from './model';
 import { useCockpitWeather } from './useCockpitWeather';
+import { stepStatusLabels, type StepExecution } from './stepExecution';
 import styles from './cockpit.module.css';
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
@@ -22,6 +23,7 @@ const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap)
 const KitScene = dynamic(() => import('./HubKitPreview').then((m) => m.HubKitPreview), {
   ssr: false, loading: () => <p role="status">Chargement du kit…</p>,
 });
+const StepExecutionDetails = dynamic(() => import('./StepExecutionDetails').then((m) => m.StepExecutionDetails), { ssr: false });
 const MomentEditor = dynamic(() => import('./HubMomentEditor').then((m) => m.HubMomentEditor), {
   ssr: false, loading: () => <p role="status">Chargement du carnet…</p>,
 });
@@ -93,6 +95,7 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const [clock, setClock] = useState<{ date: string; hour: number } | null>(null);
   const [selection, setSelection] = useState<{ day: number; date: string | undefined } | null>(null);
   const [carnet, setCarnet] = useState(data.carnet);
+  const [savedSteps, setSavedSteps] = useState<Record<string, StepExecution>>({});
   const restore = useRef<{ item: string; top: number } | null>(null);
   const dayRail = useRef<HTMLDivElement>(null);
   const widget = view?.widget ?? lastWidget;
@@ -107,6 +110,8 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     : data.pending > 0 ? `${data.pending} invitation${data.pending > 1 ? 's' : ''} en attente`
     : 'Aucun membre actif';
   const daySteps = useMemo(() => data.steps.filter((step) => step.day === day), [data.steps, day]);
+  const archivedSteps = useMemo(() => Object.values(data.stepExecutions ?? {}).filter((step) => step.archived), [data.stepExecutions]);
+  const dayArchive = archivedSteps.filter((step) => step.planned_day_number === day);
   const dayMap = useMemo(() => ({
     ...data, steps: daySteps, route: cockpitDayRoute(data.route, daySteps, day, data.dayCount),
   }), [data, daySteps, day]);
@@ -119,10 +124,10 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
   const dayKit = data.kit.filter((item) => item.day == null || item.day === day);
   const packed = dayKit.filter((item) => item.packed).length;
   const days = useMemo(() => {
-    const list = new Set([today, ...data.steps.map((step) => step.day)]);
+    const list = new Set([today, ...data.steps.map((step) => step.day), ...archivedSteps.map((step) => step.planned_day_number)]);
     if (data.dayCount) for (let i = 1; i <= data.dayCount; i += 1) list.add(i);
     return [...list].sort((a, b) => a - b);
-  }, [data.steps, data.dayCount, today]);
+  }, [data.steps, data.dayCount, today, archivedSteps]);
 
   useEffect(() => {
     function syncClock() {
@@ -218,11 +223,30 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     }
   }
 
-  function stepRows(target: 'carte' | 'etapes') {
-    return daySteps.map((step) => (
-      <Pill key={step.id} itemId={step.id} title={step.title} meta={step.time} inline
-        onClick={(element) => go({ widget: target, detail: step.id }, element)} />
-    ));
+  function executionFor(stepId: string) {
+    if (!data.stepExecutions) return undefined;
+    const fromServer = data.stepExecutions[stepId];
+    const saved = savedSteps[stepId];
+    return saved && saved.version > (fromServer?.version ?? 0) ? saved : fromServer;
+  }
+
+  function onStepSaved(row: StepExecution) {
+    setSavedSteps((saved) => (saved[row.step_id]?.version ?? 0) < row.version
+      ? { ...saved, [row.step_id]: row } : saved);
+  }
+
+  function stepRows(target: 'carte' | 'etapes', showState = false) {
+    return daySteps.map((step) => {
+      const execution = executionFor(step.id);
+      return (
+        <Pill key={step.id} itemId={step.id} title={step.title}
+          meta={execution ? <>
+            <i className={styles.stepIndicator} data-status={execution.status} aria-hidden="true" />
+            <span className={showState ? undefined : 'sr-only'}>{stepStatusLabels[execution.status]}{step.time ? ' · ' : ''}</span>{step.time}
+          </> : step.time} inline
+          onClick={(element) => go({ widget: target, detail: step.id }, element)} />
+      );
+    });
   }
 
   function weatherDays() {
@@ -349,11 +373,27 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
           {daySteps.length > 0 && <div className={styles.rows}>{stepRows('carte')}</div>}
           {!fixture && <Action href={"/hub/itineraire?jour=" + day}>Ouvrir l’itinéraire</Action>}
         </>;
-      case 'etapes':
+      case 'etapes': {
+        const completed = daySteps.filter((step) => executionFor(step.id)?.status === 'completed').length;
         return <>
-          {daySteps.length ? <div className={styles.rows}>{stepRows('etapes')}</div> : <Status>{data.unavailableSections?.includes('steps') ? 'Étapes momentanément indisponibles.' : 'Aucune étape prévue pour ce jour.'}</Status>}
+          {data.stepExecutions && daySteps.length > 0 && (
+            <p className={styles.meta}>{completed}/{daySteps.length} étapes terminées</p>
+          )}
+          {daySteps.length > 0 && <div className={styles.rows}>{stepRows('etapes', true)}</div>}
+          {dayArchive.length > 0 && (
+            <div role="group" aria-label="Étapes retirées du plan" className={styles.rows}>
+              <p className={styles.meta}>Étapes retirées du plan</p>
+              {dayArchive.map((step) => <Pill key={step.step_id} itemId={step.step_id} title={step.planned_title}
+                meta={stepStatusLabels[step.status]} inline
+                onClick={(element) => go({ widget: 'etapes', detail: step.step_id }, element)} />)}
+            </div>
+          )}
+          {!daySteps.length && !dayArchive.length && (
+            <Status>{data.unavailableSections?.includes('steps') ? 'Étapes momentanément indisponibles.' : 'Aucune étape prévue pour ce jour.'}</Status>
+          )}
           {!fixture && <Action href={`/hub/itineraire?jour=${day}`}>Gérer les étapes</Action>}
         </>;
+      }
       case 'carnet':
         return <>
           <button className={`lkdv-cv2-chip ${styles.addMoment}`} type="button"
@@ -426,14 +466,29 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
     }
     if (widget === 'carte' || widget === 'etapes') {
       const step = data.steps.find((item) => item.id === detailId);
-      return step ? { title: step.title, content: <>
-        <p><strong>{step.title}</strong></p>
-        <p>{[`J${step.day}`, step.time, step.place].filter(Boolean).join(' · ')}</p>
-        {step.description && <p className={styles.bodyCopy}>{step.description}</p>}
-        {step.distance != null && <p>{number(step.distance)} km prévus</p>}
-        {step.elevation != null && <p>+{number(step.elevation)} m</p>}
-        {!fixture && <Action href={`/hub/itineraire?jour=${step.day}`}>Ouvrir dans l’itinéraire</Action>}
-      </> } : null;
+      const execution = executionFor(detailId);
+      const plan = step ?? (execution?.archived ? {
+        title: execution.planned_title,
+        day: execution.planned_day_number,
+        time: execution.planned_start_time?.slice(0, 5),
+      } : null);
+      if (!plan) return null;
+      const { title, day: stepDay, time } = plan;
+      return { title, content: <>
+        <p><strong>{title}</strong></p>
+        <p>{[`J${stepDay}`, time ? `Prévue à ${time}` : null, step?.place].filter(Boolean).join(' · ')}</p>
+        {!step && <p className={styles.meta}>Retirée du plan</p>}
+        {step?.description && <p className={styles.bodyCopy}>{step.description}</p>}
+        {step?.distance != null && <p>{number(step.distance)} km prévus</p>}
+        {step?.elevation != null && <p>+{number(step.elevation)} m</p>}
+        {data.stepExecutions === null && <p className={styles.meta}>Suivi terrain momentanément indisponible.</p>}
+        {data.stepExecutions && (
+          <StepExecutionDetails key={detailId} tripId={data.key} stepId={detailId} execution={execution}
+            planUpdatedAt={step?.planUpdatedAt} canSave={Boolean(step && data.canEdit)} isOnline={isOnline}
+            onSaved={onStepSaved} />
+        )}
+        {!fixture && step && <Action href={`/hub/itineraire?jour=${stepDay}`}>Ouvrir dans l’itinéraire</Action>}
+      </> };
     }
     if (widget === 'carnet') {
       const clockMatch = /^heure-([0-9]{1,2})$/.exec(detailId);

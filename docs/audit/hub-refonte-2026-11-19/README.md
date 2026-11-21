@@ -586,3 +586,42 @@ Pour une sortie, le chargeur ajoute les inscriptions confirmées de
 son rôle et sa fiche indique « Participation confirmée » quand sa ligne
 l’atteste. La recette WebKit a confirmé l’affichage depuis le rail du HUB
 puis dans le sous-tiroir d’une personne inscrite en base.
+
+### P02-07 / P07-22 · Exécution des étapes et séparation prévu / réel
+
+Le HUB affiche les horaires prévus et le suivi terrain côte à côte sans
+modifier `trip_steps`. La migration `20261121100000_trip_step_execution.sql`
+ajoute un journal d’exécution distinct du plan (`trip_step_executions`) avec
+statuts (`started`, `arrived`, `completed`, `skipped`, `postponed`, `cancelled`),
+horodatages réels, source (`manual`, `gps`, `system`), identifiant d’opération
+idempotent, vérification conjointe de la version du journal et de
+`trip_steps.updated_at`, instantané du plan d’origine et notes réservées aux
+éditeurs. Le retour arrière `20261121100000_trip_step_execution.down.sql`
+refuse de supprimer un journal non vide.
+
+Le sous-tiroir Étapes (`StepExecutionDetails.tsx`) permet aux éditeurs de
+démarrer, marquer atteinte, terminer, reporter, ignorer ou annuler une étape
+avec note facultative réservée aux éditeurs. Les étapes réalisées retirées du
+plan restent consultables dans le tiroir sous « Étapes retirées du plan » avec
+leur état et leur contexte prévu. Les participants confirmés consultent l’état
+et les horaires en lecture seule, sans accès aux notes internes.
+
+**Recette locale.**
+- **PostgreSQL / pgTAP · PASS.** 50 assertions dédiées dans
+  `supabase/tests/database/trip_step_execution.test.sql` (`1..50`, zéro `not ok`),
+  et suite complète verte sur `lkdv_hub_ci` : 123 fichiers, 2 117 assertions.
+- **Typage, lint et Vitest · PASS.** `npm run type-check` (Node 24, heap 4 Go),
+  ESLint ciblé sur `src/features/hub/cockpit/` et 45 tests de
+  `src/features/hub/__tests__` passent.
+- **Recette WebKit mobile authentifiée · PASS.** Rejeu sur `127.0.0.1:4103/hub`
+  avec trois sessions Supabase Auth (deux appareils éditeur, un participant
+  confirmé) : démarrage manuel sans GPS, conflit de version entre appareils puis
+  actualisation, conflit après modification de `trip_steps.updated_at` puis
+  actualisation, enchaînement départ/arrivée/fin avec plan intact, lecture seule
+  et confidentialité des notes éditeur vérifiées côté participant, puis retrait
+  du plan et ouverture de l’archive « Étapes retirées du plan » (avec note
+  visible pour l’éditeur et masquée pour le participant).
+
+Le GPS automatique, le suivi porte-à-porte, les pauses non sportives et la
+reprise hors ligne après redémarrage restent à traiter pour clôturer P02-07 et
+P07-22.

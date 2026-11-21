@@ -9,6 +9,7 @@ import type { HubAdventureData } from '../server/getHubAdventureData';
 import { buildCockpitReservations } from './booking';
 import { buildCockpit, type CockpitData } from './model';
 import { momentClock } from './day';
+import { readStepExecutions } from './stepExecutionServer';
 
 type ClubRouteUpdateRow = {
   event_id: string;
@@ -68,7 +69,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
 
   const supabase = await createClient();
   const hasCachedViewer = data.viewer !== undefined;
-  const [session, participants, bookings, carnets, kit, clubRouteUpdates] = await Promise.all([
+  const [session, participants, bookings, carnets, kit, clubRouteUpdates, stepExecutions] = await Promise.all([
     hasCachedViewer
       ? Promise.resolve({ data: { user: data.viewer } })
       : supabase.auth.getUser(),
@@ -84,6 +85,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
       .order('created_at', { ascending: false }).limit(1).maybeSingle(),
     trip.kit_id ? supabase.from('materiel_kits').select('name').eq('id', trip.kit_id).eq('is_trashed', false).maybeSingle() : null,
     supabase.rpc('get_trip_club_route_updates', { p_trip_id: trip.id }),
+    data.viewer !== null ? readStepExecutions(supabase, trip.id) : undefined,
   ]);
   const viewer = session.data.user;
   const selectedCarnet = carnets.data;
@@ -108,6 +110,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
 
   return {
     ...cockpit,
+    stepExecutions,
     clubRouteUpdates: clubRouteUpdateRows.map((row) => ({
       eventId: row.event_id,
       title: row.event_title,
