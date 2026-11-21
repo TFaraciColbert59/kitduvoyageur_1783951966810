@@ -45,7 +45,7 @@ const MAX_LIMIT = 25;
 const PUBLIC_COLUMNS = 'id, full_name, avatar_url, location, trust_score';
 
 const searchSchema = z.object({
-  scope: z.enum(['friends', 'all']).default('all'),
+  scope: z.enum(['friends', 'followers', 'all']).default('all'),
   q: z.string().max(MAX_SEARCH_QUERY).optional(),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 });
@@ -88,11 +88,12 @@ export async function GET(request: NextRequest) {
   }
 
   let allowedIds: string[] | null = null;
-  if (scope === 'friends') {
+  if (scope === 'friends' || scope === 'followers') {
+    const isFollowers = scope === 'followers';
     const { data: follows, error: followsError } = await supabase
       .from('user_follows')
-      .select('following_id')
-      .eq('follower_id', user.id);
+      .select(isFollowers ? 'follower_id' : 'following_id')
+      .eq(isFollowers ? 'following_id' : 'follower_id', user.id);
 
     if (followsError) {
       return NextResponse.json(
@@ -104,7 +105,11 @@ export async function GET(request: NextRequest) {
     allowedIds = [
       ...new Set(
         (follows ?? [])
-          .map((row) => (row as { following_id?: unknown }).following_id)
+          .map((row) =>
+            isFollowers
+              ? (row as { follower_id?: unknown }).follower_id
+              : (row as { following_id?: unknown }).following_id,
+          )
           .filter((id): id is string => typeof id === 'string' && id.length > 0),
       ),
     ];

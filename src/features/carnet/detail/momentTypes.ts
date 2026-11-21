@@ -77,6 +77,8 @@ export interface MomentMeta {
   amountEur?: number;
   category?: string;
   who?: string;
+  whoUserId?: string;
+  whoAvatarUrl?: string;
   itemId?: string;
   latin?: string;
   durationLabel?: string;

@@ -69,6 +69,10 @@ const StoriesViewer = dynamic(
   () => import('@/components/communaute/StoriesViewer'),
   { ssr: false }
 );
+const StoriesViewsSheet = dynamic(
+  () => import('@/components/communaute/StoryViewsSheet'),
+  { ssr: false }
+);
 const ReportSheet = dynamic(
   () => import('@/components/social/ReportSheet'),
   { ssr: false }
@@ -177,6 +181,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     : null;
   const [storiesOpen, setStoriesOpen] = useState(false);
   const [storyStartIndex, setStoryStartIndex] = useState(0);
+  const [storyViewsSlide, setStoryViewsSlide] = useState<StorySlide | null>(null);
   const [kitClonePrefill, setKitClonePrefill] = useState<{
     name: string;
     items: KitItemV2[];
@@ -696,7 +701,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
       caption: moment.caption || moment.title || undefined,
       storyId: moment.id,
       mediaType: 'image',
+      location: moment.place || undefined,
+      carnetTitle: detail.title,
+      carnetId: detail.id,
     });
+
+    const authorName = detail.author?.name || 'Voyageur';
+    const authorAvatar = detail.author?.avatarUrl || undefined;
 
     const byDay = new Map<number, typeof photos>();
     for (const m of photos) {
@@ -708,21 +719,18 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     if (byDay.size > 1) {
       return Array.from(byDay.entries())
         .sort(([a], [b]) => a - b)
-        .map(([dayNum, items]) => {
-          const dayInfo = detail.days.find((d) => d.dayNumber === dayNum);
-          return {
-            id: detail.author?.id || `day-${dayNum}`,
-            name: dayInfo?.title?.trim() || `Jour ${dayNum}`,
-            avatarUrl: items[0].imageUrl || detail.author?.avatarUrl || undefined,
-            slides: items.map(toSlide),
-          };
-        });
+        .map(([dayNum, items]) => ({
+          id: detail.author?.id || `day-${dayNum}`,
+          name: authorName,
+          avatarUrl: authorAvatar || items[0].imageUrl || undefined,
+          slides: items.map(toSlide),
+        }));
     }
 
     return photos.map((m) => ({
       id: m.authorId || detail.author?.id || `moment-${m.id}`,
-      name: m.caption || m.title || detail.author?.name || `Jour ${m.dayNumber}`,
-      avatarUrl: m.imageUrl || detail.author?.avatarUrl || undefined,
+      name: m.authorName || authorName,
+      avatarUrl: authorAvatar || m.imageUrl || undefined,
       slides: [toSlide(m)],
     }));
   }, [detail]);
@@ -1468,7 +1476,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           onReply={handleStoryReply}
           onToggleLike={(slide, wasLiked) => void handleStoryLike(slide, wasLiked)}
           likedStoryIds={likedStories}
-          onReport={(_u, slide) => setReportTarget({ kind: 'moment', id: slide.storyId })}
+          onShowViews={(slide) => setStoryViewsSlide(slide)}
           onAuthor={(storyUser) => {
             setStoriesOpen(false);
             if (detail.participants.some((p) => p.userId === storyUser.id)) {
@@ -1487,7 +1495,14 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             }
             setReportTarget({ kind: 'moment', momentId: slide.storyId });
           }}
-          myUserId={currentUserId ?? undefined}
+        />
+      ) : null}
+
+      {storyViewsSlide?.storyId ? (
+        <StoriesViewsSheet
+          storyId={storyViewsSlide.storyId}
+          currentUser={user}
+          onClose={() => setStoryViewsSlide(null)}
         />
       ) : null}
 

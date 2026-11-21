@@ -55,6 +55,7 @@ const CARNET_CREATE_TABS: ReadonlyArray<{
   icon: React.ReactNode;
 }> = [
   { id: 'post', label: 'Publication', icon: <PenLine size={20} aria-hidden="true" /> },
+  { id: 'story', label: 'Story', icon: <Camera size={20} aria-hidden="true" /> },
   { id: 'meet', label: 'Rencontre', icon: <Users size={20} aria-hidden="true" /> },
   { id: 'species', label: 'Espèce', icon: <Leaf size={20} aria-hidden="true" /> },
   { id: 'inc', label: 'Incident', icon: <AlertTriangle size={20} aria-hidden="true" /> },
@@ -92,7 +93,7 @@ export function CarnetCommunityCreateBridge({
   onCreated,
 }: CarnetCommunityCreateBridgeProps) {
   const [tabIndex, setTabIndex] = useState(() => {
-    const resolved = initialTab === 'voice' || initialTab === 'story' ? 'post' : initialTab;
+    const resolved = initialTab === 'voice' ? 'post' : initialTab;
     const idx = CARNET_CREATE_TABS.findIndex((t) => t.id === resolved);
     return idx >= 0 ? idx : 0;
   });
@@ -683,15 +684,14 @@ export function CarnetCommunityCreateBridge({
   useEffect(() => {
     if (!whoDropdownOpen || activeTab !== 'meet') return;
     const q = who.trim();
-    if (q.length === 1) return;
     let cancelled = false;
     const timer = window.setTimeout(() => {
       const url =
         q.length >= 2
-          ? `/api/users/search?scope=friends&q=${encodeURIComponent(q)}&limit=8`
-          : `/api/users/search?scope=friends&limit=8`;
+          ? `/api/users/search?scope=followers&q=${encodeURIComponent(q)}&limit=12`
+          : `/api/users/search?scope=followers&limit=25`;
       fetch(url)
-        .then((res) => res.json())
+        .then((res) => (res.ok ? res.json() : { users: [] }))
         .then((data: {
           users?: Array<{
             id: string;
@@ -702,21 +702,31 @@ export function CarnetCommunityCreateBridge({
             location?: string | null;
           }>;
         }) => {
-          if (!cancelled && Array.isArray(data.users)) {
-            setWhoMatches(
-              data.users
+          if (cancelled) return;
+          const mapped = Array.isArray(data.users)
+            ? data.users
                 .map((u) => ({
                   id: u.id,
                   name: (u.name || u.full_name || '').trim(),
                   avatarUrl: u.avatarUrl ?? u.avatar_url ?? null,
                   location: u.location ?? null,
                 }))
-                .filter((u) => u.name.length > 0),
-            );
-          }
+                .filter((u) => u.name.length > 0)
+            : [];
+          const filtered =
+            q.length === 1
+              ? mapped.filter(
+                  (u) =>
+                    u.name.toLowerCase().includes(q.toLowerCase()) ||
+                    (u.location ?? '').toLowerCase().includes(q.toLowerCase()),
+                )
+              : mapped;
+          setWhoMatches(filtered);
         })
-        .catch(() => {});
-    }, q.length === 0 ? 0 : 220);
+        .catch(() => {
+          if (!cancelled) setWhoMatches([]);
+        });
+    }, q.length === 0 ? 0 : 180);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
@@ -764,8 +774,8 @@ export function CarnetCommunityCreateBridge({
       setMomentError('Enregistre un mémo vocal avant de l’ajouter.');
       return;
     }
-    if (targetKind === 'meet' && !who.trim() && !tabCaption.trim()) {
-      setMomentError('Indique qui tu as rencontré ou ce que vous vous êtes dit.');
+    if (targetKind === 'meet' && !selectedWhoUser) {
+      setMomentError('Sélectionne un voyageur parmi tes abonnés.');
       return;
     }
     if (targetKind === 'inc' && !tabCaption.trim()) {
@@ -802,7 +812,11 @@ export function CarnetCommunityCreateBridge({
       input.durationLabel = voice.recording?.durationLabel;
       if (ambiance) input.ambiance = true;
     }
-    if (targetKind === 'meet') input.who = who;
+    if (targetKind === 'meet' && selectedWhoUser) {
+      input.who = selectedWhoUser.name;
+      input.whoUserId = selectedWhoUser.id;
+      if (selectedWhoUser.avatarUrl) input.whoAvatarUrl = selectedWhoUser.avatarUrl;
+    }
     if (targetKind === 'species') {
       input.latin = latin;
       if (speciesNote.trim()) {
@@ -1442,8 +1456,8 @@ export function CarnetCommunityCreateBridge({
             <div className="lkdv-cv2c-form-mount" data-kind="story">
               <StoryFormV2
                 active
-                prefill={initialPrefill}
-                prefillNonce={1}
+                prefill={null}
+                prefillNonce={0}
                 onNavChange={onStoryNavChange}
                 stepHosts={stepHostsRef.current}
                 inCarnet

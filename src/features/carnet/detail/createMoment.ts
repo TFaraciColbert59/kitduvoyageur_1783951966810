@@ -54,6 +54,8 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
     type: z.literal('meet'),
     caption: required('Donne un titre à ton moment.', 240),
     who: optional(60),
+    whoUserId: optional(80),
+    whoAvatarUrl: optional(400),
   }),
   z.object({
     ...common,
@@ -110,8 +112,13 @@ export function metaOf(value: MomentInput): MomentMeta | null {
       if (value.ambiance) meta.ambiance = true;
       return Object.keys(meta).length > 0 ? meta : null;
     }
-    case 'meet':
-      return value.who ? { who: value.who } : null;
+    case 'meet': {
+      const meta: MomentMeta = {};
+      if (value.who) meta.who = value.who;
+      if (value.whoUserId) meta.whoUserId = value.whoUserId;
+      if (value.whoAvatarUrl) meta.whoAvatarUrl = value.whoAvatarUrl;
+      return Object.keys(meta).length > 0 ? meta : null;
+    }
     case 'spend':
       return { amountEur: value.amountEur, category: value.category };
     case 'kit':

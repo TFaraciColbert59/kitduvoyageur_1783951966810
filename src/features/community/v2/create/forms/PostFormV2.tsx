@@ -336,6 +336,7 @@ function FormatStep({
             aria-checked={voiceMode}
             className="lkdv-cv2c-format-card"
             data-active={voiceMode}
+            style={{ gridColumn: '1 / -1' }}
             onClick={() => onVoiceModeChange(true)}
           >
             <span className="lkdv-cv2c-format-ico" aria-hidden="true">

@@ -86,9 +86,12 @@ function resolveMeetUserPill(m: CarnetMomentItem, detail: CarnetDetail) {
   const whoName = (m.meta?.who || m.authorName || '').trim() || 'Voyageur rencontré';
   const lower = whoName.toLowerCase();
   const matchedParticipant = (detail.participants ?? []).find(
-    (p) => p.name?.trim().toLowerCase() === lower,
+    (p) =>
+      (m.meta?.whoUserId && p.userId === m.meta.whoUserId) ||
+      p.name?.trim().toLowerCase() === lower,
   );
   const avatarUrl =
+    m.meta?.whoAvatarUrl ??
     matchedParticipant?.avatarUrl ??
     (detail.author?.name?.trim().toLowerCase() === lower ? detail.author.avatarUrl : null) ??
     null;
