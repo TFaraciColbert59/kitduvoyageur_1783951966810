@@ -172,22 +172,55 @@ export function CarnetCommunityCreateBridge({
     return cb;
   }, []);
 
-  const stepHostsFor = useCallback(
-    (kind: CreateKindV2): Array<HTMLDivElement | null> => {
-      void stepHostsVersion;
-      const count = createKindConfig(kind).steps.length;
-      return Array.from({ length: count }, (_, i) => stepHostRefs.current.get(`${kind}:${i}`) ?? null);
-    },
-    [stepHostsVersion],
-  );
+  const postStepHosts = useMemo(() => {
+    void stepHostsVersion;
+    const count = createKindConfig('post').steps.length;
+    return Array.from({ length: count }, (_, i) => stepHostRefs.current.get(`post:${i}`) ?? null);
+  }, [stepHostsVersion]);
+
+  const storyStepHosts = useMemo(() => {
+    void stepHostsVersion;
+    const count = createKindConfig('story').steps.length;
+    return Array.from({ length: count }, (_, i) => stepHostRefs.current.get(`story:${i}`) ?? null);
+  }, [stepHostsVersion]);
 
   const handleNavChange = useCallback((kind: CreateKindV2, nav: CreateNavV2 | null) => {
     setNavs((prev) => {
+      const cur = prev.get(kind) ?? null;
+      if (cur === nav) return prev;
+      if (
+        cur &&
+        nav &&
+        cur.stepIndex === nav.stepIndex &&
+        cur.stepCount === nav.stepCount &&
+        cur.busy === nav.busy &&
+        cur.canBack === nav.canBack &&
+        cur.finalLabel === nav.finalLabel &&
+        cur.serverError === nav.serverError &&
+        cur.goBack === nav.goBack &&
+        cur.goNext === nav.goNext &&
+        cur.goToStep === nav.goToStep
+      ) {
+        return prev;
+      }
       const next = new Map(prev);
       if (nav) next.set(kind, nav);
       else next.delete(kind);
       return next;
     });
+  }, []);
+
+  const onPostNavChange = useCallback(
+    (nav: CreateNavV2 | null) => handleNavChange('post', nav),
+    [handleNavChange],
+  );
+  const onStoryNavChange = useCallback(
+    (nav: CreateNavV2 | null) => handleNavChange('story', nav),
+    [handleNavChange],
+  );
+  const handleVoiceModeChange = useCallback((next: boolean) => {
+    setMomentError(null);
+    setPostVoiceMode(next);
   }, []);
 
   const contextValue = useMemo<CreateSheetContextValue>(
@@ -1423,13 +1456,10 @@ export function CarnetCommunityCreateBridge({
                 active
                 prefill={initialPrefill}
                 prefillNonce={1}
-                onNavChange={(nav) => handleNavChange('post', nav)}
-                stepHosts={stepHostsFor('post')}
+                onNavChange={onPostNavChange}
+                stepHosts={postStepHosts}
                 voiceMode={postVoiceMode}
-                onVoiceModeChange={(next) => {
-                  setMomentError(null);
-                  setPostVoiceMode(next);
-                }}
+                onVoiceModeChange={handleVoiceModeChange}
                 voiceStepContent={voiceStepContent}
               />
             </div>
@@ -1440,8 +1470,8 @@ export function CarnetCommunityCreateBridge({
                 active
                 prefill={initialPrefill}
                 prefillNonce={1}
-                onNavChange={(nav) => handleNavChange('story', nav)}
-                stepHosts={stepHostsFor('story')}
+                onNavChange={onStoryNavChange}
+                stepHosts={storyStepHosts}
                 inCarnet
               />
             </div>
