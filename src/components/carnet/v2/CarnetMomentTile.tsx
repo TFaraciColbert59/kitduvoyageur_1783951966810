@@ -67,7 +67,7 @@ export interface CarnetMomentTileBodyProps {
 /** Corps de la tuile : l'image du moment ou l'aplat du type (`.tfill`). */
 export function CarnetMomentTileBody({ moment, type }: CarnetMomentTileBodyProps) {
   const text = momentText(moment);
-  if ((type === 'photo' || type === 'video') && moment.imageUrl) {
+  if ((type === 'photo' || type === 'video' || type === 'species') && moment.imageUrl) {
     /* Vidéo (proposition n° 31) : vignette vidéo inerte, jamais une image figée
        qui laisserait croire à une photo ; la tuile ouvre le moment comme avant. */
     if (type === 'video') return <CarnetVideoThumb src={moment.imageUrl} />;
