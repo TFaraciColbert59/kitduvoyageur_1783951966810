@@ -3967,6 +3967,11 @@
   background: #ffffff;
 }
 
+.lkdv-cv2c-stack-overlay.is-level2.is-product-sheet {
+  height: 93dvh;
+  max-height: 93dvh;
+}
+
 .lkdv-cv2c-stack-head {
   display: flex;
   align-items: center;
