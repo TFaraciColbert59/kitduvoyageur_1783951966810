@@ -3,7 +3,8 @@
 import { useState, useTransition, type FormEvent } from 'react';
 import { createHubFieldReport, type FieldReportCategory } from './fieldReportActions';
 import type { Coordinate } from './model';
-import styles from './cockpit.module.css';
+import { DrawerSection } from './DrawerPrimitives';
+import ds from './cockpitDrawers.module.css';
 
 const REPORT_LABELS: Record<FieldReportCategory, string> = {
   water_dry: 'Source tarie',
@@ -12,8 +13,8 @@ const REPORT_LABELS: Record<FieldReportCategory, string> = {
   hazard: 'Danger / éboulement',
   shelter_closed: 'Abri fermé',
   snow_ice: 'Neige / glace',
-  mud: 'Boue / terrain glissant',
-  other: 'Autre observation',
+  mud: 'Boue / glissant',
+  other: 'Autre',
 };
 
 export function FieldReportForm({
@@ -33,11 +34,15 @@ export function FieldReportForm({
 
   if (!open) {
     return (
-      <div>
-        <button type="button" className="lkdv-cv2-chip" onClick={() => setOpen(true)}>
+      <div className={ds.drawerRoot} style={{ paddingBottom: 0 }}>
+        <button type="button" className={ds.btnPrimary} onClick={() => setOpen(true)}>
           + Signaler un état terrain
         </button>
-        {feedback && <p role="status" className={styles.meta}>{feedback}</p>}
+        {feedback && (
+          <div className={ds.alertBanner} data-tone="good" role="status">
+            {feedback}
+          </div>
+        )}
       </div>
     );
   }
@@ -73,34 +78,46 @@ export function FieldReportForm({
   }
 
   return (
-    <form onSubmit={submit} className={styles.stepExecution} aria-label="Signalement terrain">
-      <label className={styles.stepNote}>
-        Type d’observation
-        <select value={category} onChange={(e) => setCategory(e.currentTarget.value as FieldReportCategory)}>
-          {(Object.keys(REPORT_LABELS) as FieldReportCategory[]).map((key) => (
-            <option key={key} value={key}>{REPORT_LABELS[key]}</option>
-          ))}
-        </select>
-      </label>
-      <label className={styles.stepNote}>
-        Précision (ex. Source à sec au refuge)
-        <input
-          type="text"
-          value={title}
-          maxLength={140}
-          required
-          onChange={(e) => setTitle(e.currentTarget.value)}
-        />
-      </label>
-      <div className={styles.stepButtons}>
-        <button type="submit" className="lkdv-cv2-chip" disabled={pending}>
-          {pending ? 'Envoi…' : 'Publier le signalement'}
-        </button>
-        <button type="button" className="lkdv-cv2-chip" onClick={() => setOpen(false)}>
-          Annuler
-        </button>
-      </div>
-      {feedback && <p role="alert" className={styles.meta}>{feedback}</p>}
-    </form>
+    <DrawerSection title="Nouveau signalement terrain" padded>
+      <form onSubmit={submit} className={ds.drawerRoot} style={{ paddingBottom: 0 }} aria-label="Signalement terrain">
+        <label className={ds.fieldGroup}>
+          <span className={ds.fieldLabel}>Type d’observation</span>
+          <select
+            className={ds.fieldSelect}
+            value={category}
+            onChange={(e) => setCategory(e.currentTarget.value as FieldReportCategory)}
+          >
+            {(Object.keys(REPORT_LABELS) as FieldReportCategory[]).map((key) => (
+              <option key={key} value={key}>{REPORT_LABELS[key]}</option>
+            ))}
+          </select>
+        </label>
+        <label className={ds.fieldGroup}>
+          <span className={ds.fieldLabel}>Précision (ex. Source à sec au refuge)</span>
+          <input
+            type="text"
+            className={ds.fieldInput}
+            value={title}
+            maxLength={140}
+            required
+            placeholder="Décris l’état observé sur place…"
+            onChange={(e) => setTitle(e.currentTarget.value)}
+          />
+        </label>
+        <div className={ds.btnRow}>
+          <button type="submit" className={ds.btnPrimary} disabled={pending}>
+            {pending ? 'Envoi…' : 'Publier le signalement'}
+          </button>
+          <button type="button" className={ds.btnSecondary} onClick={() => setOpen(false)}>
+            Annuler
+          </button>
+        </div>
+        {feedback && (
+          <div className={ds.alertBanner} data-tone="bad" role="alert">
+            {feedback}
+          </div>
+        )}
+      </form>
+    </DrawerSection>
   );
 }

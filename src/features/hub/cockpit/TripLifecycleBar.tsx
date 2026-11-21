@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react';
 import { newId } from '@/lib/uuid';
 import { transitionHubTripLifecycle, type TripLifecycleState } from './lifecycleActions';
-import styles from './cockpit.module.css';
+import { StatusBadge, type BadgeTone } from './DrawerPrimitives';
+import ds from './cockpitDrawers.module.css';
 
 const STATE_LABELS: Record<TripLifecycleState, string> = {
   draft: 'Brouillon',
@@ -16,16 +17,27 @@ const STATE_LABELS: Record<TripLifecycleState, string> = {
   cancelled: 'Annulé',
 };
 
-const NEXT_ACTIONS: Partial<Record<TripLifecycleState, { to: TripLifecycleState; label: string }[]>> = {
-  draft: [{ to: 'active', label: 'Démarrer le voyage' }],
-  planned: [{ to: 'active', label: 'Démarrer le voyage' }],
-  ready: [{ to: 'active', label: 'Démarrer le voyage' }],
+const STATE_TONES: Record<TripLifecycleState, BadgeTone> = {
+  draft: 'neutral',
+  planned: 'water',
+  ready: 'water',
+  active: 'good',
+  paused: 'warn',
+  completed: 'tint',
+  recount: 'tint',
+  cancelled: 'bad',
+};
+
+const NEXT_ACTIONS: Partial<Record<TripLifecycleState, { to: TripLifecycleState; label: string; primary?: boolean }[]>> = {
+  draft: [{ to: 'active', label: 'Démarrer le voyage', primary: true }],
+  planned: [{ to: 'active', label: 'Démarrer le voyage', primary: true }],
+  ready: [{ to: 'active', label: 'Démarrer le voyage', primary: true }],
   active: [
     { to: 'paused', label: 'Mettre en pause' },
-    { to: 'completed', label: 'Clôturer le voyage' },
+    { to: 'completed', label: 'Clôturer le voyage', primary: true },
   ],
   paused: [
-    { to: 'active', label: 'Reprendre' },
+    { to: 'active', label: 'Reprendre', primary: true },
     { to: 'completed', label: 'Clôturer le voyage' },
   ],
 };
@@ -44,7 +56,6 @@ export function TripLifecycleBar({
   const [state, setState] = useState<TripLifecycleState>(initialState);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-
   const actions = NEXT_ACTIONS[state] ?? [];
 
   function trigger(toState: TripLifecycleState) {
@@ -66,26 +77,30 @@ export function TripLifecycleBar({
   }
 
   return (
-    <div role="region" aria-label="Cycle de vie du voyage" className={styles.stepExecution}>
-      <p className={styles.meta}>
-        État du voyage : <strong>{STATE_LABELS[state]}</strong>
-      </p>
-      {canEdit && actions.length > 0 && (
-        <div className={styles.stepButtons}>
-          {actions.map((action) => (
-            <button
-              key={action.to}
-              type="button"
-              className="lkdv-cv2-chip"
-              disabled={!isOnline || pending}
-              onClick={() => trigger(action.to)}
-            >
-              {action.label}
-            </button>
-          ))}
+    <div role="region" aria-label="Cycle de vie du voyage" className={ds.heroCard}>
+      <div className={ds.heroTop}>
+        <div>
+          <p className={ds.sectionTitle} style={{ marginBottom: 4 }}>Statut du voyage</p>
+          <StatusBadge tone={STATE_TONES[state]}>{STATE_LABELS[state]}</StatusBadge>
         </div>
-      )}
-      {feedback && <p role="status" className={styles.meta}>{feedback}</p>}
+        {canEdit && actions.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {actions.map((action) => (
+              <button
+                key={action.to}
+                type="button"
+                className={action.primary ? ds.btnPrimary : ds.btnSecondary}
+                style={{ minHeight: 38, padding: '0 12px', fontSize: 13 }}
+                disabled={!isOnline || pending}
+                onClick={() => trigger(action.to)}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {feedback && <p role="status" className={ds.heroSub}>{feedback}</p>}
     </div>
   );
 }

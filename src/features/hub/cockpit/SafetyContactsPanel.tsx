@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useTransition, type FormEvent } from 'react';
+import Icon from '@/components/ui/Icon';
 import { publishHubLivePosition, saveHubSafetyContact } from './liveSafetyActions';
 import type { Coordinate } from './model';
-import styles from './cockpit.module.css';
+import { DrawerRow, DrawerSection, StatusBadge } from './DrawerPrimitives';
+import ds from './cockpitDrawers.module.css';
 
 export function SafetyContactsPanel({
   tripId,
@@ -67,49 +69,104 @@ export function SafetyContactsPanel({
   }
 
   return (
-    <div role="region" aria-label="Sécurité et partage de position" className={styles.stepExecution}>
-      <div className={styles.stepButtons}>
-        <button
-          type="button"
-          className="lkdv-cv2-chip"
-          disabled={!isOnline || pending}
-          onClick={() => toggleSharing(!sharing)}
-        >
-          {sharing ? 'Couper le partage de position' : 'Partager ma position au groupe'}
-        </button>
-        {!openContact && (
-          <button type="button" className="lkdv-cv2-chip" onClick={() => setOpenContact(true)}>
-            + Contact d’urgence privé
+    <div role="region" aria-label="Sécurité et partage de position" className={ds.drawerRoot} style={{ paddingBottom: 0 }}>
+      <DrawerSection
+        title="Partage de position au groupe"
+        right={<StatusBadge tone={sharing ? 'good' : 'neutral'}>{sharing ? 'Actif (4h)' : 'Masqué'}</StatusBadge>}
+      >
+        <div className={ds.row}>
+          <span className={ds.rowIcon} data-tone={sharing ? 'good' : 'neutral'} aria-hidden="true">
+            <Icon name="navigation" size={17} />
+          </span>
+          <span className={ds.rowBody}>
+            <span className={ds.rowTitle}>Partager ma position</span>
+            <span className={ds.rowSub}>Visible par les membres confirmés · révocable instantanément</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={sharing}
+            aria-label={sharing ? 'Couper le partage de position' : 'Partager ma position au groupe'}
+            className={ds.switchTrack}
+            disabled={!isOnline || pending}
+            onClick={() => toggleSharing(!sharing)}
+          >
+            <span className={ds.switchThumb} />
           </button>
+        </div>
+      </DrawerSection>
+
+      <DrawerSection
+        title="Contacts d’urgence privés"
+        right={<StatusBadge tone="neutral">Privé 🔒</StatusBadge>}
+        padded={openContact}
+      >
+        {!openContact ? (
+          <DrawerRow
+            icon="shield"
+            iconTone="warn"
+            title="+ Contact d’urgence privé"
+            subtitle="Visible uniquement par toi · persisté en base"
+            chevron
+            onClick={() => setOpenContact(true)}
+          />
+        ) : (
+          <form onSubmit={submitContact} className={ds.drawerRoot} style={{ paddingBottom: 0 }} aria-label="Contact de sécurité privé">
+            <label className={ds.fieldGroup}>
+              <span className={ds.fieldLabel}>Nom du contact</span>
+              <input
+                type="text"
+                className={ds.fieldInput}
+                required
+                maxLength={120}
+                placeholder="Ex. Claire Fontaine"
+                value={name}
+                onChange={(e) => setName(e.currentTarget.value)}
+              />
+            </label>
+            <div className={ds.kpiGrid2}>
+              <label className={ds.fieldGroup}>
+                <span className={ds.fieldLabel}>Canal</span>
+                <select
+                  className={ds.fieldSelect}
+                  value={channel}
+                  onChange={(e) => setChannel(e.currentTarget.value as 'phone' | 'sms' | 'email')}
+                >
+                  <option value="phone">Téléphone</option>
+                  <option value="sms">SMS</option>
+                  <option value="email">E-mail</option>
+                </select>
+              </label>
+              <label className={ds.fieldGroup}>
+                <span className={ds.fieldLabel}>Numéro ou e-mail</span>
+                <input
+                  type="text"
+                  className={ds.fieldInput}
+                  required
+                  maxLength={160}
+                  placeholder="+33 6 …"
+                  value={value}
+                  onChange={(e) => setValue(e.currentTarget.value)}
+                />
+              </label>
+            </div>
+            <div className={ds.btnRow}>
+              <button type="submit" className={ds.btnPrimary} disabled={pending}>
+                Enregistrer le contact
+              </button>
+              <button type="button" className={ds.btnSecondary} onClick={() => setOpenContact(false)}>
+                Annuler
+              </button>
+            </div>
+          </form>
         )}
-      </div>
-      {openContact && (
-        <form onSubmit={submitContact} className={styles.stepExecution} aria-label="Contact de sécurité privé">
-          <label className={styles.stepNote}>
-            Nom du contact
-            <input type="text" required maxLength={120} value={name} onChange={(e) => setName(e.currentTarget.value)} />
-          </label>
-          <div className={styles.stepButtons}>
-            <label className={styles.stepNote}>
-              Canal
-              <select value={channel} onChange={(e) => setChannel(e.currentTarget.value as 'phone' | 'sms' | 'email')}>
-                <option value="phone">Téléphone</option>
-                <option value="sms">SMS</option>
-                <option value="email">E-mail</option>
-              </select>
-            </label>
-            <label className={styles.stepNote}>
-              Numéro ou e-mail
-              <input type="text" required maxLength={160} value={value} onChange={(e) => setValue(e.currentTarget.value)} />
-            </label>
-          </div>
-          <div className={styles.stepButtons}>
-            <button type="submit" className="lkdv-cv2-chip" disabled={pending}>Enregistrer le contact</button>
-            <button type="button" className="lkdv-cv2-chip" onClick={() => setOpenContact(false)}>Annuler</button>
-          </div>
-        </form>
+      </DrawerSection>
+
+      {feedback && (
+        <div className={ds.alertBanner} data-tone="good" role="status">
+          {feedback}
+        </div>
       )}
-      {feedback && <p role="status" className={styles.meta}>{feedback}</p>}
     </div>
   );
 }

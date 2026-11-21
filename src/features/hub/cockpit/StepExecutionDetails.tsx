@@ -2,14 +2,24 @@
 
 import { useRef, useState, useTransition, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Icon from '@/components/ui/Icon';
 import { newId } from '@/lib/uuid';
 import { enqueueOfflineOp, type StepExecutionPayload } from './offlineQueue';
 import { recordStepExecution } from './stepExecutionActions';
 import { stepActionLabels, stepStatusLabels, stepTransitions, type StepExecution, type StepStatus } from './stepExecution';
-import styles from './cockpit.module.css';
+import { DrawerRow, DrawerSection, StatusBadge, type BadgeTone } from './DrawerPrimitives';
+import ds from './cockpitDrawers.module.css';
 
 function observedTime(value: string) {
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+}
+
+function toneForStatus(status: StepStatus | 'planned'): BadgeTone {
+  if (status === 'completed') return 'good';
+  if (status === 'started' || status === 'arrived') return 'tint';
+  if (status === 'postponed') return 'warn';
+  if (status === 'cancelled' || status === 'skipped') return 'bad';
+  return 'neutral';
 }
 
 export function StepExecutionDetails({ tripId, stepId, execution, canSave, isOnline, planUpdatedAt, pendingOffline, onSaved, onQueued }: {
@@ -36,6 +46,9 @@ export function StepExecutionDetails({ tripId, stepId, execution, canSave, isOnl
   const message = feedback?.revision === revision ? feedback : null;
   const onlyEventTime = status === 'skipped' || status === 'postponed' || status === 'cancelled';
 
+  const primaryAction = actions[0] ?? null;
+  const secondaryActions = actions.slice(1);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const button = (event.nativeEvent as SubmitEvent).submitter;
@@ -60,9 +73,7 @@ export function StepExecutionDetails({ tripId, stepId, execution, canSave, isOnl
           setFeedback({ revision, message: 'Enregistré hors ligne. Synchronisation automatique au retour du réseau.' });
           return;
         }
-        const result = await recordStepExecution({
-          ...payload, operationId,
-        });
+        const result = await recordStepExecution({ ...payload, operationId });
         if (result.ok) {
           onSaved(result.execution);
           setNote('');
@@ -90,44 +101,116 @@ export function StepExecutionDetails({ tripId, stepId, execution, canSave, isOnl
     });
   }
 
-  return <div className={styles.stepExecution}>
-    <p role="status"><strong>{execution ? stepStatusLabels[execution.status] : 'Prévue'}</strong>
-      {pendingOffline && <span className={styles.meta}> · En attente de synchronisation</span>}
-      {execution && onlyEventTime && <time dateTime={execution.occurred_at}> · {observedTime(execution.occurred_at)}</time>}
-    </p>
-    {execution && (
-      <dl className={styles.stepTimes}>
-        {([
-          ['Départ réel', execution.actual_started_at],
-          ['Arrivée réelle', execution.actual_arrived_at],
-          ['Fin réelle', execution.actual_completed_at],
-        ] as const).map(([label, value]) => value && (
-          <div key={label}><dt>{label}</dt><dd><time dateTime={value}>{observedTime(value)}</time></dd></div>
-        ))}
-      </dl>
-    )}
-    {execution?.note && <p className={styles.bodyCopy}>{execution.note}</p>}
-    {canSave && planUpdatedAt && actions.length > 0 && (
-      <form onSubmit={submit} className={styles.stepExecution} aria-label="Suivi de l’étape">
-        {!isOnline && <p role="status" className={styles.meta}>Mode hors ligne : les actions sont gardées sur cet appareil.</p>}
-        <label className={styles.stepNote}>Note pour les éditeurs (facultative)
-          <textarea value={note} maxLength={500} rows={2} disabled={pending}
-            onChange={(event) => setNote(event.currentTarget.value)} />
-        </label>
-        <div className={styles.stepButtons}>
-          {actions.map((action) => (
-            <button key={action} type="submit" value={action} className="lkdv-cv2-chip"
-              disabled={pending || message?.refresh}>
-              {stepActionLabels[action]}
-            </button>
-          ))}
+  return (
+    <div className={ds.drawerRoot} style={{ paddingBottom: 0 }}>
+      <div className={ds.heroTop} role="status">
+        <StatusBadge tone={toneForStatus(status)}>
+          {execution ? stepStatusLabels[execution.status] : 'Prévue'}
+        </StatusBadge>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {pendingOffline && <StatusBadge tone="warn">En attente de synchronisation</StatusBadge>}
+          {execution && onlyEventTime && (
+            <time className={ds.rowSub} dateTime={execution.occurred_at}>{observedTime(execution.occurred_at)}</time>
+          )}
         </div>
-        {pending && <p role="status">Enregistrement…</p>}
-      </form>
-    )}
-    {message && <p role="alert">{message.message}</p>}
-    {message?.refresh && <button type="button" className="lkdv-cv2-chip" onClick={() => router.refresh()}>
-      Actualiser le suivi
-    </button>}
-  </div>;
+      </div>
+
+      {execution && (execution.actual_started_at || execution.actual_arrived_at || execution.actual_completed_at) && (
+        <DrawerSection title="Horaires réels enregistrés">
+          {execution.actual_started_at && (
+            <DrawerRow icon="play" iconTone="good" title="Départ réel"
+              right={<time dateTime={execution.actual_started_at}>{observedTime(execution.actual_started_at)}</time>} />
+          )}
+          {execution.actual_arrived_at && (
+            <DrawerRow icon="map-pin" iconTone="water" title="Arrivée réelle"
+              right={<time dateTime={execution.actual_arrived_at}>{observedTime(execution.actual_arrived_at)}</time>} />
+          )}
+          {execution.actual_completed_at && (
+            <DrawerRow icon="check" iconTone="good" title="Fin réelle"
+              right={<time dateTime={execution.actual_completed_at}>{observedTime(execution.actual_completed_at)}</time>} />
+          )}
+        </DrawerSection>
+      )}
+
+      {execution?.note && (
+        <div className={ds.editorNoteBox}>
+          <span className={ds.kpiLabel}>
+            <Icon name="lock" size={13} /> Note interne · visible uniquement par les éditeurs
+          </span>
+          <p style={{ margin: 0 }}>{execution.note}</p>
+        </div>
+      )}
+
+      {canSave && planUpdatedAt && actions.length > 0 && (
+        <DrawerSection title="Piloter l’étape" padded>
+          <form onSubmit={submit} className={ds.drawerRoot} style={{ paddingBottom: 0 }} aria-label="Suivi de l’étape">
+            {!isOnline && (
+              <div className={ds.alertBanner} data-tone="warn" role="status">
+                Mode hors ligne : les actions sont gardées sur cet appareil.
+              </div>
+            )}
+            <label className={ds.fieldGroup}>
+              <span className={ds.fieldLabel}>Note pour les éditeurs (facultative)</span>
+              <textarea
+                className={ds.fieldTextarea}
+                value={note}
+                maxLength={500}
+                rows={2}
+                disabled={pending}
+                placeholder="Ex. Départ groupé à l’heure, point d’eau vérifié…"
+                onChange={(event) => setNote(event.currentTarget.value)}
+              />
+            </label>
+
+            {primaryAction && (
+              <button
+                type="submit"
+                value={primaryAction}
+                className={ds.btnPrimary}
+                disabled={pending || message?.refresh}
+              >
+                {stepActionLabels[primaryAction]}
+              </button>
+            )}
+
+            {secondaryActions.length > 0 && (
+              <div className={ds.btnRow}>
+                {secondaryActions.map((action) => (
+                  <button
+                    key={action}
+                    type="submit"
+                    value={action}
+                    className={action === 'cancelled' ? ds.btnSoftDanger : ds.btnSecondary}
+                    disabled={pending || message?.refresh}
+                  >
+                    {stepActionLabels[action]}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {pending && <p role="status" className={ds.heroSub}>Enregistrement…</p>}
+          </form>
+        </DrawerSection>
+      )}
+
+      {message && (
+        <div className={ds.alertBanner} data-tone={message.refresh ? 'bad' : 'good'} role="alert">
+          <div style={{ flex: 1 }}>
+            <p style={{ margin: 0 }}>{message.message}</p>
+            {message.refresh && (
+              <button
+                type="button"
+                className={ds.btnSecondary}
+                style={{ marginTop: 8, width: '100%' }}
+                onClick={() => router.refresh()}
+              >
+                Actualiser le suivi
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

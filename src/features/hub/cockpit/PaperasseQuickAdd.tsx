@@ -2,7 +2,8 @@
 
 import { useState, useTransition, type FormEvent } from 'react';
 import { createCockpitDocument } from './paperasseActions';
-import styles from './cockpit.module.css';
+import { DrawerSection } from './DrawerPrimitives';
+import ds from './cockpitDrawers.module.css';
 
 export function PaperasseQuickAdd({
   tripId,
@@ -23,11 +24,15 @@ export function PaperasseQuickAdd({
 
   if (!open) {
     return (
-      <div>
-        <button type="button" className="lkdv-cv2-chip" onClick={() => setOpen(true)}>
+      <div className={ds.drawerRoot} style={{ paddingBottom: 0 }}>
+        <button type="button" className={ds.btnPrimary} onClick={() => setOpen(true)}>
           + Ajouter une confirmation / billet
         </button>
-        {feedback && <p role="status" className={styles.meta}>{feedback}</p>}
+        {feedback && (
+          <div className={ds.alertBanner} data-tone="good" role="status">
+            {feedback}
+          </div>
+        )}
       </div>
     );
   }
@@ -58,38 +63,70 @@ export function PaperasseQuickAdd({
   }
 
   return (
-    <form onSubmit={submit} className={styles.stepExecution} aria-label="Nouvelle confirmation">
-      <label className={styles.stepNote}>
-        Intitulé (ex. Train Paris–Chamonix, Refuge…)
-        <input type="text" required maxLength={120} value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
-      </label>
-      <div className={styles.stepButtons}>
-        <label className={styles.stepNote}>
-          Type
-          <select value={category} onChange={(e) => setCategory(e.currentTarget.value)}>
-            <option value="booking">Réservation</option>
-            <option value="ticket">Billet</option>
-            <option value="insurance">Assurance</option>
-            <option value="passport">Identité / Passeport</option>
-            <option value="other">Autre</option>
-          </select>
+    <DrawerSection title="Nouvelle confirmation ou billet" padded>
+      <form onSubmit={submit} className={ds.drawerRoot} style={{ paddingBottom: 0 }} aria-label="Nouvelle confirmation">
+        <label className={ds.fieldGroup}>
+          <span className={ds.fieldLabel}>Intitulé (ex. Train Paris–Chamonix, Refuge…)</span>
+          <input
+            type="text"
+            className={ds.fieldInput}
+            required
+            maxLength={120}
+            value={title}
+            placeholder="Ex. Refuge du Lac Blanc"
+            onChange={(e) => setTitle(e.currentTarget.value)}
+          />
         </label>
-        <label className={styles.stepNote}>
-          Échéance (facultative)
-          <input type="date" value={expiration} onChange={(e) => setExpiration(e.currentTarget.value)} />
+        <div className={ds.kpiGrid2}>
+          <label className={ds.fieldGroup}>
+            <span className={ds.fieldLabel}>Type</span>
+            <select
+              className={ds.fieldSelect}
+              value={category}
+              onChange={(e) => setCategory(e.currentTarget.value)}
+            >
+              <option value="booking">Réservation</option>
+              <option value="ticket">Billet</option>
+              <option value="insurance">Assurance</option>
+              <option value="passport">Identité / Passeport</option>
+              <option value="other">Autre</option>
+            </select>
+          </label>
+          <label className={ds.fieldGroup}>
+            <span className={ds.fieldLabel}>Échéance (facultative)</span>
+            <input
+              type="date"
+              className={ds.fieldInput}
+              value={expiration}
+              onChange={(e) => setExpiration(e.currentTarget.value)}
+            />
+          </label>
+        </div>
+        <label className={ds.fieldGroup}>
+          <span className={ds.fieldLabel}>Référence / n° dossier (facultatif)</span>
+          <input
+            type="text"
+            className={ds.fieldInput}
+            maxLength={200}
+            value={reference}
+            placeholder="Ex. #LB-8842"
+            onChange={(e) => setReference(e.currentTarget.value)}
+          />
         </label>
-      </div>
-      <label className={styles.stepNote}>
-        Référence / n° dossier (facultatif)
-        <input type="text" maxLength={200} value={reference} onChange={(e) => setReference(e.currentTarget.value)} />
-      </label>
-      <div className={styles.stepButtons}>
-        <button type="submit" className="lkdv-cv2-chip" disabled={!isOnline || pending}>
-          {pending ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
-        <button type="button" className="lkdv-cv2-chip" onClick={() => setOpen(false)}>Annuler</button>
-      </div>
-      {feedback && <p role="alert" className={styles.meta}>{feedback}</p>}
-    </form>
+        <div className={ds.btnRow}>
+          <button type="submit" className={ds.btnPrimary} disabled={!isOnline || pending}>
+            {pending ? 'Enregistrement…' : 'Enregistrer'}
+          </button>
+          <button type="button" className={ds.btnSecondary} onClick={() => setOpen(false)}>
+            Annuler
+          </button>
+        </div>
+        {feedback && (
+          <div className={ds.alertBanner} data-tone="bad" role="alert">
+            {feedback}
+          </div>
+        )}
+      </form>
+    </DrawerSection>
   );
 }
