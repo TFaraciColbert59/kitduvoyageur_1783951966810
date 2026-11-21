@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Backpack, ChevronRight, Euro } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/Toast';
+import { useToast } from '@/contexts/ToastContext';
 import { CommunitySheetShell } from '@/features/community/v2/create/CommunitySheetShell';
 import {
   MOMENT_EXPENSE_CATEGORIES,
@@ -44,6 +44,7 @@ export function CarnetLogCreateSheet({
   onClose,
 }: CarnetLogCreateSheetProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [tabIndex, setTabIndex] = useState(() => (initialTab === 'kit' ? 1 : 0));
   const activeTab: CarnetLogTabId = LOG_TABS[tabIndex]?.id ?? 'spend';
 
@@ -81,7 +82,7 @@ export function CarnetLogCreateSheet({
         setError(res.error);
         return;
       }
-      toast.success('Dépense ajoutée au carnet');
+      toast('Dépense ajoutée au carnet', 'success');
       onClose();
       return;
     }
@@ -108,7 +109,7 @@ export function CarnetLogCreateSheet({
       setError(res.error);
       return;
     }
-    toast.success('Objet du kit ajouté au carnet');
+    toast('Objet du kit ajouté au carnet', 'success');
     onClose();
   };
 
