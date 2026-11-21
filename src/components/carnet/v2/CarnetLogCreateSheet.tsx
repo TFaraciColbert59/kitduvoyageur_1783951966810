@@ -227,14 +227,10 @@ export function CarnetLogCreateSheet({
           setTabIndex(idx);
           setError(null);
         },
-        label: 'Type d’ajout',
+        ariaLabel: 'Type d’ajout',
       }}
-      pages={panes}
-      active={tabIndex}
-      onChange={(idx) => {
-        setTabIndex(idx);
-        setError(null);
-      }}
+      panes={panes}
+      resetKey={activeTab}
       footer={footer}
     />
   );
