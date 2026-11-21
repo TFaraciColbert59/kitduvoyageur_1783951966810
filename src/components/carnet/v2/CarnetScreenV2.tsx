@@ -1288,10 +1288,17 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         <StoriesViewer
           users={storyUsers}
           startUser={storyStartIndex}
+          myUserId={currentUserId ?? undefined}
+          followedAuthorIds={
+            follow.following && detail.author?.id
+              ? new Set([detail.author.id])
+              : undefined
+          }
           onClose={() => setStoriesOpen(false)}
           onReply={handleStoryReply}
           onToggleLike={(slide, wasLiked) => void handleStoryLike(slide, wasLiked)}
           likedStoryIds={likedStories}
+          onReport={(_u, slide) => setReportTarget({ kind: 'moment', id: slide.storyId })}
           onAuthor={(storyUser) => {
             setStoriesOpen(false);
             if (detail.participants.some((p) => p.userId === storyUser.id)) {

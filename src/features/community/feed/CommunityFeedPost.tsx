@@ -839,7 +839,7 @@ export function CommunityFeedPost({
       {panel === 'share' ? (
         <PostGlassPanel side="share" headerRef={headerRef} onClose={closePanel} onSwitch={setPanel}>
           <div className="lkdv-feed-panel-surface">
-            {source ? (
+            {source && !source.useCommunityShare ? (
               <div className="lkdv-post-panel" role="dialog" aria-modal="true" aria-label="Partager">
                 <div className="lkdv-panel-grab" aria-hidden="true"><span /></div>
                 <div className="lkdv-post-panel-body">{source.renderShare({ onClose: closePanel })}</div>
@@ -850,6 +850,7 @@ export function CommunityFeedPost({
                 user={user}
                 onClose={closePanel}
                 onRequireAuth={onRequireAuth}
+                permalinkOverride={source?.shareUrl}
               />
             )}
           </div>

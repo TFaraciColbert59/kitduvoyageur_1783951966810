@@ -14,6 +14,7 @@ export interface PostSharePanelProps {
   user: any;
   onClose: () => void;
   onRequireAuth?: (reason: CommunityAuthReason) => void;
+  permalinkOverride?: string;
 }
 
 function Avatar({ url, name }: { url?: string | null; name?: string | null }) {
@@ -28,7 +29,7 @@ function Avatar({ url, name }: { url?: string | null; name?: string | null }) {
   );
 }
 
-export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostSharePanelProps) {
+export function PostSharePanel({ post, user, onClose, onRequireAuth, permalinkOverride }: PostSharePanelProps) {
   const { toast } = useToast();
   const { conversations, loading, sending, send } = usePostShareTargets(user?.id);
   const [copied, setCopied] = useState(false);
@@ -40,7 +41,9 @@ export function PostSharePanel({ post, user, onClose, onRequireAuth }: PostShare
     return `${conversation.title || ''} ${conversation.name || ''}`.toLowerCase().includes(text);
   });
 
-  const permalink = `${typeof window !== 'undefined' ? window.location.origin : ''}/communaute?post=${post.id}`;
+  const permalink =
+    permalinkOverride ||
+    `${typeof window !== 'undefined' ? window.location.origin : ''}/communaute?post=${post.id}`;
 
   const copy = async () => {
     try {

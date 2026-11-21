@@ -33,6 +33,10 @@ export interface PostSource {
   };
   renderComments: (ctx: { onClose: () => void }) => React.ReactNode;
   renderShare: (ctx: { onClose: () => void }) => React.ReactNode;
+  /** Utilise le panneau de partage jumeau du fil communautaire (PostSharePanel). */
+  useCommunityShare?: boolean;
+  /** URL canonique utilisée par PostSharePanel quand useCommunityShare est actif. */
+  shareUrl?: string;
   /** Texte sous la carte (jour · lieu · légende d'un moment). */
   footer?: React.ReactNode;
   /** Éléments posés sur la carte hors panneau (puces de sortie, RSVP…). */

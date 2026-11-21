@@ -318,6 +318,8 @@ export function CarnetPostSheet({
         onRequireAuth={onRequireAuth}
       />
     ),
+    useCommunityShare: true,
+    shareUrl,
     renderShare: ({ onClose: close }) => (
       <CarnetSharePane
         url={shareUrl}

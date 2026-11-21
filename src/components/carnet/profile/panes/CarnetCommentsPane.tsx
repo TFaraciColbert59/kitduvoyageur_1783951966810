@@ -53,6 +53,9 @@ interface CarnetCommentRowProps {
   isNew: boolean;
   /** Le lecteur est l'auteur : la ligne porte « supprimer ». */
   mine: boolean;
+  liked: boolean;
+  onToggleLike: (commentId: string) => void;
+  onReply: (authorName: string) => void;
   onRemove: (commentId: string) => Promise<boolean>;
 }
 
@@ -65,6 +68,9 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
   comment,
   isNew,
   mine,
+  liked,
+  onToggleLike,
+  onReply,
   onRemove,
 }: CarnetCommentRowProps) {
   const social = useMemo<SocialComment>(
@@ -75,14 +81,25 @@ const CarnetCommentRow = React.memo(function CarnetCommentRow({
       authorAvatarUrl: comment.authorAvatar,
       content: comment.content,
       timeLabel: timeAgo(comment.createdAt),
-      likes: 0,
-      liked: false,
+      likes: liked ? 1 : 0,
+      liked,
       isOwner: mine,
     }),
-    [comment, mine],
+    [comment, liked, mine],
   );
   const remove = useCallback(() => void onRemove(comment.id), [comment.id, onRemove]);
-  return <CommentItem comment={social} canInteract isNew={isNew} onDelete={remove} />;
+  const like = useCallback(() => onToggleLike(comment.id), [comment.id, onToggleLike]);
+  const reply = useCallback(() => onReply(comment.authorName), [comment.authorName, onReply]);
+  return (
+    <CommentItem
+      comment={social}
+      canInteract
+      isNew={isNew}
+      onLike={like}
+      onReply={reply}
+      onDelete={remove}
+    />
+  );
 });
 
 /**
@@ -108,6 +125,7 @@ export function CarnetCommentsPane({
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [entering, setEntering] = useState<string | null>(null);
+  const [likedIds, setLikedIds] = useState<Record<string, boolean>>({});
   const listRef = useRef<HTMLDivElement | null>(null);
   const known = useRef<Set<string> | null>(null);
 
@@ -136,6 +154,29 @@ export function CarnetCommentsPane({
     const timer = window.setTimeout(() => setEntering(null), 220);
     return () => window.clearTimeout(timer);
   }, [comments]);
+
+  const handleToggleLike = useCallback(
+    (commentId: string) => {
+      if (!canWrite) {
+        onRequireAuth();
+        return;
+      }
+      setLikedIds((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+    },
+    [canWrite, onRequireAuth],
+  );
+
+  const handleReply = useCallback(
+    (authorName: string) => {
+      if (!canWrite) {
+        onRequireAuth();
+        return;
+      }
+      const prefix = `@${authorName.trim()} `;
+      setDraft((prev) => (prev.startsWith(prefix) ? prev : `${prefix}${prev}`));
+    },
+    [canWrite, onRequireAuth],
+  );
 
   const submit = useCallback(async () => {
     if (!canWrite) {
@@ -179,6 +220,9 @@ export function CarnetCommentsPane({
                 comment={comment}
                 isNew={entering === comment.id}
                 mine={Boolean(currentUserId) && comment.authorId === currentUserId}
+                liked={Boolean(likedIds[comment.id])}
+                onToggleLike={handleToggleLike}
+                onReply={handleReply}
                 onRemove={onRemove}
               />
             ))}
