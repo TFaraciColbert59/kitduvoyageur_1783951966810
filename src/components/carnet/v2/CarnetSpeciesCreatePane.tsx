@@ -8,6 +8,7 @@ import {
   Check,
   Feather,
   Flower2,
+  LocateFixed,
   MapPin,
   Plus,
   Search,
@@ -16,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
+import type { GeocodeMatch } from '@/features/adventure-prep/geocodeService';
 import { CARNET_SPRING } from './CarnetDrawerMotion';
 
 export interface DiscoveredSpeciesItem {
@@ -90,6 +92,72 @@ export function CarnetSpeciesCreatePane({
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [countLabel, setCountLabel] = useState<string>('1 individu');
   const [loading, setLoading] = useState(false);
+
+  // Recherche de lieu (géocodage réel via /api/geocode)
+  const [placeMatches, setPlaceMatches] = useState<GeocodeMatch[]>([]);
+  const [placeLoading, setPlaceLoading] = useState(false);
+  const [placeDropdownOpen, setPlaceDropdownOpen] = useState(false);
+  const [locatingPlace, setLocatingPlace] = useState(false);
+  const skipNextPlaceFetchRef = useRef(false);
+
+  useEffect(() => {
+    if (!placeDropdownOpen) return;
+    if (skipNextPlaceFetchRef.current) {
+      skipNextPlaceFetchRef.current = false;
+      return;
+    }
+    const q = place.trim();
+    if (q.length < 2) {
+      setPlaceMatches([]);
+      return;
+    }
+    let cancelled = false;
+    setPlaceLoading(true);
+    const timer = window.setTimeout(() => {
+      fetch(`/api/geocode?q=${encodeURIComponent(q)}&limit=6`)
+        .then((res) => res.json())
+        .then((data: { matches?: GeocodeMatch[] }) => {
+          if (!cancelled && Array.isArray(data.matches)) {
+            setPlaceMatches(data.matches);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setPlaceLoading(false);
+        });
+    }, 240);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [place, placeDropdownOpen]);
+
+  const handleLocateCurrentPlace = () => {
+    if (locatingPlace || typeof navigator === 'undefined' || !navigator.geolocation) return;
+    setLocatingPlace(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `/api/geocode?lat=${encodeURIComponent(String(pos.coords.latitude))}&lon=${encodeURIComponent(String(pos.coords.longitude))}`,
+          );
+          const data = (await res.json()) as { matches?: GeocodeMatch[] };
+          const best = data.matches?.[0];
+          if (best) {
+            skipNextPlaceFetchRef.current = true;
+            onPlaceChange(best.context ? `${best.name}, ${best.context}` : best.name);
+            setPlaceDropdownOpen(false);
+          }
+        } catch {
+          // silencieux
+        } finally {
+          setLocatingPlace(false);
+        }
+      },
+      () => setLocatingPlace(false),
+      { enableHighAccuracy: false, timeout: 6000 },
+    );
+  };
 
   const filePreviewUrl = useMemo(
     () => (speciesFile ? URL.createObjectURL(speciesFile) : null),
@@ -534,20 +602,104 @@ export function CarnetSpeciesCreatePane({
         </div>
       </div>
 
-      {/* 5. Lieu & Note de terrain */}
-      <div className="lkdv-cv2-field">
+      {/* 5. Lieu (recherche réelle /api/geocode) & Note de terrain */}
+      <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
         <span className="lkdv-cv2-field-label">
           <MapPin size={12} style={{ display: 'inline', marginRight: 4 }} />
-          Lieu d’observation (Jour {day})
+          Lieu d’observation (Jour {day}) {placeLoading ? '· recherche…' : ''}
         </span>
-        <input
-          type="text"
-          className="lkdv-cv2-input"
-          value={place}
-          maxLength={80}
-          placeholder="Col, crête, alpage…"
-          onChange={(e) => onPlaceChange(e.target.value)}
-        />
+        <div className="lkdv-carnet-pokedex-search">
+          <Search size={14} aria-hidden="true" />
+          <input
+            type="search"
+            value={place}
+            maxLength={100}
+            autoComplete="off"
+            placeholder="Rechercher un col, sommet, refuge, ville…"
+            onFocus={() => setPlaceDropdownOpen(true)}
+            onChange={(e) => {
+              onPlaceChange(e.target.value);
+              setPlaceDropdownOpen(true);
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleLocateCurrentPlace}
+            disabled={locatingPlace}
+            title="Utiliser ma position actuelle"
+            aria-label="Utiliser ma position actuelle"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 26,
+              height: 26,
+              borderRadius: 999,
+              border: 0,
+              background: 'rgba(27, 67, 50, 0.08)',
+              color: '#1b4332',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <LocateFixed size={13} className={locatingPlace ? 'animate-spin' : undefined} />
+          </button>
+        </div>
+        {placeDropdownOpen && placeMatches.length > 0 ? (
+          <div
+            role="listbox"
+            aria-label="Suggestions de lieux"
+            style={{
+              marginTop: 6,
+              borderRadius: 16,
+              border: '1px solid rgba(27, 67, 50, 0.14)',
+              background: 'rgba(255, 255, 255, 0.96)',
+              boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
+              overflow: 'hidden',
+              maxHeight: 196,
+              overflowY: 'auto',
+            }}
+          >
+            {placeMatches.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => {
+                  skipNextPlaceFetchRef.current = true;
+                  onPlaceChange(m.context ? `${m.name}, ${m.context}` : m.name);
+                  setPlaceMatches([]);
+                  setPlaceDropdownOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '9px 12px',
+                  border: 0,
+                  borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
+                  background: 'transparent',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <MapPin size={13} style={{ color: '#1b4332', flexShrink: 0 }} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.name}
+                  </div>
+                  {m.context || m.country ? (
+                    <div style={{ fontSize: 11, color: 'var(--label2, #56665d)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {[m.context, m.country].filter(Boolean).join(' · ')}
+                    </div>
+                  ) : null}
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="lkdv-cv2-field">
