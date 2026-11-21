@@ -68,6 +68,7 @@ interface CommunityOffer {
   ownerId: string | null;
   ownerName: string;
   ownerAvatar: string | null;
+  ownerTrustScore: number | null;
   image: string | null;
 }
 
@@ -196,6 +197,8 @@ export function KitProductSheetV2({
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [loanSending, setLoanSending] = useState(false);
+  const [variantImages, setVariantImages] = useState<string[]>([]);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
   const swipeStartY = useRef<number | null>(null);
 
   useEffect(() => {
@@ -210,6 +213,8 @@ export function KitProductSheetV2({
     setSelectedOccasionId(null);
     setSelectedLocationId(null);
     setSelectedLoanId(null);
+    setVariantImages([]);
+    setActiveImageIdx(0);
   }, [product.id, product.weightG, setPreviewCollapsed]);
 
   useEffect(() => {
@@ -307,6 +312,8 @@ export function KitProductSheetV2({
                         : null,
                 ownerName: String(seller.full_name ?? seller.name ?? 'Voyageur LKDV'),
                 ownerAvatar: typeof seller.avatar_url === 'string' ? seller.avatar_url : null,
+                ownerTrustScore:
+                  typeof seller.trust_score === 'number' ? Math.round(seller.trust_score) : null,
                 image:
                   typeof l.photo_url === 'string'
                     ? l.photo_url
@@ -326,6 +333,28 @@ export function KitProductSheetV2({
         setSelectedOccasionId(cheapestOffer(occ)?.id ?? null);
         setSelectedLocationId(cheapestOffer(locs)?.id ?? null);
         if (loans[0]) setSelectedLoanId(loans[0].id);
+
+        // Charger les variantes/vues réelles depuis le bucket product-images si une URL Supabase est trouvée
+        const candidateUrl =
+          (product.image && /^https?:\/\//.test(product.image) ? product.image : '') ||
+          (sp && typeof sp.image === 'string' && /^https?:\/\//.test(sp.image) ? sp.image : '') ||
+          locs[0]?.image ||
+          occ[0]?.image ||
+          loans[0]?.image ||
+          '';
+        const match = candidateUrl.match(/^(https?:\/\/[^/]+\/storage\/v1\/object\/public\/product-images)\/([^/]+)\//);
+        if (match) {
+          const basePrefix = match[1];
+          const folder = match[2];
+          const { data: files } = await sb.storage.from('product-images').list(folder, { limit: 6 });
+          if (alive && Array.isArray(files) && files.length > 0) {
+            const urls = files
+              .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((f) => `${basePrefix}/${folder}/${f.name}`);
+            setVariantImages(urls);
+          }
+        }
       } finally {
         if (alive) setOffersLoading(false);
       }
@@ -361,6 +390,21 @@ export function KitProductSheetV2({
     () => loanOffers.find((o) => o.id === selectedLoanId) ?? loanOffers[0] ?? null,
     [loanOffers, selectedLoanId]
   );
+
+  const heroGallery = useMemo(() => {
+    const raw = [
+      product.image && /^https?:\/\//.test(product.image) ? product.image : null,
+      shopOffer?.image && /^https?:\/\//.test(shopOffer.image) ? shopOffer.image : null,
+      ...variantImages,
+      selectedLocation?.image && /^https?:\/\//.test(selectedLocation.image) ? selectedLocation.image : null,
+      selectedOccasion?.image && /^https?:\/\//.test(selectedOccasion.image) ? selectedOccasion.image : null,
+      selectedLoan?.image && /^https?:\/\//.test(selectedLoan.image) ? selectedLoan.image : null,
+    ].filter((u): u is string => Boolean(u));
+    const unique = Array.from(new Set(raw));
+    return unique.length > 0 ? unique : [imgSrc];
+  }, [imgSrc, product.image, selectedLoan?.image, selectedLocation?.image, selectedOccasion?.image, shopOffer?.image, variantImages]);
+
+  const activeHeroImg = heroGallery[activeImageIdx] ?? heroGallery[0] ?? imgSrc;
 
   const sendMarketplaceRequest = async (
     offer: CommunityOffer,
@@ -845,8 +889,65 @@ export function KitProductSheetV2({
                 </div>
               ) : (
                 <>
+                  {heroGallery.length > 1 ? (
+                    <div
+                      aria-label="Vues du produit"
+                      style={{
+                        position: 'absolute',
+                        left: 10,
+                        top: 10,
+                        bottom: 10,
+                        width: 42,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        overflowY: 'auto',
+                        zIndex: 3,
+                        scrollbarWidth: 'none',
+                      }}
+                    >
+                      {heroGallery.map((url, idx) => {
+                        const active = idx === activeImageIdx;
+                        return (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setActiveImageIdx(idx)}
+                            aria-label={`Vue ${idx + 1}`}
+                            aria-pressed={active}
+                            style={{
+                              width: 38,
+                              height: 38,
+                              padding: 0,
+                              borderRadius: 9,
+                              overflow: 'hidden',
+                              border: active
+                                ? '1.5px solid #17402c'
+                                : '1px solid rgba(23, 64, 44, 0.16)',
+                              background: '#ffffff',
+                              flex: 'none',
+                              cursor: 'pointer',
+                              opacity: active ? 1 : 0.72,
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- miniature variante */}
+                            <img
+                              src={url}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   {/* eslint-disable-next-line @next/next/no-img-element -- photo produit */}
-                  <img src={imgSrc} alt={product.name} className="lkdv-cv2c-ps-hero-img" />
+                  <img
+                    src={activeHeroImg}
+                    alt={product.name}
+                    className="lkdv-cv2c-ps-hero-img"
+                    style={heroGallery.length > 1 ? { paddingLeft: 48 } : undefined}
+                  />
                   <span className="lkdv-cv2c-ps-badge is-right">{singleHeroBadge}</span>
                   <button
                     type="button"
@@ -1112,31 +1213,31 @@ export function KitProductSheetV2({
                   ? 'Occasion communauté'
                   : 'Achat neuf';
 
-          const specs: Array<{ label: string; value: string }> =
+          const specs: Array<{ label: string; value: string; uppercase?: boolean; trustScore?: number | null }> =
             selectedMode === 'pret'
               ? [
                   { label: 'Coût', value: 'Gratuit (0 €)' },
                   { label: 'Casse / perte', value: `${loanBreakageEuro} €` },
-                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur' },
-                  { label: 'État', value: selectedLoan?.condition ?? 'Bon état' },
+                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur', trustScore: selectedLoan?.ownerTrustScore ?? null },
+                  { label: 'État', value: selectedLoan?.condition ?? 'Bon état', uppercase: true },
                 ]
               : selectedMode === 'location'
                 ? [
                     { label: 'Tarif', value: selectedLocation?.priceEur != null ? `${selectedLocation.priceEur} € / j` : 'Sur demande' },
-                    { label: 'État', value: selectedLocation?.condition ?? 'Bon état' },
-                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté' },
+                    { label: 'État', value: selectedLocation?.condition ?? 'Bon état', uppercase: true },
+                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté', trustScore: selectedLocation?.ownerTrustScore ?? null },
                     { label: 'Dispos', value: `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}` },
                   ]
                 : selectedMode === 'occasion'
                   ? [
                       { label: 'Prix', value: selectedOccasion?.priceEur != null ? `${selectedOccasion.priceEur} €` : 'À négocier' },
-                      { label: 'État', value: selectedOccasion?.condition ?? 'Bon état' },
-                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté' },
+                      { label: 'État', value: selectedOccasion?.condition ?? 'Bon état', uppercase: true },
+                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté', trustScore: selectedOccasion?.ownerTrustScore ?? null },
                       { label: 'Dispos', value: `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}` },
                     ]
                   : [
                       { label: 'Prix', value: shopOffer?.priceEur ? `${shopOffer.priceEur} €` : 'Indisponible' },
-                      { label: 'État', value: 'Neuf' },
+                      { label: 'État', value: 'Neuf', uppercase: true },
                       { label: 'Stock', value: shopOffer?.inStock ? 'En stock' : 'Hors stock' },
                       { label: 'Poids', value: fmtItem(shopOffer?.weightG || weightG) },
                     ];
@@ -1260,17 +1361,40 @@ export function KitProductSheetV2({
                     }}
                   >
                     <small style={{ fontSize: '0.66rem', color: '#64748b' }}>{spec.label}</small>
-                    <b
-                      style={{
-                        fontSize: '0.76rem',
-                        color: '#172b24',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {spec.value}
-                    </b>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                      <b
+                        style={{
+                          fontSize: '0.76rem',
+                          color: '#172b24',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          textTransform: spec.uppercase ? 'uppercase' : undefined,
+                        }}
+                      >
+                        {spec.value}
+                      </b>
+                      {spec.trustScore != null ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            padding: '1px 6px',
+                            borderRadius: 999,
+                            background: 'rgba(22, 163, 74, 0.12)',
+                            color: '#15803d',
+                            fontSize: '0.64rem',
+                            fontWeight: 700,
+                            flex: 'none',
+                          }}
+                          title="Score de confiance"
+                        >
+                          <ShieldCheck size={10} aria-hidden="true" />
+                          {spec.trustScore}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>
