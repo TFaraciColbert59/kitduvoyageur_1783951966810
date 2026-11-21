@@ -763,33 +763,35 @@ export function CommunitySheetShell({
             footer && mini ? (
               <div className="lkdv-cv2-bottom-dock">
                 <div className="lkdv-cv2-footer">{footer}</div>
-                <div
-                  className={cx(
-                    'lkdv-cv2-mini-slot',
-                    'has-footer',
-                    Boolean(mini.sort) && 'has-sort',
-                  )}
-                  data-testid="cv2-mini-capsule"
-                >
-                  <CapsuleTabs
-                    items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
-                    activeIndex={mini.active}
-                    onIndexChange={mini.onChange}
-                    ariaLabel={mini.label}
-                    size="sm"
-                    className="lkdv-cv2-mini"
-                    idFor={(id) => `cv2-mini-${id}`}
-                    panelIdFor={
-                      filterPages && activeVoletItem
-                        ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
-                        : undefined
-                    }
-                  />
-                </div>
+                {mini.items.length > 1 || Boolean(mini.sort) ? (
+                  <div
+                    className={cx(
+                      'lkdv-cv2-mini-slot',
+                      'has-footer',
+                      Boolean(mini.sort) && 'has-sort',
+                    )}
+                    data-testid="cv2-mini-capsule"
+                  >
+                    <CapsuleTabs
+                      items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
+                      activeIndex={mini.active}
+                      onIndexChange={mini.onChange}
+                      ariaLabel={mini.label}
+                      size="sm"
+                      className="lkdv-cv2-mini"
+                      idFor={(id) => `cv2-mini-${id}`}
+                      panelIdFor={
+                        filterPages && activeVoletItem
+                          ? (id) => `cv2-mini-pane-${activeVoletItem.id}-${id}`
+                          : undefined
+                      }
+                    />
+                  </div>
+                ) : null}
               </div>
             ) : (
               <>
-                {mini ? (
+                {mini && (mini.items.length > 1 || Boolean(mini.sort)) ? (
                   <div
                     className={cx(
                       'lkdv-cv2-mini-slot',

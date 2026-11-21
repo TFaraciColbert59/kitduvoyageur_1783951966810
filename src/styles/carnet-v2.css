@@ -3543,11 +3543,12 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 }
 
 .lkdv-carnet-species-chip-card {
-  flex: 0 0 106px;
+  flex: 0 0 124px;
+  min-height: 156px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 7px;
+  gap: 6px;
+  padding: 8px;
   border-radius: 16px;
   border: 1px solid rgba(27, 67, 50, 0.14);
   background: rgba(255, 255, 255, 0.84);
@@ -3566,7 +3567,7 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   align-items: center;
   justify-content: center;
   text-align: center;
-  min-height: 108px;
+  min-height: 156px;
 }
 
 .lkdv-carnet-species-chip-card.is-add-slot:hover {
@@ -3625,7 +3626,7 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
 .lkdv-carnet-species-chip-img {
   position: relative;
   width: 100%;
-  height: 58px;
+  height: 92px;
   border-radius: 11px;
   overflow: hidden;
   background: rgba(27, 67, 50, 0.08);

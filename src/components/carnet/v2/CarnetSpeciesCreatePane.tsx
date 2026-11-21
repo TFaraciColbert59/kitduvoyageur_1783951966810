@@ -1,20 +1,21 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { motion } from 'framer-motion';
 import {
-  Binoculars,
   Camera,
   Check,
   Feather,
   Flower2,
   Plus,
   Search,
-  Sparkles,
-  Trash2,
   X,
 } from 'lucide-react';
 import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
+import { PostHeroPreview } from '@/features/community/v2/create/photo/PostHeroPreview';
+import type { PostFormValuesV2 } from '@/features/community/v2/create/engine/createSchemasV2';
+import { createDefaultsV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import { CARNET_SPRING } from './CarnetDrawerMotion';
 import { CarnetPlaceSearchField } from './CarnetPlaceSearchField';
 
@@ -57,6 +58,7 @@ interface CarnetSpeciesCreatePaneProps {
     species: PokedexApiSpecies,
     file: File,
   ) => Promise<{ ok: boolean; error?: string }>;
+  user?: User | null;
   step?: 0 | 1 | 2;
 }
 
@@ -76,6 +78,7 @@ export function CarnetSpeciesCreatePane({
   nearbyLat = null,
   nearbyLng = null,
   onValidateDiscovery,
+  user = null,
   step,
 }: CarnetSpeciesCreatePaneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -216,68 +219,46 @@ export function CarnetSpeciesCreatePane({
     }
   };
 
+  const previewPostValues = useMemo<PostFormValuesV2>(() => {
+    const base = createDefaultsV2('post');
+    const summaryParts = [
+      caption.trim() || 'Observation naturaliste…',
+      latin.trim() ? `(${latin.trim()})` : null,
+      note.trim() || null,
+    ].filter(Boolean);
+    return {
+      ...base,
+      format: 'photo',
+      title: caption.trim(),
+      content: summaryParts.join(' · '),
+      location: place.trim() || `Jour ${day}`,
+      media: previewPhoto
+        ? [
+            {
+              id: 'species-preview-media',
+              url: previewPhoto,
+              kind: 'image' as const,
+              status: 'ready' as const,
+            },
+          ]
+        : [],
+    };
+  }, [caption, day, latin, note, place, previewPhoto]);
+
   return (
     <div className="lkdv-cv2c-pane">
-      {/* 1. Aperçu Carte Pokédex en direct */}
-      <motion.div
-        layout
-        transition={CARNET_SPRING}
-        className="lkdv-carnet-species-preview"
-      >
-        <div className="lkdv-carnet-species-preview-media">
-          {previewPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={previewPhoto} alt={caption || 'Espèce'} />
-          ) : (
-            <div className="lkdv-carnet-species-preview-empty">
-              <Binoculars size={26} aria-hidden="true" />
-              <span>Aperçu Pokédex</span>
-            </div>
-          )}
-          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
-          {selectedDiscovered?.rarity ? (
-            <span className="lkdv-carnet-species-preview-rarity">
-              <Sparkles size={10} /> {selectedDiscovered.rarity}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="lkdv-carnet-species-preview-body">
-          <div className="lkdv-carnet-species-preview-title">
-            <b>{caption.trim() || 'Nom de l’espèce…'}</b>
-            <i>{latin.trim() || 'Nom scientifique'}</i>
-          </div>
-          <div className="lkdv-carnet-species-preview-actions">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={(e) => onSpeciesFileChange(e.target.files?.[0] ?? null)}
-            />
-            <button
-              type="button"
-              className="lkdv-carnet-btn-soft"
-              style={{ height: 32, padding: '0 10px', fontSize: 11.5 }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera size={13} />
-              <span>{speciesFile ? 'Changer photo' : 'Ajouter photo'}</span>
-            </button>
-            {speciesFile ? (
-              <button
-                type="button"
-                className="lkdv-carnet-comment-del"
-                aria-label="Retirer la photo"
-                onClick={() => onSpeciesFileChange(null)}
-              >
-                <Trash2 size={14} />
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </motion.div>
+      {/* 1. Aperçu identique à celui d'un post */}
+      <PostHeroPreview
+        values={previewPostValues}
+        user={user}
+        activePhotoIndex={0}
+        activeCategory={null}
+        onSelectCategory={() => {}}
+        onTriggerFileInput={() => fileInputRef.current?.click()}
+        fileInputRef={fileInputRef}
+        onFilesSelected={(e) => onSpeciesFileChange(e.target.files?.[0] ?? null)}
+        onRemoveActivePhoto={speciesFile ? () => onSpeciesFileChange(null) : undefined}
+      />
 
       {/* 2. Espèces déjà découvertes + case "+" en pointillé en premier */}
       {step === undefined || step === 0 ? (

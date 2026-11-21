@@ -226,7 +226,7 @@ export function CarnetCommunityCreateBridge({
   const momentStepLabels = useMemo(() => {
     if (activeTab === 'voice') return ['Enregistrement', 'Lieu & Note'];
     if (activeTab === 'meet') return ['Voyageur', 'Lieu & Échange'];
-    if (activeTab === 'species') return ['Espèce', 'Détails', 'Lieu & Note'];
+    if (activeTab === 'species') return ['Espèce'];
     if (activeTab === 'inc') return ['Lieu', 'Description'];
     return [];
   }, [activeTab]);
@@ -594,10 +594,9 @@ export function CarnetCommunityCreateBridge({
         ];
       }
       if (t.id === 'species') {
-        return ([0, 1, 2] as const).map((spStep) => (
+        return [
           <CarnetSpeciesCreatePane
-            key={`species-s${spStep}`}
-            step={spStep}
+            key="species-s0"
             day={day}
             place={place}
             onPlaceChange={setPlace}
@@ -613,8 +612,9 @@ export function CarnetCommunityCreateBridge({
             nearbyLat={nearbyLat}
             nearbyLng={nearbyLng}
             onValidateDiscovery={handleValidateSpeciesDiscovery}
-          />
-        ));
+            user={user}
+          />,
+        ];
       }
       return [
         <div key="inc-s0" className="lkdv-cv2c-pane">
