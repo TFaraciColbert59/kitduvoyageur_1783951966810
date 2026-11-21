@@ -606,18 +606,11 @@ export function KitProductSheetV2({
                     </p>
                   ) : listOffers.length === 0 ? (
                     <div style={{ margin: 'auto 0', textAlign: 'center', padding: '12px' }}>
-                      <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: '#56665d' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#56665d' }}>
                         {isLocation
                           ? 'Aucune annonce de location avec cette référence pour le moment.'
                           : 'Aucune annonce d’occasion avec cette référence pour le moment.'}
                       </p>
-                      <Link
-                        href={`/explorer?q=${encodeURIComponent(product.name)}&mode=${modeParam}`}
-                        onClick={onClose}
-                        style={{ fontSize: '0.78rem', fontWeight: 600, color: '#17402c' }}
-                      >
-                        Chercher dans Explorer →
-                      </Link>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
