@@ -494,34 +494,43 @@ export function CarnetSpeciesCreatePane({
         ) : null}
       </div>
 
-      {/* 3. Nombre & Contexte d'observation */}
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">Effectif & Comportement</span>
-        <div className="lkdv-carnet-filter-rail">
-          {INDIVIDUAL_COUNTS.map((cnt) => (
-            <button
-              key={cnt}
-              type="button"
-              className={`lkdv-carnet-filter-pill${countLabel === cnt ? ' is-active' : ''}`}
-              onClick={() => setCountLabel(cnt)}
-            >
-              {countLabel === cnt ? <span className="lkdv-carnet-filter-pill-bg" /> : null}
-              <span className="lkdv-carnet-filter-pill-label">{cnt}</span>
-            </button>
-          ))}
+      {/* 3. Effectif & Comportement (2 selects côte à côte) */}
+      <div className="lkdv-cv2c-row-2">
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Effectif</span>
+          <select
+            className="lkdv-cv2-input"
+            value={countLabel}
+            onChange={(e) => setCountLabel(e.target.value)}
+          >
+            {INDIVIDUAL_COUNTS.map((cnt) => (
+              <option key={cnt} value={cnt}>
+                {cnt}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="lkdv-carnet-filter-rail">
-          {OBSERVATION_TAGS.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className={`lkdv-carnet-filter-pill${selectedTag === tag ? ' is-active' : ''}`}
-              onClick={() => applyTag(tag)}
-            >
-              {selectedTag === tag ? <span className="lkdv-carnet-filter-pill-bg" /> : null}
-              <span className="lkdv-carnet-filter-pill-label">{tag}</span>
-            </button>
-          ))}
+        <div className="lkdv-cv2-field">
+          <span className="lkdv-cv2-field-label">Comportement</span>
+          <select
+            className="lkdv-cv2-input"
+            value={selectedTag ?? ''}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (!next) {
+                setSelectedTag(null);
+                return;
+              }
+              applyTag(next);
+            }}
+          >
+            <option value="">Choisir…</option>
+            {OBSERVATION_TAGS.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
