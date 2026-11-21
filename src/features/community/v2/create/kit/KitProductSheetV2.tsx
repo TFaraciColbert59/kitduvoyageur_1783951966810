@@ -362,20 +362,43 @@ export function KitProductSheetV2({
     [loanOffers, selectedLoanId]
   );
 
-  const handleSendLoanRequest = async () => {
-    if (!selectedLoan) return;
+  const sendMarketplaceRequest = async (
+    offer: CommunityOffer,
+    mode: 'pret' | 'location' | 'vente'
+  ): Promise<boolean> => {
     setLoanSending(true);
     try {
-      await fetch('/api/marketplace/loans', {
+      const res = await fetch('/api/marketplace/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: selectedLoan.id, productName: product.name }),
-      }).catch(() => null);
-      toast.success(`Demande de prêt envoyée à ${selectedLoan.ownerName}`);
+        body: JSON.stringify({
+          listingId: offer.id,
+          mode,
+          productName: product.name,
+          priceEur: offer.priceEur,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(json.error || 'Impossible d’envoyer la demande');
+        return false;
+      }
+      const label =
+        mode === 'pret' ? 'Demande de prêt' : mode === 'location' ? 'Demande de location' : 'Demande d’occasion';
+      toast.success(`${label} envoyée par message et notification à ${offer.ownerName}`);
       setHeroPanel(null);
+      return true;
+    } catch {
+      toast.error('Erreur réseau lors de l’envoi de la demande');
+      return false;
     } finally {
       setLoanSending(false);
     }
+  };
+
+  const handleSendLoanRequest = async () => {
+    if (!selectedLoan) return;
+    await sendMarketplaceRequest(selectedLoan, 'pret');
   };
 
   useEffect(() => {
@@ -1122,9 +1145,9 @@ export function KitProductSheetV2({
             selectedMode === 'pret'
               ? Boolean(selectedLoan) && !loanSending
               : selectedMode === 'location'
-                ? Boolean(selectedLocation)
+                ? Boolean(selectedLocation) && !loanSending
                 : selectedMode === 'occasion'
-                  ? Boolean(selectedOccasion)
+                  ? Boolean(selectedOccasion) && !loanSending
                   : Boolean(shopOffer?.inStock);
 
           const ctaText =
@@ -1133,9 +1156,13 @@ export function KitProductSheetV2({
                 ? 'Envoi…'
                 : 'Emprunter'
               : selectedMode === 'location'
-                ? `Louer${selectedLocation?.priceEur != null ? ` · ${selectedLocation.priceEur} € / j` : ''}`
+                ? loanSending
+                  ? 'Envoi…'
+                  : `Louer${selectedLocation?.priceEur != null ? ` · ${selectedLocation.priceEur} € / j` : ''}`
                 : selectedMode === 'occasion'
-                  ? `Ajouter au panier${selectedOccasion?.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
+                  ? loanSending
+                    ? 'Envoi…'
+                    : `Ajouter au panier${selectedOccasion?.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
                   : shopOffer?.inStock
                     ? `Ajouter au panier${shopOffer.priceEur > 0 ? ` · ${shopOffer.priceEur} €` : ''}`
                     : 'Indisponible en neuf';
@@ -1143,6 +1170,10 @@ export function KitProductSheetV2({
           const handlePrimaryCta = () => {
             if (selectedMode === 'pret') {
               void handleSendLoanRequest();
+              return;
+            }
+            if (selectedMode === 'location' && selectedLocation) {
+              void sendMarketplaceRequest(selectedLocation, 'location');
               return;
             }
             if (selectedMode === 'achat') {
@@ -1178,12 +1209,8 @@ export function KitProductSheetV2({
                 quantity,
                 category: product.category ?? 'Divers',
               });
-              toast.success(`${selectedOccasion.title} (occasion) ajouté au panier`);
-              return;
+              void sendMarketplaceRequest(selectedOccasion, 'vente');
             }
-            const modeParam = selectedMode === 'location' ? 'location' : 'occasion';
-            onClose();
-            window.location.href = `/explorer?q=${encodeURIComponent(product.name)}&mode=${modeParam}`;
           };
 
           return (
