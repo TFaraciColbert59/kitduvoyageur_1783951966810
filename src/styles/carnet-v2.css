@@ -479,7 +479,7 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
   padding: 1px 0;
   overflow-x: auto;
   overflow-y: visible;
@@ -492,7 +492,8 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 .lkdv-ig-hl {
-  flex: 0 0 calc((100% - 16px) / 5);
+  flex: 0 0 auto;
+  width: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -980,6 +981,13 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   transition:
     opacity 0.25s ease,
     transform 0.35s var(--motion-ease-standard);
+}
+
+.lkdv-carnet-acc.is-collapsed {
+  right: auto;
+  width: 42px;
+  padding: 0 4px;
+  justify-content: center;
 }
 
 .lkdv-carnet-v2-root.overlay-open .lkdv-carnet-acc {

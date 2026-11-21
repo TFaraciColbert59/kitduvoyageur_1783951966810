@@ -146,19 +146,19 @@
 /* Photo bord à bord dans un liseré de verre de 3 mm. */
 /* Les panneaux commentaires/partage commencent sous la pilule et le bouton. */
 /* Post plein bord : 2px d'écart avec les bords de la carte, et contenu remplissant 100% de la surface */
-.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet{left:2px!important;right:2px!important;top:2px!important;bottom:2px!important;width:calc(100% - 4px)!important;height:calc(100% - 4px)!important;max-height:calc(100% - 4px)!important;border-radius:40px!important;background:transparent!important;box-shadow:none!important;border:0!important;overflow:hidden!important;}
+.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet{left:2px!important;right:2px!important;top:2px!important;bottom:2px!important;width:calc(100% - 4px)!important;height:calc(100% - 4px)!important;max-height:calc(100% - 4px)!important;border-radius:26px!important;background:transparent!important;box-shadow:none!important;border:0!important;overflow:hidden!important;}
 .lkdv-post-drawer{width:100%!important;height:100%!important;}
 .lkdv-post-drawer .lkdv-overlay-body{width:100%!important;height:100%!important;padding:0!important;margin:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
 .lkdv-post-drawer .lkdv-account-glass{width:100%!important;height:100%!important;display:flex!important;flex-direction:column!important;}
-.lkdv-post-drawer .lkdv-feed-post{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;border-radius:40px!important;display:flex!important;flex-direction:column!important;}
+.lkdv-post-drawer .lkdv-feed-post{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;border-radius:26px!important;display:flex!important;flex-direction:column!important;}
 .lkdv-post-drawer .lkdv-feed-post-frame{width:100%!important;height:100%!important;flex:1 1 auto!important;}
 .lkdv-post-drawer .lkdv-feed-media{width:100%!important;height:100%!important;position:absolute!important;inset:0!important;}
 .lkdv-post-drawer .lkdv-feed-media img,
 .lkdv-post-drawer .lkdv-feed-media video{width:100%!important;height:100%!important;object-fit:cover!important;}
 .lkdv-post-drawer .lkdv-lens-track,
 .lkdv-post-drawer .lkdv-lens-pane{width:100%!important;height:100%!important;}
-.lkdv-post-drawer .lkdv-feed-panel{width:100%!important;height:100%!important;border-radius:40px!important;}
-.lkdv-post-drawer .lkdv-feed-panel-surface{border-radius:40px!important;}
+.lkdv-post-drawer .lkdv-feed-panel{width:100%!important;height:100%!important;border-radius:26px!important;}
+.lkdv-post-drawer .lkdv-feed-panel-surface{border-radius:26px!important;}
 @media(min-width:720px){.lkdv-compte-overlay:has(.lkdv-post-drawer) .lkdv-overlay-sheet,.lkdv-post-drawer .lkdv-feed-post,.lkdv-post-drawer .lkdv-feed-panel,.lkdv-post-drawer .lkdv-feed-panel-surface{border-radius:26px!important;}}
 .lkdv-overlay-heading.is-clickable{border:0!important;background:transparent!important;font:inherit!important;text-align:left!important;cursor:pointer!important;padding:0!important;color:inherit!important;}
 .lkdv-overlay-heading.is-clickable .lkdv-overlay-title-text{display:block!important;font:700 13px/1.2 -apple-system,"SF Pro Display",Inter,system-ui,sans-serif!important;color:#172B24!important;}

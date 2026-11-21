@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -142,6 +143,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [altitudeExpanded, setAltitudeExpanded] = useState(false);
   const [postMomentId, setPostMomentId] = useState<string | null>(null);
   const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
   const [peekMoment, setPeekMoment] = useState<CarnetMomentItem | null>(null);
@@ -1010,46 +1012,82 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         </button>
       </section>
 
-      {/* Accessoire altimétrique — seulement avec de vraies mesures */}
+      {/* Accessoire altimétrique — réduit en pilule icône par défaut, extensible via Framer Motion */}
       {hasElevationProfile && !overlayOpen ? (
-        <div className="lkdv-carnet-acc" role="group" aria-label="Profil d’altitude du parcours">
-          <span className="lkdv-acc-badge" aria-hidden="true">
+        <motion.div
+          layout
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+          className={`lkdv-carnet-acc${altitudeExpanded ? '' : ' is-collapsed'}`}
+          role="group"
+          aria-label="Profil d’altitude du parcours"
+        >
+          <button
+            type="button"
+            className="lkdv-acc-badge"
+            onClick={() => {
+              haptic('selection');
+              setAltitudeExpanded((prev) => !prev);
+            }}
+            aria-expanded={altitudeExpanded}
+            aria-label={altitudeExpanded ? 'Réduire le profil d’altitude' : 'Afficher le profil d’altitude'}
+            style={{ border: 0, cursor: 'pointer', padding: 0 }}
+          >
             D+
-          </span>
-          <span className="lkdv-acc-ro">
-            <b>
-              {scrubPoint
-                ? `${Math.round(scrubPoint.elevationM)} m`
-                : profileGain !== null
-                  ? `+${profileGain} m`
-                  : '—'}
-            </b>
-            <span>
-              {scrubPoint
-                ? `${scrubPoint.distanceKm.toFixed(1)} km`
-                : profileDistance !== null
-                  ? `Profil · ${profileDistance.toFixed(1)} km`
-                  : 'Dénivelé non renseigné'}
-            </span>
-          </span>
-          <CarnetAltitude
-            points={elevationProfile}
-            interactive
-            onScrub={(point) =>
-              setScrubPoint(
-                point
-                  ? {
-                      elevationM: point.elevationM,
-                      distanceKm: point.distanceKm,
-                      lat: point.lat,
-                      lng: point.lng,
-                    }
-                  : null
-              )
-            }
-            label="Profil d’altitude du parcours"
-          />
-        </div>
+          </button>
+          <AnimatePresence initial={false}>
+            {altitudeExpanded ? (
+              <motion.div
+                key="altitude-expanded-content"
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 9,
+                  flex: '1 1 auto',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                }}
+              >
+                <span className="lkdv-acc-ro">
+                  <b>
+                    {scrubPoint
+                      ? `${Math.round(scrubPoint.elevationM)} m`
+                      : profileGain !== null
+                        ? `+${profileGain} m`
+                        : '—'}
+                  </b>
+                  <span>
+                    {scrubPoint
+                      ? `${scrubPoint.distanceKm.toFixed(1)} km`
+                      : profileDistance !== null
+                        ? `Profil · ${profileDistance.toFixed(1)} km`
+                        : 'Dénivelé non renseigné'}
+                  </span>
+                </span>
+                <CarnetAltitude
+                  points={elevationProfile}
+                  interactive
+                  onScrub={(point) =>
+                    setScrubPoint(
+                      point
+                        ? {
+                            elevationM: point.elevationM,
+                            distanceKm: point.distanceKm,
+                            lat: point.lat,
+                            lng: point.lng,
+                          }
+                        : null
+                    )
+                  }
+                  label="Profil d’altitude du parcours"
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </motion.div>
       ) : null}
 
       {/* Notifications drawer (remplace Affichage dans la barre du haut) */}
