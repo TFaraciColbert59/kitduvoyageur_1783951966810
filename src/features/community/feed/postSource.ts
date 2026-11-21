@@ -40,5 +40,16 @@ export interface PostSource {
   /** Entrées de menu `···` propres à l'origine (« Voir en 3D », « Fiche sortie »). */
   menuExtras?: Array<{ id: string; label: string; icon: React.ReactNode; onSelect: () => void }>;
   /** Pastille auteur : action au tap (au lieu du lien profil), méta et badge propres. */
-  author?: { onClick?: () => void; meta?: string; badge?: string; pinned?: boolean };
+  author?: {
+    onClick?: () => void;
+    meta?: string;
+    badge?: string;
+    pinned?: boolean;
+    contextAction?: {
+      label: string;
+      icon?: React.ReactNode;
+      onClick: () => void;
+      ariaLabel?: string;
+    };
+  };
 }

@@ -666,7 +666,13 @@ export function CommunityFeedPost({
         inert={Boolean(panel)}
         aria-hidden={panel ? true : undefined}
       >
-        <PostAuthorPill post={headerPost} onClick={source?.author?.onClick} meta={source?.author?.meta} badge={source?.author?.badge} />
+        <PostAuthorPill
+          post={headerPost}
+          onClick={source?.author?.onClick}
+          meta={source?.author?.meta}
+          badge={source?.author?.badge}
+          contextAction={source?.author?.contextAction}
+        />
       </div>
 
       {/* Seul contrôle posé sur la carte : les trois points, en haut à droite

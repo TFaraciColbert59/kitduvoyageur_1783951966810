@@ -288,43 +288,16 @@ export function CarnetPostSheet({
       }
     },
     onReport,
-    overlay: matchedPokedexEntry ? (
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          setPokedexCardOpen(true);
-        }}
-        aria-label={`Voir la fiche Pokédex : ${matchedPokedexEntry.name}`}
-        style={{
-          position: 'absolute',
-          top: 'calc(var(--post-pill-top, 14px) + var(--post-pill-h, 44px) + 8px)',
-          left: 14,
-          zIndex: 12,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          height: 28,
-          padding: '0 10px',
-          borderRadius: 999,
-          border: '1px solid rgba(23, 64, 44, 0.14)',
-          background: 'rgba(255, 255, 255, 0.88)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          color: '#17402c',
-          fontSize: 11.5,
-          fontWeight: 700,
-          boxShadow: '0 4px 12px rgba(23, 43, 36, 0.14)',
-          cursor: 'pointer',
-          maxWidth: 'calc(100% - 28px)',
-        }}
-      >
-        <Leaf size={12} aria-hidden="true" style={{ flex: 'none' }} />
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {matchedPokedexEntry.dexNumber} · {matchedPokedexEntry.name}
-        </span>
-      </button>
-    ) : undefined,
+    author: matchedPokedexEntry
+      ? {
+          contextAction: {
+            label: `${matchedPokedexEntry.dexNumber} · ${matchedPokedexEntry.name}`,
+            icon: <Leaf size={11} aria-hidden="true" />,
+            onClick: () => setPokedexCardOpen(true),
+            ariaLabel: `Voir la fiche Pokédex : ${matchedPokedexEntry.name}`,
+          },
+        }
+      : undefined,
     media:
       items.length > 0
         ? {

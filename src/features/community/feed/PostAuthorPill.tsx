@@ -15,9 +15,15 @@ export interface PostAuthorPillOverrides {
   onClick?: () => void;
   meta?: string;
   badge?: string;
+  contextAction?: {
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+    ariaLabel?: string;
+  };
 }
 
-export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { post: FeedPost } & PostAuthorPillOverrides) {
+export function PostAuthorPill({ post, onClick, meta: metaOverride, badge, contextAction }: { post: FeedPost } & PostAuthorPillOverrides) {
   const author = post.author;
   const name = author?.full_name || 'Voyageur LKDV';
   const id = author?.id || post.author_id || '';
@@ -53,28 +59,43 @@ export function PostAuthorPill({ post, onClick, meta: metaOverride, badge }: { p
         }
       : null;
 
-  if (!contextLink) return pillEl;
+  if (!contextLink && !contextAction) return pillEl;
 
   return (
     <div className="lkdv-post-author-stack">
       {pillEl}
-      <Link
-        href={contextLink.href}
-        className="lkdv-post-context-pill"
-        onClick={(event) => event.stopPropagation()}
-        aria-label={
-          contextLink.kind === 'club'
-            ? `Ouvrir le club ${contextLink.label}`
-            : `Ouvrir le carnet ${contextLink.label}`
-        }
-      >
-        {contextLink.kind === 'club' ? (
-          <Users size={11} aria-hidden="true" />
-        ) : (
-          <BookOpen size={11} aria-hidden="true" />
-        )}
-        <span>{contextLink.label}</span>
-      </Link>
+      {contextAction ? (
+        <button
+          type="button"
+          className="lkdv-post-context-pill"
+          onClick={(event) => {
+            event.stopPropagation();
+            contextAction.onClick();
+          }}
+          aria-label={contextAction.ariaLabel ?? contextAction.label}
+        >
+          {contextAction.icon}
+          <span>{contextAction.label}</span>
+        </button>
+      ) : contextLink ? (
+        <Link
+          href={contextLink.href}
+          className="lkdv-post-context-pill"
+          onClick={(event) => event.stopPropagation()}
+          aria-label={
+            contextLink.kind === 'club'
+              ? `Ouvrir le club ${contextLink.label}`
+              : `Ouvrir le carnet ${contextLink.label}`
+          }
+        >
+          {contextLink.kind === 'club' ? (
+            <Users size={11} aria-hidden="true" />
+          ) : (
+            <BookOpen size={11} aria-hidden="true" />
+          )}
+          <span>{contextLink.label}</span>
+        </Link>
+      ) : null}
     </div>
   );
 }
