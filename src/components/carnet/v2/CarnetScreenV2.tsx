@@ -996,10 +996,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               color: '#111827',
-              paddingTop: 48,
+              paddingTop: 28,
             }}
             role="dialog"
             aria-label="Partager ce carnet"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setSharePanelOpen(false);
+            }}
           >
             <button
               type="button"
@@ -1007,21 +1010,28 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
               aria-label="Fermer le partage"
               style={{
                 position: 'absolute',
-                top: 12,
-                left: 14,
-                zIndex: 5,
-                height: 32,
-                padding: '0 12px',
-                borderRadius: 999,
-                border: '1px solid rgba(23, 43, 36, 0.14)',
-                background: 'rgba(255, 255, 255, 0.9)',
-                color: '#172b24',
-                fontSize: 12,
-                fontWeight: 600,
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 28,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 0,
+                background: 'transparent',
                 cursor: 'pointer',
+                zIndex: 10,
               }}
             >
-              Fermer
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 38,
+                  height: 4.5,
+                  borderRadius: 999,
+                  background: 'rgba(23, 43, 36, 0.24)',
+                }}
+              />
             </button>
             <PostSharePanel
               post={shareCarnetPost}
