@@ -220,19 +220,28 @@ export function KitProductSheetV2({
     const loadOffers = async () => {
       try {
         const sb = createClient();
+        const needleWords = needle
+          .split(/\s+/)
+          .filter((w) => w.length >= 4 && !['pour', 'avec', 'sans', 'dans', 'plus'].includes(w));
         const shopPromise = product.productId
           ? sb.from('shop_products').select('*').eq('id', product.productId).maybeSingle()
-          : sb.from('shop_products').select('*').ilike('name', product.name).limit(1).maybeSingle();
+          : sb
+              .from('shop_products')
+              .select('*')
+              .ilike('name', `%${needleWords.slice(0, 2).join('%') || product.name}%`)
+              .limit(1)
+              .maybeSingle();
 
+        const qParam = encodeURIComponent(product.name);
         const [shopRes, occRes, locRes, loanRes] = await Promise.all([
           shopPromise,
-          fetch('/api/marketplace/listings?mode=vente', { cache: 'no-store' })
+          fetch(`/api/marketplace/listings?mode=vente&q=${qParam}`, { cache: 'no-store' })
             .then((r) => (r.ok ? r.json() : { listings: [] }))
             .catch(() => ({ listings: [] })),
-          fetch('/api/marketplace/listings?mode=location', { cache: 'no-store' })
+          fetch(`/api/marketplace/listings?mode=location&q=${qParam}`, { cache: 'no-store' })
             .then((r) => (r.ok ? r.json() : { listings: [] }))
             .catch(() => ({ listings: [] })),
-          fetch('/api/marketplace/listings?mode=pret', { cache: 'no-store' })
+          fetch(`/api/marketplace/listings?mode=pret&q=${qParam}`, { cache: 'no-store' })
             .then((r) => (r.ok ? r.json() : { listings: [] }))
             .catch(() => ({ listings: [] })),
         ]);
@@ -264,20 +273,46 @@ export function KitProductSheetV2({
           return list
             .filter((l) => {
               if (product.productId && l.product_id === product.productId) return true;
-              const title = normalizeText(String(l.title ?? l.product_name ?? ''));
-              return Boolean(needle && title && (title === needle || title.includes(needle) || needle.includes(title)));
+              const title = normalizeText(String(l.name ?? l.title ?? l.product_name ?? ''));
+              if (!needle || !title) return false;
+              if (title === needle || title.includes(needle) || needle.includes(title)) return true;
+              if (needleWords.length >= 2) {
+                const hits = needleWords.filter((w) => title.includes(w));
+                return hits.length >= Math.min(2, needleWords.length);
+              }
+              return needleWords.length === 1 && title.includes(needleWords[0]);
             })
             .map((l) => {
-              const seller = (l.seller ?? l.owner ?? {}) as Record<string, unknown>;
+              const seller = (l.owner ?? l.seller ?? {}) as Record<string, unknown>;
+              const rawPrice =
+                typeof l.price_eur === 'number'
+                  ? l.price_eur
+                  : typeof l.price === 'number'
+                    ? l.price
+                    : typeof l.price_cents === 'number'
+                      ? Math.round(l.price_cents / 100)
+                      : null;
               return {
                 id: String(l.id),
-                title: String(l.title ?? l.product_name ?? product.name),
-                priceEur: typeof l.price_eur === 'number' ? l.price_eur : typeof l.price === 'number' ? l.price : null,
+                title: String(l.name ?? l.title ?? l.product_name ?? product.name),
+                priceEur: rawPrice,
                 condition: typeof l.condition === 'string' ? l.condition : null,
-                ownerId: typeof l.user_id === 'string' ? l.user_id : typeof seller.id === 'string' ? seller.id : null,
+                ownerId:
+                  typeof l.owner_id === 'string'
+                    ? l.owner_id
+                    : typeof l.user_id === 'string'
+                      ? l.user_id
+                      : typeof seller.id === 'string'
+                        ? seller.id
+                        : null,
                 ownerName: String(seller.full_name ?? seller.name ?? 'Voyageur LKDV'),
                 ownerAvatar: typeof seller.avatar_url === 'string' ? seller.avatar_url : null,
-                image: typeof l.image_url === 'string' ? l.image_url : null,
+                image:
+                  typeof l.photo_url === 'string'
+                    ? l.photo_url
+                    : typeof l.image_url === 'string'
+                      ? l.image_url
+                      : null,
               };
             });
         };
