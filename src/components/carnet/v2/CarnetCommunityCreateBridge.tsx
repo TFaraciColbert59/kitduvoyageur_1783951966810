@@ -34,6 +34,7 @@ import type { CreateKindV2 } from '@/features/community/v2/create/engine/createS
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import { formatClock, useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
 import { CarnetSpeciesCreatePane, type DiscoveredSpeciesItem } from './CarnetSpeciesCreatePane';
+import { CarnetPlaceSearchField } from './CarnetPlaceSearchField';
 import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
 
 const PostFormV2 = dynamic(
@@ -105,8 +106,15 @@ export function CarnetCommunityCreateBridge({
 
   // Carnet-specific moment fields (voice, meet, species, inc)
   const [place, setPlace] = useState(defaultPlace);
-  const [caption, setCaption] = useState(initialSpeciesName);
+  const [speciesCaption, setSpeciesCaption] = useState(initialSpeciesName);
+  const [momentCaptions, setMomentCaptions] = useState<Record<'voice' | 'meet' | 'inc', string>>({
+    voice: '',
+    meet: '',
+    inc: '',
+  });
   const [who, setWho] = useState('');
+  const [whoMatches, setWhoMatches] = useState<Array<{ id: string; name: string; avatarUrl: string | null }>>([]);
+  const [whoDropdownOpen, setWhoDropdownOpen] = useState(false);
   const [latin, setLatin] = useState(initialSpeciesLatin);
   const [speciesFile, setSpeciesFile] = useState<File | null>(null);
   const [speciesNote, setSpeciesNote] = useState('');
@@ -214,6 +222,38 @@ export function CarnetCommunityCreateBridge({
     };
   }, [activeCommunityKind, activeNav, activeTab, registerStepHost]);
 
+  useEffect(() => {
+    if (!whoDropdownOpen || activeTab !== 'meet') return;
+    const q = who.trim();
+    if (q.length < 2) {
+      setWhoMatches([]);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      fetch(`/api/users/search?scope=all&q=${encodeURIComponent(q)}&limit=6`)
+        .then((res) => res.json())
+        .then((data: { users?: Array<{ id: string; name?: string | null; full_name?: string | null; avatarUrl?: string | null; avatar_url?: string | null }> }) => {
+          if (!cancelled && Array.isArray(data.users)) {
+            setWhoMatches(
+              data.users
+                .map((u) => ({
+                  id: u.id,
+                  name: (u.name || u.full_name || '').trim(),
+                  avatarUrl: u.avatarUrl ?? u.avatar_url ?? null,
+                }))
+                .filter((u) => u.name.length > 0),
+            );
+          }
+        })
+        .catch(() => {});
+    }, 220);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [who, whoDropdownOpen, activeTab]);
+
   const validatedNowRef = useRef<Set<string>>(new Set());
 
   const handleValidateSpeciesDiscovery = useCallback(
@@ -240,9 +280,30 @@ export function CarnetCommunityCreateBridge({
   const submitCarnetMoment = async () => {
     if (momentBusy) return;
     if (activeTab === 'post' || activeTab === 'story') return;
+    const tabCaption =
+      activeTab === 'species'
+        ? speciesCaption
+        : momentCaptions[activeTab];
+
+    if (activeTab === 'voice' && !voice.recording?.file) {
+      setMomentError('Enregistre un mémo vocal avant de l’ajouter.');
+      return;
+    }
+    if (activeTab === 'meet' && !who.trim() && !tabCaption.trim()) {
+      setMomentError('Indique qui tu as rencontré ou ce que vous vous êtes dit.');
+      return;
+    }
+    if (activeTab === 'inc' && !tabCaption.trim()) {
+      setMomentError('Décris brièvement ce qui s’est passé.');
+      return;
+    }
     if (activeTab === 'species') {
-      const c = caption.trim().toLowerCase();
+      const c = speciesCaption.trim().toLowerCase();
       const l = latin.trim().toLowerCase();
+      if (!c) {
+        setMomentError('Sélectionne ou valide une espèce d’abord.');
+        return;
+      }
       const alreadyDiscovered =
         (c && validatedNowRef.current.has(c)) ||
         (l && validatedNowRef.current.has(l)) ||
@@ -260,7 +321,7 @@ export function CarnetCommunityCreateBridge({
       type: activeTab,
       day,
       place,
-      caption,
+      caption: tabCaption,
     };
     if (activeTab === 'voice') {
       input.durationLabel = voice.recording?.durationLabel;
@@ -270,7 +331,7 @@ export function CarnetCommunityCreateBridge({
     if (activeTab === 'species') {
       input.latin = latin;
       if (speciesNote.trim()) {
-        input.caption = `${caption.trim() || 'Espèce'} — ${speciesNote.trim()}`;
+        input.caption = `${speciesCaption.trim() || 'Espèce'} — ${speciesNote.trim()}`;
       }
     }
 
@@ -357,22 +418,13 @@ export function CarnetCommunityCreateBridge({
     </div>
   );
 
-  const renderMomentForm = (kind: 'voice' | 'meet' | 'species' | 'inc') => (
+  const renderMomentForm = (kind: 'voice' | 'meet' | 'inc') => (
     <div className="lkdv-cv2c-pane">
-      <div className="lkdv-cv2-field">
-        <span className="lkdv-cv2-field-label">
-          <MapPin size={12} style={{ display: 'inline', marginRight: 4 }} />
-          Lieu (Jour {day})
-        </span>
-        <input
-          type="text"
-          className="lkdv-cv2-input"
-          value={place}
-          maxLength={80}
-          placeholder="Col, refuge, sommet…"
-          onChange={(e) => setPlace(e.target.value)}
-        />
-      </div>
+      <CarnetPlaceSearchField
+        label={`Lieu (Jour ${day})`}
+        value={place}
+        onChange={setPlace}
+      />
 
       {kind === 'voice' ? (
         <>
@@ -444,87 +496,118 @@ export function CarnetCommunityCreateBridge({
       ) : null}
 
       {kind === 'meet' ? (
-        <div className="lkdv-cv2-field">
+        <div className="lkdv-cv2-field" style={{ position: 'relative' }}>
           <span className="lkdv-cv2-field-label">Personne rencontrée</span>
           <input
             type="text"
             className="lkdv-cv2-input"
             value={who}
             maxLength={60}
-            placeholder="Prénom ou surnom…"
-            onChange={(e) => setWho(e.target.value)}
+            autoComplete="off"
+            placeholder="Prénom, surnom ou voyageur…"
+            onFocus={() => setWhoDropdownOpen(true)}
+            onChange={(e) => {
+              setWho(e.target.value);
+              setWhoDropdownOpen(true);
+            }}
           />
-        </div>
-      ) : null}
-
-      {kind === 'species' ? (
-        <>
-          <div className="lkdv-cv2-field">
-            <span className="lkdv-cv2-field-label">Nom scientifique (optionnel)</span>
-            <input
-              type="text"
-              className="lkdv-cv2-input"
-              value={latin}
-              maxLength={80}
-              placeholder="Capra ibex…"
-              onChange={(e) => setLatin(e.target.value)}
-            />
-          </div>
-          {speciesSuggestions.length > 0 ? (
-            <div className="lkdv-carnet-filter-rail" style={{ paddingBottom: 2 }}>
-              {speciesSuggestions.map((sp) => (
+          {whoDropdownOpen && whoMatches.length > 0 ? (
+            <div
+              role="listbox"
+              aria-label="Voyageurs correspondants"
+              style={{
+                marginTop: 6,
+                borderRadius: 16,
+                border: '1px solid rgba(27, 67, 50, 0.14)',
+                background: 'rgba(255, 255, 255, 0.96)',
+                boxShadow: '0 10px 26px rgba(15, 23, 42, 0.1)',
+                overflow: 'hidden',
+                maxHeight: 160,
+                overflowY: 'auto',
+              }}
+            >
+              {whoMatches.map((u) => (
                 <button
-                  key={sp.taxonId}
+                  key={u.id}
                   type="button"
-                  className="lkdv-carnet-filter-pill"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, paddingLeft: 4 }}
+                  role="option"
+                  aria-selected={false}
                   onClick={() => {
-                    setCaption(sp.name);
-                    setLatin(sp.latin);
-                    setSpeciesSuggestions([]);
+                    setWho(u.name);
+                    setWhoMatches([]);
+                    setWhoDropdownOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 12px',
+                    border: 0,
+                    borderBottom: '1px solid rgba(27, 67, 50, 0.08)',
+                    background: 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer',
                   }}
                 >
-                  {sp.imageUrl ? (
+                  {u.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={sp.imageUrl}
+                      src={u.avatarUrl}
                       alt=""
-                      style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
+                      style={{ width: 22, height: 22, borderRadius: 999, objectFit: 'cover' }}
                     />
-                  ) : null}
-                  <span>{sp.name}</span>
+                  ) : (
+                    <span
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 999,
+                        background: '#ddebd8',
+                        color: '#17402C',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {u.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: '#111827' }}>{u.name}</span>
                 </button>
               ))}
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
 
       <div className="lkdv-cv2-field">
         <span className="lkdv-cv2-field-label">
           {kind === 'meet'
             ? 'Ce qu’on s’est dit'
-            : kind === 'species'
-              ? 'Espèce observée'
-              : kind === 'inc'
-                ? 'Ce qui s’est passé'
-                : 'Note ou légende'}
+            : kind === 'inc'
+              ? 'Ce qui s’est passé'
+              : 'Note ou légende'}
         </span>
         <textarea
           className="lkdv-cv2-input"
           rows={3}
-          value={caption}
+          value={momentCaptions[kind]}
           maxLength={240}
           placeholder={
             kind === 'meet'
               ? 'Un échange sur le sentier…'
-              : kind === 'species'
-                ? 'Bouquetin des Alpes…'
-                : kind === 'inc'
-                  ? 'Ampoule, météo, détour…'
-                  : 'Un mot sur cette note…'
+              : kind === 'inc'
+                ? 'Ampoule, météo, détour…'
+                : 'Un mot sur cette note…'
           }
-          onChange={(e) => setCaption(e.target.value)}
+          onChange={(e) =>
+            setMomentCaptions((prev) => ({
+              ...prev,
+              [kind]: e.target.value,
+            }))
+          }
         />
       </div>
     </div>
@@ -541,8 +624,8 @@ export function CarnetCommunityCreateBridge({
           day={day}
           place={place}
           onPlaceChange={setPlace}
-          caption={caption}
-          onCaptionChange={setCaption}
+          caption={speciesCaption}
+          onCaptionChange={setSpeciesCaption}
           latin={latin}
           onLatinChange={setLatin}
           speciesFile={speciesFile}
