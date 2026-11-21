@@ -760,3 +760,38 @@ branchées sur PostgreSQL dans les tiroirs :
     (requête `geo_pois` eau/abris/campings avec caveat OSM), `storySummary.ts`
     (export récit sans notes internes éditeur) et `PaperasseQuickAdd.tsx`
     (ajout rapide de confirmation/billet persisté dans `trip_documents`).
+
+### P09 · Cinq passes d’amélioration, livraison réversible et clôture
+
+1. **Passe 1 — Fondations (`P09-07`)** : contrat env redacted (`envContract.ts`),
+   zéro contamination maquette (`verify:hub-no-mockup`), 385/385 tables RLS,
+   0 fonction `SECURITY DEFINER` sans `search_path`, 125 suites pgTAP / 2 143 assertions.
+2. **Passe 2 — Données terrain (`P09-08`)** : catalogue géo (`geoCatalog.ts`),
+   MET Norway + MeteoAlarm CAP 1.2 + NASA EONET v3 en direct sans clé API,
+   POI corridor `geo_pois`, signalements terrain datés (`hub_field_reports`).
+3. **Passe 3 — Logique métier (`P09-09`)** : suivi étapes prévu/réel sans
+   altérer le plan, cycle de vie atomique (`trip_lifecycle_events`), taille de
+   groupe canonique (`get_trip_effective_party_size`), recalcul ressources sans
+   perte (`recomputeResourcesWithoutLoss`), répartition et remboursements exacts
+   au centime (`budgetMath.ts`, `settlementsAndGear.ts`).
+4. **Passe 4 — Vitesse & Profiling (`P09-10`)** : baseline perf authentifiée
+   (`baseline-perf.csv`), benchmarks `explorer:bench:geo` (100k pts en 1,126 ms
+   p50 / 2,432 ms p95) et `perf:gpx`, ABI TypedArray prête (`geoKernelContract.ts`),
+   repli TS retenu sur décision validée par Tony.
+5. **Passe 5 — Usage terrain & mobile (`P09-11`)** : 8 widgets sur écran fixe
+   iPhone (zéro débordement sur 2h, 2j, 30j et 50 membres en 17 blocs de 3),
+   file hors-ligne IndexedDB avec reprise après redémarrage, pack carte et
+   brouillon Carnet hors-ligne, fermeture clavier `Escape`, protection locale à
+   la déconnexion (`localDataProtection.ts`), aperçu ouvert sur l’iPhone de Tony.
+
+**Runbook de livraison réversible (`P09-13`) :**
+- **Application** : bascule immédiate vers l’ancien HUB via `LKDV_HUB_LAYOUT=legacy`
+  sans perte de données.
+- **Base de données** : toutes les nouvelles migrations sont additives et
+  accompagnées de leur script `.down.sql` testé en transaction sur `lkdv_hub_ci`
+  (`20261121100000_trip_step_execution.down.sql`,
+  `20261121120000_hub_live_safety_and_field_reports.down.sql`,
+  `20261121130000_hub_retention_and_shared_gear.down.sql`). Les scripts
+  refusent de supprimer les journaux remplis.
+- **Production** : aucune mutation ni déploiement effectué sur la production
+  sans autorisation distincte.
