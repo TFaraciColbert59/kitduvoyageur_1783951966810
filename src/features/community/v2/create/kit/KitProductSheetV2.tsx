@@ -71,6 +71,17 @@ interface CommunityOffer {
   image: string | null;
 }
 
+type ObtainMode = 'achat' | 'location' | 'occasion' | 'pret';
+
+function cheapestOffer(list: CommunityOffer[]): CommunityOffer | null {
+  if (list.length === 0) return null;
+  return list.reduce((best, cur) => {
+    const bp = best.priceEur ?? Number.POSITIVE_INFINITY;
+    const cp = cur.priceEur ?? Number.POSITIVE_INFINITY;
+    return cp < bp ? cur : best;
+  }, list[0]);
+}
+
 function normalizeText(v: string | null | undefined): string {
   return (v ?? '')
     .trim()
@@ -174,11 +185,15 @@ export function KitProductSheetV2({
   const [sendingConvId, setSendingConvId] = useState<string | null>(null);
   const [sentConvIds, setSentConvIds] = useState<string[]>([]);
   const [heroPanel, setHeroPanel] = useState<'occasion' | 'location' | 'pret' | null>(null);
+  const [selectedMode, setSelectedMode] = useState<ObtainMode>('achat');
+  const [userPickedMode, setUserPickedMode] = useState(false);
   const [shopOffer, setShopOffer] = useState<ShopOffer | null>(null);
   const [occasionOffers, setOccasionOffers] = useState<CommunityOffer[]>([]);
   const [locationOffers, setLocationOffers] = useState<CommunityOffer[]>([]);
   const [loanOffers, setLoanOffers] = useState<CommunityOffer[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [selectedOccasionId, setSelectedOccasionId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [loanSending, setLoanSending] = useState(false);
   const swipeStartY = useRef<number | null>(null);
@@ -191,6 +206,9 @@ export function KitProductSheetV2({
     setShareOpen(false);
     setPreviewCollapsed(false);
     setHeroPanel(null);
+    setUserPickedMode(false);
+    setSelectedOccasionId(null);
+    setSelectedLocationId(null);
     setSelectedLoanId(null);
   }, [product.id, product.weightG, setPreviewCollapsed]);
 
@@ -270,6 +288,8 @@ export function KitProductSheetV2({
         setOccasionOffers(occ);
         setLocationOffers(locs);
         setLoanOffers(loans);
+        setSelectedOccasionId(cheapestOffer(occ)?.id ?? null);
+        setSelectedLocationId(cheapestOffer(locs)?.id ?? null);
         if (loans[0]) setSelectedLoanId(loans[0].id);
       } finally {
         if (alive) setOffersLoading(false);
@@ -281,6 +301,56 @@ export function KitProductSheetV2({
       alive = false;
     };
   }, [product.brand, product.category, product.id, product.name, product.productId, weightG]);
+
+  const bestMode = useMemo<ObtainMode>(() => {
+    if (loanOffers.length > 0) return 'pret';
+    const candidates: Array<{ mode: ObtainMode; price: number }> = [];
+    const bestLoc = cheapestOffer(locationOffers);
+    if (bestLoc) candidates.push({ mode: 'location', price: bestLoc.priceEur ?? 999999 });
+    const bestOcc = cheapestOffer(occasionOffers);
+    if (bestOcc) candidates.push({ mode: 'occasion', price: bestOcc.priceEur ?? 999999 });
+    if (shopOffer?.inStock) {
+      candidates.push({ mode: 'achat', price: shopOffer.priceEur > 0 ? shopOffer.priceEur : 999999 });
+    }
+    if (candidates.length === 0) return 'achat';
+    candidates.sort((a, b) => a.price - b.price);
+    return candidates[0].mode;
+  }, [loanOffers.length, locationOffers, occasionOffers, shopOffer]);
+
+  useEffect(() => {
+    if (!offersLoading && !userPickedMode) {
+      setSelectedMode(bestMode);
+    }
+  }, [bestMode, offersLoading, userPickedMode]);
+
+  const selectedOccasion = useMemo(
+    () => occasionOffers.find((o) => o.id === selectedOccasionId) ?? cheapestOffer(occasionOffers),
+    [occasionOffers, selectedOccasionId]
+  );
+  const selectedLocation = useMemo(
+    () => locationOffers.find((o) => o.id === selectedLocationId) ?? cheapestOffer(locationOffers),
+    [locationOffers, selectedLocationId]
+  );
+  const selectedLoan = useMemo(
+    () => loanOffers.find((o) => o.id === selectedLoanId) ?? loanOffers[0] ?? null,
+    [loanOffers, selectedLoanId]
+  );
+
+  const handleSendLoanRequest = async () => {
+    if (!selectedLoan) return;
+    setLoanSending(true);
+    try {
+      await fetch('/api/marketplace/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: selectedLoan.id, productName: product.name }),
+      }).catch(() => null);
+      toast.success(`Demande de prêt envoyée à ${selectedLoan.ownerName}`);
+      setHeroPanel(null);
+    } finally {
+      setLoanSending(false);
+    }
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -551,47 +621,60 @@ export function KitProductSheetV2({
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {listOffers.map((offer) => (
-                        <div
-                          key={offer.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 8,
-                            padding: '8px 10px',
-                            borderRadius: 12,
-                            background: '#f8faf8',
-                            border: '1px solid rgba(23, 64, 44, 0.1)',
-                          }}
-                        >
-                          <div style={{ minWidth: 0 }}>
-                            <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
-                              {offer.ownerName}
-                            </b>
-                            <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
-                              {offer.condition || 'Bon état'}
-                              {offer.priceEur !== null ? ` · ${offer.priceEur} €` : ''}
-                            </small>
-                          </div>
-                          <Link
-                            href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=${modeParam}`}
-                            onClick={onClose}
+                      {listOffers.map((offer) => {
+                        const isPicked = isLocation
+                          ? selectedLocation?.id === offer.id
+                          : selectedOccasion?.id === offer.id;
+                        return (
+                          <div
+                            key={offer.id}
+                            onClick={() => {
+                              if (isLocation) setSelectedLocationId(offer.id);
+                              else setSelectedOccasionId(offer.id);
+                            }}
                             style={{
-                              padding: '5px 10px',
-                              borderRadius: 999,
-                              background: '#17402c',
-                              color: '#fff',
-                              fontSize: '0.72rem',
-                              fontWeight: 600,
-                              textDecoration: 'none',
-                              flex: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 8,
+                              padding: '8px 10px',
+                              borderRadius: 12,
+                              background: isPicked ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                              border: isPicked ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                              cursor: 'pointer',
                             }}
                           >
-                            Voir
-                          </Link>
-                        </div>
-                      ))}
+                            <div style={{ minWidth: 0 }}>
+                              <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
+                                {offer.ownerName}
+                              </b>
+                              <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
+                                {offer.condition || 'Bon état'}
+                                {offer.priceEur !== null ? ` · ${offer.priceEur} €` : ''}
+                              </small>
+                            </div>
+                            <Link
+                              href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=${modeParam}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
+                              }}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: 999,
+                                background: '#17402c',
+                                color: '#fff',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                flex: 'none',
+                              }}
+                            >
+                              Voir
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -669,22 +752,7 @@ export function KitProductSheetV2({
                   <button
                     type="button"
                     disabled={!selectedLoanId || loanSending}
-                    onClick={async () => {
-                      const chosen = loanOffers.find((l) => l.id === selectedLoanId);
-                      if (!chosen) return;
-                      setLoanSending(true);
-                      try {
-                        await fetch('/api/marketplace/loans', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ listingId: chosen.id, productName: product.name }),
-                        }).catch(() => null);
-                        toast.success(`Demande de prêt envoyée à ${chosen.ownerName}`);
-                        setHeroPanel(null);
-                      } finally {
-                        setLoanSending(false);
-                      }
-                    }}
+                    onClick={() => void handleSendLoanRequest()}
                     style={{
                       height: 36,
                       borderRadius: 999,
@@ -759,27 +827,13 @@ export function KitProductSheetV2({
               gap: 8,
             }}
           >
-            {/* 1. Achat neuf -> ajoute au panier si en stock */}
+            {/* 1. Achat neuf -> sélectionne le mode achat */}
             <button
               type="button"
               onClick={() => {
-                if (shopOffer?.inStock) {
-                  addToCart({
-                    id: shopOffer.id,
-                    slug: shopOffer.slug,
-                    name: shopOffer.name,
-                    brand: shopOffer.brand,
-                    priceEur: shopOffer.priceEur,
-                    weightG: shopOffer.weightG,
-                    image: shopOffer.image || imgSrc,
-                    imageAlt: shopOffer.name,
-                    quantity,
-                    category: shopOffer.category,
-                  });
-                  toast.success(`${shopOffer.name} ajouté au panier`);
-                } else {
-                  toast.info('Produit indisponible en stock neuf');
-                }
+                setUserPickedMode(true);
+                setSelectedMode('achat');
+                setHeroPanel(null);
               }}
               style={{
                 display: 'flex',
@@ -787,12 +841,12 @@ export function KitProductSheetV2({
                 gap: 8,
                 padding: '9px 10px',
                 borderRadius: 12,
-                background: shopOffer?.inStock ? '#f8faf8' : '#f9fafb',
-                border: '1px solid rgba(23, 64, 44, 0.1)',
+                background: selectedMode === 'achat' ? 'rgba(23, 64, 44, 0.08)' : shopOffer?.inStock ? '#f8faf8' : '#f9fafb',
+                border: selectedMode === 'achat' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
                 color: '#172b24',
                 textAlign: 'left',
                 cursor: 'pointer',
-                opacity: shopOffer?.inStock === false ? 0.65 : 1,
+                opacity: shopOffer?.inStock === false && selectedMode !== 'achat' ? 0.65 : 1,
               }}
             >
               <span
@@ -815,24 +869,28 @@ export function KitProductSheetV2({
                   {offersLoading
                     ? 'Vérification…'
                     : shopOffer?.inStock
-                      ? `${shopOffer.priceEur > 0 ? `${shopOffer.priceEur} € · ` : ''}Au panier`
+                      ? `${shopOffer.priceEur > 0 ? `${shopOffer.priceEur} € · ` : ''}En stock`
                       : 'Hors stock'}
                 </small>
               </span>
             </button>
 
-            {/* 2. Location -> ouvre le mini drawer à la place de l'image produit */}
+            {/* 2. Location -> sélectionne le mode location + ouvre le mini drawer */}
             <button
               type="button"
-              onClick={() => setHeroPanel((cur) => (cur === 'location' ? null : 'location'))}
+              onClick={() => {
+                setUserPickedMode(true);
+                setSelectedMode('location');
+                setHeroPanel((cur) => (cur === 'location' ? null : 'location'));
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 padding: '9px 10px',
                 borderRadius: 12,
-                background: heroPanel === 'location' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
-                border: heroPanel === 'location' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                background: selectedMode === 'location' || heroPanel === 'location' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: selectedMode === 'location' || heroPanel === 'location' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
                 color: '#172b24',
                 textAlign: 'left',
                 cursor: 'pointer',
@@ -860,18 +918,22 @@ export function KitProductSheetV2({
               </span>
             </button>
 
-            {/* 3. Occasion -> ouvre le mini drawer à la place de l'image produit */}
+            {/* 3. Occasion -> sélectionne le mode occasion + ouvre le mini drawer */}
             <button
               type="button"
-              onClick={() => setHeroPanel((cur) => (cur === 'occasion' ? null : 'occasion'))}
+              onClick={() => {
+                setUserPickedMode(true);
+                setSelectedMode('occasion');
+                setHeroPanel((cur) => (cur === 'occasion' ? null : 'occasion'));
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 padding: '9px 10px',
                 borderRadius: 12,
-                background: heroPanel === 'occasion' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
-                border: heroPanel === 'occasion' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                background: selectedMode === 'occasion' || heroPanel === 'occasion' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: selectedMode === 'occasion' || heroPanel === 'occasion' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
                 color: '#172b24',
                 textAlign: 'left',
                 cursor: 'pointer',
@@ -899,12 +961,14 @@ export function KitProductSheetV2({
               </span>
             </button>
 
-            {/* 4. Emprunter (Prêt) -> rouge si indisponible, vert si dispo + ouvre sélecteur à la place de l'image */}
+            {/* 4. Emprunter (Prêt) -> rouge si indisponible, vert si dispo + sélectionne et ouvre sélecteur */}
             <button
               type="button"
               disabled={!offersLoading && loanOffers.length === 0}
               onClick={() => {
                 if (loanOffers.length > 0) {
+                  setUserPickedMode(true);
+                  setSelectedMode('pret');
                   setHeroPanel((cur) => (cur === 'pret' ? null : 'pret'));
                 }
               }}
@@ -919,9 +983,11 @@ export function KitProductSheetV2({
                     ? 'rgba(22, 163, 74, 0.1)'
                     : 'rgba(220, 38, 38, 0.08)',
                 border:
-                  loanOffers.length > 0
-                    ? '1px solid rgba(22, 163, 74, 0.35)'
-                    : '1px solid rgba(220, 38, 38, 0.28)',
+                  selectedMode === 'pret' && loanOffers.length > 0
+                    ? '1.5px solid #15803d'
+                    : loanOffers.length > 0
+                      ? '1px solid rgba(22, 163, 74, 0.35)'
+                      : '1px solid rgba(220, 38, 38, 0.28)',
                 color: loanOffers.length > 0 ? '#15803d' : '#b91c1c',
                 textAlign: 'left',
                 cursor: loanOffers.length > 0 ? 'pointer' : 'not-allowed',
@@ -957,6 +1023,208 @@ export function KitProductSheetV2({
             </button>
           </div>
         </div>
+
+        {/* Action principale + caractéristiques de l'option sélectionnée (défaut = moins cher / plus avantageux) */}
+        {(() => {
+          const isBest = selectedMode === bestMode && (loanOffers.length > 0 || locationOffers.length > 0 || occasionOffers.length > 0 || Boolean(shopOffer?.inStock));
+          const modeLabel =
+            selectedMode === 'pret'
+              ? 'Emprunt (prêt)'
+              : selectedMode === 'location'
+                ? 'Location communauté'
+                : selectedMode === 'occasion'
+                  ? 'Occasion communauté'
+                  : 'Achat neuf';
+
+          const specs: Array<{ label: string; value: string }> =
+            selectedMode === 'pret'
+              ? [
+                  { label: 'Coût', value: 'Gratuit (0 €)' },
+                  { label: 'Casse / perte', value: `${loanBreakageEuro} €` },
+                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur' },
+                  { label: 'État', value: selectedLoan?.condition ?? 'Bon état' },
+                ]
+              : selectedMode === 'location'
+                ? [
+                    { label: 'Tarif', value: selectedLocation?.priceEur != null ? `${selectedLocation.priceEur} € / j` : 'Sur demande' },
+                    { label: 'État', value: selectedLocation?.condition ?? 'Bon état' },
+                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté' },
+                    { label: 'Dispos', value: `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}` },
+                  ]
+                : selectedMode === 'occasion'
+                  ? [
+                      { label: 'Prix', value: selectedOccasion?.priceEur != null ? `${selectedOccasion.priceEur} €` : 'À négocier' },
+                      { label: 'État', value: selectedOccasion?.condition ?? 'Bon état' },
+                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté' },
+                      { label: 'Dispos', value: `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}` },
+                    ]
+                  : [
+                      { label: 'Prix', value: shopOffer?.priceEur ? `${shopOffer.priceEur} €` : 'Indisponible' },
+                      { label: 'État', value: 'Neuf' },
+                      { label: 'Stock', value: shopOffer?.inStock ? 'En stock' : 'Hors stock' },
+                      { label: 'Poids', value: fmtItem(shopOffer?.weightG || weightG) },
+                    ];
+
+          const canAct =
+            selectedMode === 'pret'
+              ? Boolean(selectedLoan) && !loanSending
+              : selectedMode === 'location'
+                ? true
+                : selectedMode === 'occasion'
+                  ? true
+                  : Boolean(shopOffer?.inStock);
+
+          const ctaText =
+            selectedMode === 'pret'
+              ? loanSending
+                ? 'Envoi…'
+                : 'Emprunter'
+              : selectedMode === 'location'
+                ? `Louer${selectedLocation?.priceEur != null ? ` · ${selectedLocation.priceEur} € / j` : ''}`
+                : selectedMode === 'occasion'
+                  ? selectedOccasion
+                    ? `Ajouter au panier${selectedOccasion.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
+                    : 'Voir les occasions'
+                  : shopOffer?.inStock
+                    ? `Ajouter au panier${shopOffer.priceEur > 0 ? ` · ${shopOffer.priceEur} €` : ''}`
+                    : 'Indisponible en neuf';
+
+          const handlePrimaryCta = () => {
+            if (selectedMode === 'pret') {
+              void handleSendLoanRequest();
+              return;
+            }
+            if (selectedMode === 'achat') {
+              if (shopOffer?.inStock) {
+                addToCart({
+                  id: shopOffer.id,
+                  slug: shopOffer.slug,
+                  name: shopOffer.name,
+                  brand: shopOffer.brand,
+                  priceEur: shopOffer.priceEur,
+                  weightG: shopOffer.weightG,
+                  image: shopOffer.image || imgSrc,
+                  imageAlt: shopOffer.name,
+                  quantity,
+                  category: shopOffer.category,
+                });
+                toast.success(`${shopOffer.name} ajouté au panier`);
+              } else {
+                toast.info('Produit indisponible en stock neuf');
+              }
+              return;
+            }
+            if (selectedMode === 'occasion' && selectedOccasion) {
+              addToCart({
+                id: selectedOccasion.id,
+                slug: selectedOccasion.id,
+                name: `${selectedOccasion.title} (Occasion)`,
+                brand: product.brand ?? '',
+                priceEur: selectedOccasion.priceEur ?? 0,
+                weightG,
+                image: selectedOccasion.image || imgSrc,
+                imageAlt: selectedOccasion.title,
+                quantity,
+                category: product.category ?? 'Divers',
+              });
+              toast.success(`${selectedOccasion.title} (occasion) ajouté au panier`);
+              return;
+            }
+            const modeParam = selectedMode === 'location' ? 'location' : 'occasion';
+            onClose();
+            window.location.href = `/explorer?q=${encodeURIComponent(product.name)}&mode=${modeParam}`;
+          };
+
+          return (
+            <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                  {modeLabel}
+                </span>
+                {isBest ? (
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(22, 163, 74, 0.12)',
+                      color: '#15803d',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    Le moins cher · plus avantageux
+                  </span>
+                ) : null}
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: 6,
+                }}
+              >
+                {specs.map((spec) => (
+                  <div
+                    key={spec.label}
+                    style={{
+                      padding: '6px 9px',
+                      borderRadius: 10,
+                      background: '#f8faf8',
+                      border: '1px solid rgba(23, 64, 44, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 1,
+                    }}
+                  >
+                    <small style={{ fontSize: '0.66rem', color: '#64748b' }}>{spec.label}</small>
+                    <b
+                      style={{
+                        fontSize: '0.76rem',
+                        color: '#172b24',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {spec.value}
+                    </b>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                disabled={!canAct}
+                onClick={handlePrimaryCta}
+                style={{
+                  height: 40,
+                  borderRadius: 999,
+                  border: 0,
+                  background: selectedMode === 'pret' ? '#15803d' : '#17402c',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  cursor: canAct ? 'pointer' : 'not-allowed',
+                  opacity: canAct ? 1 : 0.55,
+                }}
+              >
+                {selectedMode === 'pret' ? (
+                  <Handshake size={15} aria-hidden="true" />
+                ) : selectedMode === 'location' ? (
+                  <Calendar size={15} aria-hidden="true" />
+                ) : (
+                  <ShoppingBag size={15} aria-hidden="true" />
+                )}
+                <span>{ctaText}</span>
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Description du produit */}
         {product.description ? (
