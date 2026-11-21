@@ -38,7 +38,12 @@ import {
   Check,
   Send,
   Trash2,
+  Sun,
+  Globe,
+  Lock,
+  X,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/Switch';
 import LikeIcon from '@/components/social-kit/LikeIcon';
 import { SlotShell, type SlotId, type SlotLens } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
@@ -149,6 +154,10 @@ export interface CarnetDrawerV2Props {
   onSettingsSaved?: (changes: Record<string, unknown>) => void;
   onDeleted?: () => void;
   onDayPick?: (day: number) => void;
+  isOutdoor?: boolean;
+  onToggleOutdoor?: () => void;
+  reduceMotion?: boolean;
+  onToggleReduceMotion?: () => void;
 }
 
 type StackView =
@@ -180,6 +189,10 @@ export function CarnetDrawerV2({
   isAccountDrawer = false,
   onObserveSpecies,
   onDayPick,
+  isOutdoor = false,
+  onToggleOutdoor,
+  reduceMotion = false,
+  onToggleReduceMotion,
 }: CarnetDrawerV2Props) {
   const { haptic } = useHapticFeedback();
   const router = useRouter();
@@ -193,7 +206,6 @@ export function CarnetDrawerV2({
   const [accountTab, setAccountTab] = useState<number>(0);
   const [stack, setStack] = useState<StackView[]>([]);
   const [selectedParticipant, setSelectedParticipant] = useState<CarnetDetail['participants'][number] | null>(null);
-  const [selectedKitProductIndex, setSelectedKitProductIndex] = useState<number | null>(null);
   const sacKitItems = useMemo(() => {
     if (detail.kit?.items?.length) return detail.kit.items;
     const memberLists = Object.values(detail.memberKits ?? {});
@@ -202,6 +214,56 @@ export function CarnetDrawerV2({
     }
     return [];
   }, [detail.kit, detail.memberKits]);
+  type SheetKitItem = (typeof sacKitItems)[number];
+  const [selectedKitSheet, setSelectedKitSheet] = useState<{
+    items: SheetKitItem[];
+    index: number;
+    owner?: { id: string; name: string; avatarUrl?: string | null } | null;
+  } | null>(null);
+  const openKitProductSheet = (
+    item: SheetKitItem,
+    preferredItems?: SheetKitItem[],
+    preferredOwner?: { id: string; name: string; avatarUrl?: string | null } | null
+  ) => {
+    if (preferredItems && preferredItems.length > 0) {
+      const idx = preferredItems.findIndex((k) => k.id === item.id);
+      if (idx >= 0) {
+        setSelectedKitSheet({ items: preferredItems, index: idx, owner: preferredOwner ?? null });
+        return;
+      }
+    }
+    const baseIdx = sacKitItems.findIndex((k) => k.id === item.id);
+    if (baseIdx >= 0) {
+      setSelectedKitSheet({
+        items: sacKitItems,
+        index: baseIdx,
+        owner: detail.author
+          ? { id: detail.author.id, name: detail.author.name, avatarUrl: detail.author.avatarUrl ?? null }
+          : null,
+      });
+      return;
+    }
+    for (const [memberId, mk] of Object.entries(detail.memberKits ?? {})) {
+      const items = mk?.items ?? [];
+      const mkIdx = items.findIndex((k) => k.id === item.id);
+      if (mkIdx >= 0) {
+        const part = detail.participants.find((pt) => pt.userId === memberId || pt.id === memberId);
+        setSelectedKitSheet({
+          items,
+          index: mkIdx,
+          owner: part
+            ? {
+                id: part.userId ?? part.id,
+                name: part.name?.trim() || part.handle?.trim() || 'Voyageur',
+                avatarUrl: part.avatarUrl ?? null,
+              }
+            : null,
+        });
+        return;
+      }
+    }
+    setSelectedKitSheet({ items: [item], index: 0, owner: preferredOwner ?? null });
+  };
   const [verdictFilter, setVerdictFilter] = useState<'all' | KitVerdictType>('all');
   const [newCommentText, setNewCommentText] = useState('');
   const [kitJumpUserId, setKitJumpUserId] = useState<string | null>(null);
@@ -319,16 +381,15 @@ export function CarnetDrawerV2({
     };
   }, [detail.budget, detail.budgetPublic, detail.viewerRole, selectedParticipant]);
 
-  // Account / Settings Tabs
-  const accountTabs = useMemo(() => {
-    const isOwner = detail.isOwner;
-    return [
-      { id: 'notif', label: 'Notifications' },
-      { id: 'part', label: 'Partage' },
-      { id: 'param', label: 'Paramètres' },
-      ...(isOwner ? [{ id: 'gerer', label: 'Gérer' }] : []),
-    ];
-  }, [detail.isOwner]);
+  // Account / Settings Tabs (sans Notifications, qui vit désormais dans la cloche)
+  const accountTabs = useMemo(
+    () => [
+      { id: 'partage', label: 'Partage', icon: <Share2 size={14} aria-hidden="true" /> },
+      { id: 'affichage', label: 'Affichage', icon: <Sun size={14} aria-hidden="true" /> },
+      { id: 'export', label: 'Export & Infos', icon: <Download size={14} aria-hidden="true" /> },
+    ],
+    []
+  );
 
   // ---- Lecture : position mémorisée par lentille (`${slot}:${lens.id}`) ----
   const activeLensId = (slotLenses[activeSlot] ?? [])[activeLensIndex]?.id;
@@ -677,172 +738,405 @@ export function CarnetDrawerV2({
     );
   }
 
-  // Render Secondary Account Drawer
+  // Render Secondary Account / Carnet Settings Drawer (Design System LKDV V2)
   if (isAccountDrawer) {
+    const safeTabIdx = Math.min(accountTab, accountTabs.length - 1);
+    const activeAccountTabId = accountTabs[safeTabIdx]?.id ?? 'partage';
+    const shareHref = typeof window !== 'undefined' ? window.location.href : '';
+    const totalMoments = detail.moments.length;
+    const totalSpecies = detail.pokedexEntries?.length ?? 0;
+    const totalGear = detail.kit?.items?.length ?? 0;
+    const isPublicCarnet = detail.isPublic !== false && detail.visibility !== 'private';
+
     return (
       <div
         ref={dialogRef}
-        className="lkdv-stack-sheet"
+        className="lkdv-stack-sheet lkdv-cv2c-ps-sheet"
         role="dialog"
         aria-modal="true"
         aria-label="Paramètres du carnet"
         tabIndex={-1}
+        style={{ background: '#f6f8f7' }}
       >
-        <div className="lkdv-stack-header">
-          <button type="button" className="lkdv-stack-back" onClick={onClose}>
-            <ChevronLeft size={16} />
-            <span>Fermer</span>
-          </button>
-          <b style={{ fontSize: '13.5px', color: 'var(--tint, #17402C)' }}>Carnet</b>
-        </div>
-
-        <div style={{ padding: '8px 12px 0' }}>
-          <div
-            className="lkdv-day-capsule"
-            role="tablist"
-            style={{ width: '100%', justifyContent: 'space-around' }}
+        <div className="lkdv-cv2c-ps-head">
+          <button
+            type="button"
+            className="lkdv-cv2c-ps-close"
+            onClick={onClose}
+            aria-label="Fermer les paramètres"
           >
-            {accountTabs.map((tab, idx) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                className="lkdv-day-capsule-btn"
-                aria-selected={accountTab === idx}
-                onClick={() => setAccountTab(idx)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+            <X size={16} aria-hidden="true" />
+          </button>
+          <span
+            className="lkdv-cv2c-ps-head-title"
+            style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: '0.92rem', color: '#172b24' }}
+          >
+            Paramètres du carnet
+          </span>
+          <span style={{ width: 34, flexShrink: 0 }} aria-hidden="true" />
         </div>
 
-        <div className="lkdv-stack-body">
+        <div style={{ padding: '4px 14px 10px' }}>
+          <CapsuleTabs
+            items={accountTabs.map((t) => ({
+              id: t.id,
+              label: t.label,
+              icon: t.icon,
+            }))}
+            activeId={activeAccountTabId}
+            onChange={(id) => {
+              const idx = accountTabs.findIndex((t) => t.id === id);
+              if (idx >= 0) setAccountTab(idx);
+            }}
+            ariaLabel="Sections des paramètres du carnet"
+          />
+        </div>
+
+        <div className="lkdv-cv2c-ps-scroll" style={{ paddingTop: 2 }}>
           <CarnetMotionRoot>
-            <StackSlideView stackKey={`account-${stack.length}`}>
-          {accountTab === 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Alertes de progression</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                  Recevoir une notification lors de chaque publication d’étape.
-                </p>
-              </div>
-            </div>
-          )}
+            <StackSlideView stackKey={`account-${activeAccountTabId}-${stack.length}`}>
+              {activeAccountTabId === 'partage' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                        Carnet d’expédition
+                      </span>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          background: isPublicCarnet ? 'rgba(22, 163, 74, 0.12)' : 'rgba(100, 116, 139, 0.14)',
+                          color: isPublicCarnet ? '#15803d' : '#475569',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {isPublicCarnet ? <Globe size={11} aria-hidden="true" /> : <Lock size={11} aria-hidden="true" />}
+                        {isPublicCarnet ? 'Public' : 'Privé'}
+                      </span>
+                    </div>
+                    <b style={{ fontSize: '0.92rem', color: '#172b24', lineHeight: 1.3 }}>{detail.title}</b>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: '0.74rem', color: '#56665d' }}>
+                      <span>{detail.etapes.length} étape{detail.etapes.length > 1 ? 's' : ''}</span>
+                      <span>·</span>
+                      <span>{detail.participants.length} participant{detail.participants.length > 1 ? 's' : ''}</span>
+                      {detail.distanceKm ? (
+                        <>
+                          <span>·</span>
+                          <span>{Math.round(detail.distanceKm)} km</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
 
-          {accountTab === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Lien public</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Partagez ce carnet d’expédition avec vos proches.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '32px',
-                    padding: '0 12px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      void navigator.clipboard.writeText(window.location.href);
-                      onIsland?.('Lien copié dans le presse-papier');
-                    }
-                  }}
-                >
-                  <Copy size={13} />
-                  <span>Copier le lien</span>
-                </button>
-              </div>
-            </div>
-          )}
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Lien de partage
+                    </span>
+                    <div
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 10,
+                        background: '#f8faf8',
+                        border: '1px solid rgba(23, 64, 44, 0.1)',
+                        fontSize: '0.72rem',
+                        color: '#56665d',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {shareHref || `/carnets/${detail.id}`}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            void navigator.clipboard.writeText(window.location.href);
+                            onIsland?.('Lien copié dans le presse-papier');
+                          }
+                        }}
+                        style={{
+                          height: 36,
+                          borderRadius: 999,
+                          border: 0,
+                          background: '#17402c',
+                          color: '#fff',
+                          fontWeight: 600,
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Copy size={13} aria-hidden="true" />
+                        <span>Copier le lien</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (typeof navigator !== 'undefined' && navigator.share) {
+                            void navigator.share({ title: detail.title, url: shareHref }).catch(() => {});
+                          } else if (typeof window !== 'undefined') {
+                            void navigator.clipboard.writeText(window.location.href);
+                            onIsland?.('Lien copié dans le presse-papier');
+                          }
+                        }}
+                        style={{
+                          height: 36,
+                          borderRadius: 999,
+                          border: '1px solid rgba(23, 64, 44, 0.18)',
+                          background: '#ffffff',
+                          color: '#17402c',
+                          fontWeight: 600,
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Share2 size={13} aria-hidden="true" />
+                        <span>Partager</span>
+                      </button>
+                    </div>
+                  </div>
 
-          {accountTab === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Unités</b>
-                <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--label2)' }}>
-                  Système métrique (km, mètres de dénivelé).
-                </p>
-              </div>
-            </div>
-          )}
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Réutiliser l’itinéraire
+                    </span>
+                    <p style={{ margin: 0, fontSize: '0.76rem', color: '#56665d', lineHeight: 1.4 }}>
+                      Ouvrez ce tracé dans le Compas pour planifier votre propre départ avec ces étapes.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
+                      }}
+                      style={{
+                        height: 36,
+                        borderRadius: 999,
+                        border: '1px solid rgba(23, 64, 44, 0.16)',
+                        background: '#f8faf8',
+                        color: '#17402c',
+                        fontWeight: 600,
+                        fontSize: '0.78rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Route size={14} aria-hidden="true" />
+                      <span>Reprendre dans le Compas</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
-          {accountTab === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div
-                style={{
-                  padding: '12px',
-                  borderRadius: '16px',
-                  background: 'var(--drawer-card-bg)',
-                }}
-              >
-                <b>Exportation</b>
-                <p style={{ margin: '4px 0 8px', fontSize: '12px', color: 'var(--label2)' }}>
-                  Téléchargez l’intégralité des données du carnet au format standard JSON.
-                </p>
-                <button
-                  type="button"
-                  style={{
-                    height: '32px',
-                    padding: '0 12px',
-                    borderRadius: '9999px',
-                    border: '0',
-                    background: 'var(--tint, #17402C)',
-                    color: '#fff',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    const blob = new Blob([JSON.stringify(detail, null, 2)], {
-                      type: 'application/json',
-                    });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `carnet-${detail.id}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    onIsland?.('Carnet exporté en JSON');
-                  }}
-                >
-                  <Download size={13} />
-                  <span>Télécharger le JSON</span>
-                </button>
-              </div>
-            </div>
-          )}
+              {activeAccountTabId === 'affichage' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 12 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Confort de lecture sur le terrain
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <b style={{ display: 'block', fontSize: '0.82rem', color: '#172b24' }}>Mode plein soleil</b>
+                        <small style={{ fontSize: '0.72rem', color: '#56665d' }}>
+                          Contraste renforcé, texte plus lisible en extérieur
+                        </small>
+                      </div>
+                      <Switch
+                        checked={isOutdoor}
+                        onCheckedChange={() => {
+                          haptic('selection');
+                          onToggleOutdoor?.();
+                        }}
+                        aria-label="Mode plein soleil"
+                      />
+                    </div>
+                    <div
+                      style={{
+                        height: 1,
+                        background: 'rgba(23, 64, 44, 0.08)',
+                      }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <b style={{ display: 'block', fontSize: '0.82rem', color: '#172b24' }}>Réduire les animations</b>
+                        <small style={{ fontSize: '0.72rem', color: '#56665d' }}>
+                          Transitions simplifiées et économie de batterie
+                        </small>
+                      </div>
+                      <Switch
+                        checked={reduceMotion}
+                        onCheckedChange={() => {
+                          haptic('selection');
+                          onToggleReduceMotion?.();
+                        }}
+                        aria-label="Réduire les animations"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Unités actives
+                    </span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
+                      {[
+                        { k: 'Distance', v: 'km' },
+                        { k: 'Dénivelé', v: 'm D+' },
+                        { k: 'Poids', v: 'kg / g' },
+                      ].map((u) => (
+                        <div
+                          key={u.k}
+                          style={{
+                            padding: '8px',
+                            borderRadius: 10,
+                            background: '#f8faf8',
+                            border: '1px solid rgba(23, 64, 44, 0.08)',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <small style={{ display: 'block', fontSize: '0.66rem', color: '#64748b' }}>{u.k}</small>
+                          <b style={{ fontSize: '0.78rem', color: '#172b24' }}>{u.v}</b>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeAccountTabId === 'export' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Données du carnet
+                    </span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
+                      {[
+                        { k: 'Moments', v: String(totalMoments) },
+                        { k: 'Espèces', v: String(totalSpecies) },
+                        { k: 'Équipement', v: `${totalGear} objets` },
+                        { k: 'Visibilité', v: isPublicCarnet ? 'Public' : 'Privé' },
+                      ].map((stat) => (
+                        <div
+                          key={stat.k}
+                          style={{
+                            padding: '7px 10px',
+                            borderRadius: 10,
+                            background: '#f8faf8',
+                            border: '1px solid rgba(23, 64, 44, 0.08)',
+                          }}
+                        >
+                          <small style={{ display: 'block', fontSize: '0.66rem', color: '#64748b' }}>{stat.k}</small>
+                          <b style={{ fontSize: '0.78rem', color: '#172b24' }}>{stat.v}</b>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+                    <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                      Exporter
+                    </span>
+                    <button
+                      type="button"
+                      style={{
+                        height: 38,
+                        borderRadius: 999,
+                        border: 0,
+                        background: '#17402c',
+                        color: '#fff',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(detail, null, 2)], {
+                          type: 'application/json',
+                        });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `carnet-${detail.id}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        onIsland?.('Carnet exporté en JSON');
+                      }}
+                    >
+                      <Download size={14} aria-hidden="true" />
+                      <span>Télécharger le JSON complet</span>
+                    </button>
+
+                    {(() => {
+                      const t = detail.trace as { type?: string; coordinates?: unknown; geometry?: { coordinates?: unknown }; features?: Array<{ geometry?: { coordinates?: unknown } }> } | null;
+                      const rawCoords = Array.isArray(t?.coordinates)
+                        ? t.coordinates
+                        : Array.isArray(t?.geometry?.coordinates)
+                          ? t.geometry.coordinates
+                          : Array.isArray(t?.features?.[0]?.geometry?.coordinates)
+                            ? t.features[0].geometry.coordinates
+                            : null;
+                      if (!Array.isArray(rawCoords) || rawCoords.length === 0) return null;
+                      return (
+                        <button
+                          type="button"
+                          style={{
+                            height: 38,
+                            borderRadius: 999,
+                            border: '1px solid rgba(23, 64, 44, 0.18)',
+                            background: '#ffffff',
+                            color: '#17402c',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            const pts = rawCoords
+                              .filter((c): c is [number, number] => Array.isArray(c) && c.length >= 2)
+                              .map((pt) => `<trkpt lat="${pt[1]}" lon="${pt[0]}"></trkpt>`)
+                              .join('');
+                            const gpx = `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Le Kit du Voyageur"><trk><name>${detail.title.replace(/[<>&]/g, '')}</name><trkseg>${pts}</trkseg></trk></gpx>`;
+                            const blob = new Blob([gpx], { type: 'application/gpx+xml' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `trace-${detail.id}.gpx`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            onIsland?.('Trace GPX téléchargée');
+                          }}
+                        >
+                          <Route size={14} aria-hidden="true" />
+                          <span>Télécharger la trace GPX</span>
+                        </button>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </StackSlideView>
           </CarnetMotionRoot>
         </div>
@@ -884,10 +1178,7 @@ export function CarnetDrawerV2({
             initialUserId={kitJumpUserId}
             verdictFilter={verdictFilter}
             onVerdictFilterChange={setVerdictFilter}
-            onSelectItem={(item) => {
-              const idx = sacKitItems.findIndex((k) => k.id === item.id);
-              setSelectedKitProductIndex(idx >= 0 ? idx : 0);
-            }}
+            onSelectItem={(item) => openKitProductSheet(item)}
             onForkAll={(ids) => {
               void forkAllItems(ids);
             }}
@@ -1072,10 +1363,13 @@ export function CarnetDrawerV2({
                                   key={item.id}
                                   type="button"
                                   className="lkdv-carnet-kit-mini-tile"
-                                  onClick={() => {
-                                    const idx = sacKitItems.findIndex((k) => k.id === item.id);
-                                    setSelectedKitProductIndex(idx >= 0 ? idx : 0);
-                                  }}
+                                  onClick={() =>
+                                    openKitProductSheet(item, pKitItems, {
+                                      id: p.userId ?? p.id,
+                                      name: pName,
+                                      avatarUrl: p.avatarUrl ?? null,
+                                    })
+                                  }
                                 >
                                   <div className="lkdv-carnet-kit-mini-tile-top">
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1313,16 +1607,25 @@ export function CarnetDrawerV2({
         </button>
       ) : null}
 
-      {selectedKitProductIndex !== null &&
-      sacKitItems[selectedKitProductIndex] &&
+      {selectedKitSheet &&
+      selectedKitSheet.items[selectedKitSheet.index] &&
       typeof document !== 'undefined'
         ? createPortal(
             (() => {
-              const item = sacKitItems[selectedKitProductIndex];
-              const totalKitWeightG = sacKitItems.reduce(
+              const sheetItems = selectedKitSheet.items;
+              const sheetIdx = selectedKitSheet.index;
+              const item = sheetItems[sheetIdx];
+              const totalKitWeightG = sheetItems.reduce(
                 (sum, k) => sum + (Number(k.weightG) || 0),
                 0
               );
+              const sheetOwner = selectedKitSheet.owner ?? (detail.author
+                ? {
+                    id: detail.author.id,
+                    name: detail.author.name,
+                    avatarUrl: detail.author.avatarUrl ?? null,
+                  }
+                : null);
               const product: PickerProduct = {
                 key: item.id,
                 source: 'inventory',
@@ -1336,11 +1639,11 @@ export function CarnetDrawerV2({
                 conditionLabel: item.verdict ?? null,
                 description: item.detail ?? null,
                 priceLabel: null,
-                owner: detail.author
+                owner: sheetOwner
                   ? {
-                      id: detail.author.id,
-                      name: detail.author.name,
-                      avatarUrl: detail.author.avatarUrl ?? null,
+                      id: sheetOwner.id,
+                      name: sheetOwner.name,
+                      avatarUrl: sheetOwner.avatarUrl ?? null,
                       trustScore: null,
                     }
                   : null,
@@ -1354,21 +1657,25 @@ export function CarnetDrawerV2({
                   initialCategory={item.category ?? undefined}
                   currentKitWeightG={totalKitWeightG}
                   alreadyInKit={false}
-                  positionLabel={`${selectedKitProductIndex + 1} / ${sacKitItems.length}`}
-                  hasPrev={selectedKitProductIndex > 0}
-                  hasNext={selectedKitProductIndex < sacKitItems.length - 1}
+                  positionLabel={`${sheetIdx + 1} / ${sheetItems.length}`}
+                  hasPrev={sheetIdx > 0}
+                  hasNext={sheetIdx < sheetItems.length - 1}
                   onPrev={() =>
-                    setSelectedKitProductIndex((i) => (i !== null && i > 0 ? i - 1 : i))
-                  }
-                  onNext={() =>
-                    setSelectedKitProductIndex((i) =>
-                      i !== null && i < sacKitItems.length - 1 ? i + 1 : i
+                    setSelectedKitSheet((cur) =>
+                      cur && cur.index > 0 ? { ...cur, index: cur.index - 1 } : cur
                     )
                   }
-                  onClose={() => setSelectedKitProductIndex(null)}
+                  onNext={() =>
+                    setSelectedKitSheet((cur) =>
+                      cur && cur.index < cur.items.length - 1
+                        ? { ...cur, index: cur.index + 1 }
+                        : cur
+                    )
+                  }
+                  onClose={() => setSelectedKitSheet(null)}
                   onAdd={(prod) => {
                     void forkItem(prod.id);
-                    setSelectedKitProductIndex(null);
+                    setSelectedKitSheet(null);
                   }}
                 />
               );

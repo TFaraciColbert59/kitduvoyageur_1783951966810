@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ChevronDown,
   Plus,
-  Sun,
+  Bell,
   SlidersHorizontal,
   Share2,
   Link2,
@@ -12,7 +12,6 @@ import {
   Pencil,
   UserPlus,
 } from 'lucide-react';
-import { Switch } from '@/components/ui/Switch';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import type { CarnetViewerRole } from '@/features/carnet/detail/types';
 import { isParticipantRole } from '@/features/carnet/detail/viewerRole';
@@ -37,9 +36,10 @@ export interface CarnetTopBarV2Props {
   isEditing?: boolean;
   onToggleEdit?: () => void;
   onOpenSettings: () => void;
+  onOpenNotifications?: () => void;
   onCreateMoment?: () => void;
-  onToggleOutdoor: () => void;
-  isOutdoor: boolean;
+  onToggleOutdoor?: () => void;
+  isOutdoor?: boolean;
   /** Réduction manuelle des animations de la fiche (popover Affichage). */
   reduceMotion?: boolean;
   onToggleReduceMotion?: () => void;
@@ -65,11 +65,8 @@ export function CarnetTopBarV2({
   isEditing = false,
   onToggleEdit,
   onOpenSettings,
+  onOpenNotifications,
   onCreateMoment,
-  onToggleOutdoor,
-  isOutdoor,
-  reduceMotion = false,
-  onToggleReduceMotion,
   onShare,
   onReport,
   onCopyLink,
@@ -78,12 +75,9 @@ export function CarnetTopBarV2({
 }: CarnetTopBarV2Props) {
   const { haptic } = useHapticFeedback();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [displayOpen, setDisplayOpen] = useState(false);
   const [titleMorph, setTitleMorph] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
-  const displayRef = useRef<HTMLDivElement>(null);
-  const displayBtnRef = useRef<HTMLButtonElement>(null);
 
   const isParticipant = isParticipantRole(viewerRole);
 
@@ -107,26 +101,6 @@ export function CarnetTopBarV2({
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [menuOpen]);
-
-  useEffect(() => {
-    if (!displayOpen) return;
-    function onPointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (displayRef.current?.contains(target) || displayBtnRef.current?.contains(target)) return;
-      setDisplayOpen(false);
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return;
-      setDisplayOpen(false);
-      displayBtnRef.current?.focus();
-    }
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [displayOpen]);
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -262,59 +236,22 @@ export function CarnetTopBarV2({
         ) : null}
 
         <button
-          ref={displayBtnRef}
           type="button"
           className="lkdv-gbtn"
-          onClick={() => setDisplayOpen((prev) => !prev)}
-          aria-label="Affichage"
+          onClick={() => {
+            haptic('selection');
+            onOpenNotifications?.();
+          }}
+          aria-label="Notifications"
           aria-haspopup="dialog"
-          aria-expanded={displayOpen}
         >
-          <Sun size={17} />
+          <Bell size={17} />
         </button>
-
-        {displayOpen ? (
-          <div
-            ref={displayRef}
-            className="lkdv-display-popover"
-            role="dialog"
-            aria-label="Affichage"
-          >
-            <div className="lkdv-display-row">
-              <div>
-                <b>Plein soleil</b>
-                <small>Contraste renforcé, texte plus grand</small>
-              </div>
-              <Switch
-                checked={isOutdoor}
-                onCheckedChange={() => {
-                  haptic('selection');
-                  onToggleOutdoor();
-                }}
-                aria-label="Plein soleil"
-              />
-            </div>
-            <div className="lkdv-display-row">
-              <div>
-                <b>Réduire les animations</b>
-                <small>Mouvements simplifiés</small>
-              </div>
-              <Switch
-                checked={reduceMotion}
-                onCheckedChange={() => {
-                  haptic('selection');
-                  onToggleReduceMotion?.();
-                }}
-                aria-label="Réduire les animations"
-              />
-            </div>
-          </div>
-        ) : null}
         <button
           type="button"
           className="lkdv-gbtn"
           onClick={onOpenSettings}
-          aria-label="Carnet : notifications, partage, paramètres"
+          aria-label="Carnet : partage, paramètres"
           aria-haspopup="dialog"
         >
           <SlidersHorizontal size={17} />

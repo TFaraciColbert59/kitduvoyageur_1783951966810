@@ -4,19 +4,25 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Bookmark,
+  Calendar,
   Check,
   ChevronRight,
+  Handshake,
   Loader2,
   Maximize2,
   Minimize2,
   Minus,
   Plus,
+  Repeat,
   Search,
   Send,
   ShieldCheck,
+  ShoppingBag,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { addToCart } from '@/lib/cart';
+import { createClient } from '@/lib/supabase/client';
 import type { PickerProduct, KitSource } from '@/features/community/create/kit/types';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
@@ -40,6 +46,49 @@ interface ShareConv {
   title?: string | null;
   name?: string | null;
   avatar_url?: string | null;
+}
+
+interface ShopOffer {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  priceEur: number;
+  weightG: number;
+  image: string;
+  category: string;
+  inStock: boolean;
+}
+
+interface CommunityOffer {
+  id: string;
+  title: string;
+  priceEur: number | null;
+  condition: string | null;
+  ownerId: string | null;
+  ownerName: string;
+  ownerAvatar: string | null;
+  ownerTrustScore: number | null;
+  image: string | null;
+}
+
+type ObtainMode = 'achat' | 'location' | 'occasion' | 'pret';
+
+function cheapestOffer(list: CommunityOffer[]): CommunityOffer | null {
+  if (list.length === 0) return null;
+  return list.reduce((best, cur) => {
+    const bp = best.priceEur ?? Number.POSITIVE_INFINITY;
+    const cp = cur.priceEur ?? Number.POSITIVE_INFINITY;
+    return cp < bp ? cur : best;
+  }, list[0]);
+}
+
+function normalizeText(v: string | null | undefined): string {
+  return (v ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 export interface ProductAddOverrides {
@@ -136,6 +185,20 @@ export function KitProductSheetV2({
   const [convSearch, setConvSearch] = useState('');
   const [sendingConvId, setSendingConvId] = useState<string | null>(null);
   const [sentConvIds, setSentConvIds] = useState<string[]>([]);
+  const [heroPanel, setHeroPanel] = useState<'occasion' | 'location' | 'pret' | null>(null);
+  const [selectedMode, setSelectedMode] = useState<ObtainMode>('achat');
+  const [userPickedMode, setUserPickedMode] = useState(false);
+  const [shopOffer, setShopOffer] = useState<ShopOffer | null>(null);
+  const [occasionOffers, setOccasionOffers] = useState<CommunityOffer[]>([]);
+  const [locationOffers, setLocationOffers] = useState<CommunityOffer[]>([]);
+  const [loanOffers, setLoanOffers] = useState<CommunityOffer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(false);
+  const [selectedOccasionId, setSelectedOccasionId] = useState<string | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+  const [loanSending, setLoanSending] = useState(false);
+  const [variantImages, setVariantImages] = useState<string[]>([]);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
   const swipeStartY = useRef<number | null>(null);
 
   useEffect(() => {
@@ -145,7 +208,242 @@ export function KitProductSheetV2({
     setWeightG(product.weightG ?? 0);
     setShareOpen(false);
     setPreviewCollapsed(false);
+    setHeroPanel(null);
+    setUserPickedMode(false);
+    setSelectedOccasionId(null);
+    setSelectedLocationId(null);
+    setSelectedLoanId(null);
+    setVariantImages([]);
+    setActiveImageIdx(0);
   }, [product.id, product.weightG, setPreviewCollapsed]);
+
+  useEffect(() => {
+    let alive = true;
+    const needle = normalizeText(product.name);
+    setOffersLoading(true);
+
+    const loadOffers = async () => {
+      try {
+        const sb = createClient();
+        const needleWords = needle
+          .split(/\s+/)
+          .filter((w) => w.length >= 4 && !['pour', 'avec', 'sans', 'dans', 'plus'].includes(w));
+        const shopPromise = product.productId
+          ? sb.from('shop_products').select('*').eq('id', product.productId).maybeSingle()
+          : sb
+              .from('shop_products')
+              .select('*')
+              .ilike('name', `%${needleWords.slice(0, 2).join('%') || product.name}%`)
+              .limit(1)
+              .maybeSingle();
+
+        const qParam = encodeURIComponent(product.name);
+        const [shopRes, occRes, locRes, loanRes] = await Promise.all([
+          shopPromise,
+          fetch(`/api/marketplace/listings?mode=vente&q=${qParam}`, { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+          fetch(`/api/marketplace/listings?mode=location&q=${qParam}`, { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+          fetch(`/api/marketplace/listings?mode=pret&q=${qParam}`, { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+        ]);
+
+        if (!alive) return;
+
+        const sp = shopRes?.data as Record<string, unknown> | null;
+        if (sp) {
+          const stockNum = typeof sp.stock === 'number' ? sp.stock : typeof sp.stock_qty === 'number' ? sp.stock_qty : 1;
+          setShopOffer({
+            id: String(sp.id),
+            slug: String(sp.slug ?? sp.id),
+            name: String(sp.name ?? product.name),
+            brand: String(sp.brand ?? product.brand ?? ''),
+            priceEur: Number(sp.price_eur ?? sp.price ?? 0) || 0,
+            weightG: Number(sp.weight_g ?? weightG) || 0,
+            image: String(sp.image ?? ''),
+            category: String(sp.category ?? product.category ?? 'Divers'),
+            inStock: sp.in_stock !== false && stockNum > 0,
+          });
+        } else {
+          setShopOffer(null);
+        }
+
+        const mapListings = (raw: unknown): CommunityOffer[] => {
+          const list = Array.isArray((raw as { listings?: unknown[] })?.listings)
+            ? ((raw as { listings: Array<Record<string, unknown>> }).listings)
+            : [];
+          return list
+            .filter((l) => {
+              if (product.productId && l.product_id === product.productId) return true;
+              const title = normalizeText(String(l.name ?? l.title ?? l.product_name ?? ''));
+              if (!needle || !title) return false;
+              if (title === needle || title.includes(needle) || needle.includes(title)) return true;
+              if (needleWords.length >= 2) {
+                const hits = needleWords.filter((w) => title.includes(w));
+                return hits.length >= Math.min(2, needleWords.length);
+              }
+              return needleWords.length === 1 && title.includes(needleWords[0]);
+            })
+            .map((l) => {
+              const seller = (l.owner ?? l.seller ?? {}) as Record<string, unknown>;
+              const rawPrice =
+                typeof l.price_eur === 'number'
+                  ? l.price_eur
+                  : typeof l.price === 'number'
+                    ? l.price
+                    : typeof l.price_cents === 'number'
+                      ? Math.round(l.price_cents / 100)
+                      : null;
+              return {
+                id: String(l.id),
+                title: String(l.name ?? l.title ?? l.product_name ?? product.name),
+                priceEur: rawPrice,
+                condition: typeof l.condition === 'string' ? l.condition : null,
+                ownerId:
+                  typeof l.owner_id === 'string'
+                    ? l.owner_id
+                    : typeof l.user_id === 'string'
+                      ? l.user_id
+                      : typeof seller.id === 'string'
+                        ? seller.id
+                        : null,
+                ownerName: String(seller.full_name ?? seller.name ?? 'Voyageur LKDV'),
+                ownerAvatar: typeof seller.avatar_url === 'string' ? seller.avatar_url : null,
+                ownerTrustScore:
+                  typeof seller.trust_score === 'number' ? Math.round(seller.trust_score) : null,
+                image:
+                  typeof l.photo_url === 'string'
+                    ? l.photo_url
+                    : typeof l.image_url === 'string'
+                      ? l.image_url
+                      : null,
+              };
+            });
+        };
+
+        const occ = mapListings(occRes);
+        const locs = mapListings(locRes);
+        const loans = mapListings(loanRes);
+        setOccasionOffers(occ);
+        setLocationOffers(locs);
+        setLoanOffers(loans);
+        setSelectedOccasionId(cheapestOffer(occ)?.id ?? null);
+        setSelectedLocationId(cheapestOffer(locs)?.id ?? null);
+        if (loans[0]) setSelectedLoanId(loans[0].id);
+
+        // Charger les variantes/vues réelles depuis le bucket product-images si une URL Supabase est trouvée
+        const candidateUrl =
+          (product.image && /^https?:\/\//.test(product.image) ? product.image : '') ||
+          (sp && typeof sp.image === 'string' && /^https?:\/\//.test(sp.image) ? sp.image : '') ||
+          locs[0]?.image ||
+          occ[0]?.image ||
+          loans[0]?.image ||
+          '';
+        const match = candidateUrl.match(/^(https?:\/\/[^/]+\/storage\/v1\/object\/public\/product-images)\/([^/]+)\//);
+        if (match) {
+          const basePrefix = match[1];
+          const folder = match[2];
+          const { data: files } = await sb.storage.from('product-images').list(folder, { limit: 6 });
+          if (alive && Array.isArray(files) && files.length > 0) {
+            const urls = files
+              .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((f) => `${basePrefix}/${folder}/${f.name}`);
+            setVariantImages(urls);
+          }
+        }
+      } finally {
+        if (alive) setOffersLoading(false);
+      }
+    };
+
+    void loadOffers();
+    return () => {
+      alive = false;
+    };
+  }, [product.brand, product.category, product.id, product.name, product.productId, weightG]);
+
+  const bestMode = useMemo<ObtainMode>(() => {
+    if (loanOffers.length > 0) return 'pret';
+    if (shopOffer?.inStock) return 'achat';
+    return 'occasion';
+  }, [loanOffers.length, shopOffer]);
+
+  useEffect(() => {
+    if (!offersLoading && !userPickedMode) {
+      setSelectedMode(bestMode);
+    }
+  }, [bestMode, offersLoading, userPickedMode]);
+
+  const selectedOccasion = useMemo(
+    () => occasionOffers.find((o) => o.id === selectedOccasionId) ?? cheapestOffer(occasionOffers),
+    [occasionOffers, selectedOccasionId]
+  );
+  const selectedLocation = useMemo(
+    () => locationOffers.find((o) => o.id === selectedLocationId) ?? cheapestOffer(locationOffers),
+    [locationOffers, selectedLocationId]
+  );
+  const selectedLoan = useMemo(
+    () => loanOffers.find((o) => o.id === selectedLoanId) ?? loanOffers[0] ?? null,
+    [loanOffers, selectedLoanId]
+  );
+
+  const heroGallery = useMemo(() => {
+    const raw = [
+      product.image && /^https?:\/\//.test(product.image) ? product.image : null,
+      shopOffer?.image && /^https?:\/\//.test(shopOffer.image) ? shopOffer.image : null,
+      ...variantImages,
+      selectedLocation?.image && /^https?:\/\//.test(selectedLocation.image) ? selectedLocation.image : null,
+      selectedOccasion?.image && /^https?:\/\//.test(selectedOccasion.image) ? selectedOccasion.image : null,
+      selectedLoan?.image && /^https?:\/\//.test(selectedLoan.image) ? selectedLoan.image : null,
+    ].filter((u): u is string => Boolean(u));
+    const unique = Array.from(new Set(raw));
+    return unique.length > 0 ? unique : [imgSrc];
+  }, [imgSrc, product.image, selectedLoan?.image, selectedLocation?.image, selectedOccasion?.image, shopOffer?.image, variantImages]);
+
+  const activeHeroImg = heroGallery[activeImageIdx] ?? heroGallery[0] ?? imgSrc;
+
+  const sendMarketplaceRequest = async (
+    offer: CommunityOffer,
+    mode: 'pret' | 'location' | 'vente'
+  ): Promise<boolean> => {
+    setLoanSending(true);
+    try {
+      const res = await fetch('/api/marketplace/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: offer.id,
+          mode,
+          productName: product.name,
+          priceEur: offer.priceEur,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        toast.error(json.error || 'Impossible d’envoyer la demande');
+        return false;
+      }
+      const label =
+        mode === 'pret' ? 'Demande de prêt' : mode === 'location' ? 'Demande de location' : 'Demande d’occasion';
+      toast.success(`${label} envoyée par message et notification à ${offer.ownerName}`);
+      setHeroPanel(null);
+      return true;
+    } catch {
+      toast.error('Erreur réseau lors de l’envoi de la demande');
+      return false;
+    } finally {
+      setLoanSending(false);
+    }
+  };
+
+  const handleSendLoanRequest = async () => {
+    if (!selectedLoan) return;
+    await sendMarketplaceRequest(selectedLoan, 'pret');
+  };
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -352,20 +650,315 @@ export function KitProductSheetV2({
             onExpand={() => setPreviewCollapsed(false)}
             title={product.name}
             subtitle={`${fmtItem(weightG)} · ${singleHeroBadge}`}
-            avatarUrl={imgSrc}
+            avatarUrl={activeHeroImg}
           >
             <div className="lkdv-cv2c-ps-hero" data-zoomed={zoomed || undefined}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- photo produit */}
-              <img src={imgSrc} alt={product.name} className="lkdv-cv2c-ps-hero-img" />
-              <span className="lkdv-cv2c-ps-badge is-right">{singleHeroBadge}</span>
-              <button
-                type="button"
-                className="lkdv-cv2c-ps-zoom-btn"
-                aria-label={zoomed ? 'Réduire la photo' : 'Zoomer sur la photo'}
-                onClick={() => setZoomed((z) => !z)}
-              >
-                {zoomed ? <Minimize2 size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
-              </button>
+              {heroPanel === 'occasion' || heroPanel === 'location' ? (() => {
+                const isLocation = heroPanel === 'location';
+                const listOffers = isLocation ? locationOffers : occasionOffers;
+                return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '12px',
+                    gap: '8px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <b style={{ fontSize: '0.84rem', color: '#172b24' }}>
+                      {isLocation ? `Locations (${listOffers.length})` : `Occasions (${listOffers.length})`}
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => setHeroPanel(null)}
+                      aria-label="Revenir à la photo"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: 0,
+                        background: 'rgba(23, 64, 44, 0.08)',
+                        color: '#17402c',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  {offersLoading ? (
+                    <p style={{ margin: '12px 0', fontSize: '0.78rem', color: '#56665d' }}>
+                      {isLocation ? 'Recherche des annonces de location…' : 'Recherche des annonces d’occasion…'}
+                    </p>
+                  ) : listOffers.length === 0 ? (
+                    <div style={{ margin: 'auto 0', textAlign: 'center', padding: '12px' }}>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: '#56665d' }}>
+                        {isLocation
+                          ? 'Aucune annonce de location avec cette référence pour le moment.'
+                          : 'Aucune annonce d’occasion avec cette référence pour le moment.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                        gap: '8px',
+                      }}
+                    >
+                      {listOffers.map((offer) => {
+                        const isPicked = isLocation
+                          ? selectedLocation?.id === offer.id
+                          : selectedOccasion?.id === offer.id;
+                        const offerImg = offer.image || imgSrc;
+                        return (
+                          <button
+                            key={offer.id}
+                            type="button"
+                            onClick={() => {
+                              if (isLocation) setSelectedLocationId(offer.id);
+                              else setSelectedOccasionId(offer.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              justifyContent: 'space-between',
+                              gap: 6,
+                              padding: '8px',
+                              borderRadius: 14,
+                              aspectRatio: '1 / 1',
+                              background: isPicked ? 'rgba(23, 64, 44, 0.06)' : '#ffffff',
+                              border: isPicked ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.12)',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              minWidth: 0,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 38,
+                                height: 38,
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                                background: '#f2f6f3',
+                                flex: 'none',
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element -- photo offre */}
+                              <img
+                                src={offerImg}
+                                alt=""
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                              />
+                            </div>
+                            <div style={{ width: '100%', minWidth: 0 }}>
+                              <b
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.72rem',
+                                  lineHeight: 1.2,
+                                  color: '#172b24',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {offer.ownerName}
+                              </b>
+                              <small
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.68rem',
+                                  color: '#17402c',
+                                  fontWeight: 700,
+                                  marginTop: 2,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {offer.priceEur !== null
+                                  ? isLocation
+                                    ? `${offer.priceEur} € / j`
+                                    : `${offer.priceEur} €`
+                                  : offer.condition || 'Bon état'}
+                              </small>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+                );
+              })() : heroPanel === 'pret' ? (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '12px',
+                    gap: '8px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <b style={{ fontSize: '0.84rem', color: '#172b24' }}>
+                      Demander un prêt ({loanOffers.length})
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => setHeroPanel(null)}
+                      aria-label="Revenir à la photo"
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: 0,
+                        background: 'rgba(23, 64, 44, 0.08)',
+                        color: '#17402c',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    {loanOffers.map((offer) => {
+                      const active = selectedLoanId === offer.id;
+                      return (
+                        <button
+                          key={offer.id}
+                          type="button"
+                          onClick={() => setSelectedLoanId(offer.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 8,
+                            padding: '8px 10px',
+                            borderRadius: 12,
+                            background: active ? 'rgba(22, 163, 74, 0.1)' : '#f8faf8',
+                            border: active ? '1.5px solid #15803d' : '1px solid rgba(23, 64, 44, 0.1)',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <b style={{ display: 'block', fontSize: '0.78rem', color: '#172b24' }}>
+                              {offer.ownerName}
+                            </b>
+                            <small style={{ fontSize: '0.7rem', color: '#56665d' }}>
+                              {offer.condition || 'Disponible en prêt'}
+                            </small>
+                          </div>
+                          {active ? <Check size={15} color="#15803d" /> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!selectedLoanId || loanSending}
+                    onClick={() => void handleSendLoanRequest()}
+                    style={{
+                      height: 36,
+                      borderRadius: 999,
+                      border: 0,
+                      background: '#15803d',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {loanSending ? 'Envoi…' : 'Envoyer la demande de prêt'}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {heroGallery.length > 1 ? (
+                    <div
+                      aria-label="Vues du produit"
+                      style={{
+                        position: 'absolute',
+                        left: 10,
+                        top: 10,
+                        bottom: 10,
+                        width: 42,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        overflowY: 'auto',
+                        zIndex: 3,
+                        scrollbarWidth: 'none',
+                      }}
+                    >
+                      {heroGallery.map((url, idx) => {
+                        const active = idx === activeImageIdx;
+                        return (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setActiveImageIdx(idx)}
+                            aria-label={`Vue ${idx + 1}`}
+                            aria-pressed={active}
+                            style={{
+                              width: 38,
+                              height: 38,
+                              padding: 0,
+                              borderRadius: 9,
+                              overflow: 'hidden',
+                              border: active
+                                ? '1.5px solid #17402c'
+                                : '1px solid rgba(23, 64, 44, 0.16)',
+                              background: '#ffffff',
+                              flex: 'none',
+                              cursor: 'pointer',
+                              opacity: active ? 1 : 0.72,
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- miniature variante */}
+                            <img
+                              src={url}
+                              alt=""
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- photo produit */}
+                  <img
+                    src={activeHeroImg}
+                    alt={product.name}
+                    className="lkdv-cv2c-ps-hero-img"
+                    style={heroGallery.length > 1 ? { paddingLeft: 48 } : undefined}
+                  />
+                  <span className="lkdv-cv2c-ps-badge is-right">{singleHeroBadge}</span>
+                  <button
+                    type="button"
+                    className="lkdv-cv2c-ps-zoom-btn"
+                    aria-label={zoomed ? 'Réduire la photo' : 'Zoomer sur la photo'}
+                    onClick={() => setZoomed((z) => !z)}
+                  >
+                    {zoomed ? <Minimize2 size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
+                  </button>
+                </>
+              )}
             </div>
           </CollapsibleHeroPreview>
         </div>
@@ -400,6 +993,455 @@ export function KitProductSheetV2({
             <ChevronRight size={15} color="#64748b" aria-hidden="true" />
           </Link>
         ) : null}
+
+        {/* Différentes possibilités d'obtenir cet objet */}
+        <div className="lkdv-cv2c-ps-card" style={{ gap: 8 }}>
+          <span className="lkdv-cv2c-ps-label">Obtenir cet objet</span>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: 8,
+            }}
+          >
+            {/* 1. Achat neuf -> sélectionne le mode achat */}
+            <button
+              type="button"
+              onClick={() => {
+                setUserPickedMode(true);
+                setSelectedMode('achat');
+                setHeroPanel(null);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: selectedMode === 'achat' ? 'rgba(23, 64, 44, 0.08)' : shopOffer?.inStock ? '#f8faf8' : '#f9fafb',
+                border: selectedMode === 'achat' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
+                opacity: shopOffer?.inStock === false && selectedMode !== 'achat' ? 0.65 : 1,
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <ShoppingBag size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Acheter neuf</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading
+                    ? 'Vérification…'
+                    : shopOffer?.inStock
+                      ? `${shopOffer.priceEur > 0 ? `${shopOffer.priceEur} € · ` : ''}En stock`
+                      : 'Hors stock'}
+                </small>
+              </span>
+            </button>
+
+            {/* 2. Location -> sélectionne le mode location + ouvre le mini drawer */}
+            <button
+              type="button"
+              onClick={() => {
+                setUserPickedMode(true);
+                setSelectedMode('location');
+                setHeroPanel((cur) => (cur === 'location' ? null : 'location'));
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: selectedMode === 'location' || heroPanel === 'location' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: selectedMode === 'location' || heroPanel === 'location' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Calendar size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Louer</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading ? 'Recherche…' : `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}`}
+                </small>
+              </span>
+            </button>
+
+            {/* 3. Occasion -> sélectionne le mode occasion + ouvre le mini drawer */}
+            <button
+              type="button"
+              onClick={() => {
+                setUserPickedMode(true);
+                setSelectedMode('occasion');
+                setHeroPanel((cur) => (cur === 'occasion' ? null : 'occasion'));
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: selectedMode === 'occasion' || heroPanel === 'occasion' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: selectedMode === 'occasion' || heroPanel === 'occasion' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
+                color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background: 'rgba(23, 64, 44, 0.08)',
+                  color: '#17402c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Repeat size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Occasion</b>
+                <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading ? 'Recherche…' : `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}`}
+                </small>
+              </span>
+            </button>
+
+            {/* 4. Emprunter (Prêt) -> rouge si indisponible, vert si dispo + sélectionne et ouvre sélecteur */}
+            <button
+              type="button"
+              disabled={!offersLoading && loanOffers.length === 0}
+              onClick={() => {
+                if (loanOffers.length > 0) {
+                  setUserPickedMode(true);
+                  setSelectedMode('pret');
+                  setHeroPanel((cur) => (cur === 'pret' ? null : 'pret'));
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '9px 10px',
+                borderRadius: 12,
+                background:
+                  loanOffers.length > 0
+                    ? 'rgba(22, 163, 74, 0.1)'
+                    : 'rgba(220, 38, 38, 0.08)',
+                border:
+                  selectedMode === 'pret' && loanOffers.length > 0
+                    ? '1.5px solid #15803d'
+                    : loanOffers.length > 0
+                      ? '1px solid rgba(22, 163, 74, 0.35)'
+                      : '1px solid rgba(220, 38, 38, 0.28)',
+                color: loanOffers.length > 0 ? '#15803d' : '#b91c1c',
+                textAlign: 'left',
+                cursor: loanOffers.length > 0 ? 'pointer' : 'not-allowed',
+              }}
+            >
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 8,
+                  background:
+                    loanOffers.length > 0
+                      ? 'rgba(22, 163, 74, 0.14)'
+                      : 'rgba(220, 38, 38, 0.14)',
+                  color: loanOffers.length > 0 ? '#15803d' : '#b91c1c',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flex: 'none',
+                }}
+              >
+                <Handshake size={14} aria-hidden="true" />
+              </span>
+              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Emprunter</b>
+                <small style={{ fontSize: '0.68rem', opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {offersLoading
+                    ? 'Vérification…'
+                    : loanOffers.length > 0
+                      ? `${loanOffers.length} dispo${loanOffers.length > 1 ? 's' : ''}`
+                      : 'Personne ne le prête'}
+                </small>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Action principale + caractéristiques de l'option sélectionnée (défaut = moins cher / plus avantageux) */}
+        {(() => {
+          const isBest = selectedMode === bestMode && (loanOffers.length > 0 || locationOffers.length > 0 || occasionOffers.length > 0 || Boolean(shopOffer?.inStock));
+          const modeLabel =
+            selectedMode === 'pret'
+              ? 'Emprunt (prêt)'
+              : selectedMode === 'location'
+                ? 'Location communauté'
+                : selectedMode === 'occasion'
+                  ? 'Occasion communauté'
+                  : 'Achat neuf';
+
+          const specs: Array<{ label: string; value: string; uppercase?: boolean; trustScore?: number | null; href?: string | null }> =
+            selectedMode === 'pret'
+              ? [
+                  { label: 'Coût', value: 'Gratuit (0 €)' },
+                  { label: 'Casse / perte', value: `${loanBreakageEuro} €` },
+                  { label: 'Prêteur', value: selectedLoan?.ownerName ?? 'Aucun prêteur', trustScore: selectedLoan?.ownerTrustScore ?? null, href: selectedLoan?.ownerId ? `/profil/${selectedLoan.ownerId}` : null },
+                  { label: 'État', value: selectedLoan?.condition ?? 'Bon état', uppercase: true },
+                ]
+              : selectedMode === 'location'
+                ? [
+                    { label: 'Tarif', value: selectedLocation?.priceEur != null ? `${selectedLocation.priceEur} € / j` : 'Sur demande' },
+                    { label: 'État', value: selectedLocation?.condition ?? 'Bon état', uppercase: true },
+                    { label: 'Loueur', value: selectedLocation?.ownerName ?? 'Communauté', trustScore: selectedLocation?.ownerTrustScore ?? null, href: selectedLocation?.ownerId ? `/profil/${selectedLocation.ownerId}` : null },
+                    { label: 'Dispos', value: `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}` },
+                  ]
+                : selectedMode === 'occasion'
+                  ? [
+                      { label: 'Prix', value: selectedOccasion?.priceEur != null ? `${selectedOccasion.priceEur} €` : 'À négocier' },
+                      { label: 'État', value: selectedOccasion?.condition ?? 'Bon état', uppercase: true },
+                      { label: 'Vendeur', value: selectedOccasion?.ownerName ?? 'Communauté', trustScore: selectedOccasion?.ownerTrustScore ?? null, href: selectedOccasion?.ownerId ? `/profil/${selectedOccasion.ownerId}` : null },
+                      { label: 'Dispos', value: `${occasionOffers.length} annonce${occasionOffers.length > 1 ? 's' : ''}` },
+                    ]
+                  : [
+                      { label: 'Prix', value: shopOffer?.priceEur ? `${shopOffer.priceEur} €` : 'Indisponible' },
+                      { label: 'État', value: 'Neuf', uppercase: true },
+                      { label: 'Stock', value: shopOffer?.inStock ? 'En stock' : 'Hors stock' },
+                      { label: 'Poids', value: fmtItem(shopOffer?.weightG || weightG) },
+                    ];
+
+          const canAct =
+            selectedMode === 'pret'
+              ? Boolean(selectedLoan) && !loanSending
+              : selectedMode === 'location'
+                ? Boolean(selectedLocation) && !loanSending
+                : selectedMode === 'occasion'
+                  ? Boolean(selectedOccasion) && !loanSending
+                  : Boolean(shopOffer?.inStock);
+
+          const ctaText =
+            selectedMode === 'pret'
+              ? loanSending
+                ? 'Envoi…'
+                : 'Emprunter'
+              : selectedMode === 'location'
+                ? loanSending
+                  ? 'Envoi…'
+                  : `Louer${selectedLocation?.priceEur != null ? ` · ${selectedLocation.priceEur} € / j` : ''}`
+                : selectedMode === 'occasion'
+                  ? loanSending
+                    ? 'Envoi…'
+                    : `Ajouter au panier${selectedOccasion?.priceEur != null ? ` · ${selectedOccasion.priceEur} €` : ''}`
+                  : shopOffer?.inStock
+                    ? `Ajouter au panier${shopOffer.priceEur > 0 ? ` · ${shopOffer.priceEur} €` : ''}`
+                    : 'Indisponible en neuf';
+
+          const handlePrimaryCta = () => {
+            if (selectedMode === 'pret') {
+              void handleSendLoanRequest();
+              return;
+            }
+            if (selectedMode === 'location' && selectedLocation) {
+              void sendMarketplaceRequest(selectedLocation, 'location');
+              return;
+            }
+            if (selectedMode === 'achat') {
+              if (shopOffer?.inStock) {
+                addToCart({
+                  id: shopOffer.id,
+                  slug: shopOffer.slug,
+                  name: shopOffer.name,
+                  brand: shopOffer.brand,
+                  priceEur: shopOffer.priceEur,
+                  weightG: shopOffer.weightG,
+                  image: shopOffer.image || imgSrc,
+                  imageAlt: shopOffer.name,
+                  quantity,
+                  category: shopOffer.category,
+                });
+                toast.success(`${shopOffer.name} ajouté au panier`);
+              } else {
+                toast.info('Produit indisponible en stock neuf');
+              }
+              return;
+            }
+            if (selectedMode === 'occasion' && selectedOccasion) {
+              addToCart({
+                id: selectedOccasion.id,
+                slug: selectedOccasion.id,
+                name: `${selectedOccasion.title} (Occasion)`,
+                brand: product.brand ?? '',
+                priceEur: selectedOccasion.priceEur ?? 0,
+                weightG,
+                image: selectedOccasion.image || imgSrc,
+                imageAlt: selectedOccasion.title,
+                quantity,
+                category: product.category ?? 'Divers',
+              });
+              void sendMarketplaceRequest(selectedOccasion, 'vente');
+            }
+          };
+
+          return (
+            <div className="lkdv-cv2c-ps-card" style={{ gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span className="lkdv-cv2c-ps-label" style={{ marginBottom: 0 }}>
+                  {modeLabel}
+                </span>
+                {isBest ? (
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(22, 163, 74, 0.12)',
+                      color: '#15803d',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {selectedMode === 'pret'
+                      ? 'Emprunt prioritaire'
+                      : selectedMode === 'achat'
+                        ? 'Boutique LKDV · En stock'
+                        : 'Meilleure alternative'}
+                  </span>
+                ) : null}
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  gap: 6,
+                }}
+              >
+                {specs.map((spec) => {
+                  const inner = (
+                    <>
+                      <small style={{ fontSize: '0.66rem', color: '#64748b' }}>{spec.label}</small>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                        <b
+                          style={{
+                            fontSize: '0.76rem',
+                            color: '#172b24',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            textTransform: spec.uppercase ? 'uppercase' : undefined,
+                          }}
+                        >
+                          {spec.value}
+                        </b>
+                        {spec.trustScore != null ? (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              padding: '1px 6px',
+                              borderRadius: 999,
+                              background: 'rgba(22, 163, 74, 0.12)',
+                              color: '#15803d',
+                              fontSize: '0.64rem',
+                              fontWeight: 700,
+                              flex: 'none',
+                            }}
+                            title="Score de confiance"
+                          >
+                            <ShieldCheck size={10} aria-hidden="true" />
+                            {spec.trustScore}
+                          </span>
+                        ) : null}
+                        {spec.href ? <ChevronRight size={12} color="#64748b" style={{ marginLeft: 'auto', flex: 'none' }} aria-hidden="true" /> : null}
+                      </div>
+                    </>
+                  );
+                  const boxStyle = {
+                    padding: '6px 9px',
+                    borderRadius: 10,
+                    background: '#f8faf8',
+                    border: '1px solid rgba(23, 64, 44, 0.08)',
+                    display: 'flex',
+                    flexDirection: 'column' as const,
+                    gap: 1,
+                    textDecoration: 'none',
+                  };
+                  return spec.href ? (
+                    <Link key={spec.label} href={spec.href} onClick={onClose} style={boxStyle}>
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div key={spec.label} style={boxStyle}>
+                      {inner}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                disabled={!canAct}
+                onClick={handlePrimaryCta}
+                style={{
+                  height: 40,
+                  borderRadius: 999,
+                  border: 0,
+                  background: selectedMode === 'pret' ? '#15803d' : '#17402c',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  cursor: canAct ? 'pointer' : 'not-allowed',
+                  opacity: canAct ? 1 : 0.55,
+                }}
+              >
+                {selectedMode === 'pret' ? (
+                  <Handshake size={15} aria-hidden="true" />
+                ) : selectedMode === 'location' ? (
+                  <Calendar size={15} aria-hidden="true" />
+                ) : (
+                  <ShoppingBag size={15} aria-hidden="true" />
+                )}
+                <span>{ctaText}</span>
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Description du produit */}
         {product.description ? (

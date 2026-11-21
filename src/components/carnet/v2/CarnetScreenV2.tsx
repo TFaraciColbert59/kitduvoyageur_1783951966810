@@ -72,6 +72,13 @@ const ReportSheet = dynamic(
   () => import('@/components/social/ReportSheet'),
   { ssr: false }
 );
+const CommunityNotificationsDrawer = dynamic(
+  () =>
+    import('@/features/community/notifications/CommunityNotificationsDrawer').then((m) => ({
+      default: m.CommunityNotificationsDrawer,
+    })),
+  { ssr: false }
+);
 
 import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
@@ -134,6 +141,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSlot, setDrawerSlot] = useState<CarnetSlotId>('fil');
   const [isAccountDrawer, setIsAccountDrawer] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [postMomentId, setPostMomentId] = useState<string | null>(null);
   const [postSheetPanel, setPostSheetPanel] = useState<'comments' | null>(null);
   const [peekMoment, setPeekMoment] = useState<CarnetMomentItem | null>(null);
@@ -859,6 +867,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
             setIsAccountDrawer(true);
             setDrawerOpen(true);
           }}
+          onOpenNotifications={() => setNotificationsOpen(true)}
           onCreateMoment={() => openCreate()}
           onToggleOutdoor={() => setOutdoor((prev) => !prev)}
           isOutdoor={outdoor}
@@ -1043,6 +1052,13 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         </div>
       ) : null}
 
+      {/* Notifications drawer (remplace Affichage dans la barre du haut) */}
+      <CommunityNotificationsDrawer
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        user={currentUserId ? ({ id: currentUserId } as never) : null}
+      />
+
       {/* 5-Slot Drawer (Fil, Route, Sac, Chiffres, Équipage) */}
       <CarnetDrawerV2
         isOpen={drawerOpen}
@@ -1058,6 +1074,10 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         onSelectMoment={(moment) => openPost(moment)}
         onOpenStories={() => setStoriesOpen(true)}
         isAccountDrawer={isAccountDrawer}
+        isOutdoor={outdoor}
+        onToggleOutdoor={() => setOutdoor((prev) => !prev)}
+        reduceMotion={reduceMotion}
+        onToggleReduceMotion={() => setReduceMotion((prev) => !prev)}
         isEditing={isEditing}
         onCreate={openCreate}
         pinnedIds={pinnedIds}
