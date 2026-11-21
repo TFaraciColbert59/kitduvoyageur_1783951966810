@@ -20,6 +20,10 @@ export interface CreateFormV2Props {
   stepHosts?: (HTMLElement | null)[] | null;
   /** Masque les options redondantes (lier un carnet, politique de réponses) quand ouvert depuis un carnet. */
   inCarnet?: boolean;
+  /** Option « Note vocale » intégrée au sélecteur de format de PostFormV2 dans un carnet. */
+  voiceMode?: boolean;
+  onVoiceModeChange?: (active: boolean) => void;
+  voiceStepContent?: React.ReactNode;
 }
 
 /** Valeurs de préremplissage connues (lecture sûre, aucune coercition). */

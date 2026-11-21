@@ -55,8 +55,6 @@ const CARNET_CREATE_TABS: ReadonlyArray<{
   icon: React.ReactNode;
 }> = [
   { id: 'post', label: 'Publication', icon: <PenLine size={20} aria-hidden="true" /> },
-  { id: 'story', label: 'Story', icon: <Camera size={20} aria-hidden="true" /> },
-  { id: 'voice', label: 'Vocal', icon: <Mic size={20} aria-hidden="true" /> },
   { id: 'meet', label: 'Rencontre', icon: <Users size={20} aria-hidden="true" /> },
   { id: 'species', label: 'Espèce', icon: <Leaf size={20} aria-hidden="true" /> },
   { id: 'inc', label: 'Incident', icon: <AlertTriangle size={20} aria-hidden="true" /> },
@@ -94,9 +92,11 @@ export function CarnetCommunityCreateBridge({
   onCreated,
 }: CarnetCommunityCreateBridgeProps) {
   const [tabIndex, setTabIndex] = useState(() => {
-    const idx = CARNET_CREATE_TABS.findIndex((t) => t.id === initialTab);
+    const resolved = initialTab === 'voice' || initialTab === 'story' ? 'post' : initialTab;
+    const idx = CARNET_CREATE_TABS.findIndex((t) => t.id === resolved);
     return idx >= 0 ? idx : 0;
   });
+  const [postVoiceMode, setPostVoiceMode] = useState(initialTab === 'voice');
   const [momentStepIndex, setMomentStepIndex] = useState(0);
   const activeTab = CARNET_CREATE_TABS[tabIndex]?.id ?? 'post';
 
@@ -736,27 +736,28 @@ export function CarnetCommunityCreateBridge({
     [day, onSubmitMoment, place],
   );
 
-  const submitCarnetMoment = async () => {
+  const submitCarnetMoment = async (overrideKind?: 'voice' | 'meet' | 'species' | 'inc') => {
+    const targetKind = overrideKind ?? activeTab;
     if (momentBusy) return;
-    if (activeTab === 'post' || activeTab === 'story') return;
+    if (targetKind === 'post' || targetKind === 'story') return;
     const tabCaption =
-      activeTab === 'species'
+      targetKind === 'species'
         ? speciesCaption
-        : momentCaptions[activeTab];
+        : momentCaptions[targetKind];
 
-    if (activeTab === 'voice' && !voice.recording?.file) {
+    if (targetKind === 'voice' && !voice.recording?.file) {
       setMomentError('Enregistre un mémo vocal avant de l’ajouter.');
       return;
     }
-    if (activeTab === 'meet' && !who.trim() && !tabCaption.trim()) {
+    if (targetKind === 'meet' && !who.trim() && !tabCaption.trim()) {
       setMomentError('Indique qui tu as rencontré ou ce que vous vous êtes dit.');
       return;
     }
-    if (activeTab === 'inc' && !tabCaption.trim()) {
+    if (targetKind === 'inc' && !tabCaption.trim()) {
       setMomentError('Décris brièvement ce qui s’est passé.');
       return;
     }
-    if (activeTab === 'species') {
+    if (targetKind === 'species') {
       const c = speciesCaption.trim().toLowerCase();
       const l = latin.trim().toLowerCase();
       if (!c) {
@@ -777,17 +778,17 @@ export function CarnetCommunityCreateBridge({
     setMomentBusy(true);
     setMomentError(null);
     const input: Record<string, unknown> = {
-      type: activeTab,
+      type: targetKind,
       day,
       place,
       caption: tabCaption,
     };
-    if (activeTab === 'voice') {
+    if (targetKind === 'voice') {
       input.durationLabel = voice.recording?.durationLabel;
       if (ambiance) input.ambiance = true;
     }
-    if (activeTab === 'meet') input.who = who;
-    if (activeTab === 'species') {
+    if (targetKind === 'meet') input.who = who;
+    if (targetKind === 'species') {
       input.latin = latin;
       if (speciesNote.trim()) {
         input.caption = `${speciesCaption.trim() || 'Espèce'} — ${speciesNote.trim()}`;
@@ -795,9 +796,9 @@ export function CarnetCommunityCreateBridge({
     }
 
     const attachedFile =
-      activeTab === 'voice'
+      targetKind === 'voice'
         ? (voice.recording?.file ?? null)
-        : activeTab === 'species'
+        : targetKind === 'species'
           ? speciesFile
           : null;
 
@@ -813,10 +814,123 @@ export function CarnetCommunityCreateBridge({
 
   const isLastMomentStep = momentStepIndex >= momentStepLabels.length - 1;
 
+  const voiceStepContent = (
+    <div className="lkdv-cv2c-pane">
+      <div
+        className="lkdv-carnet-species-preview"
+        style={{ marginBottom: 4 }}
+        aria-label="Aperçu du mémo vocal"
+      >
+        <div
+          className="lkdv-carnet-species-preview-media"
+          style={{
+            background: ambiance
+              ? 'linear-gradient(135deg, rgba(27, 67, 50, 0.16), rgba(16, 185, 129, 0.14))'
+              : 'rgba(27, 67, 50, 0.08)',
+          }}
+        >
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
+            <Mic size={24} aria-hidden="true" />
+            <span>{voice.recording?.durationLabel || (voice.state === 'recording' ? formatClock(voice.seconds) : '0:00')}</span>
+          </div>
+          <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+          {ambiance ? (
+            <span className="lkdv-carnet-species-preview-rarity">Ambiance</span>
+          ) : null}
+        </div>
+        <div className="lkdv-carnet-species-preview-body">
+          <div className="lkdv-carnet-species-preview-title">
+            <b>{momentCaptions.voice.trim() || (ambiance ? 'Son d’ambiance' : 'Mémo vocal')}</b>
+            <i>{place.trim() || `Lieu non défini · J${day}`}</i>
+          </div>
+        </div>
+      </div>
+
+      <div className="lkdv-cv2-card" style={{ padding: 14, borderRadius: 22 }}>
+        <span className="lkdv-cv2-field-label">Enregistrement audio</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+          {voice.state === 'recording' ? (
+            <button
+              type="button"
+              className="lkdv-cv2-pill lkdv-cv2-pill--primary"
+              style={{ background: '#a8443a' }}
+              onClick={voice.stop}
+            >
+              <Square size={13} /> Arrêter · {formatClock(voice.seconds)}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="lkdv-cv2-pill lkdv-cv2-pill--primary"
+              disabled={!voice.supported}
+              onClick={() => void voice.start()}
+            >
+              <Mic size={14} /> {voice.state === 'ready' ? 'Réenregistrer' : 'Enregistrer'}
+            </button>
+          )}
+          {voice.state === 'ready' ? (
+            <button
+              type="button"
+              className="lkdv-cv2-pill lkdv-cv2-pill--secondary"
+              onClick={voice.reset}
+            >
+              <Trash2 size={13} /> Effacer
+            </button>
+          ) : null}
+        </div>
+        {voice.state === 'ready' && voice.recording ? (
+          <audio controls src={recordedUrl ?? undefined} style={{ width: '100%', marginTop: 10 }} />
+        ) : null}
+        <p className="lkdv-cv2-field-hint" style={{ marginTop: 8 }}>
+          {voice.message ??
+            (voice.supported
+              ? '3 minutes maximum. Le micro ne s’ouvre qu’à l’appui.'
+              : 'Enregistrement audio non supporté par ce navigateur.')}
+        </p>
+      </div>
+
+      <span className="lkdv-cv2c-inert-row">
+        <span>
+          <b>Son d’ambiance</b>
+          <small>Marquer comme ambiance sonore du lieu</small>
+        </span>
+        <button
+          type="button"
+          className="lkdv-cv2c-switch"
+          role="switch"
+          aria-checked={ambiance}
+          onClick={() => setAmbiance((v) => !v)}
+        >
+          <span className="lkdv-cv2c-switch-track" aria-hidden="true">
+            <span className="lkdv-cv2c-switch-dot" />
+          </span>
+        </button>
+      </span>
+
+      <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
+
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Note ou légende</span>
+        <textarea
+          className="lkdv-cv2-input"
+          rows={2}
+          value={momentCaptions.voice}
+          maxLength={240}
+          placeholder="Un mot sur cette note…"
+          onChange={(e) => setMomentCaptions((prev) => ({ ...prev, voice: e.target.value }))}
+        />
+      </div>
+    </div>
+  );
+
   const footer = activeCommunityKind ? (
     activeNav ? (
       <div className="lkdv-cv2c-footbar">
-        {activeNav.serverError ? (
+        {postVoiceMode && momentError ? (
+          <p className="lkdv-cv2c-server" role="alert">
+            {momentError}
+          </p>
+        ) : activeNav.serverError ? (
           <p className="lkdv-cv2c-server" role="alert">
             {activeNav.serverError}
           </p>
@@ -834,7 +948,7 @@ export function CarnetCommunityCreateBridge({
                   className="lkdv-cv2-pill lkdv-cv2-pill--secondary lkdv-cv2c-back lkdv-cv2c-back--icon"
                   aria-label="Retour"
                   onClick={activeNav.goBack}
-                  disabled={activeNav.busy}
+                  disabled={activeNav.busy || momentBusy}
                 >
                   <ChevronLeft size={16} aria-hidden="true" />
                 </motion.button>
@@ -844,14 +958,22 @@ export function CarnetCommunityCreateBridge({
               key="next"
               type="button"
               className="lkdv-cv2-pill lkdv-cv2-pill--primary lkdv-cv2c-next"
-              onClick={activeNav.goNext}
-              disabled={activeNav.busy || !user}
+              onClick={() => {
+                if (postVoiceMode && activeNav.stepIndex >= activeNav.stepCount - 1) {
+                  void submitCarnetMoment('voice');
+                  return;
+                }
+                activeNav.goNext();
+              }}
+              disabled={activeNav.busy || momentBusy || !user}
             >
-              {activeNav.busy
+              {momentBusy || activeNav.busy
                 ? 'Envoi…'
-                : activeNav.stepIndex >= activeNav.stepCount - 1
-                  ? activeNav.finalLabel
-                  : 'Suivant'}
+                : postVoiceMode && activeNav.stepIndex >= activeNav.stepCount - 1
+                  ? `Ajouter à J${day}`
+                  : activeNav.stepIndex >= activeNav.stepCount - 1
+                    ? activeNav.finalLabel
+                    : 'Suivant'}
               <ChevronRight size={15} aria-hidden="true" />
             </motion.button>
           </motion.div>
@@ -1303,6 +1425,12 @@ export function CarnetCommunityCreateBridge({
                 prefillNonce={1}
                 onNavChange={(nav) => handleNavChange('post', nav)}
                 stepHosts={stepHostsFor('post')}
+                voiceMode={postVoiceMode}
+                onVoiceModeChange={(next) => {
+                  setMomentError(null);
+                  setPostVoiceMode(next);
+                }}
+                voiceStepContent={voiceStepContent}
               />
             </div>
           ) : null}

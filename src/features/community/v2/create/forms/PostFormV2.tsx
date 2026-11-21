@@ -13,6 +13,7 @@ import {
   Loader2,
   Lock,
   MapPin,
+  Mic,
   PenLine,
   Plus,
   Users,
@@ -256,8 +257,12 @@ function SortieAttachmentPanel({
 
 function FormatStep({
   sortiesState,
+  voiceMode = false,
+  onVoiceModeChange,
 }: {
   sortiesState: ReturnType<typeof useMySortiesV2>;
+  voiceMode?: boolean;
+  onVoiceModeChange?: (active: boolean) => void;
 }) {
   const form = useFormContext<PostFormValuesV2>();
   const values = form.watch();
@@ -299,7 +304,7 @@ function FormatStep({
       </div>
       <div className="lkdv-cv2c-format-grid" role="radiogroup" aria-labelledby="cv2c-format-label">
         {FORMAT_OPTIONS.map((option) => {
-          const active = values.format === option.value;
+          const active = !voiceMode && values.format === option.value;
           return (
             <button
               key={option.value}
@@ -309,6 +314,7 @@ function FormatStep({
               className="lkdv-cv2c-format-card"
               data-active={active}
               onClick={() => {
+                onVoiceModeChange?.(false);
                 form.setValue('format', option.value, { shouldValidate: true, shouldDirty: true });
                 if (option.value === 'event' && !form.getValues('eventDate')) {
                   form.setValue('eventDate', todayIso(), { shouldDirty: true });
@@ -323,6 +329,22 @@ function FormatStep({
             </button>
           );
         })}
+        {onVoiceModeChange ? (
+          <button
+            type="button"
+            role="radio"
+            aria-checked={voiceMode}
+            className="lkdv-cv2c-format-card"
+            data-active={voiceMode}
+            onClick={() => onVoiceModeChange(true)}
+          >
+            <span className="lkdv-cv2c-format-ico" aria-hidden="true">
+              <Mic size={22} aria-hidden="true" />
+            </span>
+            <b>Note vocale</b>
+            <small>Enregistrer un audio</small>
+          </button>
+        ) : null}
       </div>
       {values.format === 'event' ? (
         <div className="lkdv-cv2c-event-format-flow" data-testid="cv2c-event-flow">
@@ -615,6 +637,9 @@ function PostBody({
   previewCollapsed,
   setPreviewCollapsed,
   savedModifiersRef,
+  voiceMode = false,
+  onVoiceModeChange,
+  voiceStepContent,
 }: {
   api: CreateFormEngineApiV2<PostFormValuesV2>;
   user: User | null;
@@ -627,6 +652,9 @@ function PostBody({
   previewCollapsed: boolean;
   setPreviewCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   savedModifiersRef: React.MutableRefObject<Record<string, PhotoModifiersV2>>;
+  voiceMode?: boolean;
+  onVoiceModeChange?: (active: boolean) => void;
+  voiceStepContent?: React.ReactNode;
 }) {
   const form = api.form;
   const values = form.watch();
@@ -828,7 +856,7 @@ function PostBody({
 
   return (
     <>
-      {api.active ? (
+      {api.active && !voiceMode ? (
         <SheetPreview compact={false}>
           <PostHeroPreview
             values={hydratedValues}
@@ -875,9 +903,18 @@ function PostBody({
           </AnimatePresence>
         </SheetPreview>
       ) : null}
-      {!isEditorOpen && api.step === 0 ? <FormatStep sortiesState={sortiesState} /> : null}
+      {!isEditorOpen && api.step === 0 ? (
+        <FormatStep
+          sortiesState={sortiesState}
+          voiceMode={voiceMode}
+          onVoiceModeChange={onVoiceModeChange}
+        />
+      ) : null}
       {!isEditorOpen && api.step === 1 ? (
-        <ContentStep
+        voiceMode && voiceStepContent ? (
+          <>{voiceStepContent}</>
+        ) : (
+          <ContentStep
           user={user}
           sortiesState={sortiesState}
           onCreateSortieUpstream={() => {
@@ -898,6 +935,7 @@ function PostBody({
           onChangeModifier={handleChangeModifier}
           onResetCategory={handleResetCategory}
         />
+        )
       ) : null}
     </>
   );
@@ -909,7 +947,16 @@ function PostBody({
  * La retouche photo Instagram (3 catégories, 15 modificateurs) et le carrousel
  * de miniatures sont intégrés directement avec proportions réalistes.
  */
-export function PostFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
+export function PostFormV2({
+  active,
+  prefill,
+  prefillNonce,
+  onNavChange,
+  stepHosts,
+  voiceMode = false,
+  onVoiceModeChange,
+  voiceStepContent,
+}: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('post')).current;
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
@@ -953,6 +1000,9 @@ export function PostFormV2({ active, prefill, prefillNonce, onNavChange, stepHos
           previewCollapsed={previewCollapsed}
           setPreviewCollapsed={setPreviewCollapsed}
           savedModifiersRef={savedModifiersRef}
+          voiceMode={voiceMode}
+          onVoiceModeChange={onVoiceModeChange}
+          voiceStepContent={voiceStepContent}
         />
       )}
     </CreateFormEngineV2>
