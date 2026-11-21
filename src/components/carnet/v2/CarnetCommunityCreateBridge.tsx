@@ -637,9 +637,9 @@ export function CarnetCommunityCreateBridge({
                 overflowY: 'auto',
               }}
             >
-              {whoMatches.map((u) => (
+              {whoMatches.map((u, idx) => (
                 <button
-                  key={u.id}
+                  key={`${u.id}-${idx}`}
                   type="button"
                   role="option"
                   aria-selected={false}

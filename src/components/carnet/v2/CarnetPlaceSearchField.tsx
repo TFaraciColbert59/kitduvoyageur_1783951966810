@@ -44,7 +44,15 @@ export function CarnetPlaceSearchField({
         .then((res) => res.json())
         .then((data: { matches?: GeocodeMatch[] }) => {
           if (!cancelled && Array.isArray(data.matches)) {
-            setMatches(data.matches);
+            const seen = new Set<string>();
+            const unique: GeocodeMatch[] = [];
+            for (const m of data.matches) {
+              const sig = `${m.id}|${m.name}|${m.context}|${m.country}`;
+              if (seen.has(sig)) continue;
+              seen.add(sig);
+              unique.push(m);
+            }
+            setMatches(unique);
           }
         })
         .catch(() => {})
@@ -100,6 +108,9 @@ export function CarnetPlaceSearchField({
           autoComplete="off"
           placeholder={placeholder}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
           onChange={(e) => {
             onChange(e.target.value);
             setOpen(true);
@@ -143,9 +154,9 @@ export function CarnetPlaceSearchField({
             overflowY: 'auto',
           }}
         >
-          {matches.map((m) => (
+          {matches.map((m, idx) => (
             <button
-              key={m.id}
+              key={`${m.id}-${idx}`}
               type="button"
               role="option"
               aria-selected={false}
