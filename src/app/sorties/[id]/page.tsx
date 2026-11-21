@@ -236,9 +236,10 @@ export default async function SortiePage({ params, searchParams }: {
       key={eventRef.kind + '/' + id}
       event={data}
       signedIn={Boolean(user)}
-      routeProposal={proposal && revision != null ? (
+      routeProposal={user && proposal && revision != null ? (
         <ClubEventRouteProposal
-          key={revision}
+          key={user.id + ':' + revision}
+          viewerId={user.id}
           eventId={id}
           revision={revision}
           routeName={asString(proposal.route_name)}

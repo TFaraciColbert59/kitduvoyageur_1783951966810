@@ -44,6 +44,7 @@ export interface HubRouteMapProps {
   manualSegments?: HubRouteManualSegment[];
   points?: HubRoutePoint[];
   interactive?: boolean;
+  showBasemap?: boolean;
   reserveBottom?: number;
   className?: string;
   emptyLabel?: string;
@@ -65,6 +66,7 @@ export default function HubRouteMap({
   manualSegments = [],
   points = NO_POINTS,
   interactive = false,
+  showBasemap = true,
   reserveBottom = 0,
   className,
   emptyLabel = 'Trace non géolocalisée',
@@ -177,22 +179,27 @@ export default function HubRouteMap({
         zoomSnap: 0.25,
       });
 
-      // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
-      L.control.attribution({ prefix: false }).addTo(map);
-      const base = leafletTiles('topo');
-      const tiles = L.tileLayer(base.url, { ...base.options, keepBuffer: 4 }).addTo(map);
-      let tileLoaded = false;
-      tiles.on('tileload', () => {
-        if (tileLoaded || cancelled) return;
-        tileLoaded = true;
-        setReady(true);
-        onBasemapStateRef.current?.('ready');
-      });
-      readyTimer = setTimeout(() => {
-        if (cancelled || tileLoaded) return;
+      if (showBasemap) {
+        // Crédit visible et complet (plan 1.6) : « Powered by Esri » et chaque fournisseur de données.
+        L.control.attribution({ prefix: false }).addTo(map);
+        const base = leafletTiles('topo');
+        const tiles = L.tileLayer(base.url, { ...base.options, keepBuffer: 4 }).addTo(map);
+        let tileLoaded = false;
+        tiles.on('tileload', () => {
+          if (tileLoaded || cancelled) return;
+          tileLoaded = true;
+          setReady(true);
+          onBasemapStateRef.current?.('ready');
+        });
+        readyTimer = setTimeout(() => {
+          if (cancelled || tileLoaded) return;
+          setReady(true);
+          onBasemapStateRef.current?.('unavailable');
+        }, 4000);
+      } else {
         setReady(true);
         onBasemapStateRef.current?.('unavailable');
-      }, 4000);
+      }
 
       if (interactive) {
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -389,7 +396,7 @@ export default function HubRouteMap({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- geoKey (coordonnées sérialisées) pilote le cycle.
-  }, [visible, hasRoute, geoKey, interactive, reserveBottom]);
+  }, [visible, hasRoute, geoKey, interactive, showBasemap, reserveBottom]);
 
   if (!hasRoute) {
     return (
@@ -419,6 +426,7 @@ export default function HubRouteMap({
         <div
           ref={containerRef}
           className="h-full w-full"
+          style={showBasemap ? undefined : { backgroundColor: 'var(--lkv-surface-raised)' }}
           aria-hidden={interactive ? undefined : true}
           role={interactive ? 'application' : undefined}
           aria-label={interactive ? 'Carte interactive — déplacez et zoomez' : undefined}

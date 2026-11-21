@@ -78,6 +78,12 @@ export const useAuth = (): AuthContextValue => {
   return context;
 };
 
+function clearClubRouteCopies(userId: string) {
+  return import('@/features/adventure-intelligence/offline/clubRouteCopies')
+    .then((m) => m.purgeClubRouteCopies(userId))
+    .catch(() => undefined);
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -144,12 +150,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       identity.current = { userId: nextId, generation: identity.current.generation + 1 };
       profileRequest.current = null;
       setProfile(null);
+      const previousOwner = lastCacheOwner.current;
+      const clearPrevious = previousOwner && previousOwner !== nextId && (nextId || navigator.onLine);
+      if (clearPrevious) void clearClubRouteCopies(previousOwner);
       try {
         window.sessionStorage.removeItem('lkdv:profile:current');
-        const previousOwner = lastCacheOwner.current;
-        if (previousOwner && previousOwner !== nextId && (nextId || navigator.onLine)) {
-          window.sessionStorage.removeItem(profileKey(previousOwner));
-        }
+        if (clearPrevious) window.sessionStorage.removeItem(profileKey(previousOwner));
         if (nextId) {
           const raw = window.sessionStorage.getItem(profileKey(nextId));
           const cached = raw ? JSON.parse(raw) as UserProfile : null;
@@ -267,7 +273,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     void import('@/features/offline/offlineRuntimeStore')
       .then((m) => m.getOfflineRuntimeStore().purgePrivateOnLogout())
       .catch(() => undefined);
-    const { error } = await supabase.auth.signOut();
+    const [{ error }] = await Promise.all([
+      supabase.auth.signOut(),
+      owner ? clearClubRouteCopies(owner) : Promise.resolve(),
+    ]);
     if (error) throw error;
   }, [supabase]);
 

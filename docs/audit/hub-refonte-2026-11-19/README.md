@@ -513,5 +513,19 @@ Les deux anciennes policies d’écriture restent absentes lorsque la
 synchronisation passe par le RPC. Le retour du changement de code
 d’erreur a aussi été exercé sur la base locale.
 
-La navigation terrain, les impacts du changement de parcours et la
-conservation de la variante hors connexion restent à vérifier.
+**Copie du tracé adopté.** Depuis la fiche, un inscrit peut enregistrer la
+géométrie de sa révision et la retirer de cet appareil. La copie est
+partitionnée par compte, sortie et révision. La déconnexion et le changement
+de compte retirent les copies de l’ancien compte. En ligne, la fiche refait
+la lecture autorisée en base.
+
+**Recette WebKit mobile.** Le tiroir Carte du HUB authentifié ouvre la
+fiche de cette sortie. Une sortie publiait la révision 2 alors que le
+participant avait conservé la révision 1. Le test a comparé la géométrie
+enregistrée à celle du RPC PostgreSQL, puis ouvert le tracé après coupure du
+réseau, sans requête RPC ni tuile. La copie a été retrouvée à la réouverture
+de la fiche avec réseau. Sa suppression a été vérifiée dans IndexedDB et lors
+d’une nouvelle coupure.
+
+Le démarrage en mode avion, le fond de carte téléchargé, le guidage terrain
+et le calcul des impacts du changement de parcours restent à vérifier.

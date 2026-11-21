@@ -4,9 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@supabase/supabase-js';
 const mocks = vi.hoisted(() => ({
   callback: null as null | ((event: string, session: Session | null) => void),
-  getSession: vi.fn(), query: vi.fn(), signOut: vi.fn(), purge: vi.fn(),
+  getSession: vi.fn(), query: vi.fn(), signOut: vi.fn(), purge: vi.fn(), purgeClubRoutes: vi.fn(),
 }));
 vi.mock('@/lib/offlineStorage', () => ({ purgeCompasSnapshots: mocks.purge }));
+vi.mock('@/features/adventure-intelligence/offline/clubRouteCopies', () => ({ purgeClubRouteCopies: mocks.purgeClubRoutes }));
 vi.mock('@/lib/supabase/client', () => ({ createClient: () => ({
   auth: { getSession: mocks.getSession, signOut: mocks.signOut, onAuthStateChange: (callback: typeof mocks.callback) => {
     mocks.callback = callback;
@@ -72,6 +73,7 @@ describe('authenticated profile ownership', () => {
     expect(screen.getByTestId('identity').textContent).toBe('B:B');
     expect(sessionStorage.getItem('lkdv:profile:A')).toBeNull();
     expect(JSON.parse(sessionStorage.getItem('lkdv:profile:B')!).id).toBe('B');
+    await waitFor(() => expect(mocks.purgeClubRoutes.mock.calls).toEqual([['A']]));
   });
   it('does not create a missing profile after its session has changed', async () => {
     const a = deferred<{ data: null; error: null }>();
@@ -146,6 +148,7 @@ describe('authenticated profile ownership', () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
     await emit(null);
     expect(sessionStorage.getItem('lkdv:profile:A')).not.toBeNull();
+    expect(mocks.purgeClubRoutes).not.toHaveBeenCalled();
     mocks.query.mockRejectedValue(new Error('offline'));
     await emit('A');
     expect(screen.getByTestId('identity').textContent).toBe('A:A');
@@ -153,5 +156,6 @@ describe('authenticated profile ownership', () => {
     await act(async () => { await auth.signOut(); });
     expect(sessionStorage.getItem('lkdv:profile:A')).toBeNull();
     await waitFor(() => expect(mocks.purge).toHaveBeenCalledWith(null));
+    expect(mocks.purgeClubRoutes.mock.calls).toEqual([['A']]);
   });
 });
