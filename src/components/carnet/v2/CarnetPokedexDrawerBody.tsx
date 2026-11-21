@@ -42,7 +42,7 @@ export interface PokedexEntry {
   discoverers?: Array<{ userId: string; name: string; avatarUrl: string | null }>;
 }
 
-const ALPINE_DEX_CATALOG: Array<Omit<PokedexEntry, 'discovered' | 'moment' | 'imageUrl'>> = [
+export const ALPINE_DEX_CATALOG: Array<Omit<PokedexEntry, 'discovered' | 'moment' | 'imageUrl'>> = [
   {
     dexNumber: '#001',
     id: 'bouquetin',
@@ -320,6 +320,160 @@ interface CarnetPokedexDrawerBodyProps {
   onZoneProgressChange?: (progress: { discovered: number; total: number }) => void;
 }
 
+export function PokedexSpeciesDetailCard({
+  entry,
+  onBack,
+  backLabel = '← Retour au Pokédex',
+  onObserveSpecies,
+}: {
+  entry: PokedexEntry;
+  onBack: () => void;
+  backLabel?: string;
+  onObserveSpecies?: (species: { name: string; latin: string }) => void;
+}) {
+  const rStyle = RARITY_STYLES[entry.rarity];
+  return (
+    <motion.div
+      key={entry.id}
+      initial={{ opacity: 0, x: 24 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={CARNET_SPRING}
+      className="lkdv-carnet-pokedex-detail"
+    >
+      <button type="button" className="lkdv-carnet-pokedex-back" onClick={onBack}>
+        {backLabel}
+      </button>
+
+      <div className="lkdv-carnet-pokedex-hero" style={{ borderColor: rStyle.border }}>
+        <div className="lkdv-carnet-pokedex-hero-top">
+          <span className="lkdv-carnet-pokedex-num">{entry.dexNumber}</span>
+          <span
+            className="lkdv-carnet-pokedex-rarity"
+            style={{ background: rStyle.bg, color: rStyle.color }}
+          >
+            <Sparkles size={10} /> {entry.rarity}
+          </span>
+        </div>
+
+        {entry.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={entry.imageUrl}
+            alt={entry.name}
+            className={`lkdv-carnet-pokedex-hero-img${
+              !entry.discovered ? ' is-silhouette-photo' : ''
+            }`}
+          />
+        ) : (
+          <div className="lkdv-carnet-pokedex-silhouette">
+            {entry.discovered ? kingdomIcon(entry.kingdom, 36) : <Lock size={28} />}
+            <span>
+              {entry.discovered ? 'Observé sans photo' : 'Espèce non encore repérée'}
+            </span>
+          </div>
+        )}
+
+        <div className="lkdv-carnet-pokedex-title">
+          <b>{entry.name}</b>
+          <i>{entry.latin}</i>
+        </div>
+        <p className="lkdv-carnet-pokedex-desc">{entry.description}</p>
+
+        {entry.wikipediaUrl ? (
+          <a
+            href={entry.wikipediaUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="lkdv-carnet-pokedex-wiki"
+          >
+            <span>Fiche encyclopédique</span>
+            <ExternalLink size={12} aria-hidden="true" />
+          </a>
+        ) : null}
+
+        {!entry.discovered && onObserveSpecies ? (
+          <button
+            type="button"
+            className="lkdv-carnet-btn-primary"
+            style={{ alignSelf: 'flex-start', marginTop: 2 }}
+            onClick={() => onObserveSpecies({ name: entry.name, latin: entry.latin })}
+          >
+            <Binoculars size={14} aria-hidden="true" />
+            <span>J’ai observé cette espèce</span>
+          </button>
+        ) : null}
+      </div>
+
+      <div className="lkdv-carnet-kpi-grid-3">
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Zone</small>
+          <b style={{ fontSize: 11.5 }}>{entry.altitudeRange}</b>
+        </div>
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Taxon</small>
+          <b style={{ fontSize: 11.5 }}>{entry.habitat}</b>
+        </div>
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Observations</small>
+          <b style={{ fontSize: 12 }}>
+            {entry.observationsCount ? (
+              <AnimatedNumber value={entry.observationsCount} />
+            ) : (
+              entry.bestTime
+            )}
+          </b>
+        </div>
+      </div>
+
+      <div className="lkdv-carnet-chart-card">
+        <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 10, display: 'block' }}>
+          Indice d’observation
+        </span>
+        <div className="lkdv-carnet-kit-bars">
+          {(
+            [
+              ['Rareté', entry.stats.rarete, '#7e22ce'],
+              ['Discrétion', entry.stats.discretion, '#1d4ed8'],
+              ['Altitude', entry.stats.altitude, '#1b4332'],
+            ] as const
+          ).map(([label, val, color]) => (
+            <div key={label} className="lkdv-carnet-kit-bar-row">
+              <span className="lkdv-carnet-kit-bar-label">{label}</span>
+              <div className="lkdv-carnet-kit-bar-track">
+                <motion.div
+                  className="lkdv-carnet-kit-bar-fill"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${val}%` }}
+                  transition={CARNET_SPRING}
+                  style={{ background: color }}
+                />
+              </div>
+              <span className="lkdv-carnet-kit-bar-val">{val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {entry.moment ? (
+        <div className="lkdv-carnet-pokedex-fieldnote">
+          <div className="lkdv-carnet-timeline-meta">
+            <span className="lkdv-carnet-chip-dark">
+              Observé · J{entry.moment.dayNumber}
+            </span>
+            {entry.moment.place ? (
+              <span className="lkdv-carnet-chip-place">
+                <MapPin size={10} /> {entry.moment.place}
+              </span>
+            ) : null}
+          </div>
+          {entry.moment.quote ? <p>« {entry.moment.quote} »</p> : null}
+        </div>
+      ) : null}
+    </motion.div>
+  );
+}
+
+
 export function CarnetPokedexDrawerBody({
   detail,
   lensId,
@@ -573,155 +727,12 @@ export function CarnetPokedexDrawerBody({
   }, [entries, lensId, kingdomFilter, query]);
 
   if (selectedEntry) {
-    const rStyle = RARITY_STYLES[selectedEntry.rarity];
     return (
-      <motion.div
-        key={selectedEntry.id}
-        initial={{ opacity: 0, x: 24 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={CARNET_SPRING}
-        className="lkdv-carnet-pokedex-detail"
-      >
-        <button
-          type="button"
-          className="lkdv-carnet-pokedex-back"
-          onClick={() => setSelectedEntry(null)}
-        >
-          ← Retour au Pokédex
-        </button>
-
-        <div className="lkdv-carnet-pokedex-hero" style={{ borderColor: rStyle.border }}>
-          <div className="lkdv-carnet-pokedex-hero-top">
-            <span className="lkdv-carnet-pokedex-num">{selectedEntry.dexNumber}</span>
-            <span
-              className="lkdv-carnet-pokedex-rarity"
-              style={{ background: rStyle.bg, color: rStyle.color }}
-            >
-              <Sparkles size={10} /> {selectedEntry.rarity}
-            </span>
-          </div>
-
-          {selectedEntry.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={selectedEntry.imageUrl}
-              alt={selectedEntry.name}
-              className={`lkdv-carnet-pokedex-hero-img${
-                !selectedEntry.discovered ? ' is-silhouette-photo' : ''
-              }`}
-            />
-          ) : (
-            <div className="lkdv-carnet-pokedex-silhouette">
-              {selectedEntry.discovered ? (
-                kingdomIcon(selectedEntry.kingdom, 36)
-              ) : (
-                <Lock size={28} />
-              )}
-              <span>
-                {selectedEntry.discovered ? 'Observé sans photo' : 'Espèce non encore repérée'}
-              </span>
-            </div>
-          )}
-
-          <div className="lkdv-carnet-pokedex-title">
-            <b>{selectedEntry.name}</b>
-            <i>{selectedEntry.latin}</i>
-          </div>
-          <p className="lkdv-carnet-pokedex-desc">{selectedEntry.description}</p>
-
-          {selectedEntry.wikipediaUrl ? (
-            <a
-              href={selectedEntry.wikipediaUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="lkdv-carnet-pokedex-wiki"
-            >
-              <span>Fiche encyclopédique</span>
-              <ExternalLink size={12} aria-hidden="true" />
-            </a>
-          ) : null}
-
-          {!selectedEntry.discovered && onObserveSpecies ? (
-            <button
-              type="button"
-              className="lkdv-carnet-btn-primary"
-              style={{ alignSelf: 'flex-start', marginTop: 2 }}
-              onClick={() =>
-                onObserveSpecies({ name: selectedEntry.name, latin: selectedEntry.latin })
-              }
-            >
-              <Binoculars size={14} aria-hidden="true" />
-              <span>J’ai observé cette espèce</span>
-            </button>
-          ) : null}
-        </div>
-
-        <div className="lkdv-carnet-kpi-grid-3">
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Zone</small>
-            <b style={{ fontSize: 11.5 }}>{selectedEntry.altitudeRange}</b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Taxon</small>
-            <b style={{ fontSize: 11.5 }}>{selectedEntry.habitat}</b>
-          </div>
-          <div className="lkdv-carnet-kpi-mini">
-            <small>Observations</small>
-            <b style={{ fontSize: 12 }}>
-              {selectedEntry.observationsCount ? (
-                <AnimatedNumber value={selectedEntry.observationsCount} />
-              ) : (
-                selectedEntry.bestTime
-              )}
-            </b>
-          </div>
-        </div>
-
-        <div className="lkdv-carnet-chart-card">
-          <span className="lkdv-carnet-kit-eyebrow" style={{ marginBottom: 10, display: 'block' }}>
-            Indice d’observation
-          </span>
-          <div className="lkdv-carnet-kit-bars">
-            {(
-              [
-                ['Rareté', selectedEntry.stats.rarete, '#7e22ce'],
-                ['Discrétion', selectedEntry.stats.discretion, '#1d4ed8'],
-                ['Altitude', selectedEntry.stats.altitude, '#1b4332'],
-              ] as const
-            ).map(([label, val, color]) => (
-              <div key={label} className="lkdv-carnet-kit-bar-row">
-                <span className="lkdv-carnet-kit-bar-label">{label}</span>
-                <div className="lkdv-carnet-kit-bar-track">
-                  <motion.div
-                    className="lkdv-carnet-kit-bar-fill"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${val}%` }}
-                    transition={CARNET_SPRING}
-                    style={{ background: color }}
-                  />
-                </div>
-                <span className="lkdv-carnet-kit-bar-val">{val}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {selectedEntry.moment ? (
-          <div className="lkdv-carnet-pokedex-fieldnote">
-            <div className="lkdv-carnet-timeline-meta">
-              <span className="lkdv-carnet-chip-dark">
-                Observé · J{selectedEntry.moment.dayNumber}
-              </span>
-              {selectedEntry.moment.place ? (
-                <span className="lkdv-carnet-chip-place">
-                  <MapPin size={10} /> {selectedEntry.moment.place}
-                </span>
-              ) : null}
-            </div>
-            {selectedEntry.moment.quote ? <p>« {selectedEntry.moment.quote} »</p> : null}
-          </div>
-        ) : null}
-      </motion.div>
+      <PokedexSpeciesDetailCard
+        entry={selectedEntry}
+        onBack={() => setSelectedEntry(null)}
+        onObserveSpecies={onObserveSpecies}
+      />
     );
   }
 

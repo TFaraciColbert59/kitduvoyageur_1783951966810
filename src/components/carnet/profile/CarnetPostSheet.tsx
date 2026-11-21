@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Leaf } from 'lucide-react';
 import { PostSheet } from '@/components/compte/overlay/PostSheet';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
@@ -8,6 +9,11 @@ import type { PostSource } from '@/features/community/feed/postSource';
 import type { CarnetDetail, CarnetMomentEngagementItem } from '@/features/carnet/detail/types';
 import type { CarnetComment } from '@/features/carnet/detail/useCarnetComments';
 import { useMomentEngagement } from '@/features/carnet/detail/useMomentEngagement';
+import {
+  ALPINE_DEX_CATALOG,
+  PokedexSpeciesDetailCard,
+  type PokedexEntry,
+} from '@/components/carnet/v2/CarnetPokedexDrawerBody';
 import { CarnetCommentsPane } from './panes/CarnetCommentsPane';
 import { CarnetSharePane } from './panes/CarnetSharePane';
 
@@ -108,6 +114,45 @@ export function CarnetPostSheet({
   const momentId = moment?.id ?? '';
   const author = detail.author;
   const createdAt = moment ? momentDate(detail.startDate, moment.dayNumber) : null;
+  const [pokedexCardOpen, setPokedexCardOpen] = useState(false);
+
+  useEffect(() => {
+    setPokedexCardOpen(false);
+  }, [momentId]);
+
+  const matchedPokedexEntry = useMemo<PokedexEntry | null>(() => {
+    if (!moment) return null;
+    const text = `${moment.speciesName ?? ''} ${moment.speciesLatin ?? ''} ${moment.quote ?? ''} ${moment.place ?? ''}`;
+    const catalogMatch = ALPINE_DEX_CATALOG.find((item) => item.keywords.test(text));
+    if (catalogMatch) {
+      return {
+        ...catalogMatch,
+        discovered: true,
+        moment,
+        imageUrl: moment.imageUrl ?? null,
+      };
+    }
+    const isNatureKind =
+      moment.kind === 'espece' || moment.kind === 'nature' || Boolean(moment.speciesName);
+    if (!isNatureKind) return null;
+    return {
+      dexNumber: '#DEX',
+      id: `moment-${moment.id}`,
+      name: moment.speciesName?.trim() || moment.place?.trim() || 'Observation naturaliste',
+      latin: moment.speciesLatin?.trim() || 'Spécimen du carnet',
+      kingdom: 'faune',
+      rarity: 'Peu commun',
+      altitudeRange: moment.place || 'En chemin',
+      bestTime: moment.time || 'Journée',
+      habitat: moment.place || 'Milieu naturel',
+      description: moment.quote || 'Observation naturelle enregistrée pendant la sortie.',
+      stats: { rarete: 60, discretion: 50, altitude: 75 },
+      keywords: /.^/,
+      discovered: true,
+      moment,
+      imageUrl: moment.imageUrl ?? null,
+    };
+  }, [moment]);
 
   /* État réel du moment : la fusion passée par la fiche (serveur + actions de
      session), sinon `detail.momentEngagement`. Le j'aime et l'enregistrer du
@@ -243,6 +288,43 @@ export function CarnetPostSheet({
       }
     },
     onReport,
+    overlay: matchedPokedexEntry ? (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          setPokedexCardOpen(true);
+        }}
+        aria-label={`Voir la fiche Pokédex : ${matchedPokedexEntry.name}`}
+        style={{
+          position: 'absolute',
+          top: 'calc(var(--post-pill-top, 14px) + var(--post-pill-h, 44px) + 8px)',
+          left: 14,
+          zIndex: 12,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          height: 28,
+          padding: '0 10px',
+          borderRadius: 999,
+          border: '1px solid rgba(23, 64, 44, 0.14)',
+          background: 'rgba(255, 255, 255, 0.88)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          color: '#17402c',
+          fontSize: 11.5,
+          fontWeight: 700,
+          boxShadow: '0 4px 12px rgba(23, 43, 36, 0.14)',
+          cursor: 'pointer',
+          maxWidth: 'calc(100% - 28px)',
+        }}
+      >
+        <Leaf size={12} aria-hidden="true" style={{ flex: 'none' }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {matchedPokedexEntry.dexNumber} · {matchedPokedexEntry.name}
+        </span>
+      </button>
+    ) : undefined,
     media:
       items.length > 0
         ? {
@@ -289,6 +371,31 @@ export function CarnetPostSheet({
         onRequireAuth={onRequireAuth}
         onDismissGesture={onClose}
       />
+      {pokedexCardOpen && matchedPokedexEntry ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Fiche Pokédex ${matchedPokedexEntry.name}`}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 40,
+            background: 'rgba(246, 248, 247, 0.96)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            overflowY: 'auto',
+            padding: 14,
+            borderRadius: 26,
+          }}
+        >
+          <PokedexSpeciesDetailCard
+            entry={matchedPokedexEntry}
+            onBack={() => setPokedexCardOpen(false)}
+            backLabel="← Retour à la publication"
+          />
+        </div>
+      ) : null}
     </PostSheet>
   );
 }
