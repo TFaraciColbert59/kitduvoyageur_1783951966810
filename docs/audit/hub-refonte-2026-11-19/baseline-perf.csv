@@ -1,0 +1,5 @@
+route,samples,status,p50_ms,p95_ms,min_ms,max_ms,sha,env
+/hub,5,200,1796.7,2374.2,1339.4,2374.2,625a40ef9,local-auth-recette
+/compas,5,200,1670.4,3994.9,1317.4,3994.9,625a40ef9,local-auth-recette
+/api/hub/adventures?view=list,5,200,135.9,1129.7,81.2,1129.7,625a40ef9,local-auth-recette
+/api/weather/point?lat=45.92&lon=6.86,5,200,76.8,537.6,50.7,537.6,625a40ef9,local-auth-recette

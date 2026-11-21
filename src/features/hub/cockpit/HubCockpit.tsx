@@ -45,6 +45,7 @@ import { newId } from '@/lib/uuid';
 import styles from './cockpit.module.css';
 
 const BudgetDrawerTools = dynamic(() => import('./BudgetDrawerTools').then((m) => m.BudgetDrawerTools), { ssr: false });
+const FieldReportForm = dynamic(() => import('./FieldReportForm').then((m) => m.FieldReportForm), { ssr: false });
 
 const Map = dynamic(() => import('./HubCockpitMap').then((m) => m.HubCockpitMap), {
   ssr: false, loading: () => <p className={styles.mapStatus} role="status">Chargement de la carte</p>,
@@ -582,6 +583,9 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
             </Action>
           ))}
           {daySteps.length > 0 && <div className={styles.rows}>{stepRows('carte')}</div>}
+          {!fixture && data.trip && (
+            <FieldReportForm tripId={data.key} defaultPoint={data.weatherPoint ?? daySteps.find((s) => s.coordinate)?.coordinate} isOnline={isOnline} />
+          )}
           {!fixture && <Action href={"/hub/itineraire?jour=" + day}>Ouvrir l’itinéraire</Action>}
         </>;
       case 'etapes': {

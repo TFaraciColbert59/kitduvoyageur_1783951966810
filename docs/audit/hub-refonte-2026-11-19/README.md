@@ -673,3 +673,43 @@ branchées sur PostgreSQL dans les tiroirs :
   - `verify-hub-map-carnet-offline.cjs` : profil de dénivelé, pack carte
     hors-ligne persisté après rechargement et brouillon Carnet hors-ligne
     restauré après redémarrage.
+
+### P00 / P01 / P02 / P03 / P04 / P05 / P08 · Consolidation finale en recette locale
+
+- **P00-06 · Contrat d’environnement redacted.** `src/lib/envContract.ts`
+  déclare les variables obligatoires et optionnelles par fonctionnalité,
+  distingue `public`/`server` et produit un rapport strictement expurgé de
+  toute valeur sensible (`src/lib/__tests__/envContract.test.ts` PASS).
+  `npm run verify:hub-no-mockup` confirme zéro contamination de maquette.
+- **P00-07 · Baseline de performance mesurée.** `baseline-perf.csv` archive
+  les mesures p50/p95 authentifiées sur `127.0.0.1:4103` (`/hub`, `/compas`,
+  `/api/hub/adventures?view=list`, `/api/weather/point`).
+- **P01 · Audit PostgreSQL sur `lkdv_hub_ci`.** 385 tables publiques dont
+  **385 avec RLS activée (100 %)**, **0 fonction `SECURITY DEFINER` sans
+  `search_path`**, 17 index spatiaux GiST PostGIS, 63 index sur les tables
+  `trip*`, et **124 suites pgTAP / 2 135 assertions PASS**.
+- **P02-04 / P02-05 / P03-26 / P05-01..P05-03 / P07-18 / P07-54 · Migration
+  `20261121120000_hub_live_safety_and_field_reports.sql`.**
+  - `trip_lifecycle_events` + RPC `transition_trip_lifecycle` (verrou `FOR UPDATE`,
+    idempotence `operation_id`, journalisation atomique du départ/pause/clôture).
+  - `trip_live_positions` + RPC `upsert_trip_live_position` / `read_trip_live_positions`
+    (persistance en base remplaçant la mémoire de processus, protection contre
+    les paquets inversés `recorded_at`, expiration et révocation immédiate).
+  - `trip_safety_contacts` (contacts d’urgence persistés en base, RLS stricte
+    par propriétaire).
+  - `hub_field_reports` + `hub_field_report_confirmations` + RPC
+    `confirm_hub_field_report` (signalements terrain datés avec expiration 7 j,
+    confirmations idempotentes, formulaire `FieldReportForm.tsx` dans le tiroir Carte).
+  - Retour arrière réversible (`20261121120000_hub_live_safety_and_field_reports.down.sql`)
+    exercé en transaction sur `lkdv_hub_ci` et 18 nouvelles assertions pgTAP PASS.
+- **P03-01 / P03-02 / P08-01..P08-07 · Catalogue géo-environnemental et
+  orchestration incrémentale.** `src/features/hub/cockpit/geoCatalog.ts`
+  formalise les sources, licences, TTL, fraîcheur et dégradations honnêtes,
+  ainsi que le graphe d’invalidation par domaine `resolveAffectedDomains`.
+- **P04 · Profiling CPU et décision Rust/WASM.**
+  `npm run explorer:bench:geo` mesure le moteur TS pur sur 1k / 10k / 100k
+  points : pire cas 100 000 points à **1,126 ms p50 / 2,432 ms p95** (budget
+  frame 16,7 ms). `npm run perf:gpx` confirme la parité et les temps d’export/parse.
+  Verdict mesuré et documenté : le noyau TypeScript suffit largement sur la
+  cible mesurée ; un portage Rust/WASM n’apporte pas de gain end-to-end
+  démontrable à ce stade (et la toolchain Cargo n’est pas requise en CI).
