@@ -103,8 +103,8 @@ export function CarnetCommunityCreateBridge({
   const [navs, setNavs] = useState<Map<CreateKindV2, CreateNavV2>>(() => new Map());
   const [detail, setDetail] = useState<CreateDetailRequest | null>(null);
   const [previewSlot, setPreviewSlot] = useState<HTMLDivElement | null>(null);
-  const stepHostRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [stepHostsVersion, setStepHostsVersion] = useState(0);
+  const stepHostsRef = useRef<Array<HTMLDivElement | null>>([]);
+  const [, bumpHostsVersion] = useState(0);
 
   // Carnet-specific moment fields (voice, meet, species, inc)
   const [place, setPlace] = useState(defaultPlace);
@@ -152,36 +152,13 @@ export function CarnetCommunityCreateBridge({
     [recordedUrl],
   );
 
-  const stepHostCallbacksRef = useRef<Map<string, (el: HTMLDivElement | null) => void>>(new Map());
-  const registerStepHost = useCallback((kind: CreateKindV2, stepIndex: number) => {
-    const key = `${kind}:${stepIndex}`;
-    let cb = stepHostCallbacksRef.current.get(key);
-    if (!cb) {
-      cb = (el: HTMLDivElement | null) => {
-        if (stepHostRefs.current.get(key) === (el ?? undefined)) return;
-        if (el) {
-          stepHostRefs.current.set(key, el);
-          queueMicrotask(() => setStepHostsVersion((v) => v + 1));
-        } else {
-          stepHostRefs.current.delete(key);
-        }
-      };
-      stepHostCallbacksRef.current.set(key, cb);
+  const attachStepHost = useCallback((stepIndex: number, element: HTMLDivElement | null) => {
+    if (stepHostsRef.current[stepIndex] === element) return;
+    stepHostsRef.current[stepIndex] = element;
+    if (element) {
+      queueMicrotask(() => bumpHostsVersion((v) => v + 1));
     }
-    return cb;
   }, []);
-
-  const postStepHosts = useMemo(() => {
-    void stepHostsVersion;
-    const count = createKindConfig('post').steps.length;
-    return Array.from({ length: count }, (_, i) => stepHostRefs.current.get(`post:${i}`) ?? null);
-  }, [stepHostsVersion]);
-
-  const storyStepHosts = useMemo(() => {
-    void stepHostsVersion;
-    const count = createKindConfig('story').steps.length;
-    return Array.from({ length: count }, (_, i) => stepHostRefs.current.get(`story:${i}`) ?? null);
-  }, [stepHostsVersion]);
 
   const handleNavChange = useCallback((kind: CreateKindV2, nav: CreateNavV2 | null) => {
     setNavs((prev) => {
@@ -281,14 +258,14 @@ export function CarnetCommunityCreateBridge({
     const cfg = createKindConfig(activeCommunityKind);
     const stepHosts = cfg.steps.map((step, index) => (
       <div
-        key={`${activeCommunityKind}-step-${index}`}
+        key={`${activeCommunityKind}-${step.id}`}
         className="lkdv-cv2c-step-host"
-        ref={registerStepHost(activeCommunityKind, index)}
-        data-step-title={step.label}
+        ref={(el) => attachStepHost(index, el)}
+        data-step-host={index}
       />
     ));
     return CARNET_CREATE_TABS.map((t) => (t.id === activeCommunityKind ? stepHosts : []));
-  }, [activeCommunityKind, registerStepHost]);
+  }, [activeCommunityKind, attachStepHost]);
 
   const mini = useMemo(() => {
     if (activeCommunityKind && activeNav && communityStepPages) {
@@ -1444,7 +1421,7 @@ export function CarnetCommunityCreateBridge({
                 prefill={initialPrefill}
                 prefillNonce={1}
                 onNavChange={onPostNavChange}
-                stepHosts={postStepHosts}
+                stepHosts={stepHostsRef.current}
                 voiceMode={postVoiceMode}
                 onVoiceModeChange={handleVoiceModeChange}
                 voiceStepContent={voiceStepContent}
@@ -1458,7 +1435,7 @@ export function CarnetCommunityCreateBridge({
                 prefill={initialPrefill}
                 prefillNonce={1}
                 onNavChange={onStoryNavChange}
-                stepHosts={storyStepHosts}
+                stepHosts={stepHostsRef.current}
                 inCarnet
               />
             </div>
