@@ -17,6 +17,7 @@ import {
   createMapStyle,
 } from '@/components/map/engine/createMapStyle';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
+import { getIncidentMeta } from '@/features/carnet/detail/momentTypes';
 import {
   cameraForScale,
   fitIntentForMode,
@@ -92,6 +93,7 @@ export interface CompteMapProps {
     title: string;
     type?: string;
     badge?: string;
+    incidentType?: string;
   }>;
   /** Morceaux indépendants par jour, avec le jour actif en avant. */
   dayTraces?: Array<{ day: number; coordinates: Array<[number, number]> }>;
@@ -1157,19 +1159,6 @@ export function CompteMap({
 
   useEffect(() => {
     if (!map || !ready || !isCarnet) return;
-    if (!map.isStyleLoaded()) {
-      const onStyle = () => {
-        ensureSource(
-          map,
-          'compte-carnet-trace',
-          carnetTraceCollection(traceSegments) as ReturnType<typeof tracksCollection>
-        );
-      };
-      map.once('styledata', onStyle);
-      return () => {
-        map.off('styledata', onStyle);
-      };
-    }
     for (const m of carnetMarkerRefs.current) m.remove();
     carnetMarkerRefs.current = [];
 
@@ -1188,7 +1177,28 @@ export function CompteMap({
           onMarkerPickRef.current?.(marker.id);
         });
       }
-      if (marker.badge) {
+      if (marker.type === 'inc') {
+        const incMeta = getIncidentMeta(marker.incidentType);
+        el.classList.add('is-incident');
+        el.style.color = incMeta.color;
+        el.style.borderColor = incMeta.color;
+        el.style.background = '#ffffff';
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('width', '13');
+        svg.setAttribute('height', '13');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2.2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('aria-hidden', 'true');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', incMeta.svgPath);
+        svg.appendChild(path);
+        el.appendChild(svg);
+        el.setAttribute('aria-label', `Incident · ${incMeta.label} · ${marker.title}`);
+      } else if (marker.badge) {
         el.classList.add('has-badge');
         const badge = document.createElement('span');
         badge.className = 'lkdv-map-night-badge';

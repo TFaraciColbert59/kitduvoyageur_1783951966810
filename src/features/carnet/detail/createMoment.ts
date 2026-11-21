@@ -76,7 +76,12 @@ export const MomentInputSchema = z.discriminatedUnion('type', [
     caption: required('Donne un titre à ton moment.', 80),
     latin: optional(80),
   }),
-  z.object({ ...common, type: z.literal('inc'), caption: required('Donne un titre à ton moment.', 400) }),
+  z.object({
+    ...common,
+    type: z.literal('inc'),
+    caption: required('Donne un titre à ton moment.', 400),
+    incidentType: optional(32),
+  }),
 ]);
 
 export type MomentInput = z.infer<typeof MomentInputSchema>;
@@ -125,6 +130,8 @@ export function metaOf(value: MomentInput): MomentMeta | null {
       return { itemId: value.itemId };
     case 'species':
       return value.latin ? { latin: value.latin } : null;
+    case 'inc':
+      return value.incidentType ? { incidentType: value.incidentType } : null;
     default:
       return null;
   }

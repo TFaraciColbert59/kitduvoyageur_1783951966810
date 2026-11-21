@@ -6,12 +6,17 @@ import {
   Backpack,
   Camera,
   Check,
+  CloudLightning,
+  Compass,
+  Droplets,
   Euro,
+  HeartPulse,
   Leaf,
   Mic,
   Quote,
   Type,
   Video,
+  Wrench,
 } from 'lucide-react';
 import type { CarnetMomentItem } from '@/features/carnet/detail/types';
 import { MOMENT_TYPE_LABELS, type MomentType, isMomentType } from '@/features/carnet/detail/momentTypes';
@@ -123,13 +128,27 @@ export function CarnetMomentTileBody({ moment, type }: CarnetMomentTileBodyProps
           <small>{text}</small>
         </div>
       );
-    case 'inc':
+    case 'inc': {
+      const incType = moment.meta?.incidentType;
+      const IncIcon =
+        incType === 'meteo'
+          ? CloudLightning
+          : incType === 'blessure'
+            ? HeartPulse
+            : incType === 'materiel'
+              ? Wrench
+              : incType === 'itineraire'
+                ? Compass
+                : incType === 'eau'
+                  ? Droplets
+                  : AlertTriangle;
       return (
         <div className="lkdv-tfill c-inc">
-          <AlertTriangle className="ic" size={22} strokeWidth={1.6} aria-hidden />
+          <IncIcon className="ic" size={22} strokeWidth={1.6} aria-hidden />
           <small>{text}</small>
         </div>
       );
+    }
     default:
       return (
         <div className="lkdv-tfill c-text">

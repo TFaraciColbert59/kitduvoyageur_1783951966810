@@ -4034,6 +4034,28 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   color: #15803d;
 }
 
+.lkdv-carnet-hdot.is-inc {
+  background: #d97706;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.24);
+}
+
+.lkdv-carnet-hbadge.is-inc {
+  background: rgba(217, 119, 6, 0.14);
+  color: #b45309;
+}
+
+.lkdv-carnet-map-marker.is-incident {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #b45309;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.24);
+  cursor: pointer;
+}
+
 .lkdv-carnet-huser-pill {
   display: inline-flex;
   align-items: center;

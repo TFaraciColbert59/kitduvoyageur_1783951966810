@@ -3,13 +3,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
+  AlertTriangle,
   Binoculars,
   Camera,
+  CloudLightning,
   CloudSun,
+  Compass,
+  Droplets,
+  HeartPulse,
   Moon,
   Route,
   Users,
   Wallet,
+  Wrench,
 } from 'lucide-react';
 
 export type HorizontalTimelineKind =
@@ -17,6 +23,7 @@ export type HorizontalTimelineKind =
   | 'pokedex'
   | 'rencontre'
   | 'spend'
+  | 'inc'
   | 'perf'
   | 'night'
   | 'meteo';
@@ -37,6 +44,7 @@ export interface HorizontalTimelineEvent {
   subtitle?: string;
   imageUrl?: string | null;
   userPill?: HorizontalTimelineUserPill | null;
+  incidentType?: string | null;
   onClick?: () => void;
 }
 
@@ -46,7 +54,7 @@ export interface HorizontalTimelineDayGroup {
   events: HorizontalTimelineEvent[];
 }
 
-function eventIcon(kind: HorizontalTimelineKind) {
+function eventIcon(kind: HorizontalTimelineKind, incidentType?: string | null) {
   switch (kind) {
     case 'pokedex':
       return <Binoculars size={11} aria-hidden="true" />;
@@ -56,6 +64,21 @@ function eventIcon(kind: HorizontalTimelineKind) {
       return <Users size={11} aria-hidden="true" />;
     case 'spend':
       return <Wallet size={11} aria-hidden="true" />;
+    case 'inc':
+      switch (incidentType) {
+        case 'meteo':
+          return <CloudLightning size={11} aria-hidden="true" />;
+        case 'blessure':
+          return <HeartPulse size={11} aria-hidden="true" />;
+        case 'materiel':
+          return <Wrench size={11} aria-hidden="true" />;
+        case 'itineraire':
+          return <Compass size={11} aria-hidden="true" />;
+        case 'eau':
+          return <Droplets size={11} aria-hidden="true" />;
+        default:
+          return <AlertTriangle size={11} aria-hidden="true" />;
+      }
     case 'night':
       return <Moon size={11} aria-hidden="true" />;
     case 'meteo':
@@ -104,7 +127,7 @@ export function CarnetHorizontalTimeline({
                   >
                     <div className="lkdv-carnet-hcard-top">
                       <span className={`lkdv-carnet-hbadge is-${ev.kind}`}>
-                        {eventIcon(ev.kind)}
+                        {eventIcon(ev.kind, ev.incidentType)}
                         <span>{ev.badge}</span>
                       </span>
                       <span className="lkdv-carnet-htime">{ev.timeLabel}</span>

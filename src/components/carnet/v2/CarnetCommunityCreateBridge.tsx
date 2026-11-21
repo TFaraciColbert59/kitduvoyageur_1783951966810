@@ -9,6 +9,10 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  CloudLightning,
+  Compass,
+  Droplets,
+  HeartPulse,
   Leaf,
   MapPin,
   Mic,
@@ -16,7 +20,9 @@ import {
   Square,
   Trash2,
   Users,
+  Wrench,
 } from 'lucide-react';
+import { getIncidentMeta, INCIDENT_TYPES, type IncidentTypeId } from '@/features/carnet/detail/momentTypes';
 import { Toaster, toast } from 'sonner';
 import '@/styles/communaute-v2.css';
 import '@/styles/communaute-v2-shell.css';
@@ -138,6 +144,7 @@ export function CarnetCommunityCreateBridge({
     Array<{ taxonId: number | string; name: string; latin: string; imageUrl?: string | null }>
   >([]);
   const [ambiance, setAmbiance] = useState(false);
+  const [incidentType, setIncidentType] = useState<IncidentTypeId>('meteo');
   const [momentBusy, setMomentBusy] = useState(false);
   const [momentError, setMomentError] = useState<string | null>(null);
   const voice = useVoiceRecorder();
@@ -317,29 +324,47 @@ export function CarnetCommunityCreateBridge({
       </div>
     );
 
+    const activeIncMeta = getIncidentMeta(incidentType);
+    const incIconNode = (id: IncidentTypeId, size = 24) => {
+      switch (id) {
+        case 'meteo':
+          return <CloudLightning size={size} aria-hidden="true" />;
+        case 'blessure':
+          return <HeartPulse size={size} aria-hidden="true" />;
+        case 'materiel':
+          return <Wrench size={size} aria-hidden="true" />;
+        case 'itineraire':
+          return <Compass size={size} aria-hidden="true" />;
+        case 'eau':
+          return <Droplets size={size} aria-hidden="true" />;
+        default:
+          return <AlertTriangle size={size} aria-hidden="true" />;
+      }
+    };
+
     const incPreview = (
       <div
         className="lkdv-carnet-species-preview"
         style={{
           marginBottom: 4,
-          borderColor: 'rgba(180, 83, 9, 0.24)',
-          background: 'rgba(254, 243, 199, 0.38)',
+          borderColor: `${activeIncMeta.color}3d`,
+          background: activeIncMeta.bg,
         }}
         aria-label="Aperçu de l’incident"
       >
         <div
           className="lkdv-carnet-species-preview-media"
-          style={{ background: 'rgba(217, 119, 6, 0.14)' }}
+          style={{ background: activeIncMeta.bg }}
         >
-          <div className="lkdv-carnet-species-preview-empty" style={{ color: '#b45309' }}>
-            <AlertTriangle size={24} aria-hidden="true" />
-            <span>Incident</span>
+          <div className="lkdv-carnet-species-preview-empty" style={{ color: activeIncMeta.color }}>
+            {incIconNode(activeIncMeta.id, 24)}
+            <span>{activeIncMeta.label}</span>
           </div>
           <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
         </div>
         <div className="lkdv-carnet-species-preview-body">
           <div className="lkdv-carnet-species-preview-title">
-            <b>{momentCaptions.inc.trim() || 'Signalement terrain…'}</b>
+            <b>{momentCaptions.inc.trim() || `Incident · ${activeIncMeta.label}`}</b>
             <i>{place.trim() || `Lieu non défini · J${day}`}</i>
           </div>
         </div>
@@ -619,6 +644,51 @@ export function CarnetCommunityCreateBridge({
       return [
         <div key="inc-s0" className="lkdv-cv2c-pane">
           {incPreview}
+          <div className="lkdv-cv2-field">
+            <span className="lkdv-cv2-field-label">Type d’incident</span>
+            <div
+              role="radiogroup"
+              aria-label="Type d’incident"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                gap: 8,
+              }}
+            >
+              {INCIDENT_TYPES.map((item) => {
+                const selected = incidentType === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setIncidentType(item.id)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 5,
+                      padding: '10px 6px',
+                      borderRadius: 16,
+                      border: selected
+                        ? `1.5px solid ${item.color}`
+                        : '1px solid rgba(27, 67, 50, 0.14)',
+                      background: selected ? item.bg : 'rgba(255, 255, 255, 0.84)',
+                      color: selected ? item.color : '#1b4332',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {incIconNode(item.id, 18)}
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <CarnetPlaceSearchField label={`Lieu (Jour ${day})`} value={place} onChange={setPlace} />
           <div className="lkdv-cv2-field">
             <span className="lkdv-cv2-field-label">Ce qui s’est passé</span>
@@ -676,6 +746,7 @@ export function CarnetCommunityCreateBridge({
     discoveredSpecies,
     nearbyLat,
     nearbyLng,
+    incidentType,
   ]);
 
   useEffect(() => {
@@ -819,6 +890,9 @@ export function CarnetCommunityCreateBridge({
       if (speciesNote.trim()) {
         input.caption = `${speciesCaption.trim() || 'Espèce'} — ${speciesNote.trim()}`;
       }
+    }
+    if (targetKind === 'inc') {
+      input.incidentType = incidentType;
     }
 
     const attachedFile =

@@ -18,8 +18,9 @@ export interface CarnetMapMarker {
   lat: number;
   lng: number;
   title: string;
-  type: 'start' | 'end' | 'moment' | 'poi' | 'night' | 'scrub';
+  type: 'start' | 'end' | 'moment' | 'poi' | 'night' | 'scrub' | 'inc';
   badge?: string;
+  incidentType?: string;
   day?: number;
   /** Rôle d'accessibilité : un marqueur cliquable ouvre son objet. */
   momentId?: string;
@@ -105,23 +106,52 @@ export function selectMapLayers(input: {
     }
   }
 
-  /* Moments : fermé (jour affiché), Fil (selon la lentille), Sac (objets du kit). */
-  const wantMoments = (slot === 'closed' && activeDay > 0) || slot === 'fil' || slot === 'sac';
+  /* Moments : fermé (jour affiché, ou incidents sur tout le carnet), Fil (selon la lentille), Sac (objets du kit). */
+  const wantMoments = slot === 'closed' || slot === 'fil' || slot === 'sac';
   if (wantMoments) {
-    for (const day of days) {
-      const number = dayOf(day);
-      const ofDay = detail.moments.filter((m) => m.dayNumber === number);
+    const allTrackDays = detail.days
+      .filter((d) => d.points.length >= 2)
+      .sort((a, b) => dayOf(a) - dayOf(b));
+    const lastKnownPoint =
+      allTrackDays.length > 0
+        ? allTrackDays[allTrackDays.length - 1].points[
+            allTrackDays[allTrackDays.length - 1].points.length - 1
+          ]
+        : null;
+
+    const momentsByDay = new Map<number, CarnetMomentItem[]>();
+    for (const m of detail.moments) {
+      if (activeDay > 0 && m.dayNumber !== activeDay) continue;
+      if (slot === 'closed' && activeDay <= 0 && m.type !== 'inc') continue;
+      if (slot === 'sac' && m.type !== 'kit') continue;
+      if (slot === 'fil' && !lensAllows(lensId, m)) continue;
+      const arr = momentsByDay.get(m.dayNumber) ?? [];
+      arr.push(m);
+      momentsByDay.set(m.dayNumber, arr);
+    }
+
+    for (const [number, ofDay] of momentsByDay.entries()) {
+      const day = allTrackDays.find((d) => dayOf(d) === number);
+      const dayNight = (detail.nights ?? []).find(
+        (n) => n.dayNumber === number && n.lat != null && n.lng != null,
+      );
       ofDay.forEach((moment, rank) => {
-        if (slot === 'sac' && moment.type !== 'kit') return;
-        if (slot === 'fil' && !lensAllows(lensId, moment)) return;
-        const position = momentPosition(day, moment, rank, ofDay.length);
+        const isInc = moment.type === 'inc';
+        const position =
+          momentPosition(day, moment, rank, ofDay.length) ??
+          (isInc && dayNight?.lat != null && dayNight?.lng != null
+            ? { lat: dayNight.lat, lng: dayNight.lng }
+            : isInc && lastKnownPoint
+              ? { lat: lastKnownPoint.lat, lng: lastKnownPoint.lng }
+              : null);
         if (!position) return;
         markers.push({
           id: `moment-${moment.id}`,
           lat: position.lat,
           lng: position.lng,
           title: [moment.place, moment.time].filter(Boolean).join(', ') || 'Moment',
-          type: 'moment',
+          type: isInc ? 'inc' : 'moment',
+          incidentType: isInc ? (moment.meta?.incidentType ?? 'autre') : undefined,
           day: number,
           momentId: moment.id,
         });

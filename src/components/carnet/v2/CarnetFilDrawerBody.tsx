@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Camera, Clock, Flag, Quote } from 'lucide-react';
+import { getIncidentMeta } from '@/features/carnet/detail/momentTypes';
 import type {
   CarnetDetail,
   CarnetEtapeDay,
@@ -58,7 +59,11 @@ function classifyMoment(m: CarnetMomentItem): { kind: HorizontalTimelineKind; ba
     return { kind: 'moment', badge: 'Vocal' };
   }
   if (mType === 'inc') {
-    return { kind: 'moment', badge: 'Incident' };
+    const incMeta = getIncidentMeta(m.meta?.incidentType);
+    return {
+      kind: 'inc',
+      badge: m.meta?.incidentType ? `Incident · ${incMeta.label}` : 'Incident',
+    };
   }
   if (mType === 'text') {
     return { kind: 'moment', badge: 'Note' };
@@ -170,6 +175,7 @@ export function CarnetFilDrawerBody({
           subtitle: isSpend ? spendSub : m.quote || m.caption || undefined,
           imageUrl: isMeet || isSpend ? null : m.imageUrl,
           userPill: isMeet ? resolveMeetUserPill(m, detail) : null,
+          incidentType: kind === 'inc' ? (m.meta?.incidentType ?? 'autre') : null,
           onClick: onSelectMoment ? () => onSelectMoment(m, idx) : undefined,
         });
       });
