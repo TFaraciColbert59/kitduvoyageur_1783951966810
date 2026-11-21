@@ -565,10 +565,11 @@ export function CarnetPokedexDrawerBody({
   const entries = useMemo<PokedexEntry[]>(() => {
     const natureMoments = detail.moments.filter(
       (m) =>
+        m.type === 'species' ||
         m.source?.toLowerCase().includes('nature') ||
         m.source?.toLowerCase().includes('species') ||
         ALPINE_DEX_CATALOG.some((cat) =>
-          cat.keywords.test(`${m.quote ?? ''} ${m.place ?? ''}`),
+          cat.keywords.test(`${m.quote ?? ''} ${m.caption ?? ''} ${m.place ?? ''}`),
         ),
     );
 
@@ -601,9 +602,15 @@ export function CarnetPokedexDrawerBody({
       const escapedLatin = sp.latin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const escapedName = sp.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const kw = new RegExp(`${escapedName}|${escapedLatin}`, 'i');
-      const matches = natureMoments.filter((m) =>
-        kw.test(`${m.speciesName ?? ''} ${m.speciesLatin ?? ''} ${m.quote ?? ''} ${m.place ?? ''}`),
-      );
+      const matches = natureMoments.filter((m) => {
+        const metaLatin =
+          m.meta && typeof (m.meta as { latin?: unknown }).latin === 'string'
+            ? (m.meta as { latin: string }).latin
+            : '';
+        return kw.test(
+          `${m.speciesName ?? ''} ${m.speciesLatin ?? ''} ${metaLatin} ${m.caption ?? ''} ${m.quote ?? ''} ${m.place ?? ''}`,
+        );
+      });
       for (const m of matches) usedMomentIds.add(m.id);
       const match = matches[0];
       const discoverers = resolveDiscoverers(matches);

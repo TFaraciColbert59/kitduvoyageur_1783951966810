@@ -106,17 +106,23 @@ export function useCarnetEdits({
       let imageUrl: string | null = null;
       let audioUrl: string | undefined;
       let uploaded: { bucket: string; path: string } | undefined;
-      if (value.type === 'photo' || value.type === 'video' || value.type === 'voice') {
-        const media = mediaPlan(value.type, file ?? null);
+      if (
+        value.type === 'photo' ||
+        value.type === 'video' ||
+        value.type === 'voice' ||
+        (value.type === 'species' && file)
+      ) {
+        const mediaType = value.type === 'species' ? 'photo' : value.type;
+        const media = mediaPlan(mediaType, file ?? null);
         if (!media.ok) return media;
-        const prepared = value.type === 'photo' ? await stripImageMetadata(media.file) : media.file;
-        const ext = extensionOf(value.type, prepared.type);
+        const prepared = mediaType === 'photo' ? await stripImageMetadata(media.file) : media.file;
+        const ext = extensionOf(mediaType, prepared.type);
         /* Le premier segment du chemin est l'identifiant de la personne : c'est
            ce que vérifient les politiques de stockage (`carnet_media_insert_owner`
            et `carnet_moments_media_insert_owner`). */
         const filename = `${crypto.randomUUID()}.${ext}`;
         const path = `${userId}/carnet-moments/${carnetId}/${filename}`;
-        const bucket = privateMedia ? PRIVATE_MOMENT_BUCKET : bucketFor(value.type);
+        const bucket = privateMedia ? PRIVATE_MOMENT_BUCKET : bucketFor(mediaType);
         const upload = await supabase.storage.from(bucket).upload(path, prepared, {
           contentType: prepared.type || undefined,
           upsert: false,

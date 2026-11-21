@@ -3560,6 +3560,68 @@ body.lkdv-overlay-open .lkdv-floating-tabbar {
   background: rgba(27, 67, 50, 0.08);
 }
 
+.lkdv-carnet-species-chip-card.is-add-slot {
+  border: 1.5px dashed rgba(27, 67, 50, 0.34);
+  background: rgba(255, 255, 255, 0.62);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 108px;
+}
+
+.lkdv-carnet-species-chip-card.is-add-slot:hover {
+  border-color: #1b4332;
+  background: rgba(27, 67, 50, 0.06);
+}
+
+.lkdv-carnet-species-add-plus {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1.5px dashed rgba(27, 67, 50, 0.4);
+  display: grid;
+  place-items: center;
+  color: #1b4332;
+  margin-bottom: 4px;
+}
+
+.lkdv-carnet-species-discover-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(27, 67, 50, 0.16);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.lkdv-carnet-species-discover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1b4332;
+}
+
+.lkdv-carnet-species-proof-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(27, 67, 50, 0.28);
+  background: rgba(27, 67, 50, 0.04);
+}
+
+.lkdv-carnet-species-proof-box.is-ready {
+  border-style: solid;
+  border-color: rgba(27, 67, 50, 0.36);
+  background: rgba(27, 67, 50, 0.08);
+}
+
 .lkdv-carnet-species-chip-img {
   position: relative;
   width: 100%;

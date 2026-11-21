@@ -33,7 +33,8 @@ import { createKindConfig, stepAriaLabel } from '@/features/community/v2/create/
 import type { CreateKindV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import { formatClock, useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
-import { CarnetSpeciesCreatePane } from './CarnetSpeciesCreatePane';
+import { CarnetSpeciesCreatePane, type DiscoveredSpeciesItem } from './CarnetSpeciesCreatePane';
+import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
 
 const PostFormV2 = dynamic(
   () => import('@/features/community/v2/create/forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
@@ -64,6 +65,9 @@ interface CarnetCommunityCreateBridgeProps {
   initialPrefill?: Record<string, unknown> | null;
   initialSpeciesName?: string;
   initialSpeciesLatin?: string;
+  discoveredSpecies?: DiscoveredSpeciesItem[];
+  nearbyLat?: number | null;
+  nearbyLng?: number | null;
   day: number;
   defaultPlace?: string;
   user: User | null;
@@ -77,6 +81,9 @@ export function CarnetCommunityCreateBridge({
   initialPrefill = null,
   initialSpeciesName = '',
   initialSpeciesLatin = '',
+  discoveredSpecies = [],
+  nearbyLat = null,
+  nearbyLng = null,
   day,
   defaultPlace = '',
   user,
@@ -207,9 +214,46 @@ export function CarnetCommunityCreateBridge({
     };
   }, [activeCommunityKind, activeNav, activeTab, registerStepHost]);
 
+  const validatedNowRef = useRef<Set<string>>(new Set());
+
+  const handleValidateSpeciesDiscovery = useCallback(
+    async (species: PokedexApiSpecies, file: File) => {
+      const res = await onSubmitMoment(
+        {
+          type: 'species',
+          day,
+          place,
+          caption: species.name,
+          latin: species.latin,
+        },
+        file,
+      );
+      if (!res.ok) return { ok: false, error: res.error };
+      validatedNowRef.current.add(species.latin.toLowerCase());
+      validatedNowRef.current.add(species.name.toLowerCase());
+      toast.success(`${species.name} validée dans ton Pokédex !`);
+      return { ok: true };
+    },
+    [day, onSubmitMoment, place],
+  );
+
   const submitCarnetMoment = async () => {
     if (momentBusy) return;
     if (activeTab === 'post' || activeTab === 'story') return;
+    if (activeTab === 'species') {
+      const c = caption.trim().toLowerCase();
+      const l = latin.trim().toLowerCase();
+      const alreadyDiscovered =
+        (c && validatedNowRef.current.has(c)) ||
+        (l && validatedNowRef.current.has(l)) ||
+        discoveredSpecies.some(
+          (d) => (l && d.latin.toLowerCase() === l) || (c && d.name.toLowerCase() === c),
+        );
+      if (!alreadyDiscovered && !speciesFile) {
+        setMomentError('Preuve photo obligatoire pour valider une nouvelle espèce.');
+        return;
+      }
+    }
     setMomentBusy(true);
     setMomentError(null);
     const input: Record<string, unknown> = {
@@ -505,6 +549,10 @@ export function CarnetCommunityCreateBridge({
           onSpeciesFileChange={setSpeciesFile}
           note={speciesNote}
           onNoteChange={setSpeciesNote}
+          discoveredSpecies={discoveredSpecies}
+          nearbyLat={nearbyLat}
+          nearbyLng={nearbyLng}
+          onValidateDiscovery={handleValidateSpeciesDiscovery}
         />
       );
     }

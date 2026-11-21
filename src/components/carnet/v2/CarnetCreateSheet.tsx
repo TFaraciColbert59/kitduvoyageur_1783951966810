@@ -15,6 +15,7 @@ import {
 import type { CreateMomentResult } from '@/features/carnet/detail/useCarnetEdits';
 import { momentCapture, type MomentCapture } from '@/features/carnet/detail/createMoment';
 import type { CarnetKitItemRow } from '@/features/carnet/detail/types';
+import type { DiscoveredSpeciesItem } from './CarnetSpeciesCreatePane';
 import { MOMENT_TYPE_ICONS } from './CarnetMomentTile';
 import { useVoiceRecorder } from '@/features/carnet/detail/useVoiceRecorder';
 import { formatClock } from '@/features/carnet/detail/useVoiceRecorder';
@@ -47,6 +48,9 @@ export interface CarnetCreateSheetProps {
   initialType?: MomentType | null;
   initialSpeciesName?: string;
   initialSpeciesLatin?: string;
+  discoveredSpecies?: DiscoveredSpeciesItem[];
+  nearbyLat?: number | null;
+  nearbyLng?: number | null;
   onSubmit: (input: unknown, file: File | null, capture?: MomentCapture) => Promise<CreateMomentResult>;
   onClose: () => void;
   embedded?: boolean;
@@ -72,6 +76,9 @@ export function CarnetCreateSheet({
   initialType = null,
   initialSpeciesName = '',
   initialSpeciesLatin = '',
+  discoveredSpecies = [],
+  nearbyLat = null,
+  nearbyLng = null,
   onSubmit,
   onClose,
   embedded = false,
@@ -180,6 +187,9 @@ export function CarnetCreateSheet({
         }}
         initialSpeciesName={initialSpeciesName}
         initialSpeciesLatin={initialSpeciesLatin}
+        discoveredSpecies={discoveredSpecies}
+        nearbyLat={nearbyLat}
+        nearbyLng={nearbyLng}
         day={day}
         defaultPlace={defaultPlace}
         user={user ?? null}

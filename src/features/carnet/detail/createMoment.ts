@@ -173,11 +173,17 @@ export function momentItemFromRow(
   id: string,
   row: ReturnType<typeof momentInsertRow>
 ): CarnetMomentItem {
+  const isSpecies = row.moment_type === 'species';
+  const metaLatin =
+    isSpecies && row.moment_meta && typeof (row.moment_meta as { latin?: unknown }).latin === 'string'
+      ? (row.moment_meta as { latin: string }).latin
+      : null;
   return {
     id,
     dayNumber: row.jour_numero,
     time: row.heure,
     caption: row.citation || null,
+    quote: row.citation || undefined,
     authorName: row.auteur_nom,
     authorId: row.auteur_id,
     place: row.lieu,
@@ -185,5 +191,8 @@ export function momentItemFromRow(
     title: row.lieu,
     type: row.moment_type,
     meta: row.moment_meta,
+    source: isSpecies ? 'species' : row.source,
+    speciesName: isSpecies ? (row.citation || null) : undefined,
+    speciesLatin: isSpecies ? metaLatin : undefined,
   };
 }

@@ -799,6 +799,42 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     [detail]
   );
 
+  const discoveredSpecies = useMemo(() => {
+    if (!currentUserId) return [];
+    const seen = new Set<string>();
+    const out: Array<{
+      id: string;
+      name: string;
+      latin: string;
+      imageUrl?: string | null;
+    }> = [];
+    for (const m of detail.moments) {
+      if (m.authorId !== currentUserId) continue;
+      const isSpecies =
+        m.type === 'species' ||
+        m.source?.toLowerCase().includes('species') ||
+        m.source?.toLowerCase().includes('nature') ||
+        Boolean(m.speciesName || m.speciesLatin);
+      if (!isSpecies) continue;
+      const name = (m.speciesName || m.caption || m.quote || '').split('—')[0].trim();
+      const metaLatin =
+        m.meta && typeof (m.meta as { latin?: unknown }).latin === 'string'
+          ? (m.meta as { latin: string }).latin
+          : '';
+      const latin = (m.speciesLatin || metaLatin || '').trim();
+      const key = (latin || name).toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        id: m.id,
+        name: name || latin,
+        latin,
+        imageUrl: m.imageUrl ?? null,
+      });
+    }
+    return out;
+  }, [detail.moments, currentUserId]);
+
   const handleCopyLink = useCallback(() => {
     if (typeof window !== 'undefined') {
       void navigator.clipboard.writeText(shareUrl);
@@ -1291,6 +1327,9 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           initialType={createSheet.type}
           initialSpeciesName={createSheet.speciesName}
           initialSpeciesLatin={createSheet.speciesLatin}
+          discoveredSpecies={discoveredSpecies}
+          nearbyLat={detail.place?.lat ?? detail.nights?.[0]?.lat ?? null}
+          nearbyLng={detail.place?.lng ?? detail.nights?.[0]?.lng ?? null}
           onSubmit={async (input, file) => {
             if (!isOnline) return { ok: false, error: 'Tu es hors ligne : réessaie avec du réseau.' };
             return edits.createMoment(input, file);
