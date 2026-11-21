@@ -173,9 +173,10 @@ export function KitProductSheetV2({
   const [convSearch, setConvSearch] = useState('');
   const [sendingConvId, setSendingConvId] = useState<string | null>(null);
   const [sentConvIds, setSentConvIds] = useState<string[]>([]);
-  const [heroPanel, setHeroPanel] = useState<'occasion' | 'pret' | null>(null);
+  const [heroPanel, setHeroPanel] = useState<'occasion' | 'location' | 'pret' | null>(null);
   const [shopOffer, setShopOffer] = useState<ShopOffer | null>(null);
   const [occasionOffers, setOccasionOffers] = useState<CommunityOffer[]>([]);
+  const [locationOffers, setLocationOffers] = useState<CommunityOffer[]>([]);
   const [loanOffers, setLoanOffers] = useState<CommunityOffer[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
@@ -205,9 +206,12 @@ export function KitProductSheetV2({
           ? sb.from('shop_products').select('*').eq('id', product.productId).maybeSingle()
           : sb.from('shop_products').select('*').ilike('name', product.name).limit(1).maybeSingle();
 
-        const [shopRes, occRes, loanRes] = await Promise.all([
+        const [shopRes, occRes, locRes, loanRes] = await Promise.all([
           shopPromise,
           fetch('/api/marketplace/listings?mode=vente', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : { listings: [] }))
+            .catch(() => ({ listings: [] })),
+          fetch('/api/marketplace/listings?mode=location', { cache: 'no-store' })
             .then((r) => (r.ok ? r.json() : { listings: [] }))
             .catch(() => ({ listings: [] })),
           fetch('/api/marketplace/listings?mode=pret', { cache: 'no-store' })
@@ -261,8 +265,10 @@ export function KitProductSheetV2({
         };
 
         const occ = mapListings(occRes);
+        const locs = mapListings(locRes);
         const loans = mapListings(loanRes);
         setOccasionOffers(occ);
+        setLocationOffers(locs);
         setLoanOffers(loans);
         if (loans[0]) setSelectedLoanId(loans[0].id);
       } finally {
@@ -484,7 +490,11 @@ export function KitProductSheetV2({
             avatarUrl={imgSrc}
           >
             <div className="lkdv-cv2c-ps-hero" data-zoomed={zoomed || undefined}>
-              {heroPanel === 'occasion' ? (
+              {heroPanel === 'occasion' || heroPanel === 'location' ? (() => {
+                const isLocation = heroPanel === 'location';
+                const listOffers = isLocation ? locationOffers : occasionOffers;
+                const modeParam = isLocation ? 'location' : 'occasion';
+                return (
                 <div
                   style={{
                     position: 'absolute',
@@ -499,7 +509,7 @@ export function KitProductSheetV2({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <b style={{ fontSize: '0.84rem', color: '#172b24' }}>
-                      Occasions ({occasionOffers.length})
+                      {isLocation ? `Locations (${listOffers.length})` : `Occasions (${listOffers.length})`}
                     </b>
                     <button
                       type="button"
@@ -522,15 +532,17 @@ export function KitProductSheetV2({
                   </div>
                   {offersLoading ? (
                     <p style={{ margin: '12px 0', fontSize: '0.78rem', color: '#56665d' }}>
-                      Recherche des annonces d’occasion…
+                      {isLocation ? 'Recherche des annonces de location…' : 'Recherche des annonces d’occasion…'}
                     </p>
-                  ) : occasionOffers.length === 0 ? (
+                  ) : listOffers.length === 0 ? (
                     <div style={{ margin: 'auto 0', textAlign: 'center', padding: '12px' }}>
                       <p style={{ margin: '0 0 8px', fontSize: '0.8rem', color: '#56665d' }}>
-                        Aucune annonce d’occasion avec cette référence pour le moment.
+                        {isLocation
+                          ? 'Aucune annonce de location avec cette référence pour le moment.'
+                          : 'Aucune annonce d’occasion avec cette référence pour le moment.'}
                       </p>
                       <Link
-                        href={`/explorer?q=${encodeURIComponent(product.name)}&mode=occasion`}
+                        href={`/explorer?q=${encodeURIComponent(product.name)}&mode=${modeParam}`}
                         onClick={onClose}
                         style={{ fontSize: '0.78rem', fontWeight: 600, color: '#17402c' }}
                       >
@@ -539,7 +551,7 @@ export function KitProductSheetV2({
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {occasionOffers.map((offer) => (
+                      {listOffers.map((offer) => (
                         <div
                           key={offer.id}
                           style={{
@@ -563,7 +575,7 @@ export function KitProductSheetV2({
                             </small>
                           </div>
                           <Link
-                            href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=occasion`}
+                            href={`/explorer?q=${encodeURIComponent(offer.title)}&mode=${modeParam}`}
                             onClick={onClose}
                             style={{
                               padding: '5px 10px',
@@ -583,7 +595,8 @@ export function KitProductSheetV2({
                     </div>
                   )}
                 </div>
-              ) : heroPanel === 'pret' ? (
+                );
+              })() : heroPanel === 'pret' ? (
                 <div
                   style={{
                     position: 'absolute',
@@ -808,20 +821,21 @@ export function KitProductSheetV2({
               </span>
             </button>
 
-            {/* 2. Location */}
-            <Link
-              href={`/explorer?q=${encodeURIComponent(product.name)}&mode=location`}
-              onClick={onClose}
+            {/* 2. Location -> ouvre le mini drawer à la place de l'image produit */}
+            <button
+              type="button"
+              onClick={() => setHeroPanel((cur) => (cur === 'location' ? null : 'location'))}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
                 padding: '9px 10px',
                 borderRadius: 12,
-                background: '#f8faf8',
-                border: '1px solid rgba(23, 64, 44, 0.1)',
-                textDecoration: 'none',
+                background: heroPanel === 'location' ? 'rgba(23, 64, 44, 0.08)' : '#f8faf8',
+                border: heroPanel === 'location' ? '1.5px solid #17402c' : '1px solid rgba(23, 64, 44, 0.1)',
                 color: '#172b24',
+                textAlign: 'left',
+                cursor: 'pointer',
               }}
             >
               <span
@@ -841,10 +855,10 @@ export function KitProductSheetV2({
               <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <b style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>Louer</b>
                 <small style={{ fontSize: '0.68rem', color: '#56665d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  Pour la durée du trip
+                  {offersLoading ? 'Recherche…' : `${locationOffers.length} annonce${locationOffers.length > 1 ? 's' : ''}`}
                 </small>
               </span>
-            </Link>
+            </button>
 
             {/* 3. Occasion -> ouvre le mini drawer à la place de l'image produit */}
             <button
