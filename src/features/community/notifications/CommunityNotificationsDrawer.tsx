@@ -62,7 +62,7 @@ export function CommunityNotificationsDrawer({
 
   return createPortal(
     <div
-      className="lkdv-communaute-v2 lkdv-cv2-layer"
+      className="lkdv-communaute-v2 lkdv-cv2-layer lkdv-notif-standalone"
       style={{ pointerEvents: 'auto' }}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -104,7 +104,62 @@ export function CommunityNotificationsDrawer({
               <DrawerAuthRequired title="Connecte-toi pour accéder à tes notifications" />
             </div>
           )}
-          <style dangerouslySetInnerHTML={{ __html: `${DRAWER_SHELL_CSS}\n${COMPTE_CSS}` }} />
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+.lkdv-notif-standalone.lkdv-cv2-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(11, 31, 23, 0.34);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.lkdv-notif-standalone .lkdv-cv2-wrap {
+  width: min(100%, 520px);
+  max-height: min(62dvh, 560px);
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px 6px;
+}
+.lkdv-notif-standalone .lkdv-cv2-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: min(60dvh, 540px);
+  border-radius: 26px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(242, 247, 238, 0.96) 45%, rgba(255, 255, 255, 0.98));
+  box-shadow: 0 -18px 50px rgba(10, 20, 14, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border: 0.5px solid rgba(23, 43, 36, 0.14);
+}
+.lkdv-notif-standalone .lkdv-cv2-handle-bar {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 4px;
+  flex: none;
+}
+.lkdv-notif-standalone .lkdv-cv2-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(23, 43, 36, 0.22);
+  cursor: pointer;
+}
+.lkdv-notif-standalone .lkdv-compte-root {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+${DRAWER_SHELL_CSS}
+${COMPTE_CSS}`,
+            }}
+          />
         </div>
       </div>
     </div>,
