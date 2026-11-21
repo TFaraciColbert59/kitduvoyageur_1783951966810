@@ -402,32 +402,37 @@ export function CarnetLogCreateSheet({
   const panes = [
     <div key="spend" className="lkdv-cv2c-pane">
       {spendPreview}
-      <div className="lkdv-cv2c-row-2">
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Montant (€)</span>
-          <input
-            type="text"
-            inputMode="decimal"
-            className="lkdv-cv2-input"
-            value={amount}
-            maxLength={12}
-            placeholder="12,50"
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-        <div className="lkdv-cv2-field">
-          <span className="lkdv-cv2-field-label">Catégorie</span>
-          <select
-            className="lkdv-cv2-input"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {MOMENT_EXPENSE_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Montant (€)</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          className="lkdv-cv2-input"
+          value={amount}
+          maxLength={12}
+          placeholder="12,50"
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </div>
+      <div className="lkdv-cv2-field">
+        <span className="lkdv-cv2-field-label">Catégorie</span>
+        <div className="lkdv-carnet-filter-rail" role="radiogroup" aria-label="Catégorie de dépense">
+          {MOMENT_EXPENSE_CATEGORIES.map((c) => {
+            const active = category === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                className={`lkdv-carnet-filter-pill${active ? ' is-active' : ''}`}
+                onClick={() => setCategory(c)}
+              >
+                {active ? <span className="lkdv-carnet-filter-pill-bg" /> : null}
+                <span className="lkdv-carnet-filter-pill-label">{c}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="lkdv-cv2-field">
@@ -448,17 +453,47 @@ export function CarnetLogCreateSheet({
       {participants.length > 0 ? (
         <div className="lkdv-cv2-field">
           <span className="lkdv-cv2-field-label">Kit du participant</span>
-          <select
-            className="lkdv-cv2-input"
-            value={kitParticipantId}
-            onChange={(e) => setKitParticipantId(e.target.value)}
+          <div
+            className="lkdv-carnet-users-row"
+            role="radiogroup"
+            aria-label="Choisir le participant"
+            style={{ paddingTop: 2 }}
           >
-            {participants.map((p) => (
-              <option key={p.userId} value={p.userId}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            {participants.map((p) => {
+              const active = kitParticipantId === p.userId;
+              return (
+                <button
+                  key={p.userId}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setKitParticipantId(p.userId)}
+                  className="lkdv-post-author"
+                  style={{
+                    cursor: 'pointer',
+                    border: active
+                      ? '1.5px solid #1b4332'
+                      : '1px solid rgba(27, 67, 50, 0.12)',
+                    background: active ? 'rgba(27, 67, 50, 0.08)' : undefined,
+                  }}
+                >
+                  {p.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="lkdv-post-author-av" src={p.avatarUrl} alt="" />
+                  ) : (
+                    <span className="lkdv-post-author-av pmi-author-initial" aria-hidden="true">
+                      {p.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="lkdv-post-author-txt">
+                    <span className="lkdv-post-author-line">
+                      <b>{p.name}</b>
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
