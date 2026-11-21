@@ -221,6 +221,29 @@ export function CarnetCommunityCreateBridge({
     return [];
   }, [activeTab]);
 
+  const validatedNowRef = useRef<Set<string>>(new Set());
+
+  const handleValidateSpeciesDiscovery = useCallback(
+    async (species: PokedexApiSpecies, file: File) => {
+      const res = await onSubmitMoment(
+        {
+          type: 'species',
+          day,
+          place,
+          caption: species.name,
+          latin: species.latin,
+        },
+        file,
+      );
+      if (!res.ok) return { ok: false, error: res.error };
+      validatedNowRef.current.add(species.latin.toLowerCase());
+      validatedNowRef.current.add(species.name.toLowerCase());
+      toast.success(`${species.name} validée dans ton Pokédex !`);
+      return { ok: true };
+    },
+    [day, onSubmitMoment, place],
+  );
+
   const mini = useMemo(() => {
     if (activeCommunityKind && activeNav) {
       const cfg = createKindConfig(activeCommunityKind);
@@ -712,29 +735,6 @@ export function CarnetCommunityCreateBridge({
       cancelled = true;
     };
   }, [selectedWhoUser?.id]);
-
-  const validatedNowRef = useRef<Set<string>>(new Set());
-
-  const handleValidateSpeciesDiscovery = useCallback(
-    async (species: PokedexApiSpecies, file: File) => {
-      const res = await onSubmitMoment(
-        {
-          type: 'species',
-          day,
-          place,
-          caption: species.name,
-          latin: species.latin,
-        },
-        file,
-      );
-      if (!res.ok) return { ok: false, error: res.error };
-      validatedNowRef.current.add(species.latin.toLowerCase());
-      validatedNowRef.current.add(species.name.toLowerCase());
-      toast.success(`${species.name} validée dans ton Pokédex !`);
-      return { ok: true };
-    },
-    [day, onSubmitMoment, place],
-  );
 
   const submitCarnetMoment = async (overrideKind?: 'voice' | 'meet' | 'species' | 'inc') => {
     const targetKind = overrideKind ?? activeTab;
