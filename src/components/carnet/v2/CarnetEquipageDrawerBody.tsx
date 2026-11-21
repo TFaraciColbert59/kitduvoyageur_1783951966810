@@ -160,16 +160,17 @@ export function CarnetEquipageDrawerBody({
       createdAt: '',
     }));
 
+    const activeEtape = detail.etapes.find((e) => e.dayNumber === reactionDay);
+    const activeDayLabel = activeEtape?.to || activeEtape?.from || null;
+
     return (
-      <div className="lkdv-carnet-drawer-pane" style={{ gap: '12px' }}>
+      <StaggerList className="lkdv-carnet-drawer-pane" style={{ gap: '12px' }}>
+        {/* Sélecteur de jour compact en pilules */}
         <div
-          role="group"
+          role="tablist"
           aria-label="Jours des réactions"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(94px, 1fr))',
-            gap: '8px',
-          }}
+          className="lkdv-carnet-filter-rail"
+          style={{ paddingBottom: '2px' }}
         >
           {days.map((d) => {
             const n = d.dayNumber ?? d.index ?? 1;
@@ -179,88 +180,148 @@ export function CarnetEquipageDrawerBody({
             const count = isCurrent ? reactions.likesCount : (dayReact?.likesCount ?? 0);
 
             return (
-              <div
+              <button
                 key={n}
+                type="button"
+                role="tab"
+                aria-selected={isCurrent}
+                onClick={() => onReactionDayChange(n)}
+                className={`lkdv-carnet-filter-pill${isCurrent ? ' is-active' : ''}`}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  aspectRatio: '1 / 0.86',
-                  padding: '10px',
-                  borderRadius: '16px',
-                  background: isCurrent ? 'rgba(23, 64, 44, 0.06)' : 'var(--drawer-card-bg, #fff)',
-                  border: isCurrent
-                    ? '1.5px solid rgba(23, 64, 44, 0.28)'
-                    : '1px solid rgba(23, 43, 36, 0.08)',
-                  boxShadow: '0 2px 8px rgba(16, 32, 25, 0.04)',
+                  gap: '6px',
+                  padding: '0 12px',
+                  height: '34px',
+                  flexShrink: 0,
                 }}
               >
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.86 }}
-                  onClick={() => {
-                    if (!isCurrent) onReactionDayChange(n);
-                    reactions.toggleLike();
-                  }}
-                  aria-pressed={liked}
-                  aria-label={liked ? `Retirer mon j’aime du jour ${n}` : `J’aime le jour ${n}`}
-                  style={{
-                    border: 0,
-                    background: 'transparent',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    display: 'grid',
-                    placeItems: 'center',
-                    color: liked ? '#e11d48' : '#17402c',
-                  }}
+                {isCurrent ? <span className="lkdv-carnet-filter-pill-bg" /> : null}
+                <span
+                  className="lkdv-carnet-filter-pill-label"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                 >
-                  <LikeIcon size={22} active={liked} />
-                </motion.button>
-
-                <button
-                  type="button"
-                  onClick={() => onSelectDay?.(n)}
-                  aria-label={`Aller au jour ${n}`}
-                  style={{
-                    border: 0,
-                    background: 'transparent',
-                    padding: '4px 2px',
-                    cursor: 'pointer',
-                    textAlign: 'right',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '2px',
-                  }}
-                >
-                  <b style={{ fontSize: '15px', color: 'var(--label, #172b24)', lineHeight: 1.1 }}>
-                    J{n}
-                  </b>
-                  <small style={{ fontSize: '10.5px', color: 'var(--label2, #56665d)' }}>
-                    {count}
-                  </small>
-                </button>
-              </div>
+                  <LikeIcon
+                    size={13}
+                    active={liked}
+                    style={{ color: liked ? '#e11d48' : 'currentColor' }}
+                  />
+                  <span>J{n}</span>
+                  <span style={{ opacity: 0.72, fontSize: '11px' }}>{count}</span>
+                </span>
+              </button>
             );
           })}
         </div>
 
-        <CarnetCommentsPane
-          comments={paneComments}
-          loading={false}
-          canWrite={Boolean(userId)}
-          currentUserId={userId ?? null}
-          onSend={async (content) => {
-            await reactions.addComment(content);
-            return true;
+        {/* Carte du jour sélectionné */}
+        <StaggerCard
+          className="lkdv-carnet-follow-card"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '12px 14px',
           }}
-          onRemove={async (commentId) => {
-            await reactions.deleteComment(commentId);
-            return true;
-          }}
-          onRequireAuth={onRequireAuth ?? (() => {})}
-        />
-      </div>
+        >
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <b style={{ fontSize: '14px', color: 'var(--label, #172b24)' }}>
+                Jour {reactionDay}
+              </b>
+              {onSelectDay ? (
+                <button
+                  type="button"
+                  onClick={() => onSelectDay(reactionDay)}
+                  style={{
+                    border: 0,
+                    background: 'rgba(27, 67, 50, 0.08)',
+                    color: '#1b4332',
+                    borderRadius: '999px',
+                    padding: '2px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Voir sur la carte
+                </button>
+              ) : null}
+            </div>
+            <div
+              style={{
+                fontSize: '12px',
+                color: 'var(--label2, #56665d)',
+                marginTop: '2px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {activeDayLabel ? `${activeDayLabel} · ` : ''}
+              {reactions.likesCount} j’aime · {paneComments.length} commentaire
+              {paneComments.length > 1 ? 's' : ''}
+            </div>
+          </div>
+
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => reactions.toggleLike()}
+            aria-pressed={reactions.liked}
+            aria-label={
+              reactions.liked
+                ? `Retirer mon j’aime du jour ${reactionDay}`
+                : `J’aime le jour ${reactionDay}`
+            }
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              height: '36px',
+              padding: '0 14px',
+              borderRadius: '999px',
+              border: reactions.liked
+                ? '1px solid rgba(225, 29, 72, 0.28)'
+                : '1px solid rgba(23, 43, 36, 0.14)',
+              background: reactions.liked
+                ? 'rgba(225, 29, 72, 0.1)'
+                : 'rgba(255, 255, 255, 0.85)',
+              color: reactions.liked ? '#e11d48' : '#17402c',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <LikeIcon size={15} active={reactions.liked} />
+            <span>{reactions.liked ? 'Aimé' : 'J’aime'}</span>
+          </motion.button>
+        </StaggerCard>
+
+        {/* Commentaires du jour */}
+        <StaggerCard
+          className="lkdv-carnet-follow-card"
+          style={{ padding: '12px 14px' }}
+        >
+          <CarnetCommentsPane
+            comments={paneComments}
+            loading={false}
+            canWrite={Boolean(userId)}
+            currentUserId={userId ?? null}
+            onSend={async (content) => {
+              await reactions.addComment(content);
+              return true;
+            }}
+            onRemove={async (commentId) => {
+              await reactions.deleteComment(commentId);
+              return true;
+            }}
+            onRequireAuth={onRequireAuth ?? (() => {})}
+          />
+        </StaggerCard>
+      </StaggerList>
     );
   }
 
