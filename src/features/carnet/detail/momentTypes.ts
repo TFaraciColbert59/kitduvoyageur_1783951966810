@@ -90,7 +90,7 @@ export interface MomentMeta {
   ambiance?: boolean;
 }
 
-const EXPENSE_CATEGORIES = ['Repas', 'Hébergement', 'Transport', 'Matériel'] as const;
+const EXPENSE_CATEGORIES = ['Repas', 'Hébergement', 'Transport', 'Matériel', 'Autre'] as const;
 export const MOMENT_EXPENSE_CATEGORIES = EXPENSE_CATEGORIES;
 
 /** Préfixe des URL publiques d'un seau Supabase du projet (lu à l'appel : l'env peut changer en test). */

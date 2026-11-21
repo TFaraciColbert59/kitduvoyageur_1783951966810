@@ -120,44 +120,183 @@ export function CarnetLogCreateSheet({
 
   const selectedKitItem = kitItems.find((i) => i.id === itemId) ?? null;
 
+  const parsedAmount = Number(amount.replace(',', '.'));
+  const formattedAmount =
+    amount.trim() && Number.isFinite(parsedAmount)
+      ? `${parsedAmount % 1 === 0 ? parsedAmount.toFixed(0) : parsedAmount.toFixed(2).replace('.', ',')} €`
+      : '0 €';
+
   const spendPreview = (
-    <div className="lkdv-carnet-species-preview" aria-label="Aperçu de la dépense">
-      <div
-        className="lkdv-carnet-species-preview-media"
-        style={{ background: 'rgba(27, 67, 50, 0.08)' }}
-      >
-        <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
-          <Euro size={24} aria-hidden="true" />
-          <span>{amount.trim() ? `${amount.trim()} €` : '0,00 €'}</span>
-        </div>
-        <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+    <div
+      aria-label="Aperçu de la dépense"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        padding: '12px 14px',
+        borderRadius: 20,
+        border: '1px solid rgba(27, 67, 50, 0.14)',
+        background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(242, 247, 238, 0.88))',
+        boxShadow: '0 6px 18px rgba(16, 32, 25, 0.05)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '3px 9px',
+            borderRadius: 999,
+            background: 'rgba(27, 67, 50, 0.09)',
+            color: '#1b4332',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          <Euro size={12} aria-hidden="true" />
+          <span>{category}</span>
+        </span>
+        <span
+          style={{
+            padding: '3px 9px',
+            borderRadius: 999,
+            background: 'rgba(23, 43, 36, 0.07)',
+            color: '#34473e',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          Jour {day}
+        </span>
       </div>
-      <div className="lkdv-carnet-species-preview-body">
-        <div className="lkdv-carnet-species-preview-title">
-          <b>{spendNote.trim() || category}</b>
-          <i>{place.trim() ? `${category} · ${place.trim()}` : category}</i>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontSize: 14.5,
+              fontWeight: 700,
+              color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {spendNote.trim() || `Dépense · ${category}`}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#56665d',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {place.trim() || 'Lieu à préciser à l’étape suivante'}
+          </div>
+        </div>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+            fontVariantNumeric: 'tabular-nums',
+            color: '#1b4332',
+            flexShrink: 0,
+          }}
+        >
+          {formattedAmount}
         </div>
       </div>
     </div>
   );
 
   const kitPreview = (
-    <div className="lkdv-carnet-species-preview" aria-label="Aperçu de l’objet du kit">
-      <div
-        className="lkdv-carnet-species-preview-media"
-        style={{ background: 'rgba(27, 67, 50, 0.08)' }}
-      >
-        <div className="lkdv-carnet-species-preview-empty" style={{ color: '#1b4332' }}>
-          <Backpack size={24} aria-hidden="true" />
-          <span>{selectedKitItem?.weightG ? `${selectedKitItem.weightG} g` : 'Kit'}</span>
-        </div>
-        <span className="lkdv-carnet-species-preview-day">Jour {day}</span>
+    <div
+      aria-label="Aperçu de l’objet du kit"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        padding: '12px 14px',
+        borderRadius: 20,
+        border: '1px solid rgba(27, 67, 50, 0.14)',
+        background: 'linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(242, 247, 238, 0.88))',
+        boxShadow: '0 6px 18px rgba(16, 32, 25, 0.05)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '3px 9px',
+            borderRadius: 999,
+            background: 'rgba(27, 67, 50, 0.09)',
+            color: '#1b4332',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          <Backpack size={12} aria-hidden="true" />
+          <span>Équipement</span>
+        </span>
+        <span
+          style={{
+            padding: '3px 9px',
+            borderRadius: 999,
+            background: 'rgba(23, 43, 36, 0.07)',
+            color: '#34473e',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          Jour {day}
+        </span>
       </div>
-      <div className="lkdv-carnet-species-preview-body">
-        <div className="lkdv-carnet-species-preview-title">
-          <b>{selectedKitItem?.name ?? 'Aucun objet'}</b>
-          <i>{place.trim() || `Utilisé à J${day}`}</i>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontSize: 14.5,
+              fontWeight: 700,
+              color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {selectedKitItem?.name ?? 'Aucun objet'}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#56665d',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {place.trim() || `Utilisé à J${day}`}
+          </div>
         </div>
+        {selectedKitItem?.weightG ? (
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              color: '#1b4332',
+              flexShrink: 0,
+            }}
+          >
+            {selectedKitItem.weightG} g
+          </div>
+        ) : null}
       </div>
     </div>
   );
