@@ -36,6 +36,7 @@ import { formatClock, useVoiceRecorder } from '@/features/carnet/detail/useVoice
 import { CarnetSpeciesCreatePane, type DiscoveredSpeciesItem } from './CarnetSpeciesCreatePane';
 import { CarnetPlaceSearchField } from './CarnetPlaceSearchField';
 import type { PokedexApiSpecies } from '@/app/api/pokedex/species/route';
+import { createClient } from '@/lib/supabase/client';
 
 const PostFormV2 = dynamic(
   () => import('@/features/community/v2/create/forms/PostFormV2').then((m) => ({ default: m.PostFormV2 })),
@@ -113,8 +114,21 @@ export function CarnetCommunityCreateBridge({
     inc: '',
   });
   const [who, setWho] = useState('');
-  const [whoMatches, setWhoMatches] = useState<Array<{ id: string; name: string; avatarUrl: string | null }>>([]);
+  const [whoMatches, setWhoMatches] = useState<
+    Array<{ id: string; name: string; avatarUrl: string | null; location: string | null }>
+  >([]);
   const [whoDropdownOpen, setWhoDropdownOpen] = useState(false);
+  const [selectedWhoUser, setSelectedWhoUser] = useState<{
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    location: string | null;
+  } | null>(null);
+  const [whoStats, setWhoStats] = useState<{
+    posts: number;
+    followers: number;
+    following: number;
+  } | null>(null);
   const [latin, setLatin] = useState(initialSpeciesLatin);
   const [speciesFile, setSpeciesFile] = useState<File | null>(null);
   const [speciesNote, setSpeciesNote] = useState('');
@@ -233,7 +247,16 @@ export function CarnetCommunityCreateBridge({
     const timer = window.setTimeout(() => {
       fetch(`/api/users/search?scope=all&q=${encodeURIComponent(q)}&limit=6`)
         .then((res) => res.json())
-        .then((data: { users?: Array<{ id: string; name?: string | null; full_name?: string | null; avatarUrl?: string | null; avatar_url?: string | null }> }) => {
+        .then((data: {
+          users?: Array<{
+            id: string;
+            name?: string | null;
+            full_name?: string | null;
+            avatarUrl?: string | null;
+            avatar_url?: string | null;
+            location?: string | null;
+          }>;
+        }) => {
           if (!cancelled && Array.isArray(data.users)) {
             setWhoMatches(
               data.users
@@ -241,6 +264,7 @@ export function CarnetCommunityCreateBridge({
                   id: u.id,
                   name: (u.name || u.full_name || '').trim(),
                   avatarUrl: u.avatarUrl ?? u.avatar_url ?? null,
+                  location: u.location ?? null,
                 }))
                 .filter((u) => u.name.length > 0),
             );
@@ -253,6 +277,34 @@ export function CarnetCommunityCreateBridge({
       window.clearTimeout(timer);
     };
   }, [who, whoDropdownOpen, activeTab]);
+
+  useEffect(() => {
+    const uid = selectedWhoUser?.id;
+    if (!uid) {
+      setWhoStats(null);
+      return;
+    }
+    let cancelled = false;
+    const supabase = createClient();
+    void Promise.all([
+      supabase.from('community_posts').select('id', { count: 'exact', head: true }).eq('author_id', uid),
+      supabase.from('user_follows').select('follower_id', { count: 'exact', head: true }).eq('following_id', uid),
+      supabase.from('user_follows').select('following_id', { count: 'exact', head: true }).eq('follower_id', uid),
+    ])
+      .then(([p, f1, f2]) => {
+        if (!cancelled) {
+          setWhoStats({
+            posts: p.count ?? 0,
+            followers: f1.count ?? 0,
+            following: f2.count ?? 0,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWhoUser?.id]);
 
   const validatedNowRef = useRef<Set<string>>(new Set());
 
@@ -418,13 +470,71 @@ export function CarnetCommunityCreateBridge({
     </div>
   );
 
-  const renderMomentForm = (kind: 'voice' | 'meet' | 'inc') => (
-    <div className="lkdv-cv2c-pane">
-      <CarnetPlaceSearchField
-        label={`Lieu (Jour ${day})`}
-        value={place}
-        onChange={setPlace}
-      />
+  const renderMomentForm = (kind: 'voice' | 'meet' | 'inc') => {
+    const heroName = selectedWhoUser?.name || who.trim() || 'Voyageur rencontré…';
+    const heroAvatar = selectedWhoUser?.avatarUrl ?? null;
+    const heroSubtitle =
+      selectedWhoUser?.location ||
+      (place.trim() ? `Rencontré à ${place.trim()}` : 'Rencontre sur le sentier');
+
+    return (
+      <div className="lkdv-cv2c-pane">
+        {kind === 'meet' ? (
+          <div
+            className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile${
+              heroAvatar ? ' has-cover-bg' : ''
+            }`}
+            style={{ minHeight: 'auto', marginBottom: 4 }}
+          >
+            {heroAvatar ? (
+              <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={heroAvatar} alt="" className="lkdv-cv2x-carnet-bg-img" />
+                <span className="lkdv-cv2x-carnet-bg-scrim" />
+              </span>
+            ) : null}
+            <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
+              <span className="lkdv-ig-header">
+                <span className="lkdv-ig-avi-wrap">
+                  <span className="lkdv-ig-avi">
+                    {heroAvatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={heroAvatar} alt="" className="lkdv-cv2x-cover-img" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <span className="lkdv-cv2c-ig-avi-initials">
+                        {heroName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </span>
+                </span>
+                <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
+                  <span className="lkdv-ig-stat">
+                    <b>{whoStats ? whoStats.posts : '—'}</b>
+                    <span>publications</span>
+                  </span>
+                  <span className="lkdv-ig-stat">
+                    <b>{whoStats ? whoStats.followers : '—'}</b>
+                    <span>followers</span>
+                  </span>
+                  <span className="lkdv-ig-stat">
+                    <b>{whoStats ? whoStats.following : '—'}</b>
+                    <span>suivi(e)s</span>
+                  </span>
+                </span>
+              </span>
+              <span className="lkdv-ig-bio">
+                <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{heroName}</span>
+                <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{heroSubtitle}</span>
+              </span>
+            </span>
+          </div>
+        ) : null}
+
+        <CarnetPlaceSearchField
+          label={`Lieu (Jour ${day})`}
+          value={place}
+          onChange={setPlace}
+        />
 
       {kind === 'voice' ? (
         <>
@@ -508,6 +618,7 @@ export function CarnetCommunityCreateBridge({
             onFocus={() => setWhoDropdownOpen(true)}
             onChange={(e) => {
               setWho(e.target.value);
+              setSelectedWhoUser(null);
               setWhoDropdownOpen(true);
             }}
           />
@@ -534,6 +645,7 @@ export function CarnetCommunityCreateBridge({
                   aria-selected={false}
                   onClick={() => {
                     setWho(u.name);
+                    setSelectedWhoUser(u);
                     setWhoMatches([]);
                     setWhoDropdownOpen(false);
                   }}
@@ -611,7 +723,8 @@ export function CarnetCommunityCreateBridge({
         />
       </div>
     </div>
-  );
+    );
+  };
 
   const panes = CARNET_CREATE_TABS.map((t) => {
     if (t.id === 'post' || t.id === 'story') {
