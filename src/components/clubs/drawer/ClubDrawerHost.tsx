@@ -417,8 +417,7 @@ export function ClubDrawerHost({
         { id: 'vault-challenges', label: 'Défis & classements', icon: <Trophy size={15} aria-hidden="true" /> },
       ],
       4: [
-        { id: 'salons-chat', label: 'Discussions en direct', icon: <MessageCircle size={15} aria-hidden="true" /> },
-        { id: 'salons-channels', label: 'Canaux & annonces', icon: <Layers size={15} aria-hidden="true" /> },
+        { id: 'salons-chat', label: 'Salons de discussion', icon: <MessageCircle size={15} aria-hidden="true" /> },
       ],
     }),
     [inspectedMember],
