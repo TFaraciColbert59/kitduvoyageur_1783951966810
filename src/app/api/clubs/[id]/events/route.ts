@@ -109,7 +109,7 @@ export async function GET(
     let registrations: EventRegistration[] = [];
     const eventCounts: Record<string, { registered: number; waitlist: number }> = {};
     if (user && visible.length > 0) {
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('club_event_registrations_effective')
         .select('*')
         .in(
@@ -117,7 +117,19 @@ export async function GET(
           visible.map((event) => event.id),
         )
         .limit(2000);
-      if (error) return dbFailure('GET events registrations', error);
+      if (error) {
+        const fallback = await supabase
+          .from('club_event_registrations')
+          .select('*')
+          .in(
+            'event_id',
+            visible.map((event) => event.id),
+          )
+          .limit(2000);
+        data = fallback.data;
+        error = fallback.error;
+      }
+      if (!error && data) {
       const allRegistrations = (data ?? []).map((row) => ({
         eventId: String((row as Row).event_id ?? ''),
         userId: String((row as Row).user_id ?? ''),
@@ -143,6 +155,7 @@ export async function GET(
       registrations = isManager(bundle)
         ? allRegistrations
         : allRegistrations.filter((registration) => registration.userId === user?.id);
+      }
     }
 
     for (const event of visible) {

@@ -437,7 +437,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         isDemo: false,
         storeCreditEur: 0,
         loyaltyPoints: 0,
-        carnets: [],
+        carnets: mappedPosts.map((p) => ({
+          id: p.id,
+          title: p.spot,
+          mass: p.massif,
+          km: 0,
+          dplus: 0,
+        })),
         outings: [],
         clubs: [],
         gearItems: [],
@@ -474,7 +480,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           isDemo: false,
           storeCreditEur: 0,
           loyaltyPoints: 0,
-          carnets: [],
+          carnets: mappedPosts.map((p) => ({
+          id: p.id,
+          title: p.spot,
+          mass: p.massif,
+          km: 0,
+          dplus: 0,
+        })),
           outings: [],
           clubs: [],
           gearItems: [],
@@ -488,7 +500,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         return;
       }
 
-      const [membersRes, topicsRes, groupsRes] = await Promise.all([
+      const [membersRes, topicsRes, eventsRes, allClubsRes] = await Promise.all([
         supabase
           .from('club_members')
           .select('id, club_id, user_id, role, joined_at')
@@ -501,24 +513,176 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           .order('created_at', { ascending: false })
           .limit(20),
         supabase
-          .from('travel_groups')
-          .select('id, name, destination, departure_date, return_date, status, club_id')
+          .from('club_events')
+          .select('*')
           .eq('club_id', clubRow.id)
-          .order('departure_date', { ascending: false })
+          .order('event_date', { ascending: false })
           .limit(20),
+        supabase
+          .from('clubs')
+          .select('id, name, slug, description, category, cover_image, members_count, privacy')
+          .order('members_count', { ascending: false })
+          .limit(30),
       ]);
 
       const memberRows = membersRes.data || [];
-      const userIds = Array.from(new Set(memberRows.map((m: any) => m.user_id).filter(Boolean)));
-      const profilesMap: Record<string, any> = userIds.length > 0 ? await fetchPublicProfilesWith(supabase as any, userIds) : {};
+      const topicRows = topicsRes.data || [];
+      const eventRows = eventsRes.data || [];
+      const allClubRows = allClubsRes.data || [];
+
+      const userIds = Array.from(
+        new Set(
+          [
+            ...memberRows.map((m: any) => m.user_id),
+            ...topicRows.map((t: any) => t.author_id),
+          ].filter(Boolean),
+        ),
+      );
+      const profilesMap: Record<string, any> =
+        userIds.length > 0 ? await fetchPublicProfilesWith(supabase as any, userIds) : {};
 
       const derivedHandle = clubRow.slug || clubRow.name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 20);
+      const currentMemberRow = user?.id
+        ? memberRows.find((m: any) => m.user_id === user.id)
+        : null;
+      const isJoined = Boolean(currentMemberRow) || (Boolean(user?.id) && clubRow.created_by === user?.id);
+      const currentRole: 'Admin' | 'Modérateur' | 'Membre' =
+        currentMemberRow?.role === 'admin' || clubRow.created_by === user?.id
+          ? 'Admin'
+          : currentMemberRow?.role === 'moderator'
+            ? 'Modérateur'
+            : 'Membre';
+
+      const mappedMembers: ClubMemberData[] = memberRows.map((m: any) => {
+        const p = profilesMap[m.user_id];
+        const fullName = p?.full_name || 'Membre LKDV';
+        const handle =
+          p?.handle ||
+          fullName.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24) ||
+          'membre';
+        return {
+          id: m.user_id,
+          name: fullName,
+          handle,
+          avatarUrl: p?.avatar_url || null,
+          role: m.role === 'admin' ? 'Admin' : m.role === 'moderator' ? 'Modérateur' : 'Membre',
+          level: p?.location || clubRow.category || 'Voyageur',
+          massif: p?.location || clubRow.category || 'France',
+          skills: [p?.location || clubRow.category || 'Outdoor'],
+          followed: false,
+          availableThisWeekend: true,
+        };
+      });
+
+      const mappedPosts: ClubFeedPostItem[] = topicRows.map((t: any) => {
+        const p = profilesMap[t.author_id];
+        const authorName = p?.full_name || 'Membre du club';
+        const createdMs = t.created_at ? new Date(t.created_at).getTime() : Date.now();
+        const diffMin = Math.max(1, Math.round((Date.now() - createdMs) / 60000));
+        const timeAgo =
+          diffMin < 60
+            ? `il y a ${diffMin} min`
+            : diffMin < 1440
+              ? `il y a ${Math.round(diffMin / 60)} h`
+              : `il y a ${Math.round(diffMin / 1440)} j`;
+        return {
+          id: t.id,
+          clubId: clubRow.id,
+          authorName,
+          authorHandle: p?.handle || authorName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+          authorRole: t.is_pinned ? 'Admin' : 'Membre',
+          authorAvatar: p?.avatar_url || null,
+          timeAgo,
+          spot: t.title || clubRow.name,
+          massif: clubRow.category || clubRow.name,
+          kind: 'post',
+          caption: t.content || t.title || '',
+          likes: 0,
+          liked: false,
+          commentsCount: Number(t.replies_count ?? 0),
+          comments: [],
+          lat: 45.764,
+          lng: 4.835,
+        };
+      });
+
+      const mappedOutings: ClubOutingData[] = eventRows.map((ev: any) => {
+        const dt = ev.event_date || ev.starts_at;
+        return {
+          id: ev.id,
+          clubId: clubRow.id,
+          title: ev.title || 'Sortie club',
+          dateLabel: dt
+            ? new Date(dt).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'À venir',
+          massif: ev.location || ev.meeting_place || clubRow.category || 'Montagne',
+          km: Number(ev.distance_km ?? 0),
+          dplus: Number(ev.elevation_gain_m ?? 0),
+          rdv: ev.meeting_point || ev.location || 'Point de RDV à confirmer',
+          rsvpCount: 0,
+          rsvpJoined: false,
+          status: ev.status === 'cancelled' ? ('archived' as const) : ('upcoming' as const),
+          lat: Number(ev.lat ?? 45.764),
+          lng: Number(ev.lng ?? 4.835),
+          participants: [],
+        };
+      });
+
+      const buildClubItem = (row: any, joinedFlag: boolean): ClubItemData => ({
+        id: row.id,
+        slug: row.slug || row.id,
+        name: row.name,
+        massif: row.category || 'Outdoor',
+        category: row.category || 'Outdoor',
+        level: 'Tous niveaux',
+        membersCount: row.members_count || (row.id === clubRow.id ? memberRows.length : 0) || 0,
+        outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
+        totalKm: 0,
+        totalDplus: 0,
+        joined: joinedFlag,
+        role: row.id === clubRow.id ? currentRole : 'Membre',
+        visibility: row.privacy === 'private' ? 'private' : 'public',
+        bio: row.description || 'Club communautaire Le Kit du Voyageur.',
+        charter: 'Respect strict de la montagne, de la sécurité et zéro trace.',
+        nextOutingTitle: mappedOutings[0]?.title || 'Aucune sortie programmée',
+        nextOutingDate: mappedOutings[0]?.dateLabel || 'À venir',
+        weatherIso: 'Iso 0°C —',
+        weatherWind: 'Vent calme',
+        weatherTrail: 'Conditions stables',
+        lat: 45.764,
+        lng: 4.835,
+        emblemUrl: row.cover_image || null,
+      });
+
+      const currentClubItem = buildClubItem(clubRow, isJoined);
+      const directoryList: ClubItemData[] = [
+        currentClubItem,
+        ...allClubRows
+          .filter((r: any) => r.id !== clubRow.id)
+          .map((r: any) => buildClubItem(r, false)),
+      ];
+
+      setClubsDirectory(directoryList);
+      setActiveClubId(clubRow.id);
+      setClubMembers(mappedMembers);
+      setClubPosts(mappedPosts);
+      setClubOutings(mappedOutings);
+
+      if (typeof document !== 'undefined') {
+        document.title = `${clubRow.name} — Club | Le Kit du Voyageur`;
+      }
+
       hydrate({
         name: clubRow.name,
         handle: derivedHandle,
         followersCount: clubRow.members_count || memberRows.length || 0,
-        followingCount: (groupsRes.data || []).length || 0,
-        bioLine: clubRow.description ? '· ' + clubRow.description.slice(0, 64) : '',
+        followingCount: mappedOutings.length,
+        bioLine: clubRow.description ? '· ' + clubRow.description : '',
         avatarUrl: clubRow.cover_image || null,
         followers: memberRows.map((m: any) => {
           const p = profilesMap[m.user_id];
@@ -532,9 +696,30 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             avatar: p?.avatar_url || null,
           };
         }),
-        carnets: [],
-        outings: [],
-        clubs: [],
+        carnets: mappedPosts.map((p) => ({
+          id: p.id,
+          title: p.spot,
+          mass: p.massif,
+          km: 0,
+          dplus: 0,
+        })),
+        outings: mappedOutings.map((o) => ({
+          id: o.id,
+          title: o.title,
+          date: o.dateLabel,
+          mass: o.massif,
+          km: o.km,
+          dplus: o.dplus,
+          lat: o.lat,
+          lng: o.lng,
+        })),
+        clubs: directoryList.map((c) => ({
+          id: c.id,
+          name: c.name,
+          handle: c.slug,
+          members: c.membersCount,
+          massif: c.massif,
+        })),
         gearItems: [],
         orders: [],
         activeLoans: [],
@@ -547,7 +732,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     } catch (_) {
       setSyncStatus('idle');
     }
-  }, [clubId]);
+  }, [clubId, user?.id]);
 
   useEffect(() => {
     syncProfileRef.current = syncClubProfile;

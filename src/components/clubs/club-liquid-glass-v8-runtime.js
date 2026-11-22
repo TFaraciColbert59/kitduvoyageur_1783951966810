@@ -33,6 +33,7 @@ export function initCompteLiquidGlassRuntime(rootContainer) {
 
   try {
     (function() {
+    const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
 
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -2273,7 +2274,9 @@ let fit = function() {
 }
 window.addEventListener("resize", () => { fit(); syncCardBounds(); }); fit();
 let fitVB = function() {
-  const tm = $("tm"), w = tm.clientWidth, h = tm.clientHeight;
+  const tm = $("tm");
+  if (!tm) return;
+  const w = tm.clientWidth, h = tm.clientHeight;
   if (!w || !h) return;
   const vh = (370 * h) / w;
   tm.setAttribute("viewBox", `0 ${(150 - vh / 2).toFixed(1)} 370 ${vh.toFixed(1)}`);
@@ -2288,7 +2291,6 @@ window.__QR={"n":37,"rows":["1111111011101010010100110111001111111","10000010010
 
 /* ================= Compte — 50 améliorations : couche d'extension (override des fonctions du générateur) ================= */
 (() => {
-const X = { filter: 'all', feed: false, visitor: false, ligSub: 0, cmp: null, prof: 'km', story: null, vault: 0, scan: 0, seen: {}, hov: false, mon: null, evt: null, acct: 'me', hold: 0 };
 window.__X = X;
 {
   const st = document.createElement('div'); st.className = 'story'; st.id = 'story'; st.setAttribute('role', 'dialog'); st.setAttribute('aria-label', 'Story à la une'); phone.appendChild(st);

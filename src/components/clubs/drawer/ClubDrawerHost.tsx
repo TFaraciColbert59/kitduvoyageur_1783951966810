@@ -945,7 +945,7 @@ export function ClubDrawerHost({
                           <span className="club-comment-badge">{m.role}</span>
                         </span>
                         <span className="reseau-sub">
-                          {m.massif} · {m.skills.slice(0, 2).join(' · ')}
+                          {m.massif} · {(m.skills ?? []).slice(0, 2).join(' · ')}
                         </span>
                       </span>
                     </button>
@@ -1371,7 +1371,7 @@ export function ClubDrawerHost({
                 <b>Charte, Gouvernance & QR Code Terrain</b>
                 <span>Rôle : {activeClub.role}</span>
               </div>
-              <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+              <div className="li nt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
                 <div className="ttl"><b>Charte & Sécurité du Club</b></div>
                 <div className="s2">{activeClub.charter}</div>
               </div>

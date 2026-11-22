@@ -15,12 +15,12 @@ function ClubDetailContent() {
   const initialTab = searchParams.get('tab') || undefined;
 
   return (
-    <main className="min-h-screen w-full bg-[color:var(--bg-body)]">
+    <div className="min-h-screen w-full bg-[color:var(--bg-body)]">
       <ClubLiquidGlassV8 clubId={clubId} initialTab={initialTab} />
       <div className="sr-only">
         <ClubPrivatePostsPanel clubId={clubId} isMember={false} user={user} />
       </div>
-    </main>
+    </div>
   );
 }
 
