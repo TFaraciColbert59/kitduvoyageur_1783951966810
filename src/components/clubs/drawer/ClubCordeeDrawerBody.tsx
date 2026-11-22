@@ -28,6 +28,19 @@ import type {
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 import { ClubG02Workspace } from '../g02';
 
+function resolveMemberGearImage(name: string, category: string, imageUrl?: string): string {
+  if (imageUrl) return imageUrl;
+  const hay = `${name} ${category}`.toLowerCase();
+  if (hay.includes('tente') || hay.includes('bivouac') || hay.includes('abri')) return '/assets/images/product-tent.jpg';
+  if (hay.includes('duvet') || hay.includes('couchage') || hay.includes('matelas')) return '/assets/images/product-sleeping.jpg';
+  if (hay.includes('rechaud') || hay.includes('réchaud') || hay.includes('cuisine') || hay.includes('jetboil')) return '/assets/images/gear-stove.jpg';
+  if (hay.includes('frontale') || hay.includes('eclairage') || hay.includes('éclairage') || hay.includes('lampe')) return '/assets/images/product-headlamp.jpg';
+  if (hay.includes('crampon') || hay.includes('chaussure') || hay.includes('piolet') || hay.includes('baton') || hay.includes('bâton')) return '/assets/images/gear-boots.jpg';
+  if (hay.includes('veste') || hay.includes('doudoune') || hay.includes('textile')) return '/assets/images/product-jacket.jpg';
+  if (hay.includes('gourde') || hay.includes('hydrat')) return '/assets/images/product-bottle.jpg';
+  return '/assets/images/product-backpack.jpg';
+}
+
 export function hasClubRole(member: Pick<ClubMemberData, 'role' | 'rawRole'>): boolean {
   if (member.rawRole === 'admin' || member.rawRole === 'moderator') return true;
   return (
@@ -295,12 +308,13 @@ function InspectedMemberPane({
               <span className="lkdv-carnet-kit-eyebrow">
                 Médias publiés ({photoPosts.length})
               </span>
-              <div className="lkdv-ig-grid">
+              <div className="lkdv-ig-grid" style={{ gap: 6 }}>
                 {photoPosts.map((m) => (
                   <button
                     key={m.id}
                     type="button"
                     className="lkdv-ig-tile"
+                    style={{ borderRadius: 14, overflow: 'hidden' }}
                     onClick={() => {
                       onClose();
                       document
@@ -322,13 +336,13 @@ function InspectedMemberPane({
               <span className="lkdv-carnet-kit-eyebrow">
                 Publications ({textPosts.length})
               </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {textPosts.map((post) => (
                   <button
                     key={post.id}
                     type="button"
-                    className="lkdv-carnet-note-row"
-                    style={{ textAlign: 'left', width: '100%' }}
+                    className="club-glass-card"
+                    style={{ textAlign: 'left', width: '100%', border: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
                     onClick={() => {
                       onClose();
                       document
@@ -336,9 +350,27 @@ function InspectedMemberPane({
                         ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }}
                   >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <b style={{ fontSize: 13, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {post.spot || 'Publication club'}
+                      </b>
+                      {post.timeAgo ? (
+                        <span className="club-badge-soft" style={{ whiteSpace: 'nowrap', flex: 'none' }}>
+                          {post.timeAgo}
+                        </span>
+                      ) : null}
+                    </div>
                     <p
-                      className="lkdv-carnet-note-txt"
-                      style={{ margin: 0, fontSize: 12.5, color: 'var(--label)' }}
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        lineHeight: 1.4,
+                        color: 'var(--label2)',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
                     >
                       {post.caption || post.spot || 'Publication dans le club'}
                     </p>
@@ -352,23 +384,61 @@ function InspectedMemberPane({
               <span className="lkdv-carnet-kit-eyebrow">
                 Matériel mutualisé ({memberGear.length})
               </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {memberGear.map((g) => (
-                  <div key={g.id} className="lkdv-carnet-note-row">
-                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>
-                      {g.name}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
-                      {[
-                        g.category,
-                        g.weightG ? `${g.weightG} g` : null,
-                        g.available ? 'Disponible' : 'Emprunté',
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {memberGear.map((g) => {
+                  const weightLabel = g.weightG
+                    ? g.weightG >= 1000
+                      ? `${(g.weightG / 1000).toFixed(1).replace('.', ',')} kg`
+                      : `${g.weightG} g`
+                    : null;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      className="club-glass-card"
+                      style={{
+                        width: '100%',
+                        border: 0,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                      }}
+                      onClick={() => onSwitchTabAndLens(3, 0, { highlightGearId: g.id })}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={resolveMemberGearImage(g.name, g.category, g.imageUrl)}
+                          alt={g.name}
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 10,
+                            objectFit: 'cover',
+                            background: 'rgba(23, 64, 44, 0.06)',
+                            flex: 'none',
+                          }}
+                        />
+                        <div style={{ minWidth: 0 }}>
+                          <b style={{ display: 'block', fontSize: 13, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {g.name}
+                          </b>
+                          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+                            {[g.category, weightLabel].filter(Boolean).join(' · ')}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={g.available ? 'club-badge-sage' : 'club-badge-soft'} style={{ whiteSpace: 'nowrap', flex: 'none' }}>
+                        {g.available ? 'Disponible' : 'Emprunté'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </>
           ) : null}
