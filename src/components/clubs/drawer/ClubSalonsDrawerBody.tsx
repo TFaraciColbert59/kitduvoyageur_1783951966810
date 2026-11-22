@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calendar,
+  ChevronDown,
   Flag,
   Hash,
   Layers,
@@ -11,6 +12,7 @@ import {
   MessageCircle,
   Plus,
   RefreshCw,
+  Reply,
   Search,
   Send,
   Trash2,
@@ -42,10 +44,10 @@ export interface ClubSalonsDrawerBodyProps {
   onToast?: (payload: ClubToastPayload) => void;
 }
 
-function channelIcon(kind: ClubChannelKind) {
-  if (kind === 'announcements') return <Megaphone size={13} aria-hidden="true" />;
-  if (kind === 'events') return <Calendar size={13} aria-hidden="true" />;
-  return <Hash size={13} aria-hidden="true" />;
+function channelIcon(kind: ClubChannelKind, size = 14) {
+  if (kind === 'announcements') return <Megaphone size={size} aria-hidden="true" />;
+  if (kind === 'events') return <Calendar size={size} aria-hidden="true" />;
+  return <Hash size={size} aria-hidden="true" />;
 }
 
 function channelKindLabel(kind: ClubChannelKind): string {
@@ -70,6 +72,28 @@ function formatMsgTime(iso: string): string {
   }).format(d);
 }
 
+function resolveAuthorDisplay(
+  authorId: string,
+  memberByUserId: Map<string, ClubMemberData>,
+  currentUserId: string | null,
+) {
+  const author = memberByUserId.get(authorId);
+  const rawName = author?.name?.trim();
+  const isMine = Boolean(currentUserId && authorId === currentUserId);
+  const name =
+    rawName && rawName !== 'Membre LKDV'
+      ? rawName
+      : author?.role === 'Fondateur'
+        ? 'Alexandre Dumas'
+        : author?.handle || (isMine ? 'Vous' : author?.role || 'Membre du club');
+  return {
+    name,
+    role: author?.role,
+    avatarUrl: author?.avatarUrl,
+    isMine,
+  };
+}
+
 export function ClubSalonsDrawerBody({
   activeSubTab,
   active,
@@ -80,8 +104,7 @@ export function ClubSalonsDrawerBody({
   onToggleJoinClub,
   onToast,
 }: ClubSalonsDrawerBodyProps) {
-  const cacheKeyBase = activeClub.id;
-  const cachedInit = salonsCache.get(cacheKeyBase);
+  const cachedInit = salonsCache.get(activeClub.id);
 
   const [channels, setChannels] = useState<ClubChannel[]>(cachedInit?.channels ?? []);
   const [activeChannelId, setActiveChannelId] = useState<string | null>(
@@ -94,15 +117,16 @@ export function ClubSalonsDrawerBody({
 
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [channelMenuOpen, setChannelMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelKind, setNewChannelKind] = useState<ClubChannelKind>('custom');
   const [newChannelReadOnly, setNewChannelReadOnly] = useState(false);
   const [creatingChannel, setCreatingChannel] = useState(false);
   const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const memberByUserId = useMemo(() => {
@@ -211,13 +235,10 @@ export function ClubSalonsDrawerBody({
     const q = searchQuery.trim().toLowerCase();
     if (!q) return clean;
     return clean.filter((m) => {
-      const author = memberByUserId.get(m.authorId);
-      return (
-        m.body.toLowerCase().includes(q) ||
-        (author?.name || '').toLowerCase().includes(q)
-      );
+      const info = resolveAuthorDisplay(m.authorId, memberByUserId, currentUserId);
+      return m.body.toLowerCase().includes(q) || info.name.toLowerCase().includes(q);
     });
-  }, [messages, searchQuery, memberByUserId]);
+  }, [messages, searchQuery, memberByUserId, currentUserId]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -297,7 +318,6 @@ export function ClubSalonsDrawerBody({
         throw new Error(payload?.message || payload?.error || 'Création impossible.');
       }
       setNewChannelName('');
-      setShowCreateForm(false);
       setChannels((prev) => [...prev, payload.data!]);
       setActiveChannelId(payload.data.id);
       salonsCache.clear();
@@ -332,11 +352,9 @@ export function ClubSalonsDrawerBody({
       setMessages((prev) => prev.filter((m) => m.id !== msg.id));
       setSelectedMsgId(null);
       salonsCache.delete(`${activeClub.id}:${activeChannelId ?? 'default'}`);
-      onToast?.({
-        title: moderation === 'delete' ? 'Message supprimé' : 'Message masqué',
-      });
+      onToast?.({ title: 'Message supprimé' });
     } catch {
-      onToast?.({ title: 'Impossible de modérer ce message' });
+      onToast?.({ title: 'Impossible de supprimer ce message' });
     }
   };
 
@@ -361,7 +379,7 @@ export function ClubSalonsDrawerBody({
   };
 
   // ============================================================================
-  // Lens 1: Gestion & liste des canaux
+  // Lens 1: Canaux & création (style Discord)
   // ============================================================================
   if (activeSubTab === 1) {
     return (
@@ -393,7 +411,7 @@ export function ClubSalonsDrawerBody({
                   >
                     {isActiveKind ? <span className="club-filter-pill-bg" /> : null}
                     <span className="club-filter-pill-label">
-                      {channelIcon(k)}
+                      {channelIcon(k, 13)}
                       <span>{channelKindLabel(k)}</span>
                     </span>
                   </button>
@@ -424,7 +442,7 @@ export function ClubSalonsDrawerBody({
           <ClubEmptyCard
             icon={<Layers size={22} />}
             title="Aucun salon disponible"
-            description="Les salons de discussion du club apparaîtront ici dès que tu rejoins la cordée."
+            description="Les salons de discussion du club apparaîtront ici."
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -488,22 +506,130 @@ export function ClubSalonsDrawerBody({
   }
 
   // ============================================================================
-  // Lens 0: Discussions en direct
+  // Lens 0: Chat Discord-like (header fixe, flux scrollable, compositeur fixe en bas)
   // ============================================================================
   return (
     <div
       className="club-drawer-pane-content"
       data-testid="club-salons-chat-pane"
-      style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: '1 1 auto', minHeight: '100%', paddingBottom: 0 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '1 1 0',
+        minHeight: 0,
+        height: '100%',
+        overflow: 'hidden',
+        paddingBottom: 0,
+        gap: 8,
+      }}
     >
-      {/* Barre supérieure : sélecteur de canaux + recherche + rafraîchir */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      {/* En-tête Discord-like : sélecteur de salon + recherche + actualiser */}
+      <div
+        style={{
+          flex: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 8,
+          padding: '6px 8px',
+          borderRadius: 16,
+          background: 'rgba(255, 255, 255, 0.72)',
+          boxShadow: 'inset 0 0 0 0.5px rgba(23, 64, 44, 0.12)',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setChannelMenuOpen((v) => !v)}
+          aria-expanded={channelMenuOpen}
+          style={{
+            flex: '1 1 auto',
+            minWidth: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            border: 0,
+            background: 'transparent',
+            padding: '2px 4px',
+            cursor: 'pointer',
+            color: '#172b24',
+            textAlign: 'left',
+          }}
+        >
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 8,
+              background: '#17402c',
+              color: '#ffffff',
+              display: 'grid',
+              placeItems: 'center',
+              flex: 'none',
+            }}
+          >
+            {activeChannel ? channelIcon(activeChannel.kind, 13) : <Hash size={13} />}
+          </span>
+          <b
+            style={{
+              fontSize: 13.5,
+              fontWeight: 700,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {activeChannel?.name || 'Général'}
+          </b>
+          {activeChannel?.readOnlyForMembers ? (
+            <Lock size={12} aria-hidden="true" style={{ color: '#56665d', flex: 'none' }} />
+          ) : null}
+          <ChevronDown
+            size={14}
+            aria-hidden="true"
+            style={{
+              color: '#56665d',
+              flex: 'none',
+              transform: channelMenuOpen ? 'rotate(180deg)' : undefined,
+              transition: 'transform 0.18s ease',
+            }}
+          />
+        </button>
+
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
+          <button
+            type="button"
+            className={`reseau-btn ${searchOpen ? 'active' : ''} club-icon-pill`}
+            aria-label="Rechercher dans le salon"
+            onClick={() => setSearchOpen((v) => !v)}
+          >
+            <Search size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="reseau-btn club-icon-pill"
+            aria-label="Actualiser les messages"
+            onClick={() => void loadChannel(activeChannelId, true)}
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      {/* Menu déroulant des salons (style Discord) */}
+      {channelMenuOpen && channels.length > 0 ? (
         <div
-          className="club-filter-rail"
-          data-hscroll="true"
-          style={{ flex: 1, minWidth: 0 }}
-          role="tablist"
-          aria-label="Canaux du club"
+          className="club-glass-card"
+          role="listbox"
+          aria-label="Changer de salon"
+          style={{
+            flex: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+            padding: 8,
+            maxHeight: 190,
+            overflowY: 'auto',
+          }}
         >
           {channels.map((ch) => {
             const selected = ch.id === activeChannel?.id;
@@ -511,57 +637,73 @@ export function ClubSalonsDrawerBody({
               <button
                 key={ch.id}
                 type="button"
-                role="tab"
+                role="option"
                 aria-selected={selected}
-                className={`club-filter-pill ${selected ? 'is-active' : ''}`}
                 onClick={() => {
                   setActiveChannelId(ch.id);
+                  setChannelMenuOpen(false);
                   setSelectedMsgId(null);
                 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  width: '100%',
+                  padding: '7px 10px',
+                  borderRadius: 11,
+                  border: 0,
+                  background: selected ? '#17402c' : 'transparent',
+                  color: selected ? '#ffffff' : '#172b24',
+                  fontSize: 13,
+                  fontWeight: selected ? 700 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
               >
-                {selected ? <span className="club-filter-pill-bg" /> : null}
-                <span className="club-filter-pill-label">
-                  {channelIcon(ch.kind)}
-                  <span>{ch.name}</span>
-                  {ch.readOnlyForMembers ? <Lock size={10} aria-hidden="true" /> : null}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+                  {channelIcon(ch.kind, 13)}
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {ch.name}
+                  </span>
+                </span>
+                <span style={{ fontSize: 10.5, opacity: 0.72, flex: 'none' }}>
+                  {channelKindLabel(ch.kind)}
                 </span>
               </button>
             );
           })}
+          {canManageChannels ? (
+            <button
+              type="button"
+              onClick={() => {
+                setChannelMenuOpen(false);
+                onSwitchSubTab(1);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 10px',
+                borderRadius: 11,
+                border: '1px dashed rgba(23, 64, 44, 0.22)',
+                background: 'transparent',
+                color: '#17402c',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginTop: 2,
+              }}
+            >
+              <Plus size={13} aria-hidden="true" />
+              <span>Créer ou gérer les salons</span>
+            </button>
+          ) : null}
         </div>
-
-        <button
-          type="button"
-          className="reseau-btn club-icon-pill"
-          aria-label="Rechercher dans le salon"
-          onClick={() => setSearchOpen((v) => !v)}
-        >
-          <Search size={14} aria-hidden="true" />
-        </button>
-
-        <button
-          type="button"
-          className="reseau-btn club-icon-pill"
-          aria-label="Actualiser les messages"
-          onClick={() => void loadChannel(activeChannelId, true)}
-        >
-          <RefreshCw size={14} aria-hidden="true" />
-        </button>
-
-        {canManageChannels ? (
-          <button
-            type="button"
-            className={`reseau-btn ${showCreateForm ? 'primary' : ''} club-icon-pill`}
-            aria-label="Nouveau salon"
-            onClick={() => setShowCreateForm((v) => !v)}
-          >
-            <Plus size={15} aria-hidden="true" />
-          </button>
-        ) : null}
-      </div>
+      ) : null}
 
       {searchOpen ? (
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        <div style={{ flex: 'none', position: 'relative', display: 'flex', alignItems: 'center' }}>
           <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
           <input
             type="text"
@@ -584,262 +726,278 @@ export function ClubSalonsDrawerBody({
         </div>
       ) : null}
 
-      {showCreateForm && canManageChannels ? (
-        <form onSubmit={handleCreateChannel} className="club-glass-card" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <input
-            type="text"
-            className="club-glass-input"
-            placeholder="Nom du nouveau salon…"
-            value={newChannelName}
-            onChange={(e) => setNewChannelName(e.target.value)}
-            minLength={2}
-            required
-          />
-          <button
-            type="submit"
-            disabled={creatingChannel || newChannelName.trim().length < 2}
-            className="lkdv-carnet-btn-primary"
-            style={{ height: 32, padding: '0 12px', borderRadius: 999, flex: 'none' }}
-          >
-            Créer
-          </button>
-        </form>
-      ) : null}
-
-      {/* Fil de discussion */}
-      {error ? (
-        <ClubEmptyCard
-          icon={<MessageCircle size={22} />}
-          title="Accès au salon"
-          description={error}
-          actions={
-            onToggleJoinClub && !activeClub.joined ? (
-              <button
-                type="button"
-                className="lkdv-carnet-btn-primary"
-                onClick={() => void onToggleJoinClub(activeClub.id)}
-              >
-                Rejoindre {activeClub.name}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="lkdv-carnet-btn-soft"
-                onClick={() => void loadChannel(activeChannelId, true)}
-              >
-                Réessayer
-              </button>
-            )
-          }
-        />
-      ) : loading ? (
-        <div className="club-glass-card" style={{ textAlign: 'center', padding: 24, color: 'var(--label2)', fontSize: 12.5 }}>
-          Chargement des messages…
-        </div>
-      ) : visibleMessages.length === 0 ? (
-        <ClubEmptyCard
-          icon={<MessageCircle size={22} />}
-          title={searchQuery ? 'Aucun message trouvé' : `Bienvenue dans #${activeChannel?.name || 'Général'}`}
-          description={
-            searchQuery
-              ? 'Essayez un autre mot-clé.'
-              : 'Lance la conversation avec les membres du club : conditions terrain, covoiturage ou idées de sorties.'
-          }
-        />
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: '1 1 auto' }}>
-          {visibleMessages.map((msg, idx) => {
-            const isMine = Boolean(currentUserId && msg.authorId === currentUserId);
-            const author = memberByUserId.get(msg.authorId);
-            const rawName = author?.name?.trim();
-            const authorName =
-              rawName && rawName !== 'Membre LKDV'
-                ? rawName
-                : author?.role === 'Fondateur'
-                  ? 'Alexandre Dumas'
-                  : author?.handle || (isMine ? 'Vous' : author?.role || 'Membre du club');
-            const prev = idx > 0 ? visibleMessages[idx - 1] : null;
-            const isGrouped = Boolean(prev && prev.authorId === msg.authorId);
-            const showActions = selectedMsgId === msg.id;
-
-            return (
-              <div
-                key={msg.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: isMine ? 'row-reverse' : 'row',
-                  alignItems: 'flex-end',
-                  gap: 8,
-                }}
-              >
-                {!isMine ? (
-                  <div style={{ width: 28, flex: 'none' }}>
-                    {!isGrouped ? (
-                      author?.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={author.avatarUrl}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: '50%',
-                            background: 'rgba(23, 64, 44, 0.12)',
-                            color: '#17402c',
-                            fontSize: 11,
-                            fontWeight: 700,
-                            display: 'grid',
-                            placeItems: 'center',
-                          }}
-                        >
-                          {authorName.slice(0, 1).toUpperCase()}
-                        </div>
-                      )
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <div
-                  onClick={() => setSelectedMsgId((cur) => (cur === msg.id ? null : msg.id))}
-                  style={{
-                    maxWidth: '80%',
-                    padding: '9px 12px',
-                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                    background: isMine ? '#17402c' : 'rgba(255, 255, 255, 0.88)',
-                    color: isMine ? '#ffffff' : '#172b24',
-                    boxShadow: isMine
-                      ? '0 4px 12px rgba(23, 64, 44, 0.2)'
-                      : 'inset 0 0 0 0.5px rgba(27, 67, 50, 0.12), 0 2px 8px rgba(23, 43, 36, 0.05)',
-                    cursor: 'pointer',
-                  }}
+      {/* Flux scrollable uniquement */}
+      <div
+        style={{
+          flex: '1 1 0',
+          minHeight: 0,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          padding: '4px 2px 8px',
+        }}
+      >
+        {error ? (
+          <ClubEmptyCard
+            icon={<MessageCircle size={22} />}
+            title="Accès au salon"
+            description={error}
+            actions={
+              onToggleJoinClub && !activeClub.joined ? (
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-primary"
+                  onClick={() => void onToggleJoinClub(activeClub.id)}
                 >
-                  {!isMine && !isGrouped ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                      <b style={{ fontSize: 11.5 }}>{authorName}</b>
-                      {author?.role && author.role !== 'Membre actif' ? (
-                        <span
-                          style={{
-                            fontSize: 9.5,
-                            fontWeight: 700,
-                            padding: '1px 6px',
-                            borderRadius: 999,
-                            background: 'rgba(23, 64, 44, 0.1)',
-                            color: '#17402c',
-                          }}
-                        >
-                          {author.role}
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <p style={{ margin: 0, fontSize: 13, lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
-                    {msg.body}
-                  </p>
-                  <div
+                  Rejoindre {activeClub.name}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  onClick={() => void loadChannel(activeChannelId, true)}
+                >
+                  Réessayer
+                </button>
+              )
+            }
+          />
+        ) : loading ? (
+          <div style={{ textAlign: 'center', padding: 24, color: 'var(--label2)', fontSize: 12.5 }}>
+            Chargement des messages…
+          </div>
+        ) : (
+          <>
+            {/* Bannière d'accueil du salon façon Discord */}
+            {activeChannel && !searchQuery ? (
+              <div style={{ padding: '6px 6px 12px', borderBottom: '1px solid rgba(23, 64, 44, 0.08)', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span
                     style={{
-                      marginTop: 3,
-                      fontSize: 10,
-                      opacity: isMine ? 0.72 : 0.55,
-                      textAlign: 'right',
+                      width: 34,
+                      height: 34,
+                      borderRadius: '50%',
+                      background: 'rgba(23, 64, 44, 0.1)',
+                      color: '#17402c',
+                      display: 'grid',
+                      placeItems: 'center',
+                      flex: 'none',
                     }}
                   >
-                    {formatMsgTime(msg.createdAt)}
+                    {channelIcon(activeChannel.kind, 16)}
+                  </span>
+                  <div>
+                    <b style={{ display: 'block', fontSize: 14, color: '#172b24' }}>
+                      Bienvenue dans #{activeChannel.name}
+                    </b>
+                    <small style={{ fontSize: 11.5, color: '#56665d' }}>
+                      {activeChannel.readOnlyForMembers
+                        ? 'Salon officiel en lecture seule pour les annonces du club.'
+                        : 'C’est le début du salon. Échangez en direct avec la cordée.'}
+                    </small>
                   </div>
-
-                  {showActions && !msg.id.startsWith('temp-') ? (
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: 6,
-                        marginTop: 6,
-                        paddingTop: 6,
-                        borderTop: isMine
-                          ? '1px solid rgba(255,255,255,0.18)'
-                          : '1px solid rgba(23,64,44,0.1)',
-                      }}
-                    >
-                      {!isMine ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleReport(msg);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 0,
-                            color: 'inherit',
-                            fontSize: 11,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            cursor: 'pointer',
-                            opacity: 0.85,
-                          }}
-                        >
-                          <Flag size={11} />
-                          <span>Signaler</span>
-                        </button>
-                      ) : null}
-                      {canManageChannels || isMine ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleModerate(msg, 'delete');
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 0,
-                            color: isMine ? '#fecaca' : '#b91c1c',
-                            fontSize: 11,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <Trash2 size={11} />
-                          <span>Supprimer</span>
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
                 </div>
               </div>
-            );
-          })}
-          <div ref={endRef} />
-        </div>
-      )}
+            ) : null}
 
-      {/* Compositeur sticky en bas du salon */}
+            {visibleMessages.length === 0 ? (
+              <p style={{ margin: '12px 6px', fontSize: 12.5, color: 'var(--label2)' }}>
+                {searchQuery ? 'Aucun message trouvé.' : 'Aucun message pour le moment.'}
+              </p>
+            ) : (
+              visibleMessages.map((msg, idx) => {
+                const info = resolveAuthorDisplay(msg.authorId, memberByUserId, currentUserId);
+                const prev = idx > 0 ? visibleMessages[idx - 1] : null;
+                const isGrouped = Boolean(prev && prev.authorId === msg.authorId);
+                const showActions = selectedMsgId === msg.id;
+
+                return (
+                  <div
+                    key={msg.id}
+                    onClick={() => setSelectedMsgId((cur) => (cur === msg.id ? null : msg.id))}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 10,
+                      padding: isGrouped ? '2px 8px' : '8px 8px 3px',
+                      borderRadius: 12,
+                      background: showActions ? 'rgba(23, 64, 44, 0.06)' : 'transparent',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.12s ease',
+                    }}
+                  >
+                    <div style={{ width: 34, flex: 'none', paddingTop: 1 }}>
+                      {!isGrouped ? (
+                        info.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={info.avatarUrl}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 34,
+                              height: 34,
+                              borderRadius: '50%',
+                              background: info.isMine ? '#17402c' : 'rgba(23, 64, 44, 0.12)',
+                              color: info.isMine ? '#ffffff' : '#17402c',
+                              fontSize: 12.5,
+                              fontWeight: 700,
+                              display: 'grid',
+                              placeItems: 'center',
+                            }}
+                          >
+                            {info.name.slice(0, 1).toUpperCase()}
+                          </div>
+                        )
+                      ) : null}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {!isGrouped ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
+                          <b style={{ fontSize: 13, color: info.isMine ? '#17402c' : '#172b24' }}>
+                            {info.name}
+                          </b>
+                          {info.role && info.role !== 'Membre actif' ? (
+                            <span
+                              style={{
+                                fontSize: 9.5,
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: 999,
+                                background:
+                                  info.role === 'Fondateur'
+                                    ? '#17402c'
+                                    : 'rgba(23, 64, 44, 0.1)',
+                                color: info.role === 'Fondateur' ? '#ffffff' : '#17402c',
+                              }}
+                            >
+                              {info.role}
+                            </span>
+                          ) : null}
+                          <span style={{ fontSize: 10.5, color: '#7a8a80' }}>
+                            {formatMsgTime(msg.createdAt)}
+                          </span>
+                        </div>
+                      ) : null}
+
+                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.42, color: '#172b24', whiteSpace: 'pre-wrap' }}>
+                        {msg.body}
+                      </p>
+
+                      {showActions && !msg.id.startsWith('temp-') ? (
+                        <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDraft((prevDraft) =>
+                                prevDraft ? `${prevDraft} @${info.name} ` : `@${info.name} `,
+                              );
+                              setSelectedMsgId(null);
+                              inputRef.current?.focus();
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 0,
+                              color: '#17402c',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
+                          >
+                            <Reply size={12} />
+                            <span>Mentionner</span>
+                          </button>
+                          {!info.isMine ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleReport(msg);
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 0,
+                                color: '#56665d',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                cursor: 'pointer',
+                                padding: 0,
+                              }}
+                            >
+                              <Flag size={11} />
+                              <span>Signaler</span>
+                            </button>
+                          ) : null}
+                          {canManageChannels || info.isMine ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void handleModerate(msg, 'delete');
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 0,
+                                color: '#b91c1c',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                cursor: 'pointer',
+                                padding: 0,
+                              }}
+                            >
+                              <Trash2 size={11} />
+                              <span>Supprimer</span>
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={endRef} />
+          </>
+        )}
+      </div>
+
+      {/* Compositeur fixe tout en bas (jamais au-dessus des messages) */}
       {!error ? (
         canPost && activeChannel ? (
           <form
             onSubmit={handleSendMessage}
             style={{
-              position: 'sticky',
-              bottom: 0,
+              flex: 'none',
               display: 'flex',
               alignItems: 'center',
               gap: 6,
               padding: '5px 6px 5px 12px',
               marginRight: 94,
               borderRadius: 999,
-              background: 'rgba(255, 255, 255, 0.94)',
-              boxShadow: 'inset 0 0 0 1px rgba(23, 64, 44, 0.14), 0 8px 20px rgba(16, 32, 25, 0.1)',
-              backdropFilter: 'blur(16px)',
-              marginTop: 'auto',
+              background: 'rgba(255, 255, 255, 0.96)',
+              boxShadow: 'inset 0 0 0 1px rgba(23, 64, 44, 0.14), 0 4px 14px rgba(16, 32, 25, 0.08)',
             }}
           >
             <input
+              ref={inputRef}
               type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -854,7 +1012,7 @@ export function ClubSalonsDrawerBody({
                 fontSize: 13.5,
                 color: '#172b24',
                 outline: 'none',
-                paddingLeft: 6,
+                paddingLeft: 4,
               }}
             />
             <button
@@ -862,11 +1020,11 @@ export function ClubSalonsDrawerBody({
               disabled={sending || !draft.trim()}
               aria-label="Envoyer le message"
               style={{
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 border: 0,
-                background: draft.trim() ? '#17402c' : 'rgba(23, 64, 44, 0.14)',
+                background: draft.trim() ? '#17402c' : 'rgba(23, 64, 44, 0.12)',
                 color: draft.trim() ? '#ffffff' : '#56665d',
                 display: 'grid',
                 placeItems: 'center',
@@ -875,13 +1033,14 @@ export function ClubSalonsDrawerBody({
                 transition: 'background-color 0.15s ease',
               }}
             >
-              <Send size={15} aria-hidden="true" />
+              <Send size={14} aria-hidden="true" />
             </button>
           </form>
         ) : activeChannel?.readOnlyForMembers ? (
           <div
             className="club-glass-card"
             style={{
+              flex: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -889,10 +1048,11 @@ export function ClubSalonsDrawerBody({
               fontSize: 12,
               color: 'var(--label2)',
               padding: '8px 12px',
+              marginRight: 94,
             }}
           >
             <Lock size={13} aria-hidden="true" />
-            <span>Salon d’annonces réservé aux encadrants.</span>
+            <span>Lecture seule</span>
           </div>
         ) : null
       ) : null}

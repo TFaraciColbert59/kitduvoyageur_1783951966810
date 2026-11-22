@@ -357,7 +357,9 @@
 }
 
 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-chat-pane"]) {
-  padding-bottom: 10px !important;
+  padding-bottom: 8px !important;
+  height: 100%;
+  overflow: hidden !important;
   display: flex;
   flex-direction: column;
 }
