@@ -50,6 +50,19 @@ export interface ClubG02WorkspaceProps {
   onOpenActivity?: (activityId: string) => void;
 }
 
+interface G02BasePayload {
+  club: Club;
+  viewerMembership: ClubMember | null;
+  members: ClubMember[];
+  events: ClubEvent[];
+  channels: ClubChannel[];
+  ts: number;
+}
+
+const g02BaseCache = new Map<string, G02BasePayload>();
+const g02BaseInFlight = new Map<string, Promise<G02BasePayload>>();
+const G02_BASE_TTL_MS = 60_000;
+
 async function readApiJson<T>(res: Response): Promise<T> {
   const payload = (await res.json().catch(() => null)) as { data?: T; error?: string; message?: string } | null;
   if (!res.ok) {
@@ -157,26 +170,55 @@ export function ClubG02Workspace({
 
   const loadBaseAndEvents = useCallback(async () => {
     if (!isValidClubId) return;
-    setLoadingBase(true);
+    const cached = g02BaseCache.get(clubId);
+    const needEvents = !lockedSection || initialSection === 'events';
+    if (cached && Date.now() - cached.ts < G02_BASE_TTL_MS) {
+      setClub(cached.club);
+      setViewerMembership(cached.viewerMembership ?? null);
+      if (cached.members?.length) setMembers(cached.members);
+      if (cached.channels?.length) setChannels(cached.channels);
+      if (!needEvents) {
+        setLoadingBase(false);
+        return;
+      }
+    }
+
+    if (!cached) setLoadingBase(true);
     setErrorBase(null);
     try {
-      const [clubRes, eventsRes] = await Promise.all([
-        fetch(`/api/clubs/${clubId}`, { credentials: 'include' }),
-        fetch(`/api/clubs/${clubId}/events`, { credentials: 'include' }),
+      let basePromise = g02BaseInFlight.get(clubId);
+      if (!basePromise) {
+        basePromise = fetch(`/api/clubs/${clubId}`, { credentials: 'include' })
+          .then((res) =>
+            readApiJson<{
+              club: Club;
+              viewerMembership: ClubMember | null;
+              members: ClubMember[];
+              events: ClubEvent[];
+              channels: ClubChannel[];
+            }>(res),
+          )
+          .then((payload) => {
+            const entry: G02BasePayload = { ...payload, ts: Date.now() };
+            g02BaseCache.set(clubId, entry);
+            return entry;
+          })
+          .finally(() => {
+            g02BaseInFlight.delete(clubId);
+          });
+        g02BaseInFlight.set(clubId, basePromise);
+      }
+
+      const [clubPayload, eventsRes] = await Promise.all([
+        basePromise,
+        needEvents ? fetch(`/api/clubs/${clubId}/events`, { credentials: 'include' }) : Promise.resolve(null),
       ]);
-      const clubPayload = await readApiJson<{
-        club: Club;
-        viewerMembership: ClubMember | null;
-        members: ClubMember[];
-        events: ClubEvent[];
-        channels: ClubChannel[];
-      }>(clubRes);
       setClub(clubPayload.club);
       setViewerMembership(clubPayload.viewerMembership ?? null);
       if (clubPayload.members?.length) setMembers(clubPayload.members);
       if (clubPayload.channels?.length) setChannels(clubPayload.channels);
 
-      if (eventsRes.ok) {
+      if (eventsRes && eventsRes.ok) {
         const eventsPayload = await readApiJson<{
           events: ClubEvent[];
           registrations: EventRegistration[];
@@ -193,7 +235,7 @@ export function ClubG02Workspace({
     } finally {
       setLoadingBase(false);
     }
-  }, [clubId, isValidClubId]);
+  }, [clubId, initialSection, isValidClubId, lockedSection]);
 
   useEffect(() => {
     setSelectedEventId(null);

@@ -54,6 +54,11 @@ function CordeeMemberList({
   emptySubtitle: string;
   onSelectMember: (member: ClubMemberData) => void;
 }) {
+  const [visibleCount, setVisibleCount] = useState(35);
+  useEffect(() => {
+    setVisibleCount(35);
+  }, [members.length]);
+
   const outingsCountByHandle = useMemo(() => {
     const map = new Map<string, number>();
     for (const o of outings) {
@@ -86,9 +91,12 @@ function CordeeMemberList({
     );
   }
 
+  const visibleMembers = useMemo(() => members.slice(0, visibleCount), [members, visibleCount]);
+  const remainingCount = Math.max(0, members.length - visibleMembers.length);
+
   return (
     <StaggerList className="lkdv-carnet-cards-col">
-      {members.map((p) => {
+      {visibleMembers.map((p) => {
         const displayName = p.name?.trim() || p.handle?.trim() || 'Voyageur';
         const initial = displayName.slice(0, 1).toUpperCase();
         const handleKey = (p.handle || '').toLowerCase();
@@ -110,7 +118,7 @@ function CordeeMemberList({
               <span className="lkdv-carnet-crew-avatar">
                 {p.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.avatarUrl} alt="" />
+                  <img src={p.avatarUrl} alt="" loading="lazy" decoding="async" />
                 ) : (
                   initial
                 )}
@@ -136,6 +144,16 @@ function CordeeMemberList({
           </StaggerCard>
         );
       })}
+      {remainingCount > 0 ? (
+        <button
+          type="button"
+          className="lkdv-carnet-btn-soft"
+          style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+          onClick={() => setVisibleCount((c) => c + 50)}
+        >
+          Afficher 50 de plus ({remainingCount} restants)
+        </button>
+      ) : null}
     </StaggerList>
   );
 }

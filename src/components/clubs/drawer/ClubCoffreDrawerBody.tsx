@@ -55,6 +55,7 @@ export function ClubCoffreDrawerBody({
   // D16 — Vault items search & filter state
   const [vaultSearch, setVaultSearch] = useState('');
   const [vaultFilter, setVaultFilter] = useState<VaultFilterId>('all');
+  const [visibleVaultCount, setVisibleVaultCount] = useState(35);
 
   // D17 — Standard kits filter & expanded card state
   const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
@@ -385,6 +386,8 @@ export function ClubCoffreDrawerBody({
   const totalVaultWeightKg = (
     vaultGear.reduce((acc, g) => acc + (g.weightG || 0), 0) / 1000
   ).toFixed(1);
+  const visibleVault = filteredVault.slice(0, visibleVaultCount);
+  const remainingVaultCount = Math.max(0, filteredVault.length - visibleVault.length);
 
   return (
     <div className="club-drawer-pane-content" data-testid="club-vault-items-pane">
@@ -423,7 +426,7 @@ export function ClubCoffreDrawerBody({
           />
         ) : (
           <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filteredVault.map((g) => (
+            {visibleVault.map((g) => (
               <ClubStaggerCard key={g.id} className="li nt club-outing-row club-glass-card">
                 <div>
                   <div className="ttl">
@@ -454,6 +457,16 @@ export function ClubCoffreDrawerBody({
                 </button>
               </ClubStaggerCard>
             ))}
+            {remainingVaultCount > 0 ? (
+              <button
+                type="button"
+                className="lkdv-carnet-btn-soft"
+                style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+                onClick={() => setVisibleVaultCount((c) => c + 50)}
+              >
+                Afficher 50 de plus ({remainingVaultCount} restants)
+              </button>
+            ) : null}
           </ClubStaggerList>
         )}
       </div>
