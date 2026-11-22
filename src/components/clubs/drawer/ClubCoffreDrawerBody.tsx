@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
-import type { PickerProduct } from '@/features/community/v2/create/kit/useKitProductPickerV2';
+import type { PickerProduct } from '@/features/community/create/kit/types';
 import {
   Check,
   ChevronDown,
@@ -25,7 +25,7 @@ import {
   ClubStaggerCard,
   ClubStaggerList,
 } from './ClubDrawerMotion';
-import { ClubEmptyCard } from './ClubSharedUi';
+import { ClubEmptyCard, ClubFilterPopoverButton } from './ClubSharedUi';
 import type { ClubCoffreDrawerBodyProps } from './ClubDrawerTypes';
 import { ClubG02Workspace } from '../g02';
 
@@ -151,6 +151,30 @@ export function ClubCoffreDrawerBody({
   if (activeSubTab === 1) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-vault-kits-pane">
+        <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Filtrer les kits par saison" style={{ marginBottom: 8 }}>
+          {(
+            [
+              { id: 'all', label: 'Toutes saisons' },
+              { id: 'summer', label: 'Été · 3 saisons' },
+              { id: 'winter', label: 'Hiver · Alpi' },
+            ] as const
+          ).map((opt) => {
+            const activeSeason = kitSeason === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="tab"
+                aria-selected={activeSeason}
+                className={`club-filter-pill ${activeSeason ? 'is-active' : ''}`}
+                onClick={() => setKitSeason(opt.id)}
+              >
+                {activeSeason ? <span className="club-filter-pill-bg" /> : null}
+                <span className="club-filter-pill-label">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
         {filteredKits.length === 0 ? (
           <ClubEmptyCard
             icon={<Layers size={22} />}
@@ -430,13 +454,13 @@ export function ClubCoffreDrawerBody({
   return (
     <div className="club-drawer-pane-content" data-testid="club-vault-items-pane">
       {/* Search & Filter strip */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
           <input
             type="text"
             className="club-glass-input"
-            style={{ paddingLeft: 30, width: '100%' }}
+            style={{ paddingLeft: 30, paddingRight: vaultSearch ? 28 : 10, width: '100%' }}
             placeholder="Rechercher tente, DVA, réchaud, marque, prêteur…"
             aria-label="Rechercher dans le coffre matériel"
             value={vaultSearch}
@@ -453,6 +477,26 @@ export function ClubCoffreDrawerBody({
             </button>
           ) : null}
         </div>
+        <ClubFilterPopoverButton<VaultFilterId>
+          value={vaultFilter}
+          defaultValue="all"
+          ariaLabel="Filtrer le matériel du coffre"
+          onChange={setVaultFilter}
+          options={[
+            { id: 'all', label: 'Tout le coffre', count: vaultGear.length },
+            {
+              id: 'available',
+              label: 'Disponibles',
+              count: vaultGear.filter((g) => g.available && !g.reservedByMe).length,
+            },
+            { id: 'mine', label: 'Mes emprunts', count: reservedCount },
+            {
+              id: 'light',
+              label: 'Ultraléger (< 500 g)',
+              count: vaultGear.filter((g) => g.weightG < 500).length,
+            },
+          ]}
+        />
       </div>
 
       <div className="reseau-list">

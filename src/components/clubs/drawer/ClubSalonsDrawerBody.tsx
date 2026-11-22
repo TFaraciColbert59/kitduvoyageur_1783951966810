@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Copy,
   CornerUpLeft,
   Flag,
   Hash,
@@ -20,7 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ClubChannel, ClubChannelKind, ClubChannelMessage } from '@/features/clubs';
-import type { ClubData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
+import type { ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
 import { ClubEmptyCard } from './ClubSharedUi';
 
 interface CachedSalonData {
@@ -38,11 +39,11 @@ const QUICK_REACTIONS = ['🏔️', '👍', '🔥', '❤️'] as const;
 export interface ClubSalonsDrawerBodyProps {
   activeSubTab?: number;
   active: boolean;
-  activeClub: ClubData;
+  activeClub: ClubItemData;
   members: ClubMemberData[];
   currentUserId: string | null;
   onSwitchSubTab?: (subIndex: number) => void;
-  onToggleJoinClub?: (clubId: string) => Promise<void> | void;
+  onToggleJoinClub?: (clubId: string) => Promise<boolean | void> | void;
   onToast?: (payload: ClubToastPayload) => void;
 }
 
@@ -271,6 +272,27 @@ export function ClubSalonsDrawerBody({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [active, view, messages.length, activeChannelId]);
+
+  useEffect(() => {
+    if (!active) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (selectedMsgId) {
+        setSelectedMsgId(null);
+      } else if (searchOpen) {
+        setSearchOpen(false);
+        setSearchQuery('');
+      } else if (showCreateForm) {
+        setShowCreateForm(false);
+      } else if (view === 'channels') {
+        setView('chat');
+      } else if (replyingTo) {
+        setReplyingTo(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [active, replyingTo, searchOpen, selectedMsgId, showCreateForm, view]);
 
   const activeChannel = useMemo(
     () => channels.find((c) => c.id === activeChannelId) ?? channels[0] ?? null,
@@ -1134,6 +1156,31 @@ export function ClubSalonsDrawerBody({
                                     <span>Répondre</span>
                                   </button>
                                 ) : null}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void navigator.clipboard?.writeText(parsed.text).catch(() => {});
+                                    setSelectedMsgId(null);
+                                    onToast?.({ title: 'Message copié ✓' });
+                                  }}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    height: 26,
+                                    padding: '0 8px',
+                                    borderRadius: 999,
+                                    border: 0,
+                                    background: 'transparent',
+                                    color: '#172b24',
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <Copy size={11} />
+                                  <span>Copier</span>
+                                </button>
                                 {!author.isMine ? (
                                   <button
                                     type="button"

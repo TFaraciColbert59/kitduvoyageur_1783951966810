@@ -261,6 +261,11 @@ export interface ClubDrawerHostProps {
     payload: { outingId?: string; slot?: 'sam' | 'dim' | 'we'; note?: string },
   ) => Promise<boolean> | void;
   onRetractBinome?: (member: ClubMemberData) => Promise<void> | void;
+  onUpdateMyAvailability?: (payload: {
+    availableWeekend: boolean;
+    days: Array<'sam' | 'dim'>;
+    objective: string;
+  }) => Promise<void> | void;
   onChangeMemberRole?: (
     member: ClubMemberData,
     nextRole: 'admin' | 'moderator' | 'member',

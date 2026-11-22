@@ -37,7 +37,7 @@ import {
   LensTransition,
   StackSlideView,
 } from './ClubDrawerMotion';
-import { ClubEmptyCard } from './ClubSharedUi';
+import { ClubEmptyCard, ClubFilterPopoverButton } from './ClubSharedUi';
 import type { ClubOutingData, ClubSortiesDrawerBodyProps } from './ClubDrawerTypes';
 
 type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
@@ -763,6 +763,32 @@ export function ClubSortiesDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-weather-pane">
+        {/* Créneau météo */}
+        <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Créneau météo massif" style={{ marginBottom: 8 }}>
+          {(
+            [
+              { id: 'morning', label: 'Matin' },
+              { id: 'afternoon', label: 'Après-midi' },
+              { id: 'weekend', label: 'Week-end' },
+            ] as const
+          ).map((w) => {
+            const activeW = weatherWindow === w.id;
+            return (
+              <button
+                key={w.id}
+                type="button"
+                role="tab"
+                aria-selected={activeW}
+                className={`club-filter-pill ${activeW ? 'is-active' : ''}`}
+                onClick={() => setWeatherWindow(w.id)}
+              >
+                {activeW ? <span className="club-filter-pill-bg" /> : null}
+                <span className="club-filter-pill-label">{w.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Altitude Thermal Etagement Card */}
         <div
           className="li nt club-glass-card"
@@ -925,20 +951,49 @@ export function ClubSortiesDrawerBody({
   if (activeSubTab === 2) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-outings-gpx-pane">
-        {/* Search strip */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        {/* Search & Filter strip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
             <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
             <input
               type="text"
               className="club-glass-input"
-              style={{ paddingLeft: 30, width: '100%' }}
+              style={{ paddingLeft: 30, paddingRight: gpxSearch ? 28 : 10, width: '100%' }}
               placeholder="Filtrer les traces GPX par sommet, massif, guide…"
               aria-label="Rechercher une trace GPX"
               value={gpxSearch}
               onChange={(e) => setGpxSearch(e.target.value)}
             />
+            {gpxSearch ? (
+              <button
+                type="button"
+                onClick={() => setGpxSearch('')}
+                aria-label="Effacer la recherche GPX"
+                style={{ position: 'absolute', right: 8, background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            ) : null}
           </div>
+          <ClubFilterPopoverButton<GpxFilterId>
+            value={gpxFilter}
+            defaultValue="all"
+            ariaLabel="Filtrer les traces GPX"
+            onChange={setGpxFilter}
+            options={[
+              { id: 'all', label: 'Toutes les traces', count: completedOutings.length },
+              {
+                id: 'high_dplus',
+                label: 'D+ ≥ 1 000 m',
+                count: completedOutings.filter((o) => (o.dplus || 0) >= 1000).length,
+              },
+              {
+                id: 'long_km',
+                label: 'Distance ≥ 15 km',
+                count: completedOutings.filter((o) => (o.km || 0) >= 15).length,
+              },
+            ]}
+          />
         </div>
 
         <div className="reseau-list">
@@ -1044,13 +1099,13 @@ export function ClubSortiesDrawerBody({
   return (
     <div className="club-drawer-pane-content" data-testid="club-outings-upcoming-pane">
       {/* Filter & Quick Search Ribbon */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
           <input
             type="text"
             className="club-glass-input"
-            style={{ paddingLeft: 30, width: '100%' }}
+            style={{ paddingLeft: 30, paddingRight: searchQuery ? 28 : 10, width: '100%' }}
             placeholder="Rechercher une sortie, sommet, encadrant, ville covoit…"
             aria-label="Rechercher une sortie du club"
             value={searchQuery}
@@ -1067,6 +1122,27 @@ export function ClubSortiesDrawerBody({
             </button>
           ) : null}
         </div>
+        <ClubFilterPopoverButton<OutingFilterId>
+          value={outingFilter}
+          defaultValue="all"
+          ariaLabel="Filtrer les sorties du club"
+          onChange={setOutingFilter}
+          options={[
+            { id: 'all', label: 'Toutes les sorties', count: upcomingOutings.length },
+            { id: 'weekend', label: 'Ce week-end' },
+            {
+              id: 'carpool',
+              label: 'Covoiturage dispo',
+              count: upcomingOutings.filter((o) => (o.carpoolSeatsLeft ?? 0) > 0).length,
+            },
+            { id: 'joined', label: 'Mes inscriptions', count: upcomingKpis.joinedCount },
+            {
+              id: 'available',
+              label: 'Places disponibles',
+              count: upcomingOutings.filter((o) => o.participantsCount < o.maxParticipants).length,
+            },
+          ]}
+        />
       </div>
 
       <div className="reseau-list">

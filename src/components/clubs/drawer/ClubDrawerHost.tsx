@@ -115,6 +115,7 @@ export function ClubDrawerHost({
   onToggleFollowMember,
   onProposeBinome,
   onRetractBinome,
+  onUpdateMyAvailability,
   onChangeMemberRole,
   onCreateBinomeGroup,
   onToggleRsvpOuting,
@@ -758,7 +759,7 @@ export function ClubDrawerHost({
                 const handleLabel = inspectedMember.handle
                   ? `@${inspectedMember.handle.replace(/^@/, '')}`
                   : '';
-                const subtitleText = [handleLabel, inspectedMember.city].filter(Boolean).join(' · ');
+                const subtitleText = [handleLabel, inspectedMember.carpoolCity || inspectedMember.massif].filter(Boolean).join(' · ');
 
                 const roleBadgeTone =
                   inspectedMember.role === 'Fondateur'
@@ -909,7 +910,7 @@ export function ClubDrawerHost({
                     (async () => true)
                   }
                   onRetractBinome={onRetractBinome ?? (async () => {})}
-                  onUpdateMyAvailability={async () => {}}
+                  onUpdateMyAvailability={onUpdateMyAvailability ?? (async () => {})}
                   onChangeMemberRole={onChangeMemberRole}
                   onCreateBinomeGroup={onCreateBinomeGroup}
                   onBorrowGear={onToggleReserveGear}

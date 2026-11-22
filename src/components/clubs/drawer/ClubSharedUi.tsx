@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Check, SlidersHorizontal, X } from 'lucide-react';
 import { useClubDialog } from './useClubDialog';
 
 export function normalizeSearchText(value: string): string {
@@ -245,4 +245,212 @@ export function useLongPressPeek(onTrigger: () => void, delayMs = 460) {
   };
 
   return { handlers, wasLongPress: () => triggeredRef.current };
+}
+
+export interface ClubFilterOption<T extends string = string> {
+  id: T;
+  label: string;
+  count?: number;
+}
+
+export function ClubFilterPopoverButton<T extends string>({
+  value,
+  options,
+  onChange,
+  defaultValue,
+  ariaLabel = 'Filtrer',
+  extraGroup,
+  extraToggle,
+}: {
+  value: T;
+  options: Array<ClubFilterOption<T>>;
+  onChange: (next: T) => void;
+  defaultValue: T;
+  ariaLabel?: string;
+  extraGroup?: {
+    label: string;
+    value: string;
+    defaultValue: string;
+    options: Array<ClubFilterOption<string>>;
+    onChange: (next: string) => void;
+  };
+  extraToggle?: {
+    label: string;
+    checked: boolean;
+    onChange: (next: boolean) => void;
+  };
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const isFiltered =
+    value !== defaultValue ||
+    Boolean(extraToggle?.checked) ||
+    Boolean(extraGroup && extraGroup.value !== extraGroup.defaultValue);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} style={{ position: 'relative', flex: 'none' }}>
+      <button
+        type="button"
+        className={`reseau-btn ${isFiltered ? 'primary' : ''} club-icon-pill`}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((v) => !v)}
+        style={{ position: 'relative' }}
+      >
+        <SlidersHorizontal size={14} aria-hidden="true" />
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          aria-label={ariaLabel}
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            right: 0,
+            minWidth: 196,
+            zIndex: 40,
+            padding: 6,
+            borderRadius: 16,
+            background: 'rgba(255, 255, 255, 0.96)',
+            boxShadow:
+              '0 12px 28px rgba(16, 32, 25, 0.16), inset 0 0 0 0.5px rgba(23, 64, 44, 0.14)',
+            backdropFilter: 'blur(18px)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
+          {options.map((opt) => {
+            const active = opt.id === value;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={active}
+                onClick={() => {
+                  onChange(opt.id);
+                  setOpen(false);
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '7px 10px',
+                  borderRadius: 11,
+                  border: 0,
+                  background: active ? 'rgba(23, 64, 44, 0.1)' : 'transparent',
+                  color: active ? '#17402c' : '#172b24',
+                  fontSize: 12.5,
+                  fontWeight: active ? 700 : 500,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>
+                  {opt.label}
+                  {typeof opt.count === 'number' ? ` (${opt.count})` : ''}
+                </span>
+                {active ? <Check size={13} aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+          {extraGroup ? (
+            <>
+              <div style={{ height: 1, background: 'rgba(23, 64, 44, 0.09)', margin: '4px 6px' }} />
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#56665d', padding: '2px 10px' }}>
+                {extraGroup.label}
+              </div>
+              {extraGroup.options.map((opt) => {
+                const active = opt.id === extraGroup.value;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    onClick={() => {
+                      extraGroup.onChange(opt.id);
+                      setOpen(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: '6px 10px',
+                      borderRadius: 11,
+                      border: 0,
+                      background: active ? 'rgba(23, 64, 44, 0.1)' : 'transparent',
+                      color: active ? '#17402c' : '#172b24',
+                      fontSize: 12,
+                      fontWeight: active ? 700 : 500,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span>{opt.label}</span>
+                    {active ? <Check size={13} aria-hidden="true" /> : null}
+                  </button>
+                );
+              })}
+            </>
+          ) : null}
+          {extraToggle ? (
+            <>
+              <div style={{ height: 1, background: 'rgba(23, 64, 44, 0.09)', margin: '4px 6px' }} />
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={extraToggle.checked}
+                onClick={() => extraToggle.onChange(!extraToggle.checked)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  padding: '7px 10px',
+                  borderRadius: 11,
+                  border: 0,
+                  background: extraToggle.checked ? 'rgba(23, 64, 44, 0.1)' : 'transparent',
+                  color: extraToggle.checked ? '#17402c' : '#172b24',
+                  fontSize: 12,
+                  fontWeight: extraToggle.checked ? 700 : 500,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+              >
+                <span>{extraToggle.label}</span>
+                {extraToggle.checked ? <Check size={13} aria-hidden="true" /> : null}
+              </button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 }

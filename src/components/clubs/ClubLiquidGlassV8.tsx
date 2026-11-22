@@ -533,15 +533,17 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             outingId: sortieParam,
             memberId: membreParam,
           };
-          act('openClubDrawer', `${tIdx}:${Math.min(2, sIdx)}`);
+          act('openClubDrawer', `${tIdx}:${Math.min(3, sIdx)}`);
         } else if (initialTab === 'carnets') {
           act('igtab', 0);
         } else if (initialTab === 'sorties' || initialTab === 'aventures') {
           act('igtab', 1);
         } else if (initialTab === 'membres') {
           act('openClubDrawer', '1:0');
+        } else if (initialTab === 'salons') {
+          act('openClubDrawer', '4:0');
         } else if (initialTab === 'parametres') {
-          act('openClubDrawer', '4:2');
+          act('openClubDrawer', '0:0');
         }
       }
 
@@ -1477,11 +1479,46 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   }, []);
 
   const handleTogglePostSave = useCallback((postId: string) => {
+    let wasSaved = false;
     setClubPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p)),
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        wasSaved = Boolean(p.saved);
+        return { ...p, saved: !p.saved };
+      }),
     );
-    showIslandToast('Publication enregistrée ✓', 'Ajoutée aux favoris du club');
+    showIslandToast(
+      wasSaved ? 'Retirée des favoris' : 'Publication enregistrée ✓',
+      wasSaved ? 'Supprimée de vos favoris du club' : 'Ajoutée aux favoris du club',
+    );
   }, [showIslandToast]);
+
+  const handleUpdateMyAvailability = useCallback(
+    (payload: { availableWeekend: boolean; days: Array<'sam' | 'dim'>; objective: string }) => {
+      try {
+        window.localStorage.setItem(
+          `lkdv.club.myAvail.${activeClub.id}`,
+          JSON.stringify(payload),
+        );
+      } catch {
+        // ignore storage quota errors
+      }
+      if (!user?.id) return;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === user.id || m.id === user.id
+            ? {
+                ...m,
+                availableWeekend: payload.availableWeekend,
+                availableDays: payload.days,
+                seekingObjective: payload.objective,
+              }
+            : m,
+        ),
+      );
+    },
+    [activeClub.id, user?.id],
+  );
 
   const handleAddPostComment = useCallback(
     (postId: string, text: string) => {
@@ -2013,6 +2050,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onToggleJoinClub={handleToggleJoinClub}
             onToggleFollowMember={handleToggleFollowMember}
             onProposeBinome={handleProposeBinome}
+            onUpdateMyAvailability={handleUpdateMyAvailability}
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {
@@ -2373,7 +2411,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         onCreateGroupFromOuting={handleCreateGroupFromOuting}
         onOpenClubDrawer={(t, s = 0, extras) => {
           pendingDrawerIntentRef.current = { tab: t, subTab: s, ...extras };
-          triggerAct('openClubDrawer', `${t}:${Math.min(2, s)}`);
+          triggerAct('openClubDrawer', `${t}:${Math.min(3, s)}`);
         }}
         onFlyToCoords={(lat, lng, label) => flyMapToCoords([lng, lat], label)}
         onToast={handleToast}

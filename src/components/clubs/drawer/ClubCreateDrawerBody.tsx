@@ -22,8 +22,9 @@ const RECOMMENDED_POLE_PRESETS = [
   { id: 'pole-handi', name: 'Pôle Joëlette & Partage', specialty: 'Pilotage joëlette & sentiers adaptés' },
 ];
 const PHOTO_PRESETS = [
-  { label: 'Crête alpine', url: '/images/ridge-line.jpg' },
-  { label: 'Panorama massif', url: '/images/mountain-vista.jpg' },
+  { label: 'Crête alpine', url: '/assets/images/club-alpin.jpg' },
+  { label: 'Sentier & massif', url: '/assets/images/adventure-hiking.jpg' },
+  { label: 'Bivouac', url: '/assets/images/adventure-bivouac.jpg' },
 ];
 
 export function ClubCreateDrawerBody({
@@ -413,7 +414,7 @@ export function ClubCreateDrawerBody({
           kind: postKind,
           caption: postCaption.trim(),
           spot: postSpot.trim() || activeClub.massif,
-          mediaUrl: postKind === 'media' ? (postMediaUrl.trim() || '/images/ridge-line.jpg') : undefined,
+          mediaUrl: postKind === 'media' ? (postMediaUrl.trim() || '/assets/images/club-alpin.jpg') : undefined,
           poleId: chosenPole?.id,
           poleName: chosenPole?.name,
         };
@@ -503,7 +504,7 @@ export function ClubCreateDrawerBody({
               className="club-glass-input"
               value={postMediaUrl}
               onChange={(e) => setPostMediaUrl(e.target.value)}
-              placeholder="/images/mountain-vista.jpg"
+              placeholder="/assets/images/club-alpin.jpg"
             />
           </label>
         </>

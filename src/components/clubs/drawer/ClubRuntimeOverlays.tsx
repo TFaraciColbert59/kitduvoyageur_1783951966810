@@ -138,9 +138,17 @@ export function ClubRuntimeOverlays({
                   type="button"
                   className={`reseau-btn ${outdoorHighContrast ? 'primary' : 'active'}`}
                   onClick={() => {
-                    setOutdoorHighContrast((v) => !v);
+                    const next = !outdoorHighContrast;
+                    setOutdoorHighContrast(next);
+                    if (typeof document !== 'undefined') {
+                      const phoneEl = document.getElementById('phone');
+                      if (phoneEl) {
+                        phoneEl.classList.toggle('outdoor', next);
+                        phoneEl.setAttribute('data-outdoor', next ? 'true' : 'false');
+                      }
+                    }
                     onToast({
-                      title: !outdoorHighContrast ? 'Mode Plein Soleil activé' : 'Mode Liquid Glass standard',
+                      title: next ? 'Mode Plein Soleil activé' : 'Mode Liquid Glass standard',
                       subtitle: activeClub.name,
                     });
                   }}
@@ -208,6 +216,26 @@ export function ClubRuntimeOverlays({
                 >
                   <Users size={14} aria-hidden="true" />
                   <span>Cordée ({members.length})</span>
+                </button>
+                <button
+                  type="button"
+                  className="reseau-btn active"
+                  onClick={() => {
+                    onOpenClubDrawer(3, 0);
+                    onClose();
+                  }}
+                >
+                  <span>Coffre</span>
+                </button>
+                <button
+                  type="button"
+                  className="reseau-btn active"
+                  onClick={() => {
+                    onOpenClubDrawer(4, 0);
+                    onClose();
+                  }}
+                >
+                  <span>Salons</span>
                 </button>
                 <button
                   type="button"

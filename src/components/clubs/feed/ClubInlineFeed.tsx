@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
@@ -417,6 +417,29 @@ export function ClubInlineFeed({
   const [newPoleName, setNewPoleName] = useState('');
   const [newPoleSpecialty, setNewPoleSpecialty] = useState('');
   const [cardHost, setCardHost] = useState<HTMLElement | null>(null);
+  const polesDockRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!polesMenuOpen) return;
+    const onDocDown = (e: MouseEvent) => {
+      if (polesDockRef.current && !polesDockRef.current.contains(e.target as Node)) {
+        setPolesMenuOpen(false);
+        setShowAddPoleForm(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPolesMenuOpen(false);
+        setShowAddPoleForm(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [polesMenuOpen]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -455,6 +478,7 @@ export function ClubInlineFeed({
   const polesBottomRightDock =
     poles.length > 0 || (isLargeClubWithoutPoles && onEnableRecommendedPoles) ? (
       <div
+        ref={polesDockRef}
         className={cardHost ? 'club-poles-float' : 'club-poles-float club-poles-float--inline'}
         aria-label="Filtres de pôles du club"
       >

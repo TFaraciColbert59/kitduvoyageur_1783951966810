@@ -43,6 +43,7 @@ import {
 import {
   ClubEmptyCard,
   ClubEntityPeek,
+  ClubFilterPopoverButton,
   type ClubPeekAction,
   haversineKm,
   normalizeSearchText,
@@ -332,7 +333,6 @@ function MyClubsPane({
   | 'onToast'
 >) {
   const router = useRouter();
-  const [sortBy, setSortBy] = useLocalStorageState<MyClubsSort>('lkdv.clubs.myClubsSort', 'active');
   const [pinnedIds, setPinnedIds] = useLocalStorageState<string[]>('lkdv.clubs.pinned', []);
   const [leaveConfirmId, setLeaveConfirmId] = useState<string | null>(null);
   const [peekClub, setPeekClub] = useState<ClubItemData | null>(null);
@@ -344,26 +344,13 @@ function MyClubsPane({
     return [...joined].sort((a, b) => {
       const pinDiff = (pinSet.has(b.id) ? 1 : 0) - (pinSet.has(a.id) ? 1 : 0);
       if (pinDiff !== 0) return pinDiff;
-      if (sortBy === 'active') {
-        if (a.id === activeClub.id) return -1;
-        if (b.id === activeClub.id) return 1;
-        const liveDiff = (b.hasLiveOrImminentOuting ? 1 : 0) - (a.hasLiveOrImminentOuting ? 1 : 0);
-        if (liveDiff !== 0) return liveDiff;
-        return b.membersCount - a.membersCount;
-      }
-      if (sortBy === 'next_outing') {
-        const aHas = a.outingsCount > 0 ? 1 : 0;
-        const bHas = b.outingsCount > 0 ? 1 : 0;
-        if (bHas !== aHas) return bHas - aHas;
-        return b.outingsCount - a.outingsCount;
-      }
-      if (sortBy === 'role') {
-        const score = (r: string) => (/fondateur|admin/i.test(r) ? 3 : /encadrant|mod/i.test(r) ? 2 : 1);
-        return score(b.role) - score(a.role);
-      }
+      if (a.id === activeClub.id) return -1;
+      if (b.id === activeClub.id) return 1;
+      const liveDiff = (b.hasLiveOrImminentOuting ? 1 : 0) - (a.hasLiveOrImminentOuting ? 1 : 0);
+      if (liveDiff !== 0) return liveDiff;
       return b.membersCount - a.membersCount;
     });
-  }, [activeClub.id, clubs, pinnedIds, sortBy]);
+  }, [activeClub.id, clubs, pinnedIds]);
 
   const managedClubs = useMemo(
     () =>
@@ -552,7 +539,7 @@ function MyClubsPane({
           type="button"
           className="li nt club-glass-card"
           style={{ width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
-          onClick={() => onSwitchTabAndLens(2, 0)}
+          onClick={() => onSwitchTabAndLens(2, 0, { inspectOuting: nextOuting })}
         >
           <div style={{ minWidth: 0 }}>
             <div className="s2" style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: '#17402c' }}>
@@ -620,14 +607,21 @@ function MyClubsPane({
       </div>
 
       {/* 4. À propos du club */}
-      {activeClub.description ? (
+      {activeClub.bio || activeClub.charter ? (
         <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--label2)' }}>
             À propos du club
           </div>
-          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.45, color: 'var(--label)' }}>
-            {activeClub.description}
-          </p>
+          {activeClub.bio ? (
+            <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.45, color: 'var(--label)' }}>
+              {activeClub.bio}
+            </p>
+          ) : null}
+          {activeClub.charter && activeClub.charter !== activeClub.bio ? (
+            <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.4, color: 'var(--label2)' }}>
+              {activeClub.charter}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
@@ -988,20 +982,45 @@ function DiscoverClubsPane({
 
   return (
     <div className="club-drawer-pane-content">
-      <div className="club-search-box-v2 is-compact">
-        <Search size={14} color="#56665d" aria-hidden="true" />
-        <input
-          type="search"
-          value={quickFilter}
-          onChange={(e) => setQuickFilter(e.target.value)}
-          placeholder="Filtrer par massif, ville ou discipline…"
-          aria-label="Filtrer les clubs à découvrir"
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="club-search-box-v2 is-compact" style={{ flex: 1, minWidth: 0 }}>
+          <Search size={14} color="#56665d" aria-hidden="true" />
+          <input
+            type="search"
+            value={quickFilter}
+            onChange={(e) => setQuickFilter(e.target.value)}
+            placeholder="Filtrer par massif, ville ou discipline…"
+            aria-label="Filtrer les clubs à découvrir"
+          />
+          {quickFilter ? (
+            <button type="button" className="club-search-clear-btn" onClick={() => setQuickFilter('')} aria-label="Effacer le filtre">
+              <X size={13} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+        <ClubFilterPopoverButton
+          value={filterChip}
+          defaultValue="all"
+          ariaLabel="Filtrer et trier les clubs à découvrir"
+          onChange={setFilterChip}
+          options={DISCOVER_FILTER_CHIPS.map((c) => ({ id: c.id, label: c.label }))}
+          extraGroup={{
+            label: 'Affichage',
+            value: viewMode,
+            defaultValue: 'popular',
+            onChange: (next) => setViewMode(next as DiscoverViewMode),
+            options: [
+              { id: 'popular', label: 'Populaires' },
+              { id: 'massif', label: 'Groupés par massif' },
+              { id: 'recent', label: 'Activité récente' },
+            ],
+          }}
+          extraToggle={{
+            label: 'Non rejoints uniquement',
+            checked: onlyUnjoined,
+            onChange: setOnlyUnjoined,
+          }}
         />
-        {quickFilter ? (
-          <button type="button" className="club-search-clear-btn" onClick={() => setQuickFilter('')} aria-label="Effacer le filtre">
-            <X size={13} aria-hidden="true" />
-          </button>
-        ) : null}
       </div>
 
       {spotlightClubs.length > 0 && !quickFilter && filterChip === 'all' ? (
@@ -1451,32 +1470,48 @@ function SearchAllPane({
   return (
     <div className="club-drawer-pane-content">
       <Cmd.CommandRoot loop shouldFilter={false}>
-        <div className="club-search-box-v2" style={{ marginBottom: 8 }}>
-          <Search size={15} color="#17402c" aria-hidden="true" />
-          <Cmd.CommandInput
-            ref={inputRef}
-            data-autofocus="true"
-            className="club-search-input"
-            placeholder="Chercher un club, une sortie, un membre, un spot…"
-            aria-label="Rechercher dans les clubs"
-            value={searchQuery}
-            onValueChange={onSearchQueryChange}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <div className="club-search-box-v2" style={{ flex: 1, minWidth: 0, marginBottom: 0 }}>
+            <Search size={15} color="#17402c" aria-hidden="true" />
+            <Cmd.CommandInput
+              ref={inputRef}
+              data-autofocus="true"
+              className="club-search-input"
+              placeholder="Chercher un club, une sortie, un membre, un spot…"
+              aria-label="Rechercher dans les clubs"
+              value={searchQuery}
+              onValueChange={onSearchQueryChange}
+            />
+            {remoteSearching ? (
+              <span style={{ fontSize: 11, color: '#56665d' }} aria-label="Recherche en cours">…</span>
+            ) : null}
+            {searchQuery ? (
+              <button
+                type="button"
+                className="club-search-clear-btn"
+                onClick={() => onSearchQueryChange('')}
+                aria-label="Effacer la recherche"
+              >
+                <X size={13} aria-hidden="true" />
+              </button>
+            ) : (
+              <span className="club-kbd-hint" aria-hidden="true">⌘K</span>
+            )}
+          </div>
+          <ClubFilterPopoverButton<SearchScope>
+            value={scope}
+            defaultValue="all"
+            ariaLabel="Filtrer la recherche par catégorie"
+            onChange={setScope}
+            options={[
+              { id: 'all', label: 'Tout chercher', count: searchQuery.trim() ? counts.all : undefined },
+              { id: 'clubs', label: 'Clubs', count: searchQuery.trim() ? counts.clubs : undefined },
+              { id: 'outings', label: 'Sorties & GPX', count: searchQuery.trim() ? counts.outings : undefined },
+              { id: 'members', label: 'Membres', count: searchQuery.trim() ? counts.members : undefined },
+              { id: 'posts', label: 'Publications', count: searchQuery.trim() ? counts.posts : undefined },
+              { id: 'gear', label: 'Coffre matériel', count: searchQuery.trim() ? counts.gear : undefined },
+            ]}
           />
-          {remoteSearching ? (
-            <span style={{ fontSize: 11, color: '#56665d' }} aria-label="Recherche en cours">…</span>
-          ) : null}
-          {searchQuery ? (
-            <button
-              type="button"
-              className="club-search-clear-btn"
-              onClick={() => onSearchQueryChange('')}
-              aria-label="Effacer la recherche"
-            >
-              <X size={13} aria-hidden="true" />
-            </button>
-          ) : (
-            <span className="club-kbd-hint" aria-hidden="true">⌘K</span>
-          )}
         </div>
 
         {remoteOffline ? (
