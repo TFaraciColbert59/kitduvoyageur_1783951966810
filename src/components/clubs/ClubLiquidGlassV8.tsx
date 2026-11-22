@@ -612,7 +612,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           id: ev.id,
           clubId: clubRow.id,
           title: ev.title || 'Sortie club',
-          dateLabel: dt
+          date: dt
             ? new Date(dt).toLocaleDateString('fr-FR', {
                 day: 'numeric',
                 month: 'short',
@@ -623,13 +623,18 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           massif: ev.location || ev.meeting_place || clubRow.category || 'Montagne',
           km: Number(ev.distance_km ?? 0),
           dplus: Number(ev.elevation_gain_m ?? 0),
-          rdv: ev.meeting_point || ev.location || 'Point de RDV à confirmer',
-          rsvpCount: 0,
+          maxAlt: 0,
+          leaderName: clubRow.name,
+          leaderHandle: derivedHandle,
+          participantsCount: Number(ev.participants_count ?? 0),
+          maxParticipants: Number(ev.max_participants ?? 12),
+          carpoolCity: ev.location || ev.meeting_point || clubRow.category || 'Sur place',
+          carpoolSeatsLeft: 0,
+          requiredGear: [],
           rsvpJoined: false,
-          status: ev.status === 'cancelled' ? ('archived' as const) : ('upcoming' as const),
+          status: ev.status === 'cancelled' ? ('completed' as const) : ('upcoming' as const),
           lat: Number(ev.lat ?? 45.764),
           lng: Number(ev.lng ?? 4.835),
-          participants: [],
         };
       });
 

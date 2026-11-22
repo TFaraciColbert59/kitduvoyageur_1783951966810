@@ -175,12 +175,20 @@ export async function loadEventRegistrations(
   supabase: SupabaseClient,
   eventId: string,
 ): Promise<EventRegistration[]> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('club_event_registrations_effective')
     .select('*')
     .eq('event_id', eventId)
     .limit(1000);
-  if (error) throw error;
+  if (error) {
+    const fallback = await supabase
+      .from('club_event_registrations')
+      .select('*')
+      .eq('event_id', eventId)
+      .limit(1000);
+    if (fallback.error) return [];
+    data = fallback.data;
+  }
   return asArray<Row>(data).map(mapRegistrationRow);
 }
 
@@ -193,7 +201,7 @@ export async function loadAttendanceRecords(
     .select('*')
     .eq('event_id', eventId)
     .limit(1000);
-  if (error) throw error;
+  if (error) return [];
   return asArray<Row>(data).map((row) => ({
     eventId: String(row.event_id ?? ''),
     userId: String(row.user_id ?? ''),

@@ -1055,7 +1055,7 @@ export function ClubDrawerHost({
                   🚐 Covoiturage départ <b>{inspectedOuting.carpoolCity}</b> : <b>{inspectedOuting.carpoolSeatsLeft} places restantes</b>
                 </div>
                 <div className="club-skill-tags">
-                  {inspectedOuting.requiredGear.map((g) => (
+                  {(inspectedOuting.requiredGear ?? []).map((g) => (
                     <span key={g} className="club-skill-tag">✓ Kit requis : {g}</span>
                   ))}
                 </div>
