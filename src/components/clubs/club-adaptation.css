@@ -1216,6 +1216,44 @@
   color: #92400e;
 }
 
+/* Frise chronologique des sorties : centrage vertical & pas de débordement latéral */
+.lkdv-club-carnet-drawer [data-testid="club-outings-upcoming-pane"] {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 12px !important;
+}
+
+.lkdv-club-carnet-drawer [data-testid="club-outings-upcoming-pane"] .reseau-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 44px !important;
+}
+
+.lkdv-club-carnet-drawer .lkdv-carnet-hevent {
+  flex: 0 0 216px;
+  width: 216px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard-body,
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard-text,
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard-text b,
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard-text p {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-member-cta {
   display: inline-flex;
   align-items: center;
