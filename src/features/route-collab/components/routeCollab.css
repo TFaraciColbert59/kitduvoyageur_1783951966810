@@ -1,5 +1,16 @@
 /* Styles complémentaires au design Explorer v2 pour le créateur d'itinéraire collaboratif. */
 
+/* Jetons locaux du Compas itinéraire : tous dérivés de jetons existants (--lkv-*, --xp-*),
+   aucune couleur littérale. Les encres et blancs translucides sont obtenus par color-mix(). */
+.rcw-explorer-root {
+  --rc-forest: var(--lkv-forest-900);
+  --rc-white: var(--lkv-text-inverted);
+  --rc-ink: var(--lkv-text-primary);
+  --rc-warn: var(--xp-warn);
+  --rc-ok: var(--lkv-forest-500);
+  --rc-idle: var(--lkv-ink-300);
+}
+
 .rcw-explorer-root .xp-sheet-pill-launcher {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 22px + var(--cookie-banner-h, 0px));
 }
@@ -86,7 +97,7 @@
 .rcw-icon-tool--primary {
   background: var(--xp-inkbtn);
   box-shadow: var(--xp-inkbtn-shadow);
-  color: #ffffff;
+  color: var(--rc-white);
 }
 
 .rcw-icon-tool:disabled {
@@ -116,7 +127,7 @@
 
 .rcw-cat-group {
   padding-left: 10px;
-  border-left: 1.5px solid rgba(23, 64, 44, 0.14);
+  border-left: 1.5px solid color-mix(in srgb, var(--rc-forest) 14%, transparent);
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -143,8 +154,8 @@
   gap: 5px;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 0 0 0.5px rgba(23, 43, 36, 0.1);
+  background: color-mix(in srgb, var(--rc-white) 72%, transparent);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--rc-ink) 10%, transparent);
   font-size: 11.5px;
   font-weight: 650;
   color: var(--xp-txt);
@@ -157,7 +168,7 @@
   gap: 6px;
   padding: 6px 8px;
   border-radius: 14px;
-  background: rgba(23, 64, 44, 0.06);
+  background: color-mix(in srgb, var(--rc-forest) 6%, transparent);
   font-size: 11px;
   font-weight: 650;
   color: var(--xp-mut);
@@ -194,21 +205,21 @@
 }
 
 .rcw-top-toast--impact {
-  background: linear-gradient(180deg, rgba(255, 250, 236, 0.92), rgba(250, 241, 214, 0.88));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--lkv-warning-subtle) 92%, transparent), color-mix(in srgb, var(--lkv-warning-bg) 88%, transparent));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 0.5px rgba(185, 138, 46, 0.4),
-    0 8px 22px rgba(23, 43, 36, 0.14);
+    inset 0 1px 0 color-mix(in srgb, var(--rc-white) 90%, transparent),
+    0 0 0 0.5px color-mix(in srgb, var(--rc-warn) 40%, transparent),
+    0 8px 22px color-mix(in srgb, var(--rc-ink) 14%, transparent);
 }
 
 .rcw-top-toast--mode {
-  background: linear-gradient(180deg, rgba(23, 64, 44, 0.92), rgba(23, 64, 44, 0.86));
-  color: #ffffff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc-forest) 92%, transparent), color-mix(in srgb, var(--rc-forest) 86%, transparent));
+  color: var(--rc-white);
 }
 
 .rcw-top-toast--mode .xp-chip {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--rc-white) 20%, transparent);
+  color: var(--rc-white);
   box-shadow: none;
 }
 
@@ -242,10 +253,10 @@
   width: 26px;
   height: 26px;
   border-radius: 999px;
-  background: #17402c;
-  color: #ffffff;
-  border: 2.5px solid #ffffff;
-  box-shadow: 0 3px 10px rgba(23, 43, 36, 0.35);
+  background: var(--rc-forest);
+  color: var(--rc-white);
+  border: 2.5px solid var(--rc-white);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--rc-ink) 35%, transparent);
   display: grid;
   place-items: center;
   font-size: 11px;
@@ -283,7 +294,7 @@
 .rcw-tool-btn[aria-pressed='true'] {
   background: var(--xp-inkbtn);
   box-shadow: var(--xp-inkbtn-shadow);
-  color: #ffffff;
+  color: var(--rc-white);
 }
 
 .rcw-tool-btn:disabled {
@@ -359,7 +370,7 @@
 .rcw-bar-track {
   height: 7px;
   border-radius: 999px;
-  background: rgba(23, 43, 36, 0.1);
+  background: color-mix(in srgb, var(--rc-ink) 10%, transparent);
   overflow: hidden;
 }
 
@@ -397,7 +408,7 @@
 .rcw-hourly-cell {
   padding: 7px 6px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.58);
+  background: color-mix(in srgb, var(--rc-white) 58%, transparent);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -445,8 +456,8 @@
   padding: 11px 12px;
   margin-bottom: 10px;
   border-radius: 16px;
-  background: rgba(168, 68, 58, 0.12);
-  box-shadow: inset 0 0 0 0.5px rgba(168, 68, 58, 0.36);
+  background: color-mix(in srgb, var(--lkv-brick-600) 12%, transparent);
+  box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--lkv-brick-600) 36%, transparent);
   font-size: 12px;
   color: var(--xp-txt);
 }
@@ -468,8 +479,8 @@
   width: 100%;
   padding: 9px 11px;
   border-radius: 12px;
-  border: 0.5px solid rgba(23, 43, 36, 0.16);
-  background: rgba(255, 255, 255, 0.82);
+  border: 0.5px solid color-mix(in srgb, var(--rc-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--rc-white) 82%, transparent);
   font: inherit;
   font-size: 13px;
   color: var(--xp-txt);
@@ -477,8 +488,8 @@
 
 .xp-root[data-theme='dark'] .rcw-textarea,
 .xp-root[data-theme='dark'] .rcw-select {
-  background: rgba(44, 55, 49, 0.72);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, var(--lkv-ink-700) 72%, transparent);
+  border-color: color-mix(in srgb, var(--rc-white) 16%, transparent);
   color: var(--xp-txt);
 }
 
@@ -564,8 +575,8 @@
 .rcw-visual-card {
   border-radius: 16px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(16, 40, 26, 0.08);
+  background: color-mix(in srgb, var(--rc-white) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 8%, transparent);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -609,7 +620,7 @@
   font-weight: 500;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(16, 40, 26, 0.06);
+  background: color-mix(in srgb, var(--rc-ink) 6%, transparent);
   color: var(--xp-mut);
   display: inline-flex;
   align-items: center;
@@ -617,8 +628,8 @@
 }
 
 .rcw-mini-pill--strong {
-  background: rgba(23, 64, 44, 0.12);
-  color: #17402c;
+  background: color-mix(in srgb, var(--rc-forest) 12%, transparent);
+  color: var(--rc-forest);
   font-weight: 600;
 }
 
@@ -681,7 +692,7 @@
   gap: 7px;
   padding: 7px 9px;
   border-radius: 12px;
-  background: rgba(16, 40, 26, 0.04);
+  background: color-mix(in srgb, var(--rc-ink) 4%, transparent);
 }
 
 .rcw-kpi-tile strong {
@@ -703,7 +714,7 @@
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(16, 40, 26, 0.08);
+  background: color-mix(in srgb, var(--rc-ink) 8%, transparent);
   gap: 1.5px;
 }
 
@@ -807,8 +818,8 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(16, 40, 26, 0.08);
+  background: color-mix(in srgb, var(--rc-white) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 8%, transparent);
 }
 
 .rcw-splitter-label {
@@ -826,8 +837,8 @@
 
 .rcw-split-pill,
 .rcw-mini-chip {
-  border: 1px solid rgba(16, 40, 26, 0.12);
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 12%, transparent);
+  background: color-mix(in srgb, var(--rc-white) 90%, transparent);
   color: var(--xp-ink);
   border-radius: 999px;
   padding: 3px 9px;
@@ -838,9 +849,9 @@
 
 .rcw-split-pill.is-active,
 .rcw-mini-chip.is-active {
-  background: #17402c;
-  border-color: #17402c;
-  color: #fff;
+  background: var(--rc-forest);
+  border-color: var(--rc-forest);
+  color: var(--rc-white);
 }
 
 .rcw-rec-list {
@@ -856,7 +867,7 @@
   gap: 8px;
   padding: 6px 9px;
   border-radius: 12px;
-  background: rgba(23, 64, 44, 0.05);
+  background: color-mix(in srgb, var(--rc-forest) 5%, transparent);
 }
 
 .rcw-rec-main {
@@ -886,8 +897,8 @@
 
 .rcw-rec-apply {
   border: 0;
-  background: #17402c;
-  color: #fff;
+  background: var(--rc-forest);
+  color: var(--rc-white);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 11px;
@@ -918,8 +929,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(23, 64, 44, 0.12);
-  color: #17402c;
+  background: color-mix(in srgb, var(--rc-forest) 12%, transparent);
+  color: var(--rc-forest);
   font-size: 12px;
   font-weight: 700;
   display: grid;
@@ -933,12 +944,12 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #9ca3af;
-  border: 1.5px solid #fff;
+  background: var(--rc-idle);
+  border: 1.5px solid var(--rc-white);
 }
 
 .rcw-dot.is-live {
-  background: #16a34a;
+  background: var(--rc-ok);
 }
 
 .rcw-avatar-name {
@@ -965,7 +976,7 @@
   gap: 8px;
   padding: 6px 8px;
   border-radius: 12px;
-  background: rgba(16, 40, 26, 0.035);
+  background: color-mix(in srgb, var(--rc-ink) 3.5%, transparent);
 }
 
 .rcw-member-info strong {
@@ -988,8 +999,8 @@
 
 .rcw-select-sm {
   border-radius: 999px;
-  border: 1px solid rgba(16, 40, 26, 0.14);
-  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 14%, transparent);
+  background: var(--rc-white);
   font-size: 11px;
   padding: 3px 8px;
   color: var(--xp-ink);
@@ -1001,8 +1012,8 @@
   gap: 14px;
   padding: 12px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(16, 40, 26, 0.08);
+  background: color-mix(in srgb, var(--rc-white) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 8%, transparent);
 }
 
 .rcw-readiness-svg {
@@ -1060,7 +1071,7 @@
   width: 100%;
   min-height: 54px;
   padding: 10px 14px;
-  border: 1.5px dashed rgba(16, 40, 26, 0.22);
+  border: 1.5px dashed color-mix(in srgb, var(--rc-ink) 22%, transparent);
   border-radius: 14px;
   background: transparent;
   color: var(--xp-mut);
@@ -1072,9 +1083,9 @@
 }
 
 .rcw-moment-add-compact:hover {
-  border-color: #17402c;
-  color: #17402c;
-  background: rgba(23, 64, 44, 0.04);
+  border-color: var(--rc-forest);
+  color: var(--rc-forest);
+  background: color-mix(in srgb, var(--rc-forest) 4%, transparent);
 }
 
 .rcw-moment-add-compact .lkdv-cv2c-moment-empty-icon {
@@ -1084,8 +1095,8 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(23, 64, 44, 0.1);
-  color: #17402c;
+  background: color-mix(in srgb, var(--rc-forest) 10%, transparent);
+  color: var(--rc-forest);
 }
 
 /* ── Champs de saisie Équipe & formulaires ── */
@@ -1093,19 +1104,19 @@
   width: 100%;
   min-width: 0;
   flex: 1;
-  border: 1px solid rgba(16, 40, 26, 0.14);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 14%, transparent);
   border-radius: 12px;
   padding: 8px 11px;
   font-size: 13px;
   line-height: 1.3;
-  background: rgba(255, 255, 255, 0.94);
+  background: color-mix(in srgb, var(--rc-white) 94%, transparent);
   color: var(--xp-ink);
   outline: none;
 }
 
 .rcw-input:focus {
-  border-color: #17402c;
-  box-shadow: 0 0 0 2px rgba(23, 64, 44, 0.12);
+  border-color: var(--rc-forest);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--rc-forest) 12%, transparent);
 }
 
 
@@ -1124,7 +1135,7 @@
   width: 82px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(23, 64, 44, 0.06);
+  background: color-mix(in srgb, var(--rc-forest) 6%, transparent);
   flex-shrink: 0;
 }
 
@@ -1165,8 +1176,8 @@
   gap: 4px;
   padding: 11px 12px;
   border-radius: 16px;
-  border: 1px solid rgba(16, 40, 26, 0.09);
-  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid color-mix(in srgb, var(--rc-ink) 9%, transparent);
+  background: color-mix(in srgb, var(--rc-white) 84%, transparent);
   text-align: left;
   cursor: pointer;
   transition: transform 0.14s ease, border-color 0.14s ease;
@@ -1174,11 +1185,11 @@
 
 .rcw-depart-tile:hover {
   transform: translateY(-1px);
-  border-color: rgba(23, 64, 44, 0.25);
+  border-color: color-mix(in srgb, var(--rc-forest) 25%, transparent);
 }
 
 .rcw-depart-tile.is-ok {
-  border-color: rgba(29, 122, 71, 0.22);
+  border-color: color-mix(in srgb, var(--rc-ok) 22%, transparent);
 }
 
 .rcw-depart-tile-top {
