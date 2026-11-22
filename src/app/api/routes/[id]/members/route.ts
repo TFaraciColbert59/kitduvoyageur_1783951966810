@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { manageShareLink, updateMemberRoleOrRevoke } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -42,27 +43,32 @@ export async function POST(
     return NextResponse.json({ error: 'Requête membres/partage invalide.' }, { status: 400 });
   }
 
-  if (parsed.data.kind === 'share_link') {
-    const res = manageShareLink({
+  try {
+    const store = await getRouteCollabStore();
+    if (parsed.data.kind === 'share_link') {
+      const res = await store.manageShareLink({
+        workspaceId: id,
+        actorId: actor.userId,
+        action: parsed.data.action,
+        expiresInHours: parsed.data.expiresInHours,
+        hidePrivateStartRadiusM: parsed.data.hidePrivateStartRadiusM,
+      });
+      if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+      return NextResponse.json(res);
+    }
+
+    const res = await store.updateMemberRoleOrRevoke({
       workspaceId: id,
       actorId: actor.userId,
-      action: parsed.data.action,
-      expiresInHours: parsed.data.expiresInHours,
-      hidePrivateStartRadiusM: parsed.data.hidePrivateStartRadiusM,
+      targetUserId: parsed.data.targetUserId,
+      displayName: parsed.data.displayName,
+      role: parsed.data.role,
+      delegatedPublish: parsed.data.delegatedPublish,
+      revoke: parsed.data.revoke,
     });
     if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
     return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
   }
-
-  const res = updateMemberRoleOrRevoke({
-    workspaceId: id,
-    actorId: actor.userId,
-    targetUserId: parsed.data.targetUserId,
-    displayName: parsed.data.displayName,
-    role: parsed.data.role,
-    delegatedPublish: parsed.data.delegatedPublish,
-    revoke: parsed.data.revoke,
-  });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res);
 }

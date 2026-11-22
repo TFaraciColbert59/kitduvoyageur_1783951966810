@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { updateWorkspaceKitItem } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -46,14 +47,19 @@ export async function POST(
     return NextResponse.json({ error: 'Requête kit invalide.' }, { status: 400 });
   }
 
-  const res = updateWorkspaceKitItem({
-    workspaceId: id,
-    actorId: actor.userId,
-    action: parsed.data.action,
-    itemId: parsed.data.itemId,
-    assigneeUserId: parsed.data.assigneeUserId,
-    newItem: parsed.data.newItem,
-  });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res);
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.updateWorkspaceKitItem({
+      workspaceId: id,
+      actorId: actor.userId,
+      action: parsed.data.action,
+      itemId: parsed.data.itemId,
+      assigneeUserId: parsed.data.assigneeUserId,
+      newItem: parsed.data.newItem,
+    });
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }

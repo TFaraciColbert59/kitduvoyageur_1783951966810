@@ -9,6 +9,7 @@ import {
   type PublishResult,
 } from './engine';
 import { hasRoutePermission } from './permissions';
+import { sanitizeWorkspaceForShareLink } from './shareSanitize';
 import type {
   ApplyOperationResult,
   CollaborativeKitItem,
@@ -98,7 +99,8 @@ function getStore(): Map<string, WorkspaceRecord> {
   return loaded;
 }
 
-function prunePresence(presence: Record<string, PresenceEntry>, nowMs = Date.now()): PresenceEntry[] {
+/** Purge les présences > 30 s et libère les verrous souples expirés (réutilisé par le store Supabase). */
+export function prunePresence(presence: Record<string, PresenceEntry>, nowMs = Date.now()): PresenceEntry[] {
   const active: PresenceEntry[] = [];
   for (const [uid, entry] of Object.entries(presence)) {
     const seen = Date.parse(entry.lastSeenAt);
@@ -187,16 +189,8 @@ export function getWorkspaceForActor(
     if (link.expiresAt && Date.parse(link.expiresAt) <= Date.now()) {
       return { ok: false, status: 403, error: 'Ce lien de partage a expiré.' };
     }
-    // Ne jamais exposer les brouillons internes ou infos privées aux lecteurs externes
-    const sanitized: RouteWorkspaceState = {
-      ...rec.state,
-      proposals: [],
-      members: rec.state.members.map((m) => ({
-        userId: m.userId,
-        displayName: m.displayName,
-        role: m.role,
-      })),
-    };
+    // Ne jamais exposer les brouillons internes ni la zone de départ privée (RGPD, 8.9).
+    const sanitized: RouteWorkspaceState = sanitizeWorkspaceForShareLink(rec.state);
     return {
       ok: true,
       workspace: sanitized,

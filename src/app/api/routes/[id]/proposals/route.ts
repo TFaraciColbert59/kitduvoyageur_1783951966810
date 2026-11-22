@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createWorkspaceProposal } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteOperationInput } from '@/features/route-collab/types';
 import { getAuthenticatedRouteActor } from '../_auth';
 
@@ -32,16 +33,21 @@ export async function POST(
     return NextResponse.json({ error: 'Proposition invalide.' }, { status: 400 });
   }
 
-  const res = createWorkspaceProposal({
-    workspaceId: id,
-    actorId: actor.userId,
-    actorName: actor.displayName,
-    title: parsed.data.title,
-    rationale: parsed.data.rationale,
-    operations: parsed.data.operations as unknown as RouteOperationInput[],
-  });
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.createWorkspaceProposal({
+      workspaceId: id,
+      actorId: actor.userId,
+      actorName: actor.displayName,
+      title: parsed.data.title,
+      rationale: parsed.data.rationale,
+      operations: parsed.data.operations as unknown as RouteOperationInput[],
+    });
+    if (!res.ok) {
+      return NextResponse.json({ error: res.error }, { status: res.status });
+    }
+    return NextResponse.json(res, { status: 201 });
+  } catch (error) {
+    return storeErrorResponse(error);
   }
-  return NextResponse.json(res, { status: 201 });
 }

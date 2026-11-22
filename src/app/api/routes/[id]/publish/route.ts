@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { publishWorkspace } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -31,19 +32,24 @@ export async function POST(
     return NextResponse.json({ error: 'Paramètres de publication invalides.' }, { status: 400 });
   }
 
-  const res = publishWorkspace({
-    workspaceId: id,
-    actorId: actor.userId,
-    actorName: actor.displayName,
-    expectedHeadSeq: parsed.data.expectedHeadSeq,
-    summary: parsed.data.summary,
-    acknowledgedUnknowns: parsed.data.acknowledgedUnknowns,
-  });
-  if (res.status === 'not_found') {
-    return NextResponse.json({ error: 'Itinéraire introuvable.' }, { status: 404 });
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.publishWorkspace({
+      workspaceId: id,
+      actorId: actor.userId,
+      actorName: actor.displayName,
+      expectedHeadSeq: parsed.data.expectedHeadSeq,
+      summary: parsed.data.summary,
+      acknowledgedUnknowns: parsed.data.acknowledgedUnknowns,
+    });
+    if (res.status === 'not_found') {
+      return NextResponse.json({ error: 'Itinéraire introuvable.' }, { status: 404 });
+    }
+    if (res.status === 'blocked') {
+      return NextResponse.json(res, { status: 409 });
+    }
+    return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
   }
-  if (res.status === 'blocked') {
-    return NextResponse.json(res, { status: 409 });
-  }
-  return NextResponse.json(res);
 }

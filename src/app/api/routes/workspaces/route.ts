@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  createWorkspaceRecord,
-  listWorkspacesForActor,
-} from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteWorkspaceState } from '@/features/route-collab/types';
 import { getAuthenticatedRouteActor } from '@/app/api/routes/[id]/_auth';
 
@@ -22,7 +20,12 @@ export async function GET() {
   if (!actor) {
     return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
   }
-  return NextResponse.json({ workspaces: listWorkspacesForActor(actor.userId) });
+  try {
+    const store = await getRouteCollabStore();
+    return NextResponse.json({ workspaces: await store.listWorkspacesForActor(actor.userId) });
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -269,6 +272,11 @@ export async function POST(request: Request) {
     updatedAt: nowIso,
   };
 
-  const created = createWorkspaceRecord(workspace);
-  return NextResponse.json({ workspace: created }, { status: 201 });
+  try {
+    const store = await getRouteCollabStore();
+    const created = await store.createWorkspaceRecord(workspace);
+    return NextResponse.json({ workspace: created }, { status: 201 });
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import {
-  getPackManifestForRevision,
-  markParticipantPackState,
-} from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +14,18 @@ export async function GET(
   const actor = await getAuthenticatedRouteActor();
   const revRaw = request.nextUrl.searchParams.get('revisionNo');
   const revisionNo = revRaw != null ? Number(revRaw) : undefined;
-  const res = getPackManifestForRevision(
-    id,
-    actor?.userId ?? null,
-    revisionNo != null && Number.isFinite(revisionNo) ? revisionNo : undefined,
-  );
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json({ manifest: res.manifest });
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.getPackManifestForRevision(
+      id,
+      actor?.userId ?? null,
+      revisionNo != null && Number.isFinite(revisionNo) ? revisionNo : undefined,
+    );
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json({ manifest: res.manifest });
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }
 
 const PackStateSchema = z.object({
@@ -51,12 +54,17 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: 'État de pack invalide.' }, { status: 400 });
   }
-  const res = markParticipantPackState({
-    workspaceId: id,
-    userId: actor.userId,
-    displayName: actor.displayName,
-    ...parsed.data,
-  });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: 403 });
-  return NextResponse.json(res);
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.markParticipantPackState({
+      workspaceId: id,
+      userId: actor.userId,
+      displayName: actor.displayName,
+      ...parsed.data,
+    });
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: 403 });
+    return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }

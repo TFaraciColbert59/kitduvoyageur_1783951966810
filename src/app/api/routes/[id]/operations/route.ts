@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { submitWorkspaceOperation } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteOperationInput } from '@/features/route-collab/types';
 import { getAuthenticatedRouteActor } from '../_auth';
 
@@ -33,23 +34,28 @@ export async function POST(
     return NextResponse.json({ error: 'Opération invalide.' }, { status: 400 });
   }
 
-  const res = submitWorkspaceOperation(id, {
-    opId: parsed.data.opId,
-    baseSeq: parsed.data.baseSeq,
-    actorId: actor.userId,
-    actorName: actor.displayName,
-    expectedVersions: parsed.data.expectedVersions,
-    operation: parsed.data.operation as unknown as RouteOperationInput,
-  });
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.submitWorkspaceOperation(id, {
+      opId: parsed.data.opId,
+      baseSeq: parsed.data.baseSeq,
+      actorId: actor.userId,
+      actorName: actor.displayName,
+      expectedVersions: parsed.data.expectedVersions,
+      operation: parsed.data.operation as unknown as RouteOperationInput,
+    });
 
-  if (res.status === 'not_found') {
-    return NextResponse.json({ error: 'Itinéraire introuvable.' }, { status: 404 });
+    if (res.status === 'not_found') {
+      return NextResponse.json({ error: 'Itinéraire introuvable.' }, { status: 404 });
+    }
+    if (res.status === 'denied') {
+      return NextResponse.json(res, { status: 403 });
+    }
+    if (res.status === 'conflict') {
+      return NextResponse.json(res, { status: 409 });
+    }
+    return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
   }
-  if (res.status === 'denied') {
-    return NextResponse.json(res, { status: 403 });
-  }
-  if (res.status === 'conflict') {
-    return NextResponse.json(res, { status: 409 });
-  }
-  return NextResponse.json(res);
 }

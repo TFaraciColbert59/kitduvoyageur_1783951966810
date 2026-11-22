@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exportWorkspaceGpx } from '@/features/route-collab/engine';
-import { getWorkspaceForActor } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,13 @@ export async function GET(
   const shareToken = request.nextUrl.searchParams.get('token');
   const stageId = request.nextUrl.searchParams.get('stageId') ?? undefined;
 
-  const res = getWorkspaceForActor(id, actor?.userId ?? null, shareToken);
+  let res;
+  try {
+    const store = await getRouteCollabStore();
+    res = await store.getWorkspaceForActor(id, actor?.userId ?? null, shareToken);
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
   if (!res.ok) {
     return new NextResponse(res.error, { status: res.status });
   }

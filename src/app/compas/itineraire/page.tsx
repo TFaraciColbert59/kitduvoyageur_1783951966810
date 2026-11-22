@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getAuthenticatedRouteActor } from '@/app/api/routes/[id]/_auth';
-import { getWorkspaceForActor } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
 import { RouteCollabPageClient } from '@/features/route-collab/components/RouteCollabPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -24,11 +24,16 @@ export default async function CompasItinerairePage({
   let accessDeniedMessage: string | null = null;
 
   if (workspaceId) {
-    const res = getWorkspaceForActor(workspaceId, actor?.userId ?? null, token ?? null);
-    if (res.ok) {
-      serverWorkspace = res.workspace;
-    } else {
-      accessDeniedMessage = res.error;
+    try {
+      const store = await getRouteCollabStore();
+      const res = await store.getWorkspaceForActor(workspaceId, actor?.userId ?? null, token ?? null);
+      if (res.ok) {
+        serverWorkspace = res.workspace;
+      } else {
+        accessDeniedMessage = res.error;
+      }
+    } catch {
+      accessDeniedMessage = 'Itinéraire momentanément indisponible. Réessayez.';
     }
   }
 

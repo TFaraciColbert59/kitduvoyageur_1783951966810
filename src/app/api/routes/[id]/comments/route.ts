@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { addWorkspaceComment } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -38,15 +39,20 @@ export async function POST(
     return NextResponse.json({ error: 'Commentaire invalide.' }, { status: 400 });
   }
 
-  const res = addWorkspaceComment({
-    workspaceId: id,
-    actorId: actor.userId,
-    actorName: actor.displayName,
-    body: parsed.data.body,
-    anchor: parsed.data.anchor,
-  });
-  if (!res.ok) {
-    return NextResponse.json({ error: res.error }, { status: res.status });
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.addWorkspaceComment({
+      workspaceId: id,
+      actorId: actor.userId,
+      actorName: actor.displayName,
+      body: parsed.data.body,
+      anchor: parsed.data.anchor,
+    });
+    if (!res.ok) {
+      return NextResponse.json({ error: res.error }, { status: res.status });
+    }
+    return NextResponse.json(res, { status: 201 });
+  } catch (error) {
+    return storeErrorResponse(error);
   }
-  return NextResponse.json(res, { status: 201 });
 }

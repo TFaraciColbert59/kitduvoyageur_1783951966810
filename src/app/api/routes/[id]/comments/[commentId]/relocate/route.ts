@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { relocateWorkspaceComment } from '@/features/route-collab/serverStore';
+import { getRouteCollabStore } from '@/features/route-collab/store';
+import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import { getAuthenticatedRouteActor } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -36,12 +37,17 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: 'Ancre invalide.' }, { status: 400 });
   }
-  const res = relocateWorkspaceComment({
-    workspaceId: id,
-    commentId,
-    actorId: actor.userId,
-    newAnchor: parsed.data.newAnchor,
-  });
-  if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-  return NextResponse.json(res);
+  try {
+    const store = await getRouteCollabStore();
+    const res = await store.relocateWorkspaceComment({
+      workspaceId: id,
+      commentId,
+      actorId: actor.userId,
+      newAnchor: parsed.data.newAnchor,
+    });
+    if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
+    return NextResponse.json(res);
+  } catch (error) {
+    return storeErrorResponse(error);
+  }
 }
