@@ -434,10 +434,21 @@ export function ClubInlineFeed({
     [poles, selectedPoleId],
   );
 
+  const [visiblePostCount, setVisiblePostCount] = useState(18);
   const filteredPosts = useMemo(() => {
     if (!selectedPole) return posts || [];
     return (posts || []).filter((post) => matchesPole(post, selectedPole));
   }, [posts, selectedPole]);
+
+  useEffect(() => {
+    setVisiblePostCount(18);
+  }, [selectedPoleId, posts.length]);
+
+  const visiblePosts = useMemo(
+    () => filteredPosts.slice(0, visiblePostCount),
+    [filteredPosts, visiblePostCount],
+  );
+  const remainingPostCount = Math.max(0, filteredPosts.length - visiblePosts.length);
 
   const isLargeClubWithoutPoles = poles.length === 0 && membersCount >= 10;
 
@@ -705,7 +716,7 @@ export function ClubInlineFeed({
         </div>
       ) : (
         <div className="lkdv-feed-list club-card-feed-list" role="feed" aria-label={`Fil d'actualité de ${clubName}`}>
-          {filteredPosts.map((post) => (
+          {visiblePosts.map((post) => (
             <ClubPostCard
               key={post.id}
               post={post}
@@ -718,6 +729,16 @@ export function ClubInlineFeed({
               onOpenOutingDetail={onOpenOutingDetail}
             />
           ))}
+          {remainingPostCount > 0 ? (
+            <button
+              type="button"
+              className="lkdv-carnet-btn-soft"
+              style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+              onClick={() => setVisiblePostCount((c) => c + 20)}
+            >
+              Afficher 20 publications de plus ({remainingPostCount} restantes)
+            </button>
+          ) : null}
         </div>
       )}
     </div>

@@ -797,7 +797,8 @@
       & Animation fluide d'ouverture / fermeture de la carte au scroll
    ========================================================================== */
 .lkdv-clubs-v8 .phone {
-  transition: grid-template-rows 0.52s var(--ease-spring) !important;
+  /* Ne jamais animer grid-template-rows : provoque 30+ resize WebGL MapLibre + reflow complet par seconde */
+  transition: none !important;
 }
 
 .lkdv-clubs-v8 .phone.map-collapsed {
@@ -811,10 +812,7 @@
 }
 
 .lkdv-clubs-v8 .sw-wrap[data-det="card"] {
-  transition:
-    top 0.52s var(--ease-spring),
-    bottom 0.52s var(--ease-spring),
-    border-radius 0.52s var(--ease-spring) !important;
+  transition: border-radius 0.24s ease !important;
 }
 
 .lkdv-clubs-v8 .mapzone {
@@ -824,12 +822,10 @@
 
 .lkdv-clubs-v8 .mapzone #map {
   transform-origin: 50% 82% !important;
-  will-change: transform, opacity, border-radius;
+  will-change: transform, opacity;
   transition:
-    transform 0.52s var(--ease-spring),
-    opacity 0.34s var(--motion-ease-standard),
-    border-radius 0.52s var(--ease-spring),
-    box-shadow 0.34s ease !important;
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease !important;
 }
 
 .lkdv-clubs-v8 .phone.map-collapsed .mapzone #map {
@@ -920,15 +916,13 @@
   transform: translateX(-50%) scale(0.92) !important;
 }
 
-/* Animation fluide de #card et pilule 3 points en haut lorsque la carte 3D est plein écran (.mapbig) */
+/* Animation GPU uniquement (transform + opacity) pour éviter le reflow de #card */
 .lkdv-clubs-v8 #card {
   transform-origin: 50% 0% !important;
   will-change: transform, opacity;
   transition:
-    transform 0.52s var(--ease-spring),
-    opacity 0.32s var(--motion-ease-standard),
-    max-height 0.52s var(--ease-spring),
-    padding 0.42s var(--ease-spring) !important;
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease !important;
 }
 
 .lkdv-clubs-v8 .phone.mapbig #card {
