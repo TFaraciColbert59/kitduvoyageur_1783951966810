@@ -436,43 +436,95 @@ export function ClubCoffreDrawerBody({
           />
         ) : (
           <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {visibleVault.map((g, idx) => (
-              <ClubStaggerCard
-                key={g.id}
-                className="li nt club-outing-row club-glass-card"
-                style={{ cursor: 'pointer' }}
-                onClick={() => setSelectedGearIndex(idx)}
-              >
-                <div>
-                  <div className="ttl">
-                    <b>{g.name}</b> · <span className="s2">{g.brand} ({g.weightG} g)</span>
-                  </div>
-                  <div className="s2">
-                    Prêté par <b>{g.ownerName}</b> (@{g.ownerHandle}) · {g.category} ·{' '}
-                    <span className={g.reservedByMe ? 'club-badge-sage' : 'club-badge-soft'}>
-                      {g.reservedByMe ? 'Réservé par vous ✓' : g.condition || 'Vérifié'}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'} club-icon-pill`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleReserveGear(g.id);
-                    onToast?.({
-                      title: g.reservedByMe ? 'Emprunt libéré' : 'Équipement réservé ✓',
-                      subtitle: `${g.name} (${g.ownerName})`,
-                      undo: () => onToggleReserveGear(g.id),
-                    });
+            {visibleVault.map((g, idx) => {
+              const weightLabel =
+                g.weightG >= 1000
+                  ? `${(g.weightG / 1000).toFixed(1).replace('.', ',')} kg`
+                  : `${g.weightG} g`;
+              return (
+                <ClubStaggerCard
+                  key={g.id}
+                  className="li nt club-outing-row club-glass-card"
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
                   }}
-                  aria-label={g.reservedByMe ? 'Réservé' : 'Emprunter'}
-                  title={g.reservedByMe ? 'Réservé' : 'Emprunter'}
+                  onClick={() => setSelectedGearIndex(idx)}
                 >
-                  {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
-                </button>
-              </ClubStaggerCard>
-            ))}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={g.imageUrl || generatedProductImage(g.name, g.category)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        objectFit: 'cover',
+                        background: 'rgba(23, 64, 44, 0.06)',
+                        flex: 'none',
+                      }}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <b
+                        style={{
+                          display: 'block',
+                          fontSize: 13.5,
+                          lineHeight: 1.25,
+                          color: 'var(--label)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {g.name}
+                      </b>
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: 'var(--label2)',
+                          marginTop: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {g.ownerName} · {weightLabel}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
+                        <span className={g.reservedByMe ? 'club-badge-sage' : 'club-badge-soft'}>
+                          {g.reservedByMe ? 'Réservé ✓' : g.condition || 'Vérifié'}
+                        </span>
+                        <span className="club-badge-soft">{g.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'} club-icon-pill`}
+                    style={{ flex: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleReserveGear(g.id);
+                      onToast?.({
+                        title: g.reservedByMe ? 'Emprunt libéré' : 'Équipement réservé ✓',
+                        subtitle: `${g.name} (${g.ownerName})`,
+                        undo: () => onToggleReserveGear(g.id),
+                      });
+                    }}
+                    aria-label={g.reservedByMe ? 'Réservé' : 'Emprunter'}
+                    title={g.reservedByMe ? 'Réservé' : 'Emprunter'}
+                  >
+                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
+                  </button>
+                </ClubStaggerCard>
+              );
+            })}
             {remainingVaultCount > 0 ? (
               <button
                 type="button"

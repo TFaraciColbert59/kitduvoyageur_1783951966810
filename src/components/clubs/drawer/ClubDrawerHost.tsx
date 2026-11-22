@@ -442,7 +442,6 @@ export function ClubDrawerHost({
         id: 'sorties',
         label: 'Sorties programmées, agenda et météo',
         icon: <Calendar size={18} aria-hidden="true" />,
-        badge: upcomingOutingsCount > 0 ? upcomingOutingsCount : undefined,
       },
       { id: 'coffre', label: 'Sac et coffre matériel du club', icon: <Backpack size={18} aria-hidden="true" /> },
       { id: 'salons', label: 'Salons de discussion du club', icon: <MessageCircle size={18} aria-hidden="true" /> },

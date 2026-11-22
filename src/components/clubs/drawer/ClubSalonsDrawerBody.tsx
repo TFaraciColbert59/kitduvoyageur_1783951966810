@@ -382,19 +382,23 @@ export function ClubSalonsDrawerBody({
               required
             />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(['general', 'announcements', 'events', 'custom'] as ClubChannelKind[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  className={`club-filter-pill ${newChannelKind === k ? 'is-active' : ''}`}
-                  onClick={() => setNewChannelKind(k)}
-                >
-                  <span className="club-filter-pill-label">
-                    {channelIcon(k)}
-                    <span>{channelKindLabel(k)}</span>
-                  </span>
-                </button>
-              ))}
+              {(['general', 'announcements', 'events', 'custom'] as ClubChannelKind[]).map((k) => {
+                const isActiveKind = newChannelKind === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className={`club-filter-pill ${isActiveKind ? 'is-active' : ''}`}
+                    onClick={() => setNewChannelKind(k)}
+                  >
+                    {isActiveKind ? <span className="club-filter-pill-bg" /> : null}
+                    <span className="club-filter-pill-label">
+                      {channelIcon(k)}
+                      <span>{channelKindLabel(k)}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--label2)' }}>
               <input
@@ -515,6 +519,7 @@ export function ClubSalonsDrawerBody({
                   setSelectedMsgId(null);
                 }}
               >
+                {selected ? <span className="club-filter-pill-bg" /> : null}
                 <span className="club-filter-pill-label">
                   {channelIcon(ch.kind)}
                   <span>{ch.name}</span>
