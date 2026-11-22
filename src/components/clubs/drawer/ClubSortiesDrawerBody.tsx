@@ -920,18 +920,7 @@ export function ClubSortiesDrawerBody({
   }
 
   // ============================================================================
-  // D12 — 2.3 OUTINGS-G02 ("Pont Sorties club, courses et groupes")
-  // ============================================================================
-  if (activeSubTab === 3) {
-    return (
-      <div className="club-drawer-pane-content" data-testid="club-outings-g02-bridge">
-        {active ? <ClubG02Workspace clubId={activeClub.id} initialSection={initialSection} /> : null}
-      </div>
-    );
-  }
-
-  // ============================================================================
-  // D11 — 2.2 OUTINGS-GPX ("Archives et traces GPX")
+  // D11 — 2.2 OUTINGS-GPX ("Archives, collections & traces GPX")
   // ============================================================================
   if (activeSubTab === 2) {
     return (
@@ -1042,6 +1031,9 @@ export function ClubSortiesDrawerBody({
             </>
           )}
         </div>
+        {active ? (
+          <ClubG02Workspace clubId={activeClub.id} initialSection="collections" lockedSection />
+        ) : null}
       </div>
     );
   }

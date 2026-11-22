@@ -22,6 +22,7 @@ import {
 } from './ClubDrawerMotion';
 import { ClubEmptyCard } from './ClubSharedUi';
 import type { ClubCoffreDrawerBodyProps } from './ClubDrawerTypes';
+import { ClubG02Workspace } from '../g02';
 
 type VaultFilterId = 'all' | 'available' | 'mine' | 'light';
 type KitSeasonFilter = 'all' | 'summer' | 'winter';
@@ -361,6 +362,18 @@ export function ClubCoffreDrawerBody({
             </div>
           );
         })}
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // D18b — 3.3 VAULT-CHALLENGES ("Défis & classements")
+  // ============================================================================
+  if (activeSubTab === 3) {
+    return (
+      <div className="club-drawer-pane-content" data-testid="club-vault-challenges-pane">
+        <ClubG02Workspace clubId={activeClub.id} initialSection="challenges" lockedSection />
+        <ClubG02Workspace clubId={activeClub.id} initialSection="leaderboard" lockedSection />
       </div>
     );
   }

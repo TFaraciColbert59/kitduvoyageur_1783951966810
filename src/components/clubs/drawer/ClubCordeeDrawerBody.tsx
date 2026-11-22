@@ -26,6 +26,7 @@ import type {
   ClubOutingData,
 } from './ClubDrawerTypes';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
+import { ClubG02Workspace } from '../g02';
 
 export function hasClubRole(member: Pick<ClubMemberData, 'role' | 'rawRole'>): boolean {
   if (member.rawRole === 'admin' || member.rawRole === 'moderator') return true;
@@ -613,6 +614,16 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
     );
   }
 
+  if (props.lensId === 'members-salons') {
+    return (
+      <div className="lkdv-carnet-drawer-pane" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {props.active ? (
+          <ClubG02Workspace clubId={props.activeClub.id} initialSection="salons" lockedSection />
+        ) : null}
+      </div>
+    );
+  }
+
   if (props.lensId === 'members-guides') {
     const rank: Record<string, number> = { Fondateur: 0, 'Guide & Sécurité': 1, Encadrant: 2 };
     const guides = unblockedMembers
@@ -620,15 +631,20 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
       .sort((a, b) => (rank[a.role] ?? 9) - (rank[b.role] ?? 9) || a.name.localeCompare(b.name, 'fr'));
 
     return (
-      <CordeeMemberList
-        members={guides}
-        outings={props.outings}
-        vaultGear={props.vaultGear}
-        emptyIcon={<Shield size={22} aria-hidden="true" />}
-        emptyTitle="Aucun encadrant"
-        emptySubtitle="Les référents et encadrants du club apparaîtront ici."
-        onSelectMember={(m) => handleSelectMember(m, 1)}
-      />
+      <div className="lkdv-carnet-drawer-pane" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <CordeeMemberList
+          members={guides}
+          outings={props.outings}
+          vaultGear={props.vaultGear}
+          emptyIcon={<Shield size={22} aria-hidden="true" />}
+          emptyTitle="Aucun encadrant"
+          emptySubtitle="Les référents et encadrants du club apparaîtront ici."
+          onSelectMember={(m) => handleSelectMember(m, 1)}
+        />
+        {props.active ? (
+          <ClubG02Workspace clubId={props.activeClub.id} initialSection="invites" lockedSection />
+        ) : null}
+      </div>
     );
   }
 
@@ -667,6 +683,9 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
           emptySubtitle="Les membres disponibles ce week-end apparaîtront ici."
           onSelectMember={(m) => handleSelectMember(m, 2)}
         />
+        {props.active ? (
+          <ClubG02Workspace clubId={props.activeClub.id} initialSection="matching" lockedSection />
+        ) : null}
       </div>
     );
   }

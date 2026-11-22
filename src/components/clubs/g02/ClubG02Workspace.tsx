@@ -45,6 +45,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 export interface ClubG02WorkspaceProps {
   clubId: string;
   initialSection?: ClubG02Section;
+  lockedSection?: boolean;
   currentUserId?: string | null;
   onOpenActivity?: (activityId: string) => void;
 }
@@ -60,6 +61,7 @@ async function readApiJson<T>(res: Response): Promise<T> {
 export function ClubG02Workspace({
   clubId,
   initialSection = 'events',
+  lockedSection = false,
   currentUserId: currentUserIdProp,
   onOpenActivity,
 }: ClubG02WorkspaceProps) {
@@ -120,6 +122,10 @@ export function ClubG02Workspace({
     }
     let active = true;
     const supabase = createClient();
+    if (!supabase?.auth?.getUser) {
+      setResolvedUserId(null);
+      return;
+    }
     supabase.auth
       .getUser()
       .then(({ data }) => {
@@ -431,21 +437,8 @@ export function ClubG02Workspace({
     if (selectedEventId === eventId) await loadEventDetail(eventId);
   };
 
-  return (
-    <ClubG02Screen
-      club={club}
-      memberCount={members.filter((m) => m.status === 'active').length}
-      eventCount={events.length}
-      challengeCount={challengeSummaries.length}
-      viewerMembership={viewerMembership}
-      activeSection={activeSection}
-      onSectionChange={(section) => {
-        setSelectedEventId(null);
-        setActiveSection(section);
-      }}
-      onInvite={() => setActiveSection('invites')}
-      sportContext={club.primarySport}
-    >
+  const sectionContent = (
+    <>
       {activeSection === 'events' && (
         selectedEventId && eventDetailData ? (
           <ClubEventDetail
@@ -764,6 +757,33 @@ export function ClubG02Workspace({
           onOpenActivity={onOpenActivity}
         />
       )}
+    </>
+  );
+
+  if (lockedSection) {
+    return (
+      <div className={styles.workspace} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {sectionContent}
+      </div>
+    );
+  }
+
+  return (
+    <ClubG02Screen
+      club={club}
+      memberCount={members.filter((m) => m.status === 'active').length}
+      eventCount={events.length}
+      challengeCount={challengeSummaries.length}
+      viewerMembership={viewerMembership}
+      activeSection={activeSection}
+      onSectionChange={(section) => {
+        setSelectedEventId(null);
+        setActiveSection(section);
+      }}
+      onInvite={() => setActiveSection('invites')}
+      sportContext={club.primarySport}
+    >
+      {sectionContent}
     </ClubG02Screen>
   );
 }

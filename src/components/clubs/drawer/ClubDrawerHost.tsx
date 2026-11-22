@@ -400,19 +400,20 @@ export function ClubDrawerHost({
           ]
         : [
             { id: 'members-all', label: 'Tous les membres', icon: <Users size={15} aria-hidden="true" /> },
-            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <ShieldCheck size={15} aria-hidden="true" /> },
-            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <Handshake size={15} aria-hidden="true" /> },
+            { id: 'members-guides', label: 'Encadrants, sécurité & invitations', icon: <ShieldCheck size={15} aria-hidden="true" /> },
+            { id: 'members-binomes', label: 'Binômes & matching', icon: <Handshake size={15} aria-hidden="true" /> },
+            { id: 'members-salons', label: 'Salons du club', icon: <MessageCircle size={15} aria-hidden="true" /> },
           ],
       2: [
         { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={15} aria-hidden="true" /> },
         { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={15} aria-hidden="true" /> },
-        { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={15} aria-hidden="true" /> },
-        { id: 'outings-g02', label: 'Salons, courses et groupes', icon: <MessageCircle size={15} aria-hidden="true" /> },
+        { id: 'outings-gpx', label: 'Archives, collections & traces GPX', icon: <Route size={15} aria-hidden="true" /> },
       ],
       3: [
         { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={15} aria-hidden="true" /> },
         { id: 'vault-kits', label: 'Kits types du club', icon: <Backpack size={15} aria-hidden="true" /> },
         { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={15} aria-hidden="true" /> },
+        { id: 'vault-challenges', label: 'Défis & classements', icon: <Trophy size={15} aria-hidden="true" /> },
       ],
     }),
     [inspectedMember],
