@@ -182,7 +182,7 @@ export function ClubChallengesPanel({
         {canCreate && onCreate ? (
           <button
             type="button"
-            className={cx(styles.button, styles.small, styles.primary)}
+            className={cx(styles.button, styles.small, styles.primary, 'lkdv-carnet-btn-primary')}
             onClick={() => setCreateOpen((open) => !open)}
             aria-expanded={createOpen}
           >
@@ -299,7 +299,7 @@ export function ClubChallengesPanel({
             </p>
           ) : null}
           <div>
-            <button type="submit" className={cx(styles.button, styles.primary)} disabled={pendingId === 'create'}>
+            <button type="submit" className={cx(styles.button, styles.primary, 'lkdv-carnet-btn-primary')} disabled={pendingId === 'create'}>
               {pendingId === 'create' ? 'Création…' : 'Créer le défi'}
             </button>
           </div>
@@ -375,7 +375,7 @@ export function ClubChallengesPanel({
                     {state !== 'ended' && !mine ? (
                       <button
                         type="button"
-                        className={cx(styles.button, styles.small, styles.primary)}
+                        className={cx(styles.button, styles.small, styles.primary, 'lkdv-carnet-btn-primary')}
                         disabled={busy}
                         onClick={() => void join(challenge)}
                       >

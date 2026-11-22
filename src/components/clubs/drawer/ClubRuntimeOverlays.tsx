@@ -241,6 +241,16 @@ export function ClubRuntimeOverlays({
                   type="button"
                   className="reseau-btn active"
                   onClick={() => {
+                    onOpenClubDrawer(5, 0);
+                    onClose();
+                  }}
+                >
+                  <span>Statistiques</span>
+                </button>
+                <button
+                  type="button"
+                  className="reseau-btn active"
+                  onClick={() => {
                     onFlyToCoords(activeClub.lat, activeClub.lng, activeClub.name);
                     onClose();
                   }}

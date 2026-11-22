@@ -17,6 +17,18 @@
   --club-warn-ink: #926614;
   --club-danger-bg: #f5ddd9;
   --club-danger-ink: #a8443a;
+  --lkv-on-primary: #ffffff;
+  --lkv-forest-900: #17402c;
+  --btn-tint-solid: #17402c;
+  --btn-on-solid: #ffffff;
+  --btn-tint: rgba(255, 255, 255, 0.86);
+  --btn-content: #17402c;
+  --btn-glass-border: rgba(23, 64, 44, 0.16);
+  --btn-rim: none;
+  --btn-shadow: none;
+  --btn-radius: 999px;
+  --btn-font-size: 12.5px;
+  --btn-font-weight: 600;
   position: relative;
   display: flex;
   flex-direction: column;

@@ -32,6 +32,8 @@ import {
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { EventTicket } from '@/features/community/v2/shared/EventTicket';
+import type { EventCardVM } from '@/features/community/v2/shared/types';
 import { canAppearInPublicClubSearch, normalizeClubPrivacy } from '@/features/clubs/privacy';
 import type { Club } from '@/features/clubs/types';
 import {
@@ -488,6 +490,99 @@ function MyClubsPane({
 
   const nextOuting = outings[0] ?? null;
 
+  const [fetchedSalonsCount, setFetchedSalonsCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof activeClub.salonsCount === 'number') {
+      setFetchedSalonsCount(activeClub.salonsCount);
+      return;
+    }
+    if (
+      !activeClub.id ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(activeClub.id) ||
+      typeof fetch !== 'function'
+    ) {
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/salons`, { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        const list = payload?.data?.channels;
+        if (Array.isArray(list)) setFetchedSalonsCount(list.length);
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeClub.id, activeClub.salonsCount]);
+
+  const resolvedSalonsCount =
+    typeof activeClub.salonsCount === 'number'
+      ? activeClub.salonsCount
+      : fetchedSalonsCount;
+
+  const nextOutingTicket = useMemo<EventCardVM | null>(() => {
+    if (!nextOuting) return null;
+    const estHours =
+      nextOuting.km > 0 || nextOuting.dplus > 0
+        ? Math.max(1, Math.round(nextOuting.km / 4 + nextOuting.dplus / 400))
+        : null;
+    const leaderName = nextOuting.leaderName || activeClub.name;
+    const initials = leaderName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase() || '')
+      .join('') || 'C';
+    const maxP = Math.max(0, nextOuting.maxParticipants || 0);
+    const curP = Math.max(0, nextOuting.participantsCount || 0);
+    return {
+      id: nextOuting.id,
+      title: nextOuting.title,
+      activity: activeClub.category || 'Randonnée',
+      startsAt: nextOuting.startsAtIso ?? null,
+      endsAt: null,
+      eventDate: nextOuting.startsAtIso ? nextOuting.startsAtIso.slice(0, 10) : '',
+      location: nextOuting.massif || activeClub.massif,
+      meetingPoint: nextOuting.carpoolCity || null,
+      level: null,
+      distanceKm: nextOuting.km > 0 ? nextOuting.km : null,
+      elevationGainM: nextOuting.dplus > 0 ? nextOuting.dplus : null,
+      duration: estHours ? `~${estHours} h` : null,
+      coverImage: null,
+      coverAlt: null,
+      maxParticipants: maxP,
+      currentParticipants: curP,
+      spotsLeft: maxP > 0 ? Math.max(0, maxP - curP) : 0,
+      waitlistEnabled: false,
+      myStatus: nextOuting.rsvpJoined ? 'registered' : 'none',
+      organizer: {
+        id: nextOuting.leaderHandle || activeClub.slug,
+        name: leaderName,
+        handle: nextOuting.leaderHandle || activeClub.slug,
+        avatarUrl: null,
+        initials,
+      },
+      participants: [],
+      participantsTotal: curP,
+      clubId: activeClub.id,
+      clubName: activeClub.name,
+      kitId: null,
+      description: null,
+      safetyNotes: null,
+      safetyChecklist: [],
+      recurrence: null,
+      past: nextOuting.status === 'completed',
+      routeTrace: null,
+      distanceKmFromMe: null,
+      lat: nextOuting.lat,
+      lng: nextOuting.lng,
+    };
+  }, [activeClub.category, activeClub.id, activeClub.massif, activeClub.name, activeClub.slug, nextOuting]);
+
   return (
     <div className="club-drawer-pane-content" data-testid="club-overview-pane">
       {/* 1. Hero du club actif */}
@@ -533,29 +628,15 @@ function MyClubsPane({
         </div>
       </div>
 
-      {/* 2. Prochaine sortie imminente */}
-      {nextOuting ? (
-        <button
-          type="button"
-          className="li nt club-glass-card"
-          style={{ width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
-          onClick={() => onSwitchTabAndLens(2, 0, { inspectOuting: nextOuting })}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div className="s2" style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: '#17402c' }}>
-              Prochaine sortie
-            </div>
-            <div className="ttl" style={{ fontWeight: 700, fontSize: 13.5, marginTop: 2 }}>
-              {nextOuting.title}
-            </div>
-            <div className="s2" style={{ marginTop: 2 }}>
-              {[nextOuting.date, nextOuting.massif, nextOuting.km ? `${nextOuting.km} km` : null]
-                .filter(Boolean)
-                .join(' · ')}
-            </div>
-          </div>
-          <Calendar size={16} aria-hidden="true" style={{ flex: 'none', color: '#17402c' }} />
-        </button>
+      {/* 2. Prochaine sortie imminente (billet Communauté V2) */}
+      {nextOuting && nextOutingTicket ? (
+        <div className="lkdv-communaute-v2" style={{ background: 'transparent' }}>
+          <EventTicket
+            event={nextOutingTicket}
+            variant="tile"
+            onOpen={() => onSwitchTabAndLens(2, 0, { inspectOuting: nextOuting })}
+          />
+        </div>
       ) : null}
 
       {/* 3. Accès rapides vers chaque espace */}
@@ -563,18 +644,7 @@ function MyClubsPane({
         <button
           type="button"
           className="club-glass-card"
-          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
-          onClick={() => onSwitchTabAndLens(1, 0)}
-        >
-          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Cordée</div>
-          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
-            {members.length} membres & rôles
-          </div>
-        </button>
-        <button
-          type="button"
-          className="club-glass-card"
-          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
+          style={{ gridColumn: '1 / -1', textAlign: 'left', cursor: 'pointer', border: 0 }}
           onClick={() => onSwitchTabAndLens(2, 0)}
         >
           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Sorties</div>
@@ -589,8 +659,10 @@ function MyClubsPane({
           onClick={() => onSwitchTabAndLens(4, 0)}
         >
           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Salons</div>
-          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
-            Discussions & annonces
+          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
+            {resolvedSalonsCount !== null
+              ? `${resolvedSalonsCount} salon${resolvedSalonsCount > 1 ? 's' : ''}`
+              : '—'}
           </div>
         </button>
         <button

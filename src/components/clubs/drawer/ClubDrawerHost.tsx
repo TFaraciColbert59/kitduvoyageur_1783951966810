@@ -7,6 +7,7 @@ import {
   Award,
   Backpack,
   BarChart2,
+  BarChart3,
   Bookmark,
   Calendar,
   CalendarCheck,
@@ -53,6 +54,7 @@ import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
 import { ClubSortiesDrawerBody } from './ClubSortiesDrawerBody';
 import { ClubCoffreDrawerBody } from './ClubCoffreDrawerBody';
 import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
+import { ClubStatsDrawerBody } from './ClubStatsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type {
@@ -137,13 +139,14 @@ export function ClubDrawerHost({
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
   const [internalMode, setInternalMode] = useState<'main' | 'create'>(mode);
-  const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(4, Math.max(0, initialTab)));
+  const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(5, Math.max(0, initialTab)));
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialSearch ? 2 : initialSubTab,
     1: initialTab === 1 ? initialSubTab : 0,
     2: initialTab === 2 ? initialSubTab : 0,
     3: initialTab === 3 ? initialSubTab : 0,
     4: initialTab === 4 ? initialSubTab : 0,
+    5: initialTab === 5 ? initialSubTab : 0,
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -191,7 +194,7 @@ export function ClubDrawerHost({
   useEffect(() => {
     if (!intent) return;
     setInternalMode('main');
-    const nextTab = Math.min(3, Math.max(0, intent.tab ?? tab));
+    const nextTab = Math.min(5, Math.max(0, intent.tab ?? tab));
     if (typeof intent.tab === 'number') setTab(nextTab);
     if (typeof intent.subTab === 'number') {
       setSubTabs((prev) => ({ ...prev, [nextTab]: intent.subTab! }));
@@ -371,8 +374,8 @@ export function ClubDrawerHost({
       setStack([]);
       setInspectedMember(null);
       setInspectedOuting(null);
-      const safeTab = targetTab >= 4 ? 2 : Math.max(0, targetTab);
-      const safeLens = targetTab >= 4 ? 3 : targetLens;
+      const safeTab = Math.min(5, Math.max(0, targetTab));
+      const safeLens = Math.max(0, targetLens);
       setTab(safeTab);
       setSubTabs((prev) => ({ ...prev, [safeTab]: safeLens }));
       if (options?.g02Section) setG02Section(options.g02Section);
@@ -420,6 +423,11 @@ export function ClubDrawerHost({
       4: [
         { id: 'salons-chat', label: 'Salons de discussion', icon: <MessageCircle size={15} aria-hidden="true" /> },
       ],
+      5: [
+        { id: 'stats-overview', label: 'Synthèse et efforts du club', icon: <BarChart3 size={15} aria-hidden="true" /> },
+        { id: 'stats-members', label: 'Efforts par membre', icon: <Users size={15} aria-hidden="true" /> },
+        { id: 'stats-weekly', label: 'Classement hebdomadaire', icon: <Trophy size={15} aria-hidden="true" /> },
+      ],
     }),
     [inspectedMember],
   );
@@ -445,6 +453,7 @@ export function ClubDrawerHost({
       },
       { id: 'coffre', label: 'Sac et coffre matériel du club', icon: <Backpack size={18} aria-hidden="true" /> },
       { id: 'salons', label: 'Salons de discussion du club', icon: <MessageCircle size={18} aria-hidden="true" /> },
+      { id: 'stats', label: 'Statistiques et efforts des membres', icon: <BarChart3 size={18} aria-hidden="true" /> },
     ],
     [newArrivalsCount, upcomingOutingsCount],
   );
@@ -549,7 +558,7 @@ export function ClubDrawerHost({
           target.isContentEditable);
       if (isTextInput) return;
 
-      if (event.key >= '1' && event.key <= '4') {
+      if (event.key >= '1' && event.key <= '6') {
         const idx = Number(event.key) - 1;
         setStack([]);
         setInspectedMember(null);
@@ -973,6 +982,24 @@ export function ClubDrawerHost({
                     setSubTabs((prev) => ({ ...prev, 4: nextSub }))
                   }
                   onToggleJoinClub={onToggleJoinClub}
+                  onToast={emitToast}
+                />
+              ) : null}
+
+              {tab === 5 ? (
+                <ClubStatsDrawerBody
+                  activeSubTab={index}
+                  active={active}
+                  activeClub={activeClub}
+                  members={members}
+                  outings={outings}
+                  posts={posts}
+                  vaultGear={vaultGear}
+                  challenges={challenges}
+                  currentUserId={currentUserId}
+                  onInspectMember={(m) => pushMember(m, index)}
+                  onOpenMemberProfile={openMemberProfileByHandle}
+                  onSwitchTabAndLens={handleSwitchTabAndLens}
                   onToast={emitToast}
                 />
               ) : null}

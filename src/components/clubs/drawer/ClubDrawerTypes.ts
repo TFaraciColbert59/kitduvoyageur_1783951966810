@@ -19,6 +19,7 @@ export interface ClubItemData {
   level: string;
   membersCount: number;
   outingsCount: number;
+  salonsCount?: number;
   totalKm: number;
   totalDplus: number;
   joined: boolean;
@@ -421,6 +422,22 @@ export interface ClubCoffreDrawerBodyProps {
   onCloneStandardKit: (kitId: string) => void;
   onSwitchTab?: (tab: number, subTab?: number) => void;
   onSwitchToCreate?: (createTab: number) => void;
+  onToast?: (toast: ClubToastPayload) => void;
+}
+
+export interface ClubStatsDrawerBodyProps {
+  activeSubTab: number;
+  active: boolean;
+  activeClub: ClubItemData;
+  members: ClubMemberData[];
+  outings: ClubOutingData[];
+  posts: ClubFeedPostItem[];
+  vaultGear: ClubGearVaultItem[];
+  challenges: ClubChallengeItem[];
+  currentUserId?: string | null;
+  onInspectMember: (member: ClubMemberData) => void;
+  onOpenMemberProfile: (handle: string) => void;
+  onSwitchTabAndLens: ClubDrawerNavHandler;
   onToast?: (toast: ClubToastPayload) => void;
 }
 

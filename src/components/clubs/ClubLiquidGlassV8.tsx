@@ -174,6 +174,9 @@ const TIROIR_TAB_MAP: Record<string, number> = {
   cordee: 1,
   sorties: 2,
   coffre: 3,
+  salons: 4,
+  stats: 5,
+  statistiques: 5,
 };
 
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
@@ -542,6 +545,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           act('openClubDrawer', '1:0');
         } else if (initialTab === 'salons') {
           act('openClubDrawer', '4:0');
+        } else if (initialTab === 'stats' || initialTab === 'statistiques') {
+          act('openClubDrawer', '5:0');
         } else if (initialTab === 'parametres') {
           act('openClubDrawer', '0:0');
         }
@@ -939,6 +944,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         };
       });
 
+      let resolvedSalonsCount: number | undefined;
       // Hydrate secondary club endpoints safely (strictly UUID + fetch guarded)
       if (isUuid(clubRow.id) && typeof fetch === 'function') {
         const requests: Array<Promise<Response | null>> = [
@@ -1064,7 +1070,9 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           try {
             const sj = await salonsRes.json();
             const msgs: any[] = sj?.data?.messages || [];
-            const channelId: string | null = sj?.data?.activeChannelId || sj?.data?.channels?.[0]?.id || null;
+            const channelsArr: any[] = Array.isArray(sj?.data?.channels) ? sj.data.channels : [];
+            resolvedSalonsCount = channelsArr.length;
+            const channelId: string | null = sj?.data?.activeChannelId || channelsArr[0]?.id || null;
             setActiveSalonChannelId(channelId);
             const msgAuthorIds = Array.from(new Set(msgs.map((m) => m.authorId).filter((id) => id && !profilesMap[id])));
             if (msgAuthorIds.length > 0) {
@@ -1158,6 +1166,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           membersCount: resolvedMembersCount,
           poles,
           outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
+          salonsCount: row.id === clubRow.id ? resolvedSalonsCount : undefined,
           totalKm: row.id === clubRow.id ? currentTotalKm : 0,
           totalDplus: row.id === clubRow.id ? currentTotalDplus : 0,
           joined: joinedFlag,
