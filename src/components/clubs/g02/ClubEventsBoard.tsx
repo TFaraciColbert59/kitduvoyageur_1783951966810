@@ -23,6 +23,7 @@ import {
   sortEventsForDisplay,
 } from './model';
 import type { EventCounts } from './model';
+import { CarnetHorizontalTimeline } from '@/components/carnet/v2/CarnetHorizontalTimeline';
 import styles from './g02.module.css';
 
 function cx(...values: Array<string | false | null | undefined>): string {
@@ -282,134 +283,39 @@ export function ClubEventsBoard({
           ) : null}
         </div>
       ) : (
-        <ul className={styles.list}>
-          {visibleEvents.map((event) => {
-            const counts = eventCounts?.[event.id];
-            const capacity = counts ? eventCapacityFromCounts(event, counts) : eventCapacity(event, registrations);
-            const rsvp = eventRsvpStatus(event.id, currentUserId, registrations);
-            const raceUrl = getValidatedRaceRegistrationUrl(event);
-            const isPast = Date.parse(event.startsAt) < Date.parse(nowIso);
-            const busy = pendingEventId === event.id;
-            return (
-              <li key={event.id}>
-                <article className={styles.card} aria-label={event.title}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.eventDate} aria-hidden="true">
-                      <span>{formatDayMonth(event.startsAt).split(' ')[1] ?? ''}</span>
-                      <strong>{formatDayMonth(event.startsAt).split(' ')[0] ?? '—'}</strong>
-                    </div>
-                    <div className={styles.grow}>
-                      <div className={styles.wrap}>
-                        <span className={styles.badge}>{EVENT_FORMAT_LABELS[event.format]}</span>
-                        <span className={styles.badge}>{event.sport}</span>
-                        {capacity.isFull ? (
-                          <span className={cx(styles.badge, styles.badgeWarn)}>
-                            {capacity.waitlistOpen ? 'Complet · liste d’attente' : 'Complet'}
-                          </span>
-                        ) : null}
-                        {isPast ? <span className={styles.badge}>Passée</span> : null}
-                      </div>
-                      <h3 className={styles.cardTitle} style={{ marginTop: 6 }}>
-                        {onOpen ? (
-                          <button type="button" className={styles.linkButton} onClick={() => onOpen(event)}>
-                            {event.title}
-                          </button>
-                        ) : (
-                          event.title
-                        )}
-                      </h3>
-                      <p className={styles.cardMeta}>
-                        {formatEventTimeRange(event.startsAt, event.endsAt)} · {event.locationLabel}
-                      </p>
-                      {event.description ? (
-                        <p className={styles.cardMeta} style={{ marginTop: 4 }}>
-                          {event.description}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className={styles.wrap}>
-                    <span className={styles.badge}>
-                      {capacity.registered}
-                      {event.maxParticipants !== null ? ` / ${event.maxParticipants}` : ''} inscrit
-                      {capacity.registered > 1 ? 's' : ''}
-                    </span>
-                    {capacity.waitlist > 0 ? (
-                      <span className={styles.badge}>{capacity.waitlist} en attente</span>
-                    ) : null}
-                    {event.paceGroups.length > 0 ? (
-                      <span className={styles.badge}>{event.paceGroups.length} groupe(s) d’allure</span>
-                    ) : null}
-                    {capacity.remaining !== null && capacity.remaining > 0 && !isPast ? (
-                      <span className={styles.badge}>{capacity.remaining} place(s) restante(s)</span>
-                    ) : null}
-                  </div>
-
-                  {event.paceGroups.length > 0 ? (
-                    <div className={styles.wrap}>
-                      {event.paceGroups.map((group) => (
-                        <span key={group.id} className={styles.badge}>
-                          {group.label} · {group.targetPaceLabel}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className={styles.rowBetween}>
-                    <p className={styles.tiny} style={{ margin: 0 }}>
-                      {rsvp === 'registered'
-                        ? 'Vous êtes inscrit·e.'
-                        : rsvp === 'waitlist'
-                          ? 'Vous êtes en liste d’attente.'
-                          : capacity.isFull && capacity.waitlistOpen
-                            ? 'Les places sont prises ; inscrivez-vous en liste d’attente.'
-                            : capacity.isFull
-                              ? 'Complet.'
-                              : 'Inscription ouverte.'}
-                    </p>
-                    <div className={styles.wrap}>
-                      {raceUrl ? (
-                        <a
-                          className={cx(styles.button, styles.small)}
-                          href={raceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          S’inscrire à la course
-                        </a>
-                      ) : null}
-                      {!isPast && rsvp === 'none' ? (
-                        <button
-                          type="button"
-                          className={cx(styles.button, styles.small, styles.primary)}
-                          onClick={() => void runRegistration(event)}
-                          disabled={busy || (capacity.isFull && !capacity.waitlistOpen)}
-                        >
-                          {busy
-                            ? 'Inscription…'
-                            : capacity.isFull && capacity.waitlistOpen
-                              ? 'Rejoindre la liste d’attente'
-                              : 'S’inscrire'}
-                        </button>
-                      ) : null}
-                      {!isPast && rsvp !== 'none' ? (
-                        <button
-                          type="button"
-                          className={cx(styles.button, styles.small)}
-                          onClick={() => void runCancel(event)}
-                          disabled={busy}
-                        >
-                          {busy ? 'Annulation…' : 'Se désinscrire'}
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
+        <CarnetHorizontalTimeline
+          ariaLabel="Frise chronologique des sorties du club"
+          groups={[
+            {
+              day: 1,
+              groupLabel: 'Sorties',
+              events: visibleEvents.map((event) => {
+                const counts = eventCounts?.[event.id];
+                const capacity = counts ? eventCapacityFromCounts(event, counts) : eventCapacity(event, registrations);
+                const rsvp = eventRsvpStatus(event.id, currentUserId, registrations);
+                return {
+                  id: event.id,
+                  day: 1,
+                  kind: 'perf',
+                  badge:
+                    rsvp === 'registered'
+                      ? `${EVENT_FORMAT_LABELS[event.format]} · Inscrit`
+                      : EVENT_FORMAT_LABELS[event.format],
+                  timeLabel: formatDayMonth(event.startsAt),
+                  title: event.title,
+                  subtitle: [
+                    event.locationLabel,
+                    event.sport,
+                    `${capacity.registered}${event.maxParticipants !== null ? `/${event.maxParticipants}` : ''} inscrit(s)`,
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
+                  onClick: onOpen ? () => onOpen(event) : undefined,
+                };
+              }),
+            },
+          ]}
+        />
       )}
     </section>
   );

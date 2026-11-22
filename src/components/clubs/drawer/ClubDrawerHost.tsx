@@ -44,6 +44,7 @@ import { SlotShell } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { LensTransition } from '@/components/carnet/v2/CarnetDrawerMotion';
 import '@/styles/carnet-v2.css';
+import { CarnetHorizontalTimeline } from '@/components/carnet/v2/CarnetHorizontalTimeline';
 import { ClubG02Workspace } from '@/components/clubs/g02';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
@@ -1160,60 +1161,35 @@ export function ClubDrawerHost({
                   {currentSub === 2 ? 'Aucune archive de sortie pour le moment.' : 'Aucune sortie programmée pour le moment.'}
                 </div>
               ) : (
-                list.map((o) => (
-                <div key={o.id} className="li nt club-outing-row">
-                  <button
-                    type="button"
-                    className="club-row-main-btn"
-                    onClick={() => {
-                      setInspectedOuting(o);
-                      onFlyToCoords(o.lat, o.lng, o.title);
-                    }}
-                  >
-                    <span className="reseau-meta">
-                      <span className="reseau-name-row">
-                        <b>{o.title}</b>
-                        <span className="club-comment-badge">{o.km} km · +{o.dplus} m · {o.maxAlt} m</span>
-                      </span>
-                      <span className="reseau-sub">
-                        {o.date} · Covoiturage : {o.carpoolCity} ({o.carpoolSeatsLeft} pl.)
-                      </span>
-                    </span>
-                  </button>
-                  {currentSub === 2 ? (
-                    <button
-                      type="button"
-                      className="reseau-btn primary club-icon-pill"
-                      onClick={() => onDownloadGpx(o)}
-                      aria-label={'Télécharger le GPX'}
-                      title={'Télécharger le GPX'}
-                    >
-                      <Download size={16} aria-hidden="true" />
-                    </button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      <button
-                        type="button"
-                        className={`reseau-btn ${o.rsvpJoined ? 'active' : 'primary'} club-icon-pill`}
-                        onClick={() => onToggleRsvpOuting(o.id)}
-                        aria-label={o.rsvpJoined ? 'Inscrit' : 'Participer'}
-                        title={o.rsvpJoined ? 'Inscrit' : 'Participer'}
-                      >
-                        {o.rsvpJoined ? <CalendarCheck size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
-                      </button>
-                      <button
-                        type="button"
-                        className="reseau-btn active club-icon-pill"
-                        onClick={() => onCreateGroupFromOuting(o)}
-                        aria-label="Créer un groupe d'expédition depuis cette sortie"
-                        title="Créer un groupe d'expédition depuis cette sortie"
-                      >
-                        <Users size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )))}
+                <CarnetHorizontalTimeline
+                  ariaLabel={currentSub === 2 ? 'Frise des archives GPX' : 'Frise des sorties du club'}
+                  groups={[
+                    {
+                      day: 1,
+                      groupLabel: currentSub === 2 ? 'Archives' : 'À venir',
+                      events: list.map((o) => ({
+                        id: o.id,
+                        day: 1,
+                        kind: 'perf',
+                        badge: currentSub === 2 ? 'Archive GPX' : o.rsvpJoined ? 'Inscrit ✓' : 'Sortie',
+                        timeLabel: o.date || 'À venir',
+                        title: o.title,
+                        subtitle: [
+                          o.massif,
+                          o.km ? `${o.km} km` : null,
+                          o.dplus ? `+${o.dplus} m` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · '),
+                        onClick: () => {
+                          setInspectedOuting(o);
+                          onFlyToCoords(o.lat, o.lng, o.title);
+                        },
+                      })),
+                    },
+                  ]}
+                />
+              )}
             </div>
           </div>
         );

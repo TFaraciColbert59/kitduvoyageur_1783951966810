@@ -50,6 +50,7 @@ export interface HorizontalTimelineEvent {
 
 export interface HorizontalTimelineDayGroup {
   day: number;
+  groupLabel?: string;
   meta?: string;
   events: HorizontalTimelineEvent[];
 }
@@ -104,8 +105,8 @@ export function CarnetHorizontalTimeline({
           if (group.events.length === 0) return null;
           return (
             <React.Fragment key={group.day}>
-              <div className="lkdv-carnet-hday-sep" aria-label={`Jour ${group.day}`}>
-                <span className="lkdv-carnet-hday-pill">Jour {group.day}</span>
+              <div className="lkdv-carnet-hday-sep" aria-label={group.groupLabel ?? `Jour ${group.day}`}>
+                <span className="lkdv-carnet-hday-pill">{group.groupLabel ?? `Jour ${group.day}`}</span>
                 {group.meta ? (
                   <span className="lkdv-carnet-hday-meta">
                     <CloudSun size={10} /> {group.meta}
