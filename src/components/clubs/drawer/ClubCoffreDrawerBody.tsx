@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
+import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
+import type { PickerProduct } from '@/features/community/v2/create/kit/useKitProductPickerV2';
 import {
   Check,
   ChevronDown,
@@ -23,6 +27,11 @@ import {
 import { ClubEmptyCard } from './ClubSharedUi';
 import type { ClubCoffreDrawerBodyProps } from './ClubDrawerTypes';
 import { ClubG02Workspace } from '../g02';
+
+const KitProductSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
+  { ssr: false },
+);
 
 type VaultFilterId = 'all' | 'available' | 'mine' | 'light';
 type KitSeasonFilter = 'all' | 'summer' | 'winter';
@@ -56,6 +65,7 @@ export function ClubCoffreDrawerBody({
   const [vaultSearch, setVaultSearch] = useState('');
   const [vaultFilter, setVaultFilter] = useState<VaultFilterId>('all');
   const [visibleVaultCount, setVisibleVaultCount] = useState(35);
+  const [selectedGearIndex, setSelectedGearIndex] = useState<number | null>(null);
 
   // D17 — Standard kits filter & expanded card state
   const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
@@ -426,8 +436,13 @@ export function ClubCoffreDrawerBody({
           />
         ) : (
           <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {visibleVault.map((g) => (
-              <ClubStaggerCard key={g.id} className="li nt club-outing-row club-glass-card">
+            {visibleVault.map((g, idx) => (
+              <ClubStaggerCard
+                key={g.id}
+                className="li nt club-outing-row club-glass-card"
+                style={{ cursor: 'pointer' }}
+                onClick={() => setSelectedGearIndex(idx)}
+              >
                 <div>
                   <div className="ttl">
                     <b>{g.name}</b> · <span className="s2">{g.brand} ({g.weightG} g)</span>
@@ -442,7 +457,8 @@ export function ClubCoffreDrawerBody({
                 <button
                   type="button"
                   className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'} club-icon-pill`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onToggleReserveGear(g.id);
                     onToast?.({
                       title: g.reservedByMe ? 'Emprunt libéré' : 'Équipement réservé ✓',
@@ -470,6 +486,79 @@ export function ClubCoffreDrawerBody({
           </ClubStaggerList>
         )}
       </div>
+
+      {selectedGearIndex !== null &&
+      visibleVault[selectedGearIndex] &&
+      typeof document !== 'undefined'
+        ? createPortal(
+            (() => {
+              const g = visibleVault[selectedGearIndex];
+              const totalKgWeightG = visibleVault.reduce((sum, x) => sum + (x.weightG || 0), 0);
+              const ownerMember = members.find(
+                (m) => (m.handle || '').toLowerCase() === (g.ownerHandle || '').toLowerCase(),
+              );
+              const product: PickerProduct = {
+                key: g.id,
+                source: 'pret',
+                id: g.id,
+                name: g.name,
+                brand: g.brand || null,
+                category: g.category || null,
+                weightG: g.weightG || null,
+                image: g.imageUrl || generatedProductImage(g.name, g.category),
+                wear: null,
+                conditionLabel: g.condition || 'Vérifié',
+                description: `Équipement mutualisé dans le club ${activeClub.name} par ${g.ownerName} (@${g.ownerHandle}).`,
+                priceLabel: null,
+                owner: {
+                  id: ownerMember?.userId || ownerMember?.id || g.ownerHandle,
+                  name: g.ownerName,
+                  avatarUrl: ownerMember?.avatarUrl ?? null,
+                  trustScore: null,
+                },
+                cartable: null,
+                ownershipId: null,
+                productId: null,
+              };
+              return (
+                <KitProductSheetV2
+                  product={product}
+                  initialCategory={g.category || undefined}
+                  currentKitWeightG={totalKgWeightG}
+                  alreadyInKit={Boolean(g.reservedByMe)}
+                  positionLabel={`${selectedGearIndex + 1} / ${visibleVault.length}`}
+                  hasPrev={selectedGearIndex > 0}
+                  hasNext={selectedGearIndex < visibleVault.length - 1}
+                  onPrev={() => setSelectedGearIndex((i) => (i !== null && i > 0 ? i - 1 : i))}
+                  onNext={() =>
+                    setSelectedGearIndex((i) =>
+                      i !== null && i < visibleVault.length - 1 ? i + 1 : i,
+                    )
+                  }
+                  onClose={() => setSelectedGearIndex(null)}
+                  onAdd={() => {
+                    onToggleReserveGear(g.id);
+                    onToast?.({
+                      title: 'Équipement réservé ✓',
+                      subtitle: `${g.name} (${g.ownerName})`,
+                      undo: () => onToggleReserveGear(g.id),
+                    });
+                    setSelectedGearIndex(null);
+                  }}
+                  onRemove={() => {
+                    onToggleReserveGear(g.id);
+                    onToast?.({
+                      title: 'Emprunt libéré',
+                      subtitle: `${g.name} (${g.ownerName})`,
+                    });
+                    setSelectedGearIndex(null);
+                  }}
+                />
+              );
+            })(),
+            document.body,
+          )
+        : null}
     </div>
   );
 }
