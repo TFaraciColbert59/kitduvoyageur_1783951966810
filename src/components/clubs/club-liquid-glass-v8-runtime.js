@@ -1883,7 +1883,20 @@ let say = function(txt) {
 
 let act = function(a, v) {
   if (a === "setvis") { closeVisMenu(); setTimeout(() => doMut("vis", v), 260); return; }
-  if (a === "igtab") { S.igTab = +v; S.step = [2, 1, 3, 0][+v] ?? 0; refresh(true); haptic(6); return; }
+  if (a === "igtab") {
+    S.igTab = +v;
+    S.step = [2, 1, 3, 0][+v] ?? 0;
+    if (S.mapCollapsed) {
+      S.mapCollapsed = false;
+      S.tabMin = false;
+      G.mapManualOpenAt = Date.now();
+      G.mapOpenScrollTop = 0;
+    }
+    applyShell();
+    refresh(true);
+    haptic(6);
+    return;
+  }
   if (a === "outdoor") { S.outdoor = !S.outdoor; applyGlass(); renderPopv(); if (S.sh) renderSheet(); island(S.outdoor ? "Mode extérieur activé" : "Mode extérieur coupé", "", false); return; }
   if (MUT[a]) { doMut(a, v); return; }
   if (typeof EXA !== "undefined" && typeof EXA[a] === "function") {
@@ -4415,6 +4428,17 @@ phone.addEventListener('wheel', e => {
   if (!target || !target.closest) return;
   const inCardOrSheet = target.closest('#card, #sheet');
   if (!inCardOrSheet) return;
+  const inCardOnly = inCardOrSheet.id === 'card';
+  if (inCardOnly && S.igTab === 1) {
+    if (S.mapCollapsed) {
+      S.mapCollapsed = false;
+      S.tabMin = false;
+      G.mapManualOpenAt = Date.now();
+      G.mapOpenScrollTop = 0;
+      applyShell();
+    }
+    return;
+  }
   const scrollPane = target.closest('.lkdv-lens-pane, .card-scroll, .sh-b, .ig-feed, #card');
   const currentScrollTop = scrollPane ? scrollPane.scrollTop : 0;
   if (e.deltaY > 6 && !S.mapCollapsed && !S.big) {
