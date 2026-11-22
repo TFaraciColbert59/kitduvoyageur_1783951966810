@@ -860,3 +860,109 @@
   transform: scale(0.92) !important;
 }
 
+/* Empty feed card: no extra white background inside Club card */
+.lkdv-clubs-v8 #card .lkdv-feed-empty,
+.lkdv-clubs-v8 #lkdv-club-feed-root .lkdv-feed-empty {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Highlight circles (.ig-hl-row): exact Carnet page (.lkdv-ig-hl-*) style parity */
+.lkdv-clubs-v8 #card .ig-hl-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  padding: 6px 4px 10px !important;
+  margin-top: 2px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl-row::-webkit-scrollbar {
+  display: none !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: 54px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+  border: 0 !important;
+  background: none !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition: transform 0.28s var(--ease-spring) !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl:hover {
+  transform: translateY(-2px) !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl:active {
+  transform: scale(0.92) !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl-ring {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  padding: 2px !important;
+  background: conic-gradient(
+    from var(--la, 140deg),
+    rgba(23, 64, 44, 0.7),
+    rgba(91, 127, 85, 0.45),
+    rgba(255, 255, 255, 0.9),
+    rgba(23, 64, 44, 0.7)
+  ) !important;
+  box-shadow:
+    0 5px 14px -4px rgba(16, 32, 25, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl-in {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  background: rgba(244, 247, 243, 0.88) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  position: relative !important;
+  color: #17402c !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl-in svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke: #17402c !important;
+  stroke-width: 1.8 !important;
+  fill: none !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.lkdv-clubs-v8 #card .ig-hl > span:last-child {
+  font: 500 9.8px/1.1 var(--sf) !important;
+  color: #172b24 !important;
+  letter-spacing: -0.01em !important;
+  white-space: nowrap !important;
+  max-width: 60px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+}
+

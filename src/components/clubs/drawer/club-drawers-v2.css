@@ -1067,13 +1067,16 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 /* ClubIsland Toast (z-index 3100, CarnetIsland parity) */
 .lkdv-club-island {
   position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+  bottom: auto !important;
   left: 50%;
-  bottom: 22px;
   transform: translateX(-50%);
   z-index: 3100;
   display: flex;
   align-items: center;
   gap: 12px;
+  height: auto !important;
+  max-height: 54px !important;
   max-width: min(390px, calc(100vw - 24px));
   padding: 10px 14px;
   border-radius: 999px;

@@ -340,7 +340,18 @@ export function ClubInlineFeed({
 }: ClubInlineFeedProps) {
   if (!posts || posts.length === 0) {
     return (
-      <div className="lkdv-feed-empty" style={{ padding: '28px 16px', borderRadius: 22 }}>
+      <div
+        className="lkdv-feed-empty"
+        style={{
+          padding: '28px 16px',
+          borderRadius: 22,
+          background: 'transparent',
+          boxShadow: 'none',
+          border: 'none',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+        }}
+      >
         <b style={{ font: '600 14px var(--sf)', color: 'var(--label)' }}>
           Le fil de {clubName} est calme
         </b>
