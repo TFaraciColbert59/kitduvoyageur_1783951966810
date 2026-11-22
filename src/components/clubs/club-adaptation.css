@@ -209,6 +209,37 @@
   visibility: hidden !important;
 }
 
+.sheet:has(.lkdv-club-carnet-drawer) {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.sheet:has(.lkdv-club-carnet-drawer) > .grab,
+.sheet:has(.lkdv-club-carnet-drawer) > .sgrab,
+.sheet:has(.lkdv-club-carnet-drawer)::before {
+  display: none !important;
+}
+
+.lkdv-club-carnet-drawer {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.lkdv-club-carnet-drawer .lkdv-lens-pager,
+.lkdv-club-carnet-drawer .lkdv-lens-pane {
+  overflow-x: hidden !important;
+}
+
 /* 5. Styles internes des Volets DrawerShell du Club */
 .lkdv-clubs-v8 .club-drawer-pane-content {
   display: flex;

@@ -1143,6 +1143,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onCreateOuting={handleCreateOuting}
             onCreateVaultGear={handleLendGearToVault}
             onCreateNewClub={handleCreateNewClub}
+            onClose={() => triggerAct('closeSheet')}
           />,
           drawerMount.root
         )}

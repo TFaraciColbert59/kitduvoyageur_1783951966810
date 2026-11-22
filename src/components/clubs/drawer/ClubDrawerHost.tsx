@@ -37,10 +37,13 @@ import {
   Users,
 } from 'lucide-react';
 import {
-  DrawerShell,
   type DrawerSecondaryItem,
   type DrawerTab,
 } from '@/components/compte/drawer/shell/DrawerShell';
+import { SlotShell } from '@/components/compte/drawer/SlotShell';
+import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
+import { LensTransition } from '@/components/carnet/v2/CarnetDrawerMotion';
+import '@/styles/carnet-v2.css';
 import { ClubG02Workspace } from '@/components/clubs/g02';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
@@ -177,6 +180,7 @@ export interface ClubDrawerHostProps {
   onCreateOuting: (payload: { title: string; date: string; massif: string; km: number; dplus: number; carpoolCity: string }) => void;
   onCreateVaultGear: (payload: { name: string; brand: string; weightG: number; category: string }) => void;
   onCreateNewClub: (payload: { name: string; massif: string; category: string; bio: string; visibility: 'public' | 'prive' }) => void;
+  onClose?: () => void;
 }
 
 export function ClubDrawerHost({
@@ -208,6 +212,7 @@ export function ClubDrawerHost({
   onCreateOuting,
   onCreateVaultGear,
   onCreateNewClub,
+  onClose,
 }: ClubDrawerHostProps) {
   const [tab, setTab] = useState<number>(initialSearch ? 0 : initialTab);
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
@@ -596,13 +601,50 @@ export function ClubDrawerHost({
       },
     ];
 
+    const activeCreateTab = createTabs[tab] ?? createTabs[0];
     return (
-      <DrawerShell
-        tabs={createTabs}
-        activeIndex={tab}
-        onIndexChange={setTab}
-        state="ready"
-      />
+      <div
+        className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Créer dans le club"
+      >
+        {onClose ? (
+          <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
+            <span />
+          </button>
+        ) : null}
+        <SlotShell
+          slot={activeCreateTab?.id ?? 'create-post'}
+          viewer="owner"
+          title={activeCreateTab?.label ?? 'Créer'}
+          lenses={[
+            {
+              id: activeCreateTab?.id ?? 'create',
+              label: activeCreateTab?.label ?? 'Créer',
+              icon: activeCreateTab?.icon,
+            },
+          ]}
+          activeLensIndex={0}
+          onLensChange={() => {}}
+          selector={
+            <CapsuleTabs
+              items={createTabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
+              activeIndex={tab}
+              onIndexChange={setTab}
+              ariaLabel="Création dans le club"
+              size="default"
+            />
+          }
+          renderLens={() => (
+            <LensTransition transitionKey={`create:${tab}`}>
+              <div className="lkdv-carnet-drawer-pane" style={{ paddingTop: 72, paddingBottom: 24 }}>
+                {activeCreateTab?.render()}
+              </div>
+            </LensTransition>
+          )}
+        />
+      </div>
     );
   }
 
@@ -1466,28 +1508,57 @@ export function ClubDrawerHost({
   ];
 
   const activeSecondaryItems = secondaryByTab[tab] ?? [];
+  const activeMainTab = mainTabs[tab] ?? mainTabs[0];
 
   return (
-    <DrawerShell
-      tabs={mainTabs}
-      activeIndex={tab}
-      onIndexChange={(nextTab) => {
-        setInspectedMember(null);
-        setInspectedOuting(null);
-        setTab(nextTab);
-      }}
-      secondary={{
-        items: activeSecondaryItems,
-        active: currentSub,
-        onChange: (idx) => {
+    <div
+      className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Espace Club & Cordée"
+    >
+      {onClose ? (
+        <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
+          <span />
+        </button>
+      ) : null}
+      <SlotShell
+        slot={activeMainTab?.id ?? 'explorer'}
+        viewer="owner"
+        title={activeMainTab?.label ?? 'Club'}
+        lenses={activeSecondaryItems.map((s, idx) => ({
+          id: s.id ?? String(idx),
+          label: s.label,
+          icon: s.icon,
+        }))}
+        activeLensIndex={currentSub}
+        onLensChange={(idx) => {
           setInspectedMember(null);
           setInspectedOuting(null);
           setCurrentSub(idx);
-        },
-        label: 'Sous-sections du club',
-      }}
-      state="ready"
-    />
+        }}
+        selector={
+          <CapsuleTabs
+            items={mainTabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
+            activeIndex={tab}
+            onIndexChange={(nextTab) => {
+              setInspectedMember(null);
+              setInspectedOuting(null);
+              setTab(nextTab);
+            }}
+            ariaLabel="Onglets du club"
+            size="default"
+          />
+        }
+        renderLens={() => (
+          <LensTransition transitionKey={`main:${tab}:${currentSub}`}>
+            <div className="lkdv-carnet-drawer-pane" style={{ paddingTop: 72, paddingBottom: 88 }}>
+              {activeMainTab?.render()}
+            </div>
+          </LensTransition>
+        )}
+      />
+    </div>
   );
 }
 
