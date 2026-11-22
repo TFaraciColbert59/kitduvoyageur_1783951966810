@@ -1184,6 +1184,38 @@
   color: #56665d;
 }
 
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(23, 43, 36, 0.08);
+  color: #172b24;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="founder"] {
+  background: #17402c;
+  color: #ffffff;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="guide"] {
+  background: rgba(23, 64, 44, 0.16);
+  color: #17402c;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="encadrant"] {
+  background: rgba(91, 127, 85, 0.18);
+  color: #24482a;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="newcomer"] {
+  background: rgba(217, 119, 6, 0.14);
+  color: #92400e;
+}
+
 .lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-member-cta {
   display: inline-flex;
   align-items: center;

@@ -756,11 +756,23 @@ export function ClubDrawerHost({
                   : '';
                 const subtitleText = [handleLabel, inspectedMember.city].filter(Boolean).join(' · ');
 
+                const roleBadgeTone =
+                  inspectedMember.role === 'Fondateur'
+                    ? 'founder'
+                    : inspectedMember.role === 'Guide & Sécurité'
+                      ? 'guide'
+                      : inspectedMember.role === 'Encadrant'
+                        ? 'encadrant'
+                        : inspectedMember.role === 'Nouveau'
+                          ? 'newcomer'
+                          : 'member';
+
                 return (
                   <div
                     className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile lkdv-club-member-hero-card${
                       inspectedMember.avatarUrl ? ' has-cover-bg' : ''
                     }`}
+                    data-role-tone={roleBadgeTone}
                   >
                     {inspectedMember.avatarUrl ? (
                       <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
@@ -815,7 +827,10 @@ export function ClubDrawerHost({
                       </span>
                     </span>
                     <span className="lkdv-cv2x-tile-foot">
-                      <span className="lkdv-cv2-meta">
+                      <span
+                        className="lkdv-club-hero-role-pill"
+                        data-role-tone={roleBadgeTone}
+                      >
                         {inspectedMember.role || 'Membre'}
                       </span>
                       <button

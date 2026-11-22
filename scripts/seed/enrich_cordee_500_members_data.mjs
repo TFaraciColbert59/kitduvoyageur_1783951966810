@@ -93,6 +93,13 @@ const GEAR_CATALOG = [
   { name: 'Corde à double Beal Opera 8.5mm 60m', brand: 'Beal', category: 'Alpinisme', weight_g: 2880 },
 ];
 
+function roleKeyFor(m, createdBy) {
+  if (m.user_id === createdBy) return 'founder';
+  if (m.role === 'admin') return 'guide';
+  if (m.role === 'moderator') return 'encadrant';
+  return 'member';
+}
+
 async function main() {
   const { data: club, error: clubErr } = await sb
     .from('clubs')
@@ -119,18 +126,69 @@ async function main() {
   // Fetch all 500 club_members
   const { data: members } = await sb
     .from('club_members')
-    .select('user_id, role')
+    .select('id, user_id, role, joined_at')
     .eq('club_id', club.id)
     .limit(600);
   const memberList = members || [];
   console.log(`Membres trouvés: ${memberList.length}`);
 
-  // 2. Topics: ensure every single member has at least 1 post in club_topics (+ media_url)
+  const now = Date.now();
+
+  // 2. Modulate joined_at + user_profiles (xp, level, trust_score) by role
+  const newMemberIds = new Set();
+  for (let i = 0; i < memberList.length; i++) {
+    const m = memberList[i];
+    const rk = roleKeyFor(m, club.created_by);
+    const isRecentNewcomer = rk === 'member' && i % 7 === 0; // ~14% Nouveaux, ~86% Membres actifs
+    if (isRecentNewcomer) newMemberIds.add(m.user_id);
+
+    const daysAgo =
+      rk === 'founder'
+        ? 320
+        : rk === 'guide'
+          ? 140 + (i % 120)
+          : rk === 'encadrant'
+            ? 60 + (i % 90)
+            : isRecentNewcomer
+              ? (i % 5) + 1
+              : 14 + (i % 160);
+
+    await sb
+      .from('club_members')
+      .update({ joined_at: new Date(now - daysAgo * 86_400_000).toISOString() })
+      .eq('id', m.id);
+
+    if (m.user_id !== club.created_by) {
+      const level =
+        rk === 'guide'
+          ? 7 + (i % 3)
+          : rk === 'encadrant'
+            ? 5 + (i % 3)
+            : isRecentNewcomer
+              ? 1 + (i % 2)
+              : 2 + (i % 4);
+      const xp = level * 480 + (i % 350);
+      const trust =
+        rk === 'guide'
+          ? 92 + (i % 7)
+          : rk === 'encadrant'
+            ? 86 + (i % 8)
+            : isRecentNewcomer
+              ? 72 + (i % 8)
+              : 78 + (i % 12);
+      await sb
+        .from('user_profiles')
+        .update({ level, xp, trust_score: trust })
+        .eq('id', m.user_id);
+    }
+  }
+
+  // 3. Topics modulated by role: Founder=5, Guide=3-4, Encadrant=2-3, Membre actif=1-2, Nouveau=1
   const { data: existingTopics } = await sb
     .from('club_topics')
     .select('id, author_id, media_url')
     .eq('club_id', club.id)
-    .limit(1000);
+    .limit(1500);
 
   const topicCountByAuthor = new Map();
   const topicsWithoutMedia = [];
@@ -140,7 +198,7 @@ async function main() {
   }
 
   for (let i = 0; i < topicsWithoutMedia.length; i++) {
-    if (i % 3 === 2) continue; // ~66% avec photo
+    if (i % 3 === 2) continue;
     await sb
       .from('club_topics')
       .update({ media_url: UNSPLASH_MOUNTAIN_PHOTOS[i % UNSPLASH_MOUNTAIN_PHOTOS.length] })
@@ -148,22 +206,32 @@ async function main() {
   }
 
   const topicsToInsert = [];
-  const now = Date.now();
   memberList.forEach((m, idx) => {
+    const rk = roleKeyFor(m, club.created_by);
     const existing = topicCountByAuthor.get(m.user_id) || 0;
-    const target = m.user_id === club.created_by ? 3 : m.role === 'admin' || m.role === 'moderator' ? 2 : 1;
+    const target =
+      rk === 'founder'
+        ? 5
+        : rk === 'guide'
+          ? 3 + (idx % 2)
+          : rk === 'encadrant'
+            ? 2 + (idx % 2)
+            : newMemberIds.has(m.user_id)
+              ? 1
+              : 1 + (idx % 3 === 0 ? 1 : 0);
+
     for (let k = existing; k < target; k++) {
       const tpl = TOPIC_TEMPLATES[(idx + k) % TOPIC_TEMPLATES.length];
-      const hasMedia = (idx + k) % 10 < 7; // ~70% avec photo
+      const hasMedia = (idx + k) % 10 < 7;
       topicsToInsert.push({
         club_id: club.id,
         author_id: m.user_id,
         title: tpl.title,
         content: tpl.content,
-        is_pinned: m.user_id === club.created_by && k === existing,
+        is_pinned: rk === 'founder' && k === existing,
         is_announcement: false,
         is_approved: true,
-        likes_count: ((idx * 7 + k * 3) % 24) + 1,
+        likes_count: ((idx * 7 + k * 3) % 24) + (rk === 'founder' || rk === 'guide' ? 8 : 1),
         replies_count: (idx + k) % 6,
         media_url: hasMedia ? UNSPLASH_MOUNTAIN_PHOTOS[(idx + k) % UNSPLASH_MOUNTAIN_PHOTOS.length] : null,
         created_at: new Date(now - ((idx * 37 + k * 19) % 720) * 3600_000).toISOString(),
@@ -175,9 +243,9 @@ async function main() {
     const { error } = await sb.from('club_topics').insert(topicsToInsert.slice(i, i + 100));
     if (error) throw error;
   }
-  console.log(`Topics ajoutés: ${topicsToInsert.length}`);
+  console.log(`Topics ajoutés (modulés par rôle): ${topicsToInsert.length}`);
 
-  // 3. Events: ensure guides/encadrants + founder + active sample lead real outings
+  // 4. Events modulated by role: Founder=4, Guide=2-3, Encadrant=1-2
   const { data: existingEvents } = await sb
     .from('club_events')
     .select('id, organizer_id')
@@ -189,16 +257,15 @@ async function main() {
     eventCountByOrganizer.set(ev.organizer_id, (eventCountByOrganizer.get(ev.organizer_id) || 0) + 1);
   }
 
-  const leaders = memberList.filter(
-    (m) => m.user_id === club.created_by || m.role === 'admin' || m.role === 'moderator',
-  );
+  const leaders = memberList.filter((m) => roleKeyFor(m, club.created_by) !== 'member');
   const eventsToInsert = [];
   leaders.forEach((m, idx) => {
+    const rk = roleKeyFor(m, club.created_by);
     const existing = eventCountByOrganizer.get(m.user_id) || 0;
-    const target = m.user_id === club.created_by ? 3 : 1;
+    const target = rk === 'founder' ? 4 : rk === 'guide' ? 2 + (idx % 2) : 1 + (idx % 2);
     for (let k = existing; k < target; k++) {
       const spot = EVENT_SPOTS[(idx + k) % EVENT_SPOTS.length];
-      const daysOffset = ((idx + k) % 21) + 1;
+      const daysOffset = ((idx + k) % 24) + 1;
       const start = new Date(now + daysOffset * 86_400_000);
       const end = new Date(start.getTime() + 6 * 3600_000);
       eventsToInsert.push({
@@ -230,9 +297,9 @@ async function main() {
       if (error) throw error;
     }
   }
-  console.log(`Sorties ajoutées: ${eventsToInsert.length}`);
+  console.log(`Sorties ajoutées (modulées par rôle): ${eventsToInsert.length}`);
 
-  // 4. Gear: ensure ~120 members + founder + guides share gear in the club vault
+  // 5. Gear modulated by role: Founder=4, Guide=2-3, Encadrant=1-2, Membre actif=0-1, Nouveau=0
   const { data: existingGear } = await sb
     .from('club_gear_items')
     .select('id, owner_id')
@@ -244,13 +311,22 @@ async function main() {
     gearCountByOwner.set(g.owner_id, (gearCountByOwner.get(g.owner_id) || 0) + 1);
   }
 
-  const gearOwners = memberList.filter(
-    (m, idx) => m.user_id === club.created_by || m.role !== 'member' || idx % 4 === 0,
-  );
   const gearToInsert = [];
-  gearOwners.forEach((m, idx) => {
+  memberList.forEach((m, idx) => {
+    const rk = roleKeyFor(m, club.created_by);
     const existing = gearCountByOwner.get(m.user_id) || 0;
-    const target = m.user_id === club.created_by ? 3 : 1;
+    const target =
+      rk === 'founder'
+        ? 4
+        : rk === 'guide'
+          ? 2 + (idx % 2)
+          : rk === 'encadrant'
+            ? 1 + (idx % 2)
+            : newMemberIds.has(m.user_id)
+              ? 0
+              : idx % 3 === 0
+                ? 1
+                : 0;
     for (let k = existing; k < target; k++) {
       const item = GEAR_CATALOG[(idx + k) % GEAR_CATALOG.length];
       gearToInsert.push({
@@ -271,9 +347,8 @@ async function main() {
       if (error) throw error;
     }
   }
-  console.log(`Équipements ajoutés: ${gearToInsert.length}`);
+  console.log(`Équipements ajoutés (modulés par rôle): ${gearToInsert.length}`);
 
-  // Summary
   const [{ count: tc }, { count: ec }, { count: gc }] = await Promise.all([
     sb.from('club_topics').select('*', { count: 'exact', head: true }).eq('club_id', club.id),
     sb.from('club_events').select('*', { count: 'exact', head: true }).eq('club_id', club.id),

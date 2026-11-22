@@ -673,7 +673,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           .select('id, club_id, author_id, title, content, is_pinned, replies_count, media_url, created_at')
           .eq('club_id', clubRow.id)
           .order('created_at', { ascending: false })
-          .limit(600),
+          .limit(1000),
         supabase
           .from('club_events')
           .select('*')
