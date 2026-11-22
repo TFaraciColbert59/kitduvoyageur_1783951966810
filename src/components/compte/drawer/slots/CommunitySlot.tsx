@@ -281,6 +281,27 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
     );
   }
 
+  const adminClubs = React.useMemo(
+    () =>
+      clubs.filter((c) => {
+        const r = (c.role || '').toLowerCase();
+        return r.includes('fondateur') || r.includes('admin') || r.includes('mod');
+      }),
+    [clubs],
+  );
+  const memberClubs = React.useMemo(
+    () => clubs.filter((c) => !adminClubs.includes(c)),
+    [clubs, adminClubs],
+  );
+  const totalMembers = React.useMemo(
+    () => clubs.reduce((acc, c) => acc + (typeof c.members === 'number' ? c.members : 0), 0),
+    [clubs],
+  );
+  const upcomingCount = React.useMemo(
+    () => clubs.filter((c) => Boolean(c.nextEvent)).length,
+    [clubs],
+  );
+
   return (
     <div className="lkdv-comm">
       <div className="lkdv-comm-head">
@@ -291,6 +312,27 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
           {clubs.length}
         </span>
       </div>
+
+      <div className="lkdv-carnet-kpi-grid-3" style={{ marginBottom: 10 }}>
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Clubs rejoints</small>
+          <b>{clubs.length}</b>
+        </div>
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Sorties à venir</small>
+          <b>{upcomingCount}</b>
+        </div>
+        <div className="lkdv-carnet-kpi-mini">
+          <small>Membres cumulés</small>
+          <b>{totalMembers}</b>
+        </div>
+      </div>
+
+      {adminClubs.length > 0 ? (
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--label2)', marginBottom: 4 }}>
+          Clubs administrés ({adminClubs.length}) · Rejoints ({memberClubs.length})
+        </div>
+      ) : null}
 
       <div
         className="lkdv-club-rail overflow-x-auto snap-x snap-mandatory"
@@ -304,6 +346,12 @@ function ClubsLens({ clubs }: { clubs: Club[] }) {
         {clubs.map((club) => (
           <ClubCard key={club.id} club={club} onOpen={(selected) => setOpenClubId(selected.id)} />
         ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        <Link className="lkdv-comm-link" href="/communaute">
+          Découvrir des clubs
+        </Link>
       </div>
 
       {openClub ? <ClubDrawer club={openClub} onClose={closeDrawer} /> : null}

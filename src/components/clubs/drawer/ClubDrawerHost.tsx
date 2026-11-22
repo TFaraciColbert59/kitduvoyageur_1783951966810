@@ -387,7 +387,7 @@ export function ClubDrawerHost({
   const secondaryByTab: Record<number, DrawerSecondaryItem[]> = useMemo(
     () => ({
       0: [
-        { id: 'my-clubs', label: 'Mes clubs rejoints', icon: <Bookmark size={15} aria-hidden="true" /> },
+        { id: 'my-clubs', label: 'Essentiel du club', icon: <Mountain size={15} aria-hidden="true" /> },
         { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Compass size={15} aria-hidden="true" /> },
         { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={15} aria-hidden="true" /> },
       ],

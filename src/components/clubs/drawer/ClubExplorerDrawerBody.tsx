@@ -499,230 +499,165 @@ function MyClubsPane({
       ]
     : [];
 
+  const nextOuting = outings[0] ?? null;
+
   return (
-    <div className="club-drawer-pane-content">
-      {myClubs.length === 0 ? (
-        <ClubEmptyCard
-          icon={<Compass size={22} />}
-          title="Aucun club rejoint pour le moment."
-          description="Rejoignez une cordée locale par massif ou fondez votre propre club pour partager traces GPX et matériel."
-          actions={
-            <>
-              <button type="button" className="lkdv-carnet-btn-primary" onClick={() => onSwitchLens(1)}>
-                <Globe size={14} aria-hidden="true" />
-                <span>Découvrir les clubs</span>
-              </button>
-              <button type="button" className="lkdv-carnet-btn-soft" onClick={() => onOpenCreateClub()}>
-                <Plus size={14} aria-hidden="true" />
-                <span>Fonder un club</span>
-              </button>
-            </>
-          }
-        />
-      ) : (
-        <>
-          <div className="lkdv-carnet-kpi-grid-3">
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Clubs rejoints</small>
-              <b><AnimatedNumber value={totals.count} /></b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Sorties à venir</small>
-              <b><AnimatedNumber value={totals.totalOutings} /></b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Membres cumulés</small>
-              <b><AnimatedNumber value={totals.totalMembers} /></b>
+    <div className="club-drawer-pane-content" data-testid="club-overview-pane">
+      {/* 1. Hero du club actif */}
+      <div className="club-hero-card">
+        {activeClub.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={activeClub.coverUrl} alt="" className="club-hero-cover-blur" />
+        ) : null}
+        <div className="club-hero-top">
+          <ClubCoverImage coverUrl={activeClub.coverUrl} name={activeClub.name} className="club-hero-emblem" />
+          <div className="club-hero-meta">
+            <b>{activeClub.name}</b>
+            <div className="club-hero-badges">
+              <span className="club-badge-forest">{activeClub.joined ? 'Club actif' : 'Club public'}</span>
+              {activeClub.role ? <span className="club-badge-soft">{activeClub.role}</span> : null}
+              {activeClub.massif ? <span className="club-badge-soft">{activeClub.massif}</span> : null}
             </div>
           </div>
-
-          {activeInList ? (
-            <div className="club-hero-card">
-              {activeInList.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={activeInList.coverUrl} alt="" className="club-hero-cover-blur" />
-              ) : null}
-              <div className="club-hero-top">
-                <ClubCoverImage coverUrl={activeInList.coverUrl} name={activeInList.name} className="club-hero-emblem" />
-                <div className="club-hero-meta">
-                  <b>{activeInList.name}</b>
-                  <div className="club-hero-badges">
-                    <span className="club-badge-forest">Club actif</span>
-                    <span className="club-badge-soft">{activeInList.role}</span>
-                    {activeInList.hasLiveOrImminentOuting ? (
-                      <span className="lkdv-carnet-live-badge is-live">
-                        <span className="lkdv-carnet-live-dot" />
-                        Sortie imminente
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
+        </div>
+        <div className="club-hero-kpis">
+          <div className="club-hero-kpi">
+            <small>Membres</small>
+            <b><AnimatedNumber value={activeClub.membersCount || members.length} /></b>
+          </div>
+          <div className="club-hero-kpi">
+            <small>Sorties</small>
+            <b><AnimatedNumber value={outings.length} /></b>
+          </div>
+          <div className="club-hero-kpi">
+            <small>Dénivelé +</small>
+            <b><AnimatedNumber value={activeClub.totalDplus ?? 0} suffix=" m" /></b>
+          </div>
+        </div>
+        <div className="club-hero-footer">
+          {members.length > 0 ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <div className="club-avatar-stack">
+                {members.slice(0, 4).map((m) => (
+                  <span key={m.id} className="club-avatar-stack-item" title={m.name}>
+                    {m.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.avatarUrl} alt="" loading="lazy" decoding="async" />
+                    ) : (
+                      m.name.charAt(0).toUpperCase()
+                    )}
+                  </span>
+                ))}
               </div>
-              <div className="club-hero-kpis">
-                <div className="club-hero-kpi">
-                  <small>Membres</small>
-                  <b><AnimatedNumber value={activeInList.membersCount} /></b>
-                </div>
-                <div className="club-hero-kpi">
-                  <small>Sorties</small>
-                  <b><AnimatedNumber value={activeInList.outingsCount} /></b>
-                </div>
-                <div className="club-hero-kpi">
-                  <small>Dénivelé +</small>
-                  <b><AnimatedNumber value={activeInList.totalDplus} suffix=" m" /></b>
-                </div>
-              </div>
-              <div className="club-hero-footer">
-                {members.length > 0 ? (
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <div className="club-avatar-stack">
-                      {members.slice(0, 4).map((m) => (
-                        <span key={m.id} className="club-avatar-stack-item" title={m.name}>
-                          {m.avatarUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={m.avatarUrl} alt="" />
-                          ) : (
-                            m.name.charAt(0).toUpperCase()
-                          )}
-                        </span>
-                      ))}
-                    </div>
-                    <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>
-                      {members.length} en cordée
-                    </span>
-                  </div>
-                ) : null}
-                <button
-                  type="button"
-                  className="club-next-outing-chip"
-                  onClick={() => onSwitchTabAndLens(2, 0)}
-                >
-                  <Calendar size={11} aria-hidden="true" />
-                  <span>{activeInList.nextOutingDate} · {activeInList.nextOutingTitle}</span>
-                </button>
-              </div>
+              <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>
+                {members.length} en cordée
+              </span>
             </div>
           ) : null}
+          <button
+            type="button"
+            className="lkdv-carnet-btn-soft"
+            style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+            onClick={() => void onToggleJoinClub(activeClub.id)}
+          >
+            {activeClub.joined ? 'Quitter le club' : 'Rejoindre'}
+          </button>
+        </div>
+      </div>
 
-          {useVirtual ? (
-            <div ref={virtualParentRef} style={{ maxHeight: 380, overflowY: 'auto' }}>
-              <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
-                {rowVirtualizer.getVirtualItems().map((vRow) => {
-                  const club = myClubs[vRow.index];
-                  return (
-                    <div
-                      key={club.id}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        transform: `translateY(${vRow.start}px)`,
-                        paddingBottom: 8,
-                      }}
-                    >
-                      <MyClubRowCard
-                        club={club}
-                        isCurrent={club.id === activeClub.id}
-                        isPinned={pinnedIds.includes(club.id)}
-                        confirmingLeave={leaveConfirmId === club.id}
-                        onOpen={() => onSelectClub(club.id)}
-                        onFlyMap={() => {
-                          const coords = resolveMassifCoords(club.massif, club.lat, club.lng);
-                          onFlyToCoords(coords.lat, coords.lng, `${club.name} · ${club.massif}`);
-                        }}
-                        onRequestLeaveToggle={() =>
-                          club.joined
-                            ? setLeaveConfirmId((prev) => (prev === club.id ? null : club.id))
-                            : void onToggleJoinClub(club.id)
-                        }
-                        onConfirmLeave={() => void handleLeaveClub(club)}
-                        onCancelLeave={() => setLeaveConfirmId(null)}
-                        onPeek={() => setPeekClub(club)}
-                        onPrefetch={() => handlePrefetch(club)}
-                        onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
+      {/* 2. Prochaine sortie imminente */}
+      {nextOuting ? (
+        <button
+          type="button"
+          className="li nt club-glass-card"
+          style={{ width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
+          onClick={() => onSwitchTabAndLens(2, 0)}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div className="s2" style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: '#17402c' }}>
+              Prochaine sortie
             </div>
-          ) : (
-            <StaggerList className="reseau-list" role="list" aria-label="Liste des clubs rejoints">
-              {managedClubs.length > 0 && memberOnlyClubs.length > 0 ? (
-                <span className="lkdv-carnet-kit-eyebrow" style={{ paddingLeft: 4 }}>
-                  Clubs administrés ({managedClubs.length})
-                </span>
-              ) : null}
-              {(managedClubs.length > 0 && memberOnlyClubs.length > 0 ? managedClubs : myClubs).map((club) => (
-                <MyClubRowCard
-                  key={club.id}
-                  club={club}
-                  isCurrent={club.id === activeClub.id}
-                  isPinned={pinnedIds.includes(club.id)}
-                  confirmingLeave={leaveConfirmId === club.id}
-                  onOpen={() => onSelectClub(club.id)}
-                  onFlyMap={() => {
-                    const coords = resolveMassifCoords(club.massif, club.lat, club.lng);
-                    onFlyToCoords(coords.lat, coords.lng, `${club.name} · ${club.massif}`);
-                  }}
-                  onRequestLeaveToggle={() =>
-                    club.joined
-                      ? setLeaveConfirmId((prev) => (prev === club.id ? null : club.id))
-                      : void onToggleJoinClub(club.id)
-                  }
-                  onConfirmLeave={() => void handleLeaveClub(club)}
-                  onCancelLeave={() => setLeaveConfirmId(null)}
-                  onPeek={() => setPeekClub(club)}
-                  onPrefetch={() => handlePrefetch(club)}
-                  onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
-                />
-              ))}
+            <div className="ttl" style={{ fontWeight: 700, fontSize: 13.5, marginTop: 2 }}>
+              {nextOuting.title}
+            </div>
+            <div className="s2" style={{ marginTop: 2 }}>
+              {[nextOuting.date, nextOuting.massif, nextOuting.km ? `${nextOuting.km} km` : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
+          </div>
+          <Calendar size={16} aria-hidden="true" style={{ flex: 'none', color: '#17402c' }} />
+        </button>
+      ) : null}
 
-              {managedClubs.length > 0 && memberOnlyClubs.length > 0 ? (
-                <>
-                  <span className="lkdv-carnet-kit-eyebrow" style={{ paddingLeft: 4, marginTop: 4 }}>
-                    Clubs rejoints ({memberOnlyClubs.length})
-                  </span>
-                  {memberOnlyClubs.map((club) => (
-                    <MyClubRowCard
-                      key={club.id}
-                      club={club}
-                      isCurrent={club.id === activeClub.id}
-                      isPinned={pinnedIds.includes(club.id)}
-                      confirmingLeave={leaveConfirmId === club.id}
-                      onOpen={() => onSelectClub(club.id)}
-                      onFlyMap={() => {
-                        const coords = resolveMassifCoords(club.massif, club.lat, club.lng);
-                        onFlyToCoords(coords.lat, coords.lng, `${club.name} · ${club.massif}`);
-                      }}
-                      onRequestLeaveToggle={() =>
-                        club.joined
-                          ? setLeaveConfirmId((prev) => (prev === club.id ? null : club.id))
-                          : void onToggleJoinClub(club.id)
-                      }
-                      onConfirmLeave={() => void handleLeaveClub(club)}
-                      onCancelLeave={() => setLeaveConfirmId(null)}
-                      onPeek={() => setPeekClub(club)}
-                      onPrefetch={() => handlePrefetch(club)}
-                      onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
-                    />
-                  ))}
-                </>
-              ) : null}
-            </StaggerList>
-          )}
-        </>
-      )}
+      {/* 3. Accès rapides vers chaque espace */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <button
+          type="button"
+          className="club-glass-card"
+          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
+          onClick={() => onSwitchTabAndLens(1, 0)}
+        >
+          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Cordée</div>
+          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+            {members.length} membres & rôles
+          </div>
+        </button>
+        <button
+          type="button"
+          className="club-glass-card"
+          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
+          onClick={() => onSwitchTabAndLens(2, 0)}
+        >
+          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Sorties</div>
+          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+            {outings.length} départs & GPX
+          </div>
+        </button>
+        <button
+          type="button"
+          className="club-glass-card"
+          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
+          onClick={() => onSwitchTabAndLens(1, 3)}
+        >
+          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Salons</div>
+          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+            Discussions & annonces
+          </div>
+        </button>
+        <button
+          type="button"
+          className="club-glass-card"
+          style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
+          onClick={() => onSwitchTabAndLens(3, 0)}
+        >
+          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Coffre & Défis</div>
+          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+            Matériel & classements
+          </div>
+        </button>
+      </div>
+
+      {/* 4. À propos du club */}
+      {activeClub.description ? (
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--label2)' }}>
+            À propos du club
+          </div>
+          <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.45, color: 'var(--label)' }}>
+            {activeClub.description}
+          </p>
+        </div>
+      ) : null}
 
       <button
         type="button"
         className="lkdv-carnet-btn-soft"
-        style={{ width: '100%', justifyContent: 'center', height: 38 }}
-        onClick={() => onOpenCreateClub()}
+        style={{ width: '100%', justifyContent: 'center', height: 36 }}
+        onClick={() => onSwitchLens(1)}
       >
-        <Plus size={15} aria-hidden="true" />
-        <span>Fonder un nouveau club</span>
+        <Compass size={14} aria-hidden="true" />
+        <span>Explorer les autres clubs</span>
       </button>
 
       <ClubEntityPeek
