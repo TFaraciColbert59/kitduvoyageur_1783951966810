@@ -15,6 +15,12 @@ import type { ClubCreateDrawerBodyProps } from './ClubDrawerTypes';
 const OUTING_SLOT_PRESETS = ['Samedi · 06h30', 'Dimanche · 07h00', 'Week-end · Bivouac 2J'];
 const GEAR_CATEGORY_PRESETS = ['Bivouac & Abri', 'Sécurité & DVA', 'Cuisine & Eau', 'Cordes & Alpi'];
 const CLUB_DISCIPLINE_PRESETS = ['Rando & Trek', 'Alpinisme & Bivouac', 'Trail & Crêtes', 'Handi-Rando & Joëlette'];
+const RECOMMENDED_POLE_PRESETS = [
+  { id: 'pole-rando', name: 'Pôle Rando & Bivouac', specialty: 'Trekking autonomie, refuges & lacs' },
+  { id: 'pole-alpi', name: 'Pôle Alpinisme & Sommets', specialty: 'Courses d’arêtes, glacier & haute montagne' },
+  { id: 'pole-trail', name: 'Pôle Trail & Crêtes', specialty: 'Sorties rapides, D+ & endurance' },
+  { id: 'pole-handi', name: 'Pôle Joëlette & Partage', specialty: 'Pilotage joëlette & sentiers adaptés' },
+];
 const PHOTO_PRESETS = [
   { label: 'Crête alpine', url: '/images/ridge-line.jpg' },
   { label: 'Panorama massif', url: '/images/mountain-vista.jpg' },
@@ -34,6 +40,7 @@ export function ClubCreateDrawerBody({
   const [postSpot, setPostSpot] = useState(activeClub.massif);
   const [postKind, setPostKind] = useState<'media' | 'text'>('text');
   const [postMediaUrl, setPostMediaUrl] = useState('');
+  const [postPoleId, setPostPoleId] = useState<string>('');
 
   const [outingTitle, setOutingTitle] = useState('');
   const [outingDate, setOutingDate] = useState('Samedi · 06h30');
@@ -52,6 +59,7 @@ export function ClubCreateDrawerBody({
   const [newClubCat, setNewClubCat] = useState('Alpinisme & Bivouac');
   const [newClubBio, setNewClubBio] = useState('');
   const [newClubVis, setNewClubVis] = useState<'public' | 'prive'>('public');
+  const [newClubPoles, setNewClubPoles] = useState<Array<{ id: string; name: string; specialty: string }>>([]);
 
   useEffect(() => {
     if (prefillMassif) {
@@ -297,6 +305,7 @@ export function ClubCreateDrawerBody({
             category: newClubCat.trim() || 'Trek & Bivouac',
             bio: newClubBio.trim() || 'Club outdoor local connecté aux traces réelles.',
             visibility: newClubVis,
+            poles: newClubPoles.length > 0 ? newClubPoles : undefined,
           };
           onCreateNewClub(payload);
           onToast?.({
@@ -376,6 +385,31 @@ export function ClubCreateDrawerBody({
             Sur Cooptation (Privé)
           </button>
         </div>
+
+        <div className="club-field-label" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span>Pôles & Spécialités (optionnel — recommandé pour les gros clubs)</span>
+          <div className="club-form-pills">
+            {RECOMMENDED_POLE_PRESETS.map((preset) => {
+              const selected = newClubPoles.some((p) => p.id === preset.id);
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`reseau-btn ${selected ? 'primary' : 'active'}`}
+                  style={{ fontSize: 11, padding: '3px 8px' }}
+                  title={preset.specialty}
+                  onClick={() =>
+                    setNewClubPoles((prev) =>
+                      selected ? prev.filter((p) => p.id !== preset.id) : [...prev, preset],
+                    )
+                  }
+                >
+                  {preset.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <button
           type="submit"
           className="reseau-btn primary club-submit-pill club-icon-pill"
@@ -398,16 +432,19 @@ export function ClubCreateDrawerBody({
       onSubmit={(e) => {
         e.preventDefault();
         if (!postCaption.trim()) return;
+        const chosenPole = (activeClub.poles || []).find((p) => p.id === postPoleId);
         const payload = {
           kind: postKind,
           caption: postCaption.trim(),
           spot: postSpot.trim() || activeClub.massif,
           mediaUrl: postKind === 'media' ? (postMediaUrl.trim() || '/images/ridge-line.jpg') : undefined,
+          poleId: chosenPole?.id,
+          poleName: chosenPole?.name,
         };
         onCreatePost(payload);
         onToast?.({
           title: 'Publication partagée avec le club ✓',
-          subtitle: `${activeClub.name} · ${payload.spot}`,
+          subtitle: `${activeClub.name}${chosenPole ? ` · ${chosenPole.name}` : ''} · ${payload.spot}`,
         });
         setPostCaption('');
       }}
@@ -458,6 +495,24 @@ export function ClubCreateDrawerBody({
           placeholder="Ex : Col du Lautaret, Aiguille du Midi…"
         />
       </label>
+      {activeClub.poles && activeClub.poles.length > 0 ? (
+        <label className="club-field-label">
+          <span>Pôle de spécialité (optionnel)</span>
+          <select
+            className="club-glass-input"
+            value={postPoleId}
+            onChange={(e) => setPostPoleId(e.target.value)}
+            aria-label="Choisir un pôle de spécialité"
+          >
+            <option value="">Tous les pôles (Fil général du club)</option>
+            {activeClub.poles.map((pole) => (
+              <option key={pole.id} value={pole.id}>
+                {pole.name} — {pole.specialty}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       {postKind === 'media' ? (
         <>
           <div className="club-form-pills">

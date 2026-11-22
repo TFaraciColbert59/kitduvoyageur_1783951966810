@@ -4,6 +4,12 @@ import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
 export type ClubVisibility = 'public' | 'prive' | 'secret';
 
+export interface ClubPoleItem {
+  id: string;
+  name: string;
+  specialty: string;
+}
+
 export interface ClubItemData {
   id: string;
   slug: string;
@@ -37,6 +43,7 @@ export interface ClubItemData {
   hasLiveOrImminentOuting?: boolean;
   lastActivityAt?: string;
   createdBy?: string | null;
+  poles?: ClubPoleItem[];
 }
 
 export type ClubMemberRoleLabel =
@@ -272,6 +279,8 @@ export interface ClubDrawerHostProps {
     caption: string;
     spot: string;
     mediaUrl?: string;
+    poleId?: string;
+    poleName?: string;
   }) => void;
   onCreateOuting: (payload: {
     title: string;
@@ -280,6 +289,8 @@ export interface ClubDrawerHostProps {
     km: number;
     dplus: number;
     carpoolCity: string;
+    poleId?: string;
+    poleName?: string;
   }) => void;
   onCreateVaultGear: (payload: {
     name: string;
@@ -293,6 +304,7 @@ export interface ClubDrawerHostProps {
     category: string;
     bio: string;
     visibility: 'public' | 'prive';
+    poles?: ClubPoleItem[];
   }) => void;
   onToast?: (toast: ClubToastPayload) => void;
   onOpenRuntimeOverlay?: (kind: ClubRuntimeOverlayKind, payload?: Record<string, unknown>) => void;

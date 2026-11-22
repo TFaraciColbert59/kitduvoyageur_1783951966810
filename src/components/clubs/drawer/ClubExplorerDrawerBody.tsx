@@ -1107,36 +1107,6 @@ function DiscoverClubsPane({
         ) : null}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
-        <div style={{ display: 'inline-flex', gap: 4 }}>
-          {(
-            [
-              { id: 'popular', label: 'Populaire' },
-              { id: 'massif', label: 'Par massif' },
-              { id: 'recent', label: 'Récents' },
-            ] as const
-          ).map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              className={viewMode === m.id ? 'club-badge-forest' : 'club-badge-soft'}
-              style={{ border: 0, cursor: 'pointer', padding: '4px 9px' }}
-              onClick={() => setViewMode(m.id)}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className={onlyUnjoined ? 'club-badge-forest' : 'club-badge-soft'}
-          style={{ border: 0, cursor: 'pointer', padding: '4px 9px' }}
-          onClick={() => setOnlyUnjoined((v) => !v)}
-        >
-          Nouveaux uniquement
-        </button>
-      </div>
-
       {spotlightClubs.length > 0 && !quickFilter && filterChip === 'all' ? (
         <div className="club-voyage-rail" data-hscroll="true" aria-label="Clubs recommandés">
           {spotlightClubs.map((c) => (

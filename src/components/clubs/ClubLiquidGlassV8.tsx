@@ -28,6 +28,7 @@ import { ClubRuntimeOverlays } from './drawer/ClubRuntimeOverlays';
 import { resolveMassifCoords } from './drawer/ClubSharedUi';
 import type {
   ClubItemData,
+  ClubPoleItem,
   ClubMemberData,
   ClubOutingData,
   ClubGearVaultItem,
@@ -113,6 +114,22 @@ const INITIAL_VAULT_GEAR: ClubGearVaultItem[] = [];
 const INITIAL_STANDARD_KITS: ClubStandardKit[] = [];
 const INITIAL_CHALLENGES: ClubChallengeItem[] = [];
 const INITIAL_CHAT_MESSAGES: ClubChatMessage[] = [];
+
+function buildRecommendedPoles(clubName: string, category: string): ClubPoleItem[] {
+  const hay = `${clubName} ${category}`.toLowerCase();
+  if (/sentiers pour tous|jo[eë]lette|handi|partage/.test(hay)) {
+    return [
+      { id: 'pole-joelette', name: 'Pôle Joëlette & Partage', specialty: 'Pilotage joëlette & randonnée adaptée' },
+      { id: 'pole-reco', name: 'Pôle Reconnaissance & Topo', specialty: 'Repérage GPX, dénivelé & accessibilité' },
+      { id: 'pole-logistique', name: 'Pôle Covoit & Logistique', specialty: 'Transport matériel, bivouac & entraide' },
+    ];
+  }
+  return [
+    { id: 'pole-rando', name: 'Pôle Rando & Bivouac', specialty: 'Trekking autonomie, refuges & lacs' },
+    { id: 'pole-alpi', name: 'Pôle Alpinisme & Sommets', specialty: 'Courses d’arêtes, glacier & haute montagne' },
+    { id: 'pole-trail', name: 'Pôle Trail & Crêtes', specialty: 'Sorties rapides, D+ & endurance' },
+  ];
+}
 
 const DEFAULT_FALLBACK_CLUB: ClubItemData = {
   id: '',
@@ -1024,6 +1041,26 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                   ? currentRole
                   : 'Membre';
 
+        const resolvedMembersCount =
+          row.members_count || (row.id === clubRow.id ? memberSourceRows.length : 0) || 0;
+        let savedPoles: ClubPoleItem[] | undefined;
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = window.localStorage.getItem(`lkdv.clubPoles.v1.${row.id}`);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) savedPoles = parsed;
+            }
+          } catch {
+            // ignore
+          }
+        }
+        const poles =
+          savedPoles ??
+          (resolvedMembersCount >= 5
+            ? buildRecommendedPoles(row.name || '', row.primary_sport || row.category || '')
+            : undefined);
+
         return {
           id: row.id,
           slug: row.slug || row.id,
@@ -1031,7 +1068,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           massif: row.location_label || row.category || 'Outdoor',
           category: row.primary_sport || row.category || 'Outdoor',
           level: 'Tous niveaux',
-          membersCount: row.members_count || (row.id === clubRow.id ? memberSourceRows.length : 0) || 0,
+          membersCount: resolvedMembersCount,
+          poles,
           outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
           totalKm: row.id === clubRow.id ? currentTotalKm : 0,
           totalDplus: row.id === clubRow.id ? currentTotalDplus : 0,
@@ -1388,7 +1426,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleCreatePost = useCallback(
-    (payload: { kind: 'media' | 'text'; caption: string; spot: string; mediaUrl?: string }) => {
+    (payload: {
+      kind: 'media' | 'text';
+      caption: string;
+      spot: string;
+      mediaUrl?: string;
+      poleId?: string;
+      poleName?: string;
+    }) => {
       const newPost: ClubFeedPostItem = {
         id: 'cp-' + Date.now(),
         clubId: activeClub.id,
@@ -1399,6 +1444,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         timeAgo: 'À l’instant',
         spot: payload.spot || activeClub.massif,
         massif: activeClub.massif,
+        poleId: payload.poleId,
+        poleName: payload.poleName,
         metricsChip: 'Trace GPX ✓ · En direct du massif',
         caption: payload.caption,
         mediaUrl:
@@ -1415,7 +1462,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       };
       setClubPosts((prev) => [newPost, ...prev]);
       triggerAct('closeSheet');
-      showIslandToast('Publié dans le fil du club ✓', `${payload.spot} · visible par la cordée`);
+      showIslandToast(
+        'Publié dans le fil du club ✓',
+        `${payload.poleName ? `${payload.poleName} · ` : ''}${payload.spot}`,
+      );
     },
     [activeClub, activeHandle, showIslandToast, triggerAct, user?.email],
   );
@@ -1471,7 +1521,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleCreateNewClub = useCallback(
-    (payload: { name: string; massif: string; category: string; bio: string; visibility: 'public' | 'prive' }) => {
+    (payload: {
+      name: string;
+      massif: string;
+      category: string;
+      bio: string;
+      visibility: 'public' | 'prive';
+      poles?: ClubPoleItem[];
+    }) => {
       const slug = payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'nouveau_club';
       const newClub: ClubItemData = {
         id: 'cl-' + Date.now(),
@@ -1496,6 +1553,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         weatherTrail: 'Conditions optimales',
         lat: 45.923,
         lng: 6.869,
+        poles: payload.poles,
       };
       setClubsDirectory((prev) => [newClub, ...prev]);
       setActiveClubId(newClub.id);
@@ -1552,6 +1610,49 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     [activeClub.id, activeHandle, activeSalonChannelId, user?.id],
   );
 
+  const handleAddPoleToActiveClub = useCallback(
+    (pole: { name: string; specialty: string }) => {
+      const newPole: ClubPoleItem = {
+        id: `pole-${Date.now()}`,
+        name: pole.name,
+        specialty: pole.specialty,
+      };
+      setClubsDirectory((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeClub.id) return c;
+          const nextPoles = [...(c.poles || []), newPole];
+          if (typeof window !== 'undefined') {
+            try {
+              window.localStorage.setItem(`lkdv.clubPoles.v1.${c.id}`, JSON.stringify(nextPoles));
+            } catch {
+              // ignore
+            }
+          }
+          return { ...c, poles: nextPoles };
+        }),
+      );
+      showIslandToast(`Pôle « ${newPole.name} » ajouté ✓`, newPole.specialty);
+    },
+    [activeClub.id, showIslandToast],
+  );
+
+  const handleEnableRecommendedPoles = useCallback(() => {
+    const recommended = buildRecommendedPoles(activeClub.name, activeClub.category);
+    setClubsDirectory((prev) =>
+      prev.map((c) => {
+        if (c.id !== activeClub.id) return c;
+        if (typeof window !== 'undefined') {
+          try {
+            window.localStorage.setItem(`lkdv.clubPoles.v1.${c.id}`, JSON.stringify(recommended));
+          } catch {
+            // ignore
+          }
+        }
+        return { ...c, poles: recommended };
+      }),
+    );
+    showIslandToast('Pôles de spécialité activés ✓', `${recommended.length} pôles configurés pour ${activeClub.name}`);
+  }, [activeClub.category, activeClub.id, activeClub.name, showIslandToast]);
   const handleToggleClubVisibility = useCallback(() => {
     setClubsDirectory((prev) =>
       prev.map((c) =>
@@ -1600,6 +1701,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             clubId={activeClub.id}
             clubName={activeClub.name}
             posts={clubPosts}
+            poles={activeClub.poles}
+            membersCount={activeClub.membersCount}
+            onAddPole={handleAddPoleToActiveClub}
+            onEnableRecommendedPoles={handleEnableRecommendedPoles}
             onToggleLike={handleTogglePostLike}
             onToggleSave={handleTogglePostSave}
             onAddComment={handleAddPostComment}
