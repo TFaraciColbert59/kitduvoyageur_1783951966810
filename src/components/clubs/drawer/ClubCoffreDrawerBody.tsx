@@ -119,27 +119,6 @@ export function ClubCoffreDrawerBody({
           <span className="club-badge-sage">{standardKits.length} kits types</span>
         </div>
 
-        <div className="club-form-pills" role="tablist" aria-label="Filtres de saison des kits">
-          {(
-            [
-              { id: 'all', label: `Toutes saisons (${standardKits.length})` },
-              { id: 'summer', label: '3 Saisons / Été' },
-              { id: 'winter', label: 'Hiver / Alpinisme' },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={kitSeason === f.id}
-              className={`reseau-btn ${kitSeason === f.id ? 'primary' : 'active'}`}
-              onClick={() => setKitSeason(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
         {filteredKits.length === 0 ? (
           <ClubEmptyCard
             icon={<Layers size={22} />}
@@ -453,28 +432,6 @@ export function ClubCoffreDrawerBody({
               <X size={14} />
             </button>
           ) : null}
-        </div>
-
-        <div className="club-form-pills" role="tablist" aria-label="Filtres du coffre matériel">
-          {(
-            [
-              { id: 'all', label: `Tout (${vaultGear.length})` },
-              { id: 'available', label: 'Disponibles' },
-              { id: 'mine', label: `Mes emprunts (${reservedCount})` },
-              { id: 'light', label: 'Ultraléger < 500 g' },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={vaultFilter === f.id}
-              className={`reseau-btn ${vaultFilter === f.id ? 'primary' : 'active'}`}
-              onClick={() => setVaultFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
         </div>
       </div>
 

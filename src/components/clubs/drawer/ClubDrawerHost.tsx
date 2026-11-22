@@ -24,6 +24,7 @@ import {
   Search,
   Shield,
   Sliders,
+  TrendingUp,
   Trophy,
   UserCheck,
   Users,
@@ -66,6 +67,15 @@ const RESUME_TOP_MAX = 10;
 type ClubStackEntry =
   | { type: 'member'; member: ClubMemberData; returnTab: number; returnSubTab: number }
   | { type: 'outing'; outing: ClubOutingData; returnTab: number; returnSubTab: number };
+
+function memberHasClubRole(member: Pick<ClubMemberData, 'role' | 'rawRole'>): boolean {
+  if (member.rawRole === 'admin' || member.rawRole === 'moderator') return true;
+  return (
+    member.role === 'Fondateur' ||
+    member.role === 'Guide & Sécurité' ||
+    member.role === 'Encadrant'
+  );
+}
 
 export function ClubDrawerHost({
   mode,
@@ -157,6 +167,17 @@ export function ClubDrawerHost({
     setInternalMode(mode);
   }, [mode]);
 
+  const openMemberProfileByHandle = useCallback((handle: string) => {
+    const clean = (handle || '').replace(/^@/, '').trim();
+    if (!clean || typeof window === 'undefined') return;
+    const navFn = (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile;
+    if (typeof navFn === 'function') {
+      navFn(clean);
+      return;
+    }
+    window.location.assign(`/profil/${encodeURIComponent(clean)}`);
+  }, []);
+
   // Sync external intent / deep-links
   useEffect(() => {
     if (!intent) return;
@@ -180,11 +201,15 @@ export function ClubDrawerHost({
     } else if (intent.memberId) {
       const foundMember = members.find((m) => m.id === intent.memberId || m.userId === intent.memberId);
       if (foundMember) {
-        setInspectedMember(foundMember);
-        setMemberLensIndex(0);
-        setInspectedOuting(null);
-        setTab(1);
-        setStack((prev) => [...prev, { type: 'member', member: foundMember, returnTab: nextTab, returnSubTab: intent.subTab ?? 0 }]);
+        if (!memberHasClubRole(foundMember)) {
+          openMemberProfileByHandle(foundMember.handle);
+        } else {
+          setInspectedMember(foundMember);
+          setMemberLensIndex(0);
+          setInspectedOuting(null);
+          setTab(1);
+          setStack((prev) => [...prev, { type: 'member', member: foundMember, returnTab: nextTab, returnSubTab: intent.subTab ?? 0 }]);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,13 +231,17 @@ export function ClubDrawerHost({
       const found = members.find((m) => m.id === initialMemberId || m.userId === initialMemberId);
       if (found) {
         appliedInitialDeepLinkRef.current = true;
-        setInspectedMember(found);
-        setMemberLensIndex(0);
-        setTab(1);
-        setStack([{ type: 'member', member: found, returnTab: 1, returnSubTab: 0 }]);
+        if (!memberHasClubRole(found)) {
+          openMemberProfileByHandle(found.handle);
+        } else {
+          setInspectedMember(found);
+          setMemberLensIndex(0);
+          setTab(1);
+          setStack([{ type: 'member', member: found, returnTab: 1, returnSubTab: 0 }]);
+        }
       }
     }
-  }, [initialMemberId, initialOutingId, members, outings]);
+  }, [initialMemberId, initialOutingId, members, openMemberProfileByHandle, outings]);
 
   const currentSub = subTabs[tab] ?? 0;
   const setSubForTab = useCallback((targetTab: number, idx: number) => {
@@ -254,6 +283,10 @@ export function ClubDrawerHost({
         popStack();
         return;
       }
+      if (!memberHasClubRole(member)) {
+        openMemberProfileByHandle(member.handle);
+        return;
+      }
       setStack((prev) => [
         ...prev,
         { type: 'member', member, returnTab: tab, returnSubTab: sourceLens ?? (subTabs[tab] ?? 0) },
@@ -264,7 +297,7 @@ export function ClubDrawerHost({
       if (tab !== 1) setTab(1);
       haptic('light');
     },
-    [haptic, popStack, subTabs, tab],
+    [haptic, openMemberProfileByHandle, popStack, subTabs, tab],
   );
 
   const pushOuting = useCallback(
@@ -354,15 +387,15 @@ export function ClubDrawerHost({
       ],
       1: inspectedMember
         ? [
-            { id: 'm-stats', label: 'Profil & Stats', icon: <Users size={14} aria-hidden="true" /> },
-            { id: 'm-outings', label: 'Sorties & Traces', icon: <Mountain size={14} aria-hidden="true" /> },
-            { id: 'm-gear', label: 'Équipement', icon: <Package size={14} aria-hidden="true" /> },
-            { id: 'm-media', label: 'Publications', icon: <Layers size={14} aria-hidden="true" /> },
+            { id: 'm-stats', label: 'Perf & Stats', icon: <TrendingUp size={15} aria-hidden="true" /> },
+            { id: 'm-outings', label: 'Sorties', icon: <Mountain size={15} aria-hidden="true" /> },
+            { id: 'm-gear', label: 'Sac', icon: <Package size={15} aria-hidden="true" /> },
+            { id: 'm-media', label: 'Contributions', icon: <Layers size={15} aria-hidden="true" /> },
           ]
         : [
-            { id: 'members-all', label: 'Tous les membres', icon: <Users size={14} aria-hidden="true" /> },
-            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={14} aria-hidden="true" /> },
-            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={14} aria-hidden="true" /> },
+            { id: 'members-all', label: 'Tous les membres', icon: <Users size={15} aria-hidden="true" /> },
+            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={15} aria-hidden="true" /> },
+            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={15} aria-hidden="true" /> },
           ],
       2: [
         { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
@@ -759,11 +792,7 @@ export function ClubDrawerHost({
                   onCreateBinomeGroup={onCreateBinomeGroup}
                   onBorrowGear={onToggleReserveGear}
                   onSwitchTabAndLens={handleSwitchTabAndLens}
-                  onOpenMemberProfile={(handle) => {
-                    if (typeof window !== 'undefined' && typeof (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile === 'function') {
-                      (window as unknown as { __lkdvNavigateProfile: (h: string) => void }).__lkdvNavigateProfile(handle);
-                    }
-                  }}
+                  onOpenMemberProfile={openMemberProfileByHandle}
                   onToast={emitToast}
                   onClose={() => onClose?.()}
                 />

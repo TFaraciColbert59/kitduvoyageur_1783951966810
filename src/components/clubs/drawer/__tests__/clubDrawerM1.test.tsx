@@ -316,11 +316,12 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     expect(container.querySelector('[data-club-tab="0"][data-club-lens="search-all"]')).toBeTruthy();
   });
 
-  it('D05, D06, D07: Cordée lenses filter newArrivals, guides, and availableWeekend binômes accurately', () => {
+  it('D05, D06, D07: Cordée lenses filter members, guides, and availableWeekend binômes accurately using Carnet crew cards', () => {
     const { unmount } = renderHost({ initialTab: 1, initialSubTab: 0 });
     const paneAll = within(screen.getByTestId('slot-content'));
-    expect(paneAll.getByText('Nouveaux dans le club')).toBeTruthy();
-    expect(paneAll.getAllByText('Léo Nouveau').length).toBeGreaterThan(0);
+    expect(paneAll.getByText('Clara Bivouac')).toBeTruthy();
+    expect(paneAll.getByText('Marc Alpi')).toBeTruthy();
+    expect(paneAll.getByText('Léo Nouveau')).toBeTruthy();
     unmount();
 
     const { unmount: unmountGuides } = renderHost({ initialTab: 1, initialSubTab: 1 });
@@ -328,6 +329,7 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     expect(paneGuides.getByText('Clara Bivouac')).toBeTruthy();
     expect(paneGuides.getByText('Marc Alpi')).toBeTruthy();
     expect(paneGuides.queryByText('Léo Nouveau')).toBeNull();
+    expect(paneGuides.queryByText('Référents & Encadrement du club')).toBeNull();
     unmountGuides();
 
     renderHost({ initialTab: 1, initialSubTab: 2 });
@@ -337,24 +339,35 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     expect(paneBinomes.getByRole('switch')).toBeTruthy();
   });
 
-  it('D08: clicking a member opens 4-lens inspectedMember stack and Escape pops back to list', () => {
+  it('D08: clicking a member WITH a role opens 4-lens Carnet-parity member view, while a member WITHOUT a role redirects to profile', () => {
     const onClose = vi.fn();
+    const navSpy = vi.fn();
+    (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile = navSpy;
+
     renderHost({ initialTab: 1, initialSubTab: 0, onClose });
 
     const paneAll = within(screen.getByTestId('slot-content'));
-    const claraBtn = paneAll.getByRole('button', { name: /Ouvrir la fiche de Clara Bivouac/i });
+    // Clicking Léo Nouveau (no special role) redirects directly to profile without opening member drawer
+    const leoBtn = paneAll.getByText('Léo Nouveau').closest('button')!;
+    fireEvent.click(leoBtn);
+    expect(navSpy).toHaveBeenCalledWith('leo_new');
+
+    // Clicking Clara Bivouac (Fondateur role) opens the 4-lens Carnet-style member detail view
+    const claraBtn = paneAll.getByText('Clara Bivouac').closest('button')!;
     fireEvent.click(claraBtn);
 
     const activeDetailPane = within(screen.getByTestId('slot-content'));
-    expect(activeDetailPane.getByText('Aperçu Cordée · Clara Bivouac')).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Profil & Stats' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Sorties & Traces' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Équipement' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Publications' })).toBeTruthy();
+    expect(activeDetailPane.getByText('Clara Bivouac')).toBeTruthy();
+    expect(activeDetailPane.getByRole('button', { name: 'Cordée' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Perf & Stats' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Sorties' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Sac' })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: 'Contributions' })).toBeTruthy();
 
     // Pressing Escape must pop the inspected member stack BEFORE calling onClose
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
-    expect(screen.queryByText('Aperçu Cordée · Clara Bivouac')).toBeNull();
+    expect(within(screen.getByTestId('slot-content')).queryByRole('button', { name: 'Cordée' })).toBeNull();
+    delete (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile;
   });
 });

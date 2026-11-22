@@ -614,40 +614,6 @@ function MyClubsPane({
             </div>
           ) : null}
 
-          {myClubs.length > 3 ? (
-            <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Trier mes clubs">
-              {(
-                [
-                  { id: 'active', label: 'Actif' },
-                  { id: 'recent', label: 'Récents' },
-                  { id: 'next_outing', label: 'Prochaine sortie' },
-                  { id: 'role', label: 'Mes rôles' },
-                ] as const
-              ).map((opt) => {
-                const active = sortBy === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    className={`club-filter-pill${active ? ' is-active' : ''}`}
-                    onClick={() => setSortBy(opt.id)}
-                  >
-                    {active ? (
-                      <motion.span
-                        layoutId="club-myclubs-sort-pill"
-                        className="club-filter-pill-bg"
-                        transition={CLUB_SPRING}
-                      />
-                    ) : null}
-                    <span className="club-filter-pill-label">{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
           {useVirtual ? (
             <div ref={virtualParentRef} style={{ maxHeight: 380, overflowY: 'auto' }}>
               <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
@@ -1139,31 +1105,6 @@ function DiscoverClubsPane({
             <X size={13} aria-hidden="true" />
           </button>
         ) : null}
-      </div>
-
-      <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Filtrer par massif ou sport">
-        {DISCOVER_FILTER_CHIPS.map((chip) => {
-          const isCurrent = filterChip === chip.id;
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              role="tab"
-              aria-selected={isCurrent}
-              className={`club-filter-pill${isCurrent ? ' is-active' : ''}`}
-              onClick={() => setFilterChip(chip.id)}
-            >
-              {isCurrent ? (
-                <motion.span
-                  layoutId="club-discover-filter-pill"
-                  className="club-filter-pill-bg"
-                  transition={CLUB_SPRING}
-                />
-              ) : null}
-              <span className="club-filter-pill-label">{chip.label}</span>
-            </button>
-          );
-        })}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, flexWrap: 'wrap' }}>
@@ -1669,43 +1610,6 @@ function SearchAllPane({
           ) : (
             <span className="club-kbd-hint" aria-hidden="true">⌘K</span>
           )}
-        </div>
-
-        <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Périmètre de recherche" style={{ marginBottom: 8 }}>
-          {(
-            [
-              { id: 'all', label: 'Tout', count: counts.all },
-              { id: 'clubs', label: 'Clubs', count: counts.clubs },
-              { id: 'outings', label: 'Sorties', count: counts.outings },
-              { id: 'members', label: 'Membres', count: counts.members },
-              { id: 'posts', label: 'Publications', count: counts.posts },
-              { id: 'gear', label: 'Coffre', count: counts.gear },
-            ] as const
-          ).map((s) => {
-            const isCurrent = scope === s.id;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                role="tab"
-                aria-selected={isCurrent}
-                className={`club-filter-pill${isCurrent ? ' is-active' : ''}`}
-                onClick={() => setScope(s.id)}
-              >
-                {isCurrent ? (
-                  <motion.span
-                    layoutId="club-search-scope-pill"
-                    className="club-filter-pill-bg"
-                    transition={CLUB_SPRING}
-                  />
-                ) : null}
-                <span className="club-filter-pill-label">
-                  <span>{s.label}</span>
-                  <span style={{ opacity: 0.75, fontVariantNumeric: 'tabular-nums' }}>{s.count}</span>
-                </span>
-              </button>
-            );
-          })}
         </div>
 
         {remoteOffline ? (

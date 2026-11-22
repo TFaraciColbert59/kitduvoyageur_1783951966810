@@ -771,28 +771,6 @@ export function ClubSortiesDrawerBody({
           <span className="club-badge-sage">{currentW.riskLabel}</span>
         </div>
 
-        {/* Time window pills */}
-        <div className="club-form-pills" role="tablist" aria-label="Créneau météo">
-          {(
-            [
-              { id: 'morning', label: 'Matin (06h–12h)' },
-              { id: 'afternoon', label: 'Après-midi (12h–18h)' },
-              { id: 'weekend', label: 'Tendance Week-end' },
-            ] as const
-          ).map((w) => (
-            <button
-              key={w.id}
-              type="button"
-              role="tab"
-              aria-selected={weatherWindow === w.id}
-              className={`reseau-btn ${weatherWindow === w.id ? 'primary' : 'active'}`}
-              onClick={() => setWeatherWindow(w.id)}
-            >
-              {w.label}
-            </button>
-          ))}
-        </div>
-
         {/* Altitude Thermal Etagement Card */}
         <div
           className="li nt club-glass-card"
@@ -981,7 +959,7 @@ export function ClubSortiesDrawerBody({
           <span className="club-badge-sage">Traces Vérifiées</span>
         </div>
 
-        {/* Search & Filter strip */}
+        {/* Search strip */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
@@ -994,24 +972,6 @@ export function ClubSortiesDrawerBody({
               value={gpxSearch}
               onChange={(e) => setGpxSearch(e.target.value)}
             />
-          </div>
-          <div className="club-form-pills" role="tablist" aria-label="Filtres archives GPX">
-            {(
-              [
-                { id: 'all', label: `Toutes (${completedOutings.length})` },
-                { id: 'high_dplus', label: '+1 000 m D+' },
-                { id: 'long_km', label: '+15 km' },
-              ] as const
-            ).map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                className={`reseau-btn ${gpxFilter === f.id ? 'primary' : 'active'}`}
-                onClick={() => setGpxFilter(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -1147,29 +1107,6 @@ export function ClubSortiesDrawerBody({
               <X size={14} />
             </button>
           ) : null}
-        </div>
-
-        <div className="club-form-pills" role="tablist" aria-label="Filtres des sorties">
-          {(
-            [
-              { id: 'all', label: `Toutes (${upcomingOutings.length})` },
-              { id: 'weekend', label: 'Ce week-end' },
-              { id: 'carpool', label: `Covoiturage (${upcomingKpis.totalSeats} pl.)` },
-              { id: 'joined', label: `Mes inscriptions (${upcomingKpis.joinedCount})` },
-              { id: 'available', label: 'Places dispo' },
-            ] as const
-          ).map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={outingFilter === f.id}
-              className={`reseau-btn ${outingFilter === f.id ? 'primary' : 'active'}`}
-              onClick={() => setOutingFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
         </div>
       </div>
 

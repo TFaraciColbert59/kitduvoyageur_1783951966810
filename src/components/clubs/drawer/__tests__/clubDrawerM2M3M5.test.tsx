@@ -240,7 +240,8 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
     );
 
     expect(screen.getByText(/Tente MSR Hubba 2P/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('tab', { name: /Ultraléger/i }));
+    const searchInput = screen.getByLabelText('Rechercher dans le coffre matériel');
+    fireEvent.change(searchInput, { target: { value: 'Titane' } });
     expect(screen.queryByText(/Tente MSR Hubba 2P/i)).toBeNull();
     expect(screen.getByText(/Réchaud Titane PocketRocket/i)).toBeTruthy();
 
