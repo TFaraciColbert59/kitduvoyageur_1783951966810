@@ -51,6 +51,7 @@ import type {
   RouteVariant,
   RouteWorkspaceState,
 } from '../../types';
+import { useOpTracker } from './chrome/useOpTracker';
 import { ROLE_LABELS } from './labels';
 import type { SubDrawerId, RouteCollabWorkspaceProps } from './types';
 
@@ -174,6 +175,16 @@ export function useRouteWorkspaceState({
   const [stageNotesDraft, setStageNotesDraft] = useState<string>('');
   const [carnetRecord, setCarnetRecord] = useState<CarnetReturnRecord | null>(null);
   const [offlineTick, setOfflineTick] = useState<number>(0);
+  // Suivi des opérations : accusés serveur, file hors ligne, journal des gestes annulables (3.4 à 3.6)
+  const opTracker = useOpTracker({ serverSynced, initialHeadSeq: initialWorkspace.headSeq });
+  const {
+    begin: trackBegin,
+    settle: trackSettle,
+    acked: trackAcked,
+    failed: trackFailed,
+    record: trackRecord,
+    replayed: trackReplayed,
+  } = opTracker;
 
   const headSeqRef = useRef(workspace.headSeq);
   headSeqRef.current = workspace.headSeq;
@@ -283,6 +294,7 @@ export function useRouteWorkspaceState({
           workspace: RouteWorkspaceState;
           presence?: PresenceEntry[];
         };
+        if (data.workspace) trackAcked(data.workspace.headSeq);
         if (data.presence) setPresence(data.presence);
         if (
           data.workspace &&
@@ -301,7 +313,7 @@ export function useRouteWorkspaceState({
       active = false;
       window.clearInterval(timer);
     };
-  }, [serverSynced, online, workspace.id, workspace.updatedAt, shareToken, commitState]);
+  }, [serverSynced, online, workspace.id, workspace.updatedAt, shareToken, commitState, trackAcked]);
 
   // Présence légère (étape active + entité sélectionnée)
   useEffect(() => {
@@ -461,7 +473,11 @@ export function useRouteWorkspaceState({
   );
 
   const runOperation = useCallback(
-    async (operation: RouteOperationInput, expectedVersions: Record<string, number> = {}) => {
+    async (
+      operation: RouteOperationInput,
+      expectedVersions: Record<string, number> = {},
+      meta: { source?: 'user' | 'undo' | 'derived'; gesture?: string } = {}
+    ) => {
       const currentWs = workspaceRef.current;
       const opId = `op-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
       if (!online) {
@@ -475,24 +491,40 @@ export function useRouteWorkspaceState({
         });
         setOfflineTick((v) => v + 1);
         setStatusMessage('Hors ligne : modification ajoutée à la file locale persistante.');
-        return;
+        return false;
       }
 
+      trackBegin();
       try {
         const result = await executeOperation(opId, currentWs.headSeq, operation, expectedVersions);
         if (result.status === 'accepted') {
           commitState(result.workspace);
           setLastImpactText(formatImpact(result.impact));
+          trackAcked(result.workspace.headSeq);
+          trackRecord({
+            operation,
+            before: currentWs,
+            after: result.workspace,
+            undoable: meta.source !== 'undo',
+            derived: meta.source === 'derived',
+            gesture: meta.gesture,
+          });
+          return true;
         } else if (result.status === 'already_applied') {
           commitState(result.workspace);
+          trackAcked(result.workspace.headSeq);
+          return true;
         } else if (result.status === 'conflict') {
           setActiveConflict({ conflict: result.conflicts[0], pendingOp: operation });
           setSheetOpen(true);
           commitState(result.currentWorkspace);
+          trackAcked(result.currentWorkspace.headSeq);
         } else if (result.status === 'denied') {
           setStatusMessage(result.reason);
+          trackFailed(result.reason);
         } else if (result.status === 'stale_routing_discarded') {
           setStatusMessage(result.reason);
+          trackFailed(result.reason);
         }
       } catch {
         enqueueOfflineOperation(currentUserId, {
@@ -505,9 +537,25 @@ export function useRouteWorkspaceState({
         });
         setOfflineTick((v) => v + 1);
         setStatusMessage('Réseau indisponible : opération placée en file locale persistante.');
+      } finally {
+        trackSettle();
       }
+      // Refusée, en conflit ou placée en file : l'appelant sait que l'opération n'est pas passée.
+      return false;
     },
-    [commitState, currentUserId, executeOperation, online, workspace.headSeq, workspace.id]
+    [
+      commitState,
+      currentUserId,
+      executeOperation,
+      online,
+      trackAcked,
+      trackBegin,
+      trackFailed,
+      trackRecord,
+      trackSettle,
+      workspace.headSeq,
+      workspace.id,
+    ]
   );
 
   // Recalcul réel via /api/route (Valhalla / Geoapify) + /api/elevation (DEM) avec empreinte d'entrée
@@ -655,23 +703,28 @@ export function useRouteWorkspaceState({
         /* altitude indisponible : on reste honnête sans inventer */
       }
 
-      await runOperation({
-        type: 'apply_routing_result',
-        sectionId: sec.id,
-        routingInputHash: fingerprint,
-        geometry: { type: 'LineString', coordinates: rawCoords },
-        distanceKm: Number((leg?.distanceKm ?? sec.distanceKm).toFixed(2)),
-        durationMin: leg?.durationMin != null ? Math.round(leg.durationMin) : sec.durationMin,
-        ascentM,
-        descentM,
-        elevationSamples,
-        provenance: {
-          provider: data.provider ?? 'valhalla',
-          calculatedAt: new Date().toISOString(),
-          profile: workspace.sport,
-          confidence: 'verified',
+      await runOperation(
+        {
+          type: 'apply_routing_result',
+          sectionId: sec.id,
+          routingInputHash: fingerprint,
+          geometry: { type: 'LineString', coordinates: rawCoords },
+          distanceKm: Number((leg?.distanceKm ?? sec.distanceKm).toFixed(2)),
+          durationMin: leg?.durationMin != null ? Math.round(leg.durationMin) : sec.durationMin,
+          ascentM,
+          descentM,
+          elevationSamples,
+          provenance: {
+            provider: data.provider ?? 'valhalla',
+            calculatedAt: new Date().toISOString(),
+            profile: workspace.sport,
+            confidence: 'verified',
+          },
         },
-      });
+        {},
+        // Recollage silencieux = suite d'un geste (ajout, déplacement) : annulé avec lui.
+        { source: silent ? 'derived' : 'user' }
+      );
       setStatusMessage(
         silent
           ? 'Tronçon recollé au réseau.'
@@ -695,8 +748,14 @@ export function useRouteWorkspaceState({
       });
       if (r.status === 'accepted' || r.status === 'already_applied') {
         commitState(r.workspace);
+        trackAcked(r.workspace.headSeq);
       }
       return r;
+    });
+    trackReplayed({
+      applied: res.appliedCount,
+      conflicts: res.conflicts.length,
+      rejected: res.rejected.length,
     });
     setOfflineTick((v) => v + 1);
     setStatusMessage(
@@ -770,6 +829,7 @@ export function useRouteWorkspaceState({
         return;
       }
       commitState(data.workspace);
+      trackAcked(data.workspace.headSeq);
       setStatusMessage(`Version ${data.revision?.revisionNo} publiée et figée.`);
       return;
     }
@@ -1315,6 +1375,8 @@ export function useRouteWorkspaceState({
 
   const handleSplitIntoDays = async (targetDays: number) => {
     const safeDays = Math.max(1, Math.min(20, Math.round(targetDays)));
+    // Points d'étape ajoutés + découpage = un seul geste pour « Annuler ».
+    const splitGesture = `split-${Date.now().toString(36)}`;
     const pts = activePoints(workspaceRef.current);
     if (pts.length < 2) {
       setStatusMessage('Ajoutez au moins 2 points pour découper en journées.');
@@ -1339,18 +1401,22 @@ export function useRouteWorkspaceState({
                 Number((start[1] + (end[1] - start[1]) * ratio).toFixed(5)),
               ];
         const ptId = `pt-split-${Date.now().toString(36)}-${i}`;
-        await runOperation({
-          type: 'insert_point',
-          pointId: ptId,
-          afterPointId: afterId,
-          lat,
-          lon,
-          name: `Étape ${i + 1}`,
-        });
+        await runOperation(
+          {
+            type: 'insert_point',
+            pointId: ptId,
+            afterPointId: afterId,
+            lat,
+            lon,
+            name: `Étape ${i + 1}`,
+          },
+          {},
+          { gesture: splitGesture }
+        );
         afterId = ptId;
       }
     }
-    await runOperation({ type: 'split_days', targetDays: safeDays });
+    await runOperation({ type: 'split_days', targetDays: safeDays }, {}, { gesture: splitGesture });
     setStatusMessage(`Itinéraire modulé en ${safeDays} journée(s).`);
   };
 
@@ -1801,6 +1867,7 @@ export function useRouteWorkspaceState({
     shareToken,
     workspace,
     presence,
+    opTracker,
     sheetOpen,
     setSheetOpen,
     detent,

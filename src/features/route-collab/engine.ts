@@ -5,6 +5,19 @@ import {
 } from '@/features/adventure-prep/routeRevision';
 import type { RouteRoutingOptions, RouteSport } from '@/features/adventure-prep/routeProfiles';
 import { hasRoutePermission, requiredPermissionForOperation } from './permissions';
+import {
+  SNAP_POINT_KM,
+  distanceToKm,
+  isDefaultDayTitle,
+  locateOnSections,
+  mergeSectionPair,
+  normalizeStages,
+  repairStagesForRemovedPoints,
+  reverseSectionData,
+  shiftIsoDate,
+  splitSectionAt,
+  stageKind,
+} from './engineTrack';
 import type {
   ApplyOperationResult,
   CollaborativeKitItem,
@@ -562,7 +575,8 @@ export function applyWorkspaceOperation(
         result: {
           status: 'stale_routing_discarded',
           seq: workspace.headSeq,
-          reason: 'Section introuvable (supprimée ou fusionnée).',
+          reason:
+            'Calcul rejeté : le tronçon n’existe plus (supprimé, coupé ou fusionné pendant le calcul). Le tracé affiché n’a pas changé.',
         },
         nextOpLog: opLog,
       };
@@ -573,7 +587,8 @@ export function applyWorkspaceOperation(
         result: {
           status: 'stale_routing_discarded',
           seq: workspace.headSeq,
-          reason: 'Résultat de routage obsolète : les points ou options ont changé depuis la requête.',
+          reason:
+            'Calcul rejeté : le tronçon a changé pendant le calcul (point déplacé, profil modifié ou recalcul plus récent). Le tracé affiché est resté celui d’avant ; relancez le calcul.',
         },
         nextOpLog: opLog,
       };
@@ -588,8 +603,76 @@ export function applyWorkspaceOperation(
   let nextSport = workspace.sport;
   let nextShapeMode = workspace.shapeMode ?? 'one_way';
   let nextOptions = workspace.routingOptions;
+  let nextSourceOrigin = workspace.sourceOrigin;
+  const fp = (from: CollaborativeRoutePoint, to: CollaborativeRoutePoint) =>
+    computeRoutingFingerprint({ from, to, sport: nextSport, options: nextOptions });
+  const deny = (reason: string): { result: ApplyOperationResult; nextOpLog: readonly RouteOperationRecord[] } => ({
+    result: { status: 'denied', reason },
+    nextOpLog: opLog,
+  });
 
   const op = command.operation;
+
+  /** Les tronçons dans l'ordre des points actifs (un tronçon manquant n'y figure pas). */
+  const orderedSections = (): CollaborativeRouteSection[] => {
+    const pts = activePoints({ ...workspace, points: nextPoints });
+    return pts
+      .slice(0, -1)
+      .map((p, i) => nextSections.find((s) => s.fromPointId === p.id && s.toPointId === pts[i + 1].id))
+      .filter((s): s is CollaborativeRouteSection => Boolean(s));
+  };
+  const realign = () => {
+    nextSections = rebuildSectionsFromPoints(
+      workspace.id,
+      activePoints({ ...workspace, points: nextPoints }),
+      nextSections,
+      nextSport,
+      nextOptions,
+    );
+  };
+  /**
+   * Pose un point sur le tracé : un point existant à moins de 30 m est réutilisé, sinon le tronçon le plus
+   * proche est coupé en deux (géométrie conservée). Lieu à plus de 500 m du tracé : refusé.
+   */
+  const placePointOnTrack = (
+    newId: string,
+    lat: number,
+    lon: number,
+    name: string | null | undefined,
+  ): { ok: true; pointId: string } | { ok: false; reason: string } => {
+    const pts = activePoints({ ...workspace, points: nextPoints });
+    const near = pts
+      .map((p) => ({ p, d: distanceToKm(p, { lat, lon }) }))
+      .sort((a, b) => a.d - b.d)[0];
+    if (near && near.d <= SNAP_POINT_KM) return { ok: true, pointId: near.p.id };
+    if (nextPoints.some((p) => p.id === newId)) return { ok: false, reason: 'Identifiant de point déjà utilisé.' };
+    const secs = orderedSections();
+    const loc = locateOnSections(secs, lat, lon);
+    if (!loc || loc.offsetKm > 0.5) return { ok: false, reason: 'Ce lieu est trop éloigné du tracé.' };
+    const sec = secs[loc.sectionIndex];
+    const from = pts.find((p) => p.id === sec.fromPointId);
+    const to = pts.find((p) => p.id === sec.toPointId);
+    if (!from || !to) return { ok: false, reason: 'Tronçon introuvable.' };
+    const via: CollaborativeRoutePoint = {
+      id: newId,
+      workspaceId: workspace.id,
+      kind: 'via',
+      orderKey: orderKeyBetween(from.orderKey, to.orderKey),
+      lat: loc.point[1],
+      lon: loc.point[0],
+      name: name ?? null,
+      semanticKind: 'waypoint',
+      entityVersion: 1,
+    };
+    const split = splitSectionAt(sec, loc, from, via, to, fp);
+    if (!split.ok) return split;
+    nextPoints = [...nextPoints, via];
+    nextSections = [...nextSections.filter((s) => s !== sec), split.left, split.right];
+    realign();
+    return { ok: true, pointId: via.id };
+  };
+  const byDay = () => nextStages.slice().sort((a, b) => a.dayNumber - b.dayNumber);
+
   switch (op.type) {
     case 'move_point': {
       nextPoints = nextPoints.map((p) =>
@@ -609,6 +692,18 @@ export function applyWorkspaceOperation(
         const fromPt = ordered.find((p) => p.id === s.fromPointId);
         const toPt = ordered.find((p) => p.id === s.toPointId);
         if (!fromPt || !toPt) return s;
+        if (s.mode !== 'routed' && s.geometry.coordinates.length >= 2) {
+          // Tracé à la main ou importé : il est conservé, seul son sommet d'extrémité suit le point déplacé.
+          const kept = s.geometry.coordinates.map((c) => [c[0], c[1]] as [number, number]);
+          if (s.fromPointId === op.pointId) kept[0] = [op.lon, op.lat];
+          else kept[kept.length - 1] = [op.lon, op.lat];
+          return {
+            ...s,
+            geometry: { type: 'LineString', coordinates: kept },
+            distanceKm: lineDistanceKm(kept),
+            entityVersion: s.entityVersion + 1,
+          };
+        }
         const coords: Array<[number, number]> = [
           [fromPt.lon, fromPt.lat],
           [toPt.lon, toPt.lat],
@@ -624,6 +719,9 @@ export function applyWorkspaceOperation(
             sport: nextSport,
             options: nextOptions,
           }),
+          // Segment direct en attendant le routeur : il n'est plus présenté comme calculé.
+          provenance: { ...s.provenance, calculatedAt: null, confidence: 'estimated' as const },
+          warnings: ['Point déplacé : tronçon à recalculer'],
           entityVersion: s.entityVersion + 1,
         };
       });
@@ -662,9 +760,25 @@ export function applyWorkspaceOperation(
     }
 
     case 'delete_point': {
+      const before = activePoints(workspace);
+      const at = before.findIndex((p) => p.id === op.pointId);
+      if (at < 0) return deny('Point introuvable ou déjà supprimé.');
+      if (before.length <= 2) return deny('Un itinéraire garde au moins deux points.');
       nextPoints = nextPoints.map((p) =>
         p.id === op.pointId ? { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 } : p,
       );
+      const prevPt = before[at - 1];
+      const nextPt = before[at + 1];
+      const inSec = prevPt ? nextSections.find((s) => s.fromPointId === prevPt.id && s.toPointId === op.pointId) : undefined;
+      const outSec = nextPt ? nextSections.find((s) => s.fromPointId === op.pointId && s.toPointId === nextPt.id) : undefined;
+      // Les deux tronçons voisins deviennent un seul. Tracés à la main ou importés : leur géométrie est
+      // conservée telle quelle. Tracés routés : segment direct recalculé ensuite (jamais laissé en trou).
+      nextSections = nextSections.filter((s) => s !== inSec && s !== outSec);
+      if (prevPt && nextPt && inSec && outSec && (inSec.mode !== 'routed' || outSec.mode !== 'routed')) {
+        const merged = mergeSectionPair(inSec, outSec, prevPt, nextPt, fp);
+        if (merged.ok) nextSections.push(merged.section);
+      }
+      nextSections = nextSections.filter((s) => s.fromPointId !== op.pointId && s.toPointId !== op.pointId);
       const reordered = activePoints({ ...workspace, points: nextPoints });
       nextSections = rebuildSectionsFromPoints(
         workspace.id,
@@ -672,6 +786,10 @@ export function applyWorkspaceOperation(
         nextSections,
         nextSport,
         nextOptions,
+      );
+      nextStages = normalizeStages(
+        repairStagesForRemovedPoints(nextStages, before, new Set([op.pointId])),
+        reordered,
       );
       break;
     }
@@ -685,38 +803,81 @@ export function applyWorkspaceOperation(
         reversedMap.set(p.id, k);
         prev = k;
       }
+      const swapKind = (k: CollaborativeRoutePoint['kind']): CollaborativeRoutePoint['kind'] =>
+        k === 'start' ? 'finish' : k === 'finish' ? 'start' : k;
       nextPoints = nextPoints.map((p) =>
         p.deletedAt
           ? p
           : {
               ...p,
               orderKey: reversedMap.get(p.id) ?? p.orderKey,
+              kind: swapKind(p.kind),
               entityVersion: p.entityVersion + 1,
             },
       );
       const reordered = activePoints({ ...workspace, points: nextPoints });
-      nextSections = rebuildSectionsFromPoints(
-        workspace.id,
-        reordered,
-        [],
-        nextSport,
-        nextOptions,
-      );
+      // Chaque tronçon est parcouru à l'envers : géométrie retournée, D+ et D− échangés. Un tronçon routé
+      // reste affiché mais attend un nouveau calcul (sens uniques, montées et descentes ne sont plus les mêmes).
+      const reversedSections: CollaborativeRouteSection[] = [];
+      for (let i = 0; i < reordered.length - 1; i += 1) {
+        const a = reordered[i];
+        const b = reordered[i + 1];
+        const old = nextSections.find((s) => s.fromPointId === b.id && s.toPointId === a.id);
+        if (old) reversedSections.push(reverseSectionData(old, a, b, fp, { keepCalculated: false }));
+      }
+      nextSections = rebuildSectionsFromPoints(workspace.id, reordered, reversedSections, nextSport, nextOptions);
+      // Les journées se lisent dans l'autre sens : la première devient la dernière, la nuit suit le lieu.
+      const slots = nextStages.slice().sort((a, b) => a.dayNumber - b.dayNumber);
+      const count = slots.length;
+      nextStages = slots.map((slot, idx) => {
+        const src = slots[count - 1 - idx];
+        const night = idx < count - 1 ? slots[count - 2 - idx] : null;
+        return {
+          ...slot,
+          kind: src.kind,
+          title: isDefaultDayTitle(src.title) ? slot.title : src.title,
+          startPointId: src.endPointId,
+          endPointId: src.startPointId,
+          overnightPlace: night ? night.overnightPlace : null,
+          notes: src.notes,
+          waterObservations: src.waterObservations,
+          hazards: src.hazards,
+          weatherSlice: null,
+          entityVersion: slot.entityVersion + 1,
+        };
+      });
       break;
     }
 
     case 'set_section_mode': {
-      nextSections = nextSections.map((s) =>
-        s.id === op.sectionId
-          ? {
-              ...s,
-              mode: op.mode,
-              geometry: op.geometry ?? s.geometry,
-              distanceKm: op.geometry ? lineDistanceKm(op.geometry.coordinates) : s.distanceKm,
-              entityVersion: s.entityVersion + 1,
-            }
-          : s,
-      );
+      const ordered = activePoints(workspace);
+      nextSections = nextSections.map((s) => {
+        if (s.id !== op.sectionId) return s;
+        const changed = {
+          ...s,
+          mode: op.mode,
+          geometry: op.geometry ?? s.geometry,
+          distanceKm: op.geometry ? lineDistanceKm(op.geometry.coordinates) : s.distanceKm,
+          entityVersion: s.entityVersion + 1,
+        };
+        const fromPt = ordered.find((p) => p.id === s.fromPointId);
+        const toPt = ordered.find((p) => p.id === s.toPointId);
+        if (op.mode === 'routed' && s.mode !== 'routed' && !op.geometry && fromPt && toPt) {
+          // « Revenir au calcul » : le tracé à la main reste affiché jusqu'au résultat du routeur, dit à calculer.
+          return {
+            ...changed,
+            routingInputHash: fp(fromPt, toPt),
+            pendingFingerprint: null,
+            provenance: { ...s.provenance, calculatedAt: null, confidence: 'estimated' as const },
+            warnings: ['Retour au calcul : tronçon à recalculer'],
+          };
+        }
+        if (op.mode === 'manual' && s.mode !== 'manual') {
+          // Tracé à la main : jamais présenté comme vérifié.
+          return { ...changed, provenance: { ...s.provenance, confidence: 'unknown' as const } };
+        }
+        return changed;
+      });
       break;
     }
 
@@ -815,11 +976,26 @@ export function applyWorkspaceOperation(
 
     case 'set_shape_mode': {
       nextShapeMode = op.shapeMode;
-      const ordered = activePoints(workspace);
+      const beforePoints = activePoints(workspace);
+      // Les points d'une forme précédente (fermeture de boucle, retour) sont retirés d'abord : changer de
+      // forme, ou rappuyer sur la même, ne les empile jamais.
+      const generated = new Set(beforePoints.filter((p) => /^pt-(loop-close|ret)-/.test(p.id)).map((p) => p.id));
+      let ordered = beforePoints;
+      if (generated.size > 0) {
+        nextPoints = nextPoints.map((p) =>
+          generated.has(p.id) ? { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 } : p,
+        );
+        nextSections = nextSections.filter((s) => !generated.has(s.fromPointId) && !generated.has(s.toPointId));
+        ordered = beforePoints.filter((p) => !generated.has(p.id));
+        nextStages = normalizeStages(repairStagesForRemovedPoints(nextStages, beforePoints, generated), ordered);
+      }
       if (ordered.length >= 2) {
+        const first = ordered[0];
+        const last = ordered[ordered.length - 1];
+        const lastStageIdx = nextStages.length
+          ? nextStages.reduce((best, s, i) => (s.dayNumber >= nextStages[best].dayNumber ? i : best), 0)
+          : -1;
         if (op.shapeMode === 'loop') {
-          const first = ordered[0];
-          const last = ordered[ordered.length - 1];
           const dist = haversineKm({ lat: first.lat, lon: first.lon }, { lat: last.lat, lon: last.lon });
           if (dist > 0.05) {
             const closingPt: CollaborativeRoutePoint = {
@@ -833,24 +1009,28 @@ export function applyWorkspaceOperation(
               name: `${first.name || 'Départ'} (boucle)`,
               entityVersion: 1,
             };
-            nextPoints.push(closingPt);
-            const reordered = activePoints({ ...workspace, points: nextPoints });
+            nextPoints = [...nextPoints, closingPt];
             nextSections = rebuildSectionsFromPoints(
               workspace.id,
-              reordered,
+              activePoints({ ...workspace, points: nextPoints }),
               nextSections,
               nextSport,
               nextOptions,
             );
+            // Le dernier jour va jusqu'à la fermeture de la boucle.
+            if (lastStageIdx >= 0) {
+              nextStages = nextStages.map((s, i) =>
+                i === lastStageIdx ? { ...s, endPointId: closingPt.id, entityVersion: s.entityVersion + 1 } : s,
+              );
+            }
           }
         } else if (op.shapeMode === 'out_and_back') {
           const returnPts = ordered.slice(0, -1).reverse();
-          let prevKey = ordered[ordered.length - 1].orderKey;
-          for (let i = 0; i < returnPts.length; i += 1) {
-            const src = returnPts[i];
+          let prevKey = last.orderKey;
+          const copies: CollaborativeRoutePoint[] = returnPts.map((src, i) => {
             const k = orderKeyBetween(prevKey, null);
             prevKey = k;
-            nextPoints.push({
+            return {
               id: `pt-ret-${nextSeq}-${i}`,
               workspaceId: workspace.id,
               kind: i === returnPts.length - 1 ? 'finish' : 'via',
@@ -860,16 +1040,63 @@ export function applyWorkspaceOperation(
               eleM: src.eleM,
               name: src.name ? `${src.name} (retour)` : null,
               entityVersion: 1,
-            });
+            } as CollaborativeRoutePoint;
+          });
+          nextPoints = [...nextPoints, ...copies];
+          const chain = [last, ...copies];
+          // Le retour suit le même chemin : chaque tronçon aller est repris à l'envers (D+ et D− échangés).
+          const returnSections: CollaborativeRouteSection[] = [];
+          for (let k = 0; k < chain.length - 1; k += 1) {
+            const outbound = nextSections.find(
+              (s) =>
+                s.fromPointId === ordered[ordered.length - 2 - k].id &&
+                s.toPointId === ordered[ordered.length - 1 - k].id,
+            );
+            if (outbound) returnSections.push(reverseSectionData(outbound, chain[k], chain[k + 1], fp, { keepCalculated: true }));
           }
-          const reordered = activePoints({ ...workspace, points: nextPoints });
           nextSections = rebuildSectionsFromPoints(
             workspace.id,
-            reordered,
-            nextSections,
+            activePoints({ ...workspace, points: nextPoints }),
+            [...nextSections, ...returnSections],
             nextSport,
             nextOptions,
           );
+          const sorted = nextStages.slice().sort((a, b) => a.dayNumber - b.dayNumber);
+          if (sorted.length === 1 && lastStageIdx >= 0) {
+            nextStages = nextStages.map((s, i) =>
+              i === lastStageIdx
+                ? { ...s, endPointId: chain[chain.length - 1].id, entityVersion: s.entityVersion + 1 }
+                : s,
+            );
+          } else if (sorted.length >= 2) {
+            // Plusieurs jours à l'aller : les mêmes jours, dans l'autre sens, au retour.
+            const copyOf = new Map<string, string>();
+            ordered.slice(0, -1).forEach((p, i) => copyOf.set(p.id, copies[ordered.length - 2 - i].id));
+            copyOf.set(last.id, last.id);
+            const lastDate = sorted[sorted.length - 1].dateIso;
+            const mirrored: CollaborativeStage[] = sorted
+              .slice()
+              .reverse()
+              .map((st, m) => {
+                const day = sorted.length + m + 1;
+                const night = m < sorted.length - 1 ? sorted[sorted.length - 2 - m].overnightPlace : null;
+                return {
+                  ...st,
+                  id: `stage-ret-${nextSeq}-${m}`,
+                  orderKey: String(day).padStart(3, '0'),
+                  dayNumber: day,
+                  title: isDefaultDayTitle(st.title) ? `Jour ${day}` : `${st.title} (retour)`,
+                  dateIso: lastDate ? shiftIsoDate(lastDate, m + 1) : null,
+                  startPointId: copyOf.get(st.endPointId) ?? st.endPointId,
+                  endPointId: copyOf.get(st.startPointId) ?? st.startPointId,
+                  overnightPlace: night,
+                  notes: '',
+                  weatherSlice: null,
+                  entityVersion: 1,
+                };
+              });
+            nextStages = [...sorted, ...mirrored];
+          }
         }
       }
       break;
@@ -907,6 +1134,9 @@ export function applyWorkspaceOperation(
     }
 
     case 'set_sport_profile': {
+      const profileChanged =
+        op.sport !== workspace.sport ||
+        stableHash(op.routingOptions ?? {}) !== stableHash(workspace.routingOptions ?? {});
       nextSport = op.sport;
       nextOptions = op.routingOptions;
       const ordered = activePoints(workspace);
@@ -923,6 +1153,13 @@ export function applyWorkspaceOperation(
             sport: nextSport,
             options: nextOptions,
           }),
+          // Le tracé affiché vient de l'ancien profil : il attend le nouveau calcul, et le dit.
+          ...(profileChanged
+            ? {
+                provenance: { ...s.provenance, calculatedAt: null, confidence: 'estimated' as const },
+                warnings: ['Profil modifié : tronçon à recalculer'],
+              }
+            : {}),
           entityVersion: s.entityVersion + 1,
         };
       });
@@ -931,12 +1168,426 @@ export function applyWorkspaceOperation(
 
     case 'revert_to_seq': {
       // Restaure depuis une révision publiée/cible en créant une nouvelle séquence (jamais d'effacement de l'historique).
-      const targetRev = workspace.revisions.find((r) => r.basedOnSeq === op.targetSeq || r.revisionNo === op.targetSeq);
+      const targetRev = op.revisionId
+        ? workspace.revisions.find((r) => r.id === op.revisionId)
+        : workspace.revisions.find((r) => r.basedOnSeq === op.targetSeq || r.revisionNo === op.targetSeq);
+      if (op.revisionId && !targetRev) return deny('Version introuvable : rien n’a été modifié.');
       if (targetRev) {
-        nextPoints = targetRev.points.map((p) => ({ ...p, entityVersion: p.entityVersion + 1 }));
+        // Les points d'aujourd'hui qui n'existaient pas dans cette version sont retirés, jamais effacés :
+        // l'historique et le journal restent entiers, le retour est une nouvelle séquence.
+        const kept = new Set(targetRev.points.map((p) => p.id));
+        const currentVersion = new Map(workspace.points.map((p) => [p.id, p.entityVersion]));
+        nextPoints = [
+          ...workspace.points
+            .filter((p) => !kept.has(p.id))
+            .map((p) => (p.deletedAt ? p : { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 })),
+          ...targetRev.points.map((p) => ({
+            ...p,
+            deletedAt: null,
+            entityVersion: Math.max(p.entityVersion, currentVersion.get(p.id) ?? 0) + 1,
+          })),
+        ];
         nextSections = targetRev.sections.map((s) => ({ ...s, entityVersion: s.entityVersion + 1 }));
         nextStages = targetRev.stages.map((st) => ({ ...st, entityVersion: st.entityVersion + 1 }));
       }
+      break;
+    }
+
+    case 'update_point': {
+      if (!nextPoints.some((p) => p.id === op.pointId && !p.deletedAt)) return deny('Point introuvable.');
+      nextPoints = nextPoints.map((p) =>
+        p.id === op.pointId
+          ? {
+              ...p,
+              name: op.name !== undefined ? (op.name?.trim() ? op.name.trim().slice(0, 120) : null) : p.name,
+              note: op.note !== undefined ? (op.note?.trim() ? op.note.trim().slice(0, 500) : null) : p.note,
+              entityVersion: p.entityVersion + 1,
+            }
+          : p,
+      );
+      break;
+    }
+
+    case 'split_section': {
+      const secs = orderedSections();
+      const sec = secs.find((s) => s.id === op.sectionId);
+      if (!sec) return deny('Tronçon introuvable.');
+      const pts = activePoints({ ...workspace, points: nextPoints });
+      const from = pts.find((p) => p.id === sec.fromPointId);
+      const to = pts.find((p) => p.id === sec.toPointId);
+      if (!from || !to) return deny('Tronçon introuvable.');
+      if (nextPoints.some((p) => p.id === op.pointId)) return deny('Identifiant de point déjà utilisé.');
+      const loc = locateOnSections([sec], op.lat, op.lon);
+      if (!loc || loc.offsetKm > 0.5) return deny('Ce lieu est trop éloigné du tronçon.');
+      const via: CollaborativeRoutePoint = {
+        id: op.pointId,
+        workspaceId: workspace.id,
+        kind: 'via',
+        orderKey: orderKeyBetween(from.orderKey, to.orderKey),
+        lat: loc.point[1],
+        lon: loc.point[0],
+        name: op.name ?? null,
+        semanticKind: 'waypoint',
+        entityVersion: 1,
+      };
+      const split = splitSectionAt(sec, loc, from, via, to, fp);
+      if (!split.ok) return deny(split.reason);
+      nextPoints = [...nextPoints, via];
+      nextSections = [...nextSections.filter((s) => s !== sec), split.left, split.right];
+      realign();
+      break;
+    }
+
+    case 'merge_sections': {
+      const secs = orderedSections();
+      const a = secs.find((s) => s.id === op.sectionId);
+      const b = secs.find((s) => s.id === op.withSectionId);
+      if (!a || !b) return deny('Tronçon introuvable.');
+      if (a.toPointId !== b.fromPointId) return deny('Seuls deux tronçons qui se suivent peuvent être fusionnés.');
+      const pts = activePoints({ ...workspace, points: nextPoints });
+      const from = pts.find((p) => p.id === a.fromPointId);
+      const to = pts.find((p) => p.id === b.toPointId);
+      if (!from || !to) return deny('Tronçon introuvable.');
+      const shared = a.toPointId;
+      if (workspace.stages.some((st) => st.startPointId === shared || st.endPointId === shared)) {
+        return deny('Ce point sépare deux journées : déplacez d’abord la coupure.');
+      }
+      const merged = mergeSectionPair(a, b, from, to, fp);
+      if (!merged.ok) return deny(merged.reason);
+      nextPoints = nextPoints.map((p) =>
+        p.id === shared ? { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 } : p,
+      );
+      nextSections = [...nextSections.filter((s) => s !== a && s !== b), merged.section];
+      realign();
+      break;
+    }
+
+    case 'cut_stage_at': {
+      const days = byDay();
+      const k = days.findIndex((s) => s.id === op.stageId);
+      if (k < 0) return deny('Étape introuvable.');
+      if (k === days.length - 1) return deny('La dernière étape n’a pas de coupure à déplacer.');
+      const stage = days[k];
+      const following = days[k + 1];
+      if (stageKind(stage) !== 'walk' || stageKind(following) !== 'walk') {
+        return deny('La coupure d’une journée de repos ou d’une étape courte ne se déplace pas.');
+      }
+      const placed = placePointOnTrack(op.pointId, op.lat, op.lon, op.name ?? null);
+      if (!placed.ok) return deny(placed.reason);
+      const pts = activePoints({ ...workspace, points: nextPoints });
+      const at = (id: string) => pts.findIndex((p) => p.id === id);
+      const cutIdx = at(placed.pointId);
+      if (cutIdx <= at(stage.startPointId) || cutIdx >= at(following.endPointId)) {
+        return deny('La coupure doit rester entre le début de l’étape et la fin de la suivante.');
+      }
+      const cutPt = pts[cutIdx];
+      nextStages = nextStages.map((s) => {
+        if (s.id === stage.id) {
+          // Une nuit qui n'est plus à la coupure n'est pas gardée : « nuit à trouver », jamais un lieu faux.
+          const stays = s.overnightPlace && distanceToKm(s.overnightPlace, cutPt) <= 1;
+          return {
+            ...s,
+            endPointId: cutPt.id,
+            overnightPlace: stays ? s.overnightPlace : null,
+            entityVersion: s.entityVersion + 1,
+          };
+        }
+        if (s.id === following.id) return { ...s, startPointId: cutPt.id, entityVersion: s.entityVersion + 1 };
+        return s;
+      });
+      break;
+    }
+
+    case 'apply_stage_split': {
+      const placedIds: string[] = [];
+      for (const cut of op.cuts) {
+        const placed = placePointOnTrack(cut.pointId, cut.lat, cut.lon, cut.name ?? null);
+        if (!placed.ok) return deny(placed.reason);
+        placedIds.push(placed.pointId);
+      }
+      const pts = activePoints({ ...workspace, points: nextPoints });
+      if (pts.length < 2) return deny('Au moins deux points sont nécessaires pour découper.');
+      const idxs = placedIds.map((id) => pts.findIndex((p) => p.id === id));
+      const increasing = idxs.every((v, i) => v > (i === 0 ? 0 : idxs[i - 1]) && v < pts.length - 1);
+      if (!increasing) return deny('Les coupures proposées ne se suivent pas sur le tracé.');
+      const bounds = [pts[0].id, ...placedIds, pts[pts.length - 1].id];
+      const previous = byDay();
+      const firstDate = previous[0]?.dateIso ?? null;
+      nextStages = bounds.slice(1).map((end, i) => {
+        const prev = previous[i];
+        const day = i + 1;
+        return {
+          id: prev?.id ?? `stage-${day}`,
+          workspaceId: workspace.id,
+          orderKey: String(day).padStart(3, '0'),
+          dayNumber: day,
+          kind: 'walk' as const,
+          title: prev && !isDefaultDayTitle(prev.title) ? prev.title : `Jour ${day}`,
+          dateIso: prev?.dateIso ?? (firstDate ? shiftIsoDate(firstDate, i) : null),
+          departureTimeLocal: prev?.departureTimeLocal ?? previous[0]?.departureTimeLocal ?? '08:30',
+          timezone: prev?.timezone ?? previous[0]?.timezone ?? 'Europe/Paris',
+          startPointId: bounds[i],
+          endPointId: end,
+          overnightPlace: i < op.cuts.length ? op.cuts[i].overnightPlace : null,
+          notes: prev?.notes ?? '',
+          waterObservations: prev?.waterObservations ?? [],
+          weatherSlice: null,
+          hazards: prev?.hazards ?? [],
+          entityVersion: (prev?.entityVersion ?? 0) + 1,
+        };
+      });
+      break;
+    }
+
+    case 'set_stage_schedule': {
+      const target = nextStages.find((s) => s.id === op.stageId);
+      if (!target) return deny('Étape introuvable.');
+      if (op.departureTimeLocal !== undefined && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(op.departureTimeLocal)) {
+        return deny('Heure de départ invalide (attendu HH:MM).');
+      }
+      if (op.dateIso != null && !/^\d{4}-\d{2}-\d{2}$/.test(op.dateIso)) {
+        return deny('Date invalide (attendu AAAA-MM-JJ).');
+      }
+      if (op.dateIso != null && shiftIsoDate(op.dateIso, 0) !== op.dateIso) return deny('Date invalide.');
+      if (op.timezone !== undefined) {
+        try {
+          new Intl.DateTimeFormat('en-US', { timeZone: op.timezone });
+        } catch {
+          return deny('Fuseau horaire inconnu.');
+        }
+      }
+      nextStages = nextStages.map((s) => {
+        if (s.id === target.id) {
+          return {
+            ...s,
+            departureTimeLocal: op.departureTimeLocal ?? s.departureTimeLocal,
+            dateIso: op.dateIso !== undefined ? op.dateIso : s.dateIso,
+            timezone: op.timezone ?? s.timezone,
+            entityVersion: s.entityVersion + 1,
+          };
+        }
+        if (op.chainFollowing && op.dateIso && s.dayNumber > target.dayNumber) {
+          return { ...s, dateIso: shiftIsoDate(op.dateIso, s.dayNumber - target.dayNumber), entityVersion: s.entityVersion + 1 };
+        }
+        return s;
+      });
+      break;
+    }
+
+    case 'insert_rest_day': {
+      const days = byDay();
+      const k = days.findIndex((s) => s.id === op.afterStageId);
+      if (k < 0) return deny('Étape introuvable.');
+      if (k === days.length - 1) return deny('Une journée de repos se place avant la dernière étape.');
+      if (days.some((s) => s.id === op.stageId)) return deny('Identifiant d’étape déjà utilisé.');
+      const after = days[k];
+      const rest: CollaborativeStage = {
+        id: op.stageId,
+        workspaceId: workspace.id,
+        orderKey: '',
+        dayNumber: after.dayNumber + 1,
+        kind: 'rest',
+        title: 'Jour de repos',
+        dateIso: after.dateIso ? shiftIsoDate(after.dateIso, 1) : null,
+        departureTimeLocal: after.departureTimeLocal,
+        timezone: after.timezone,
+        startPointId: after.endPointId,
+        endPointId: after.endPointId,
+        overnightPlace: after.overnightPlace,
+        notes: '',
+        waterObservations: [],
+        weatherSlice: null,
+        hazards: [],
+        entityVersion: 1,
+      };
+      const later = days.slice(k + 1).map((s) => ({
+        ...s,
+        dateIso: s.dateIso ? shiftIsoDate(s.dateIso, 1) : null,
+        entityVersion: s.entityVersion + 1,
+      }));
+      nextStages = normalizeStages([...days.slice(0, k + 1), rest, ...later], activePoints({ ...workspace, points: nextPoints }));
+      break;
+    }
+
+    case 'insert_short_stage': {
+      const days = byDay();
+      const k = days.findIndex((s) => s.id === op.afterStageId);
+      if (k < 0) return deny('Étape introuvable.');
+      if (k === days.length - 1) return deny('Une étape courte se place avant la dernière étape.');
+      if (days.some((s) => s.id === op.stageId)) return deny('Identifiant d’étape déjà utilisé.');
+      if (nextPoints.some((p) => p.id === op.turnaroundPointId || p.id === op.returnPointId)) {
+        return deny('Identifiant de point déjà utilisé.');
+      }
+      const after = days[k];
+      const pts = activePoints({ ...workspace, points: nextPoints });
+      const baseIdx = pts.findIndex((p) => p.id === after.endPointId);
+      const base = pts[baseIdx];
+      const following = pts[baseIdx + 1];
+      if (!base || !following) return deny('Point de nuit introuvable.');
+      const turnaround: CollaborativeRoutePoint = {
+        id: op.turnaroundPointId,
+        workspaceId: workspace.id,
+        kind: 'via',
+        orderKey: orderKeyBetween(base.orderKey, following.orderKey),
+        lat: op.lat,
+        lon: op.lon,
+        name: op.name?.trim() || 'Point de demi-tour',
+        semanticKind: 'waypoint',
+        entityVersion: 1,
+      };
+      const back: CollaborativeRoutePoint = {
+        id: op.returnPointId,
+        workspaceId: workspace.id,
+        kind: 'via',
+        orderKey: orderKeyBetween(turnaround.orderKey, following.orderKey),
+        lat: base.lat,
+        lon: base.lon,
+        eleM: base.eleM,
+        name: `${base.name || 'Nuit'} (retour)`,
+        semanticKind: 'waypoint',
+        entityVersion: 1,
+      };
+      // Le tronçon qui repartait de la nuit repart désormais du retour : son tracé n'est pas touché.
+      nextSections = nextSections.map((s) =>
+        s.fromPointId === base.id && s.toPointId === following.id
+          ? {
+              ...s,
+              id: `sec-${back.id}-${following.id}`,
+              fromPointId: back.id,
+              routingInputHash: s.mode === 'routed' ? fp(back, following) : s.routingInputHash,
+              entityVersion: s.entityVersion + 1,
+            }
+          : s,
+      );
+      nextPoints = [...nextPoints, turnaround, back];
+      realign();
+      const short: CollaborativeStage = {
+        id: op.stageId,
+        workspaceId: workspace.id,
+        orderKey: '',
+        dayNumber: after.dayNumber + 1,
+        kind: 'short',
+        title: 'Étape courte',
+        dateIso: after.dateIso ? shiftIsoDate(after.dateIso, 1) : null,
+        departureTimeLocal: after.departureTimeLocal,
+        timezone: after.timezone,
+        startPointId: base.id,
+        endPointId: back.id,
+        overnightPlace: after.overnightPlace,
+        notes: '',
+        waterObservations: [],
+        weatherSlice: null,
+        hazards: [],
+        entityVersion: 1,
+      };
+      const later = days.slice(k + 1).map((s) => ({
+        ...s,
+        startPointId: s.startPointId === base.id ? back.id : s.startPointId,
+        dateIso: s.dateIso ? shiftIsoDate(s.dateIso, 1) : null,
+        entityVersion: s.entityVersion + 1,
+      }));
+      nextStages = normalizeStages(
+        [...days.slice(0, k + 1), short, ...later],
+        activePoints({ ...workspace, points: nextPoints }),
+      );
+      break;
+    }
+
+    case 'remove_stage': {
+      const days = byDay();
+      const k = days.findIndex((s) => s.id === op.stageId);
+      if (k < 0) return deny('Étape introuvable.');
+      const target = days[k];
+      const kind = stageKind(target);
+      if (kind === 'walk') return deny('Seuls un jour de repos ou une étape courte se retirent : déplacez la coupure sinon.');
+      let startFix: { from: string; to: string } | null = null;
+      if (kind === 'short') {
+        const pts = activePoints({ ...workspace, points: nextPoints });
+        const baseIdx = pts.findIndex((p) => p.id === target.startPointId);
+        const backIdx = pts.findIndex((p) => p.id === target.endPointId);
+        if (baseIdx < 0 || backIdx !== baseIdx + 2) return deny('Le tracé de cette étape courte a changé : retirez-la depuis la carte.');
+        const turnaround = pts[baseIdx + 1];
+        const following = pts[backIdx + 1];
+        const removed = new Set([turnaround.id, target.endPointId]);
+        nextSections = nextSections
+          .filter((s) => !(removed.has(s.fromPointId) && s.toPointId !== following?.id) && !removed.has(s.toPointId))
+          .map((s) =>
+            following && s.fromPointId === target.endPointId && s.toPointId === following.id
+              ? {
+                  ...s,
+                  id: `sec-${target.startPointId}-${following.id}`,
+                  fromPointId: target.startPointId,
+                  routingInputHash:
+                    s.mode === 'routed' ? fp(pts[baseIdx], following) : s.routingInputHash,
+                  entityVersion: s.entityVersion + 1,
+                }
+              : s,
+          );
+        nextPoints = nextPoints.map((p) =>
+          removed.has(p.id) ? { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 } : p,
+        );
+        startFix = { from: target.endPointId, to: target.startPointId };
+        realign();
+      }
+      const later = days.slice(k + 1).map((s) => ({
+        ...s,
+        startPointId: startFix && s.startPointId === startFix.from ? startFix.to : s.startPointId,
+        dateIso: s.dateIso ? shiftIsoDate(s.dateIso, -1) : null,
+        entityVersion: s.entityVersion + 1,
+      }));
+      nextStages = normalizeStages(
+        [...days.slice(0, k), ...later],
+        activePoints({ ...workspace, points: nextPoints }),
+      );
+      break;
+    }
+
+    case 'import_track': {
+      if (op.points.length < 2 || op.sections.length !== op.points.length - 1) {
+        return deny('Trace importée incomplète : au moins deux points et un tronçon entre chaque.');
+      }
+      const incoming = op.points
+        .slice()
+        .sort((a, b) => (a.orderKey < b.orderKey ? -1 : a.orderKey > b.orderKey ? 1 : a.id.localeCompare(b.id)));
+      const chained = incoming
+        .slice(0, -1)
+        .every((p, i) => op.sections.some((s) => s.fromPointId === p.id && s.toPointId === incoming[i + 1].id));
+      if (!chained) return deny('Trace importée incohérente : les tronçons ne suivent pas les points.');
+      nextPoints = [
+        ...workspace.points.map((p) =>
+          p.deletedAt ? p : { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 },
+        ),
+        ...incoming.map((p) => ({ ...p, workspaceId: workspace.id })),
+      ];
+      nextSections = incoming
+        .slice(0, -1)
+        .map((p, i) => op.sections.find((s) => s.fromPointId === p.id && s.toPointId === incoming[i + 1].id))
+        .filter((s): s is CollaborativeRouteSection => Boolean(s))
+        .map((s) => ({ ...s, workspaceId: workspace.id }));
+      const firstStage = byDay()[0];
+      nextStages = [
+        {
+          id: firstStage?.id ?? 'stage-1',
+          workspaceId: workspace.id,
+          orderKey: '001',
+          dayNumber: 1,
+          kind: 'walk',
+          title: firstStage?.title ?? 'Jour 1',
+          dateIso: firstStage?.dateIso ?? null,
+          departureTimeLocal: firstStage?.departureTimeLocal ?? '08:30',
+          timezone: firstStage?.timezone ?? 'Europe/Paris',
+          startPointId: incoming[0].id,
+          endPointId: incoming[incoming.length - 1].id,
+          overnightPlace: null,
+          notes: firstStage?.notes ?? '',
+          waterObservations: [],
+          weatherSlice: null,
+          hazards: [],
+          entityVersion: (firstStage?.entityVersion ?? 0) + 1,
+        },
+      ];
+      nextSourceOrigin = op.sourceOrigin;
+      nextShapeMode = 'one_way';
       break;
     }
   }
@@ -947,6 +1598,7 @@ export function applyWorkspaceOperation(
     sport: nextSport,
     shapeMode: nextShapeMode,
     routingOptions: nextOptions,
+    sourceOrigin: nextSourceOrigin,
     headSeq: nextSeq,
     points: nextPoints,
     sections: nextSections,

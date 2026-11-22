@@ -31,18 +31,30 @@ export interface ExplorerSheetProps {
   /** Capsule d'onglets ancrée en bas de la feuille (écran Monde). */
   tabsBottom?: boolean;
   onClose?: () => void;
+  /**
+   * Trois hauteurs nettes (aperçu, moitié, plein) au lieu de deux : la moitié laisse la carte lisible.
+   * Facultatif et désactivé par défaut : les autres écrans gardent leurs deux crans.
+   */
+  threeDetents?: boolean;
 }
 
 const PEEK = 176;
 const LOW = 300;
 
 const DETENTS: Detent[] = ['peek', 'low', 'mid', 'full'];
+const THREE_DETENTS: Detent[] = ['peek', 'mid', 'full'];
 
-function heightsFor(viewport: number, _bottomInset: number) {
+function heightsFor(viewport: number, _bottomInset: number, three = false) {
   // Sur iPhone 16 Pro, safe-area-inset-top + .xp-chrome requiert au moins ~148px de dégagement pour éviter la collision
   const topClearance = 148;
   const minH = Math.max(248, Math.round(viewport * 0.32));
   const maxH = Math.max(minH + 40, Math.min(Math.round(viewport * 0.85), viewport - topClearance));
+  if (three) {
+    // Aperçu : l'en-tête et la capsule d'onglets ; moitié : la carte reste lisible ; plein : le maximum.
+    const peek = Math.min(190, Math.max(150, Math.round(viewport * 0.2)));
+    const mid = Math.min(maxH - 60, Math.max(peek + 90, Math.round(viewport * 0.5)));
+    return { peek, low: mid, mid, full: maxH } as Record<Detent, number>;
+  }
   return {
     peek: minH,
     low: minH,
@@ -68,6 +80,7 @@ export function ExplorerSheet({
   labelledBy,
   tabsBottom = false,
   onClose,
+  threeDetents = false,
 }: ExplorerSheetProps) {
   const [viewport, setViewport] = useState(844);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -89,12 +102,29 @@ export function ExplorerSheet({
     };
   }, []);
 
-  const heights = useMemo(() => heightsFor(viewport, bottomInset), [viewport, bottomInset]);
-  const targetHeight = heights[detent];
+  const heights = useMemo(() => heightsFor(viewport, bottomInset, threeDetents), [viewport, bottomInset, threeDetents]);
+  const detents = threeDetents ? THREE_DETENTS : DETENTS;
+  // En trois crans, « low » (ancien cran) vaut « moitié ».
+  const shownDetent: Detent = threeDetents && detent === 'low' ? 'mid' : detent;
+  const targetHeight = heights[shownDetent];
   const height = dragHeight ?? targetHeight;
 
   const setDetentFromHeight = useCallback(
     (next: number, velocity: number) => {
+      if (threeDetents) {
+        // Relâchement : le cran le plus proche, ou le voisin dans le sens du geste s'il est vif.
+        const index = THREE_DETENTS.indexOf(shownDetent);
+        if (velocity < -0.3) return onDetent(THREE_DETENTS[Math.min(2, index + 1)]);
+        if (velocity > 0.3) {
+          if (index === 0 && onClose) return onClose();
+          return onDetent(THREE_DETENTS[Math.max(0, index - 1)]);
+        }
+        if (next < heights.peek * 0.82 && onClose) return onClose();
+        const nearest = THREE_DETENTS.reduce((best, d) =>
+          Math.abs(heights[d] - next) < Math.abs(heights[best] - next) ? d : best
+        );
+        return onDetent(nearest);
+      }
       // Relâchement : strictement deux crans (30 % min et 90 % max)
       const minH = heights.low;
       const maxH = heights.full;
@@ -114,7 +144,7 @@ export function ExplorerSheet({
       }
       onDetent(next >= midpoint ? 'full' : 'low');
     },
-    [heights, onClose, onDetent],
+    [heights, onClose, onDetent, shownDetent, threeDetents],
   );
 
   const onPointerDown = useCallback(
@@ -161,9 +191,9 @@ export function ExplorerSheet({
       const finalHeight = dragHeight ?? drag.startHeight;
       setDragHeight(null);
       if (Math.abs(finalHeight - drag.startHeight) < 2) {
-        // Un simple toucher sur la poignée fait monter d'un cran.
-        const index = DETENTS.indexOf(detent);
-        onDetent(DETENTS[Math.min(DETENTS.length - 1, index + 1)]);
+        // Un simple toucher sur la poignée fait monter d'un cran (et revient à l'aperçu depuis le plein).
+        const index = detents.indexOf(shownDetent);
+        onDetent(detents[index >= detents.length - 1 && threeDetents ? 0 : Math.min(detents.length - 1, index + 1)]);
         return;
       }
       setDetentFromHeight(finalHeight, drag.velocity);
@@ -175,18 +205,18 @@ export function ExplorerSheet({
         // idem
       }
     },
-    [detent, dragHeight, onDetent, setDetentFromHeight],
+    [detents, dragHeight, onDetent, setDetentFromHeight, shownDetent, threeDetents],
   );
 
   const onHandleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const index = DETENTS.indexOf(detent);
+      const index = detents.indexOf(shownDetent);
       if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
         event.preventDefault();
-        onDetent(DETENTS[Math.min(DETENTS.length - 1, index + 1)]);
+        onDetent(detents[Math.min(detents.length - 1, index + 1)]);
       } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
         event.preventDefault();
-        onDetent(DETENTS[Math.max(0, index - 1)]);
+        onDetent(detents[Math.max(0, index - 1)]);
       } else if (event.key === 'Home') {
         event.preventDefault();
         onDetent('peek');
@@ -195,7 +225,7 @@ export function ExplorerSheet({
         onDetent('full');
       }
     },
-    [detent, onDetent],
+    [detents, onDetent, shownDetent],
   );
 
   const safeTab = tabs && tabs.length > 0 ? Math.min(Math.max(0, tab), tabs.length - 1) : 0;
@@ -210,7 +240,7 @@ export function ExplorerSheet({
   return (
     <section
       className="xp-sheet"
-      data-detent={detent}
+      data-detent={shownDetent}
       data-dragging={dragHeight === null ? 'false' : 'true'}
       style={{ height: `${height}px` }}
       aria-label={labelledBy ? undefined : title}
@@ -222,7 +252,7 @@ export function ExplorerSheet({
         role="button"
         tabIndex={0}
         aria-label="Ajuster la hauteur du tiroir"
-        aria-expanded={detent !== 'peek'}
+        aria-expanded={shownDetent !== 'peek'}
         onKeyDown={onHandleKeyDown}
         {...grab}
       >

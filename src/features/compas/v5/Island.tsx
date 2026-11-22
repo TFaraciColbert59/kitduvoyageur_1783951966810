@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { CompasT } from '../components/compasTypes';
 import type { PrepState } from '../components/CompasPrep';
 
@@ -14,6 +14,74 @@ export interface IslandToast {
   tone?: 'bad';
   sub?: string;
   undo?: () => void;
+}
+
+export interface IslandAction {
+  label: string;
+  onClick: () => void;
+  title?: string;
+  disabled?: boolean;
+  ariaLabel?: string;
+}
+
+/**
+ * Corps d'une annonce de l'îlot (titre, détail, boutons). Partagé : l'îlot du Compas l'insère dans sa coque
+ * à deux états (préparation / annonce), `IslandNote` le pose dans une coque d'annonce seule (itinéraire).
+ */
+export function IslandNoteBody({ title, sub, actions }: { title: ReactNode; sub?: ReactNode; actions: readonly IslandAction[] }) {
+  return (
+    <div className="is note">
+      <span className="t">
+        <b>{title}</b>
+        {sub ? <span>{sub}</span> : null}
+      </span>
+      {actions.map((a) => (
+        <button key={a.label} type="button" disabled={a.disabled} title={a.title} aria-label={a.ariaLabel} onClick={a.onClick}>
+          {a.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Îlot d'annonce seule, sans préparation : une annonce à la fois (`null` : îlot replié). Même coque, mêmes
+ * classes et même comportement (survol et focus suspendent le délai, un toucher hors bouton le referme).
+ */
+export function IslandNote({
+  note,
+  onDismiss,
+  onHold,
+  onRelease,
+  testId,
+}: {
+  note: { title: ReactNode; sub?: ReactNode; tone?: 'bad'; actions: readonly IslandAction[] } | null;
+  onDismiss: () => void;
+  onHold?: () => void;
+  onRelease?: () => void;
+  testId?: string;
+}) {
+  const tone = note?.tone;
+  return (
+    <div
+      className="v5-island"
+      data-s={note ? 'note' : 'idle'}
+      data-tone={tone}
+      data-testid={testId}
+      role={tone === 'bad' ? 'alert' : 'status'}
+      aria-live={tone === 'bad' ? undefined : 'polite'}
+      onPointerEnter={onHold}
+      onPointerLeave={onRelease}
+      onFocus={onHold}
+      onBlur={onRelease}
+      onClick={(e) => {
+        if ((e.target as Element).closest('button')) return;
+        if (note) onDismiss();
+      }}
+    >
+      <IslandNoteBody title={note?.title ?? ''} sub={note?.sub} actions={note?.actions ?? []} />
+    </div>
+  );
 }
 
 export function Island({
@@ -59,7 +127,7 @@ export function Island({
   let title = '';
   let sub: string | null = null;
   let tone: 'bad' | undefined;
-  const actions: Array<{ label: string; onClick: () => void; title?: string }> = [];
+  const actions: IslandAction[] = [];
 
   if (live) {
     state = 'live';
@@ -84,7 +152,7 @@ export function Island({
     title = toast.message;
     sub = toast.sub ?? null;
     tone = toast.tone;
-    if (toast.undo) actions.push({ label: t('compas.v5.core.undo'), onClick: toast.undo, title: 'Ctrl/⌘ + Z' });
+    if (toast.undo) actions.push({ label: t('compas.v5.core.undo'), onClick: toast.undo, title: 'Ctrl/⌘ + Z', disabled: running });
   }
 
   return (
@@ -112,17 +180,7 @@ export function Island({
           ■
         </button>
       </div>
-      <div className="is note">
-        <span className="t">
-          <b>{title}</b>
-          {sub && <span>{sub}</span>}
-        </span>
-        {actions.map((a) => (
-          <button key={a.label} type="button" disabled={running && a.label === t('compas.v5.core.undo')} title={a.title} onClick={a.onClick}>
-            {a.label}
-          </button>
-        ))}
-      </div>
+      <IslandNoteBody title={title} sub={sub} actions={actions} />
     </div>
   );
 }

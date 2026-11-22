@@ -46,6 +46,8 @@ export function Li({
   onClick,
   disabled,
   ariaLabel,
+  testId,
+  state,
 }: {
   icon?: V5IconName;
   photo?: string | null;
@@ -57,6 +59,9 @@ export function Li({
   onClick?: () => void;
   disabled?: boolean;
   ariaLabel?: string;
+  /** Repères de test et de style posés sur la ligne (utilisés par l'itinéraire : `data-testid`, `data-state`). */
+  testId?: string;
+  state?: string;
 }) {
   const body = (
     <>
@@ -70,11 +75,13 @@ export function Li({
     </>
   );
   return onClick ? (
-    <button type="button" className="v5-li" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
+    <button type="button" className="v5-li" onClick={onClick} disabled={disabled} aria-label={ariaLabel} data-testid={testId} data-state={state}>
       {body}
     </button>
   ) : (
-    <div className="v5-li">{body}</div>
+    <div className="v5-li" data-testid={testId} data-state={state}>
+      {body}
+    </div>
   );
 }
 

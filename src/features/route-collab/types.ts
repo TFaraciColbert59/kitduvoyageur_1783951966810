@@ -118,6 +118,16 @@ export interface OvernightPlace {
   readonly openingInfo?: string | null;
   readonly provenance: string;
   readonly lastVerifiedAt: string | null;
+  /**
+   * Repère de prix par personne. `bareme` : repère du barème du Compas, jamais le tarif de l'établissement.
+   * Absent : pas de repère (camping, bivouac, lieu noté à la main).
+   */
+  readonly priceHint?: {
+    readonly perPerson: number;
+    readonly currency: string;
+    readonly basis: 'bareme' | 'partenaire';
+    readonly asOf: string;
+  } | null;
 }
 
 /* ---------- Entités Topologiques Stables ---------- */
@@ -161,11 +171,18 @@ export interface CollaborativeRouteSection {
   readonly entityVersion: number;
 }
 
+/**
+ * `walk` : journée de tracé (défaut quand absent, instantanés anciens compris) ; `rest` : journée sans tracé
+ * (départ et arrivée sur le même point) ; `short` : aller-retour depuis la nuit de la veille.
+ */
+export type StageKind = 'walk' | 'rest' | 'short';
+
 export interface CollaborativeStage {
   readonly id: string;
   readonly workspaceId: string;
   readonly orderKey: string;
   readonly dayNumber: number;
+  readonly kind?: StageKind;
   readonly title: string;
   readonly dateIso: string | null;
   readonly departureTimeLocal: string;
@@ -398,6 +415,89 @@ export type RouteOperationInput =
       readonly type: 'revert_to_seq';
       readonly targetSeq: number;
       readonly reason: string;
+      /** Version visée sans ambiguïté (le numéro de séquence et le numéro de version peuvent coïncider). */
+      readonly revisionId?: string;
+    }
+  | {
+      /** Renomme un point ou change sa note, sans toucher au tracé (5.6). */
+      readonly type: 'update_point';
+      readonly pointId: string;
+      readonly name?: string | null;
+      readonly note?: string | null;
+    }
+  | {
+      /** Coupe un tronçon en deux au point donné, géométrie conservée de part et d'autre (5.7). */
+      readonly type: 'split_section';
+      readonly sectionId: string;
+      readonly pointId: string;
+      readonly lat: number;
+      readonly lon: number;
+      readonly name?: string | null;
+    }
+  | {
+      /** Fusionne deux tronçons consécutifs sans rien recalculer : le point commun disparaît (5.7). */
+      readonly type: 'merge_sections';
+      readonly sectionId: string;
+      readonly withSectionId: string;
+    }
+  | {
+      /** Place la fin d'une étape à l'endroit du tracé le plus proche, point créé au besoin (6.2). */
+      readonly type: 'cut_stage_at';
+      readonly stageId: string;
+      readonly pointId: string;
+      readonly lat: number;
+      readonly lon: number;
+      readonly name?: string | null;
+    }
+  | {
+      /** Applique un découpage proposé : coupures sur le tracé et nuits choisies parmi des lieux réels (6.1). */
+      readonly type: 'apply_stage_split';
+      readonly cuts: readonly {
+        readonly pointId: string;
+        readonly lat: number;
+        readonly lon: number;
+        readonly name?: string | null;
+        readonly overnightPlace: OvernightPlace | null;
+      }[];
+    }
+  | {
+      /** Heure de départ, date (et fuseau) d'une journée (6.5, 6.8). */
+      readonly type: 'set_stage_schedule';
+      readonly stageId: string;
+      readonly departureTimeLocal?: string;
+      readonly dateIso?: string | null;
+      readonly timezone?: string;
+      /** Avec une date : les journées suivantes se calent un jour après l'autre. */
+      readonly chainFollowing?: boolean;
+    }
+  | {
+      /** Journée sans tracé après l'étape donnée (6.7). */
+      readonly type: 'insert_rest_day';
+      readonly afterStageId: string;
+      readonly stageId: string;
+    }
+  | {
+      /** Étape courte : aller-retour depuis la nuit de l'étape donnée (6.7). */
+      readonly type: 'insert_short_stage';
+      readonly afterStageId: string;
+      readonly stageId: string;
+      readonly turnaroundPointId: string;
+      readonly returnPointId: string;
+      readonly lat: number;
+      readonly lon: number;
+      readonly name?: string | null;
+    }
+  | {
+      /** Retire une journée de repos ou une étape courte (6.7). */
+      readonly type: 'remove_stage';
+      readonly stageId: string;
+    }
+  | {
+      /** Remplace le tracé par une trace importée (GPX, KML, TCX, GeoJSON) (5.9). */
+      readonly type: 'import_track';
+      readonly points: readonly CollaborativeRoutePoint[];
+      readonly sections: readonly CollaborativeRouteSection[];
+      readonly sourceOrigin: RouteSourceOrigin;
     };
 
 export interface RouteOperationRecord {

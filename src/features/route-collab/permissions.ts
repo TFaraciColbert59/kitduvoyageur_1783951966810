@@ -84,6 +84,10 @@ export function requiredPermissionForOperation(op: RouteOperationInput): RoutePe
     case 'apply_routing_result':
     case 'set_sport_profile':
     case 'apply_variant':
+    case 'update_point':
+    case 'split_section':
+    case 'merge_sections':
+    case 'import_track':
       return 'route.edit_geometry';
     case 'add_variant':
       return 'route.propose';
@@ -91,6 +95,12 @@ export function requiredPermissionForOperation(op: RouteOperationInput): RoutePe
     case 'move_day_boundary':
     case 'update_stage_note':
     case 'set_overnight':
+    case 'cut_stage_at':
+    case 'apply_stage_split':
+    case 'set_stage_schedule':
+    case 'insert_rest_day':
+    case 'insert_short_stage':
+    case 'remove_stage':
       return 'route.edit_stages';
     case 'revert_to_seq':
       return 'route.publish';
