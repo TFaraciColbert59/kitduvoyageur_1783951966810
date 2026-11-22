@@ -534,26 +534,7 @@ function MyClubsPane({
             <b><AnimatedNumber value={activeClub.totalDplus ?? 0} suffix=" m" /></b>
           </div>
         </div>
-        <div className="club-hero-footer">
-          {members.length > 0 ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <div className="club-avatar-stack">
-                {members.slice(0, 4).map((m) => (
-                  <span key={m.id} className="club-avatar-stack-item" title={m.name}>
-                    {m.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.avatarUrl} alt="" loading="lazy" decoding="async" />
-                    ) : (
-                      m.name.charAt(0).toUpperCase()
-                    )}
-                  </span>
-                ))}
-              </div>
-              <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>
-                {members.length} en cordée
-              </span>
-            </div>
-          ) : null}
+        <div className="club-hero-footer" style={{ justifyContent: 'flex-end' }}>
           <button
             type="button"
             className="lkdv-carnet-btn-soft"
