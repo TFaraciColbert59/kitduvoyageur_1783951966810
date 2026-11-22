@@ -4397,16 +4397,26 @@ phone.addEventListener('scroll', e => {
     t.classList.contains('sh-b') ||
     t.classList.contains('ig-feed');
   if (!isVerticalPane) return;
-  if (t.scrollTop > 8) {
+  const now = Date.now();
+  const prevTop = typeof t.__lkdvPrevScrollTop === 'number' ? t.__lkdvPrevScrollTop : t.scrollTop;
+  const curTop = t.scrollTop;
+  t.__lkdvPrevScrollTop = curTop;
+
+  // Ignore layout-driven scroll clamping during the 520ms map expand/collapse CSS spring transition
+  if (now - (G.mapCollapsedAt || 0) < 620 || now - (G.mapManualOpenAt || 0) < 620) {
+    return;
+  }
+
+  if (curTop > 12 && curTop > prevTop + 2) {
     if (!S.tabMin) { S.tabMin = true; }
-    const recentlyOpenedManually = Date.now() - (G.mapManualOpenAt || 0) < 420;
-    const scrolledFurtherDown = G.mapOpenScrollTop == null || (t.scrollTop - G.mapOpenScrollTop) > 10;
-    if (!S.mapCollapsed && !S.big && !recentlyOpenedManually && scrolledFurtherDown) {
+    const scrolledFurtherDown = G.mapOpenScrollTop == null || (curTop - G.mapOpenScrollTop) > 12;
+    if (!S.mapCollapsed && !S.big && scrolledFurtherDown) {
       S.mapCollapsed = true;
+      G.mapCollapsedAt = now;
       G.mapOpenScrollTop = null;
       applyShell();
     }
-  } else if (t.scrollTop <= 4) {
+  } else if (curTop <= 2 && prevTop > 6 && curTop < prevTop && now - (G.lastDownGestureAt || 0) > 450) {
     let changed = false;
     if (S.tabMin) {
       S.tabMin = false;
@@ -4414,7 +4424,7 @@ phone.addEventListener('scroll', e => {
     }
     if (S.mapCollapsed) {
       S.mapCollapsed = false;
-      G.mapManualOpenAt = Date.now();
+      G.mapManualOpenAt = now;
       G.mapOpenScrollTop = 0;
       changed = true;
     }
@@ -4430,30 +4440,35 @@ phone.addEventListener('wheel', e => {
   if (!inCardOrSheet) return;
   const inCardOnly = inCardOrSheet.id === 'card';
   if (inCardOnly && S.igTab === 1) {
-    if (S.mapCollapsed) {
-      S.mapCollapsed = false;
-      S.tabMin = false;
-      G.mapManualOpenAt = Date.now();
-      G.mapOpenScrollTop = 0;
-      applyShell();
-    }
     return;
   }
+  const now = Date.now();
   const scrollPane = target.closest('.lkdv-lens-pane, .card-scroll, .sh-b, .ig-feed, #card');
   const currentScrollTop = scrollPane ? scrollPane.scrollTop : 0;
-  if (e.deltaY > 6 && !S.mapCollapsed && !S.big) {
-    const recentlyOpenedManually = Date.now() - (G.mapManualOpenAt || 0) < 420;
-    if (!recentlyOpenedManually) {
+  if (e.deltaY > 10) {
+    G.lastDownGestureAt = now;
+    G.lastUpGestureAt = 0;
+    if (!S.mapCollapsed && !S.big && now - (G.mapManualOpenAt || 0) > 620 && now - (G.mapCollapsedAt || 0) > 620) {
       S.mapCollapsed = true;
+      G.mapCollapsedAt = now;
       G.mapOpenScrollTop = null;
       applyShell();
     }
-  } else if (e.deltaY < -6 && S.mapCollapsed && currentScrollTop <= 4) {
-    S.mapCollapsed = false;
-    S.tabMin = false;
-    G.mapManualOpenAt = Date.now();
-    G.mapOpenScrollTop = 0;
-    applyShell();
+  } else if (e.deltaY < -10) {
+    G.lastUpGestureAt = now;
+    if (
+      S.mapCollapsed &&
+      currentScrollTop <= 2 &&
+      now - (G.mapCollapsedAt || 0) > 620 &&
+      now - (G.mapManualOpenAt || 0) > 620 &&
+      now - (G.lastDownGestureAt || 0) > 380
+    ) {
+      S.mapCollapsed = false;
+      S.tabMin = false;
+      G.mapManualOpenAt = now;
+      G.mapOpenScrollTop = 0;
+      applyShell();
+    }
   }
 }, { passive: true });
 const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
