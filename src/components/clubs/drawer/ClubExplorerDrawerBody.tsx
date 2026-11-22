@@ -599,7 +599,7 @@ function MyClubsPane({
           type="button"
           className="club-glass-card"
           style={{ textAlign: 'left', cursor: 'pointer', border: 0 }}
-          onClick={() => onSwitchTabAndLens(1, 3)}
+          onClick={() => onSwitchTabAndLens(4, 0)}
         >
           <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>Salons</div>
           <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>

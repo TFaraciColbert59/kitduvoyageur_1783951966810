@@ -52,6 +52,7 @@ import { ClubExplorerDrawerBody } from './ClubExplorerDrawerBody';
 import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
 import { ClubSortiesDrawerBody } from './ClubSortiesDrawerBody';
 import { ClubCoffreDrawerBody } from './ClubCoffreDrawerBody';
+import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type {
@@ -135,12 +136,13 @@ export function ClubDrawerHost({
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
   const [internalMode, setInternalMode] = useState<'main' | 'create'>(mode);
-  const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(3, Math.max(0, initialTab)));
+  const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(4, Math.max(0, initialTab)));
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialSearch ? 2 : initialSubTab,
     1: initialTab === 1 ? initialSubTab : 0,
     2: initialTab === 2 ? initialSubTab : 0,
     3: initialTab === 3 ? initialSubTab : 0,
+    4: initialTab === 4 ? initialSubTab : 0,
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -402,7 +404,6 @@ export function ClubDrawerHost({
             { id: 'members-all', label: 'Tous les membres', icon: <Users size={15} aria-hidden="true" /> },
             { id: 'members-guides', label: 'Encadrants, sécurité & invitations', icon: <ShieldCheck size={15} aria-hidden="true" /> },
             { id: 'members-binomes', label: 'Binômes & matching', icon: <Handshake size={15} aria-hidden="true" /> },
-            { id: 'members-salons', label: 'Salons du club', icon: <MessageCircle size={15} aria-hidden="true" /> },
           ],
       2: [
         { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={15} aria-hidden="true" /> },
@@ -414,6 +415,10 @@ export function ClubDrawerHost({
         { id: 'vault-kits', label: 'Kits types du club', icon: <Backpack size={15} aria-hidden="true" /> },
         { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={15} aria-hidden="true" /> },
         { id: 'vault-challenges', label: 'Défis & classements', icon: <Trophy size={15} aria-hidden="true" /> },
+      ],
+      4: [
+        { id: 'salons-chat', label: 'Discussions en direct', icon: <MessageCircle size={15} aria-hidden="true" /> },
+        { id: 'salons-channels', label: 'Canaux & annonces', icon: <Layers size={15} aria-hidden="true" /> },
       ],
     }),
     [inspectedMember],
@@ -440,6 +445,7 @@ export function ClubDrawerHost({
         badge: upcomingOutingsCount > 0 ? upcomingOutingsCount : undefined,
       },
       { id: 'coffre', label: 'Sac et coffre matériel du club', icon: <Backpack size={18} aria-hidden="true" /> },
+      { id: 'salons', label: 'Salons de discussion du club', icon: <MessageCircle size={18} aria-hidden="true" /> },
     ],
     [newArrivalsCount, upcomingOutingsCount],
   );
@@ -953,6 +959,21 @@ export function ClubDrawerHost({
                     setInternalMode('create');
                     setTab(cTab);
                   }}
+                  onToast={emitToast}
+                />
+              ) : null}
+
+              {tab === 4 ? (
+                <ClubSalonsDrawerBody
+                  activeSubTab={index}
+                  active={active}
+                  activeClub={activeClub}
+                  members={members}
+                  currentUserId={currentUserId}
+                  onSwitchSubTab={(nextSub) =>
+                    setSubTabs((prev) => ({ ...prev, 4: nextSub }))
+                  }
+                  onToggleJoinClub={onToggleJoinClub}
                   onToast={emitToast}
                 />
               ) : null}

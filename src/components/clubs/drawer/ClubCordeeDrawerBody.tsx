@@ -685,16 +685,6 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
     );
   }
 
-  if (props.lensId === 'members-salons') {
-    return (
-      <div className="lkdv-carnet-drawer-pane" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {props.active ? (
-          <ClubG02Workspace clubId={props.activeClub.id} initialSection="salons" lockedSection />
-        ) : null}
-      </div>
-    );
-  }
-
   if (props.lensId === 'members-guides') {
     const rank: Record<string, number> = { Fondateur: 0, 'Guide & Sécurité': 1, Encadrant: 2 };
     const guides = unblockedMembers
