@@ -350,6 +350,10 @@
   overflow-x: hidden !important;
 }
 
+.lkdv-club-carnet-drawer .lkdv-lens-pane {
+  padding-bottom: 56px !important;
+}
+
 /* 5. Styles internes des Volets DrawerShell du Club */
 .lkdv-clubs-v8 .club-drawer-pane-content {
   display: flex;
@@ -810,12 +814,14 @@
   grid-template-rows: calc(100% - 52px) 52px !important;
 }
 
-.lkdv-clubs-v8 .phone.sheet-open .sw-wrap[data-det="card"] .sheet,
 .lkdv-clubs-v8 .phone.sheet-open .sw-wrap[data-det="medium"] .sheet {
   bottom: calc(33% + 10px) !important;
 }
 
-.lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] .sheet,
+.lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] {
+  bottom: 54px !important;
+}
+
 .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="medium"] .sheet {
   bottom: 54px !important;
 }
@@ -827,7 +833,9 @@
   .lkdv-clubs-v8 .phone.sheet-open.map-collapsed {
     grid-template-rows: calc(100% - 56px) 56px !important;
   }
-  .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] .sheet,
+  .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] {
+    bottom: 58px !important;
+  }
   .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="medium"] .sheet {
     bottom: 58px !important;
   }
