@@ -673,13 +673,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           .select('id, club_id, author_id, title, content, is_pinned, replies_count, media_url, created_at')
           .eq('club_id', clubRow.id)
           .order('created_at', { ascending: false })
-          .limit(40),
+          .limit(600),
         supabase
           .from('club_events')
           .select('*')
           .eq('club_id', clubRow.id)
           .order('event_date', { ascending: false })
-          .limit(30),
+          .limit(100),
         supabase
           .from('clubs')
           .select('id, name, slug, description, category, cover_image, members_count, privacy, rules, location_label, primary_sport, created_by, created_at')
@@ -732,6 +732,20 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         );
         for (const resMap of chunkResults) {
           Object.assign(profilesMap, resMap);
+        }
+      }
+      if (user?.id && !profilesMap[user.id]) {
+        try {
+          const { data: selfProf } = await supabase
+            .from('user_profiles')
+            .select('id, handle, full_name, avatar_url, trust_score, bio, location, website, loyalty_points, loyalty_level, xp, level, created_at')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (selfProf?.id) {
+            profilesMap[selfProf.id] = selfProf;
+          }
+        } catch {
+          // ignore if mock does not support user_profiles fallback
         }
       }
 
