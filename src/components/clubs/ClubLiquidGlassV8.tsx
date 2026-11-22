@@ -667,19 +667,19 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           .from('club_members')
           .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in')
           .eq('club_id', clubRow.id)
-          .limit(100),
+          .limit(600),
         supabase
           .from('club_topics')
           .select('id, club_id, author_id, title, content, is_pinned, replies_count, media_url, created_at')
           .eq('club_id', clubRow.id)
           .order('created_at', { ascending: false })
-          .limit(20),
+          .limit(40),
         supabase
           .from('club_events')
           .select('*')
           .eq('club_id', clubRow.id)
           .order('event_date', { ascending: false })
-          .limit(20),
+          .limit(30),
         supabase
           .from('clubs')
           .select('id, name, slug, description, category, cover_image, members_count, privacy, rules, location_label, primary_sport, created_by, created_at')
@@ -721,19 +721,40 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           ].filter(Boolean),
         ),
       );
-      const profilesMap: Record<string, any> =
-        userIds.length > 0 ? await fetchPublicProfilesWith(supabase as any, userIds) : {};
+      const profilesMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const chunks: string[][] = [];
+        for (let i = 0; i < userIds.length; i += 150) {
+          chunks.push(userIds.slice(i, i + 150));
+        }
+        const chunkResults = await Promise.all(
+          chunks.map((chunk) => fetchPublicProfilesWith(supabase as any, chunk)),
+        );
+        for (const resMap of chunkResults) {
+          Object.assign(profilesMap, resMap);
+        }
+      }
 
       const followedSet = new Set<string>();
       const blockedList: string[] = [];
       if (user?.id && userIds.length > 0) {
         try {
-          const [followsRes, blocksRes] = await Promise.all([
-            supabase.from('user_follows').select('following_id').eq('follower_id', user.id).in('following_id', userIds),
+          const followChunks: string[][] = [];
+          for (let i = 0; i < userIds.length; i += 150) {
+            followChunks.push(userIds.slice(i, i + 150));
+          }
+          const [followResponses, blocksRes] = await Promise.all([
+            Promise.all(
+              followChunks.map((chunk) =>
+                supabase.from('user_follows').select('following_id').eq('follower_id', user.id).in('following_id', chunk),
+              ),
+            ),
             supabase.from('user_blocks').select('blocker_id, blocked_id').eq('blocker_id', user.id),
           ]);
-          for (const f of followsRes.data || []) {
-            if (f.following_id) followedSet.add(f.following_id);
+          for (const fRes of followResponses) {
+            for (const f of fRes.data || []) {
+              if (f.following_id) followedSet.add(f.following_id);
+            }
           }
           for (const b of blocksRes.data || []) {
             if (b.blocked_id) blockedList.push(b.blocked_id);

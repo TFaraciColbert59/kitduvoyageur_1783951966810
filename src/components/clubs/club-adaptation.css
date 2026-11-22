@@ -202,6 +202,116 @@
   max-width: 88px !important;
 }
 
+/* 4b. Filtre de pôles flottant en bas à droite (à gauche de .ig-tabs-float) */
+.lkdv-clubs-v8 #card > .club-poles-float {
+  position: absolute !important;
+  right: 106px !important;
+  bottom: 10px !important;
+  z-index: 13 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 8px !important;
+  pointer-events: none !important;
+}
+.lkdv-clubs-v8 .club-poles-float--inline {
+  position: relative !important;
+  align-self: flex-end !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  gap: 8px !important;
+}
+.lkdv-clubs-v8 .club-poles-trigger {
+  pointer-events: auto !important;
+  height: 30px !important;
+  padding: 0 11px !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font: 600 11.5px/1 var(--sf, -apple-system, system-ui, sans-serif) !important;
+  color: #17402c !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42) 55%, rgba(255, 255, 255, 0.52)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.45), 0 0 0 0.5px rgba(23, 43, 36, 0.14), 0 8px 22px rgba(23, 43, 36, 0.12) !important;
+  cursor: pointer !important;
+  max-width: 145px !important;
+}
+.lkdv-clubs-v8 .club-poles-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lkdv-clubs-v8 .club-poles-trigger.is-filtered {
+  background: #17402c !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+.lkdv-clubs-v8 .club-poles-popover {
+  pointer-events: auto !important;
+  width: min(272px, calc(100vw - 44px)) !important;
+  max-height: 280px !important;
+  overflow-y: auto !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  background: rgba(248, 250, 247, 0.92) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.9) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 16px 36px rgba(16, 32, 25, 0.22) !important;
+}
+.lkdv-clubs-v8 .club-poles-option {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  padding: 7px 10px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  color: #172b24 !important;
+}
+.lkdv-clubs-v8 .club-poles-option:hover,
+.lkdv-clubs-v8 .club-poles-option.is-active {
+  background: rgba(23, 64, 44, 0.08) !important;
+  color: #17402c !important;
+}
+.lkdv-clubs-v8 .club-poles-option b {
+  display: block;
+  font: 600 12px/1.2 var(--sf);
+}
+.lkdv-clubs-v8 .club-poles-option small {
+  display: block;
+  font: 400 10.5px/1.25 var(--sf);
+  color: #56665d;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lkdv-clubs-v8 .club-poles-add-btn {
+  width: 100% !important;
+  height: 32px !important;
+  border-radius: 12px !important;
+  border: 1px dashed rgba(23, 64, 44, 0.25) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  color: #17402c !important;
+  font: 600 11.5px/1 var(--sf) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  cursor: pointer !important;
+}
+
 /* Éviter toute fuite visuelle de #card lorsque la sheet/drawer est ouverte */
 .lkdv-clubs-v8 .phone.sheet-open #card {
   opacity: 0 !important;

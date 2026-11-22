@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Check, Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { useAuth } from '@/contexts/AuthContext';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
@@ -411,9 +412,16 @@ export function ClubInlineFeed({
   onOpenCreatePost,
 }: ClubInlineFeedProps) {
   const [internalPoleId, setInternalPoleId] = useState<string>('all');
+  const [polesMenuOpen, setPolesMenuOpen] = useState(false);
   const [showAddPoleForm, setShowAddPoleForm] = useState(false);
   const [newPoleName, setNewPoleName] = useState('');
   const [newPoleSpecialty, setNewPoleSpecialty] = useState('');
+  const [cardHost, setCardHost] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    setCardHost(document.getElementById('card'));
+  }, [posts.length, poles.length]);
 
   const selectedPoleId = activePoleId ?? internalPoleId;
   const setSelectedPoleId = (next: string) => {
@@ -433,8 +441,173 @@ export function ClubInlineFeed({
 
   const isLargeClubWithoutPoles = poles.length === 0 && membersCount >= 10;
 
+  const polesBottomRightDock =
+    poles.length > 0 || (isLargeClubWithoutPoles && onEnableRecommendedPoles) ? (
+      <div
+        className={cardHost ? 'club-poles-float' : 'club-poles-float club-poles-float--inline'}
+        aria-label="Filtres de pôles du club"
+      >
+        {polesMenuOpen ? (
+          <div
+            className="club-poles-popover"
+            role="tablist"
+            aria-label="Filtrer le fil d'actualité par pôle"
+          >
+            {poles.length > 0 ? (
+              <>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedPoleId === 'all'}
+                  className={`club-poles-option${selectedPoleId === 'all' ? ' is-active' : ''}`}
+                  onClick={() => {
+                    setSelectedPoleId('all');
+                    setPolesMenuOpen(false);
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <b>Tous les pôles</b>
+                    <small>Fil complet du club</small>
+                  </div>
+                  {selectedPoleId === 'all' ? <Check size={14} aria-hidden="true" /> : null}
+                </button>
+
+                {poles.map((pole) => {
+                  const isCurrent = selectedPoleId === pole.id;
+                  return (
+                    <button
+                      key={pole.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isCurrent}
+                      className={`club-poles-option${isCurrent ? ' is-active' : ''}`}
+                      onClick={() => {
+                        setSelectedPoleId(isCurrent ? 'all' : pole.id);
+                        setPolesMenuOpen(false);
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <b>{pole.name}</b>
+                        <small>{pole.specialty}</small>
+                      </div>
+                      {isCurrent ? <Check size={14} aria-hidden="true" /> : null}
+                    </button>
+                  );
+                })}
+
+                {onAddPole ? (
+                  showAddPoleForm ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!newPoleName.trim()) return;
+                        onAddPole({
+                          name: newPoleName.trim(),
+                          specialty: newPoleSpecialty.trim() || 'Spécialité terrain du club',
+                        });
+                        setNewPoleName('');
+                        setNewPoleSpecialty('');
+                        setShowAddPoleForm(false);
+                        setPolesMenuOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        padding: 8,
+                        borderRadius: 12,
+                        background: 'rgba(23, 64, 44, 0.05)',
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={newPoleName}
+                        onChange={(e) => setNewPoleName(e.target.value)}
+                        placeholder="Nom du pôle (ex : Pôle Alpinisme)"
+                        aria-label="Nom du pôle"
+                        className="club-glass-input"
+                        required
+                      />
+                      <input
+                        type="text"
+                        value={newPoleSpecialty}
+                        onChange={(e) => setNewPoleSpecialty(e.target.value)}
+                        placeholder="Spécialité (ex : Courses d’arêtes)"
+                        aria-label="Spécialité du pôle"
+                        className="club-glass-input"
+                      />
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          type="button"
+                          className="reseau-btn active"
+                          style={{ flex: 1, height: 28, fontSize: 11 }}
+                          onClick={() => setShowAddPoleForm(false)}
+                        >
+                          Annuler
+                        </button>
+                        <button
+                          type="submit"
+                          className="reseau-btn primary"
+                          style={{ flex: 1, height: 28, fontSize: 11 }}
+                        >
+                          Créer
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      className="club-poles-add-btn"
+                      onClick={() => setShowAddPoleForm(true)}
+                    >
+                      <Plus size={13} aria-hidden="true" />
+                      <span>Ajouter un pôle</span>
+                    </button>
+                  )
+                ) : null}
+              </>
+            ) : isLargeClubWithoutPoles && onEnableRecommendedPoles ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 4 }}>
+                <div style={{ fontSize: 11.5, color: '#172b24', lineHeight: 1.35 }}>
+                  <b style={{ display: 'block', marginBottom: 2 }}>Pôles recommandés</b>
+                  <span style={{ color: '#56665d' }}>
+                    Organisez les grands clubs par spécialité pour filtrer le fil d’actualité.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="reseau-btn primary"
+                  style={{ height: 30, fontSize: 11.5, width: '100%' }}
+                  onClick={() => {
+                    onEnableRecommendedPoles();
+                    setPolesMenuOpen(false);
+                  }}
+                >
+                  <Sparkles size={12} aria-hidden="true" />
+                  <span>Activer les pôles</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          className={`club-poles-trigger${selectedPole ? ' is-filtered' : ''}`}
+          aria-expanded={polesMenuOpen}
+          aria-label={selectedPole ? `Filtre actif : ${selectedPole.name}` : 'Filtrer par pôle'}
+          title={selectedPole ? `${selectedPole.name} · ${selectedPole.specialty}` : 'Filtrer le fil par pôle'}
+          onClick={() => setPolesMenuOpen((v) => !v)}
+        >
+          <Layers size={14} aria-hidden="true" />
+          <span>{selectedPole ? selectedPole.name.replace(/^Pôle\s+/i, '') : 'Pôles'}</span>
+        </button>
+      </div>
+    ) : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {polesBottomRightDock && cardHost ? createPortal(polesBottomRightDock, cardHost) : polesBottomRightDock}
       {/* Stories à la une du club (dans le fil d'actu, style identique à Carnet) */}
       {highlights.length > 0 || canManageStories ? (
         <div
@@ -532,251 +705,7 @@ export function ClubInlineFeed({
         </div>
       ) : null}
 
-      {/* Barre de Pôles de spécialité du club (optionnelle, recommandée pour les gros clubs) */}
-      {poles.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '2px 4px 0' }}>
-          <div
-            role="tablist"
-            aria-label="Filtrer le fil d'actualité par pôle"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              paddingBottom: 2,
-            }}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedPoleId === 'all'}
-              onClick={() => setSelectedPoleId('all')}
-              style={{
-                flexShrink: 0,
-                height: 28,
-                padding: '0 11px',
-                borderRadius: 999,
-                border:
-                  selectedPoleId === 'all'
-                    ? '1px solid rgba(23, 64, 44, 0.25)'
-                    : '1px solid rgba(23, 43, 36, 0.1)',
-                background:
-                  selectedPoleId === 'all'
-                    ? '#17402c'
-                    : 'rgba(255, 255, 255, 0.55)',
-                color: selectedPoleId === 'all' ? '#ffffff' : '#172b24',
-                font: '600 11.5px var(--sf)',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
-              <Layers size={12} aria-hidden="true" />
-              <span>Tous les pôles</span>
-            </button>
-
-            {poles.map((pole) => {
-              const isCurrent = selectedPoleId === pole.id;
-              return (
-                <button
-                  key={pole.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isCurrent}
-                  title={`${pole.name} — ${pole.specialty}`}
-                  onClick={() => setSelectedPoleId(isCurrent ? 'all' : pole.id)}
-                  style={{
-                    flexShrink: 0,
-                    height: 28,
-                    padding: '0 11px',
-                    borderRadius: 999,
-                    border: isCurrent
-                      ? '1px solid rgba(23, 64, 44, 0.25)'
-                      : '1px solid rgba(23, 43, 36, 0.1)',
-                    background: isCurrent
-                      ? '#17402c'
-                      : 'rgba(255, 255, 255, 0.55)',
-                    color: isCurrent ? '#ffffff' : '#172b24',
-                    font: '600 11.5px var(--sf)',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                  }}
-                >
-                  <span>{pole.name}</span>
-                </button>
-              );
-            })}
-
-            {onAddPole ? (
-              <button
-                type="button"
-                onClick={() => setShowAddPoleForm((v) => !v)}
-                aria-label="Ajouter un pôle de spécialité"
-                title="Ajouter un pôle de spécialité"
-                style={{
-                  flexShrink: 0,
-                  height: 28,
-                  padding: '0 10px',
-                  borderRadius: 999,
-                  border: '1px dashed rgba(23, 64, 44, 0.28)',
-                  background: 'rgba(255, 255, 255, 0.35)',
-                  color: '#17402c',
-                  font: '600 11px var(--sf)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <Plus size={12} aria-hidden="true" />
-                <span>Pôle</span>
-              </button>
-            ) : null}
-          </div>
-
-          {selectedPole ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                padding: '6px 10px',
-                borderRadius: 12,
-                background: 'rgba(23, 64, 44, 0.06)',
-                fontSize: 11.5,
-                color: '#172b24',
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <b style={{ color: '#17402c' }}>{selectedPole.name}</b>
-                <span style={{ color: '#56665d' }}> · Spécialité : {selectedPole.specialty}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedPoleId('all')}
-                aria-label="Réinitialiser le filtre de pôle"
-                style={{
-                  border: 0,
-                  background: 'none',
-                  color: '#56665d',
-                  cursor: 'pointer',
-                  padding: 2,
-                  display: 'inline-flex',
-                }}
-              >
-                <X size={13} aria-hidden="true" />
-              </button>
-            </div>
-          ) : null}
-
-          {showAddPoleForm && onAddPole ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newPoleName.trim()) return;
-                onAddPole({
-                  name: newPoleName.trim(),
-                  specialty: newPoleSpecialty.trim() || 'Spécialité terrain du club',
-                });
-                setNewPoleName('');
-                setNewPoleSpecialty('');
-                setShowAddPoleForm(false);
-              }}
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 6,
-                padding: '8px 10px',
-                borderRadius: 14,
-                background: 'rgba(255, 255, 255, 0.52)',
-                border: '1px solid rgba(23, 43, 36, 0.1)',
-              }}
-            >
-              <input
-                type="text"
-                value={newPoleName}
-                onChange={(e) => setNewPoleName(e.target.value)}
-                placeholder="Nom du pôle (ex : Pôle Alpinisme)"
-                aria-label="Nom du pôle"
-                style={{
-                  flex: '1 1 130px',
-                  height: 30,
-                  padding: '0 10px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(23, 43, 36, 0.14)',
-                  background: 'rgba(255, 255, 255, 0.85)',
-                  fontSize: 12,
-                }}
-                required
-              />
-              <input
-                type="text"
-                value={newPoleSpecialty}
-                onChange={(e) => setNewPoleSpecialty(e.target.value)}
-                placeholder="Spécialité (ex : Courses d’arêtes & glacier)"
-                aria-label="Spécialité du pôle"
-                style={{
-                  flex: '1 1 150px',
-                  height: 30,
-                  padding: '0 10px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(23, 43, 36, 0.14)',
-                  background: 'rgba(255, 255, 255, 0.85)',
-                  fontSize: 12,
-                }}
-              />
-              <button
-                type="submit"
-                className="reseau-btn primary"
-                style={{ height: 30, padding: '0 12px', fontSize: 11.5 }}
-              >
-                Créer le pôle
-              </button>
-            </form>
-          ) : null}
-        </div>
-      ) : isLargeClubWithoutPoles && onEnableRecommendedPoles ? (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            padding: '7px 11px',
-            margin: '2px 4px 0',
-            borderRadius: 14,
-            background: 'rgba(23, 64, 44, 0.06)',
-            fontSize: 11.5,
-            color: '#172b24',
-          }}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#56665d' }}>
-            <Sparkles size={13} color="#17402c" aria-hidden="true" />
-            <span>Recommandé pour les grands clubs : filtrer le fil par Pôles de spécialité</span>
-          </span>
-          <button
-            type="button"
-            onClick={onEnableRecommendedPoles}
-            style={{
-              border: 0,
-              borderRadius: 999,
-              padding: '4px 10px',
-              background: '#17402c',
-              color: '#fff',
-              font: '600 11px var(--sf)',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            Activer les pôles
-          </button>
-        </div>
-      ) : null}
+      {/* Fil d'actualité */}
 
       {!filteredPosts || filteredPosts.length === 0 ? (
         <div
