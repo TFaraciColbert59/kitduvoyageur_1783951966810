@@ -228,7 +228,7 @@ async function main() {
         '#17402C',
         '/assets/images/account-bg.webp',
         'Alpinisme & Trekking',
-        'public',
+        'open',
         $2,
         184,
         true,
@@ -335,7 +335,7 @@ async function main() {
           club_id, organizer_id, title, description, event_date, starts_at, ends_at,
           location, meeting_point, max_participants, participants_count,
           sport, format, visibility, lat, lng, waitlist_enabled, pace_groups
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'collective','club',$13,$14,true,$15)`,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'trail_outing','club_only',$13,$14,true,$15)`,
         [
           clubId,
           organizerId,
@@ -442,7 +442,7 @@ async function main() {
     const challengesSpec = [
       { title: 'Défi 50 000 m D+ Automne', desc: 'Cumul collectif de dénivelé positif sur le massif alpin.', metric: 'elevation_gain_m', target: 50000, xp: 500, badge: 'Grimpeur Alpin' },
       { title: 'Traversée des 3 Massifs (600 km)', desc: 'Distance cumulée en rando, trail et alpinisme.', metric: 'distance_m', target: 600000, xp: 450, badge: 'Grand Voyageur' },
-      { title: '20 Sorties de Cordée', desc: 'Sorties collectives partagées et tracées en GPX.', metric: 'outings_count', target: 20, xp: 350, badge: 'Chef de Cordée' },
+      { title: '20 Sorties de Cordée', desc: 'Sorties collectives partagées et tracées en GPX.', metric: 'activities_count', target: 20, xp: 350, badge: 'Chef de Cordée' },
       { title: '120 h en Altitude', desc: 'Temps actif cumulé au-dessus de 1 500 m.', metric: 'duration_s', target: 432000, xp: 400, badge: 'Haute Montagne' },
     ];
     for (const ch of challengesSpec) {
@@ -458,8 +458,8 @@ async function main() {
     console.log('10. Inserting 3 salons + 15 messages...');
     const channelsSpec = [
       { name: 'Général · Cordée', kind: 'general' },
-      { name: 'Covoiturage & Départs', kind: 'carpool' },
-      { name: 'Sécurité & Conditions Massif', kind: 'safety' },
+      { name: 'Covoiturage & Départs', kind: 'events' },
+      { name: 'Sécurité & Conditions Massif', kind: 'announcements' },
     ];
     const channelIds = [];
     for (const ch of channelsSpec) {
