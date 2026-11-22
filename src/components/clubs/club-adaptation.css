@@ -691,12 +691,12 @@
 }
 
 .lkdv-clubs-v8 .phone.map-collapsed {
-  grid-template-rows: calc(100% - 76px) 76px !important;
+  grid-template-rows: calc(100% - 116px) 116px !important;
 }
 
 @media (max-width: 767px) {
   .lkdv-clubs-v8 .phone.map-collapsed {
-    grid-template-rows: calc(100% - 92px) 92px !important;
+    grid-template-rows: calc(100% - 126px) 126px !important;
   }
 }
 
@@ -788,7 +788,7 @@
 .lkdv-clubs-v8 #club-map-pill.club-map-pill-launcher {
   position: absolute !important;
   left: 50% !important;
-  top: 8px !important;
+  top: 4px !important;
   bottom: auto !important;
   z-index: 35 !important;
   opacity: 0 !important;
