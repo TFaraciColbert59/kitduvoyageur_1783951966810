@@ -267,8 +267,7 @@ function InspectedMemberPane({
     [memberOutings],
   );
   const outingsCount = member.outingsCount ?? memberOutings.length;
-  const hasAnySharedContent =
-    memberPosts.length > 0 || memberOutings.length > 0 || memberGear.length > 0;
+  const hasAnySharedContent = memberPosts.length > 0 || memberGear.length > 0;
 
   return (
     <div
@@ -348,27 +347,6 @@ function InspectedMemberPane({
               </div>
             </>
           ) : null}
-          {memberOutings.length > 0 ? (
-            <>
-              <span className="lkdv-carnet-kit-eyebrow">
-                Sorties encadrées ({memberOutings.length})
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {memberOutings.map((o) => (
-                  <div key={o.id} className="lkdv-carnet-note-row">
-                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>
-                      {o.title}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
-                      {[o.dateLabel, o.km ? `${o.km} km` : null, o.dplus ? `+${o.dplus} m D+` : null]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : null}
           {memberGear.length > 0 ? (
             <>
               <span className="lkdv-carnet-kit-eyebrow">
@@ -404,33 +382,55 @@ function InspectedMemberPane({
 
       {lensId === 'm-outings' ? (
         memberOutings.length > 0 || publicCarnets.length > 0 ? (
-          <div className="lkdv-carnet-cards-col">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {memberOutings.map((o) => (
               <button
                 key={o.id}
                 type="button"
-                className="lkdv-carnet-budget-row"
-                style={{ width: '100%', border: 0, textAlign: 'left', cursor: 'pointer' }}
+                className="club-glass-card"
+                style={{
+                  width: '100%',
+                  border: 0,
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
                 onClick={() => onSwitchTabAndLens(2, 0, { inspectOuting: o })}
               >
-                <div>
-                  <b>{o.title}</b>
-                  <small>
-                    {o.date} · {o.massif}
-                  </small>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span className="club-badge-sage" style={{ whiteSpace: 'nowrap' }}>
+                    {o.date || 'À venir'}
+                  </span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
+                    {o.km > 0 ? (
+                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
+                        {o.km} km
+                      </span>
+                    ) : null}
+                    {o.dplus > 0 ? (
+                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
+                        +{o.dplus} m
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-                <b>
-                  {o.km} km · +{o.dplus} m
-                </b>
+                <b style={{ fontSize: 13.5, lineHeight: 1.3, color: 'var(--label)' }}>{o.title}</b>
+                {o.massif ? (
+                  <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{o.massif}</small>
+                ) : null}
               </button>
             ))}
             {publicCarnets.map((c) => (
-              <div key={c.id} className="lkdv-carnet-budget-row">
-                <div>
-                  <b>{c.title}</b>
-                  {c.massif ? <small>{c.massif}</small> : null}
+              <div key={c.id} className="club-glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', fontSize: 13, color: 'var(--label)' }}>{c.title}</b>
+                  {c.massif ? <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{c.massif}</small> : null}
                 </div>
-                <b>{c.distance_km ? `${Math.round(c.distance_km)} km` : 'Carnet'}</b>
+                <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
+                  {c.distance_km ? `${Math.round(c.distance_km)} km` : 'Carnet'}
+                </span>
               </div>
             ))}
           </div>
@@ -540,13 +540,21 @@ function InspectedMemberPane({
             </div>
           </div>
           {memberPosts.length > 0 ? (
-            <div className="lkdv-carnet-cards-col">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {memberPosts.map((exp) => (
                 <button
                   key={exp.id}
                   type="button"
-                  className="lkdv-carnet-budget-row"
-                  style={{ width: '100%', border: 0, textAlign: 'left', cursor: 'pointer' }}
+                  className="club-glass-card"
+                  style={{
+                    width: '100%',
+                    border: 0,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
                   onClick={() => {
                     onClose();
                     document
@@ -554,11 +562,56 @@ function InspectedMemberPane({
                       ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                 >
-                  <div>
-                    <b>{exp.spot || 'Publication club'}</b>
-                    {exp.caption ? <small>{exp.caption}</small> : null}
+                  {exp.mediaUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={exp.mediaUrl}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        objectFit: 'cover',
+                        flex: 'none',
+                      }}
+                    />
+                  ) : null}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <b
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--label)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {exp.spot || 'Publication club'}
+                      </b>
+                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap', flex: 'none' }}>
+                        {exp.timeAgo || 'Club'}
+                      </span>
+                    </div>
+                    {exp.caption ? (
+                      <p
+                        style={{
+                          margin: '3px 0 0',
+                          fontSize: 11.5,
+                          lineHeight: 1.35,
+                          color: 'var(--label2)',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {exp.caption}
+                      </p>
+                    ) : null}
                   </div>
-                  <b>{exp.timeAgo || 'Club'}</b>
                 </button>
               ))}
             </div>

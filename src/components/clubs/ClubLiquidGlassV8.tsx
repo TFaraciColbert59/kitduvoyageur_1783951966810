@@ -908,6 +908,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           : 'À venir';
         const leaderId = ev.organizer_id || ev.created_by;
         const leaderProfile = leaderId ? profilesMap[leaderId] : null;
+        const titleKmMatch = String(ev.title || '').match(/(\d+(?:[.,]\d+)?)\s*km/i);
+        const titleDplusMatch = String(ev.title || '').match(/\+\s*([\d\s\u00a0]+)\s*m/i);
+        const parsedKm = Number(ev.distance_km ?? (titleKmMatch ? titleKmMatch[1].replace(',', '.') : 0)) || 0;
+        const parsedDplus = Number(ev.elevation_gain_m ?? (titleDplusMatch ? titleDplusMatch[1].replace(/\s+/g, '') : 0)) || 0;
         return {
           id: ev.id,
           clubId: clubRow.id,
@@ -916,8 +920,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           startsAtIso: dt || undefined,
           dateLabel: formattedDate,
           massif: ev.location || ev.meeting_place || clubRow.location_label || clubRow.category || 'Montagne',
-          km: Number(ev.distance_km ?? 0),
-          dplus: Number(ev.elevation_gain_m ?? 0),
+          km: parsedKm,
+          dplus: parsedDplus,
           maxAlt: Number(ev.max_altitude_m ?? 0),
           status: outingStatus,
           leaderName: leaderProfile?.full_name || clubRow.name,

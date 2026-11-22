@@ -63,7 +63,7 @@ export async function GET(
         .select('*')
         .eq('club_id', id)
         .order('created_at', { ascending: false })
-        .limit(100),
+        .limit(400),
       supabase
         .from('club_standard_kits')
         .select('*')
