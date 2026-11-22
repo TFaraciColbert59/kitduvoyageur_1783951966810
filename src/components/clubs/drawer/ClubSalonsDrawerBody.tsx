@@ -494,7 +494,7 @@ export function ClubSalonsDrawerBody({
     <div
       className="club-drawer-pane-content"
       data-testid="club-salons-chat-pane"
-      style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100%' }}
+      style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: '1 1 auto', minHeight: '100%', paddingBottom: 0 }}
     >
       {/* Barre supérieure : sélecteur de canaux + recherche + rafraîchir */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -651,7 +651,13 @@ export function ClubSalonsDrawerBody({
           {visibleMessages.map((msg, idx) => {
             const isMine = Boolean(currentUserId && msg.authorId === currentUserId);
             const author = memberByUserId.get(msg.authorId);
-            const authorName = author?.name || (isMine ? 'Vous' : 'Membre du club');
+            const rawName = author?.name?.trim();
+            const authorName =
+              rawName && rawName !== 'Membre LKDV'
+                ? rawName
+                : author?.role === 'Fondateur'
+                  ? 'Alexandre Dumas'
+                  : author?.handle || (isMine ? 'Vous' : author?.role || 'Membre du club');
             const prev = idx > 0 ? visibleMessages[idx - 1] : null;
             const isGrouped = Boolean(prev && prev.authorId === msg.authorId);
             const showActions = selectedMsgId === msg.id;
@@ -823,10 +829,11 @@ export function ClubSalonsDrawerBody({
               bottom: 0,
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              padding: '8px 10px',
+              gap: 6,
+              padding: '5px 6px 5px 12px',
+              marginRight: 94,
               borderRadius: 999,
-              background: 'rgba(255, 255, 255, 0.92)',
+              background: 'rgba(255, 255, 255, 0.94)',
               boxShadow: 'inset 0 0 0 1px rgba(23, 64, 44, 0.14), 0 8px 20px rgba(16, 32, 25, 0.1)',
               backdropFilter: 'blur(16px)',
               marginTop: 'auto',

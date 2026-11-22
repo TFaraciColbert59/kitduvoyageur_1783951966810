@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Eye,
   Layers,
   Package,
   Plus,
@@ -41,6 +42,33 @@ interface CollectiveLoadItem {
   name: string;
   weightG: number;
   category: string;
+}
+
+function resolveGearProductImage(name: string, category: string, imageUrl?: string): string {
+  if (imageUrl) return imageUrl;
+  const hay = `${name} ${category}`.toLowerCase();
+  if (hay.includes('tente') || hay.includes('bivouac') || hay.includes('abri')) {
+    return '/assets/images/product-tent.jpg';
+  }
+  if (hay.includes('duvet') || hay.includes('couchage') || hay.includes('matelas')) {
+    return '/assets/images/product-sleeping.jpg';
+  }
+  if (hay.includes('rechaud') || hay.includes('réchaud') || hay.includes('cuisine') || hay.includes('jetboil')) {
+    return '/assets/images/gear-stove.jpg';
+  }
+  if (hay.includes('frontale') || hay.includes('eclairage') || hay.includes('éclairage') || hay.includes('lampe')) {
+    return '/assets/images/product-headlamp.jpg';
+  }
+  if (hay.includes('crampon') || hay.includes('chaussure') || hay.includes('piolet') || hay.includes('baton') || hay.includes('bâton')) {
+    return '/assets/images/gear-boots.jpg';
+  }
+  if (hay.includes('veste') || hay.includes('doudoune') || hay.includes('textile')) {
+    return '/assets/images/product-jacket.jpg';
+  }
+  if (hay.includes('gourde') || hay.includes('hydrat')) {
+    return '/assets/images/product-bottle.jpg';
+  }
+  return '/assets/images/product-backpack.jpg';
 }
 
 function normalizeText(value: string): string {
@@ -457,13 +485,13 @@ export function ClubCoffreDrawerBody({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={g.imageUrl || generatedProductImage(g.name, g.category)}
-                      alt=""
+                      src={resolveGearProductImage(g.name, g.category, g.imageUrl)}
+                      alt={g.name}
                       loading="lazy"
                       decoding="async"
                       style={{
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         borderRadius: 12,
                         objectFit: 'cover',
                         background: 'rgba(23, 64, 44, 0.06)',
@@ -510,17 +538,12 @@ export function ClubCoffreDrawerBody({
                     style={{ flex: 'none' }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onToggleReserveGear(g.id);
-                      onToast?.({
-                        title: g.reservedByMe ? 'Emprunt libéré' : 'Équipement réservé ✓',
-                        subtitle: `${g.name} (${g.ownerName})`,
-                        undo: () => onToggleReserveGear(g.id),
-                      });
+                      setSelectedGearIndex(idx);
                     }}
-                    aria-label={g.reservedByMe ? 'Réservé' : 'Emprunter'}
-                    title={g.reservedByMe ? 'Réservé' : 'Emprunter'}
+                    aria-label={g.reservedByMe ? 'Réservé · Voir la fiche' : 'Voir l’équipement'}
+                    title={g.reservedByMe ? 'Réservé · Voir' : 'Voir'}
                   >
-                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
+                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
                   </button>
                 </ClubStaggerCard>
               );
@@ -557,7 +580,7 @@ export function ClubCoffreDrawerBody({
                 brand: g.brand || null,
                 category: g.category || null,
                 weightG: g.weightG || null,
-                image: g.imageUrl || generatedProductImage(g.name, g.category),
+                image: resolveGearProductImage(g.name, g.category, g.imageUrl),
                 wear: null,
                 conditionLabel: g.condition || 'Vérifié',
                 description: `Équipement mutualisé dans le club ${activeClub.name} par ${g.ownerName} (@${g.ownerHandle}).`,

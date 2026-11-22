@@ -980,7 +980,7 @@ export function ClubDrawerHost({
           )}
         />
 
-        {resumePill && resumePill.key === activeLensKey ? (
+        {resumePill && resumePill.key === activeLensKey && tab !== 4 ? (
           <div className="club-drawer-floating-left">
             <button
               type="button"
