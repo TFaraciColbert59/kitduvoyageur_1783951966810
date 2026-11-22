@@ -4393,9 +4393,21 @@ phone.addEventListener('scroll', e => {
       G.mapOpenScrollTop = null;
       applyShell();
     }
-  } else if (t.scrollTop < 2 && S.tabMin) {
-    S.tabMin = false;
-    applyShell();
+  } else if (t.scrollTop <= 4) {
+    let changed = false;
+    if (S.tabMin) {
+      S.tabMin = false;
+      changed = true;
+    }
+    if (S.mapCollapsed) {
+      S.mapCollapsed = false;
+      G.mapManualOpenAt = Date.now();
+      G.mapOpenScrollTop = 0;
+      changed = true;
+    }
+    if (changed) {
+      applyShell();
+    }
   }
 }, true);
 phone.addEventListener('wheel', e => {
@@ -4403,6 +4415,8 @@ phone.addEventListener('wheel', e => {
   if (!target || !target.closest) return;
   const inCardOrSheet = target.closest('#card, #sheet');
   if (!inCardOrSheet) return;
+  const scrollPane = target.closest('.lkdv-lens-pane, .card-scroll, .sh-b, .ig-feed, #card');
+  const currentScrollTop = scrollPane ? scrollPane.scrollTop : 0;
   if (e.deltaY > 6 && !S.mapCollapsed && !S.big) {
     const recentlyOpenedManually = Date.now() - (G.mapManualOpenAt || 0) < 420;
     if (!recentlyOpenedManually) {
@@ -4410,6 +4424,12 @@ phone.addEventListener('wheel', e => {
       G.mapOpenScrollTop = null;
       applyShell();
     }
+  } else if (e.deltaY < -6 && S.mapCollapsed && currentScrollTop <= 4) {
+    S.mapCollapsed = false;
+    S.tabMin = false;
+    G.mapManualOpenAt = Date.now();
+    G.mapOpenScrollTop = 0;
+    applyShell();
   }
 }, { passive: true });
 const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
