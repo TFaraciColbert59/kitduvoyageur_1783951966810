@@ -1,31 +1,24 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
-  ArrowUpRight,
+  ArrowUp,
   Award,
   Backpack,
   Calendar,
   CalendarCheck,
   CalendarPlus,
-  Check,
-  ChevronLeft,
-  Copy,
-  Handshake,
-  RefreshCw,
-  UserRound,
   CloudSun,
   Compass,
-  Download,
   Globe,
+  Handshake,
   Layers,
-  MapPin,
   MessageCircle,
   MessageSquarePlus,
   Mountain,
   Package,
   PlusCircle,
-  QrCode,
   Route,
   Scale,
   Search,
@@ -33,7 +26,6 @@ import {
   Sliders,
   Trophy,
   UserCheck,
-  UserPlus,
   Users,
 } from 'lucide-react';
 import {
@@ -42,153 +34,57 @@ import {
 } from '@/components/compte/drawer/shell/DrawerShell';
 import { SlotShell } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
-import { LensTransition } from '@/components/carnet/v2/CarnetDrawerMotion';
+import { useDragDismiss } from '@/hooks/gestures/useDragDismiss';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import '@/styles/carnet-v2.css';
-import { CarnetHorizontalTimeline } from '@/components/carnet/v2/CarnetHorizontalTimeline';
-import { ClubG02Workspace } from '@/components/clubs/g02';
-import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
+import './club-drawers-v2.css';
+import { ClubMotionRoot, LensTransition } from './ClubDrawerMotion';
+import { useClubDialog } from './useClubDialog';
+import { ClubIsland, type ClubIslandToast } from './ClubIsland';
+import { ClubExplorerDrawerBody } from './ClubExplorerDrawerBody';
+import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
+import { ClubSortiesDrawerBody } from './ClubSortiesDrawerBody';
+import { ClubCoffreDrawerBody } from './ClubCoffreDrawerBody';
+import { ClubTribuDrawerBody } from './ClubTribuDrawerBody';
+import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
+import type { ClubG02Section } from '../g02/ClubG02Screen';
+import type {
+  ClubDrawerHostProps,
+  ClubDrawerNavOptions,
+  ClubMemberData,
+  ClubOutingData,
+  ClubToastPayload,
+  CordeeLensId,
+  ExplorerLensId,
+  MemberDetailLensId,
+} from './ClubDrawerTypes';
 
-export interface ClubItemData {
-  id: string;
-  slug: string;
-  name: string;
-  massif: string;
-  category: string;
-  level: string;
-  membersCount: number;
-  outingsCount: number;
-  totalKm: number;
-  totalDplus: number;
-  joined: boolean;
-  role: string;
-  visibility: 'public' | 'prive';
-  bio: string;
-  charter: string;
-  nextOutingTitle: string;
-  nextOutingDate: string;
-  weatherIso: string;
-  weatherWind: string;
-  weatherTrail: string;
-  lat: number;
-  lng: number;
-  coverUrl?: string;
-}
+export * from './ClubDrawerTypes';
 
-export interface ClubMemberData {
-  id: string;
-  name: string;
-  handle: string;
-  role: 'Fondateur' | 'Guide & Sécurité' | 'Encadrant' | 'Membre actif' | 'Nouveau';
-  massif: string;
-  skills: string[];
-  availableWeekend?: boolean;
-  seekingObjective?: string;
-  followed?: boolean;
-  isNew7d?: boolean;
-  avatarUrl?: string;
-}
+const RESUME_MEMO_MIN = 20;
+const RESUME_TOP_MAX = 10;
 
-export interface ClubOutingData {
-  id: string;
-  clubId: string;
-  title: string;
-  date: string;
-  massif: string;
-  km: number;
-  dplus: number;
-  maxAlt: number;
-  status: 'upcoming' | 'live' | 'completed';
-  leaderName: string;
-  leaderHandle: string;
-  participantsCount: number;
-  maxParticipants: number;
-  rsvpJoined: boolean;
-  carpoolCity: string;
-  carpoolSeatsLeft: number;
-  requiredGear: string[];
-  lat: number;
-  lng: number;
-}
-
-export interface ClubGearVaultItem {
-  id: string;
-  clubId: string;
-  name: string;
-  brand: string;
-  category: string;
-  weightG: number;
-  ownerName: string;
-  ownerHandle: string;
-  available: boolean;
-  reservedByMe?: boolean;
-}
-
-export interface ClubStandardKit {
-  id: string;
-  title: string;
-  season: string;
-  totalWeightG: number;
-  itemsCount: number;
-  items: string[];
-  cloned?: boolean;
-}
-
-export interface ClubChallengeItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  current: number;
-  target: number;
-  unit: string;
-  rewardBadge: string;
-}
-
-export interface ClubChatMessage {
-  id: string;
-  authorName: string;
-  authorHandle: string;
-  roleBadge?: string;
-  text: string;
-  time: string;
-}
-
-export interface ClubDrawerHostProps {
-  mode: 'main' | 'create';
-  initialTab?: number;
-  initialSubTab?: number;
-  initialSearch?: boolean;
-  activeClub: ClubItemData;
-  clubs: ClubItemData[];
-  members: ClubMemberData[];
-  outings: ClubOutingData[];
-  vaultGear: ClubGearVaultItem[];
-  standardKits: ClubStandardKit[];
-  challenges: ClubChallengeItem[];
-  chatMessages: ClubChatMessage[];
-  posts: ClubFeedPostItem[];
-  onSelectClub: (clubId: string) => void;
-  onToggleJoinClub: (clubId: string) => void;
-  onToggleFollowMember: (handle: string) => void;
-  onToggleRsvpOuting: (outingId: string) => void;
-  onCreateGroupFromOuting: (outing: ClubOutingData) => void;
-  onDownloadGpx: (outing: ClubOutingData) => void;
-  onFlyToCoords: (lat: number, lng: number, label: string) => void;
-  onToggleReserveGear: (gearId: string) => void;
-  onCloneStandardKit: (kitId: string) => void;
-  onSendChatMessage: (text: string) => void;
-  onToggleClubVisibility: () => void;
-  onCreatePost: (payload: { kind: 'media' | 'text'; caption: string; spot: string; mediaUrl?: string }) => void;
-  onCreateOuting: (payload: { title: string; date: string; massif: string; km: number; dplus: number; carpoolCity: string }) => void;
-  onCreateVaultGear: (payload: { name: string; brand: string; weightG: number; category: string }) => void;
-  onCreateNewClub: (payload: { name: string; massif: string; category: string; bio: string; visibility: 'public' | 'prive' }) => void;
-  onClose?: () => void;
-}
+type ClubStackEntry =
+  | { type: 'member'; member: ClubMemberData; returnTab: number; returnSubTab: number }
+  | { type: 'outing'; outing: ClubOutingData; returnTab: number; returnSubTab: number };
 
 export function ClubDrawerHost({
   mode,
+  isOpen = true,
   initialTab = 0,
   initialSubTab = 0,
   initialSearch = false,
+  initialOutingId,
+  initialMemberId,
+  initialSection,
+  intent,
+  syncStatus = 'synced',
+  onRetrySync,
+  currentUserId = null,
+  currentUserHandle = null,
+  blockedUserIds,
+  isOutdoor = false,
+  reduceMotion = false,
   activeClub,
   clubs,
   members,
@@ -201,6 +97,10 @@ export function ClubDrawerHost({
   onSelectClub,
   onToggleJoinClub,
   onToggleFollowMember,
+  onProposeBinome,
+  onRetractBinome,
+  onChangeMemberRole,
+  onCreateBinomeGroup,
   onToggleRsvpOuting,
   onCreateGroupFromOuting,
   onDownloadGpx,
@@ -213,8 +113,13 @@ export function ClubDrawerHost({
   onCreateOuting,
   onCreateVaultGear,
   onCreateNewClub,
+  onToast,
+  onOpenRuntimeOverlay,
+  onTabChange,
   onClose,
 }: ClubDrawerHostProps) {
+  const { haptic } = useHapticFeedback();
+  const [internalMode, setInternalMode] = useState<'main' | 'create'>(mode);
   const [tab, setTab] = useState<number>(initialSearch ? 0 : initialTab);
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialSearch ? 2 : initialSubTab,
@@ -225,1315 +130,737 @@ export function ClubDrawerHost({
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [stack, setStack] = useState<ClubStackEntry[]>([]);
   const [inspectedMember, setInspectedMember] = useState<ClubMemberData | null>(null);
+  const [memberLensIndex, setMemberLensIndex] = useState(0);
   const [inspectedOuting, setInspectedOuting] = useState<ClubOutingData | null>(null);
-  const [partnerProposed, setPartnerProposed] = useState<Record<string, boolean>>({});
-  const [cordeeCarrier, setCordeeCarrier] = useState<Record<string, string>>({
-    tente: 'Тоny (@tony_frc)',
-    rechaud: 'Léa (@lea.fontaine)',
-    corde: 'Marc (@marc_alpi)',
-    secours: 'Clara (@clara.bivouac)',
-  });
-  const [chatDraft, setChatDraft] = useState('');
-  const [copiedInvite, setCopiedInvite] = useState(false);
+  const [g02Section, setG02Section] = useState<ClubG02Section | undefined>(initialSection);
+  const [chatDraftPrefill, setChatDraftPrefill] = useState('');
+  const [createPrefillMassif, setCreatePrefillMassif] = useState<string | undefined>(undefined);
+  const [localToast, setLocalToast] = useState<ClubIslandToast | null>(null);
 
-  // Create form states
-  const [postCaption, setPostCaption] = useState('');
-  const [postSpot, setPostSpot] = useState(activeClub.massif);
-  const [postKind, setPostKind] = useState<'media' | 'text'>('text');
-  const [postMediaUrl, setPostMediaUrl] = useState('');
+  const emitToast = useCallback(
+    (payload: ClubToastPayload) => {
+      if (onToast) {
+        onToast(payload);
+        return;
+      }
+      setLocalToast({
+        id: String(Date.now()),
+        message: payload.title,
+        subtitle: payload.subtitle,
+        undo: payload.undo,
+      });
+    },
+    [onToast],
+  );
 
-  const [outingTitle, setOutingTitle] = useState('');
-  const [outingDate, setOutingDate] = useState('Samedi · 06h30');
-  const [outingMassif, setOutingMassif] = useState(activeClub.massif);
-  const [outingKm, setOutingKm] = useState('22');
-  const [outingDplus, setOutingDplus] = useState('1350');
-  const [outingCity, setOutingCity] = useState('Grenoble / Annecy');
+  useEffect(() => {
+    setInternalMode(mode);
+  }, [mode]);
 
-  const [gearName, setGearName] = useState('');
-  const [gearBrand, setGearBrand] = useState('Petzl / MSR');
-  const [gearWeight, setGearWeight] = useState('420');
-  const [gearCat, setGearCat] = useState('Bivouac & Sécurité');
+  // Sync external intent / deep-links
+  useEffect(() => {
+    if (!intent) return;
+    setInternalMode('main');
+    const nextTab = intent.tab ?? tab;
+    if (typeof intent.tab === 'number') setTab(intent.tab);
+    if (typeof intent.subTab === 'number') {
+      setSubTabs((prev) => ({ ...prev, [nextTab]: intent.subTab! }));
+    }
+    if (intent.initialSection) setG02Section(intent.initialSection);
+    if (intent.searchQuery !== undefined) setSearchQuery(intent.searchQuery);
 
-  const [newClubName, setNewClubName] = useState('');
-  const [newClubMassif, setNewClubMassif] = useState('Mont-Blanc');
-  const [newClubCat, setNewClubCat] = useState('Alpinisme & Bivouac');
-  const [newClubBio, setNewClubBio] = useState('');
-  const [newClubVis, setNewClubVis] = useState<'public' | 'prive'>('public');
+    if (intent.outingId) {
+      const foundOuting = outings.find((o) => o.id === intent.outingId);
+      if (foundOuting) {
+        setInspectedOuting(foundOuting);
+        setInspectedMember(null);
+        setTab(2);
+        setStack((prev) => [...prev, { type: 'outing', outing: foundOuting, returnTab: nextTab, returnSubTab: intent.subTab ?? 0 }]);
+      }
+    } else if (intent.memberId) {
+      const foundMember = members.find((m) => m.id === intent.memberId || m.userId === intent.memberId);
+      if (foundMember) {
+        setInspectedMember(foundMember);
+        setMemberLensIndex(0);
+        setInspectedOuting(null);
+        setTab(1);
+        setStack((prev) => [...prev, { type: 'member', member: foundMember, returnTab: nextTab, returnSubTab: intent.subTab ?? 0 }]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intent?.nonce]);
+
+  // Initial outing/member deep-link on mount
+  const appliedInitialDeepLinkRef = useRef(false);
+  useEffect(() => {
+    if (appliedInitialDeepLinkRef.current) return;
+    if (initialOutingId) {
+      const found = outings.find((o) => o.id === initialOutingId);
+      if (found) {
+        appliedInitialDeepLinkRef.current = true;
+        setInspectedOuting(found);
+        setTab(2);
+        setStack([{ type: 'outing', outing: found, returnTab: 2, returnSubTab: 0 }]);
+      }
+    } else if (initialMemberId) {
+      const found = members.find((m) => m.id === initialMemberId || m.userId === initialMemberId);
+      if (found) {
+        appliedInitialDeepLinkRef.current = true;
+        setInspectedMember(found);
+        setMemberLensIndex(0);
+        setTab(1);
+        setStack([{ type: 'member', member: found, returnTab: 1, returnSubTab: 0 }]);
+      }
+    }
+  }, [initialMemberId, initialOutingId, members, outings]);
 
   const currentSub = subTabs[tab] ?? 0;
-  const setCurrentSub = (idx: number) => {
-    setSubTabs((prev) => ({ ...prev, [tab]: idx }));
-  };
+  const setSubForTab = useCallback((targetTab: number, idx: number) => {
+    setSubTabs((prev) => ({ ...prev, [targetTab]: idx }));
+  }, []);
 
-  const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return { clubs: clubs.slice(0, 3), outings: outings.slice(0, 2), members: members.slice(0, 2), posts: posts.slice(0, 2) };
-    return {
-      clubs: clubs.filter((c) => `${c.name} ${c.massif} ${c.category}`.toLowerCase().includes(q)),
-      outings: outings.filter((o) => `${o.title} ${o.massif} ${o.carpoolCity}`.toLowerCase().includes(q)),
-      members: members.filter((m) => `${m.name} ${m.handle} ${m.massif} ${m.skills.join(' ')}`.toLowerCase().includes(q)),
-      posts: posts.filter((p) => `${p.caption} ${p.spot} ${p.authorName}`.toLowerCase().includes(q)),
+  const popStack = useCallback(() => {
+    setStack((prev) => {
+      if (prev.length === 0) {
+        setInspectedMember(null);
+        setInspectedOuting(null);
+        return prev;
+      }
+      const last = prev[prev.length - 1];
+      const next = prev.slice(0, -1);
+      const nextTop = next[next.length - 1];
+      if (nextTop?.type === 'member') {
+        setInspectedMember(nextTop.member);
+        setInspectedOuting(null);
+        setTab(1);
+      } else if (nextTop?.type === 'outing') {
+        setInspectedOuting(nextTop.outing);
+        setInspectedMember(null);
+        setTab(2);
+      } else {
+        setInspectedMember(null);
+        setInspectedOuting(null);
+        setTab(last.returnTab);
+        setSubTabs((s) => ({ ...s, [last.returnTab]: last.returnSubTab }));
+      }
+      haptic('light');
+      return next;
+    });
+  }, [haptic]);
+
+  const pushMember = useCallback(
+    (member: ClubMemberData | null, sourceLens?: number) => {
+      if (!member) {
+        popStack();
+        return;
+      }
+      setStack((prev) => [
+        ...prev,
+        { type: 'member', member, returnTab: tab, returnSubTab: sourceLens ?? (subTabs[tab] ?? 0) },
+      ]);
+      setInspectedOuting(null);
+      setInspectedMember(member);
+      setMemberLensIndex(0);
+      if (tab !== 1) setTab(1);
+      haptic('light');
+    },
+    [haptic, popStack, subTabs, tab],
+  );
+
+  const pushOuting = useCallback(
+    (outing: ClubOutingData | null, sourceLens?: number) => {
+      if (!outing) {
+        popStack();
+        return;
+      }
+      setStack((prev) => [
+        ...prev,
+        { type: 'outing', outing, returnTab: tab, returnSubTab: sourceLens ?? (subTabs[tab] ?? 0) },
+      ]);
+      setInspectedMember(null);
+      setInspectedOuting(outing);
+      if (tab !== 2) setTab(2);
+      haptic('light');
+    },
+    [haptic, popStack, subTabs, tab],
+  );
+
+  const handleEscapeOrClose = useCallback(() => {
+    if (stack.length > 0 || inspectedMember || inspectedOuting) {
+      if (stack.length > 0) {
+        popStack();
+      } else {
+        setInspectedMember(null);
+        setInspectedOuting(null);
+        haptic('light');
+      }
+      return;
+    }
+    onClose?.();
+  }, [haptic, inspectedMember, inspectedOuting, onClose, popStack, stack.length]);
+
+  const dialogRef = useClubDialog(isOpen, handleEscapeOrClose);
+  const paneRootRef = useRef<HTMLDivElement | null>(null);
+  const attachPaneRoot = useCallback(
+    (node: HTMLDivElement | null) => {
+      paneRootRef.current = node;
+      dialogRef.current = node;
+    },
+    [dialogRef],
+  );
+
+  const { dragProps, handleProps, y, isDragging } = useDragDismiss({
+    onDismiss: () => onClose?.(),
+    mode: 'handle',
+  });
+
+  const handleSwitchTabAndLens = useCallback(
+    (targetTab: number, targetLens = 0, options?: ClubDrawerNavOptions) => {
+      haptic('selection');
+      if (options?.inspectOuting) {
+        pushOuting(options.inspectOuting, subTabs[tab] ?? 0);
+        setSubTabs((prev) => ({ ...prev, [targetTab]: targetLens }));
+        return;
+      }
+      if (options?.inspectMember) {
+        pushMember(options.inspectMember, subTabs[tab] ?? 0);
+        return;
+      }
+      setStack([]);
+      setInspectedMember(null);
+      setInspectedOuting(null);
+      setTab(targetTab);
+      setSubTabs((prev) => ({ ...prev, [targetTab]: targetLens }));
+      if (options?.g02Section) setG02Section(options.g02Section);
+      if (options?.chatDraft !== undefined) setChatDraftPrefill(options.chatDraft);
+      if (options?.createClubMassif !== undefined) {
+        setCreatePrefillMassif(options.createClubMassif);
+        setInternalMode('create');
+        setTab(3);
+      }
+    },
+    [haptic, pushMember, pushOuting, subTabs, tab],
+  );
+
+  // Secondary sub-drawer items (30px floating icon-only pill at bottom-right) per main tab
+  const secondaryByTab: Record<number, DrawerSecondaryItem[]> = useMemo(
+    () => ({
+      0: [
+        { id: 'my-clubs', label: 'Mes tribus rejointes', icon: <Users size={14} aria-hidden="true" /> },
+        { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Globe size={14} aria-hidden="true" /> },
+        { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={14} aria-hidden="true" /> },
+      ],
+      1: inspectedMember
+        ? [
+            { id: 'm-stats', label: 'Profil & Stats', icon: <Users size={14} aria-hidden="true" /> },
+            { id: 'm-outings', label: 'Sorties & Traces', icon: <Mountain size={14} aria-hidden="true" /> },
+            { id: 'm-gear', label: 'Équipement', icon: <Package size={14} aria-hidden="true" /> },
+            { id: 'm-media', label: 'Publications', icon: <Layers size={14} aria-hidden="true" /> },
+          ]
+        : [
+            { id: 'members-all', label: 'Tous les membres', icon: <Users size={14} aria-hidden="true" /> },
+            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={14} aria-hidden="true" /> },
+            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={14} aria-hidden="true" /> },
+          ],
+      2: [
+        { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
+        { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
+        { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
+        { id: 'outings-g02', label: 'Sorties club, courses et groupes', icon: <CalendarCheck size={14} aria-hidden="true" /> },
+      ],
+      3: [
+        { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
+        { id: 'vault-kits', label: 'Kits types du club', icon: <Layers size={14} aria-hidden="true" /> },
+        { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={14} aria-hidden="true" /> },
+      ],
+      4: [
+        { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
+        { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
+        { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
+        { id: 'tribu-g02', label: 'Salons, classement, invitations & défis club', icon: <Handshake size={14} aria-hidden="true" /> },
+      ],
+    }),
+    [inspectedMember],
+  );
+
+  const newArrivalsCount = useMemo(() => members.filter((m) => m.isNew7d).length, [members]);
+  const upcomingOutingsCount = useMemo(
+    () => outings.filter((o) => o.status === 'upcoming' || o.status === 'live').length,
+    [outings],
+  );
+
+  const mainTabDefs: Array<Omit<DrawerTab, 'render'> & { badge?: number | boolean }> = useMemo(
+    () => [
+      { id: 'explorer', label: 'Explorateur et changement de club', icon: <Compass size={18} aria-hidden="true" /> },
+      {
+        id: 'cordee',
+        label: 'Cordée et membres du club',
+        icon: <Users size={18} aria-hidden="true" />,
+        badge: newArrivalsCount > 0 ? newArrivalsCount : undefined,
+      },
+      {
+        id: 'sorties',
+        label: 'Sorties, camps de base et météo massif',
+        icon: <Mountain size={18} aria-hidden="true" />,
+        badge: upcomingOutingsCount > 0 ? upcomingOutingsCount : undefined,
+      },
+      { id: 'coffre', label: 'Coffre matériel mutualisé du club', icon: <Backpack size={18} aria-hidden="true" /> },
+      {
+        id: 'tribu',
+        label: 'Défis collectifs, canal et gouvernance',
+        icon: <Award size={18} aria-hidden="true" />,
+        badge: chatMessages.length > 0 ? true : undefined,
+      },
+    ],
+    [chatMessages.length, newArrivalsCount, upcomingOutingsCount],
+  );
+
+  const activeMainTab = mainTabDefs[tab] ?? mainTabDefs[0];
+  const activeSecondaryItems = secondaryByTab[tab] ?? [];
+  const activeLensIndex = tab === 1 && inspectedMember ? memberLensIndex : currentSub;
+  const activeLensId = activeSecondaryItems[activeLensIndex]?.id ?? 'my-clubs';
+
+  useEffect(() => {
+    onTabChange?.(tab, activeLensId);
+  }, [activeLensId, onTabChange, tab]);
+
+  // Scroll memory & edge fade per `${tab}:${lensId}` (FN-04, UI-11, UI-16)
+  const scrollMemoRef = useRef<Record<string, number>>({});
+  const [resumePill, setResumePill] = useState<{ key: string; top: number } | null>(null);
+  const activeLensKey = `${tab}:${activeLensId}`;
+
+  useEffect(() => {
+    if (!isOpen || internalMode !== 'main') {
+      setResumePill(null);
+      return;
+    }
+    const root = paneRootRef.current;
+    if (!root) return;
+
+    const readPane = () =>
+      root.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+
+    const syncPill = (key: string, top: number) => {
+      const saved = scrollMemoRef.current[key] ?? 0;
+      const visible = saved > 0 && top < RESUME_TOP_MAX && Math.abs(saved - top) > RESUME_TOP_MAX;
+      setResumePill((prev) => {
+        if (!visible) return prev === null ? prev : null;
+        if (prev && prev.key === key && prev.top === saved) return prev;
+        return { key, top: saved };
+      });
     };
-  }, [clubs, members, outings, posts, searchQuery]);
 
-  if (mode === 'create') {
-    const createTabs: DrawerTab[] = [
-      {
-        id: 'create-post',
-        label: 'Publier dans le club',
-        icon: <MessageSquarePlus size={18} aria-hidden="true" />,
-        render: () => (
-          <form
-            className="club-drawer-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!postCaption.trim()) return;
-              onCreatePost({
-                kind: postKind,
-                caption: postCaption.trim(),
-                spot: postSpot.trim() || activeClub.massif,
-                mediaUrl: postKind === 'media' ? (postMediaUrl.trim() || '/images/ridge-line.jpg') : undefined,
-              });
-              setPostCaption('');
-            }}
-          >
-            <div className="club-drawer-sec-head">
-              <b>Publier dans {activeClub.name}</b>
-            </div>
-            <div className="club-form-pills">
-              <button
-                type="button"
-                className={`reseau-btn ${postKind === 'text' ? 'primary' : 'active'}`}
-                onClick={() => setPostKind('text')}
-              >
-                Annonce / Covoit / Question
-              </button>
-              <button
-                type="button"
-                className={`reseau-btn ${postKind === 'media' ? 'primary' : 'active'}`}
-                onClick={() => setPostKind('media')}
-              >
-                Photo Terrain / Trace 1:1
-              </button>
-            </div>
-            <label className="club-field-label">
-              <span>Spot ou sommet concerné</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={postSpot}
-                onChange={(e) => setPostSpot(e.target.value)}
-                placeholder="Ex : Col du Lautaret, Aiguille du Midi…"
-              />
-            </label>
-            {postKind === 'media' ? (
-              <label className="club-field-label">
-                <span>Image du spot (URL ou preset terrain)</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={postMediaUrl}
-                  onChange={(e) => setPostMediaUrl(e.target.value)}
-                  placeholder="/images/mountain-vista.jpg"
-                />
-              </label>
-            ) : null}
-            <label className="club-field-label">
-              <span>Message à la tribu</span>
-              <textarea
-                rows={3}
-                className="club-glass-textarea"
-                value={postCaption}
-                onChange={(e) => setPostCaption(e.target.value)}
-                placeholder="Ex : Départ samedi 06h00 depuis Grenoble, il me reste 2 places dans le van…"
-                required
-              />
-            </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Publier dans le fil du club'} title={'Publier dans le fil du club'}>
-              <Check size={16} aria-hidden="true" />
-            </button>
-          </form>
-        ),
-      },
-      {
-        id: 'create-outing',
-        label: 'Proposer une sortie',
-        icon: <CalendarPlus size={18} aria-hidden="true" />,
-        render: () => (
-          <form
-            className="club-drawer-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!outingTitle.trim()) return;
-              onCreateOuting({
-                title: outingTitle.trim(),
-                date: outingDate.trim() || 'Samedi · 07h00',
-                massif: outingMassif.trim() || activeClub.massif,
-                km: Number(outingKm) || 18,
-                dplus: Number(outingDplus) || 1200,
-                carpoolCity: outingCity.trim() || 'Camp de base',
-              });
-              setOutingTitle('');
-            }}
-          >
-            <div className="club-drawer-sec-head">
-              <b>Proposer une sortie de cordée</b>
-            </div>
-            <label className="club-field-label">
-              <span>Objectif / Sommet</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={outingTitle}
-                onChange={(e) => setOutingTitle(e.target.value)}
-                placeholder="Ex : Traversée des Arêtes & Bivouac Lacs"
-                required
-              />
-            </label>
-            <div className="club-form-grid-2">
-              <label className="club-field-label">
-                <span>Créneau</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={outingDate}
-                  onChange={(e) => setOutingDate(e.target.value)}
-                />
-              </label>
-              <label className="club-field-label">
-                <span>Massif</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={outingMassif}
-                  onChange={(e) => setOutingMassif(e.target.value)}
-                />
-              </label>
-            </div>
-            <div className="club-form-grid-2">
-              <label className="club-field-label">
-                <span>Distance (km)</span>
-                <input
-                  type="number"
-                  className="club-glass-input"
-                  value={outingKm}
-                  onChange={(e) => setOutingKm(e.target.value)}
-                />
-              </label>
-              <label className="club-field-label">
-                <span>Dénivelé D+ (m)</span>
-                <input
-                  type="number"
-                  className="club-glass-input"
-                  value={outingDplus}
-                  onChange={(e) => setOutingDplus(e.target.value)}
-                />
-              </label>
-            </div>
-            <label className="club-field-label">
-              <span>Point de RDV / Covoiturage</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={outingCity}
-                onChange={(e) => setOutingCity(e.target.value)}
-              />
-            </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Lancer les inscriptions'} title={'Lancer les inscriptions'}>
-              <Check size={16} aria-hidden="true" />
-            </button>
-          </form>
-        ),
-      },
-      {
-        id: 'create-gear',
-        label: 'Mettre un équipement au coffre commun',
-        icon: <Backpack size={18} aria-hidden="true" />,
-        render: () => (
-          <form
-            className="club-drawer-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!gearName.trim()) return;
-              onCreateVaultGear({
-                name: gearName.trim(),
-                brand: gearBrand.trim() || 'LKDV',
-                weightG: Number(gearWeight) || 350,
-                category: gearCat.trim() || 'Matériel',
-              });
-              setGearName('');
-            }}
-          >
-            <div className="club-drawer-sec-head">
-              <b>Mutualiser un équipement dans le coffre</b>
-            </div>
-            <label className="club-field-label">
-              <span>Pièce d’équipement</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={gearName}
-                onChange={(e) => setGearName(e.target.value)}
-                placeholder="Ex : Tente MSR Access 2P, DVA Barryvox…"
-                required
-              />
-            </label>
-            <div className="club-form-grid-2">
-              <label className="club-field-label">
-                <span>Marque</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={gearBrand}
-                  onChange={(e) => setGearBrand(e.target.value)}
-                />
-              </label>
-              <label className="club-field-label">
-                <span>Poids (g)</span>
-                <input
-                  type="number"
-                  className="club-glass-input"
-                  value={gearWeight}
-                  onChange={(e) => setGearWeight(e.target.value)}
-                />
-              </label>
-            </div>
-            <label className="club-field-label">
-              <span>Catégorie</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={gearCat}
-                onChange={(e) => setGearCat(e.target.value)}
-              />
-            </label>
-            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Ajouter au coffre de la tribu'} title={'Ajouter au coffre de la tribu'}>
-              <Check size={16} aria-hidden="true" />
-            </button>
-          </form>
-        ),
-      },
-      {
-        id: 'create-club',
-        label: 'Fonder un nouveau club',
-        icon: <PlusCircle size={18} aria-hidden="true" />,
-        render: () => (
-          <form
-            className="club-drawer-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newClubName.trim()) return;
-              onCreateNewClub({
-                name: newClubName.trim(),
-                massif: newClubMassif.trim() || 'Alpes',
-                category: newClubCat.trim() || 'Trek & Bivouac',
-                bio: newClubBio.trim() || 'Tribu outdoor locale connectée aux traces réelles.',
-                visibility: newClubVis,
-              });
-              setNewClubName('');
-            }}
-          >
-            <div className="club-drawer-sec-head">
-              <b>Fonder une nouvelle tribu LKDV</b>
-            </div>
-            <label className="club-field-label">
-              <span>Nom du club</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={newClubName}
-                onChange={(e) => setNewClubName(e.target.value)}
-                placeholder="Ex : Cordée Écrins & Bivouac Hivernal"
-                required
-              />
-            </label>
-            <div className="club-form-grid-2">
-              <label className="club-field-label">
-                <span>Massif d’ancrage</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={newClubMassif}
-                  onChange={(e) => setNewClubMassif(e.target.value)}
-                />
-              </label>
-              <label className="club-field-label">
-                <span>Discipline</span>
-                <input
-                  type="text"
-                  className="club-glass-input"
-                  value={newClubCat}
-                  onChange={(e) => setNewClubCat(e.target.value)}
-                />
-              </label>
-            </div>
-            <label className="club-field-label">
-              <span>Manifeste (2 lignes)</span>
-              <input
-                type="text"
-                className="club-glass-input"
-                value={newClubBio}
-                onChange={(e) => setNewClubBio(e.target.value)}
-                placeholder="Sorties engagées, partage de traces GPX et entraide matériel."
-              />
-            </label>
-            <div className="club-form-pills">
-              <button
-                type="button"
-                className={`reseau-btn ${newClubVis === 'public' ? 'primary' : 'active'}`}
-                onClick={() => setNewClubVis('public')}
-              >
-                Club Public (Ouvert)
-              </button>
-              <button
-                type="button"
-                className={`reseau-btn ${newClubVis === 'prive' ? 'primary' : 'active'}`}
-                onClick={() => setNewClubVis('prive')}
-              >
-                Sur Cooptation (Privé)
-              </button>
-            </div>
-            <button type="submit" className="reseau-btn primary club-submit-pill club-icon-pill" aria-label={'Fonder le club et ouvrir sa carte'} title={'Fonder le club et ouvrir sa carte'}>
-              <Check size={16} aria-hidden="true" />
-            </button>
-          </form>
-        ),
-      },
+    const currentPane = readPane();
+    if (currentPane) {
+      currentPane.setAttribute('data-scrolled', currentPane.scrollTop > 8 ? 'true' : 'false');
+    }
+    syncPill(activeLensKey, currentPane?.scrollTop ?? 0);
+
+    const onScroll = (event: Event) => {
+      const pane = event.target as HTMLElement | null;
+      if (!pane || typeof pane.classList === 'undefined') return;
+      if (!pane.classList.contains('lkdv-lens-pane')) return;
+      const lid = pane.getAttribute('data-lens');
+      if (!lid) return;
+      pane.setAttribute('data-scrolled', pane.scrollTop > 8 ? 'true' : 'false');
+      const key = `${tab}:${lid}`;
+      if (pane.scrollTop > RESUME_MEMO_MIN) scrollMemoRef.current[key] = pane.scrollTop;
+      syncPill(key, pane.scrollTop);
+    };
+
+    root.addEventListener('scroll', onScroll, true);
+    return () => root.removeEventListener('scroll', onScroll, true);
+  }, [activeLensKey, internalMode, isOpen, tab]);
+
+  const resumeReading = useCallback(() => {
+    if (!resumePill) return;
+    const root = paneRootRef.current;
+    const pane = root?.querySelector<HTMLElement>('.lkdv-lens-pane[data-testid="slot-content"]');
+    const manualReduce = Boolean(reduceMotion || root?.closest('[data-reduce-motion="true"]'));
+    const systemReduce =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = manualReduce || systemReduce;
+    pane?.scrollTo?.({ top: resumePill.top, behavior: reduce ? 'auto' : 'smooth' });
+    haptic('selection');
+    setResumePill(null);
+  }, [haptic, reduceMotion, resumePill]);
+
+  // Keyboard shortcuts: Cmd/Ctrl+K, 1..5, Backspace (FN-17)
+  const handleRootKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (internalMode !== 'main') return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setStack([]);
+        setInspectedMember(null);
+        setInspectedOuting(null);
+        setTab(0);
+        setSubForTab(0, 2);
+        haptic('selection');
+        window.setTimeout(() => {
+          const el = paneRootRef.current?.querySelector<HTMLInputElement>('[data-autofocus="true"]');
+          el?.focus({ preventScroll: true });
+        }, 50);
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const isTextInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable);
+      if (isTextInput) return;
+
+      if (event.key >= '1' && event.key <= '5') {
+        const idx = Number(event.key) - 1;
+        setStack([]);
+        setInspectedMember(null);
+        setInspectedOuting(null);
+        setTab(idx);
+        haptic('selection');
+        return;
+      }
+
+      if (event.key === 'Backspace' && (stack.length > 0 || inspectedMember || inspectedOuting)) {
+        event.preventDefault();
+        popStack();
+      }
+    },
+    [haptic, inspectedMember, inspectedOuting, internalMode, popStack, setSubForTab, stack.length],
+  );
+
+  if (internalMode === 'create') {
+    const createTabs = [
+      { id: 'create-post', label: 'Publier dans le club', icon: <MessageSquarePlus size={18} aria-hidden="true" /> },
+      { id: 'create-outing', label: 'Proposer une sortie', icon: <CalendarPlus size={18} aria-hidden="true" /> },
+      { id: 'create-gear', label: 'Mettre un équipement au coffre commun', icon: <Backpack size={18} aria-hidden="true" /> },
+      { id: 'create-club', label: 'Fonder un nouveau club', icon: <PlusCircle size={18} aria-hidden="true" /> },
     ];
-
     const activeCreateTab = createTabs[tab] ?? createTabs[0];
+
     return (
-      <div
-        className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Créer dans le club"
-      >
-        {onClose ? (
-          <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
-            <span />
-          </button>
-        ) : null}
-        <SlotShell
-          slot={activeCreateTab?.id ?? 'create-post'}
-          viewer="owner"
-          title={activeCreateTab?.label ?? 'Créer'}
-          lenses={[
-            {
-              id: activeCreateTab?.id ?? 'create',
-              label: activeCreateTab?.label ?? 'Créer',
-              icon: activeCreateTab?.icon,
-            },
-          ]}
-          activeLensIndex={0}
-          onLensChange={() => {}}
-          selector={
-            <CapsuleTabs
-              items={createTabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
-              activeIndex={tab}
-              onIndexChange={setTab}
-              ariaLabel="Création dans le club"
-              size="default"
-            />
-          }
-          renderLens={() => (
-            <LensTransition transitionKey={`create:${tab}`}>
-              <div className="lkdv-carnet-drawer-pane" style={{ paddingTop: 72, paddingBottom: 24 }}>
-                {activeCreateTab?.render()}
-              </div>
-            </LensTransition>
-          )}
-        />
-      </div>
+      <ClubMotionRoot>
+        <motion.div
+          ref={attachPaneRoot}
+          {...dragProps}
+          style={{ y }}
+          className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Créer dans le club"
+          tabIndex={-1}
+          data-club-tab={tab}
+          data-club-lens={activeCreateTab.id}
+          data-outdoor={isOutdoor ? 'true' : undefined}
+          data-reduce-motion={reduceMotion ? 'true' : undefined}
+        >
+          {onClose ? (
+            <button
+              type="button"
+              className="lkdv-mgrab"
+              {...handleProps}
+              onClick={() => {
+                if (!isDragging) onClose();
+              }}
+              aria-label="Fermer le tiroir"
+            >
+              <span />
+            </button>
+          ) : null}
+          <SlotShell
+            slot={activeCreateTab.id}
+            viewer="owner"
+            title={activeCreateTab.label}
+            lenses={[
+              {
+                id: activeCreateTab.id,
+                label: activeCreateTab.label,
+                icon: activeCreateTab.icon,
+              },
+            ]}
+            activeLensIndex={0}
+            onLensChange={() => {}}
+            selector={
+              <CapsuleTabs
+                className="lkdv-slot-selector"
+                items={createTabs}
+                activeIndex={tab}
+                onIndexChange={(next) => {
+                  haptic('selection');
+                  setTab(next);
+                }}
+                ariaLabel="Création dans le club"
+                size="default"
+              />
+            }
+            renderLens={() => (
+              <LensTransition transitionKey={`create:${tab}`}>
+                <div className="lkdv-carnet-drawer-pane">
+                  <ClubCreateDrawerBody
+                    activeTab={tab}
+                    activeClub={activeClub}
+                    prefillMassif={createPrefillMassif}
+                    onTabChange={setTab}
+                    onCreatePost={onCreatePost}
+                    onCreateOuting={onCreateOuting}
+                    onCreateVaultGear={onCreateVaultGear}
+                    onCreateNewClub={(p) => {
+                      onCreateNewClub(p);
+                      setInternalMode('main');
+                    }}
+                    onToast={emitToast}
+                  />
+                </div>
+              </LensTransition>
+            )}
+          />
+          <ClubIsland toast={localToast} onDismiss={() => setLocalToast(null)} />
+        </motion.div>
+      </ClubMotionRoot>
     );
   }
 
-  // Secondary sub-drawer items (30px floating icon-only pill at bottom-right) per main tab
-  const secondaryByTab: Record<number, DrawerSecondaryItem[]> = {
-    0: [
-      { id: 'my-clubs', label: 'Mes tribus rejointes', icon: <Users size={14} aria-hidden="true" /> },
-      { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Globe size={14} aria-hidden="true" /> },
-      { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={14} aria-hidden="true" /> },
-    ],
-    1: [
-      { id: 'members-all', label: 'Tous les membres', icon: <Users size={14} aria-hidden="true" /> },
-      { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={14} aria-hidden="true" /> },
-      { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={14} aria-hidden="true" /> },
-    ],
-    2: [
-      { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
-      { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
-      { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
-      { id: 'outings-g02', label: 'Sorties club, courses et groupes', icon: <CalendarCheck size={14} aria-hidden="true" /> },
-    ],
-    3: [
-      { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
-      { id: 'vault-kits', label: 'Kits types du club', icon: <Layers size={14} aria-hidden="true" /> },
-      { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={14} aria-hidden="true" /> },
-    ],
-    4: [
-      { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
-      { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
-      { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
-      { id: 'tribu-g02', label: 'Salons, classement, invitations & défis club', icon: <Handshake size={14} aria-hidden="true" /> },
-    ],
-  };
-
-  const mainTabs: DrawerTab[] = [
-    // TAB 0: EXPLORATEUR & SWITCH CLUBS
-    {
-      id: 'explorer',
-      label: 'Explorateur et changement de club',
-      icon: <Compass size={18} aria-hidden="true" />,
-      render: () => {
-        if (currentSub === 2) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-search-box">
-                <Search size={15} aria-hidden="true" />
-                <input
-                  type="search"
-                  data-autofocus="true"
-                  autoFocus
-                  className="club-search-input"
-                  placeholder="Chercher un club, une sortie, un membre, un spot…"
-                  aria-label="Rechercher dans les clubs et la tribu"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {searchResults.clubs.length > 0 ? (
-                <div className="club-drawer-group">
-                  <div className="club-drawer-sec-head">
-                    <b>Clubs & Tribus</b>
-                    <span>{searchResults.clubs.length}</span>
-                  </div>
-                  {searchResults.clubs.map((c) => (
-                    <div key={c.id} className="reseau-user-row club-switch-row">
-                      <button
-                        type="button"
-                        className="club-row-main-btn"
-                        onClick={() => onSelectClub(c.id)}
-                      >
-                        <span className="club-mini-emblem">{c.name.charAt(0)}</span>
-                        <span className="reseau-meta">
-                          <span className="reseau-name-row">
-                            <b>{c.name}</b>
-                          </span>
-                          <span className="reseau-sub">
-                            {c.massif} · {c.membersCount} membres · {c.outingsCount} sorties
-                          </span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`reseau-btn ${c.id === activeClub.id ? 'active' : 'primary'} club-icon-pill`}
-                        onClick={() => onSelectClub(c.id)}
-                        aria-label={c.id === activeClub.id ? 'Club actif' : 'Ouvrir le club'}
-                        title={c.id === activeClub.id ? 'Club actif' : 'Ouvrir le club'}
-                      >
-                        {c.id === activeClub.id ? <Check size={16} aria-hidden="true" /> : <ArrowUpRight size={16} aria-hidden="true" />}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {searchResults.outings.length > 0 ? (
-                <div className="club-drawer-group">
-                  <div className="club-drawer-sec-head">
-                    <b>Sorties & Traces GPX</b>
-                    <span>{searchResults.outings.length}</span>
-                  </div>
-                  {searchResults.outings.map((o) => (
-                    <div key={o.id} className="li nt club-compact-row">
-                      <div>
-                        <div className="ttl"><span>{o.title}</span></div>
-                        <div className="s2">{o.date} · {o.massif} · {o.km} km · +{o.dplus} m</div>
-                      </div>
-                      <button
-                        type="button"
-                        className="reseau-btn primary club-icon-pill"
-                        onClick={() => {
-                          setTab(2);
-                          setCurrentSub(0);
-                          setInspectedOuting(o);
-                        }}
-                        aria-label={'Voir la sortie'}
-                        title={'Voir la sortie'}
-                      >
-                        <ArrowUpRight size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
-              {searchResults.members.length > 0 ? (
-                <div className="club-drawer-group">
-                  <div className="club-drawer-sec-head">
-                    <b>Membres de la cordée</b>
-                    <span>{searchResults.members.length}</span>
-                  </div>
-                  {searchResults.members.map((m) => (
-                    <div key={m.id} className="reseau-user-row">
-                      <div className="reseau-meta">
-                        <div className="reseau-name-row">
-                          <b>{m.name}</b>
-                          <span className="reseau-handle">@{m.handle}</span>
-                        </div>
-                        <div className="reseau-sub">{m.role} · {m.massif}</div>
-                      </div>
-                      <button
-                        type="button"
-                        className="reseau-btn active club-icon-pill"
-                        onClick={() => {
-                          setTab(1);
-                          setInspectedMember(m);
-                        }}
-                        aria-label={'Fiche du membre'}
-                        title={'Fiche du membre'}
-                      >
-                        <UserRound size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          );
-        }
-
-        const list = currentSub === 0 ? clubs.filter((c) => c.joined || c.id === activeClub.id) : clubs;
-        return (
-          <div className="club-drawer-pane-content">
-            <div className="club-drawer-sec-head">
-              <b>{currentSub === 0 ? 'Mes Tribus' : 'Explorer les Clubs par Massif'}</b>
-              <span>{list.length}</span>
-            </div>
-            <div className="reseau-list">
-              {list.length === 0 ? (
-                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                  {currentSub === 0 ? 'Aucun club rejoint pour le moment.' : 'Aucun club répertorié dans ce massif.'}
-                </div>
-              ) : (
-                list.map((c) => {
-                const isCurrent = c.id === activeClub.id;
-                return (
-                  <div key={c.id} className="reseau-user-row club-switch-row">
-                    <button
-                      type="button"
-                      className="club-row-main-btn"
-                      onClick={() => onSelectClub(c.id)}
-                      aria-label={`Basculer sur ${c.name}`}
-                    >
-                      <span className="club-mini-emblem">
-                        {c.coverUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.coverUrl} alt="" loading="lazy" />
-                        ) : (
-                          c.name.charAt(0)
-                        )}
-                      </span>
-                      <span className="reseau-meta">
-                        <span className="reseau-name-row">
-                          <b>{c.name}</b>
-                          {isCurrent ? <span className="club-comment-badge">Actif</span> : null}
-                        </span>
-                        <span className="reseau-sub">
-                          {c.massif} · {c.membersCount} membres · {c.nextOutingTitle}
-                        </span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`reseau-btn ${c.joined ? 'active' : 'primary'} club-icon-pill`}
-                      onClick={() => onToggleJoinClub(c.id)}
-                      aria-label={c.joined ? 'Membre' : 'Rejoindre'}
-                      title={c.joined ? 'Membre' : 'Rejoindre'}
-                    >
-                      {c.joined ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
-                    </button>
-                  </div>
-                );
-              }))}
-            </div>
-          </div>
-        );
-      },
-    },
-
-    // TAB 1: CORDÉE, MEMBRES & RÔLES TERRAIN
-    {
-      id: 'cordee',
-      label: 'Cordée et membres du club',
-      icon: <Users size={18} aria-hidden="true" />,
-      render: () => {
-        if (inspectedMember) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Aperçu Cordée · {inspectedMember.name}</b>
-                <button
-                  type="button"
-                  className="reseau-btn active club-icon-pill"
-                  onClick={() => setInspectedMember(null)}
-                  aria-label={'Retour à la liste'}
-                  title={'Retour à la liste'}
-                >
-                  <ChevronLeft size={16} aria-hidden="true" />
-                </button>
-              </div>
-              <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <div>
-                    <b style={{ fontSize: 14, color: 'var(--label)' }}>{inspectedMember.name} (@{inspectedMember.handle})</b>
-                    <div className="s2">{inspectedMember.role} · Massif : {inspectedMember.massif}</div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`reseau-btn ${inspectedMember.followed ? 'active' : 'primary'} club-icon-pill`}
-                    onClick={() => onToggleFollowMember(inspectedMember.handle)}
-                    aria-label={inspectedMember.followed ? 'Suivi' : 'Suivre'}
-                    title={inspectedMember.followed ? 'Suivi' : 'Suivre'}
-                  >
-                    {inspectedMember.followed ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
-                  </button>
-                </div>
-                <div className="club-skill-tags">
-                  {inspectedMember.skills.map((sk) => (
-                    <span key={sk} className="club-skill-tag">{sk}</span>
-                  ))}
-                </div>
-                {inspectedMember.seekingObjective ? (
-                  <div className="s2" style={{ color: '#17402C', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="6" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-                    <span>Objectif binôme : {inspectedMember.seekingObjective}</span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          );
-        }
-
-        const newArrivals = members.filter((m) => m.isNew7d);
-        const filteredMembers =
-          currentSub === 1
-            ? members.filter((m) => m.role === 'Fondateur' || m.role === 'Guide & Sécurité' || m.role === 'Encadrant')
-            : currentSub === 2
-              ? members.filter((m) => m.availableWeekend)
-              : members;
-
-        return (
-          <div className="club-drawer-pane-content">
-            {currentSub === 0 && newArrivals.length > 0 ? (
-              <div className="lkdv-reseau-new" style={{ marginBottom: 8 }}>
-                <div className="lkdv-reseau-strip-head">
-                  <b>Nouveaux dans la tribu</b>
-                  <span>7 derniers jours ({newArrivals.length})</span>
-                </div>
-                <div className="club-new-pills">
-                  {newArrivals.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className="club-new-member-pill"
-                      onClick={() => setInspectedMember(m)}
-                    >
-                      <b>{m.name}</b>
-                      <span>@{m.handle} · {m.massif}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <div className="club-drawer-sec-head">
-              <b>
-                {currentSub === 0
-                  ? `Membres de ${activeClub.name} (${members.length})`
-                  : currentSub === 1
-                    ? 'Encadrants & Référents Sécurité'
-                    : 'Binômes de Cordée Disponibles'}
-              </b>
-            </div>
-
-            <div className="reseau-list">
-              {filteredMembers.length === 0 ? (
-                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                  Aucun membre répertorié pour le moment.
-                </div>
-              ) : (
-                filteredMembers.map((m) => {
-                const proposed = Boolean(partnerProposed[m.id]);
-                return (
-                  <div key={m.id} className="reseau-user-row">
-                    <button
-                      type="button"
-                      className="club-row-main-btn"
-                      onClick={() => setInspectedMember(m)}
-                    >
-                      <span className="club-mini-emblem">
-                        {m.name.charAt(0)}
-                      </span>
-                      <span className="reseau-meta">
-                        <span className="reseau-name-row">
-                          <b>{m.name}</b>
-                          <span className="club-comment-badge">{m.role}</span>
-                        </span>
-                        <span className="reseau-sub">
-                          {m.massif} · {(m.skills ?? []).slice(0, 2).join(' · ')}
-                        </span>
-                      </span>
-                    </button>
-                    {currentSub === 2 ? (
-                      <button
-                        type="button"
-                        className={`reseau-btn ${proposed ? 'active' : 'primary'} club-icon-pill`}
-                        onClick={() => setPartnerProposed((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
-                        aria-label={proposed ? 'Cordée proposée' : 'Proposer un binôme'}
-                        title={proposed ? 'Cordée proposée' : 'Proposer un binôme'}
-                      >
-                        {proposed ? <Check size={16} aria-hidden="true" /> : <Handshake size={16} aria-hidden="true" />}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className={`reseau-btn ${m.followed ? 'active' : 'primary'} club-icon-pill`}
-                        onClick={() => onToggleFollowMember(m.handle)}
-                        aria-label={m.followed ? 'Suivi' : 'Suivre'}
-                        title={m.followed ? 'Suivi' : 'Suivre'}
-                      >
-                        {m.followed ? <UserCheck size={16} aria-hidden="true" /> : <UserPlus size={16} aria-hidden="true" />}
-                      </button>
-                    )}
-                  </div>
-                );
-              }))}
-            </div>
-          </div>
-        );
-      },
-    },
-
-    // TAB 2: SORTIES, CAMPS DE BASE & MÉTÉO MASSIF
-    {
-      id: 'sorties',
-      label: 'Sorties, camps de base et météo massif',
-      icon: <Mountain size={18} aria-hidden="true" />,
-      render: () => {
-        if (inspectedOuting) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Fiche Sortie & Covoiturage</b>
-                <button
-                  type="button"
-                  className="reseau-btn active club-icon-pill"
-                  onClick={() => setInspectedOuting(null)}
-                  aria-label={'Toutes les sorties'}
-                  title={'Toutes les sorties'}
-                >
-                  <ChevronLeft size={16} aria-hidden="true" />
-                </button>
-              </div>
-              <div className="li nt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                <div className="ttl"><b>{inspectedOuting.title}</b></div>
-                <div className="s2">
-                  📅 {inspectedOuting.date} · 📍 {inspectedOuting.massif} · {inspectedOuting.km} km · +{inspectedOuting.dplus} m D+ · Alt max {inspectedOuting.maxAlt} m
-                </div>
-                <div className="s2">
-                  🧭 Encadrant : <b>{inspectedOuting.leaderName}</b> (@{inspectedOuting.leaderHandle}) · {inspectedOuting.participantsCount}/{inspectedOuting.maxParticipants} inscrits
-                </div>
-                <div className="s2">
-                  🚐 Covoiturage départ <b>{inspectedOuting.carpoolCity}</b> : <b>{inspectedOuting.carpoolSeatsLeft} places restantes</b>
-                </div>
-                <div className="club-skill-tags">
-                  {(inspectedOuting.requiredGear ?? []).map((g) => (
-                    <span key={g} className="club-skill-tag">✓ Kit requis : {g}</span>
-                  ))}
-                </div>
-                <div className="club-form-pills" style={{ width: '100%', marginTop: 4 }}>
-                  <button
-                    type="button"
-                    className={`reseau-btn ${inspectedOuting.rsvpJoined ? 'active' : 'primary'} club-icon-pill`}
-                    onClick={() => onToggleRsvpOuting(inspectedOuting.id)}
-                    aria-label={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
-                    title={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
-                  >
-                    {inspectedOuting.rsvpJoined ? <CalendarCheck size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
-                  </button>
-                  <button
-                    type="button"
-                    className="reseau-btn active club-icon-pill"
-                    onClick={() => onFlyToCoords(inspectedOuting.lat, inspectedOuting.lng, inspectedOuting.title)}
-                    aria-label={'Trace 3D'}
-                    title={'Trace 3D'}
-                  >
-                    <MapPin size={16} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="reseau-btn active club-icon-pill"
-                    onClick={() => onDownloadGpx(inspectedOuting)}
-                    aria-label={'Télécharger le GPX'}
-                    title={'Télécharger le GPX'}
-                  >
-                    <Download size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        if (currentSub === 1) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Bulletin Massif · {activeClub.massif}</b>
-                <span>Conditions terrain & sécurité de la tribu</span>
-              </div>
-              <div className="li nt">
-                <div>
-                  <div className="ttl"><span>Isotherme 0°C & Plafond</span></div>
-                  <div className="s2">{activeClub.weatherIso} · Visibilité crêtes excellente le matin</div>
-                </div>
-                <span className="tg confirmed">Vérifié</span>
-              </div>
-              <div className="li nt">
-                <div>
-                  <div className="ttl"><span>Vent en altitude & Crêtes</span></div>
-                  <div className="s2">{activeClub.weatherWind} · Vigilance passages exposés</div>
-                </div>
-                <span className="tg p">Info</span>
-              </div>
-              <div className="li nt">
-                <div>
-                  <div className="ttl"><span>État des sentiers & Refuges (Tribu)</span></div>
-                  <div className="s2">{activeClub.weatherTrail}</div>
-                </div>
-                <button
-                  type="button"
-                  className="reseau-btn active club-icon-pill"
-                  onClick={() => onFlyToCoords(activeClub.lat, activeClub.lng, `Météo ${activeClub.massif}`)}
-                  aria-label={'Carte 3D'}
-                  title={'Carte 3D'}
-                >
-                  <Mountain size={16} aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          );
-        }
-
-        if (currentSub === 3) {
-          return (
-            <div className="club-drawer-pane-content">
-              <ClubG02Workspace clubId={activeClub.id} initialSection="events" />
-            </div>
-          );
-        }
-
-        const list =
-          currentSub === 2
-            ? outings.filter((o) => o.status === 'completed')
-            : outings.filter((o) => o.status !== 'completed');
-
-        return (
-          <div className="club-drawer-pane-content">
-            <div className="club-drawer-sec-head">
-              <b>
-                {currentSub === 2
-                  ? 'Archives & Traces GPX'
-                  : 'Prochains Départs & Covoiturage'}
-              </b>
-            </div>
-            <div className="reseau-list">
-              {list.length === 0 ? (
-                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                  {currentSub === 2 ? 'Aucune archive de sortie pour le moment.' : 'Aucune sortie programmée pour le moment.'}
-                </div>
-              ) : (
-                <CarnetHorizontalTimeline
-                  ariaLabel={currentSub === 2 ? 'Frise des archives GPX' : 'Frise des sorties du club'}
-                  groups={[
-                    {
-                      day: 1,
-                      groupLabel: currentSub === 2 ? 'Archives' : 'À venir',
-                      events: list.map((o) => ({
-                        id: o.id,
-                        day: 1,
-                        kind: 'perf',
-                        badge: currentSub === 2 ? 'Archive GPX' : o.rsvpJoined ? 'Inscrit ✓' : 'Sortie',
-                        timeLabel: o.date || 'À venir',
-                        title: o.title,
-                        subtitle: [
-                          o.massif,
-                          o.km ? `${o.km} km` : null,
-                          o.dplus ? `+${o.dplus} m` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · '),
-                        onClick: () => {
-                          setInspectedOuting(o);
-                        },
-                      })),
-                    },
-                  ]}
-                />
-              )}
-            </div>
-          </div>
-        );
-      },
-    },
-
-    // TAB 3: COFFRE MATÉRIEL MUTUALISÉ
-    {
-      id: 'coffre',
-      label: 'Coffre matériel mutualisé du club',
-      icon: <Backpack size={18} aria-hidden="true" />,
-      render: () => {
-        if (currentSub === 1) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Kits Standards Recommandés par {activeClub.name}</b>
-                <span>Clonables en 1 tap dans Mon Matériel</span>
-              </div>
-              {standardKits.length === 0 ? (
-                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                  Aucun kit standard recommandé pour le moment.
-                </div>
-              ) : (
-                standardKits.map((k) => (
-                <div key={k.id} className="li nt club-outing-row">
-                  <div>
-                    <div className="ttl">
-                      <b>{k.title}</b> · <span className="club-comment-badge">{(k.totalWeightG / 1000).toFixed(1)} kg</span>
-                    </div>
-                    <div className="s2">{k.season} · {k.items.join(' · ')}</div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`reseau-btn ${k.cloned ? 'active' : 'primary'} club-icon-pill`}
-                    onClick={() => onCloneStandardKit(k.id)}
-                    aria-label={k.cloned ? 'Cloné' : 'Cloner'}
-                    title={k.cloned ? 'Cloné' : 'Cloner'}
-                  >
-                    {k.cloned ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-                  </button>
-                </div>
-              )))}
-            </div>
-          );
-        }
-
-        if (currentSub === 2) {
-          const collectiveItems = [
-            { key: 'tente', name: 'Abri / Tente 3P (1 720 g)' },
-            { key: 'rechaud', name: 'Réchaud + Popote Titane (310 g)' },
-            { key: 'corde', name: 'Corde Rando 30 m (890 g)' },
-            { key: 'secours', name: 'Pharmacie & Bivouac Urgence (420 g)' },
-          ];
-          const carriers = ['Тоny (@tony_frc)', 'Léa (@lea.fontaine)', 'Marc (@marc_alpi)', 'Clara (@clara.bivouac)'];
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Poids Collectif de Cordée</b>
-                <span>Total : 3,34 kg</span>
-              </div>
-              {collectiveItems.map((item) => (
-                <div key={item.key} className="li nt">
-                  <div>
-                    <div className="ttl"><span>{item.name}</span></div>
-                    <div className="s2">Porté par : <b>{cordeeCarrier[item.key]}</b></div>
-                  </div>
-                  <button
-                    type="button"
-                    className="reseau-btn active club-icon-pill"
-                    onClick={() => {
-                      const cur = cordeeCarrier[item.key];
-                      const next = carriers[(carriers.indexOf(cur) + 1) % carriers.length];
-                      setCordeeCarrier((prev) => ({ ...prev, [item.key]: next }));
-                    }}
-                    aria-label={'Changer'}
-                    title={'Changer'}
-                  >
-                    <RefreshCw size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          );
-        }
-
-        return (
-          <div className="club-drawer-pane-content">
-            <div className="club-drawer-sec-head">
-              <b>Coffre d’Entraide ({vaultGear.length} pièces)</b>
-            </div>
-            <div className="reseau-list">
-              {vaultGear.length === 0 ? (
-                <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                  Le coffre d’entraide est actuellement vide.
-                </div>
-              ) : (
-                vaultGear.map((g) => (
-                <div key={g.id} className="li nt club-outing-row">
-                  <div>
-                    <div className="ttl">
-                      <b>{g.name}</b> · <span className="s2">{g.brand} ({g.weightG} g)</span>
-                    </div>
-                    <div className="s2">
-                      Prêté par <b>{g.ownerName}</b> (@{g.ownerHandle}) · {g.category}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`reseau-btn ${g.reservedByMe ? 'active' : 'primary'} club-icon-pill`}
-                    onClick={() => onToggleReserveGear(g.id)}
-                    aria-label={g.reservedByMe ? 'Réservé' : 'Emprunter'}
-                    title={g.reservedByMe ? 'Réservé' : 'Emprunter'}
-                  >
-                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}
-                  </button>
-                </div>
-              )))}
-            </div>
-          </div>
-        );
-      },
-    },
-
-    // TAB 4: DÉFIS COLLECTIFS, CANAL LIVE & GOUVERNANCE
-    {
-      id: 'tribu',
-      label: 'Défis collectifs, canal et gouvernance',
-      icon: <Award size={18} aria-hidden="true" />,
-      render: () => {
-        if (currentSub === 1) {
-          return (
-            <div className="club-drawer-pane-content club-chat-pane">
-              <div className="club-drawer-sec-head">
-                <b>Canal Live · {activeClub.name}</b>
-                <span>Coordination départs & météo en direct</span>
-              </div>
-              <div className="club-chat-messages">
-                {chatMessages.length === 0 ? (
-                  <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                    Aucun message dans ce canal pour le moment.
-                  </div>
-                ) : (
-                  chatMessages.map((msg) => (
-                  <div key={msg.id} className="lkdv-comment-row">
-                    <span className="lkdv-comment-av" aria-hidden="true">
-                      {msg.authorName.charAt(0)}
-                    </span>
-                    <div className="lkdv-comment-body">
-                      <div className="lkdv-comment-meta">
-                        <b>{msg.authorName}</b>
-                        {msg.roleBadge ? <span className="club-comment-badge">{msg.roleBadge}</span> : null}
-                        <span>{msg.time}</span>
-                      </div>
-                      <p className="lkdv-comment-text">{msg.text}</p>
-                    </div>
-                  </div>
-                )))}
-              </div>
-              <form
-                className="lkdv-comments-composer lkdv-comments-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!chatDraft.trim()) return;
-                  onSendChatMessage(chatDraft.trim());
-                  setChatDraft('');
-                }}
-              >
-                <input
-                  type="text"
-                  className="lkdv-comments-input"
-                  placeholder={`Écrire à la cordée ${activeClub.name}…`}
-                  aria-label="Message au canal du club"
-                  value={chatDraft}
-                  onChange={(e) => setChatDraft(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="lkdv-comments-send"
-                  aria-label="Envoyer au canal"
-                  disabled={!chatDraft.trim()}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          );
-        }
-
-        if (currentSub === 2) {
-          return (
-            <div className="club-drawer-pane-content">
-              <div className="club-drawer-sec-head">
-                <b>Charte, Gouvernance & QR Code Terrain</b>
-                <span>Rôle : {activeClub.role}</span>
-              </div>
-              <div className="li nt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-                <div className="ttl"><b>Charte & Sécurité du Club</b></div>
-                <div className="s2">{activeClub.charter}</div>
-              </div>
-              <div className="li nt">
-                <div>
-                  <div className="ttl"><span>Visibilité & Mode d’adhésion</span></div>
-                  <div className="s2">
-                    {activeClub.visibility === 'public'
-                      ? 'Public · Tout voyageur LKDV peut rejoindre'
-                      : 'Sur cooptation · Validation par les encadrants'}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="reseau-btn active"
-                  onClick={onToggleClubVisibility}
-                >
-                  {activeClub.visibility === 'public' ? 'Public' : 'Privé'}
-                </button>
-              </div>
-              <div className="li nt">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <QrCode size={28} color="#17402C" aria-hidden="true" />
-                  <div>
-                    <div className="ttl"><span>Pass QR Terrain · {activeClub.name}</span></div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="reseau-btn primary club-icon-pill"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard?.writeText(`${window.location.origin}/clubs/${activeClub.id}`);
-                      setCopiedInvite(true);
-                      window.setTimeout(() => setCopiedInvite(false), 2000);
-                    } catch {
-                      // ignore
-                    }
-                  }}
-                  aria-label={copiedInvite ? 'Copié' : 'Copier le lien QR'}
-                  title={copiedInvite ? 'Copié' : 'Copier le lien QR'}
-                >
-                  {copiedInvite ? <Check size={16} aria-hidden="true" /> : <QrCode size={16} aria-hidden="true" />}
-                </button>
-              </div>
-            </div>
-          );
-        }
-
-        if (currentSub === 3) {
-          return (
-            <div className="club-drawer-pane-content">
-              <ClubG02Workspace clubId={activeClub.id} initialSection="salons" />
-            </div>
-          );
-        }
-
-        return (
-          <div className="club-drawer-pane-content">
-            <div className="club-drawer-sec-head">
-              <b>Défis Collectifs & Empreinte du Club</b>
-              <span>Cumul vérifié : {activeClub.totalKm} km · +{activeClub.totalDplus.toLocaleString('fr-FR')} m D+</span>
-            </div>
-            {challenges.length === 0 ? (
-              <div className="li nt" style={{ color: 'var(--secondary, rgba(255,255,255,0.7))', padding: '16px 8px', fontSize: 13 }}>
-                Aucun défi actif pour le moment.
-              </div>
-            ) : (
-              challenges.map((ch) => {
-              const pct = Math.min(100, Math.round((ch.current / ch.target) * 100));
-              return (
-                <div key={ch.id} className="li nt" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <b style={{ fontSize: 13, color: 'var(--label)' }}>{ch.title}</b>
-                    <span className="club-comment-badge">{ch.rewardBadge}</span>
-                  </div>
-                  <div className="s2">{ch.subtitle}</div>
-                  <div className="club-progress-track" aria-label={`${pct}% complété`}>
-                    <div className="club-progress-fill" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="s2" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>{ch.current.toLocaleString('fr-FR')} / {ch.target.toLocaleString('fr-FR')} {ch.unit}</span>
-                    <b>{pct}%</b>
-                  </div>
-                </div>
-              );
-            }))}
-          </div>
-        );
-      },
-    },
-  ];
-
-  const activeSecondaryItems = secondaryByTab[tab] ?? [];
-  const activeMainTab = mainTabs[tab] ?? mainTabs[0];
+  const slotState =
+    syncStatus === 'error'
+      ? 'error'
+      : syncStatus === 'syncing' && clubs.length === 0 && !activeClub.id
+        ? 'loading'
+        : 'ready';
 
   return (
-    <div
-      className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Espace Club & Cordée"
-    >
-      {onClose ? (
-        <button type="button" className="lkdv-mgrab" onClick={onClose} aria-label="Fermer le tiroir">
-          <span />
-        </button>
-      ) : null}
-      <SlotShell
-        slot={activeMainTab?.id ?? 'explorer'}
-        viewer="owner"
-        title={activeMainTab?.label ?? 'Club'}
-        lenses={activeSecondaryItems.map((s, idx) => ({
-          id: s.id ?? String(idx),
-          label: s.label,
-          icon: s.icon,
-        }))}
-        activeLensIndex={currentSub}
-        onLensChange={(idx) => {
-          setInspectedMember(null);
-          setInspectedOuting(null);
-          setCurrentSub(idx);
-        }}
-        selector={
-          <CapsuleTabs
-            items={mainTabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
-            activeIndex={tab}
-            onIndexChange={(nextTab) => {
-              setInspectedMember(null);
-              setInspectedOuting(null);
-              setTab(nextTab);
+    <ClubMotionRoot>
+      <motion.div
+        ref={attachPaneRoot}
+        {...dragProps}
+        style={{ y }}
+        onKeyDown={handleRootKeyDown}
+        className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Espace Club & Cordée"
+        tabIndex={-1}
+        data-club-tab={tab}
+        data-club-lens={activeLensId}
+        data-outdoor={isOutdoor ? 'true' : undefined}
+        data-reduce-motion={reduceMotion ? 'true' : undefined}
+      >
+        {onClose ? (
+          <button
+            type="button"
+            className="lkdv-mgrab"
+            {...handleProps}
+            onClick={() => {
+              if (!isDragging) onClose();
             }}
-            ariaLabel="Onglets du club"
-            size="default"
-          />
-        }
-        renderLens={() => (
-          <LensTransition transitionKey={`main:${tab}:${currentSub}`}>
-            <div className="lkdv-carnet-drawer-pane" style={{ paddingTop: 72, paddingBottom: 88 }}>
-              {activeMainTab?.render()}
+            aria-label="Fermer le tiroir"
+          >
+            <span />
+          </button>
+        ) : null}
+
+        <SlotShell
+          slot={activeMainTab?.id ?? 'explorer'}
+          viewer="owner"
+          title={activeMainTab?.label ?? 'Club'}
+          state={slotState}
+          onRetry={onRetrySync}
+          lenses={activeSecondaryItems.map((s, idx) => ({
+            id: s.id ?? String(idx),
+            label: s.label,
+            icon: s.icon,
+          }))}
+          activeLensIndex={activeLensIndex}
+          onLensChange={(idx) => {
+            haptic('selection');
+            if (tab === 1 && inspectedMember) {
+              setMemberLensIndex(idx);
+              return;
+            }
+            setInspectedMember(null);
+            setInspectedOuting(null);
+            setSubForTab(tab, idx);
+          }}
+          selector={
+            <CapsuleTabs
+              className="lkdv-slot-selector"
+              items={mainTabDefs.map((t) => ({
+                id: t.id,
+                label: t.label,
+                icon: t.icon,
+                badge: t.badge,
+              }))}
+              activeIndex={tab}
+              onIndexChange={(nextTab) => {
+                haptic('selection');
+                setStack([]);
+                setInspectedMember(null);
+                setInspectedOuting(null);
+                setMemberLensIndex(0);
+                setTab(nextTab);
+              }}
+              ariaLabel="Onglets du club"
+              size="default"
+            />
+          }
+          renderLens={(lens, index, active) => (
+            <div className="lkdv-carnet-drawer-pane">
+              {tab === 0 ? (
+                <ClubExplorerDrawerBody
+                  lensId={(lens.id as ExplorerLensId) || 'my-clubs'}
+                  active={active}
+                  loading={syncStatus === 'syncing'}
+                  activeClub={activeClub}
+                  clubs={clubs}
+                  members={members}
+                  outings={outings}
+                  posts={posts}
+                  vaultGear={vaultGear}
+                  currentUserId={currentUserId}
+                  searchQuery={searchQuery}
+                  onSearchQueryChange={setSearchQuery}
+                  onSelectClub={onSelectClub}
+                  onToggleJoinClub={onToggleJoinClub}
+                  onFlyToCoords={onFlyToCoords}
+                  onSwitchLens={(idx) => {
+                    haptic('selection');
+                    setSubForTab(0, idx);
+                  }}
+                  onSwitchTabAndLens={handleSwitchTabAndLens}
+                  onOpenCreateClub={(prefillMassif) => {
+                    setCreatePrefillMassif(prefillMassif);
+                    setInternalMode('create');
+                    setTab(3);
+                  }}
+                  onBorrowGear={onToggleReserveGear}
+                  onToast={emitToast}
+                  onClose={() => onClose?.()}
+                />
+              ) : null}
+
+              {tab === 1 ? (
+                <ClubCordeeDrawerBody
+                  lensId={(lens.id as CordeeLensId | MemberDetailLensId) || 'members-all'}
+                  active={active}
+                  loading={syncStatus === 'syncing'}
+                  activeClub={activeClub}
+                  members={members}
+                  outings={outings}
+                  posts={posts}
+                  vaultGear={vaultGear}
+                  currentUserId={currentUserId}
+                  currentUserHandle={currentUserHandle}
+                  blockedUserIds={blockedUserIds}
+                  inspectedMember={inspectedMember}
+                  memberLensIndex={memberLensIndex}
+                  onInspectMember={pushMember}
+                  onMemberLensChange={setMemberLensIndex}
+                  onToggleFollowMember={(m) => onToggleFollowMember(m.userId || m.id || m.handle)}
+                  onProposeBinome={
+                    onProposeBinome ??
+                    (async () => true)
+                  }
+                  onRetractBinome={onRetractBinome ?? (async () => {})}
+                  onUpdateMyAvailability={async () => {}}
+                  onChangeMemberRole={onChangeMemberRole}
+                  onCreateBinomeGroup={onCreateBinomeGroup}
+                  onBorrowGear={onToggleReserveGear}
+                  onSwitchTabAndLens={handleSwitchTabAndLens}
+                  onOpenMemberProfile={(handle) => {
+                    if (typeof window !== 'undefined' && typeof (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile === 'function') {
+                      (window as unknown as { __lkdvNavigateProfile: (h: string) => void }).__lkdvNavigateProfile(handle);
+                    }
+                  }}
+                  onToast={emitToast}
+                  onClose={() => onClose?.()}
+                />
+              ) : null}
+
+              {tab === 2 ? (
+                <ClubSortiesDrawerBody
+                  activeSubTab={index}
+                  active={active}
+                  activeClub={activeClub}
+                  outings={outings}
+                  members={members}
+                  vaultGear={vaultGear}
+                  inspectedOuting={inspectedOuting}
+                  onInspectOuting={(o) => pushOuting(o, index)}
+                  onToggleRsvpOuting={onToggleRsvpOuting}
+                  onCreateGroupFromOuting={onCreateGroupFromOuting}
+                  onDownloadGpx={onDownloadGpx}
+                  onFlyToCoords={onFlyToCoords}
+                  onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
+                  onToast={emitToast}
+                  onOpenRuntimeOverlay={onOpenRuntimeOverlay}
+                  currentUserId={currentUserId}
+                  initialSection={g02Section ?? 'events'}
+                />
+              ) : null}
+
+              {tab === 3 ? (
+                <ClubCoffreDrawerBody
+                  activeSubTab={index}
+                  activeClub={activeClub}
+                  vaultGear={vaultGear}
+                  standardKits={standardKits}
+                  members={members}
+                  outings={outings}
+                  onToggleReserveGear={onToggleReserveGear}
+                  onCloneStandardKit={onCloneStandardKit}
+                  onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
+                  onSwitchToCreate={(cTab) => {
+                    setInternalMode('create');
+                    setTab(cTab);
+                  }}
+                  onToast={emitToast}
+                />
+              ) : null}
+
+              {tab === 4 ? (
+                <ClubTribuDrawerBody
+                  activeSubTab={index}
+                  active={active}
+                  activeClub={activeClub}
+                  challenges={challenges}
+                  chatMessages={chatMessages}
+                  members={members}
+                  initialChatDraft={chatDraftPrefill}
+                  onSendChatMessage={onSendChatMessage}
+                  onToggleClubVisibility={onToggleClubVisibility}
+                  onInspectMember={(m) => pushMember(m, index)}
+                  onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
+                  onToast={emitToast}
+                  onOpenRuntimeOverlay={onOpenRuntimeOverlay}
+                  currentUserId={currentUserId}
+                  initialSection={g02Section ?? 'salons'}
+                />
+              ) : null}
             </div>
-          </LensTransition>
-        )}
-      />
-    </div>
+          )}
+        />
+
+        {resumePill && resumePill.key === activeLensKey ? (
+          <div className="club-drawer-floating-left">
+            <button
+              type="button"
+              className="lkdv-club-pill-reprendre"
+              onClick={resumeReading}
+            >
+              <ArrowUp size={13} aria-hidden="true" />
+              <span>Reprendre la lecture</span>
+            </button>
+          </div>
+        ) : null}
+
+        <ClubIsland toast={localToast} onDismiss={() => setLocalToast(null)} />
+      </motion.div>
+    </ClubMotionRoot>
   );
 }
 

@@ -8,7 +8,6 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { requestCarnetPublicationAward } from '@/lib/progression-award-requests';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '../compte/compte-v8.css';
 import '../compte/compte-apple-hig.css';
@@ -16,10 +15,17 @@ import '../compte/overlay/compte-drawers.css';
 import '@/features/posts/ui/post-system.css';
 import '@/styles/community-feed.css';
 import './club-adaptation.css';
+import './drawer/club-drawers-v2.css';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
+import type { ClubChallengeSummary, ClubRole } from '@/features/clubs';
 import { DRAWER_V2_CSS } from '../compte/drawer/SlotShell';
 import { ClubInlineFeed, type ClubFeedPostItem } from './feed/ClubInlineFeed';
+import { METRIC_LABELS, METRIC_UNITS } from './g02/model';
+import type { ClubG02Section } from './g02/ClubG02Screen';
+import { ClubIsland, type ClubIslandToast } from './drawer/ClubIsland';
+import { ClubRuntimeOverlays } from './drawer/ClubRuntimeOverlays';
+import { resolveMassifCoords } from './drawer/ClubSharedUi';
 import type {
   ClubItemData,
   ClubMemberData,
@@ -28,7 +34,14 @@ import type {
   ClubStandardKit,
   ClubChallengeItem,
   ClubChatMessage,
-} from './drawer/ClubDrawerHost';
+  ClubDrawerIntent,
+  ClubToastPayload,
+  ClubRuntimeOverlayKind,
+  ClubRuntimeOverlayState,
+} from './drawer/ClubDrawerTypes';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (val?: string | null): val is string => Boolean(val && UUID_RE.test(val));
 
 // Le tiroir du club (~25 Ko gz avec ses dépendances) ne sert qu'à l'ouverture d'un tiroir :
 // il est monté seulement quand `drawerMount` est renseigné, donc chargé à ce moment-là
@@ -87,8 +100,6 @@ ${trks}
 </gpx>`;
 }
 
-
-
 export interface ClubLiquidGlassV8Props {
   clubId?: string;
   initialTab?: string;
@@ -128,16 +139,24 @@ const DEFAULT_FALLBACK_CLUB: ClubItemData = {
   lng: 6.869,
 };
 
+const TIROIR_TAB_MAP: Record<string, number> = {
+  explorer: 0,
+  cordee: 1,
+  sorties: 2,
+  coffre: 3,
+  tribu: 4,
+};
+
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
-  // Le moteur de l'écran se charge à la demande : l'hydratation du profil attend qu'il soit prêt.
   const runtimeReadyRef = useRef(false);
   const pendingProfileSyncRef = useRef(false);
   const syncProfileRef = useRef<() => void>(() => {});
+  const pendingDrawerIntentRef = useRef<Partial<ClubDrawerIntent> | null>(null);
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle');
   const [activeHandle, setActiveHandle] = useState<string>(clubId || '');
 
   // React Portal targets inside the iOS 27 runtime card & sheet
@@ -145,8 +164,19 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [drawerMount, setDrawerMount] = useState<{
     root: HTMLElement;
     kind: string;
-    props: { mode?: 'main' | 'create'; tab?: number; subTab?: number; outingId?: string };
+    props: {
+      mode?: 'main' | 'create';
+      tab?: number;
+      subTab?: number;
+      outingId?: string;
+      memberId?: string;
+      initialSection?: ClubG02Section;
+    };
   } | null>(null);
+  const [drawerIntent, setDrawerIntent] = useState<ClubDrawerIntent | null>(null);
+  const [islandToast, setIslandToast] = useState<ClubIslandToast | null>(null);
+  const [runtimeOverlay, setRuntimeOverlay] = useState<ClubRuntimeOverlayState | null>(null);
+  const [isOutdoor, setIsOutdoor] = useState(false);
 
   // Club rich interactive state
   const [clubsDirectory, setClubsDirectory] = useState<ClubItemData[]>(INITIAL_CLUBS_DIRECTORY);
@@ -156,8 +186,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [clubOutings, setClubOutings] = useState<ClubOutingData[]>(INITIAL_CLUB_OUTINGS);
   const [vaultGear, setVaultGear] = useState<ClubGearVaultItem[]>(INITIAL_VAULT_GEAR);
   const [standardKits, setStandardKits] = useState<ClubStandardKit[]>(INITIAL_STANDARD_KITS);
-  const [challenges] = useState<ClubChallengeItem[]>(INITIAL_CHALLENGES);
+  const [challenges, setChallenges] = useState<ClubChallengeItem[]>(INITIAL_CHALLENGES);
   const [chatMessages, setChatMessages] = useState<ClubChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
+  const [activeSalonChannelId, setActiveSalonChannelId] = useState<string | null>(null);
 
   const activeClub =
     clubsDirectory.find((c) => c.id === activeClubId || c.slug === activeClubId) ||
@@ -170,23 +202,28 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     }
   }, []);
 
-  const showIslandToast = useCallback((title: string, subtitle = '') => {
-    if (typeof window !== 'undefined') {
-      const islandEl = document.getElementById('island');
-      if (islandEl) {
-        islandEl.setAttribute('data-s', 'note');
-        const noteEl = islandEl.querySelector('.is.note');
-        if (noteEl) {
-          noteEl.innerHTML = `<div class="t"><b>${title}</b><span>${subtitle}</span></div>`;
-        }
-        setTimeout(() => {
-          if (islandEl.getAttribute('data-s') === 'note') {
-            islandEl.setAttribute('data-s', 'idle');
-          }
-        }, 2800);
-      }
-    }
+  const showIslandToast = useCallback((title: string, subtitle = '', undo?: () => void) => {
+    setIslandToast({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      message: title,
+      subtitle: subtitle || undefined,
+      undo,
+    });
   }, []);
+
+  const handleToast = useCallback(
+    (payload: ClubToastPayload) => {
+      showIslandToast(payload.title, payload.subtitle ?? '', payload.undo);
+    },
+    [showIslandToast],
+  );
+
+  const handleOpenRuntimeOverlay = useCallback(
+    (kind: ClubRuntimeOverlayKind, payload?: Record<string, unknown>) => {
+      setRuntimeOverlay({ kind, payload });
+    },
+    [],
+  );
 
   const flyMapToCoords = useCallback((coords?: [number, number], label?: string) => {
     if (!coords || typeof window === 'undefined') return;
@@ -216,11 +253,17 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
     let cancelled = false;
     let cleanup: (() => void) | null = null;
+    let phoneObserver: MutationObserver | null = null;
 
-    // MapLibre (~250 Ko gz) et le moteur de l'écran (~65 Ko gz) ne sont plus dans le JS de la
-    // page : ils se chargent ici, en parallèle, dès le montage. Le contenu apparaît au même
-    // moment qu'avant (le conteneur reste vide tant que le moteur n'est pas prêt), mais
-    // l'hydratation de la page n'attend plus ces deux paquets.
+    const onPrehydrateIntent = (ev: Event) => {
+      const target = ev.target as HTMLElement | null;
+      if (target?.closest?.('#rpvis, .ig-stat')) {
+        void loadClubDrawerHost().catch(() => {});
+      }
+    };
+    el.addEventListener('pointerenter', onPrehydrateIntent, true);
+    el.addEventListener('focusin', onPrehydrateIntent, true);
+
     void Promise.all([import('maplibre-gl'), import('./club-liquid-glass-v8-runtime')]).then(([maplibregl, runtime]) => {
       if (cancelled) return;
       if (typeof window !== 'undefined') {
@@ -233,9 +276,34 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         (window as any).__lkdvMountDrawer = (
           rootEl: HTMLElement,
           kind: string,
-          props: { mode?: 'main' | 'create'; tab?: number; subTab?: number; outingId?: string } = {}
+          props: {
+            mode?: 'main' | 'create';
+            tab?: number;
+            subTab?: number;
+            outingId?: string;
+            memberId?: string;
+            initialSection?: ClubG02Section;
+          } = {},
         ) => {
-          setDrawerMount({ root: rootEl, kind, props });
+          const pending = pendingDrawerIntentRef.current;
+          pendingDrawerIntentRef.current = null;
+          const merged = {
+            ...props,
+            ...(pending?.tab !== undefined ? { tab: pending.tab } : {}),
+            ...(pending?.subTab !== undefined ? { subTab: pending.subTab } : {}),
+            ...(pending?.outingId ? { outingId: pending.outingId } : {}),
+            ...(pending?.memberId ? { memberId: pending.memberId } : {}),
+            ...(pending?.initialSection ? { initialSection: pending.initialSection } : {}),
+          };
+          setDrawerMount({ root: rootEl, kind, props: merged });
+          setDrawerIntent({
+            nonce: Date.now(),
+            tab: merged.tab,
+            subTab: merged.subTab,
+            outingId: merged.outingId,
+            memberId: merged.memberId,
+            initialSection: merged.initialSection,
+          });
         };
 
         (window as any).__lkdvUnmountDrawer = () => {
@@ -248,6 +316,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const initialFeedEl = el.querySelector('#lkdv-club-feed-root') as HTMLElement | null;
       if (initialFeedEl) {
         setFeedRoot(initialFeedEl);
+      }
+
+      const phoneEl = el.querySelector('#phone');
+      if (phoneEl && typeof MutationObserver !== 'undefined') {
+        setIsOutdoor(phoneEl.classList.contains('outdoor'));
+        phoneObserver = new MutationObserver(() => {
+          setIsOutdoor(phoneEl.classList.contains('outdoor'));
+        });
+        phoneObserver.observe(phoneEl, { attributes: true, attributeFilter: ['class'] });
       }
 
       // Register real catalog lookup for the Scan sheet
@@ -359,7 +436,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             triggerBrowserDownload(
               `lkdv-club-${handle}.json`,
               JSON.stringify(fallbackBundle, null, 2),
-              'application/json;charset=utf-8'
+              'application/json;charset=utf-8',
             );
           } else if (val === 'gpx') {
             const gpx = buildGpxXml(dump.OUTINGS || [], handle);
@@ -373,27 +450,41 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         }
       };
 
-      if (initialTab && typeof (window as any).__lkdvCompteAct === 'function') {
+      if (typeof (window as any).__lkdvCompteAct === 'function') {
         const act = (window as any).__lkdvCompteAct;
-        if (initialTab === 'carnets') {
+        const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const tiroirParam = params?.get('tiroir');
+        const sousTiroirParam = params?.get('sous_tiroir');
+        const sortieParam = params?.get('sortie') ?? undefined;
+        const membreParam = params?.get('membre') ?? undefined;
+
+        if (tiroirParam && tiroirParam in TIROIR_TAB_MAP) {
+          const tIdx = TIROIR_TAB_MAP[tiroirParam];
+          const sIdx = Math.max(0, Math.min(3, Number.parseInt(sousTiroirParam || '0', 10) || 0));
+          pendingDrawerIntentRef.current = {
+            tab: tIdx,
+            subTab: sIdx,
+            outingId: sortieParam,
+            memberId: membreParam,
+          };
+          act('openClubDrawer', `${tIdx}:${Math.min(2, sIdx)}`);
+        } else if (initialTab === 'carnets') {
           act('igtab', 0);
         } else if (initialTab === 'sorties' || initialTab === 'aventures') {
           act('igtab', 1);
         } else if (initialTab === 'membres') {
-          act('openFollowers');
+          act('openClubDrawer', '1:0');
         } else if (initialTab === 'parametres') {
-          act('openSettings');
+          act('openClubDrawer', '4:2');
         }
       }
 
-      // Le moteur est prêt : l'hydratation du profil du club (effet suivant) peut partir.
       runtimeReadyRef.current = true;
       if (pendingProfileSyncRef.current) {
         pendingProfileSyncRef.current = false;
         syncProfileRef.current();
       }
 
-      // Préchargement du tiroir au repos : son ouverture reste immédiate.
       const prefetchDrawer = () => {
         void loadClubDrawerHost().catch(() => {});
       };
@@ -409,14 +500,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     return () => {
       cancelled = true;
       runtimeReadyRef.current = false;
-      // Même sémantique qu'avant le chargement différé : seul l'effet de synchronisation
-      // (montage, changement de club) redemande une synchronisation du profil.
       pendingProfileSyncRef.current = false;
+      el.removeEventListener('pointerenter', onPrehydrateIntent, true);
+      el.removeEventListener('focusin', onPrehydrateIntent, true);
+      phoneObserver?.disconnect();
       cleanup?.();
       cleanup = null;
       initializedRef.current = false;
     };
-  }, [clubId, initialTab, router, signOut, user?.id]);
+  }, [activeHandle, clubId, initialTab, router, signOut, user?.id]);
 
   // Hydrate dynamically with live Supabase club data (2-step public_profiles resolution)
   const syncClubProfile = useCallback(async () => {
@@ -424,6 +516,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     if (typeof hydrate !== 'function') return;
 
     if (!clubId) {
+      setClubsDirectory([]);
+      setClubPosts([]);
+      setClubMembers([]);
+      setClubOutings([]);
+      setVaultGear([]);
+      setStandardKits([]);
+      setChallenges([]);
+      setChatMessages([]);
       hydrate({
         name: 'Club',
         handle: 'club',
@@ -437,13 +537,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         isDemo: false,
         storeCreditEur: 0,
         loyaltyPoints: 0,
-        carnets: mappedPosts.map((p) => ({
-          id: p.id,
-          title: p.spot,
-          mass: p.massif,
-          km: 0,
-          dplus: 0,
-        })),
+        carnets: [],
         outings: [],
         clubs: [],
         gearItems: [],
@@ -460,13 +554,21 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     setSyncStatus('syncing');
     try {
       const supabase = createClient();
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clubId);
+      const clubIsUuid = isUuid(clubId);
       const clubQuery = supabase
         .from('clubs')
-        .select('id, name, slug, description, category, cover_image, members_count, privacy, created_by, created_at');
-      const { data: clubRow } = await (isUuid ? clubQuery.eq('id', clubId) : clubQuery.eq('slug', clubId)).maybeSingle();
+        .select('id, name, slug, description, category, cover_image, members_count, privacy, rules, location_label, primary_sport, created_by, created_at');
+      const { data: clubRow } = await (clubIsUuid ? clubQuery.eq('id', clubId) : clubQuery.eq('slug', clubId)).maybeSingle();
 
       if (!clubRow) {
+        setClubsDirectory([]);
+        setClubPosts([]);
+        setClubMembers([]);
+        setClubOutings([]);
+        setVaultGear([]);
+        setStandardKits([]);
+        setChallenges([]);
+        setChatMessages([]);
         hydrate({
           name: 'Club introuvable',
           handle: clubId,
@@ -480,13 +582,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           isDemo: false,
           storeCreditEur: 0,
           loyaltyPoints: 0,
-          carnets: mappedPosts.map((p) => ({
-          id: p.id,
-          title: p.spot,
-          mass: p.massif,
-          km: 0,
-          dplus: 0,
-        })),
+          carnets: [],
           outings: [],
           clubs: [],
           gearItems: [],
@@ -503,12 +599,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const [membersRes, topicsRes, eventsRes, allClubsRes] = await Promise.all([
         supabase
           .from('club_members')
-          .select('id, club_id, user_id, role, joined_at')
+          .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in')
           .eq('club_id', clubRow.id)
-          .limit(50),
+          .limit(100),
         supabase
           .from('club_topics')
-          .select('id, club_id, author_id, title, content, is_pinned, replies_count, created_at')
+          .select('id, club_id, author_id, title, content, is_pinned, replies_count, media_url, created_at')
           .eq('club_id', clubRow.id)
           .order('created_at', { ascending: false })
           .limit(20),
@@ -520,26 +616,67 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           .limit(20),
         supabase
           .from('clubs')
-          .select('id, name, slug, description, category, cover_image, members_count, privacy')
+          .select('id, name, slug, description, category, cover_image, members_count, privacy, rules, location_label, primary_sport, created_by, created_at')
           .order('members_count', { ascending: false })
           .limit(30),
       ]);
 
-      const memberRows = membersRes.data || [];
-      const topicRows = topicsRes.data || [];
-      const eventRows = eventsRes.data || [];
-      const allClubRows = allClubsRes.data || [];
+      const rawMemberRows: any[] = membersRes.data || [];
+      const memberRows = rawMemberRows.filter((m) => !m.status || m.status === 'active');
+      const topicRows: any[] = topicsRes.data || [];
+      const eventRows: any[] = eventsRes.data || [];
+      const allClubRows: any[] = allClubsRes.data || [];
+
+      const myClubRoles = new Map<string, string>();
+      if (user?.id) {
+        try {
+          const { data: myRows } = await supabase
+            .from('club_members')
+            .select('club_id, role, status')
+            .eq('user_id', user.id)
+            .limit(50);
+          for (const mr of myRows || []) {
+            if (!mr.status || mr.status === 'active') {
+              myClubRoles.set(mr.club_id, mr.role || 'member');
+            }
+          }
+        } catch {
+          // ignore on minimal test mocks
+        }
+      }
 
       const userIds = Array.from(
         new Set(
           [
+            clubRow.created_by,
             ...memberRows.map((m: any) => m.user_id),
             ...topicRows.map((t: any) => t.author_id),
+            ...eventRows.map((ev: any) => ev.organizer_id || ev.created_by),
           ].filter(Boolean),
         ),
       );
       const profilesMap: Record<string, any> =
         userIds.length > 0 ? await fetchPublicProfilesWith(supabase as any, userIds) : {};
+
+      const followedSet = new Set<string>();
+      const blockedList: string[] = [];
+      if (user?.id && userIds.length > 0) {
+        try {
+          const [followsRes, blocksRes] = await Promise.all([
+            supabase.from('user_follows').select('following_id').eq('follower_id', user.id).in('following_id', userIds),
+            supabase.from('user_blocks').select('blocker_id, blocked_id').eq('blocker_id', user.id),
+          ]);
+          for (const f of followsRes.data || []) {
+            if (f.following_id) followedSet.add(f.following_id);
+          }
+          for (const b of blocksRes.data || []) {
+            if (b.blocked_id) blockedList.push(b.blocked_id);
+          }
+        } catch {
+          // ignore if minimal mock does not implement .in()
+        }
+      }
+      setBlockedUserIds(blockedList);
 
       const derivedHandle = clubRow.slug || clubRow.name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 20);
       const currentMemberRow = user?.id
@@ -553,24 +690,61 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             ? 'Modérateur'
             : 'Membre';
 
-      const mappedMembers: ClubMemberData[] = memberRows.map((m: any) => {
+      const sevenDaysMs = 7 * 86_400_000;
+      const nowMs = Date.now();
+
+      const memberSourceRows = [...memberRows];
+      if (clubRow.created_by && !memberSourceRows.some((m: any) => m.user_id === clubRow.created_by)) {
+        memberSourceRows.unshift({
+          id: `founder-${clubRow.created_by}`,
+          club_id: clubRow.id,
+          user_id: clubRow.created_by,
+          role: 'admin',
+          status: 'active',
+          joined_at: clubRow.created_at,
+        });
+      }
+
+      const memberRoleByUserId = new Map<string, string>();
+      const mappedMembers: ClubMemberData[] = memberSourceRows.map((m: any) => {
         const p = profilesMap[m.user_id];
         const fullName = p?.full_name || 'Membre LKDV';
         const handle =
           p?.handle ||
           fullName.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24) ||
           'membre';
+        const joinedMs = m.joined_at ? Date.parse(m.joined_at) : NaN;
+        const isNew7d = Number.isFinite(joinedMs) && nowMs - joinedMs <= sevenDaysMs;
+        const mappedRole: ClubMemberData['role'] =
+          m.user_id === clubRow.created_by
+            ? 'Fondateur'
+            : m.role === 'admin'
+              ? 'Guide & Sécurité'
+              : m.role === 'moderator'
+                ? 'Encadrant'
+                : isNew7d
+                  ? 'Nouveau'
+                  : 'Membre actif';
+        memberRoleByUserId.set(m.user_id, mappedRole);
+
         return {
           id: m.user_id,
+          userId: m.user_id,
           name: fullName,
           handle,
-          avatarUrl: p?.avatar_url || null,
-          role: m.role === 'admin' ? 'Admin' : m.role === 'moderator' ? 'Modérateur' : 'Membre',
-          level: p?.location || clubRow.category || 'Voyageur',
-          massif: p?.location || clubRow.category || 'France',
-          skills: [p?.location || clubRow.category || 'Outdoor'],
-          followed: false,
-          availableThisWeekend: true,
+          avatarUrl: p?.avatar_url || undefined,
+          role: mappedRole,
+          rawRole: (m.role as ClubRole) || 'member',
+          level: p?.location || clubRow.primary_sport || clubRow.category || 'Voyageur',
+          massif: p?.location || clubRow.location_label || clubRow.category || 'France',
+          skills: [p?.location || clubRow.primary_sport || clubRow.category || 'Outdoor'],
+          followed: followedSet.has(m.user_id),
+          availableWeekend: Boolean(m.available_weekend ?? true),
+          isNew7d,
+          joinedAt: m.joined_at || undefined,
+          mutedUntil: m.muted_until ?? null,
+          isProAthlete: Boolean(m.is_pro_athlete),
+          verifiedSports: Array.isArray(m.verified_sports) ? m.verified_sports : undefined,
         };
       });
 
@@ -585,91 +759,308 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             : diffMin < 1440
               ? `il y a ${Math.round(diffMin / 60)} h`
               : `il y a ${Math.round(diffMin / 1440)} j`;
+        const kind: ClubFeedPostItem['kind'] = t.media_url ? 'media' : 'text';
         return {
           id: t.id,
           clubId: clubRow.id,
+          pinned: Boolean(t.is_pinned),
           authorName,
           authorHandle: p?.handle || authorName.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-          authorRole: t.is_pinned ? 'Admin' : 'Membre',
-          authorAvatar: p?.avatar_url || null,
+          authorRole: memberRoleByUserId.get(t.author_id) || (t.is_pinned ? 'Admin' : 'Membre'),
+          authorAvatar: p?.avatar_url || undefined,
           timeAgo,
           spot: t.title || clubRow.name,
-          massif: clubRow.category || clubRow.name,
-          kind: 'post',
+          massif: clubRow.location_label || clubRow.category || clubRow.name,
+          kind,
           caption: t.content || t.title || '',
+          mediaUrl: t.media_url || undefined,
           likes: 0,
           liked: false,
-          commentsCount: Number(t.replies_count ?? 0),
           comments: [],
           lat: 45.764,
           lng: 4.835,
         };
       });
 
-      const mappedOutings: ClubOutingData[] = eventRows.map((ev: any) => {
+      const clubCoords = resolveMassifCoords(clubRow.location_label || clubRow.category || '');
+      let mappedOutings: ClubOutingData[] = eventRows.map((ev: any) => {
         const dt = ev.event_date || ev.starts_at;
+        const endIso = ev.ends_at;
+        const startMs = dt ? Date.parse(dt) : NaN;
+        const endMs = endIso ? Date.parse(endIso) : startMs;
+        let outingStatus: ClubOutingData['status'] = 'upcoming';
+        if (ev.cancelled_at || ev.status === 'cancelled') {
+          outingStatus = 'cancelled';
+        } else if (Number.isFinite(endMs) && nowMs > endMs + 4 * 3600_000) {
+          outingStatus = 'completed';
+        } else if (Number.isFinite(startMs) && Math.abs(nowMs - startMs) <= 4 * 3600_000) {
+          outingStatus = 'live';
+        }
+
+        const formattedDate = dt
+          ? new Date(dt).toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : 'À venir';
+        const leaderId = ev.organizer_id || ev.created_by;
+        const leaderProfile = leaderId ? profilesMap[leaderId] : null;
         return {
           id: ev.id,
           clubId: clubRow.id,
           title: ev.title || 'Sortie club',
-          date: dt
-            ? new Date(dt).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            : 'À venir',
-          massif: ev.location || ev.meeting_place || clubRow.category || 'Montagne',
+          date: formattedDate,
+          startsAtIso: dt || undefined,
+          dateLabel: formattedDate,
+          massif: ev.location || ev.meeting_place || clubRow.location_label || clubRow.category || 'Montagne',
           km: Number(ev.distance_km ?? 0),
           dplus: Number(ev.elevation_gain_m ?? 0),
-          maxAlt: 0,
-          leaderName: clubRow.name,
-          leaderHandle: derivedHandle,
+          maxAlt: Number(ev.max_altitude_m ?? 0),
+          status: outingStatus,
+          leaderName: leaderProfile?.full_name || clubRow.name,
+          leaderHandle: leaderProfile?.handle || derivedHandle,
           participantsCount: Number(ev.participants_count ?? 0),
           maxParticipants: Number(ev.max_participants ?? 12),
-          carpoolCity: ev.location || ev.meeting_point || clubRow.category || 'Sur place',
-          carpoolSeatsLeft: 0,
-          requiredGear: [],
+          carpoolCity: ev.meeting_point || ev.location || clubRow.location_label || clubRow.category || 'Sur place',
+          carpoolSeatsLeft: Number(ev.carpool_seats ?? 0),
+          requiredGear: Array.isArray(ev.required_gear) ? ev.required_gear : [],
           rsvpJoined: false,
-          status: ev.status === 'cancelled' ? ('completed' as const) : ('upcoming' as const),
-          lat: Number(ev.lat ?? 45.764),
-          lng: Number(ev.lng ?? 4.835),
+          lat: Number(ev.lat ?? clubCoords.lat),
+          lng: Number(ev.lng ?? clubCoords.lng),
         };
       });
 
-      const buildClubItem = (row: any, joinedFlag: boolean): ClubItemData => ({
-        id: row.id,
-        slug: row.slug || row.id,
-        name: row.name,
-        massif: row.category || 'Outdoor',
-        category: row.category || 'Outdoor',
-        level: 'Tous niveaux',
-        membersCount: row.members_count || (row.id === clubRow.id ? memberRows.length : 0) || 0,
-        outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
-        totalKm: 0,
-        totalDplus: 0,
-        joined: joinedFlag,
-        role: row.id === clubRow.id ? currentRole : 'Membre',
-        visibility: row.privacy === 'private' ? 'private' : 'public',
-        bio: row.description || 'Club communautaire Le Kit du Voyageur.',
-        charter: 'Respect strict de la montagne, de la sécurité et zéro trace.',
-        nextOutingTitle: mappedOutings[0]?.title || 'Aucune sortie programmée',
-        nextOutingDate: mappedOutings[0]?.dateLabel || 'À venir',
-        weatherIso: 'Iso 0°C —',
-        weatherWind: 'Vent calme',
-        weatherTrail: 'Conditions stables',
-        lat: 45.764,
-        lng: 4.835,
-        emblemUrl: row.cover_image || null,
+      // Hydrate secondary club endpoints safely (strictly UUID + fetch guarded)
+      if (isUuid(clubRow.id) && typeof fetch === 'function') {
+        const requests: Array<Promise<Response | null>> = [
+          fetch(`/api/clubs/${clubRow.id}/gear`).catch(() => null),
+          fetch(`/api/clubs/${clubRow.id}/challenges`).catch(() => null),
+          fetch(`/api/clubs/${clubRow.id}/events`).catch(() => null),
+          user?.id && isJoined
+            ? fetch(`/api/clubs/${clubRow.id}/salons`).catch(() => null)
+            : Promise.resolve(null),
+        ];
+
+        const [gearRes, challRes, eventsApiRes, salonsRes] = await Promise.all(requests);
+
+        if (gearRes?.ok) {
+          try {
+            const gj = await gearRes.json();
+            const rawItems: any[] = gj.items || [];
+            const rawLoans: any[] = gj.loans || [];
+            const rawKits: any[] = gj.standardKits || [];
+            const ownerIds = Array.from(new Set(rawItems.map((it) => it.owner_id).filter((id) => id && !profilesMap[id])));
+            if (ownerIds.length > 0) {
+              const extraProfiles = await fetchPublicProfilesWith(supabase as any, ownerIds);
+              Object.assign(profilesMap, extraProfiles);
+            }
+            const activeLoanByItem = new Map<string, any>();
+            for (const l of rawLoans) {
+              if (l.status === 'requested' || l.status === 'approved') {
+                activeLoanByItem.set(l.gear_item_id, l);
+              }
+            }
+            setVaultGear(
+              rawItems.map((it) => {
+                const owner = profilesMap[it.owner_id];
+                const loan = activeLoanByItem.get(it.id);
+                return {
+                  id: it.id,
+                  clubId: it.club_id || clubRow.id,
+                  name: it.name,
+                  brand: it.brand || 'LKDV',
+                  category: it.category || 'Matériel',
+                  weightG: Number(it.weight_g ?? 0),
+                  ownerName: owner?.full_name || 'Membre',
+                  ownerHandle: owner?.handle || 'membre',
+                  available: Boolean(it.is_available ?? !loan),
+                  reservedByMe: Boolean(loan && user?.id && loan.borrower_id === user.id),
+                  imageUrl: it.image_url || undefined,
+                  condition: it.condition || undefined,
+                  loanId: loan?.id,
+                  loanStatus: loan?.status,
+                };
+              }),
+            );
+            setStandardKits(
+              rawKits.map((k) => {
+                const rawList = Array.isArray(k.items) ? k.items : [];
+                return {
+                  id: k.id,
+                  title: k.title,
+                  season: k.season || '4 saisons',
+                  totalWeightG: Number(k.total_weight_g ?? 0),
+                  itemsCount: rawList.length,
+                  items: rawList.map((x: any) => (typeof x === 'string' ? x : x?.name || 'Équipement')),
+                  detailedItems: rawList.filter((x: any) => typeof x === 'object' && x !== null),
+                };
+              }),
+            );
+          } catch {
+            // ignore parse failure
+          }
+        }
+
+        if (challRes?.ok) {
+          try {
+            const cj = await challRes.json();
+            const summaries: ClubChallengeSummary[] = cj?.data?.summaries || [];
+            setChallenges(
+              summaries.map((s) => ({
+                id: s.challenge.id,
+                title: s.challenge.title,
+                subtitle: s.challenge.description || METRIC_LABELS[s.challenge.metric],
+                current:
+                  s.challenge.metric === 'distance_m'
+                    ? Math.round(s.totalProgressValue / 1000)
+                    : s.challenge.metric === 'duration_s'
+                      ? Math.round(s.totalProgressValue / 3600)
+                      : Math.round(s.totalProgressValue),
+                target:
+                  s.challenge.metric === 'distance_m'
+                    ? Math.round(s.challenge.targetValue / 1000)
+                    : s.challenge.metric === 'duration_s'
+                      ? Math.round(s.challenge.targetValue / 3600)
+                      : Math.round(s.challenge.targetValue),
+                unit: METRIC_UNITS[s.challenge.metric] || '',
+                rewardBadge: s.challenge.badgeTitle || 'Défi club',
+              })),
+            );
+          } catch {
+            // ignore
+          }
+        }
+
+        if (eventsApiRes?.ok) {
+          try {
+            const ej = await eventsApiRes.json();
+            const regs: any[] = ej?.data?.registrations || [];
+            const eventCounts: Record<string, { registered?: number }> = ej?.data?.eventCounts || {};
+            const myRegIds = new Set(
+              regs
+                .filter((r) => user?.id && r.userId === user.id && r.status !== 'cancelled')
+                .map((r) => r.eventId),
+            );
+            mappedOutings = mappedOutings.map((o) => ({
+              ...o,
+              rsvpJoined: myRegIds.has(o.id),
+              participantsCount: eventCounts[o.id]?.registered ?? o.participantsCount,
+            }));
+          } catch {
+            // ignore
+          }
+        }
+
+        if (salonsRes?.ok) {
+          try {
+            const sj = await salonsRes.json();
+            const msgs: any[] = sj?.data?.messages || [];
+            const channelId: string | null = sj?.data?.activeChannelId || sj?.data?.channels?.[0]?.id || null;
+            setActiveSalonChannelId(channelId);
+            const msgAuthorIds = Array.from(new Set(msgs.map((m) => m.authorId).filter((id) => id && !profilesMap[id])));
+            if (msgAuthorIds.length > 0) {
+              const extra = await fetchPublicProfilesWith(supabase as any, msgAuthorIds);
+              Object.assign(profilesMap, extra);
+            }
+            setChatMessages(
+              msgs.map((m) => {
+                const author = profilesMap[m.authorId];
+                return {
+                  id: m.id,
+                  authorId: m.authorId,
+                  channelId: m.channelId,
+                  authorName: author?.full_name || 'Membre',
+                  authorHandle: author?.handle || 'membre',
+                  authorAvatar: author?.avatar_url || undefined,
+                  roleBadge: memberRoleByUserId.get(m.authorId),
+                  text: m.body,
+                  time: m.createdAt
+                    ? new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                    : '',
+                };
+              }),
+            );
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      const upcomingSorted = mappedOutings
+        .filter((o) => o.status === 'upcoming' || o.status === 'live')
+        .sort((a, b) => (a.startsAtIso || '').localeCompare(b.startsAtIso || ''));
+      const nextUpcoming = upcomingSorted[0];
+      const currentTotalKm = mappedOutings.reduce((acc, o) => acc + (o.km || 0), 0);
+      const currentTotalDplus = mappedOutings.reduce((acc, o) => acc + (o.dplus || 0), 0);
+      const hasLiveOrImminent = upcomingSorted.some((o) => {
+        if (o.status === 'live') return true;
+        if (!o.startsAtIso) return false;
+        const diff = Date.parse(o.startsAtIso) - nowMs;
+        return diff >= 0 && diff <= 48 * 3600_000;
       });
 
-      const currentClubItem = buildClubItem(clubRow, isJoined);
+      const buildClubItem = (row: any, joinedFlag: boolean, rawRole?: string | null): ClubItemData => {
+        const rowCoords = resolveMassifCoords(row.location_label || row.category || '', clubCoords.lat, clubCoords.lng);
+        const rawVis = row.privacy;
+        const visibility: ClubItemData['visibility'] =
+          rawVis === 'secret' || rawVis === 'invite_only'
+            ? 'secret'
+            : rawVis === 'closed' || rawVis === 'private'
+              ? 'prive'
+              : 'public';
+        const resolvedRoleLabel =
+          row.created_by && user?.id && row.created_by === user.id
+            ? 'Fondateur'
+            : rawRole === 'admin'
+              ? 'Admin'
+              : rawRole === 'moderator'
+                ? 'Modérateur'
+                : row.id === clubRow.id
+                  ? currentRole
+                  : 'Membre';
+
+        return {
+          id: row.id,
+          slug: row.slug || row.id,
+          name: row.name,
+          massif: row.location_label || row.category || 'Outdoor',
+          category: row.primary_sport || row.category || 'Outdoor',
+          level: 'Tous niveaux',
+          membersCount: row.members_count || (row.id === clubRow.id ? memberSourceRows.length : 0) || 0,
+          outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
+          totalKm: row.id === clubRow.id ? currentTotalKm : 0,
+          totalDplus: row.id === clubRow.id ? currentTotalDplus : 0,
+          joined: joinedFlag,
+          role: resolvedRoleLabel,
+          viewerRole: (rawRole as ClubRole) || null,
+          visibility,
+          bio: row.description || 'Club communautaire Le Kit du Voyageur.',
+          charter: row.rules || 'Respect strict de la montagne, de la sécurité et zéro trace.',
+          nextOutingTitle: row.id === clubRow.id ? nextUpcoming?.title || 'Aucune sortie programmée' : 'Voir les sorties',
+          nextOutingDate: row.id === clubRow.id ? nextUpcoming?.date || 'À venir' : 'À venir',
+          weatherIso: 'Iso 0°C —',
+          weatherWind: 'Vent calme',
+          weatherTrail: 'Conditions stables',
+          lat: rowCoords.lat,
+          lng: rowCoords.lng,
+          coverUrl: row.cover_image || undefined,
+          createdBy: row.created_by || null,
+          hasLiveOrImminentOuting: row.id === clubRow.id ? hasLiveOrImminent : false,
+          memberAvatars:
+            row.id === clubRow.id
+              ? mappedMembers.slice(0, 4).map((m) => ({ name: m.name, avatarUrl: m.avatarUrl }))
+              : undefined,
+        };
+      };
+
+      const currentClubItem = buildClubItem(clubRow, isJoined, currentMemberRow?.role);
       const directoryList: ClubItemData[] = [
         currentClubItem,
         ...allClubRows
           .filter((r: any) => r.id !== clubRow.id)
-          .map((r: any) => buildClubItem(r, false)),
+          .map((r: any) => buildClubItem(r, myClubRoles.has(r.id) || (Boolean(user?.id) && r.created_by === user?.id), myClubRoles.get(r.id))),
       ];
 
       setClubsDirectory(directoryList);
@@ -685,11 +1076,11 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       hydrate({
         name: clubRow.name,
         handle: derivedHandle,
-        followersCount: clubRow.members_count || memberRows.length || 0,
+        followersCount: clubRow.members_count || memberSourceRows.length || 0,
         followingCount: mappedOutings.length,
         bioLine: clubRow.description ? '· ' + clubRow.description : '',
         avatarUrl: clubRow.cover_image || null,
-        followers: memberRows.map((m: any) => {
+        followers: memberSourceRows.map((m: any) => {
           const p = profilesMap[m.user_id];
           const n = p?.full_name || 'Membre LKDV';
           return {
@@ -711,7 +1102,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         outings: mappedOutings.map((o) => ({
           id: o.id,
           title: o.title,
-          date: o.dateLabel,
+          date: o.date,
           mass: o.massif,
           km: o.km,
           dplus: o.dplus,
@@ -734,8 +1125,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       });
       setActiveHandle(derivedHandle);
       setSyncStatus('synced');
-    } catch (_) {
-      setSyncStatus('idle');
+    } catch {
+      setSyncStatus('error');
     }
   }, [clubId, user?.id]);
 
@@ -744,7 +1135,6 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     if (runtimeReadyRef.current) {
       syncClubProfile();
     } else {
-      // Moteur pas encore chargé : l'hydratation part dès qu'il est prêt (effet d'initialisation).
       pendingProfileSyncRef.current = true;
     }
   }, [syncClubProfile]);
@@ -769,36 +1159,124 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       }
       triggerAct('closeSheet');
       flyMapToCoords([targetClub.lng, targetClub.lat], `${targetClub.name} · ${targetClub.massif}`);
+      if (targetClub.slug && targetClub.id !== clubId && targetClub.slug !== clubId) {
+        router.push(`/clubs/${encodeURIComponent(targetClub.slug)}`);
+      }
     },
-    [clubsDirectory, flyMapToCoords, triggerAct]
+    [clubId, clubsDirectory, flyMapToCoords, router, triggerAct],
   );
 
   const handleToggleJoinClub = useCallback(
-    (targetClubId: string) => {
-      setClubsDirectory((prev) =>
-        prev.map((c) =>
+    async (targetClubId: string, options?: { message?: string }): Promise<boolean> => {
+      const prev = clubsDirectory.find((c) => c.id === targetClubId);
+      if (!prev) return false;
+      const nextJoined = !prev.joined;
+      setClubsDirectory((dir) =>
+        dir.map((c) =>
           c.id === targetClubId
             ? {
                 ...c,
-                joined: !c.joined,
-                membersCount: Math.max(1, c.membersCount + (!c.joined ? 1 : -1)),
+                joined: nextJoined,
+                membersCount: Math.max(1, c.membersCount + (nextJoined ? 1 : -1)),
               }
-            : c
-        )
+            : c,
+        ),
       );
-      showIslandToast('Adhésion mise à jour ✓', 'Synchronisé avec ta tribu LKDV');
+
+      if (user?.id && isUuid(targetClubId) && typeof fetch === 'function') {
+        try {
+          const res = nextJoined
+            ? await fetch(`/api/clubs/${targetClubId}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: options?.message }),
+              })
+            : await fetch(`/api/clubs/${targetClubId}/members`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'remove', userId: user.id, mode: 'leave' }),
+              });
+          if (!res.ok) {
+            throw new Error('Membership update failed');
+          }
+        } catch {
+          setClubsDirectory((dir) =>
+            dir.map((c) => (c.id === targetClubId ? prev : c)),
+          );
+          showIslandToast('Impossible de mettre à jour l’adhésion', 'Vérifiez votre connexion');
+          return false;
+        }
+      }
+
+      showIslandToast(
+        nextJoined ? `Bienvenue dans ${prev.name} ✓` : `Vous avez quitté ${prev.name}`,
+        'Synchronisé avec votre tribu LKDV',
+      );
+      return true;
     },
-    [showIslandToast]
+    [clubsDirectory, showIslandToast, user?.id],
   );
 
   const handleToggleFollowMember = useCallback(
-    (handle: string) => {
-      setClubMembers((prev) =>
-        prev.map((m) => (m.handle === handle ? { ...m, followed: !m.followed } : m))
+    async (handleOrId: string) => {
+      const target = clubMembers.find(
+        (m) => m.handle === handleOrId || m.id === handleOrId || m.userId === handleOrId,
       );
-      showIslandToast(`Cordée @${handle}`, 'Statut de suivi mis à jour');
+      if (!target) return;
+      const nextFollowed = !target.followed;
+
+      setClubMembers((prev) =>
+        prev.map((m) => (m.id === target.id ? { ...m, followed: nextFollowed } : m)),
+      );
+
+      const targetUserId = target.userId || target.id;
+      if (user?.id && isUuid(targetUserId) && typeof fetch === 'function') {
+        try {
+          const res = await fetch('/api/compte/reseau/follow', {
+            method: nextFollowed ? 'POST' : 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: targetUserId }),
+          });
+          if (!res.ok) throw new Error('Follow mutation failed');
+        } catch {
+          setClubMembers((prev) =>
+            prev.map((m) => (m.id === target.id ? { ...m, followed: !nextFollowed } : m)),
+          );
+          showIslandToast('Erreur de suivi', 'Réessayez dans un instant');
+          return;
+        }
+      }
+
+      showIslandToast(`Cordée @${target.handle}`, nextFollowed ? 'Membre suivi ✓' : 'Suivi retiré');
     },
-    [showIslandToast]
+    [clubMembers, showIslandToast, user?.id],
+  );
+
+  const handleProposeBinome = useCallback(
+    async (
+      member: ClubMemberData,
+      payload: { outingId?: string; slot?: 'sam' | 'dim' | 'we'; note?: string },
+    ): Promise<boolean> => {
+      if (user?.id && isUuid(activeClub.id) && typeof fetch === 'function') {
+        try {
+          const res = await fetch('/api/clubs/invites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              kind: payload.outingId ? 'event' : 'club',
+              targetId: payload.outingId || activeClub.id,
+              clubId: activeClub.id,
+            }),
+          });
+          if (!res.ok) return false;
+        } catch {
+          return false;
+        }
+      }
+      showIslandToast(`Cordée proposée à ${member.name} ✓`, payload.note || 'Invitation prête');
+      return true;
+    },
+    [activeClub.id, showIslandToast, user?.id],
   );
 
   const handleToggleOutingRsvp = useCallback(
@@ -812,7 +1290,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             rsvpJoined: nextJoined,
             participantsCount: Math.max(0, Math.min(o.maxParticipants, o.participantsCount + (nextJoined ? 1 : -1))),
           };
-        })
+        }),
       );
       setClubPosts((prev) =>
         prev.map((p) =>
@@ -822,12 +1300,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                 rsvpJoined: !p.rsvpJoined,
                 outingSeatsLeft: Math.max(0, (p.outingSeatsLeft ?? 2) + (p.rsvpJoined ? 1 : -1)),
               }
-            : p
-        )
+            : p,
+        ),
       );
       showIslandToast('Inscription cordée mise à jour ✓', 'Place réservée avec check-list kit liée');
     },
-    [showIslandToast]
+    [showIslandToast],
   );
 
   const handleBorrowGear = useCallback(
@@ -841,25 +1319,25 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             available: nextAvail,
             reservedByMe: !nextAvail,
           };
-        })
+        }),
       );
       showIslandToast('Coffre Matériel Club ✓', 'Équipement réservé pour la prochaine sortie');
     },
-    [showIslandToast]
+    [showIslandToast],
   );
 
   const handleCloneKit = useCallback(
     (kitId: string) => {
       setStandardKits((prev) =>
-        prev.map((k) => (k.id === kitId ? { ...k, cloned: true } : k))
+        prev.map((k) => (k.id === kitId ? { ...k, cloned: true } : k)),
       );
       const kit = standardKits.find((k) => k.id === kitId);
       showIslandToast(
         kit ? `${kit.title} cloné ✓` : 'Kit standard cloné ✓',
-        'Ajouté dans ton inventaire avec répartition du poids de cordée'
+        'Ajouté dans ton inventaire avec répartition du poids de cordée',
       );
     },
-    [showIslandToast, standardKits]
+    [showIslandToast, standardKits],
   );
 
   const handleTogglePostLike = useCallback((postId: string) => {
@@ -868,13 +1346,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         if (p.id !== postId) return p;
         const nextLiked = !p.liked;
         return { ...p, liked: nextLiked, likes: Math.max(0, p.likes + (nextLiked ? 1 : -1)) };
-      })
+      }),
     );
   }, []);
 
   const handleTogglePostSave = useCallback((postId: string) => {
     setClubPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p))
+      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p)),
     );
     showIslandToast('Publication enregistrée ✓', 'Ajoutée aux favoris du club');
   }, [showIslandToast]);
@@ -898,12 +1376,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                   },
                 ],
               }
-            : p
-        )
+            : p,
+        ),
       );
       showIslandToast('Commentaire publié ✓', 'Visible dans la discussion du club');
     },
-    [activeHandle, showIslandToast, user?.email]
+    [activeHandle, showIslandToast, user?.email],
   );
 
   const handleCreatePost = useCallback(
@@ -936,7 +1414,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       triggerAct('closeSheet');
       showIslandToast('Publié dans le fil du club ✓', `${payload.spot} · visible par la cordée`);
     },
-    [activeClub, activeHandle, showIslandToast, triggerAct, user?.email]
+    [activeClub, activeHandle, showIslandToast, triggerAct, user?.email],
   );
 
   const handleCreateOuting = useCallback(
@@ -966,7 +1444,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       triggerAct('closeSheet');
       showIslandToast('Sortie proposée à la cordée ✓', `${payload.title} · ${payload.km} km · +${payload.dplus} m`);
     },
-    [activeClub.id, activeClub.lat, activeClub.lng, activeHandle, showIslandToast, triggerAct, user?.email]
+    [activeClub.id, activeClub.lat, activeClub.lng, activeHandle, showIslandToast, triggerAct, user?.email],
   );
 
   const handleLendGearToVault = useCallback(
@@ -986,7 +1464,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       triggerAct('closeSheet');
       showIslandToast('Ajouté au Coffre Matériel ✓', `${payload.brand} ${payload.name} (${payload.weightG} g)`);
     },
-    [activeClub.id, activeHandle, showIslandToast, triggerAct]
+    [activeClub.id, activeHandle, showIslandToast, triggerAct],
   );
 
   const handleCreateNewClub = useCallback(
@@ -1034,34 +1512,54 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       triggerAct('closeSheet');
       showIslandToast(`Club « ${newClub.name} » fondé ✓`, 'Tu es administrateur fondateur de cette tribu');
     },
-    [showIslandToast, triggerAct]
+    [showIslandToast, triggerAct],
   );
 
-  const handleSendChatMessage = useCallback((text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: 'cm-' + Date.now(),
-        authorName: 'Toi',
-        authorHandle: activeHandle || 'tony_frc',
-        roleBadge: 'Membre',
-        text,
-        time: 'À l’instant',
-      },
-    ]);
-  }, [activeHandle]);
+  const handleSendChatMessage = useCallback(
+    async (text: string) => {
+      const optimisticId = 'cm-' + Date.now();
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: optimisticId,
+          authorName: 'Toi',
+          authorHandle: activeHandle || 'tony_frc',
+          roleBadge: 'Membre',
+          text,
+          time: 'À l’instant',
+        },
+      ]);
+
+      if (user?.id && isUuid(activeClub.id) && activeSalonChannelId && typeof fetch === 'function') {
+        try {
+          await fetch(`/api/clubs/${activeClub.id}/salons`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'post_message',
+              channelId: activeSalonChannelId,
+              body: text,
+            }),
+          });
+        } catch {
+          // keep optimistic local echo if offline
+        }
+      }
+    },
+    [activeClub.id, activeHandle, activeSalonChannelId, user?.id],
+  );
 
   const handleToggleClubVisibility = useCallback(() => {
     setClubsDirectory((prev) =>
       prev.map((c) =>
         c.id === activeClub.id
           ? { ...c, visibility: c.visibility === 'public' ? 'prive' : 'public' }
-          : c
-      )
+          : c,
+      ),
     );
     showIslandToast(
       activeClub.visibility === 'public' ? 'Club passé en Privé (Sur cooptation)' : 'Club passé en Public (Ouvert)',
-      'Gouvernance du club mise à jour'
+      'Gouvernance du club mise à jour',
     );
   }, [activeClub.id, activeClub.visibility, showIslandToast]);
 
@@ -1077,11 +1575,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         } catch (_) {}
       }
     },
-    [activeClub.id, showIslandToast, user?.id]
+    [activeClub.id, showIslandToast, user?.id],
   );
 
   return (
-    <div className="lkdv-compte-v8 lkdv-club-v8 lkdv-clubs-v8" data-theme="light">
+    <div
+      className="lkdv-compte-v8 lkdv-club-v8 lkdv-clubs-v8"
+      data-theme="light"
+      data-club-drawer-open={drawerMount ? 'true' : 'false'}
+    >
       <style dangerouslySetInnerHTML={{ __html: DRAWER_V2_CSS }} />
       <div className="sr-only" aria-hidden="true" inert>
         <span>Club iOS 27 Liquid Glass v8 · @{activeHandle} · {syncStatus}</span>
@@ -1106,18 +1608,31 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onFlyToSpot={(post) =>
               flyMapToCoords([post.lng ?? activeClub.lng, post.lat ?? activeClub.lat], `${post.spot} · ${post.massif}`)
             }
-            onOpenOutingDetail={() => triggerAct('openClubDrawer', '2:0')}
+            onOpenOutingDetail={(outingId) => {
+              pendingDrawerIntentRef.current = { tab: 2, subTab: 0, outingId };
+              triggerAct('openClubDrawer', '2:0');
+            }}
             onOpenCreatePost={() => triggerAct('openClubCreate')}
           />,
-          feedRoot
+          feedRoot,
         )}
       {drawerMount &&
         createPortal(
           <ClubDrawerHost
             mode={drawerMount.props.mode || 'main'}
+            isOpen
             initialTab={drawerMount.props.tab ?? 0}
             initialSubTab={drawerMount.props.subTab ?? 0}
             initialSearch={drawerMount.props.tab === 0 && drawerMount.props.subTab === 2}
+            initialOutingId={drawerMount.props.outingId}
+            initialMemberId={drawerMount.props.memberId}
+            initialSection={drawerMount.props.initialSection}
+            intent={drawerIntent}
+            syncStatus={syncStatus}
+            onRetrySync={() => void syncClubProfile()}
+            currentUserId={user?.id ?? null}
+            blockedUserIds={blockedUserIds}
+            isOutdoor={isOutdoor}
             activeClub={activeClub}
             clubs={clubsDirectory}
             members={clubMembers}
@@ -1130,6 +1645,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onSelectClub={handleSelectClub}
             onToggleJoinClub={handleToggleJoinClub}
             onToggleFollowMember={handleToggleFollowMember}
+            onProposeBinome={handleProposeBinome}
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {
@@ -1148,10 +1664,35 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onCreateOuting={handleCreateOuting}
             onCreateVaultGear={handleLendGearToVault}
             onCreateNewClub={handleCreateNewClub}
+            onToast={handleToast}
+            onOpenRuntimeOverlay={handleOpenRuntimeOverlay}
             onClose={() => triggerAct('closeSheet')}
           />,
-          drawerMount.root
+          drawerMount.root,
         )}
+      <ClubRuntimeOverlays
+        overlay={runtimeOverlay}
+        onClose={() => setRuntimeOverlay(null)}
+        activeClub={activeClub}
+        clubs={clubsDirectory}
+        members={clubMembers}
+        outings={clubOutings}
+        vaultGear={vaultGear}
+        challenges={challenges}
+        posts={clubPosts}
+        currentUserId={user?.id ?? null}
+        onSelectClub={handleSelectClub}
+        onToggleJoinClub={(id) => void handleToggleJoinClub(id)}
+        onToggleRsvpOuting={handleToggleOutingRsvp}
+        onCreateGroupFromOuting={handleCreateGroupFromOuting}
+        onOpenClubDrawer={(t, s = 0, extras) => {
+          pendingDrawerIntentRef.current = { tab: t, subTab: s, ...extras };
+          triggerAct('openClubDrawer', `${t}:${Math.min(2, s)}`);
+        }}
+        onFlyToCoords={(lat, lng, label) => flyMapToCoords([lng, lat], label)}
+        onToast={handleToast}
+      />
+      <ClubIsland toast={islandToast} onDismiss={() => setIslandToast(null)} />
     </div>
   );
 }

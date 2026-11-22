@@ -1,0 +1,1186 @@
+/* ==========================================================================
+   Club Drawers V2 — 100% Light Mode Liquid Glass (Carnet V2 Parity)
+   Guardrails: 100% Light Mode, tokenized motion curves only.
+   ========================================================================== */
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer,
+.lkdv-club-carnet-drawer.lkdv-carnet-drawer {
+  --label: #172b24;
+  --label2: #56665d;
+  --tint: #17402c;
+  --accent: #5b7f55;
+  --pg-ink: #17402c;
+  --drawer-card-bg: rgba(255, 255, 255, 0.78);
+  --lkv-surface-paper: #fbfaf6;
+  --club-soft-bg: #d3ebd9;
+  --club-warn-bg: #fbf1dc;
+  --club-warn-ink: #926614;
+  --club-danger-bg: #f5ddd9;
+  --club-danger-ink: #a8443a;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(430px, 100vw);
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 250, 246, 0.96) 100%);
+  -webkit-backdrop-filter: blur(36px) saturate(1.1);
+  backdrop-filter: blur(36px) saturate(1.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 0 0 0.5px rgba(27, 67, 50, 0.12),
+    0 18px 48px rgba(16, 32, 25, 0.16);
+  color: var(--label);
+}
+
+/* Hide floating tabbar when dialog open & dim 3D map context */
+body.lkdv-dialog-open .lkdv-floating-tabbar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lkdv-clubs-v8[data-club-drawer-open="true"] .ig-handle.rp {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 0 0 1.5px rgba(23, 64, 44, 0.28);
+}
+
+/* Grabber handle (UI-02) */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer > .lkdv-mgrab,
+.lkdv-club-carnet-drawer > .lkdv-mgrab {
+  height: 18px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  flex: none;
+  z-index: 20;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer > .lkdv-mgrab span,
+.lkdv-club-carnet-drawer > .lkdv-mgrab span {
+  display: block;
+  width: 38px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.22);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: transform 0.2s var(--ease-spring, ease-out), background-color 0.2s ease;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer > .lkdv-mgrab:hover span,
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer > .lkdv-mgrab:active span,
+.lkdv-club-carnet-drawer > .lkdv-mgrab:hover span,
+.lkdv-club-carnet-drawer > .lkdv-mgrab:active span {
+  transform: scaleX(1.12);
+  background: rgba(23, 64, 44, 0.36);
+}
+
+/* Top CapsuleTabs 56px override (0,6,0 specificity beating compte-drawers 0,4,0) */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav {
+  position: relative;
+  z-index: 16;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule,
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule {
+  height: 56px !important;
+  min-height: 56px !important;
+  padding: 4px !important;
+  border-radius: 9999px !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)),
+    rgba(23, 29, 26, 0.76) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
+    0 10px 30px rgba(0, 0, 0, 0.22) !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule .sel-lens,
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule .sel-lens {
+  top: 4px !important;
+  bottom: 4px !important;
+  left: 4px !important;
+  width: calc((100% - 8px) / var(--n, 5)) !important;
+  border-radius: 9999px !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button,
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button {
+  position: relative;
+  height: 48px !important;
+  color: rgba(255, 255, 255, 0.64) !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"],
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"] {
+  color: #d8f3de !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-selector .badge-count,
+.lkdv-club-carnet-drawer .lkdv-slot-selector .badge-count {
+  position: absolute;
+  top: 7px;
+  right: 12px;
+  min-width: 6px;
+  height: 6px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #96ba8e;
+  color: #172b24;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1.5px rgba(23, 29, 26, 0.72);
+}
+
+/* Bottom-right 30px lens tabs with isolation halo (UI-04) */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs,
+.lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
+    0 10px 30px rgba(0, 0, 0, 0.22),
+    0 0 0 4px rgba(251, 250, 246, 0.42) !important;
+}
+
+/* Pane spacing & scroll edge mask (UI-05, UI-16) */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane,
+.lkdv-club-carnet-drawer .lkdv-lens-pane {
+  padding-top: 66px !important;
+  padding-bottom: 56px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  box-sizing: border-box !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane[data-scrolled="true"],
+.lkdv-club-carnet-drawer .lkdv-lens-pane[data-scrolled="true"] {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18px,
+    #000 calc(100% - 22px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 18px,
+    #000 calc(100% - 22px),
+    transparent 100%
+  );
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .club-drawer-pane-content,
+.lkdv-club-carnet-drawer .club-drawer-pane-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 0 12px !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-carnet-drawer-pane,
+.lkdv-club-carnet-drawer .lkdv-carnet-drawer-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+}
+
+/* Touch hit targets >= 44x44px (UI-12) */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .reseau-btn.club-icon-pill,
+.lkdv-club-carnet-drawer .reseau-btn.club-icon-pill {
+  position: relative;
+  min-width: 40px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 0;
+  cursor: pointer;
+  flex: none;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .reseau-btn.club-icon-pill::after,
+.lkdv-club-carnet-drawer .reseau-btn.club-icon-pill::after {
+  content: '';
+  position: absolute;
+  inset: -6px -2px;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .reseau-btn.club-icon-pill.primary,
+.lkdv-club-carnet-drawer .reseau-btn.club-icon-pill.primary {
+  background: #17402c;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(23, 64, 44, 0.22);
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .reseau-btn.club-icon-pill.active,
+.lkdv-club-carnet-drawer .reseau-btn.club-icon-pill.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(245, 242, 236, 0.72));
+  color: #17402c;
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.16);
+}
+
+/* Bottom-left floating pill zone + Reprendre la lecture (UI-10, UI-11) */
+.club-drawer-floating-left {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.club-drawer-floating-left > * {
+  pointer-events: auto;
+}
+
+.lkdv-club-pill-reprendre,
+.club-context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 0.5px solid rgba(23, 64, 44, 0.24);
+  background: rgba(255, 255, 255, 0.92);
+  color: #17402c;
+  font-size: 11.5px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(23, 43, 36, 0.14);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  cursor: pointer;
+}
+
+/* Unified Section Headers & Eyebrows (UI-06) */
+.club-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 0;
+}
+
+.club-sec-head-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.club-sec-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--label2, #56665d);
+}
+
+.club-sec-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--label, #172b24);
+  line-height: 1.25;
+}
+
+.club-sec-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+/* Concentric Liquid Glass Cards (UI-17) */
+.lkdv-club-carnet-drawer .li.nt,
+.lkdv-club-carnet-drawer .reseau-user-row,
+.club-glass-card {
+  border-radius: 20px;
+  padding: 12px;
+  background: var(--drawer-card-bg, rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  color: var(--label, #172b24);
+}
+
+.club-glass-card.is-active-club {
+  box-shadow:
+    inset 0 0 0 1.5px #17402c,
+    0 6px 18px rgba(23, 64, 44, 0.1);
+}
+
+/* Active Club Hero Card (D02 UI-01) */
+.club-hero-card {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  padding: 14px;
+  background: linear-gradient(145deg, rgba(211, 235, 217, 0.65), rgba(255, 255, 255, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 0.5px rgba(27, 67, 50, 0.18),
+    0 10px 24px rgba(23, 64, 44, 0.09);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.club-hero-cover-blur {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.16;
+  filter: blur(14px) saturate(1.15);
+  pointer-events: none;
+}
+
+.club-hero-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.club-hero-emblem {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #d3ebd9, #eef6ee);
+  color: #17402c;
+  font-weight: 800;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-shadow: 0 0 0 2px #17402c;
+}
+
+.club-hero-emblem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.club-hero-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.club-hero-meta b {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #172b24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.club-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.club-hero-kpis {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.club-hero-kpi {
+  padding: 7px 9px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.1);
+}
+
+.club-hero-kpi small {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--label2, #56665d);
+}
+
+.club-hero-kpi b {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #17402c;
+  font-variant-numeric: tabular-nums;
+}
+
+.club-hero-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Emblems & Avatars */
+.club-mini-emblem-v2 {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #d3ebd9, #f5f2ec);
+  color: #17402c;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.14);
+}
+
+.club-mini-emblem-v2.is-current {
+  box-shadow: 0 0 0 2px #17402c;
+}
+
+.club-mini-emblem-v2 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.club-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.club-avatar-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #16a34a;
+  border: 1.5px solid #ffffff;
+}
+
+.club-avatar-shield {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #17402c;
+  color: #ffffff;
+  border: 1.5px solid #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-avatar-stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.club-avatar-stack-item {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1.5px solid #ffffff;
+  background: #d3ebd9;
+  color: #17402c;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -5px;
+}
+
+.club-avatar-stack-item:first-child {
+  margin-left: 0;
+}
+
+.club-avatar-stack-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Badges & Chips */
+.club-badge-forest {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #17402c;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.club-badge-sage {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #d3ebd9;
+  color: #17402c;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.club-badge-amber {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fbf1dc;
+  color: #926614;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.club-badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(27, 67, 50, 0.08);
+  color: #17402c;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.club-next-outing-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.11);
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.club-next-outing-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Filter Rail (data-hscroll) */
+.club-filter-rail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 1px;
+}
+
+.club-filter-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.club-filter-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(27, 67, 50, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: #172b24;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  flex: none;
+}
+
+.club-filter-pill.is-active {
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.club-filter-pill-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #17402c;
+  z-index: 0;
+}
+
+.club-filter-pill-label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Search Box (D03, D04, D05) */
+.club-search-box-v2 {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 0 0 1px rgba(27, 67, 50, 0.14),
+    0 6px 18px rgba(23, 43, 36, 0.08);
+}
+
+.club-search-box-v2.is-compact {
+  position: relative;
+  height: 36px;
+}
+
+.club-search-box-v2:focus-within {
+  box-shadow:
+    inset 0 0 0 1.5px #17402c,
+    0 8px 20px rgba(23, 64, 44, 0.12);
+}
+
+.club-search-box-v2 input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #172b24;
+  font-size: 16px;
+  outline: none;
+}
+
+@media (min-width: 768px) {
+  .club-search-box-v2 input {
+    font-size: 13.5px;
+  }
+}
+
+.club-search-clear-btn {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(27, 67, 50, 0.09);
+  color: #17402c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+
+.club-search-clear-btn::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+}
+
+.club-kbd-hint {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(27, 67, 50, 0.08);
+  color: var(--label2, #56665d);
+  font-size: 10.5px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Voyage / Discovery Spotlight Card (D03 UI-02, CarnetDaySwipeView parity) */
+.club-voyage-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.club-voyage-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.club-voyage-card {
+  position: relative;
+  flex: 0 0 228px;
+  height: 118px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  background: linear-gradient(135deg, #17402c, #226148);
+  cursor: pointer;
+}
+
+.club-voyage-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.club-voyage-pill-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.88);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.club-voyage-info {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 7px 9px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.club-voyage-info b {
+  display: block;
+  font-size: 12.5px;
+  color: #17402c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.club-voyage-info span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--label2, #56665d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty Card (UI-07, CarnetEquipageDrawerBody parity) */
+.club-empty-card {
+  border-radius: 22px;
+  padding: 28px 18px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.club-empty-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: #d3ebd9;
+  color: #17402c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-empty-card b {
+  font-size: 14px;
+  font-weight: 700;
+  color: #172b24;
+}
+
+.club-empty-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--label2, #56665d);
+  max-width: 260px;
+}
+
+.club-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Stack Header (UI-18, D08 UI-01) */
+.club-stack-header {
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  height: 48px;
+  padding: 0 8px;
+  margin: -2px -2px 4px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.76);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.club-stack-back {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 10px 0 6px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(27, 67, 50, 0.08);
+  color: #17402c;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.club-stack-back::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.club-stack-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #17402c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.club-stack-nav-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+/* Cordée New Arrivals Strip (D05 UI-03, UI-04) */
+.club-new-arrivals-wrap {
+  padding: 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(211, 235, 217, 0.45), rgba(255, 255, 255, 0.78));
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.14);
+}
+
+.club-new-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: 6px;
+}
+
+.club-new-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.club-new-member-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 16px;
+  border: 0.5px solid rgba(27, 67, 50, 0.14);
+  background: rgba(255, 255, 255, 0.88);
+  color: #172b24;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Search & CMDK items (D04) */
+.club-cmd-item {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.club-cmd-item[data-selected="true"] {
+  box-shadow: inset 0 0 0 1.5px #17402c;
+  background: rgba(211, 235, 217, 0.35);
+}
+
+.club-highlight-mark {
+  background: #d3ebd9;
+  color: #17402c;
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+
+.club-post-result-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: var(--drawer-card-bg);
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.club-post-thumb {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #d3ebd9;
+  color: #17402c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.club-post-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Pending Requests / Objective / Inline Forms */
+.club-pending-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: #fbf1dc;
+  color: #7c5410;
+  font-size: 12px;
+  font-weight: 600;
+  border: 0.5px solid rgba(146, 102, 20, 0.24);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.club-objective-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 13px;
+  background: rgba(211, 235, 217, 0.45);
+  color: #17402c;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.club-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(245, 242, 236, 0.85);
+  box-shadow: inset 0 0 0 0.5px rgba(27, 67, 50, 0.12);
+}
+
+.club-inline-input,
+.club-inline-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 11px;
+  border: 0.5px solid rgba(27, 67, 50, 0.18);
+  background: #ffffff;
+  color: #172b24;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+/* ClubIsland Toast (z-index 3100, CarnetIsland parity) */
+.lkdv-club-island {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 3100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(390px, calc(100vw - 24px));
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.94);
+  color: #fbfaf6;
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 12px 32px rgba(16, 32, 25, 0.28);
+}
+
+.lkdv-club-island .lkdv-carnet-island-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.lkdv-club-island .lkdv-carnet-island-text b {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.lkdv-club-island .lkdv-carnet-island-text span {
+  font-size: 11px;
+  color: rgba(251, 250, 246, 0.8);
+}
+
+.lkdv-club-island .lkdv-carnet-island-undo {
+  border: 0;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: #d3ebd9;
+  color: #17402c;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+/* Skeleton rows */
+.club-skel-block {
+  display: block;
+  border-radius: 18px;
+  background: linear-gradient(90deg, rgba(23, 43, 36, 0.06), rgba(255, 255, 255, 0.82), rgba(23, 43, 36, 0.06));
+  background-size: 220% 100%;
+  animation: lkdv-skel 1.3s ease-in-out infinite;
+}
+
+/* Outdoor High-Contrast Mode (UI-14) */
+.phone.outdoor .lkdv-club-carnet-drawer,
+.lkdv-club-carnet-drawer[data-outdoor="true"] {
+  --ga: 0.9;
+  --gb: 30px;
+  --label2: #2f3f37;
+  --drawer-card-bg: rgba(255, 255, 255, 0.94);
+  font-size: 15px;
+}
+
+.phone.outdoor .lkdv-club-carnet-drawer .club-glass-card,
+.lkdv-club-carnet-drawer[data-outdoor="true"] .club-glass-card,
+.phone.outdoor .lkdv-club-carnet-drawer .lkdv-carnet-crew-card,
+.lkdv-club-carnet-drawer[data-outdoor="true"] .lkdv-carnet-crew-card {
+  box-shadow: inset 0 0 0 1px rgba(23, 43, 36, 0.28);
+}
+
+/* Reduced Motion */
+[data-reduce-motion="true"] .lkdv-club-carnet-drawer *,
+[data-reduce-motion="true"] .lkdv-club-carnet-drawer .club-skel-block {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lkdv-club-carnet-drawer *,
+  .club-skel-block {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Reduced Transparency Fallbacks (UI-13) */
+@media (prefers-reduced-transparency: reduce) {
+  .lkdv-clubs-v8 .lkdv-club-carnet-drawer,
+  .lkdv-club-carnet-drawer.lkdv-carnet-drawer,
+  .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule,
+  .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs,
+  .lkdv-club-pill-reprendre,
+  .club-context-pill,
+  .club-search-box-v2,
+  .club-voyage-info,
+  .club-stack-header,
+  .club-glass-card,
+  .club-empty-card,
+  .club-new-member-pill,
+  .lkdv-club-carnet-drawer .li.nt,
+  .lkdv-club-carnet-drawer .reseau-user-row,
+  .lkdv-club-island {
+    background: var(--lkv-surface-paper, #ffffff) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule,
+  .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-lens-tabs,
+  .lkdv-club-island {
+    background: #172b24 !important;
+  }
+}
