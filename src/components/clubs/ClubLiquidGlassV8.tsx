@@ -144,7 +144,6 @@ const TIROIR_TAB_MAP: Record<string, number> = {
   cordee: 1,
   sorties: 2,
   coffre: 3,
-  tribu: 4,
 };
 
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
@@ -1210,7 +1209,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
       showIslandToast(
         nextJoined ? `Bienvenue dans ${prev.name} ✓` : `Vous avez quitté ${prev.name}`,
-        'Synchronisé avec votre tribu LKDV',
+        'Synchronisé avec votre club LKDV',
       );
       return true;
     },
@@ -1510,7 +1509,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         });
       }
       triggerAct('closeSheet');
-      showIslandToast(`Club « ${newClub.name} » fondé ✓`, 'Tu es administrateur fondateur de cette tribu');
+      showIslandToast(`Club « ${newClub.name} » fondé ✓`, 'Tu es administrateur fondateur de ce club');
     },
     [showIslandToast, triggerAct],
   );

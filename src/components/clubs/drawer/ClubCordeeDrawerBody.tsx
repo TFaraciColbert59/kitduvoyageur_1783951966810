@@ -356,7 +356,7 @@ function MembersAllPane({
         <button
           type="button"
           className="club-pending-banner"
-          onClick={() => onSwitchTabAndLens(4, 3, { g02Section: 'members' })}
+          onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'members' })}
         >
           <span>
             {activeClub.pendingRequestsCount} demande{activeClub.pendingRequestsCount > 1 ? 's' : ''} d’adhésion en attente
@@ -404,7 +404,7 @@ function MembersAllPane({
             <div className="lkdv-reseau-strip-head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
                 <Sparkles size={13} aria-hidden="true" />
-                Nouveaux dans la tribu
+                Nouveaux dans le club
               </span>
               <span className="club-badge-sage">7j · {newArrivals.length}</span>
             </div>
@@ -498,7 +498,7 @@ function MembersAllPane({
           description={
             search || filter !== 'all'
               ? 'Aucun membre ne correspond à ce filtre.'
-              : 'Invitez vos compagnons de cordée à rejoindre cette tribu.'
+              : 'Invitez vos compagnons de cordée à rejoindre ce club.'
           }
           actions={
             (search || filter !== 'all') ? (
@@ -516,7 +516,7 @@ function MembersAllPane({
               <button
                 type="button"
                 className="lkdv-carnet-btn-primary"
-                onClick={() => onSwitchTabAndLens(4, 3, { g02Section: 'invites' })}
+                onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'invites' })}
               >
                 Inviter un compagnon
               </button>
@@ -590,7 +590,7 @@ function MembersAllPane({
         type="button"
         className="lkdv-carnet-btn-soft"
         style={{ width: '100%', justifyContent: 'center' }}
-        onClick={() => onSwitchTabAndLens(4, 3, { g02Section: 'invites' })}
+        onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'invites' })}
       >
         <UserPlus size={14} aria-hidden="true" />
         <span>Inviter un compagnon de cordée</span>
@@ -777,7 +777,7 @@ function MembersGuidesPane({
               type="button"
               className="lkdv-carnet-btn-soft"
               style={{ height: 32, padding: '0 12px', fontSize: 12, flex: 1, justifyContent: 'center' }}
-              onClick={() => onSwitchTabAndLens(4, 1, { chatDraft: `@${g.handle} ` })}
+              onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'salons', chatDraft: `@${g.handle} ` })}
             >
               <MessageCircle size={13} aria-hidden="true" />
               <span>Contacter</span>
@@ -817,7 +817,7 @@ function MembersGuidesPane({
             type="button"
             className="lkdv-carnet-btn-soft"
             style={{ height: 30, fontSize: 11.5, alignSelf: 'flex-start' }}
-            onClick={() => onSwitchTabAndLens(4, 3, { g02Section: 'members' })}
+            onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'members' })}
           >
             Gérer l’équipe
           </button>
@@ -859,7 +859,7 @@ function MembersGuidesPane({
         <ClubEmptyCard
           icon={<Shield size={22} />}
           title="Aucun encadrant ou référent identifié"
-          description="Les fondateurs, administrateurs et référents sécurité de la tribu apparaîtront ici."
+          description="Les fondateurs, administrateurs et référents sécurité du club apparaîtront ici."
           actions={
             filter !== 'all' ? (
               <button type="button" className="lkdv-carnet-btn-soft" onClick={() => setFilter('all')}>
@@ -893,9 +893,9 @@ function MembersGuidesPane({
         type="button"
         className="lkdv-sig club-glass-card"
         style={{ border: 0, textAlign: 'left', cursor: 'pointer', width: '100%' }}
-        onClick={() => onSwitchTabAndLens(4, 2)}
+        onClick={() => onSwitchTabAndLens(2, 1)}
       >
-        <b style={{ fontSize: 12.5, color: '#17402c', display: 'block' }}>Charte & Sécurité de la Tribu</b>
+        <b style={{ fontSize: 12.5, color: '#17402c', display: 'block' }}>Charte & Sécurité du Club</b>
         <span style={{ fontSize: 11.5, color: '#56665d' }}>{activeClub.charter}</span>
       </button>
 
@@ -916,9 +916,9 @@ function MembersGuidesPane({
                 },
                 {
                   id: 'contact',
-                  label: 'Contacter sur le canal',
+                  label: 'Contacter sur le salon',
                   icon: <MessageCircle size={17} aria-hidden="true" />,
-                  onSelect: () => onSwitchTabAndLens(4, 1, { chatDraft: `@${peekGuide.handle} ` }),
+                  onSelect: () => onSwitchTabAndLens(2, 3, { g02Section: 'salons', chatDraft: `@${peekGuide.handle} ` }),
                 },
               ]
             : []
@@ -1340,7 +1340,7 @@ function MembersBinomesPane({
         type="button"
         className="lkdv-carnet-btn-soft"
         style={{ width: '100%', justifyContent: 'center' }}
-        onClick={() => onSwitchTabAndLens(4, 3, { g02Section: 'matching' })}
+        onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'matching' })}
       >
         <Sparkles size={14} aria-hidden="true" />
         <span>Matching activités & traces similaires</span>
@@ -1616,10 +1616,10 @@ function InspectedMemberStackPane({
               <button
                 type="button"
                 className="lkdv-carnet-btn-soft"
-                onClick={() => onSwitchTabAndLens(4, 1, { chatDraft: `@${member.handle} ` })}
+                onClick={() => onSwitchTabAndLens(2, 3, { g02Section: 'salons', chatDraft: `@${member.handle} ` })}
               >
                 <MessageCircle size={14} aria-hidden="true" />
-                <span>Message / Canal</span>
+                <span>Message / Salon</span>
               </button>
               {viewerLedUpcoming && currentUserId ? (
                 <button
@@ -1780,7 +1780,7 @@ function InspectedMemberStackPane({
           memberPosts.length === 0 ? (
             <ClubEmptyCard
               icon={<ImageIcon size={22} />}
-              title="Aucune publication dans la tribu"
+              title="Aucune publication dans le club"
               description="Les photos de sortie et retours terrain publiés par ce membre apparaîtront ici."
             />
           ) : (

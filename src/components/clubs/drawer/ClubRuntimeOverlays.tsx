@@ -111,17 +111,17 @@ export function ClubRuntimeOverlays({
                   }}
                 >
                   <ShieldCheck size={14} aria-hidden="true" />
-                  <span>{activeClub.joined ? 'Membre actif ✓' : 'Rejoindre la tribu'}</span>
+                  <span>{activeClub.joined ? 'Membre actif ✓' : 'Rejoindre le club'}</span>
                 </button>
                 <button
                   type="button"
                   className="reseau-btn active"
                   onClick={() => {
-                    onOpenClubDrawer(4, 2);
+                    onOpenClubDrawer(1, 1);
                     onClose();
                   }}
                 >
-                  Ouvrir Charte & QR
+                  Ouvrir Encadrants & Sécurité
                 </button>
               </div>
             </div>

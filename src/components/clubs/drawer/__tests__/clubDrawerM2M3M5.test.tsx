@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { ClubSortiesDrawerBody } from '../ClubSortiesDrawerBody';
 import { ClubCoffreDrawerBody } from '../ClubCoffreDrawerBody';
-import { ClubTribuDrawerBody } from '../ClubTribuDrawerBody';
 import { ClubCreateDrawerBody } from '../ClubCreateDrawerBody';
 import { ClubRuntimeOverlays } from '../ClubRuntimeOverlays';
 import type {
@@ -280,42 +279,9 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
     expect(onToast).toHaveBeenCalled();
   });
 
-  it('D19–D27 & D38–D43: renders Tribu challenges/chat/gov, Create forms with live preview, and Runtime Overlays', () => {
-    const onSendChatMessage = vi.fn();
+  it('D23–D27 & D38–D43: renders Create forms with live preview and Runtime Overlays without Tribu', () => {
     const onCreateOuting = vi.fn();
     const onToast = vi.fn();
-
-    const { rerender } = render(
-      <ClubTribuDrawerBody
-        activeSubTab={0}
-        activeClub={MOCK_CLUB}
-        challenges={MOCK_CHALLENGES}
-        chatMessages={MOCK_CHAT}
-        members={MOCK_MEMBERS}
-        onSendChatMessage={onSendChatMessage}
-        onToggleClubVisibility={vi.fn()}
-        onToast={onToast}
-      />,
-    );
-    expect(screen.getByText('100 000 m D+ Collectif')).toBeTruthy();
-    fireEvent.click(screen.getByText('+450 m D+'));
-    expect(onToast).toHaveBeenCalled();
-
-    // Gov & QR Matrix (D21)
-    rerender(
-      <ClubTribuDrawerBody
-        activeSubTab={2}
-        activeClub={MOCK_CLUB}
-        challenges={MOCK_CHALLENGES}
-        chatMessages={MOCK_CHAT}
-        members={MOCK_MEMBERS}
-        onSendChatMessage={onSendChatMessage}
-        onToggleClubVisibility={vi.fn()}
-        onToast={onToast}
-      />,
-    );
-    fireEvent.click(screen.getByText('Afficher QR'));
-    expect(screen.getByText('Pass Terrain Hors-Ligne')).toBeTruthy();
 
     // Create Outing form (D25)
     render(

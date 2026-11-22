@@ -836,7 +836,7 @@ export function ClubSortiesDrawerBody({
         <div className="li nt club-glass-card">
           <div>
             <div className="ttl">
-              <span>État des sentiers & Refuges (Tribu)</span>
+              <span>État des sentiers & Refuges (Club)</span>
             </div>
             <div className="s2">{activeClub.weatherTrail}</div>
           </div>
@@ -858,7 +858,7 @@ export function ClubSortiesDrawerBody({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <b style={{ fontSize: 12.5, color: '#172b24' }}>Observations Terrain de la Cordée ({terrainReports.length})</b>
-            <span className="club-badge-soft">Direct Tribu</span>
+            <span className="club-badge-soft">Direct Club</span>
           </div>
 
           {terrainReports.map((rep) => (

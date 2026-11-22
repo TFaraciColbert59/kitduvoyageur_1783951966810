@@ -2691,11 +2691,11 @@ card = function () {
     },
     {
       id: 'hl_defis',
-      title: 'Canal',
+      title: 'Météo',
       act: 'openClubDrawer',
-      val: '4:1',
+      val: '2:1',
       cls: '',
-      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+      svg: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>'
     }
   ];
 
@@ -2738,7 +2738,7 @@ renderTop = function () {
     <div class="ig-top-r">
       <button class="lg gbtn ig-top-btn" data-a="openClubSearch" aria-label="Rechercher un club, un membre, une sortie ou un matériel"><svg class="ic s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       <button class="lg gbtn ig-top-btn" data-a="openClubCreate" aria-label="Publier dans le club, proposer une sortie, prêter un équipement ou fonder un club">${ic(IC.plus, "s")}</button>
-      <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="4:2" aria-label="Espaces du club : cordée, sorties, coffre matériel, défis et charte">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="1:0" aria-label="Espaces du club : cordée, sorties et coffre matériel">${ic(IC.sliders, "s")}</button>
     </div></div>
   <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au club"><b>${esc(P.name)} · @${esc(P.handle)} ${P.isDemo ? '<span class="flag-badge">PYR · FR</span>' : ''} ${AI}</b><span>${D.sigText}</span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;

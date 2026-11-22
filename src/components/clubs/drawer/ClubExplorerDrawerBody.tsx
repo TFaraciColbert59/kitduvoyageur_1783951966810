@@ -130,7 +130,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 
 function MyClubsSkeleton() {
   return (
-    <div className="club-drawer-pane-content" aria-busy="true" aria-label="Chargement des tribus">
+    <div className="club-drawer-pane-content" aria-busy="true" aria-label="Chargement des clubs">
       <span className="club-skel-block" style={{ height: 84 }} />
       <span className="club-skel-block" style={{ height: 56 }} />
       <span className="club-skel-block" style={{ height: 56 }} />
@@ -489,7 +489,7 @@ function MyClubsPane({
           ? [
               {
                 id: 'leave',
-                label: 'Quitter la tribu',
+                label: 'Quitter le club',
                 icon: <UserCheck size={17} aria-hidden="true" />,
                 danger: true,
                 onSelect: () => void handleLeaveClub(peekClub),
@@ -503,8 +503,8 @@ function MyClubsPane({
     <div className="club-drawer-pane-content">
       <div className="club-sec-head">
         <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Explorer · Mes Tribus</span>
-          <b className="club-sec-title">Mes tribus rejointes</b>
+          <span className="club-sec-eyebrow">Explorer · Mes Clubs</span>
+          <b className="club-sec-title">Mes clubs rejoints</b>
         </div>
         <span className="lkdv-carnet-chip-soft" style={{ fontVariantNumeric: 'tabular-nums' }}>
           <AnimatedNumber value={myClubs.length} />
@@ -515,7 +515,7 @@ function MyClubsPane({
         <ClubEmptyCard
           icon={<Compass size={22} />}
           title="Aucun club rejoint pour le moment."
-          description="Rejoignez une cordée locale par massif ou fondez votre propre tribu pour partager traces GPX et matériel."
+          description="Rejoignez une cordée locale par massif ou fondez votre propre club pour partager traces GPX et matériel."
           actions={
             <>
               <button type="button" className="lkdv-carnet-btn-primary" onClick={() => onSwitchLens(1)}>
@@ -524,7 +524,7 @@ function MyClubsPane({
               </button>
               <button type="button" className="lkdv-carnet-btn-soft" onClick={() => onOpenCreateClub()}>
                 <Plus size={14} aria-hidden="true" />
-                <span>Fonder une tribu</span>
+                <span>Fonder un club</span>
               </button>
             </>
           }
@@ -533,7 +533,7 @@ function MyClubsPane({
         <>
           <div className="lkdv-carnet-kpi-grid-3">
             <div className="lkdv-carnet-kpi-mini">
-              <small>Tribus</small>
+              <small>Clubs</small>
               <b><AnimatedNumber value={totals.count} /></b>
             </div>
             <div className="lkdv-carnet-kpi-mini">
@@ -557,7 +557,7 @@ function MyClubsPane({
                 <div className="club-hero-meta">
                   <b>{activeInList.name}</b>
                   <div className="club-hero-badges">
-                    <span className="club-badge-forest">Tribu active</span>
+                    <span className="club-badge-forest">Club actif</span>
                     <span className="club-badge-soft">{activeInList.role}</span>
                     {activeInList.hasLiveOrImminentOuting ? (
                       <span className="lkdv-carnet-live-badge is-live">
@@ -615,7 +615,7 @@ function MyClubsPane({
           ) : null}
 
           {myClubs.length > 3 ? (
-            <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Trier mes tribus">
+            <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Trier mes clubs">
               {(
                 [
                   { id: 'active', label: 'Actif' },
@@ -684,7 +684,7 @@ function MyClubsPane({
                         onCancelLeave={() => setLeaveConfirmId(null)}
                         onPeek={() => setPeekClub(club)}
                         onPrefetch={() => handlePrefetch(club)}
-                        onJumpPendingMembers={() => onSwitchTabAndLens(4, 3, { g02Section: 'members' })}
+                        onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
                       />
                     </div>
                   );
@@ -692,10 +692,10 @@ function MyClubsPane({
               </div>
             </div>
           ) : (
-            <StaggerList className="reseau-list" role="list" aria-label="Liste des tribus rejointes">
+            <StaggerList className="reseau-list" role="list" aria-label="Liste des clubs rejoints">
               {managedClubs.length > 0 && memberOnlyClubs.length > 0 ? (
                 <span className="lkdv-carnet-kit-eyebrow" style={{ paddingLeft: 4 }}>
-                  Tribus administrées ({managedClubs.length})
+                  Clubs administrés ({managedClubs.length})
                 </span>
               ) : null}
               {(managedClubs.length > 0 && memberOnlyClubs.length > 0 ? managedClubs : myClubs).map((club) => (
@@ -719,14 +719,14 @@ function MyClubsPane({
                   onCancelLeave={() => setLeaveConfirmId(null)}
                   onPeek={() => setPeekClub(club)}
                   onPrefetch={() => handlePrefetch(club)}
-                  onJumpPendingMembers={() => onSwitchTabAndLens(4, 3, { g02Section: 'members' })}
+                  onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
                 />
               ))}
 
               {managedClubs.length > 0 && memberOnlyClubs.length > 0 ? (
                 <>
                   <span className="lkdv-carnet-kit-eyebrow" style={{ paddingLeft: 4, marginTop: 4 }}>
-                    Tribus rejointes ({memberOnlyClubs.length})
+                    Clubs rejoints ({memberOnlyClubs.length})
                   </span>
                   {memberOnlyClubs.map((club) => (
                     <MyClubRowCard
@@ -749,7 +749,7 @@ function MyClubsPane({
                       onCancelLeave={() => setLeaveConfirmId(null)}
                       onPeek={() => setPeekClub(club)}
                       onPrefetch={() => handlePrefetch(club)}
-                      onJumpPendingMembers={() => onSwitchTabAndLens(4, 3, { g02Section: 'members' })}
+                      onJumpPendingMembers={() => onSwitchTabAndLens(1, 0)}
                     />
                   ))}
                 </>
@@ -766,7 +766,7 @@ function MyClubsPane({
         onClick={() => onOpenCreateClub()}
       >
         <Plus size={15} aria-hidden="true" />
-        <span>Fonder une nouvelle tribu</span>
+        <span>Fonder un nouveau club</span>
       </button>
 
       <ClubEntityPeek
@@ -861,7 +861,7 @@ function DiscoverClubsPane({
           joined: false,
           role: 'Membre',
           visibility: priv === 'secret' ? 'secret' : priv === 'closed' ? 'prive' : 'public',
-          bio: r.description || 'Tribu outdoor LKDV.',
+          bio: r.description || 'Club outdoor LKDV.',
           charter: r.rules || 'Respect strict de la montagne.',
           nextOutingTitle: 'Découvrir les prochaines sorties',
           nextOutingDate: 'À venir',
@@ -1197,7 +1197,7 @@ function DiscoverClubsPane({
       </div>
 
       {spotlightClubs.length > 0 && !quickFilter && filterChip === 'all' ? (
-        <div className="club-voyage-rail" data-hscroll="true" aria-label="Tribus recommandées">
+        <div className="club-voyage-rail" data-hscroll="true" aria-label="Clubs recommandés">
           {spotlightClubs.map((c) => (
             <button
               key={c.id}
@@ -1310,7 +1310,7 @@ function DiscoverClubsPane({
           onClick={() => {
             const first = filteredList[0];
             const coords = resolveMassifCoords(first.massif, first.lat, first.lng);
-            onFlyToCoords(coords.lat, coords.lng, `Carte des clubs · ${filteredList.length} tribus`);
+            onFlyToCoords(coords.lat, coords.lng, `Carte des clubs · ${filteredList.length} clubs`);
           }}
         >
           <MapPin size={13} aria-hidden="true" />
@@ -1631,7 +1631,7 @@ function SearchAllPane({
             data-autofocus="true"
             className="club-search-input"
             placeholder="Chercher un club, une sortie, un membre, un spot…"
-            aria-label="Rechercher dans les clubs et la tribu"
+            aria-label="Rechercher dans les clubs"
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
           />
@@ -1650,7 +1650,7 @@ function SearchAllPane({
             data-autofocus="true"
             className="club-search-input"
             placeholder="Chercher un club, une sortie, un membre, un spot…"
-            aria-label="Rechercher dans les clubs et la tribu"
+            aria-label="Rechercher dans les clubs"
             value={searchQuery}
             onValueChange={onSearchQueryChange}
           />
@@ -1788,7 +1788,7 @@ function SearchAllPane({
 
           {showGroup('clubs') && searchResults.clubs.length > 0 ? (
             <Cmd.CommandGroup
-              heading={`Clubs & Tribus · ${searchResults.clubs.length}`}
+              heading={`Clubs · ${searchResults.clubs.length}`}
               style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
             >
               {limitFor('clubs', searchResults.clubs).map((c) => (

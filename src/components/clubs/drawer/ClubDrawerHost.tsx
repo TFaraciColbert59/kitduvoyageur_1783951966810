@@ -45,7 +45,6 @@ import { ClubExplorerDrawerBody } from './ClubExplorerDrawerBody';
 import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
 import { ClubSortiesDrawerBody } from './ClubSortiesDrawerBody';
 import { ClubCoffreDrawerBody } from './ClubCoffreDrawerBody';
-import { ClubTribuDrawerBody } from './ClubTribuDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type {
@@ -120,13 +119,12 @@ export function ClubDrawerHost({
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
   const [internalMode, setInternalMode] = useState<'main' | 'create'>(mode);
-  const [tab, setTab] = useState<number>(initialSearch ? 0 : initialTab);
+  const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(3, Math.max(0, initialTab)));
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialSearch ? 2 : initialSubTab,
     1: initialTab === 1 ? initialSubTab : 0,
     2: initialTab === 2 ? initialSubTab : 0,
     3: initialTab === 3 ? initialSubTab : 0,
-    4: initialTab === 4 ? initialSubTab : 0,
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -163,8 +161,8 @@ export function ClubDrawerHost({
   useEffect(() => {
     if (!intent) return;
     setInternalMode('main');
-    const nextTab = intent.tab ?? tab;
-    if (typeof intent.tab === 'number') setTab(intent.tab);
+    const nextTab = Math.min(3, Math.max(0, intent.tab ?? tab));
+    if (typeof intent.tab === 'number') setTab(nextTab);
     if (typeof intent.subTab === 'number') {
       setSubTabs((prev) => ({ ...prev, [nextTab]: intent.subTab! }));
     }
@@ -331,8 +329,10 @@ export function ClubDrawerHost({
       setStack([]);
       setInspectedMember(null);
       setInspectedOuting(null);
-      setTab(targetTab);
-      setSubTabs((prev) => ({ ...prev, [targetTab]: targetLens }));
+      const safeTab = targetTab >= 4 ? 2 : Math.max(0, targetTab);
+      const safeLens = targetTab >= 4 ? 3 : targetLens;
+      setTab(safeTab);
+      setSubTabs((prev) => ({ ...prev, [safeTab]: safeLens }));
       if (options?.g02Section) setG02Section(options.g02Section);
       if (options?.chatDraft !== undefined) setChatDraftPrefill(options.chatDraft);
       if (options?.createClubMassif !== undefined) {
@@ -348,7 +348,7 @@ export function ClubDrawerHost({
   const secondaryByTab: Record<number, DrawerSecondaryItem[]> = useMemo(
     () => ({
       0: [
-        { id: 'my-clubs', label: 'Mes tribus rejointes', icon: <Users size={14} aria-hidden="true" /> },
+        { id: 'my-clubs', label: 'Mes clubs rejoints', icon: <Users size={14} aria-hidden="true" /> },
         { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Globe size={14} aria-hidden="true" /> },
         { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={14} aria-hidden="true" /> },
       ],
@@ -374,12 +374,6 @@ export function ClubDrawerHost({
         { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
         { id: 'vault-kits', label: 'Kits types du club', icon: <Layers size={14} aria-hidden="true" /> },
         { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={14} aria-hidden="true" /> },
-      ],
-      4: [
-        { id: 'tribu-challenges', label: 'Défis collectifs et sommets', icon: <Trophy size={14} aria-hidden="true" /> },
-        { id: 'tribu-chat', label: 'Canal live de la tribu', icon: <MessageCircle size={14} aria-hidden="true" /> },
-        { id: 'tribu-gov', label: 'Charte, gouvernance et QR Code', icon: <Sliders size={14} aria-hidden="true" /> },
-        { id: 'tribu-g02', label: 'Salons, classement, invitations & défis club', icon: <Handshake size={14} aria-hidden="true" /> },
       ],
     }),
     [inspectedMember],
@@ -407,14 +401,8 @@ export function ClubDrawerHost({
         badge: upcomingOutingsCount > 0 ? upcomingOutingsCount : undefined,
       },
       { id: 'coffre', label: 'Coffre matériel mutualisé du club', icon: <Backpack size={18} aria-hidden="true" /> },
-      {
-        id: 'tribu',
-        label: 'Défis collectifs, canal et gouvernance',
-        icon: <Award size={18} aria-hidden="true" />,
-        badge: chatMessages.length > 0 ? true : undefined,
-      },
     ],
-    [chatMessages.length, newArrivalsCount, upcomingOutingsCount],
+    [newArrivalsCount, upcomingOutingsCount],
   );
 
   const activeMainTab = mainTabDefs[tab] ?? mainTabDefs[0];
@@ -517,7 +505,7 @@ export function ClubDrawerHost({
           target.isContentEditable);
       if (isTextInput) return;
 
-      if (event.key >= '1' && event.key <= '5') {
+      if (event.key >= '1' && event.key <= '4') {
         const idx = Number(event.key) - 1;
         setStack([]);
         setInspectedMember(null);
@@ -819,26 +807,6 @@ export function ClubDrawerHost({
                     setTab(cTab);
                   }}
                   onToast={emitToast}
-                />
-              ) : null}
-
-              {tab === 4 ? (
-                <ClubTribuDrawerBody
-                  activeSubTab={index}
-                  active={active}
-                  activeClub={activeClub}
-                  challenges={challenges}
-                  chatMessages={chatMessages}
-                  members={members}
-                  initialChatDraft={chatDraftPrefill}
-                  onSendChatMessage={onSendChatMessage}
-                  onToggleClubVisibility={onToggleClubVisibility}
-                  onInspectMember={(m) => pushMember(m, index)}
-                  onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
-                  onToast={emitToast}
-                  onOpenRuntimeOverlay={onOpenRuntimeOverlay}
-                  currentUserId={currentUserId}
-                  initialSection={g02Section ?? 'salons'}
                 />
               ) : null}
             </div>

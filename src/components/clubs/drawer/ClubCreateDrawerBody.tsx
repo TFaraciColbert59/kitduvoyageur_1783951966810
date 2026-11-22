@@ -264,8 +264,8 @@ export function ClubCreateDrawerBody({
         <button
           type="submit"
           className="reseau-btn primary club-submit-pill club-icon-pill"
-          aria-label="Ajouter au coffre de la tribu"
-          title="Ajouter au coffre de la tribu"
+          aria-label="Ajouter au coffre du club"
+          title="Ajouter au coffre du club"
         >
           <Check size={16} aria-hidden="true" />
         </button>
@@ -277,7 +277,7 @@ export function ClubCreateDrawerBody({
   // D27 — C.3 CREATE-CLUB ("Fonder un nouveau club")
   // ============================================================================
   if (activeTab === 3) {
-    const slugPreview = (newClubName.trim() || 'nouvelle-tribu')
+    const slugPreview = (newClubName.trim() || 'nouveau-club')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
@@ -295,12 +295,12 @@ export function ClubCreateDrawerBody({
             name: newClubName.trim(),
             massif: newClubMassif.trim() || 'Alpes',
             category: newClubCat.trim() || 'Trek & Bivouac',
-            bio: newClubBio.trim() || 'Tribu outdoor locale connectée aux traces réelles.',
+            bio: newClubBio.trim() || 'Club outdoor local connecté aux traces réelles.',
             visibility: newClubVis,
           };
           onCreateNewClub(payload);
           onToast?.({
-            title: 'Nouvelle tribu fondée ✓',
+            title: 'Nouveau club fondé ✓',
             subtitle: `${payload.name} (${payload.massif})`,
           });
           setNewClubName('');
@@ -309,7 +309,7 @@ export function ClubCreateDrawerBody({
         <div className="club-sec-head">
           <div className="club-sec-head-titles">
             <span className="club-sec-eyebrow">Fondation · /clubs/{slugPreview}</span>
-            <b className="club-sec-title">Fonder une nouvelle tribu LKDV</b>
+            <b className="club-sec-title">Fonder un nouveau club LKDV</b>
           </div>
           <span className="club-badge-sage">{newClubVis === 'public' ? 'Ouvert' : 'Cooptation'}</span>
         </div>
@@ -406,7 +406,7 @@ export function ClubCreateDrawerBody({
         };
         onCreatePost(payload);
         onToast?.({
-          title: 'Publication partagée avec la tribu ✓',
+          title: 'Publication partagée avec le club ✓',
           subtitle: `${activeClub.name} · ${payload.spot}`,
         });
         setPostCaption('');
@@ -486,7 +486,7 @@ export function ClubCreateDrawerBody({
         </>
       ) : null}
       <label className="club-field-label">
-        <span>Message à la tribu</span>
+        <span>Message au club</span>
         <textarea
           rows={3}
           className="club-glass-textarea"

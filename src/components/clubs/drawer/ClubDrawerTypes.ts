@@ -407,24 +407,6 @@ export interface ClubCoffreDrawerBodyProps {
   onToast?: (toast: ClubToastPayload) => void;
 }
 
-export interface ClubTribuDrawerBodyProps {
-  activeSubTab: number;
-  active?: boolean;
-  activeClub: ClubItemData;
-  challenges: ClubChallengeItem[];
-  chatMessages: ClubChatMessage[];
-  members: ClubMemberData[];
-  initialChatDraft?: string;
-  onSendChatMessage: (text: string) => void;
-  onToggleClubVisibility: () => void;
-  onInspectMember?: (m: ClubMemberData) => void;
-  onSwitchTab?: (tab: number, subTab?: number) => void;
-  onToast?: (toast: ClubToastPayload) => void;
-  onOpenRuntimeOverlay?: (kind: ClubRuntimeOverlayKind, payload?: Record<string, unknown>) => void;
-  currentUserId?: string | null;
-  initialSection?: ClubG02Section;
-}
-
 export interface ClubCreateDrawerBodyProps {
   activeTab: number;
   activeClub: ClubItemData;

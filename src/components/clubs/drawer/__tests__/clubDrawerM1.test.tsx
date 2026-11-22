@@ -248,8 +248,8 @@ function renderHost(overrides: Partial<React.ComponentProps<typeof ClubDrawerHos
 describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05–D08)', () => {
   it('D01: renders each SlotShell lens uniquely (FN-19 fix) and shows skeleton/error states', () => {
     const { unmount } = renderHost();
-    // "Mes tribus rejointes" is rendered strictly ONCE (pane 0), not duplicated across panes 1 & 2
-    expect(screen.getAllByText('Mes tribus rejointes')).toHaveLength(1);
+    // "Mes clubs rejoints" is rendered strictly ONCE (pane 0), not duplicated across panes 1 & 2
+    expect(screen.getAllByText('Mes clubs rejoints')).toHaveLength(1);
     unmount();
 
     const onRetry = vi.fn();
@@ -319,7 +319,7 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
   it('D05, D06, D07: Cordée lenses filter newArrivals, guides, and availableWeekend binômes accurately', () => {
     const { unmount } = renderHost({ initialTab: 1, initialSubTab: 0 });
     const paneAll = within(screen.getByTestId('slot-content'));
-    expect(paneAll.getByText('Nouveaux dans la tribu')).toBeTruthy();
+    expect(paneAll.getByText('Nouveaux dans le club')).toBeTruthy();
     expect(paneAll.getAllByText('Léo Nouveau').length).toBeGreaterThan(0);
     unmount();
 
