@@ -1183,7 +1183,6 @@ export function ClubDrawerHost({
                           .join(' · '),
                         onClick: () => {
                           setInspectedOuting(o);
-                          onFlyToCoords(o.lat, o.lng, o.title);
                         },
                       })),
                     },
