@@ -617,65 +617,29 @@ export function ClubInlineFeed({
           style={{ padding: '4px 4px 6px', justifyContent: 'flex-start', gap: 10 }}
         >
           {highlights.map((hl) => (
-            <div
+            <button
               key={hl.id}
-              style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}
+              type="button"
+              className="lkdv-ig-hl"
+              onClick={() => onOpenHighlight?.(hl.id)}
+              onContextMenu={(e) => {
+                if (!canManageStories) return;
+                e.preventDefault();
+                onEditHighlight?.(hl.id);
+              }}
+              aria-label={`Story à la une ${hl.title}`}
+              style={{ flex: '0 0 auto' }}
             >
-              <button
-                type="button"
-                className="lkdv-ig-hl"
-                onClick={() => onOpenHighlight?.(hl.id)}
-                onContextMenu={(e) => {
-                  if (!canManageStories) return;
-                  e.preventDefault();
-                  onEditHighlight?.(hl.id);
-                }}
-                aria-label={`Story à la une ${hl.title}`}
-                style={{ flex: '0 0 auto' }}
-              >
-                <div className="lkdv-ig-hl-ring">
-                  <div className="lkdv-ig-hl-thumb">
-                    {hl.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={hl.coverUrl} alt="" loading="lazy" decoding="async" />
-                    ) : null}
-                  </div>
+              <div className="lkdv-ig-hl-ring">
+                <div className="lkdv-ig-hl-thumb">
+                  {hl.coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={hl.coverUrl} alt="" loading="lazy" decoding="async" />
+                  ) : null}
                 </div>
-                <span className="lkdv-ig-hl-label">{hl.title}</span>
-              </button>
-              {canManageStories && onEditHighlight ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditHighlight(hl.id);
-                  }}
-                  aria-label={`Modifier et voir les vues de ${hl.title}`}
-                  title={`Gérer « ${hl.title} » · ${hl.viewsCount} vues`}
-                  style={{
-                    position: 'absolute',
-                    top: -2,
-                    right: 2,
-                    height: 18,
-                    padding: '0 5px',
-                    borderRadius: 999,
-                    border: '1.5px solid #ffffff',
-                    background: '#17402c',
-                    color: '#ffffff',
-                    fontSize: 9.5,
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(16, 32, 25, 0.25)',
-                  }}
-                >
-                  <Eye size={9} aria-hidden="true" />
-                  <span>{hl.viewsCount}</span>
-                </button>
-              ) : null}
-            </div>
+              </div>
+              <span className="lkdv-ig-hl-label">{hl.title}</span>
+            </button>
           ))}
 
           {canManageStories && onAddHighlight ? (

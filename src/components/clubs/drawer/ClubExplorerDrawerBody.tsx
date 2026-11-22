@@ -523,7 +523,7 @@ function MyClubsPane({
         <>
           <div className="lkdv-carnet-kpi-grid-3">
             <div className="lkdv-carnet-kpi-mini">
-              <small>Clubs</small>
+              <small>Clubs rejoints</small>
               <b><AnimatedNumber value={totals.count} /></b>
             </div>
             <div className="lkdv-carnet-kpi-mini">

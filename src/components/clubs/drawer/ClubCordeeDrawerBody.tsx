@@ -213,29 +213,31 @@ function InspectedMemberPane({
   }, [active, lensId, member.id, member.userId]);
 
   const pName = member.name?.trim() || member.handle?.trim() || 'Voyageur';
+  const normHandle = (member.handle || '').trim().toLowerCase();
+  const normName = (member.name || '').trim().toLowerCase();
+
+  const matchesMember = (handle?: string | null, name?: string | null) => {
+    const h = (handle || '').trim().toLowerCase();
+    const n = (name || '').trim().toLowerCase();
+    if (normHandle && (h === normHandle || n === normHandle)) return true;
+    if (normName && (n === normName || h === normName)) return true;
+    return false;
+  };
 
   const memberOutings = useMemo(
-    () =>
-      outings.filter(
-        (o) => (o.leaderHandle || '').toLowerCase() === (member.handle || '').toLowerCase(),
-      ),
-    [member.handle, outings],
+    () => outings.filter((o) => matchesMember(o.leaderHandle, o.leaderName)),
+    [normHandle, normName, outings],
   );
   const memberGear = useMemo(
-    () =>
-      vaultGear.filter(
-        (g) => (g.ownerHandle || '').toLowerCase() === (member.handle || '').toLowerCase(),
-      ),
-    [member.handle, vaultGear],
+    () => vaultGear.filter((g) => matchesMember(g.ownerHandle, g.ownerName)),
+    [normHandle, normName, vaultGear],
   );
   const memberPosts = useMemo(
-    () =>
-      posts.filter(
-        (p) => (p.authorHandle || '').toLowerCase() === (member.handle || '').toLowerCase(),
-      ),
-    [member.handle, posts],
+    () => posts.filter((p) => matchesMember(p.authorHandle, p.authorName)),
+    [normHandle, normName, posts],
   );
   const photoPosts = useMemo(() => memberPosts.filter((p) => Boolean(p.mediaUrl)), [memberPosts]);
+  const textPosts = useMemo(() => memberPosts.filter((p) => !p.mediaUrl), [memberPosts]);
 
   const totalKm = useMemo(
     () => memberOutings.reduce((sum, o) => sum + (Number(o.km) || 0), 0),
@@ -246,6 +248,8 @@ function InspectedMemberPane({
     [memberOutings],
   );
   const outingsCount = member.outingsCount ?? memberOutings.length;
+  const hasAnySharedContent =
+    memberPosts.length > 0 || memberOutings.length > 0 || memberGear.length > 0;
 
   return (
     <div
@@ -294,11 +298,88 @@ function InspectedMemberPane({
                 ))}
               </div>
             </>
-          ) : (
+          ) : null}
+          {textPosts.length > 0 ? (
+            <>
+              <span className="lkdv-carnet-kit-eyebrow">
+                Publications ({textPosts.length})
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {textPosts.map((post) => (
+                  <button
+                    key={post.id}
+                    type="button"
+                    className="lkdv-carnet-note-row"
+                    style={{ textAlign: 'left', width: '100%' }}
+                    onClick={() => {
+                      onClose();
+                      document
+                        .getElementById(`club-feed-post-${post.id}`)
+                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                  >
+                    <p
+                      className="lkdv-carnet-note-txt"
+                      style={{ margin: 0, fontSize: 12.5, color: 'var(--label)' }}
+                    >
+                      {post.caption || post.spot || 'Publication dans le club'}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+          {memberOutings.length > 0 ? (
+            <>
+              <span className="lkdv-carnet-kit-eyebrow">
+                Sorties encadrées ({memberOutings.length})
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {memberOutings.map((o) => (
+                  <div key={o.id} className="lkdv-carnet-note-row">
+                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>
+                      {o.title}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+                      {[o.dateLabel, o.km ? `${o.km} km` : null, o.dplus ? `+${o.dplus} m D+` : null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+          {memberGear.length > 0 ? (
+            <>
+              <span className="lkdv-carnet-kit-eyebrow">
+                Matériel mutualisé ({memberGear.length})
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {memberGear.map((g) => (
+                  <div key={g.id} className="lkdv-carnet-note-row">
+                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--label)' }}>
+                      {g.name}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
+                      {[
+                        g.category,
+                        g.weightG ? `${g.weightG} g` : null,
+                        g.available ? 'Disponible' : 'Emprunté',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+          {!hasAnySharedContent ? (
             <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>
-              Aucun média partagé pour ce voyageur.
+              Aucun contenu partagé par ce membre dans ce club.
             </p>
-          )}
+          ) : null}
         </>
       ) : null}
 
