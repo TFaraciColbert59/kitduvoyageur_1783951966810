@@ -1242,8 +1242,9 @@
   color: #92400e;
 }
 
-/* Frise chronologique des sorties : centrage vertical & pas de débordement latéral */
-.lkdv-club-carnet-drawer [data-testid="club-outings-upcoming-pane"] {
+/* Frise chronologique des sorties & archives GPX : centrage vertical, compactée vers le haut & pas de débordement latéral */
+.lkdv-club-carnet-drawer [data-testid="club-outings-upcoming-pane"],
+.lkdv-club-carnet-drawer [data-testid="club-outings-gpx-pane"] {
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -1258,9 +1259,15 @@
   padding-bottom: 44px !important;
 }
 
+.lkdv-club-carnet-drawer .lkdv-carnet-htimeline {
+  padding-top: 0 !important;
+  padding-bottom: 4px !important;
+}
+
 .lkdv-club-carnet-drawer .lkdv-carnet-hevent {
   flex: 0 0 216px;
   width: 216px;
+  grid-template-rows: 108px 14px 108px;
 }
 
 .lkdv-club-carnet-drawer .lkdv-carnet-hcard {
