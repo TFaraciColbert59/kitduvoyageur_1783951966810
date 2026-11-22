@@ -8,6 +8,7 @@ import styles from './g02.module.css';
 
 export type ClubG02Section =
   | 'events'
+  | 'collections'
   | 'salons'
   | 'challenges'
   | 'leaderboard'
@@ -22,6 +23,7 @@ export interface ClubG02NavItem {
 
 export const CLUB_G02_SECTIONS: readonly ClubG02NavItem[] = [
   { id: 'events', label: 'Sorties' },
+  { id: 'collections', label: 'Collections & POIs' },
   { id: 'salons', label: 'Salons' },
   { id: 'challenges', label: 'Défis' },
   { id: 'leaderboard', label: 'Classement' },

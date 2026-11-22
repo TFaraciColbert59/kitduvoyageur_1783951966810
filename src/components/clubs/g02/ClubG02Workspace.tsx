@@ -28,6 +28,7 @@ import type {
 } from '@/features/clubs';
 import { createClient } from '@/lib/supabase/client';
 import { ClubActivityMatchingPanel } from './ClubActivityMatchingPanel';
+import { ClubCollectionsPanel } from './ClubCollectionsPanel';
 import { ClubChallengesPanel, type ClubChallengeCreateInput } from './ClubChallengesPanel';
 import { ClubEventDetail } from './ClubEventDetail';
 import { ClubEventsBoard } from './ClubEventsBoard';
@@ -731,6 +732,13 @@ export function ClubG02Workspace({
             await loadInvites();
           }}
           onRetry={() => void loadInvites()}
+        />
+      )}
+
+      {activeSection === 'collections' && (
+        <ClubCollectionsPanel
+          clubId={club.id}
+          canWrite={Boolean(viewerMembership && viewerMembership.status === 'active')}
         />
       )}
 
