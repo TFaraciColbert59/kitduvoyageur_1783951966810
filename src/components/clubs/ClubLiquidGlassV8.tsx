@@ -226,6 +226,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
   const flyMapToCoords = useCallback((coords?: [number, number], label?: string) => {
     if (!coords || typeof window === 'undefined') return;
+    const phoneEl = document.getElementById('phone');
+    if (phoneEl?.classList.contains('map-collapsed')) {
+      triggerAct('toggleMapCollapsed');
+    }
     const map = (window as any).__lkdvCompteMap3D;
     if (map && typeof map.flyTo === 'function') {
       try {

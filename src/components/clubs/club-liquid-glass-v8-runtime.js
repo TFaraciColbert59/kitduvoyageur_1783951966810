@@ -312,6 +312,7 @@ const S = {
   sh: null,
   stk: [],
   big: false,
+  mapCollapsed: false,
   mopts: false,
   popv: false,
   outdoor: false,
@@ -1788,21 +1789,63 @@ let applyGlass = function() {
   p.classList.toggle("outdoor", !!S.outdoor);
   lensSoon();
 }
+let ensureMapPillLauncher = function() {
+  const p = $("phone");
+  if (!p) return null;
+  const mz = p.querySelector(".mapzone");
+  if (!mz) return null;
+  let pill = document.getElementById("club-map-pill");
+  if (!pill) {
+    pill = document.createElement("button");
+    pill.type = "button";
+    pill.id = "club-map-pill";
+    pill.className = "xp-sheet-pill-launcher club-map-pill-launcher";
+    pill.setAttribute("data-a", "toggleMapCollapsed");
+    pill.setAttribute("aria-label", "Réafficher la carte 3D du club");
+    pill.innerHTML = '<span class="xp-pill-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+    mz.appendChild(pill);
+  }
+  pill.setAttribute("aria-expanded", S.mapCollapsed ? "false" : "true");
+  return pill;
+};
+
+let scheduleCardAndMapSync = function() {
+  requestAnimationFrame(syncCardBounds);
+  setTimeout(syncCardBounds, 160);
+  setTimeout(syncCardBounds, 340);
+  setTimeout(syncCardBounds, 540);
+  if (window.__lkdvCompteMap3D) {
+    setTimeout(() => {
+      try { window.__lkdvCompteMap3D.resize(); } catch (_) {}
+    }, 260);
+    setTimeout(() => {
+      try { window.__lkdvCompteMap3D.resize(); } catch (_) {}
+    }, 520);
+  }
+};
+
 let applyShell = function() {
   const p = $("phone");
+  if (!p) return;
+  ensureMapPillLauncher();
   p.classList.toggle("tabmin", !!S.tabMin);
   p.classList.toggle("mapbig", !!S.big);
+  const isMapCollapsed = !!(S.mapCollapsed && !S.big);
+  p.classList.toggle("map-collapsed", isMapCollapsed);
+  p.setAttribute("data-map-collapsed", isMapCollapsed ? "true" : "false");
   p.classList.toggle("noacc", !S.map.acc);
   const isSheetOpen = !!(S.sh && S.sh.det !== "closed");
   p.classList.toggle("sheet-open", isSheetOpen);
   p.setAttribute("data-sheet-open", isSheetOpen ? "true" : "false");
   if (S.sh && S.sh.det) p.setAttribute("data-det", S.sh.det); else p.removeAttribute("data-det");
+  scheduleCardAndMapSync();
   lensSoon();
   clearTimeout(G.lt);
   G.lt = setTimeout(lensAll, 620);
 }
 
 let refresh = function(map) {
+  ensureMapPillLauncher();
   renderTop();
   if (map) drawMap();
   renderAcc();
@@ -1912,14 +1955,29 @@ let act = function(a, v) {
         } catch (_) {}
       }
       break;
-    case "mapbig":
-      S.big = !S.big; if (S.big && S.sh) { S.sh = null; renderSheet(); } applyShell(); renderMopts(); haptic(8);
-      setTimeout(syncCardBounds, 620);
-      if (window.__lkdvCompteMap3D) {
-        setTimeout(() => {
-          try { window.__lkdvCompteMap3D.resize(); } catch (_) {}
-        }, 320);
+    case "toggleMapCollapsed": {
+      S.mapCollapsed = !S.mapCollapsed;
+      if (!S.mapCollapsed) {
+        G.mapManualOpenAt = Date.now();
+        const sc = document.querySelector("#card > .card-scroll, #card, #sheet .lkdv-lens-pane");
+        G.mapOpenScrollTop = sc ? sc.scrollTop : 0;
       }
+      applyShell();
+      haptic(8);
+      break;
+    }
+    case "mapbig":
+      if (!S.big && !S.mapCollapsed && !G.forceMapBig) {
+        S.mapCollapsed = true;
+        applyShell();
+        haptic(8);
+        break;
+      }
+      G.forceMapBig = false;
+      S.big = !S.big;
+      if (S.big) S.mapCollapsed = false;
+      if (S.big && S.sh) { S.sh = null; renderSheet(); }
+      applyShell(); renderMopts(); haptic(8);
       break;
     case "zoom":
       zoomAt(+v > 0 ? 1.4 : 1 / 1.4);
@@ -2140,7 +2198,7 @@ phone.addEventListener("click", e => {
   if (tm) tm.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12); }, { passive: false });
   const mg = $("mgrab"); let gs = null;
   if (mg) mg.addEventListener("pointerdown", e => { gs = { y: e.clientY }; mg.setPointerCapture(e.pointerId); });
-  if (mg) mg.addEventListener("pointerup", e => { if (!gs) return; const dy = e.clientY - gs.y; gs = null; if (Math.abs(dy) > 20) { G.sup = Date.now() + 400; G.supEl = mg; if ((dy < 0) !== S.big) act("mapbig"); } });
+  if (mg) mg.addEventListener("pointerup", e => { if (!gs) return; const dy = e.clientY - gs.y; gs = null; if (Math.abs(dy) > 20) { G.sup = Date.now() + 400; G.supEl = mg; if (dy < 0) { G.forceMapBig = true; if (!S.big) act("mapbig"); } else { if (S.big) { G.forceMapBig = true; act("mapbig"); } else if (!S.mapCollapsed) { act("toggleMapCollapsed"); } } } });
 })();
 
 /* Accessoire : parcourir la chronologie 12 mois */
@@ -2740,7 +2798,7 @@ renderTop = function () {
       <button class="lg gbtn ig-top-btn" data-a="openClubCreate" aria-label="Publier dans le club, proposer une sortie, prêter un équipement ou fonder un club">${ic(IC.plus, "s")}</button>
       <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="1:0" aria-label="Espaces du club : cordée, sorties et coffre matériel">${ic(IC.sliders, "s")}</button>
     </div></div>
-  <button class="cs mini" data-a="mapbig" aria-label="Réduire la carte et revenir au club"><b>${esc(P.name)} · @${esc(P.handle)} ${P.isDemo ? '<span class="flag-badge">PYR · FR</span>' : ''} ${AI}</b><span>${D.sigText}</span></button>
+  <button class="cs mini xp-sheet-pill-launcher club-top-card-pill" data-a="mapbig" aria-label="Réduire la carte et revenir au club"><span class="xp-pill-dots" aria-hidden="true"><span></span><span></span><span></span></span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
   const feedEl = document.getElementById('lkdv-club-feed-root');
   if (feedEl && typeof window.__lkdvMountClubFeed === 'function') {
@@ -4300,7 +4358,45 @@ phone.addEventListener('pointerover', e => {
   const [k, id] = t.dataset.focus.split(':'); if (S.focus && S.focus.k === k && S.focus.id === id) return; X.hov = true; S.focus = { k, id }; drawMap();
 });
 phone.addEventListener('pointerout', e => { if (!X.hov) return; const t = e.target.closest && e.target.closest('.ig-tile[data-focus]'); if (!t || (e.relatedTarget && t.contains(e.relatedTarget))) return; X.hov = false; if (!S.sh && !S.callout) { S.focus = null; drawMap(); } });
-phone.addEventListener('scroll', e => { const t = e.target; if (!t.classList || !t.classList.contains('ig-feed')) return; if (t.scrollTop > 10 && !S.tabMin) { S.tabMin = true; applyShell(); } else if (t.scrollTop < 2 && S.tabMin) { S.tabMin = false; applyShell(); } }, true);
+phone.addEventListener('scroll', e => {
+  const t = e.target;
+  if (!t || !t.classList) return;
+  if (t.hasAttribute && (t.hasAttribute('data-hscroll') || t.classList.contains('carnet-htl-rail') || t.classList.contains('club-filter-rail'))) return;
+  const isVerticalPane =
+    t.classList.contains('card-scroll') ||
+    t.id === 'card' ||
+    t.classList.contains('lkdv-lens-pane') ||
+    t.classList.contains('sh-b') ||
+    t.classList.contains('ig-feed');
+  if (!isVerticalPane) return;
+  if (t.scrollTop > 8) {
+    if (!S.tabMin) { S.tabMin = true; }
+    const recentlyOpenedManually = Date.now() - (G.mapManualOpenAt || 0) < 420;
+    const scrolledFurtherDown = G.mapOpenScrollTop == null || (t.scrollTop - G.mapOpenScrollTop) > 10;
+    if (!S.mapCollapsed && !S.big && !recentlyOpenedManually && scrolledFurtherDown) {
+      S.mapCollapsed = true;
+      G.mapOpenScrollTop = null;
+      applyShell();
+    }
+  } else if (t.scrollTop < 2 && S.tabMin) {
+    S.tabMin = false;
+    applyShell();
+  }
+}, true);
+phone.addEventListener('wheel', e => {
+  const target = e.target;
+  if (!target || !target.closest) return;
+  const inCardOrSheet = target.closest('#card, #sheet');
+  if (!inCardOrSheet) return;
+  if (e.deltaY > 6 && !S.mapCollapsed && !S.big) {
+    const recentlyOpenedManually = Date.now() - (G.mapManualOpenAt || 0) < 420;
+    if (!recentlyOpenedManually) {
+      S.mapCollapsed = true;
+      G.mapOpenScrollTop = null;
+      applyShell();
+    }
+  }
+}, { passive: true });
 const storyEl = $('story'); if (storyEl) storyEl.addEventListener('animationend', e => { if (e.animationName === 'stfill' && X.story) EXA.stnext(); }, true);
 if (window.DeviceOrientationEvent) window.addEventListener('deviceorientation', e => { if (e.gamma != null) phone.style.setProperty('--la', (140 + e.gamma * 1.6).toFixed(0) + 'deg'); });
 
