@@ -2760,7 +2760,7 @@ card = function () {
   return '<div class="card-scroll">' +
     '<div class="ig-header">' +
     '<div class="ig-left">' +
-      '<button class="ig-avi-wrap ' + (unseen() ? 'live' : '') + '" data-a="openClubDrawer" data-v="0:0" aria-label="Emblème et Sceau d\'empreinte du club @' + P.handle + '">' +
+      '<button class="ig-avi-wrap live" data-a="openClubDailyStory" data-v="daily" aria-label="Stories du jour du club @' + P.handle + '">' +
         '<span class="ig-avi-in">' + (me ? aviImg : cover(club?.id || 'cl', 62)) + '</span>' +
         '<span class="ig-seal-bdg" data-a="sealzoom" role="button" title="Agrandir le Sceau d\'empreinte du club">' + renderSeal(16, 0.85) + '</span>' +
       '</button>' +
@@ -2770,7 +2770,6 @@ card = function () {
     '</div>' +
   '</div>' +
   bioHtml +
-  '<div class="ig-hl-row" role="region" aria-label="Raccourcis et espaces du club">' + clubCircles.map(c => '<button class="ig-hl ' + c.cls + '" data-a="' + c.act + '" data-v="' + c.val + '" data-hl-id="' + c.id + '" aria-label="' + c.title + '"><span class="ig-hl-ring"><span class="ig-hl-in">' + c.svg + '</span></span><span>' + c.title + '</span></button>').join('') + '</div>' +
   '<div class="ig-swipe-view" data-tab="' + S.igTab + '">' + (S.igTab > 0 ? '<div class="ig-swipe-back" aria-hidden="true"></div>' : '') + renderIgTabContent(D) + '</div>' +
   '</div>' +
   '<div class="ig-tabs-float">' + igTabs + '</div>';
@@ -4162,7 +4161,23 @@ var EXA = {
   },
   editProfile: () => { openSheet('edit_profile_full', 0, 'large'); haptic(8); },
   openCreate: () => { openSheet('club_create', 0, 'card', { drawerTab: 0, drawerSubTab: 0 }); haptic(8); },
-  openClubCreate: () => { openSheet('club_create', 0, 'card', { drawerTab: 0, drawerSubTab: 0 }); haptic(8); },
+  openClubCreate: v => {
+    if (typeof window.__lkdvOpenCommunityCreate === 'function') {
+      window.__lkdvOpenCommunityCreate(typeof v === 'string' && v ? v : 'post');
+      haptic(8);
+      return;
+    }
+    openSheet('club_create', 0, 'card', { drawerTab: 0, drawerSubTab: 0 });
+    haptic(8);
+  },
+  openClubDailyStory: () => {
+    if (typeof window.__lkdvOpenClubStory === 'function') {
+      window.__lkdvOpenClubStory('daily');
+      haptic(8);
+      return;
+    }
+    openStory('hl1');
+  },
   openClubSearch: () => { openSheet('club_drawer', 0, 'card', { drawerTab: 0, drawerSubTab: 2 }); haptic(8); },
   openClubDrawer: v => {
     const parts = String(v || '0:0').split(':');

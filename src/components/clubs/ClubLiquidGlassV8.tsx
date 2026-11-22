@@ -14,13 +14,21 @@ import '../compte/compte-apple-hig.css';
 import '../compte/overlay/compte-drawers.css';
 import '@/features/posts/ui/post-system.css';
 import '@/styles/community-feed.css';
+import '@/styles/communaute-v2.css';
+import '@/styles/communaute-v2-shell.css';
 import './club-adaptation.css';
 import './drawer/club-drawers-v2.css';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
 import type { ClubChallengeSummary, ClubRole } from '@/features/clubs';
+import type { CreateKindV2 } from '@/features/community/v2/create/engine/createSchemasV2';
+import type { StoryUser } from '@/components/communaute/StoriesViewer';
 import { DRAWER_V2_CSS } from '../compte/drawer/SlotShell';
-import { ClubInlineFeed, type ClubFeedPostItem } from './feed/ClubInlineFeed';
+import {
+  ClubInlineFeed,
+  type ClubFeedPostItem,
+  type ClubStoryHighlight,
+} from './feed/ClubInlineFeed';
 import { METRIC_LABELS, METRIC_UNITS } from './g02/model';
 import type { ClubG02Section } from './g02/ClubG02Screen';
 import { ClubIsland, type ClubIslandToast } from './drawer/ClubIsland';
@@ -49,6 +57,11 @@ const isUuid = (val?: string | null): val is string => Boolean(val && UUID_RE.te
 // (et préchargé au repos une fois l'écran prêt).
 const loadClubDrawerHost = () => import('./drawer/ClubDrawerHost').then((m) => ({ default: m.ClubDrawerHost }));
 const ClubDrawerHost = dynamic(loadClubDrawerHost, { ssr: false });
+const CreateSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/CreateSheetV2').then((m) => ({ default: m.CreateSheetV2 })),
+  { ssr: false },
+);
+const StoriesViewer = dynamic(() => import('@/components/communaute/StoriesViewer'), { ssr: false });
 
 const COMPTE_V8_HTML = "<div class=\"stage\">\r\n<div class=\"pwrap\" id=\"pwrap\"><div class=\"phone\" id=\"phone\" aria-label=\"Maquette iPhone du profil LKDV  en Liquid Glass iOS 27\">\r\n  <div class=\"bg\" aria-hidden=\"true\" style=\"background-image:url(/assets/images/account-bg.webp)\"></div>\r\n  <div class=\"status\" aria-hidden=\"true\"><span>9:41</span><span class=\"r\">\r\n    <svg width=\"18\" height=\"12\" viewBox=\"0 0 18 12\"><rect x=\"0\" y=\"8\" width=\"3\" height=\"4\" rx=\"1\" fill=\"#fff\"/><rect x=\"5\" y=\"5.5\" width=\"3\" height=\"6.5\" rx=\"1\" fill=\"#fff\"/><rect x=\"10\" y=\"3\" width=\"3\" height=\"9\" rx=\"1\" fill=\"#fff\"/><rect x=\"15\" y=\"0\" width=\"3\" height=\"12\" rx=\"1\" fill=\"#fff\"/></svg>\r\n    <svg width=\"16\" height=\"12\" viewBox=\"0 0 16 12\"><path d=\"M8 11.2 5.6 8.8a3.4 3.4 0 0 1 4.8 0L8 11.2Z\" fill=\"#fff\"/><path d=\"M3.4 6.6a6.5 6.5 0 0 1 9.2 0\" stroke=\"#fff\" stroke-width=\"1.7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M1 4.2a9.9 9.9 0 0 1 14 0\" stroke=\"#fff\" stroke-width=\"1.7\" fill=\"none\" stroke-linecap=\"round\"/></svg>\r\n    <svg width=\"27\" height=\"13\" viewBox=\"0 0 27 13\"><rect x=\".5\" y=\".5\" width=\"23\" height=\"12\" rx=\"3.8\" stroke=\"rgba(255,255,255,.6)\" fill=\"none\"/><rect x=\"2.5\" y=\"2.5\" width=\"17\" height=\"8\" rx=\"2.2\" fill=\"#fff\"/><path d=\"M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z\" fill=\"rgba(255,255,255,.6)\"/></svg></span></div>\r\n  <div class=\"island\" id=\"island\" data-s=\"idle\" role=\"status\" aria-live=\"polite\"><div class=\"is live\" id=\"isl\"></div><div class=\"is note\" id=\"isn\"></div></div>\r\n\r\n  <section class=\"top\" id=\"top\"></section>\r\n\r\n  <section class=\"mapzone\" aria-label=\"Carte d'empreinte et d'aventures de \">\r\n    <div class=\"map\" id=\"map\"><div id=\"map-loading-bar\" class=\"map-loading-bar\"><div class=\"map-loading-pill\"><span class=\"map-loading-pulse\"></span><span>Initialisation du Relief 3D…</span></div><div class=\"map-loading-track\"><div id=\"map-loading-fill\" class=\"map-loading-fill\"></div></div></div><div id=\"maplibre-compte-canvas\" style=\"position:absolute;inset:0;width:100%;height:100%;z-index:1;\"></div><div class=\"map-scale-selector\" role=\"group\" aria-label=\"Échelle de la carte 3D\"><button id=\"btnCompteOrbite\" class=\"active\" data-a=\"mapscale\" data-v=\"ORBITE\" data-scale=\"ORBITE\" aria-label=\"Vue Globe Terrestre\" aria-pressed=\"true\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"2\" x2=\"22\" y1=\"12\" y2=\"12\"/><path d=\"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z\"/></svg></button><button id=\"btnCompteMassif\" data-a=\"mapscale\" data-v=\"MASSIF\" data-scale=\"MASSIF\" aria-label=\"Vue Massif Alpin\" aria-pressed=\"false\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m8 3 4 8 5-5 5 15H2L8 3z\"/></svg></button><button id=\"btnCompteSentier\" data-a=\"mapscale\" data-v=\"SENTIER\" data-scale=\"SENTIER\" aria-label=\"Vue Sentier 3D Immersion\" aria-pressed=\"false\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polygon points=\"16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76\"/></svg></button></div><div class=\"map-badge-3d\"><span>GLOBE 3D</span></div>\r\n      <svg class=\"tm\" id=\"tm\" viewBox=\"0 -24 370 368\" preserveAspectRatio=\"xMidYMid slice\" role=\"img\" aria-label=\"Carte générée de ton empreinte terrain\"></svg>\r\n      <button class=\"mgrab\" id=\"mgrab\" data-a=\"mapbig\" aria-label=\"Agrandir ou réduire la carte\"><span></span></button>\r\n      <div class=\"lg mctl\" id=\"mctl\" role=\"group\" aria-label=\"Contrôles de la carte\"></div>\r\n      <div class=\"lg callout\" id=\"callout\" hidden></div>\r\n    </div>\r\n  </section>\r\n\r\n  <nav class=\"tabbar\" id=\"tabbar\" aria-label=\"Navigation principale\">\r\n    \r\n    <div class=\"lg tb\" id=\"tb\"></div>\r\n  </nav>\r\n  <div class=\"home\"></div>\r\n\r\n  <div class=\"sw-wrap\" id=\"sw\" data-det=\"closed\"><div class=\"scrim\" data-a=\"close\"></div><section class=\"sheet\" id=\"sheet\" role=\"dialog\" aria-label=\"Détails du compte\"></section></div>\r\n  <div class=\"lg popv\" id=\"popv\" role=\"dialog\" aria-label=\"Affichage\"></div>\r\n  <div class=\"lg mopts\" id=\"mopts\" role=\"dialog\" aria-label=\"Personnaliser la carte\"></div>\r\n  <div class=\"lg rmenu\" id=\"rmenu\" role=\"menu\" aria-label=\"Choisir une option\"></div>\r\n  <div class=\"ctx\" id=\"ctx\" role=\"dialog\" aria-label=\"Aperçu\"></div>\r\n  <div class=\"story\" id=\"story\" role=\"dialog\" aria-label=\"Story plein écran\"></div>\r\n  <div class=\"post-modal-instagram\" id=\"post_modal_instagram\" role=\"dialog\" aria-label=\"Publication Instagram\"></div>\r\n</div></div>\r\n\r\n<aside class=\"notes\">\r\n  <span class=\"tag\">Maquette finale · Compte  · iOS 27 Liquid Glass</span>\r\n  <h1>L'anatomie Instagram de  fusionnée dans le verre iOS 27 LKDV.</h1>\r\n  <p>Toute l'ergonomie de ton profil Instagram (<code></code> · <b>Тоny</b> · <code>3 publications</code> · <code>1 080 followers</code> · <code>339 suivi(e)s</code> · bio <code>IT·FR</code> · stories À la une · grille photo 3 colonnes) habillée avec le Design System unique Liquid Glass v8 et ta carte d'empreinte vivante en bas.</p>\r\n  <ul>\r\n    <li><b>En-tête Instagram </b> : vrai avatar entouré de l'anneau Sceau d'empreinte (ADR-010), bulle de note en verre, compteurs interactifs et boutons <i>Modifier le profil</i> / <i>Partager le profil</i> en verre dépoli (<code>--pg</code> / <code>.soft</code>).</li>\r\n    <li><b>Stories À la une & Grille 3×3</b> : moments terrain (<i>IT·FR Alpes</i>, <i>⛺ Néouvielle</i>, <i>🦌 Vercors</i>, <i>🎒 Sac 4,8kg</i>) et grille carrée 3 colonnes synchronisée avec la carte d'empreinte en bas.</li>\r\n    <li><b>4 onglets profil</b> : <b>Grille</b> (publications & carnets), <b>Carte</b> (sorties GPS & massifs), <b>Lignées</b> (Propagation, Endurance 91 % & Part créateur 42,50 €), <b>Tribu</b> (sorties en équipage & matériel prêté).</li>\r\n    <li><b>Tests E2E Maestro MCP</b> : identifiants et libellés accessibles pour piloter et vérifier chaque flux via Maestro MCP (<code>maestro mcp</code>).</li>\r\n  </ul>\r\n\r\n  <h2 style=\"margin:22px 0 6px;font-size:15px\">50 améliorations intégrées</h2>\r\n  <ul>\r\n    <li><b>Identité</b> : anneau animé ou ciselé, note 24 h modifiable, vue visiteur, Sceau zoomable, bascule profil / clubs (appui long sur <code>tony_frc</code>).</li>\r\n    <li><b>Stories</b> : visionneuse plein écran, story Sac, couvertures topographiques, espèce épinglée, création depuis une sortie.</li>\r\n    <li><b>Grille</b> : épingles, Peek &amp; Pop (appui long), progression du brouillon, fil, filtres saison / massif.</li>\r\n    <li><b>Carte &amp; accessoire</b> : survol lié, clusters 2/3, relief ombré, mini-profil, comparateur, 3 modes, repères, scrubber filtrant, J-4.</li>\r\n    <li><b>Lignées &amp; sac</b> : filiation G1→G3, jauge 3/5, simulateur, journal 300 bps, vestiaire 3×2, usure, prêts, scan.</li>\r\n    <li><b>Profil voyageur, sécurité, RGPD</b> : impact Compas, double nationalité, flou 1 km, coffre Face ID, SMS SOS, stockage, matrice « qui voit quoi », exports.</li>\r\n    <li><b>Interactions</b> : voix composée, reflet pilotable, QR + NameDrop, plein soleil renforcé.</li>\r\n  </ul>\r\n</aside>\r\n</div>";
 
@@ -194,6 +207,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [runtimeOverlay, setRuntimeOverlay] = useState<ClubRuntimeOverlayState | null>(null);
   const [isOutdoor, setIsOutdoor] = useState(false);
 
+  // Community CreateSheetV2 state (identical to /communaute creation drawer)
+  const [communityCreateOpen, setCommunityCreateOpen] = useState(false);
+  const [communityCreateKind, setCommunityCreateKind] = useState<CreateKindV2>('post');
+  const [communityCreatePrefill, setCommunityCreatePrefill] = useState<Record<string, unknown> | null>(null);
+
+  // Club Stories (daily 24h story on club avatar + Stories à la une in club feed)
+  const [clubHighlights, setClubHighlights] = useState<ClubStoryHighlight[]>([]);
+  const [storyViewerState, setStoryViewerState] = useState<{
+    mode: 'daily' | 'highlights';
+    startIndex: number;
+  } | null>(null);
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
+  const [highlightTitleDraft, setHighlightTitleDraft] = useState('');
+  const [highlightCoverDraft, setHighlightCoverDraft] = useState('');
+  const [highlightCaptionDraft, setHighlightCaptionDraft] = useState('');
+
   // Club rich interactive state
   const [clubsDirectory, setClubsDirectory] = useState<ClubItemData[]>(INITIAL_CLUBS_DIRECTORY);
   const [activeClubId, setActiveClubId] = useState<string>(clubId || 'cl1');
@@ -328,6 +357,23 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
         (window as any).__lkdvUnmountDrawer = () => {
           setDrawerMount(null);
+        };
+
+        (window as any).__lkdvOpenCommunityCreate = (
+          kind: CreateKindV2 = 'post',
+          extraPrefill?: Record<string, unknown>,
+        ) => {
+          setCommunityCreateKind(kind);
+          setCommunityCreatePrefill(extraPrefill ?? null);
+          setCommunityCreateOpen(true);
+        };
+
+        (window as any).__lkdvOpenClubStory = (target: string) => {
+          if (target === 'daily') {
+            setStoryViewerState({ mode: 'daily', startIndex: 0 });
+          } else {
+            setStoryViewerState({ mode: 'highlights', startIndex: 0 });
+          }
         };
       }
 
@@ -1653,6 +1699,164 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     );
     showIslandToast('Pôles de spécialité activés ✓', `${recommended.length} pôles configurés pour ${activeClub.name}`);
   }, [activeClub.category, activeClub.id, activeClub.name, showIslandToast]);
+  const canManageClubStories =
+    activeClub.viewerRole === 'admin' ||
+    activeClub.viewerRole === 'moderator' ||
+    Boolean(user?.id && activeClub.createdBy && user.id === activeClub.createdBy) ||
+    /fondateur|admin|modérateur|encadrant|guide/i.test(activeClub.role || '') ||
+    clubMembers.some(
+      (m) =>
+        Boolean(user?.id && (m.userId === user.id || m.id === user.id)) &&
+        (m.rawRole === 'admin' ||
+          m.rawRole === 'moderator' ||
+          m.role === 'Fondateur' ||
+          m.role === 'Guide & Sécurité' ||
+          m.role === 'Encadrant'),
+    );
+
+  // Hydrate or derive Stories à la une for the active club
+  useEffect(() => {
+    if (!activeClub.id) return;
+    const storageKey = `lkdv.clubHighlights.v1.${activeClub.id}`;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = window.localStorage.getItem(storageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setClubHighlights(parsed);
+            return;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const sampleViewers = clubMembers.slice(0, 5).map((m, idx) => ({
+      id: m.id || m.handle,
+      name: m.name,
+      handle: m.handle,
+      role: m.role,
+      avatarUrl: m.avatarUrl,
+      viewedAt: idx === 0 ? 'il y a 14 min' : idx === 1 ? 'il y a 1 h' : `il y a ${idx + 1} h`,
+    }));
+
+    const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const defaultHighlights: ClubStoryHighlight[] = [
+      {
+        id: 'hl-sorties',
+        title: 'Sorties',
+        coverUrl: clubOutings[0]?.coverUrl || coverBase,
+        subtitle: activeClub.nextOutingTitle || 'Reconnaissances & départs du club',
+        createdAtLabel: 'À la une',
+        slides: [
+          {
+            id: 'hl-sorties-s1',
+            image: clubOutings[0]?.coverUrl || coverBase,
+            caption: `${activeClub.name} · ${activeClub.nextOutingTitle || 'Sorties & traces vérifiées'}`,
+          },
+        ],
+        viewsCount: Math.max(sampleViewers.length, activeClub.membersCount || 7),
+        viewers: sampleViewers,
+      },
+      {
+        id: 'hl-terrain',
+        title: activeClub.massif || 'Terrain',
+        coverUrl: coverBase,
+        subtitle: `Reconnaissances ${activeClub.massif}`,
+        createdAtLabel: 'À la une',
+        slides: [
+          {
+            id: 'hl-terrain-s1',
+            image: coverBase,
+            caption: `${activeClub.massif} · Conditions & traces du club`,
+          },
+        ],
+        viewsCount: Math.max(sampleViewers.length, Math.round((activeClub.membersCount || 6) * 0.85)),
+        viewers: sampleViewers.slice(0, 4),
+      },
+      {
+        id: 'hl-charte',
+        title: 'Esprit Club',
+        coverUrl: coverBase,
+        subtitle: activeClub.charter,
+        createdAtLabel: 'À la une',
+        slides: [
+          {
+            id: 'hl-charte-s1',
+            image: coverBase,
+            caption: activeClub.charter || `Bienvenue dans ${activeClub.name}`,
+          },
+        ],
+        viewsCount: Math.max(sampleViewers.length, activeClub.membersCount || 5),
+        viewers: sampleViewers.slice(0, 3),
+      },
+    ];
+    setClubHighlights(defaultHighlights);
+  }, [activeClub.charter, activeClub.coverUrl, activeClub.id, activeClub.massif, activeClub.membersCount, activeClub.name, activeClub.nextOutingTitle, clubMembers, clubOutings]);
+
+  const persistHighlights = useCallback(
+    (next: ClubStoryHighlight[]) => {
+      setClubHighlights(next);
+      if (typeof window !== 'undefined' && activeClub.id) {
+        try {
+          window.localStorage.setItem(`lkdv.clubHighlights.v1.${activeClub.id}`, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+      }
+    },
+    [activeClub.id],
+  );
+
+  const openHighlightEditor = useCallback(
+    (highlightId: string) => {
+      if (!canManageClubStories) return;
+      const found = clubHighlights.find((h) => h.id === highlightId);
+      if (!found) return;
+      setEditingHighlightId(found.id);
+      setHighlightTitleDraft(found.title);
+      setHighlightCoverDraft(found.coverUrl);
+      setHighlightCaptionDraft(found.slides[0]?.caption || '');
+    },
+    [canManageClubStories, clubHighlights],
+  );
+
+  const handleAddHighlight = useCallback(() => {
+    if (!canManageClubStories) return;
+    const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const newHl: ClubStoryHighlight = {
+      id: `hl-${Date.now()}`,
+      title: 'Nouvelle',
+      coverUrl: coverBase,
+      subtitle: activeClub.name,
+      createdAtLabel: 'À l’instant',
+      slides: [
+        {
+          id: `hl-slide-${Date.now()}`,
+          image: coverBase,
+          caption: `${activeClub.name} · Moment fort du club`,
+        },
+      ],
+      viewsCount: 1,
+      viewers: clubMembers.slice(0, 1).map((m) => ({
+        id: m.id || m.handle,
+        name: m.name,
+        handle: m.handle,
+        role: m.role,
+        avatarUrl: m.avatarUrl,
+        viewedAt: 'À l’instant',
+      })),
+    };
+    const next = [...clubHighlights, newHl];
+    persistHighlights(next);
+    setEditingHighlightId(newHl.id);
+    setHighlightTitleDraft(newHl.title);
+    setHighlightCoverDraft(newHl.coverUrl);
+    setHighlightCaptionDraft(newHl.slides[0]?.caption || '');
+  }, [activeClub.coverUrl, activeClub.name, canManageClubStories, clubHighlights, clubMembers, persistHighlights]);
+
   const handleToggleClubVisibility = useCallback(() => {
     setClubsDirectory((prev) =>
       prev.map((c) =>
@@ -1702,6 +1906,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             clubName={activeClub.name}
             posts={clubPosts}
             poles={activeClub.poles}
+            highlights={clubHighlights}
+            canManageStories={canManageClubStories}
+            onOpenHighlight={(hlId) => {
+              const idx = clubHighlights.findIndex((h) => h.id === hlId);
+              setStoryViewerState({ mode: 'highlights', startIndex: Math.max(0, idx) });
+            }}
+            onEditHighlight={openHighlightEditor}
+            onAddHighlight={handleAddHighlight}
             membersCount={activeClub.membersCount}
             onAddPole={handleAddPoleToActiveClub}
             onEnableRecommendedPoles={handleEnableRecommendedPoles}
@@ -1720,7 +1932,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               pendingDrawerIntentRef.current = { tab: 2, subTab: 0, outingId };
               triggerAct('openClubDrawer', '2:0');
             }}
-            onOpenCreatePost={() => triggerAct('openClubCreate')}
+            onOpenCreatePost={(poleId) => {
+              setCommunityCreateKind('post');
+              setCommunityCreatePrefill({
+                clubId: activeClub.id,
+                clubName: activeClub.name,
+                ...(poleId ? { poleId } : {}),
+              });
+              setCommunityCreateOpen(true);
+            }}
           />,
           feedRoot,
         )}
@@ -1778,6 +1998,325 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           />,
           drawerMount.root,
         )}
+      {communityCreateOpen ? (
+        <CreateSheetV2
+          open={communityCreateOpen}
+          initialKind={communityCreateKind}
+          onClose={() => setCommunityCreateOpen(false)}
+          user={user ?? null}
+          onCreated={() => {
+            setCommunityCreateOpen(false);
+            void syncClubProfile();
+          }}
+          onRequireAuth={() => router.push('/connexion')}
+          initialPrefill={{
+            clubId: activeClub.id,
+            clubName: activeClub.name,
+            ...(communityCreatePrefill ?? {}),
+          }}
+          onCreateRequested={(nextKind, prefill) => {
+            setCommunityCreateKind(nextKind);
+            setCommunityCreatePrefill(prefill ?? null);
+            setCommunityCreateOpen(true);
+          }}
+        />
+      ) : null}
+
+      {storyViewerState ? (
+        <StoriesViewer
+          users={
+            storyViewerState.mode === 'daily'
+              ? [
+                  {
+                    id: activeClub.id || 'club-daily',
+                    name: `${activeClub.name} · Story du jour`,
+                    avatarUrl: activeClub.coverUrl || '/assets/images/account-bg.webp',
+                    time: 'Aujourd’hui · 24h',
+                    slides:
+                      clubPosts.filter((p) => Boolean(p.mediaUrl)).length > 0
+                        ? clubPosts
+                            .filter((p) => Boolean(p.mediaUrl))
+                            .slice(0, 5)
+                            .map((p) => ({
+                              storyId: p.id,
+                              image: p.mediaUrl!,
+                              caption: `${p.spot} — ${p.caption}`,
+                            }))
+                        : [
+                            {
+                              storyId: `daily-${activeClub.id || 'club'}`,
+                              image: activeClub.coverUrl || '/assets/images/account-bg.webp',
+                              caption: `${activeClub.name} · ${activeClub.nextOutingTitle || activeClub.bio}`,
+                            },
+                          ],
+                  } satisfies StoryUser,
+                ]
+              : clubHighlights.map(
+                  (hl): StoryUser => ({
+                    id: hl.id,
+                    name: `${activeClub.name} · ${hl.title}`,
+                    avatarUrl: hl.coverUrl || activeClub.coverUrl,
+                    time: hl.createdAtLabel || 'À la une',
+                    slides: hl.slides.map((s) => ({
+                      storyId: hl.id,
+                      image: s.image || hl.coverUrl,
+                      caption: s.caption,
+                    })),
+                  }),
+                )
+          }
+          startUser={storyViewerState.startIndex}
+          onClose={() => setStoryViewerState(null)}
+          myUserId={
+            canManageClubStories
+              ? storyViewerState.mode === 'daily'
+                ? activeClub.id || 'club-daily'
+                : clubHighlights[storyViewerState.startIndex]?.id
+              : undefined
+          }
+          onShowViews={
+            canManageClubStories
+              ? (slide) => {
+                  const targetId =
+                    slide.storyId && clubHighlights.some((h) => h.id === slide.storyId)
+                      ? slide.storyId
+                      : clubHighlights[0]?.id;
+                  setStoryViewerState(null);
+                  if (targetId) openHighlightEditor(targetId);
+                }
+              : undefined
+          }
+          onDelete={
+            canManageClubStories
+              ? (slide) => {
+                  if (slide.storyId && clubHighlights.some((h) => h.id === slide.storyId)) {
+                    persistHighlights(clubHighlights.filter((h) => h.id !== slide.storyId));
+                    setStoryViewerState(null);
+                    showIslandToast('Story à la une retirée ✓');
+                  }
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
+      {canManageClubStories && editingHighlightId
+        ? (() => {
+            const hl = clubHighlights.find((h) => h.id === editingHighlightId);
+            if (!hl) return null;
+            return (
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={`Gestion et vues de la story à la une ${hl.title}`}
+                onClick={() => setEditingHighlightId(null)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 3200,
+                  background: 'rgba(12, 22, 18, 0.56)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 16,
+                }}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: '100%',
+                    maxWidth: 380,
+                    maxHeight: '82vh',
+                    overflowY: 'auto',
+                    borderRadius: 24,
+                    padding: 16,
+                    background: 'rgba(247, 249, 246, 0.96)',
+                    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    color: '#172b24',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <b style={{ fontSize: 15, display: 'block' }}>Story à la une · {hl.title}</b>
+                      <small style={{ fontSize: 11.5, color: '#56665d' }}>
+                        Accès réservé aux membres habilités du club
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+                      onClick={() => setEditingHighlightId(null)}
+                    >
+                      Fermer
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      padding: 12,
+                      borderRadius: 16,
+                      background: 'rgba(255, 255, 255, 0.82)',
+                    }}
+                  >
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                      <span>Titre de la story à la une</span>
+                      <input
+                        type="text"
+                        className="club-glass-input"
+                        value={highlightTitleDraft}
+                        maxLength={24}
+                        onChange={(e) => setHighlightTitleDraft(e.target.value)}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                      <span>Image de couverture (URL)</span>
+                      <input
+                        type="text"
+                        className="club-glass-input"
+                        value={highlightCoverDraft}
+                        onChange={(e) => setHighlightCoverDraft(e.target.value)}
+                      />
+                    </label>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
+                      <span>Légende de la story</span>
+                      <input
+                        type="text"
+                        className="club-glass-input"
+                        value={highlightCaptionDraft}
+                        onChange={(e) => setHighlightCaptionDraft(e.target.value)}
+                      />
+                    </label>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <button
+                        type="button"
+                        className="lkdv-carnet-btn-primary"
+                        style={{ flex: 1, justifyContent: 'center' }}
+                        onClick={() => {
+                          const cleanTitle = highlightTitleDraft.trim() || hl.title;
+                          const cleanCover = highlightCoverDraft.trim() || hl.coverUrl;
+                          const next = clubHighlights.map((item) =>
+                            item.id === hl.id
+                              ? {
+                                  ...item,
+                                  title: cleanTitle,
+                                  coverUrl: cleanCover,
+                                  slides: [
+                                    {
+                                      id: item.slides[0]?.id || `s-${Date.now()}`,
+                                      image: cleanCover,
+                                      caption: highlightCaptionDraft.trim() || item.slides[0]?.caption,
+                                    },
+                                    ...item.slides.slice(1),
+                                  ],
+                                }
+                              : item,
+                          );
+                          persistHighlights(next);
+                          setEditingHighlightId(null);
+                          showIslandToast(`Story « ${cleanTitle} » mise à jour ✓`);
+                        }}
+                      >
+                        Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        className="lkdv-carnet-btn-soft"
+                        style={{ color: '#a8443a' }}
+                        onClick={() => {
+                          persistHighlights(clubHighlights.filter((item) => item.id !== hl.id));
+                          setEditingHighlightId(null);
+                          showIslandToast('Story à la une supprimée');
+                        }}
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      padding: 12,
+                      borderRadius: 16,
+                      background: 'rgba(255, 255, 255, 0.82)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <b style={{ fontSize: 13 }}>Vues de la story ({hl.viewsCount})</b>
+                      <span className="lkdv-carnet-chip-soft">{hl.viewers.length} membres</span>
+                    </div>
+                    {hl.viewers.length === 0 ? (
+                      <small style={{ color: '#56665d' }}>Aucune vue enregistrée pour le moment.</small>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {hl.viewers.map((v) => (
+                          <div
+                            key={v.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 8,
+                              padding: '6px 8px',
+                              borderRadius: 12,
+                              background: 'rgba(23, 64, 44, 0.04)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                              {v.avatarUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={v.avatarUrl}
+                                  alt=""
+                                  style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <span
+                                  style={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: '50%',
+                                    background: '#17402c',
+                                    color: '#fff',
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    display: 'grid',
+                                    placeItems: 'center',
+                                  }}
+                                >
+                                  {v.name.slice(0, 1).toUpperCase()}
+                                </span>
+                              )}
+                              <div style={{ minWidth: 0 }}>
+                                <b style={{ fontSize: 12.5, display: 'block' }}>{v.name}</b>
+                                <small style={{ fontSize: 10.5, color: '#56665d' }}>
+                                  @{v.handle}{v.role ? ` · ${v.role}` : ''}
+                                </small>
+                              </div>
+                            </div>
+                            <small style={{ fontSize: 10.5, color: '#56665d', flexShrink: 0 }}>{v.viewedAt}</small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        : null}
+
       <ClubRuntimeOverlays
         overlay={runtimeOverlay}
         onClose={() => setRuntimeOverlay(null)}

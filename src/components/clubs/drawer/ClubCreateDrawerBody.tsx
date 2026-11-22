@@ -98,14 +98,6 @@ export function ClubCreateDrawerBody({
           setOutingTitle('');
         }}
       >
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Nouvelle sortie · {activeClub.name}</span>
-            <b className="club-sec-title">Proposer une sortie de cordée</b>
-          </div>
-          <span className="club-badge-sage">~{estHours} h estimées</span>
-        </div>
-
         {/* Carnet V2 Live Single-Pane Preview Card */}
         <div
           className="li nt club-glass-card"
@@ -210,14 +202,6 @@ export function ClubCreateDrawerBody({
           setGearName('');
         }}
       >
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Coffre d’entraide · {activeClub.name}</span>
-            <b className="club-sec-title">Mutualiser un équipement dans le coffre</b>
-          </div>
-          <span className="club-badge-sage">{weightClass}</span>
-        </div>
-
         {/* Live Gear Preview Card */}
         <div
           className="li nt club-glass-card"
@@ -315,14 +299,6 @@ export function ClubCreateDrawerBody({
           setNewClubName('');
         }}
       >
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Fondation · /clubs/{slugPreview}</span>
-            <b className="club-sec-title">Fonder un nouveau club LKDV</b>
-          </div>
-          <span className="club-badge-sage">{newClubVis === 'public' ? 'Ouvert' : 'Cooptation'}</span>
-        </div>
-
         <label className="club-field-label">
           <span>Nom du club</span>
           <input
@@ -449,14 +425,6 @@ export function ClubCreateDrawerBody({
         setPostCaption('');
       }}
     >
-      <div className="club-sec-head">
-        <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Publication · {activeClub.massif}</span>
-          <b className="club-sec-title">Publier dans {activeClub.name}</b>
-        </div>
-        <span className="club-badge-sage">{postKind === 'media' ? 'Photo 1:1' : 'Billet'}</span>
-      </div>
-
       {/* Carnet Post-style Live Preview Card */}
       <div
         className="li nt club-glass-card"

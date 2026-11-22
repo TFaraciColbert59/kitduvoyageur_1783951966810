@@ -171,7 +171,7 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
       />,
     );
 
-    expect(screen.getByText('Prochains Départs & Covoiturage')).toBeTruthy();
+    expect(screen.getByTestId('club-outings-upcoming-pane')).toBeTruthy();
     expect(screen.getByText('Sortie en joëlette — Calanques')).toBeTruthy();
 
     // Weather subTab (D10)

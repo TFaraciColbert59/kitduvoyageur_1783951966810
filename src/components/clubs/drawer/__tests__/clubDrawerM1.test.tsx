@@ -248,8 +248,8 @@ function renderHost(overrides: Partial<React.ComponentProps<typeof ClubDrawerHos
 describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05–D08)', () => {
   it('D01: renders each SlotShell lens uniquely (FN-19 fix) and shows skeleton/error states', () => {
     const { unmount } = renderHost();
-    // "Mes clubs rejoints" is rendered strictly ONCE (pane 0), not duplicated across panes 1 & 2
-    expect(screen.getAllByText('Mes clubs rejoints')).toHaveLength(1);
+    // "Club actif" is rendered strictly ONCE (pane 0), not duplicated across panes 1 & 2
+    expect(screen.getAllByText('Club actif')).toHaveLength(1);
     unmount();
 
     const onRetry = vi.fn();
@@ -356,9 +356,9 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     const claraBtn = paneAll.getByText('Clara Bivouac').closest('button')!;
     fireEvent.click(claraBtn);
 
-    const activeDetailPane = within(screen.getByTestId('slot-content'));
-    expect(activeDetailPane.getByText('Clara Bivouac')).toBeTruthy();
-    expect(activeDetailPane.getByRole('button', { name: 'Cordée' })).toBeTruthy();
+    // Header stays stationary in topnav outside sliding slot-content pane
+    expect(screen.getByText('Clara Bivouac')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Cordée' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Perf & Stats' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Sorties' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Sac' })).toBeTruthy();
@@ -367,7 +367,7 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     // Pressing Escape must pop the inspected member stack BEFORE calling onClose
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).not.toHaveBeenCalled();
-    expect(within(screen.getByTestId('slot-content')).queryByRole('button', { name: 'Cordée' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cordée' })).toBeNull();
     delete (window as unknown as { __lkdvNavigateProfile?: (h: string) => void }).__lkdvNavigateProfile;
   });
 });

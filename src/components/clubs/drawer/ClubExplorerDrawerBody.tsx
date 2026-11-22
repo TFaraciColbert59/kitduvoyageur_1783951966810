@@ -501,16 +501,6 @@ function MyClubsPane({
 
   return (
     <div className="club-drawer-pane-content">
-      <div className="club-sec-head">
-        <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Explorer · Mes Clubs</span>
-          <b className="club-sec-title">Mes clubs rejoints</b>
-        </div>
-        <span className="lkdv-carnet-chip-soft" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          <AnimatedNumber value={myClubs.length} />
-        </span>
-      </div>
-
       {myClubs.length === 0 ? (
         <ClubEmptyCard
           icon={<Compass size={22} />}
@@ -1012,7 +1002,8 @@ function DiscoverClubsPane({
               <button
                 type="button"
                 className={`reseau-btn ${c.joined ? 'active' : 'primary'} club-icon-pill`}
-                style={{ padding: '0 10px', width: 'auto', fontSize: 11.5, fontWeight: 700 }}
+                aria-label={c.joined ? 'Membre' : isPrivate ? 'Candidater' : 'Rejoindre'}
+                title={c.joined ? 'Membre' : isPrivate ? 'Candidater' : 'Rejoindre'}
                 onClick={() => {
                   if (needsPrompt) {
                     setJoinPromptClubId((prev) => (prev === c.id ? null : c.id));
@@ -1021,7 +1012,7 @@ function DiscoverClubsPane({
                   }
                 }}
               >
-                {c.joined ? 'Membre ✓' : isPrivate ? 'Candidater' : 'Rejoindre'}
+                {c.joined ? <UserCheck size={15} aria-hidden="true" /> : <UserPlus size={15} aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -1081,16 +1072,6 @@ function DiscoverClubsPane({
 
   return (
     <div className="club-drawer-pane-content">
-      <div className="club-sec-head">
-        <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Explorer · Découverte</span>
-          <b className="club-sec-title">Découvrir tous les clubs</b>
-        </div>
-        <span className="lkdv-carnet-chip-soft" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          <AnimatedNumber value={filteredList.length} />
-        </span>
-      </div>
-
       <div className="club-search-box-v2 is-compact">
         <Search size={14} color="#56665d" aria-hidden="true" />
         <input

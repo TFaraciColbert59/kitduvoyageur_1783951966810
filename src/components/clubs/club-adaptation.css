@@ -870,24 +870,27 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Highlight circles (.ig-hl-row): exact Carnet page (.lkdv-ig-hl-*) style parity */
-.lkdv-clubs-v8 #card .ig-hl-row {
+/* Highlight circles (.ig-hl-row / .lkdv-ig-hl-row): exact Carnet page (.lkdv-ig-hl-*) style parity */
+.lkdv-clubs-v8 #card .ig-hl-row,
+.lkdv-clubs-v8 #card .lkdv-ig-hl-row {
   display: flex !important;
   align-items: flex-start !important;
-  justify-content: space-between !important;
-  gap: 6px !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
   padding: 6px 4px 10px !important;
   margin-top: 2px !important;
   overflow-x: auto !important;
   scrollbar-width: none !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl-row::-webkit-scrollbar {
+.lkdv-clubs-v8 #card .ig-hl-row::-webkit-scrollbar,
+.lkdv-clubs-v8 #card .lkdv-ig-hl-row::-webkit-scrollbar {
   display: none !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl {
-  flex: 1 1 0 !important;
+.lkdv-clubs-v8 #card .ig-hl,
+.lkdv-clubs-v8 #card .lkdv-ig-hl {
+  flex: 0 0 auto !important;
   min-width: 0 !important;
   width: 54px !important;
   display: flex !important;
@@ -902,15 +905,18 @@
   transition: transform 0.28s var(--ease-spring) !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl:hover {
+.lkdv-clubs-v8 #card .ig-hl:hover,
+.lkdv-clubs-v8 #card .lkdv-ig-hl:hover {
   transform: translateY(-2px) !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl:active {
+.lkdv-clubs-v8 #card .ig-hl:active,
+.lkdv-clubs-v8 #card .lkdv-ig-hl:active {
   transform: scale(0.92) !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl-ring {
+.lkdv-clubs-v8 #card .ig-hl-ring,
+.lkdv-clubs-v8 #card .lkdv-ig-hl-ring {
   width: 44px !important;
   height: 44px !important;
   border-radius: 50% !important;
@@ -931,7 +937,8 @@
   position: relative !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl-in {
+.lkdv-clubs-v8 #card .ig-hl-in,
+.lkdv-clubs-v8 #card .lkdv-ig-hl-thumb {
   width: 100% !important;
   height: 100% !important;
   border-radius: 50% !important;
@@ -945,6 +952,13 @@
   color: #17402c !important;
 }
 
+.lkdv-clubs-v8 #card .lkdv-ig-hl-thumb img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
 .lkdv-clubs-v8 #card .ig-hl-in svg {
   width: 18px !important;
   height: 18px !important;
@@ -955,7 +969,8 @@
   stroke-linejoin: round !important;
 }
 
-.lkdv-clubs-v8 #card .ig-hl > span:last-child {
+.lkdv-clubs-v8 #card .ig-hl > span:last-child,
+.lkdv-clubs-v8 #card .lkdv-ig-hl-label {
   font: 500 9.8px/1.1 var(--sf) !important;
   color: #172b24 !important;
   letter-spacing: -0.01em !important;

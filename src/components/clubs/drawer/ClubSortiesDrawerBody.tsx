@@ -763,14 +763,6 @@ export function ClubSortiesDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-weather-pane">
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Conditions · {activeClub.massif}</span>
-            <b className="club-sec-title">Bulletin Massif · {activeClub.massif}</b>
-          </div>
-          <span className="club-badge-sage">{currentW.riskLabel}</span>
-        </div>
-
         {/* Altitude Thermal Etagement Card */}
         <div
           className="li nt club-glass-card"
@@ -933,13 +925,6 @@ export function ClubSortiesDrawerBody({
   if (activeSubTab === 3) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-outings-g02-bridge">
-        <div className="club-sec-head" style={{ marginBottom: 6 }}>
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Espace Sorties & Groupes · {activeClub.name}</span>
-            <b className="club-sec-title">Planification, Groupes d’allure & Émargement</b>
-          </div>
-          <span className="club-badge-sage">{outings.length} sorties</span>
-        </div>
         {active ? <ClubG02Workspace clubId={activeClub.id} initialSection={initialSection} /> : null}
       </div>
     );
@@ -951,14 +936,6 @@ export function ClubSortiesDrawerBody({
   if (activeSubTab === 2) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-outings-gpx-pane">
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Archives · {activeClub.massif}</span>
-            <b className="club-sec-title">Archives & Traces GPX ({filteredArchives.length})</b>
-          </div>
-          <span className="club-badge-sage">Traces Vérifiées</span>
-        </div>
-
         {/* Search strip */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -1074,16 +1051,6 @@ export function ClubSortiesDrawerBody({
   // ============================================================================
   return (
     <div className="club-drawer-pane-content" data-testid="club-outings-upcoming-pane">
-      <div className="club-sec-head">
-        <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Sorties · {activeClub.massif}</span>
-          <b className="club-sec-title">Prochains Départs & Covoiturage</b>
-        </div>
-        <span className="club-badge-sage">
-          <AnimatedNumber value={upcomingKpis.count} /> départs · <AnimatedNumber value={upcomingKpis.totalSeats} /> pl. covoit
-        </span>
-      </div>
-
       {/* Filter & Quick Search Ribbon */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

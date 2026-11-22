@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Layers, Plus, Sparkles, X } from 'lucide-react';
+import { Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { useAuth } from '@/contexts/AuthContext';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
@@ -9,6 +9,30 @@ import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import type { PostSource } from '@/features/community/feed/postSource';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
 import type { ClubPoleItem } from '../drawer/ClubDrawerTypes';
+
+export interface ClubStoryViewerEntry {
+  id: string;
+  name: string;
+  handle: string;
+  role?: string;
+  avatarUrl?: string;
+  viewedAt: string;
+}
+
+export interface ClubStoryHighlight {
+  id: string;
+  title: string;
+  coverUrl: string;
+  subtitle?: string;
+  createdAtLabel?: string;
+  slides: Array<{
+    id: string;
+    image: string;
+    caption?: string;
+  }>;
+  viewsCount: number;
+  viewers: ClubStoryViewerEntry[];
+}
 
 export interface ClubFeedComment {
   id: string;
@@ -54,6 +78,11 @@ export interface ClubInlineFeedProps {
   clubName: string;
   posts: ClubFeedPostItem[];
   poles?: ClubPoleItem[];
+  highlights?: ClubStoryHighlight[];
+  canManageStories?: boolean;
+  onOpenHighlight?: (highlightId: string) => void;
+  onEditHighlight?: (highlightId: string) => void;
+  onAddHighlight?: () => void;
   membersCount?: number;
   activePoleId?: string;
   onActivePoleChange?: (poleId: string) => void;
@@ -363,6 +392,11 @@ export function ClubInlineFeed({
   clubName,
   posts,
   poles = [],
+  highlights = [],
+  canManageStories = false,
+  onOpenHighlight,
+  onEditHighlight,
+  onAddHighlight,
   membersCount = 0,
   activePoleId,
   onActivePoleChange,
@@ -401,6 +435,103 @@ export function ClubInlineFeed({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Stories à la une du club (dans le fil d'actu, style identique à Carnet) */}
+      {highlights.length > 0 || canManageStories ? (
+        <div
+          className="lkdv-ig-hl-row"
+          role="group"
+          aria-label="Stories à la une du club"
+          style={{ padding: '4px 4px 6px', justifyContent: 'flex-start', gap: 10 }}
+        >
+          {highlights.map((hl) => (
+            <div
+              key={hl.id}
+              style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}
+            >
+              <button
+                type="button"
+                className="lkdv-ig-hl"
+                onClick={() => onOpenHighlight?.(hl.id)}
+                onContextMenu={(e) => {
+                  if (!canManageStories) return;
+                  e.preventDefault();
+                  onEditHighlight?.(hl.id);
+                }}
+                aria-label={`Story à la une ${hl.title}`}
+                style={{ flex: '0 0 auto' }}
+              >
+                <div className="lkdv-ig-hl-ring">
+                  <div className="lkdv-ig-hl-thumb">
+                    {hl.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={hl.coverUrl} alt="" loading="lazy" decoding="async" />
+                    ) : null}
+                  </div>
+                </div>
+                <span className="lkdv-ig-hl-label">{hl.title}</span>
+              </button>
+              {canManageStories && onEditHighlight ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditHighlight(hl.id);
+                  }}
+                  aria-label={`Modifier et voir les vues de ${hl.title}`}
+                  title={`Gérer « ${hl.title} » · ${hl.viewsCount} vues`}
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: 2,
+                    height: 18,
+                    padding: '0 5px',
+                    borderRadius: 999,
+                    border: '1.5px solid #ffffff',
+                    background: '#17402c',
+                    color: '#ffffff',
+                    fontSize: 9.5,
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(16, 32, 25, 0.25)',
+                  }}
+                >
+                  <Eye size={9} aria-hidden="true" />
+                  <span>{hl.viewsCount}</span>
+                </button>
+              ) : null}
+            </div>
+          ))}
+
+          {canManageStories && onAddHighlight ? (
+            <button
+              type="button"
+              className="lkdv-ig-hl"
+              onClick={onAddHighlight}
+              aria-label="Ajouter une story à la une"
+              style={{ flex: '0 0 auto' }}
+            >
+              <div className="lkdv-ig-hl-ring">
+                <div
+                  className="lkdv-ig-hl-thumb"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#17402c',
+                  }}
+                >
+                  <Plus size={18} aria-hidden="true" />
+                </div>
+              </div>
+              <span className="lkdv-ig-hl-label">+ À la une</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Barre de Pôles de spécialité du club (optionnelle, recommandée pour les gros clubs) */}
       {poles.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '2px 4px 0' }}>

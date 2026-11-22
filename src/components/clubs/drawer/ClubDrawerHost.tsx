@@ -6,15 +6,19 @@ import {
   ArrowUp,
   Award,
   Backpack,
+  BarChart2,
+  Bookmark,
   Calendar,
   CalendarCheck,
   CalendarPlus,
+  ChevronLeft,
   CloudSun,
   Compass,
   Globe,
   Handshake,
   Layers,
   MessageCircle,
+  MessageSquare,
   MessageSquarePlus,
   Mountain,
   Package,
@@ -23,7 +27,9 @@ import {
   Scale,
   Search,
   Shield,
+  ShieldCheck,
   Sliders,
+  Tent,
   TrendingUp,
   Trophy,
   UserCheck,
@@ -381,32 +387,32 @@ export function ClubDrawerHost({
   const secondaryByTab: Record<number, DrawerSecondaryItem[]> = useMemo(
     () => ({
       0: [
-        { id: 'my-clubs', label: 'Mes clubs rejoints', icon: <Users size={14} aria-hidden="true" /> },
-        { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Globe size={14} aria-hidden="true" /> },
-        { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={14} aria-hidden="true" /> },
+        { id: 'my-clubs', label: 'Mes clubs rejoints', icon: <Bookmark size={15} aria-hidden="true" /> },
+        { id: 'discover-clubs', label: 'Découvrir tous les clubs', icon: <Compass size={15} aria-hidden="true" /> },
+        { id: 'search-all', label: 'Recherche unifiée', icon: <Search size={15} aria-hidden="true" /> },
       ],
       1: inspectedMember
         ? [
-            { id: 'm-stats', label: 'Perf & Stats', icon: <TrendingUp size={15} aria-hidden="true" /> },
-            { id: 'm-outings', label: 'Sorties', icon: <Mountain size={15} aria-hidden="true" /> },
-            { id: 'm-gear', label: 'Sac', icon: <Package size={15} aria-hidden="true" /> },
-            { id: 'm-media', label: 'Contributions', icon: <Layers size={15} aria-hidden="true" /> },
+            { id: 'm-stats', label: 'Perf & Stats', icon: <BarChart2 size={15} aria-hidden="true" /> },
+            { id: 'm-outings', label: 'Sorties', icon: <Calendar size={15} aria-hidden="true" /> },
+            { id: 'm-gear', label: 'Sac', icon: <Backpack size={15} aria-hidden="true" /> },
+            { id: 'm-media', label: 'Contributions', icon: <MessageSquare size={15} aria-hidden="true" /> },
           ]
         : [
             { id: 'members-all', label: 'Tous les membres', icon: <Users size={15} aria-hidden="true" /> },
-            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <Shield size={15} aria-hidden="true" /> },
-            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <UserCheck size={15} aria-hidden="true" /> },
+            { id: 'members-guides', label: 'Encadrants et référents sécurité', icon: <ShieldCheck size={15} aria-hidden="true" /> },
+            { id: 'members-binomes', label: 'Binômes disponibles ce week-end', icon: <Handshake size={15} aria-hidden="true" /> },
           ],
       2: [
-        { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={14} aria-hidden="true" /> },
-        { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={14} aria-hidden="true" /> },
-        { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={14} aria-hidden="true" /> },
-        { id: 'outings-g02', label: 'Sorties club, courses et groupes', icon: <CalendarCheck size={14} aria-hidden="true" /> },
+        { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={15} aria-hidden="true" /> },
+        { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={15} aria-hidden="true" /> },
+        { id: 'outings-gpx', label: 'Archives et traces GPX', icon: <Route size={15} aria-hidden="true" /> },
+        { id: 'outings-g02', label: 'Salons, courses et groupes', icon: <MessageCircle size={15} aria-hidden="true" /> },
       ],
       3: [
-        { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={14} aria-hidden="true" /> },
-        { id: 'vault-kits', label: 'Kits types du club', icon: <Layers size={14} aria-hidden="true" /> },
-        { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={14} aria-hidden="true" /> },
+        { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={15} aria-hidden="true" /> },
+        { id: 'vault-kits', label: 'Kits types du club', icon: <Backpack size={15} aria-hidden="true" /> },
+        { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={15} aria-hidden="true" /> },
       ],
     }),
     [inspectedMember],
@@ -420,20 +426,20 @@ export function ClubDrawerHost({
 
   const mainTabDefs: Array<Omit<DrawerTab, 'render'> & { badge?: number | boolean }> = useMemo(
     () => [
-      { id: 'explorer', label: 'Explorateur et changement de club', icon: <Compass size={18} aria-hidden="true" /> },
+      { id: 'explorer', label: 'Clubs et exploration', icon: <Globe size={18} aria-hidden="true" /> },
       {
         id: 'cordee',
-        label: 'Cordée et membres du club',
+        label: 'Membres et cordée du club',
         icon: <Users size={18} aria-hidden="true" />,
         badge: newArrivalsCount > 0 ? newArrivalsCount : undefined,
       },
       {
         id: 'sorties',
-        label: 'Sorties, camps de base et météo massif',
-        icon: <Mountain size={18} aria-hidden="true" />,
+        label: 'Sorties programmées, agenda et météo',
+        icon: <Calendar size={18} aria-hidden="true" />,
         badge: upcomingOutingsCount > 0 ? upcomingOutingsCount : undefined,
       },
-      { id: 'coffre', label: 'Coffre matériel mutualisé du club', icon: <Backpack size={18} aria-hidden="true" /> },
+      { id: 'coffre', label: 'Sac et coffre matériel du club', icon: <Backpack size={18} aria-hidden="true" /> },
     ],
     [newArrivalsCount, upcomingOutingsCount],
   );
@@ -708,26 +714,87 @@ export function ClubDrawerHost({
             setSubForTab(tab, idx);
           }}
           selector={
-            <CapsuleTabs
-              className="lkdv-slot-selector"
-              items={mainTabDefs.map((t) => ({
-                id: t.id,
-                label: t.label,
-                icon: t.icon,
-                badge: t.badge,
-              }))}
-              activeIndex={tab}
-              onIndexChange={(nextTab) => {
-                haptic('selection');
-                setStack([]);
-                setInspectedMember(null);
-                setInspectedOuting(null);
-                setMemberLensIndex(0);
-                setTab(nextTab);
-              }}
-              ariaLabel="Onglets du club"
-              size="default"
-            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+              <CapsuleTabs
+                className="lkdv-slot-selector"
+                items={mainTabDefs.map((t) => ({
+                  id: t.id,
+                  label: t.label,
+                  icon: t.icon,
+                  badge: t.badge,
+                }))}
+                activeIndex={tab}
+                onIndexChange={(nextTab) => {
+                  haptic('selection');
+                  setStack([]);
+                  setInspectedMember(null);
+                  setInspectedOuting(null);
+                  setMemberLensIndex(0);
+                  setTab(nextTab);
+                }}
+                ariaLabel="Onglets du club"
+                size="default"
+              />
+              {tab === 1 && inspectedMember ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '16px',
+                    background: 'var(--drawer-card-bg)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                    {inspectedMember.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={inspectedMember.avatarUrl}
+                        alt=""
+                        style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: '50%',
+                          background: 'var(--fill)',
+                          display: 'grid',
+                          placeItems: 'center',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {(inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'V')
+                          .slice(0, 1)
+                          .toUpperCase()}
+                      </div>
+                    )}
+                    <div style={{ minWidth: 0 }}>
+                      <b style={{ display: 'block', fontSize: 14, color: 'var(--label)' }}>
+                        {inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'Voyageur'}
+                      </b>
+                      {inspectedMember.role ? (
+                        <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>
+                          {inspectedMember.role}
+                        </small>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-soft"
+                    style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
+                    onClick={() => pushMember(null)}
+                  >
+                    <ChevronLeft size={13} />
+                    <span>Cordée</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           }
           renderLens={(lens, index, active) => (
             <div className="lkdv-carnet-drawer-pane">

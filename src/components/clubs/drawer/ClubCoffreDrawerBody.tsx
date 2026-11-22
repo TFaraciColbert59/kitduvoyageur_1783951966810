@@ -111,14 +111,6 @@ export function ClubCoffreDrawerBody({
   if (activeSubTab === 1) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-vault-kits-pane">
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Kits standards</span>
-            <b className="club-sec-title">Kits Recommandés par {activeClub.name}</b>
-          </div>
-          <span className="club-badge-sage">{standardKits.length} kits types</span>
-        </div>
-
         {filteredKits.length === 0 ? (
           <ClubEmptyCard
             icon={<Layers size={22} />}
@@ -247,14 +239,6 @@ export function ClubCoffreDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-vault-weight-pane">
-        <div className="club-sec-head">
-          <div className="club-sec-head-titles">
-            <span className="club-sec-eyebrow">Répartition poids</span>
-            <b className="club-sec-title">Poids Collectif de Cordée</b>
-          </div>
-          <span className="club-badge-sage">{totalKgLabel} kg</span>
-        </div>
-
         {/* Actions bar: Auto-balance + Add collective item */}
         <div className="club-form-pills" style={{ marginBottom: 8 }}>
           <button
@@ -391,24 +375,6 @@ export function ClubCoffreDrawerBody({
 
   return (
     <div className="club-drawer-pane-content" data-testid="club-vault-items-pane">
-      <div className="club-sec-head">
-        <div className="club-sec-head-titles">
-          <span className="club-sec-eyebrow">Coffre matériel · {totalVaultWeightKg} kg mutualisés</span>
-          <b className="club-sec-title">Coffre d’Entraide ({vaultGear.length} pièces)</b>
-        </div>
-        {onSwitchToCreate ? (
-          <button
-            type="button"
-            className="reseau-btn active"
-            style={{ fontSize: 11.5 }}
-            onClick={() => onSwitchToCreate(2)}
-          >
-            <Plus size={13} aria-hidden="true" />
-            <span>Prêter</span>
-          </button>
-        ) : null}
-      </div>
-
       {/* Search & Filter strip */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>

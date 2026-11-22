@@ -252,59 +252,6 @@ function InspectedMemberPane({
       className="lkdv-carnet-drawer-pane"
       style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '10px',
-          padding: '10px 12px',
-          borderRadius: '16px',
-          background: 'var(--drawer-card-bg)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-          {member.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={member.avatarUrl}
-              alt=""
-              style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'var(--fill)',
-                display: 'grid',
-                placeItems: 'center',
-                fontWeight: 700,
-              }}
-            >
-              {pName.slice(0, 1).toUpperCase()}
-            </div>
-          )}
-          <div style={{ minWidth: 0 }}>
-            <b style={{ display: 'block', fontSize: 14, color: 'var(--label)' }}>{pName}</b>
-            {member.role ? (
-              <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{member.role}</small>
-            ) : null}
-          </div>
-        </div>
-        <button
-          ref={backBtnRef}
-          type="button"
-          className="lkdv-carnet-btn-soft"
-          style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
-          onClick={() => onInspectMember(null)}
-        >
-          <ChevronLeft size={13} />
-          <span>Cordée</span>
-        </button>
-      </div>
-
       {lensId === 'm-stats' ? (
         <>
           <div className="lkdv-carnet-kpi-grid-3">
