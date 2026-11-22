@@ -432,7 +432,6 @@ export function ClubDrawerHost({
         id: 'cordee',
         label: 'Membres et cordée du club',
         icon: <Users size={18} aria-hidden="true" />,
-        badge: newArrivalsCount > 0 ? newArrivalsCount : undefined,
       },
       {
         id: 'sorties',
