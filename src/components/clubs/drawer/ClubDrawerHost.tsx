@@ -1043,7 +1043,7 @@ export function ClubDrawerHost({
                   <ChevronLeft size={16} aria-hidden="true" />
                 </button>
               </div>
-              <div className="li nt" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <div className="li nt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
                 <div className="ttl"><b>{inspectedOuting.title}</b></div>
                 <div className="s2">
                   📅 {inspectedOuting.date} · 📍 {inspectedOuting.massif} · {inspectedOuting.km} km · +{inspectedOuting.dplus} m D+ · Alt max {inspectedOuting.maxAlt} m
