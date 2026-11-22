@@ -1091,3 +1091,111 @@
   text-align: center !important;
 }
 
+/* Hero card membre dans le drawer Cordée : réplique la card Membre de la recherche Communauté */
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  gap: 8px;
+  border-radius: 20px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-carnet-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-carnet-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.06);
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-carnet-bg-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.84) 55%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  backdrop-filter: blur(2px);
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card > .lkdv-cv2x-tile-link,
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card > .lkdv-cv2x-tile-foot {
+  position: relative;
+  z-index: 1;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-carnet-card-scroll {
+  display: block;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-ig-bio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-ig-name,
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-ig-handle-sub {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-ig-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #172b24;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-ig-handle-sub {
+  font-size: 11.5px;
+  color: #56665d;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 2px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2-meta {
+  font-size: 11.5px;
+  color: #56665d;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-member-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+  font: 700 11.5px/1 var(--font-sans, var(--sf, -apple-system, sans-serif));
+  cursor: pointer;
+}
+
+

@@ -735,65 +735,101 @@ export function ClubDrawerHost({
                 ariaLabel="Onglets du club"
                 size="default"
               />
-              {tab === 1 && inspectedMember ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '10px',
-                    padding: '10px 12px',
-                    borderRadius: '16px',
-                    background: 'var(--drawer-card-bg)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                    {inspectedMember.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={inspectedMember.avatarUrl}
-                        alt=""
-                        style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          background: 'var(--fill)',
-                          display: 'grid',
-                          placeItems: 'center',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {(inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'V')
-                          .slice(0, 1)
-                          .toUpperCase()}
-                      </div>
-                    )}
-                    <div style={{ minWidth: 0 }}>
-                      <b style={{ display: 'block', fontSize: 14, color: 'var(--label)' }}>
-                        {inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'Voyageur'}
-                      </b>
-                      {inspectedMember.role ? (
-                        <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>
-                          {inspectedMember.role}
-                        </small>
-                      ) : null}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="lkdv-carnet-btn-soft"
-                    style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
-                    onClick={() => pushMember(null)}
+              {tab === 1 && inspectedMember ? (() => {
+                const mName = inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'Voyageur';
+                const normH = (inspectedMember.handle || '').trim().toLowerCase();
+                const normN = (inspectedMember.name || '').trim().toLowerCase();
+                const isMemberMatch = (h?: string | null, n?: string | null) => {
+                  const hh = (h || '').trim().toLowerCase();
+                  const nn = (n || '').trim().toLowerCase();
+                  if (normH && (hh === normH || nn === normH)) return true;
+                  if (normN && (nn === normN || hh === normN)) return true;
+                  return false;
+                };
+                const mPostsCount = posts.filter((p) => isMemberMatch(p.authorHandle, p.authorName)).length;
+                const mOutingsCount =
+                  inspectedMember.outingsCount ??
+                  outings.filter((o) => isMemberMatch(o.leaderHandle, o.leaderName)).length;
+                const mGearCount = vaultGear.filter((g) => isMemberMatch(g.ownerHandle, g.ownerName)).length;
+                const handleLabel = inspectedMember.handle
+                  ? `@${inspectedMember.handle.replace(/^@/, '')}`
+                  : '';
+                const subtitleText = [handleLabel, inspectedMember.city].filter(Boolean).join(' · ');
+
+                return (
+                  <div
+                    className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile lkdv-club-member-hero-card${
+                      inspectedMember.avatarUrl ? ' has-cover-bg' : ''
+                    }`}
                   >
-                    <ChevronLeft size={13} />
-                    <span>Cordée</span>
-                  </button>
-                </div>
-              ) : null}
+                    {inspectedMember.avatarUrl ? (
+                      <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={inspectedMember.avatarUrl}
+                          alt=""
+                          className="lkdv-cv2x-carnet-bg-img"
+                        />
+                        <span className="lkdv-cv2x-carnet-bg-scrim" />
+                      </span>
+                    ) : null}
+                    <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
+                      <span className="lkdv-ig-header">
+                        <span className="lkdv-ig-avi-wrap">
+                          <span className="lkdv-ig-avi">
+                            {inspectedMember.avatarUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={inspectedMember.avatarUrl}
+                                alt=""
+                                className="lkdv-cv2x-cover-img"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <span className="lkdv-cv2c-ig-avi-initials">
+                                {mName.slice(0, 1).toUpperCase()}
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                        <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
+                          <span className="lkdv-ig-stat">
+                            <b>{mPostsCount}</b>
+                            <span>publications</span>
+                          </span>
+                          <span className="lkdv-ig-stat">
+                            <b>{mOutingsCount}</b>
+                            <span>sorties</span>
+                          </span>
+                          <span className="lkdv-ig-stat">
+                            <b>{mGearCount}</b>
+                            <span>matos</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span className="lkdv-ig-bio">
+                        <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{mName}</span>
+                        {subtitleText ? (
+                          <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{subtitleText}</span>
+                        ) : null}
+                      </span>
+                    </span>
+                    <span className="lkdv-cv2x-tile-foot">
+                      <span className="lkdv-cv2-meta">
+                        {inspectedMember.role || 'Membre'}
+                      </span>
+                      <button
+                        type="button"
+                        className="lkdv-cv2x-member-cta"
+                        onClick={() => pushMember(null)}
+                      >
+                        <ChevronLeft size={13} />
+                        <span>Cordée</span>
+                      </button>
+                    </span>
+                  </div>
+                );
+              })() : null}
             </div>
           }
           renderLens={(lens, index, active) => (
