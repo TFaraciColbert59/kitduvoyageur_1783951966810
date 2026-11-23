@@ -5,7 +5,7 @@
 
 import type { Conversation } from '@/features/messaging/types/messaging.types';
 
-export type FilterId = 'all' | 'direct' | 'group' | 'requests';
+export type FilterId = 'all' | 'direct' | 'group' | 'clubs' | 'requests';
 
 /** Largeur révélée par le glissement d'une rangée (deux actions de 54 px). */
 export const SWIPE_REVEAL = 108;
@@ -48,6 +48,7 @@ export function filterConversations(
   list: Conversation[],
   opts: { filter: FilterId; query: string }
 ): Conversation[] {
+  if (opts.filter === 'clubs') return [];
   const text = opts.query.trim().toLowerCase();
   const seenDirect = new Set<string>();
   return list.filter((conversation) => {

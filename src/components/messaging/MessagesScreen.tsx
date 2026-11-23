@@ -23,8 +23,10 @@ import { AccountDrawerHost } from '@/design/account/AccountDrawerHost';
 import { initLiquidLenses, refreshLiquidLenses } from '@/design/account/liquid-lens';
 import { SubCapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { NotificationBell } from '@/components/ui/NotificationBell';
+import { Mountain } from 'lucide-react';
 import Icon from '@/components/ui/Icon';
 import dynamic from 'next/dynamic';
+import type { ClubItemData, ClubMemberData } from '@/components/clubs/drawer/ClubDrawerTypes';
 import type { ReportTarget } from '@/components/ui/ReportBlockModal';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -75,6 +77,10 @@ const GroupSettingsModal = dynamic(
   () => import('@/features/messaging/components/GroupSettingsModal').then((m) => m.GroupSettingsModal),
   { ssr: false }
 );
+const ClubSalonsDrawerBody = dynamic(
+  () => import('@/components/clubs/drawer/ClubSalonsDrawerBody').then((m) => m.ClubSalonsDrawerBody),
+  { ssr: false }
+);
 import type {
   Conversation,
   ConversationMember,
@@ -96,6 +102,7 @@ const FILTERS: Array<{ id: FilterId; label: string; icon: React.ReactNode }> = [
   { id: 'all', label: 'Toutes', icon: <Icon name="message-square" className="size-3.5" aria-hidden="true" /> },
   { id: 'direct', label: 'Directs', icon: <Icon name="user" className="size-3.5" aria-hidden="true" /> },
   { id: 'group', label: 'Groupes', icon: <Icon name="users" className="size-3.5" aria-hidden="true" /> },
+  { id: 'clubs', label: 'Clubs', icon: <Mountain size={14} aria-hidden="true" /> },
   { id: 'requests', label: 'Demandes', icon: <Icon name="bell" className="size-3.5" aria-hidden="true" /> },
 ];
 
@@ -1213,6 +1220,10 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
   // Sens du changement de filtre : la liste glisse dans ce sens (voir CSS).
   const [filterDir, setFilterDir] = useState<'next' | 'prev'>('next');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [joinedClubs, setJoinedClubs] = useState<ClubItemData[]>([]);
+  const [joinedClubsLoading, setJoinedClubsLoading] = useState(false);
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
+  const [selectedClubMembers, setSelectedClubMembers] = useState<ClubMemberData[]>([]);
   const [query, setQuery] = useState('');
   // La frappe reste fluide : le filtrage suit avec un léger retard.
   const deferredQuery = useDeferredValue(query);
@@ -1372,6 +1383,140 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     [conversations, filter, query]
   );
 
+  // Chargement des clubs rejoints pour le volet « Clubs » (accès rapide aux salons)
+  useEffect(() => {
+    if (!currentUserId) {
+      setJoinedClubs([]);
+      return;
+    }
+    let cancelled = false;
+    setJoinedClubsLoading(true);
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: memberships } = await supabase
+          .from('club_members')
+          .select('club_id, role, can_manage_gear, can_manage_stories')
+          .eq('user_id', currentUserId)
+          .eq('status', 'active')
+          .limit(50);
+        const ids = Array.isArray(memberships)
+          ? memberships.map((m) => String(m.club_id)).filter(Boolean)
+          : [];
+        if (ids.length === 0) {
+          if (!cancelled) {
+            setJoinedClubs([]);
+            setJoinedClubsLoading(false);
+          }
+          return;
+        }
+        const roleByClub = new Map<string, { role?: string; canManageGear?: boolean; canManageStories?: boolean }>();
+        for (const m of memberships ?? []) {
+          roleByClub.set(String(m.club_id), {
+            role: typeof m.role === 'string' ? m.role : undefined,
+            canManageGear: Boolean(m.can_manage_gear),
+            canManageStories: Boolean(m.can_manage_stories),
+          });
+        }
+        const { data: clubRows } = await supabase
+          .from('clubs')
+          .select('id, slug, name, description, primary_sport, location_label, privacy, members_count, cover_url, created_by, lat, lng')
+          .in('id', ids)
+          .order('members_count', { ascending: false });
+        if (cancelled) return;
+        const mapped: ClubItemData[] = (clubRows ?? []).map((row) => {
+          const cid = String(row.id);
+          const perm = roleByClub.get(cid);
+          const rawRole = perm?.role;
+          const viewerRole =
+            rawRole === 'founder' || rawRole === 'admin' || rawRole === 'moderator' || rawRole === 'member'
+              ? rawRole
+              : 'member';
+          return {
+            id: cid,
+            slug: typeof row.slug === 'string' ? row.slug : cid,
+            name: String(row.name ?? 'Club'),
+            massif: String(row.location_label ?? ''),
+            category: String(row.primary_sport ?? 'Alpinisme'),
+            level: 'Tous niveaux',
+            visibility: row.privacy === 'secret' ? 'secret' : row.privacy === 'closed' ? 'prive' : 'public',
+            membersCount: Number(row.members_count ?? 1),
+            outingsCount: 0,
+            totalKm: 0,
+            totalDplus: 0,
+            joined: true,
+            role: viewerRole,
+            bio: String(row.description ?? ''),
+            charter: '',
+            nextOutingTitle: '',
+            nextOutingDate: '',
+            weatherIso: '',
+            weatherWind: '',
+            weatherTrail: '',
+            lat: Number(row.lat ?? 45.9237),
+            lng: Number(row.lng ?? 6.8694),
+            coverUrl: typeof row.cover_url === 'string' ? row.cover_url : undefined,
+            createdBy: typeof row.created_by === 'string' ? row.created_by : null,
+            viewerRole,
+            viewerCanManageGear: perm?.canManageGear ?? false,
+            viewerCanManageStories: perm?.canManageStories ?? false,
+          };
+        });
+        setJoinedClubs(mapped);
+      } catch {
+        if (!cancelled) setJoinedClubs([]);
+      } finally {
+        if (!cancelled) setJoinedClubsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId]);
+
+  // Membres du club sélectionné (pour noms & avatars dans ClubSalonsDrawerBody)
+  useEffect(() => {
+    if (!selectedClubId) {
+      setSelectedClubMembers([]);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/clubs/${encodeURIComponent(selectedClubId)}/members`, { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json: { data?: { members?: Array<Record<string, unknown>> } } | null) => {
+        if (cancelled || !Array.isArray(json?.data?.members)) return;
+        setSelectedClubMembers(
+          json.data.members.map((m) => ({
+            id: String(m.id ?? m.userId ?? ''),
+            userId: typeof m.userId === 'string' ? m.userId : typeof m.user_id === 'string' ? m.user_id : undefined,
+            name: String(m.displayName ?? m.full_name ?? m.name ?? 'Membre'),
+            handle: String(m.handle ?? m.username ?? 'membre'),
+            role: m.role === 'founder' ? 'Fondateur' : m.role === 'admin' ? 'Guide & Sécurité' : m.role === 'moderator' ? 'Encadrant' : 'Membre actif',
+            massif: String(m.massif ?? ''),
+            skills: [],
+            avatarUrl: typeof m.avatarUrl === 'string' ? m.avatarUrl : typeof m.avatar_url === 'string' ? m.avatar_url : undefined,
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedClubId]);
+
+  const visibleClubs = useMemo(() => {
+    const q = deferredQuery.trim().toLowerCase();
+    if (!q) return joinedClubs;
+    return joinedClubs.filter((c) =>
+      `${c.name} ${c.massif} ${c.category}`.toLowerCase().includes(q),
+    );
+  }, [joinedClubs, deferredQuery]);
+
+  const selectedClub = useMemo(
+    () => joinedClubs.find((c) => c.id === selectedClubId) ?? null,
+    [joinedClubs, selectedClubId],
+  );
+
   /** Disparition puis apparition de la liste : 120 ms de fondu sortant, puis
    *  le nouveau filtre entre (les rangées ont leur propre fondu décalé). */
   const changeFilter = (next: FilterId) => {
@@ -1380,9 +1525,16 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
     const to = FILTERS.findIndex((item) => item.id === next);
     setFilterDir(to >= from ? 'next' : 'prev');
     setFilter(next);
+    if (next === 'clubs') {
+      setSelectedId(null);
+      if (!selectedClubId && joinedClubs.length > 0) {
+        setSelectedClubId(joinedClubs[0].id);
+      }
+    }
   };
 
   const open = useCallback((conversation: Conversation) => {
+    setSelectedClubId(null);
     if (selectedId === conversation.id) return;
     setSelectedId(conversation.id);
   }, [selectedId]);
@@ -1595,6 +1747,147 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                           Se connecter
                         </button>
                       </div>
+                    ) : filter === 'clubs' ? (
+                      joinedClubsLoading ? (
+                        [1, 2, 3].map((row) => (
+                          <div className="mskel" key={`club-skel-${row}`} aria-hidden="true">
+                            <i style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                            <i style={{ flex: 1, height: 12 }} />
+                            <i style={{ width: 28, height: 10 }} />
+                          </div>
+                        ))
+                      ) : visibleClubs.length === 0 ? (
+                        <div
+                          className="mstate"
+                          style={{
+                            margin: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            padding: '38px 24px',
+                            gap: 12,
+                          }}
+                        >
+                          <b style={{ font: '700 17px/1.2 var(--sf)', color: '#17402C' }}>
+                            {query.trim() ? 'Aucun club trouvé' : 'Aucun club rejoint'}
+                          </b>
+                          <span>Rejoignez un club pour accéder à ses salons directement ici.</span>
+                          <button
+                            type="button"
+                            className="mbtn p"
+                            onClick={() => router.push('/clubs')}
+                            style={{
+                              height: 38,
+                              padding: '0 20px',
+                              fontSize: 13,
+                              fontWeight: 600,
+                              borderRadius: 999,
+                              background: 'linear-gradient(180deg, #275d3f, #17402c)',
+                              color: '#fff',
+                              border: 'none',
+                            }}
+                          >
+                            Explorer les clubs
+                          </button>
+                        </div>
+                      ) : (
+                        visibleClubs.map((club) => {
+                          const isCur = club.id === selectedClubId;
+                          return (
+                            <button
+                              key={club.id}
+                              type="button"
+                              className={`mitem${isCur ? ' on' : ''}`}
+                              onClick={() => {
+                                haptic('selection');
+                                setSelectedId(null);
+                                setSelectedClubId(club.id);
+                              }}
+                              style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                padding: '9px 10px',
+                                borderRadius: 16,
+                                border: isCur ? '0.5px solid rgba(23, 64, 44, 0.22)' : '0.5px solid transparent',
+                                background: isCur
+                                  ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12))'
+                                  : 'transparent',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: '50%',
+                                  overflow: 'hidden',
+                                  flex: 'none',
+                                  display: 'grid',
+                                  placeItems: 'center',
+                                  background: 'rgba(23, 64, 44, 0.12)',
+                                  color: '#17402c',
+                                  fontWeight: 700,
+                                  fontSize: 13,
+                                }}
+                              >
+                                {club.coverUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={club.coverUrl}
+                                    alt=""
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                ) : (
+                                  initials(club.name)
+                                )}
+                              </span>
+                              <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <b
+                                  style={{
+                                    fontSize: 13.5,
+                                    fontWeight: 700,
+                                    color: '#172b24',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {club.name}
+                                </b>
+                                <span
+                                  style={{
+                                    fontSize: 11.5,
+                                    color: '#56665d',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {[club.massif, `${club.membersCount} membres`].filter(Boolean).join(' · ')}
+                                </span>
+                              </span>
+                              <span
+                                style={{
+                                  flex: 'none',
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: '2px 7px',
+                                  borderRadius: 999,
+                                  background: 'rgba(23, 64, 44, 0.09)',
+                                  color: '#17402c',
+                                }}
+                              >
+                                Salons
+                              </span>
+                            </button>
+                          );
+                        })
+                      )
                     ) : visible.length === 0 ? (
                       <div
                         className="mstate"
@@ -1736,7 +2029,44 @@ export function MessagesScreen({ currentUserId, currentUserProfile }: MessagesSc
                       ? `${keyboardInset + 1}px`
                       : 'max(calc(env(safe-area-inset-bottom, 0px) + 74px), calc(var(--lkv-native-bar-height, 0px) + 12px))',
                 }}>
-                {selected ? (
+                {selectedClub ? (
+                  <div className="mpane in" data-conversation={`club-${selectedClub.id}`}>
+                    <button
+                      type="button"
+                      className="mpill"
+                      onClick={() => {
+                        haptic('light');
+                        router.push(`/clubs/${encodeURIComponent(selectedClub.slug || selectedClub.id)}`);
+                      }}
+                      aria-label={`${selectedClub.name} — Ouvrir le club`}
+                    >
+                      <span className="mpill-av" aria-hidden="true">
+                        {selectedClub.coverUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={selectedClub.coverUrl} alt="" />
+                        ) : (
+                          initials(selectedClub.name)
+                        )}
+                      </span>
+                      <span className="mpill-txt">
+                        <b>{selectedClub.name}</b>
+                        <span>{selectedClub.membersCount} membres · Salons du club</span>
+                      </span>
+                    </button>
+                    <div
+                      className="mpane-body"
+                      style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '0 8px 4px' }}
+                    >
+                      <ClubSalonsDrawerBody
+                        key={selectedClub.id}
+                        active
+                        activeClub={selectedClub}
+                        currentUserId={currentUserId ?? null}
+                        members={selectedClubMembers}
+                      />
+                    </div>
+                  </div>
+                ) : selected ? (
                   <div className="mpane in" data-conversation={selected.id}>
                     <button
                       type="button"
