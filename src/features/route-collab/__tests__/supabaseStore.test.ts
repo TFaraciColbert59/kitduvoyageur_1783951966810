@@ -695,6 +695,22 @@ describe('supabaseStore — parties, membres, partage', () => {
     });
   });
 
+  it('membres : une étape confiée (stageScopeIds) est refusée franchement tant que la base ne sait pas l’écrire', async () => {
+    const fake = makeFake({
+      workspaceRow: () => makeWorkspace(),
+      rpc: { set_route_member_tx: () => ({ status: 'ok' }) },
+    });
+    const res = await fake.store.updateMemberRoleOrRevoke({
+      workspaceId: WS_ID,
+      actorId: OWNER,
+      targetUserId: EDITOR,
+      stageScopeIds: ['st1'],
+    });
+    expect(res).toMatchObject({ ok: false, status: 501 });
+    // rien n'est annoncé comme enregistré : aucun appel d'écriture
+    expect(fake.rpcCalls).toEqual([]);
+  });
+
   it('membres : refus de la base (co_organizer ne révoque pas un owner) mappé en 403', async () => {
     const fake = makeFake({
       workspaceRow: () => makeWorkspace(),
