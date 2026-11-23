@@ -419,7 +419,7 @@ export function ClubDrawerHost({
           ],
       2: [
         { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={15} aria-hidden="true" /> },
-        { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={15} aria-hidden="true" /> },
+        { id: 'outings-tickets', label: 'Aperçu tickets des sorties', icon: <Compass size={15} aria-hidden="true" /> },
       ],
       3: [
         { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={15} aria-hidden="true" /> },
@@ -539,21 +539,6 @@ export function ClubDrawerHost({
               label: 'Places disponibles',
               count: upcoming.filter((o) => o.participantsCount < o.maxParticipants).length,
             },
-          ]}
-        />
-      );
-    }
-    if (tab === 2 && activeLensIndex === 1 && !inspectedOuting) {
-      return (
-        <SortMenuButton
-          label="Filtrer le créneau météo"
-          value={weatherWindow}
-          defaultValue="morning"
-          onChange={(val) => setWeatherWindow(val as WeatherWindowId)}
-          options={[
-            { value: 'morning', label: 'Matin' },
-            { value: 'afternoon', label: 'Après-midi' },
-            { value: 'weekend', label: 'Week-end' },
           ]}
         />
       );
@@ -881,8 +866,10 @@ export function ClubDrawerHost({
                     activeSubTab={index}
                     activeClub={activeClub}
                     members={members}
+                    vaultGear={vaultGear}
                     currentUserId={currentUserId}
                     onToggleClubVisibility={onToggleClubVisibility}
+                    onTransitionGearLoan={onTransitionGearLoan}
                     onChangeMemberRole={onChangeMemberRole}
                     onToggleMemberStoryPermission={onToggleMemberStoryPermission}
                     onToggleMemberGearPermission={onToggleMemberGearPermission}

@@ -987,14 +987,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                     key={k.id}
                     kit={entry}
                     viewer="visitor"
-                    onSelectProduct={(_prod, prods, idx) =>
-                      setSelectedKitProductState({
-                        kitTitle: k.title,
-                        totalWeightG: k.totalWeightG,
-                        products: prods,
-                        index: idx,
-                      })
-                    }
                   />
                 );
               })}

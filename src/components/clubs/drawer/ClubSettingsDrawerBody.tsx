@@ -18,15 +18,24 @@ import {
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import { ClubEmptyCard, normalizeSearchText } from './ClubSharedUi';
-import type { ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
+import type { ClubGearVaultItem, ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
 import type { ClubJoinRequest, ClubRole } from '@/features/clubs/types';
 
 export interface ClubSettingsDrawerBodyProps {
   activeSubTab: number;
   activeClub: ClubItemData;
   members: ClubMemberData[];
+  vaultGear?: ClubGearVaultItem[];
   currentUserId?: string | null;
   onToggleClubVisibility: () => void;
+  onTransitionGearLoan?: (payload: {
+    loanId: string;
+    gearItemId: string;
+    status: 'approved' | 'checked_out' | 'returned' | 'issue' | 'declined' | 'cancelled';
+    checkoutCondition?: 'new' | 'good' | 'worn' | 'repair';
+    returnCondition?: 'new' | 'good' | 'worn' | 'repair';
+    conditionNote?: string;
+  }) => Promise<boolean> | void;
   onChangeMemberRole?: (userId: string, role: ClubRole) => Promise<boolean> | void;
   onToggleMemberStoryPermission?: (
     userId: string,
@@ -71,8 +80,10 @@ export function ClubSettingsDrawerBody({
   activeSubTab,
   activeClub,
   members,
+  vaultGear = [],
   currentUserId,
   onToggleClubVisibility,
+  onTransitionGearLoan,
   onChangeMemberRole,
   onToggleMemberStoryPermission,
   onToggleMemberGearPermission,
@@ -85,6 +96,18 @@ export function ClubSettingsDrawerBody({
   const [joinRequests, setJoinRequests] = useState<ClubJoinRequest[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [confirmTransferId, setConfirmTransferId] = useState<string | null>(null);
+  const [loanConditionPick, setLoanConditionPick] = useState<Record<string, 'new' | 'good' | 'worn' | 'repair'>>({});
+  const [loanReturnNote, setLoanReturnNote] = useState<Record<string, string>>({});
+  const [challengeFormOpen, setChallengeFormOpen] = useState(false);
+  const [challengeTitle, setChallengeTitle] = useState('');
+  const [challengeTarget, setChallengeTarget] = useState('50');
+
+  const canManageClubGear = Boolean(
+    activeClub.viewerCanManageGear ||
+      activeClub.viewerRole === 'founder' ||
+      activeClub.viewerRole === 'admin' ||
+      (currentUserId && activeClub.createdBy === currentUserId),
+  );
 
   const isFounder = Boolean(
     currentUserId && (activeClub.createdBy === currentUserId || activeClub.viewerRole === 'founder'),
@@ -245,10 +268,283 @@ export function ClubSettingsDrawerBody({
     );
   }
 
-  // 1 — Accès & Adhésions
+  // 1 — Accès, Prêts & Défis
   if (activeSubTab === 1) {
+    const actionableLoans = canManageClubGear
+      ? vaultGear.filter(
+          (g) =>
+            g.loanId &&
+            (g.loanStatus === 'requested' ||
+              g.loanStatus === 'approved' ||
+              g.loanStatus === 'checked_out' ||
+              g.loanStatus === 'overdue'),
+        )
+      : [];
+
     return (
       <div className="club-drawer-pane-content" data-testid="club-settings-access-pane">
+        {canManageClubGear ? (
+          <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Package size={16} color="#17402c" aria-hidden="true" />
+                <b style={{ fontSize: 13.5, color: 'var(--label)' }}>À valider & Suivi des prêts</b>
+              </div>
+              <span className="club-badge-sage">{actionableLoans.length}</span>
+            </div>
+            {actionableLoans.length === 0 ? (
+              <div style={{ fontSize: 12, color: 'var(--label2)' }}>
+                Aucun prêt en attente ou en cours de suivi.
+              </div>
+            ) : (
+              actionableLoans.slice(0, 12).map((g) => {
+                const isOverdue =
+                  g.loanStatus === 'overdue' ||
+                  (g.loanStatus === 'checked_out' && g.neededUntil && Date.parse(g.neededUntil) < Date.now());
+                const statusLabel = isOverdue
+                  ? 'En retard'
+                  : g.loanStatus === 'requested'
+                    ? 'Demandé'
+                    : g.loanStatus === 'approved'
+                      ? 'Validé'
+                      : 'Remis';
+                const condVal = loanConditionPick[g.loanId!] ?? 'good';
+                return (
+                  <div
+                    key={g.loanId}
+                    style={{ paddingTop: 6, borderTop: '1px solid rgba(23, 64, 44, 0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <b style={{ fontSize: 12.5, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</b>
+                        <span style={{ fontSize: 11, color: 'var(--label2)' }}>
+                          {g.borrowerName || 'Membre'}{g.neededUntil ? ` · retour ${g.neededUntil}` : ''}
+                        </span>
+                      </div>
+                      <span
+                        className="club-badge-soft"
+                        style={isOverdue ? { color: '#b91c1c', background: 'rgba(185, 28, 28, 0.10)' } : undefined}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    {g.loanStatus === 'requested' ? (
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          type="button"
+                          className="lkdv-carnet-btn-soft"
+                          style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                          onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'approved' })}
+                        >
+                          Valider
+                        </button>
+                        <button
+                          type="button"
+                          className="lkdv-carnet-btn-soft"
+                          style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                          onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'declined' })}
+                        >
+                          Refuser
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {g.loanStatus === 'approved' ? (
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <select
+                          aria-label={`État au départ pour ${g.name}`}
+                          className="club-glass-input"
+                          style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
+                          value={condVal}
+                          onChange={(e) =>
+                            setLoanConditionPick((prev) => ({
+                              ...prev,
+                              [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
+                            }))
+                          }
+                        >
+                          <option value="new">État départ : Neuf</option>
+                          <option value="good">État départ : Bon</option>
+                          <option value="worn">État départ : Usé</option>
+                        </select>
+                        <button
+                          type="button"
+                          className="lkdv-carnet-btn-soft"
+                          style={{ fontSize: 11.5 }}
+                          onClick={() =>
+                            onTransitionGearLoan?.({
+                              loanId: g.loanId!,
+                              gearItemId: g.id,
+                              status: 'checked_out',
+                              checkoutCondition: condVal,
+                            })
+                          }
+                        >
+                          Remis
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {g.loanStatus === 'checked_out' || g.loanStatus === 'overdue' ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <select
+                            aria-label={`État au retour pour ${g.name}`}
+                            className="club-glass-input"
+                            style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
+                            value={condVal}
+                            onChange={(e) =>
+                              setLoanConditionPick((prev) => ({
+                                ...prev,
+                                [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
+                              }))
+                            }
+                          >
+                            <option value="new">Retour : Neuf</option>
+                            <option value="good">Retour : Bon</option>
+                            <option value="worn">Retour : Usé</option>
+                            <option value="repair">Retour : À réparer</option>
+                          </select>
+                          <input
+                            type="text"
+                            className="club-glass-input"
+                            style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
+                            placeholder="Note retour…"
+                            value={loanReturnNote[g.loanId!] ?? ''}
+                            onChange={(e) =>
+                              setLoanReturnNote((prev) => ({ ...prev, [g.loanId!]: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            type="button"
+                            className="lkdv-carnet-btn-soft"
+                            style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                            onClick={() =>
+                              onTransitionGearLoan?.({
+                                loanId: g.loanId!,
+                                gearItemId: g.id,
+                                status: 'returned',
+                                returnCondition: condVal,
+                                conditionNote: loanReturnNote[g.loanId!] || undefined,
+                              })
+                            }
+                          >
+                            Rendu
+                          </button>
+                          <button
+                            type="button"
+                            className="lkdv-carnet-btn-soft"
+                            style={{ fontSize: 11.5, color: '#b91c1c' }}
+                            onClick={() =>
+                              onTransitionGearLoan?.({
+                                loanId: g.loanId!,
+                                gearItemId: g.id,
+                                status: 'issue',
+                                returnCondition: condVal,
+                                conditionNote: loanReturnNote[g.loanId!] || undefined,
+                              })
+                            }
+                          >
+                            Incident
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : null}
+
+        {canEditGovernance ? (
+          <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Award size={16} color="#17402c" aria-hidden="true" />
+                <b style={{ fontSize: 13.5, color: 'var(--label)' }}>Défis du club</b>
+              </div>
+              <button
+                type="button"
+                className="lkdv-carnet-btn-soft"
+                style={{ fontSize: 11.5, height: 28, padding: '0 10px' }}
+                onClick={() => setChallengeFormOpen((v) => !v)}
+              >
+                {challengeFormOpen ? 'Fermer' : 'Créer un défi'}
+              </button>
+            </div>
+            {challengeFormOpen ? (
+              <form
+                style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!challengeTitle.trim() || !UUID_RE.test(activeClub.id)) return;
+                  const now = new Date();
+                  const end = new Date(now.getTime() + 30 * 86_400_000);
+                  await runAction('create-challenge', async () => {
+                    const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/challenges`, {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'create',
+                        title: challengeTitle.trim(),
+                        description: `Défi collectif ${activeClub.name}`,
+                        sport: activeClub.category || null,
+                        metric: 'distance_m',
+                        targetValue: Math.max(1000, (Number(challengeTarget) || 50) * 1000),
+                        startsAt: now.toISOString(),
+                        endsAt: end.toISOString(),
+                        badgeTitle: challengeTitle.trim(),
+                        badgeIcon: 'trophy',
+                      }),
+                    });
+                    if (res.ok) {
+                      onToast?.({ title: 'Défi créé ✓', subtitle: challengeTitle.trim() });
+                      setChallengeTitle('');
+                      setChallengeFormOpen(false);
+                    } else {
+                      onToast?.({ title: 'Création refusée', subtitle: `Erreur ${res.status}` });
+                    }
+                  });
+                }}
+              >
+                <input
+                  type="text"
+                  className="club-glass-input"
+                  placeholder="Titre du défi (ex : 100 km en Vanoise)"
+                  value={challengeTitle}
+                  onChange={(e) => setChallengeTitle(e.target.value)}
+                  required
+                />
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min={1}
+                    className="club-glass-input"
+                    style={{ width: 100 }}
+                    value={challengeTarget}
+                    onChange={(e) => setChallengeTarget(e.target.value)}
+                    aria-label="Objectif en km"
+                  />
+                  <span style={{ fontSize: 12, color: 'var(--label2)' }}>km sur 30 jours</span>
+                  <button
+                    type="submit"
+                    className="lkdv-carnet-btn-soft"
+                    style={{ marginLeft: 'auto', fontSize: 11.5 }}
+                    disabled={busyKey === 'create-challenge'}
+                  >
+                    Publier
+                  </button>
+                </div>
+              </form>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -621,6 +621,7 @@ export function ClubG02Workspace({
           currentUserId={currentUserId}
           nowIso={nowIso}
           canCreate={canCreateChallenges}
+          showCreateButton={false}
           loading={sectionLoading}
           error={sectionError}
           onJoin={async (challenge) => {

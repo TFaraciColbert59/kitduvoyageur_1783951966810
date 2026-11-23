@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 
 import type {
   ChallengeMetric,
@@ -41,6 +42,7 @@ export interface ClubChallengesPanelProps {
   currentUserId: string | null;
   nowIso: string;
   canCreate?: boolean;
+  showCreateButton?: boolean;
   loading?: boolean;
   error?: string | null;
   onJoin: (challenge: ClubChallenge) => Promise<void> | void;
@@ -66,6 +68,7 @@ export function ClubChallengesPanel({
   currentUserId,
   nowIso,
   canCreate = false,
+  showCreateButton = true,
   loading = false,
   error = null,
   onJoin,
@@ -170,7 +173,7 @@ export function ClubChallengesPanel({
 
   return (
     <section className={styles.screen} aria-label="Défis du club">
-      {canCreate && onCreate ? (
+      {canCreate && onCreate && showCreateButton ? (
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             type="button"
@@ -366,11 +369,13 @@ export function ClubChallengesPanel({
                     {state !== 'ended' && !mine ? (
                       <button
                         type="button"
-                        className={cx(styles.button, styles.small, styles.primary, 'lkdv-carnet-btn-primary')}
+                        className="lkdv-carnet-btn-soft club-icon-pill"
+                        aria-label="Rejoindre le défi"
+                        title="Rejoindre le défi"
                         disabled={busy}
                         onClick={() => void join(challenge)}
                       >
-                        {busy ? 'Inscription…' : 'Rejoindre le défi'}
+                        <Plus size={15} aria-hidden="true" />
                       </button>
                     ) : null}
                     {state === 'ended' && !summary.isCompleted ? (

@@ -177,37 +177,35 @@ export function ClubCoffreDrawerBody({
               return (
                 <ClubStaggerCard
                   key={k.id}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                  style={{ position: 'relative' }}
                 >
                   <KitCard
                     kit={entry}
                     viewer="visitor"
-                    onSelectProduct={(_prod, prods, idx) =>
-                      setSelectedKitProductState({
-                        kitTitle: k.title,
-                        totalWeightG: k.totalWeightG,
-                        products: prods,
-                        index: idx,
-                      })
-                    }
                   />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 4px' }}>
-                    <button
-                      type="button"
-                      className={k.cloned ? 'lkdv-carnet-btn-soft' : 'lkdv-carnet-btn-primary'}
-                      style={{ height: 30, fontSize: 11.5, padding: '0 12px' }}
-                      onClick={() => {
-                        onCloneStandardKit(k.id);
-                        onToast?.({
-                          title: k.cloned ? 'Kit mis à jour dans votre Carnet' : 'Kit cloné dans votre Carnet ✓',
-                          subtitle: `${k.title} (${kgLabel} kg)`,
-                        });
-                      }}
-                    >
-                      {k.cloned ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
-                      <span>{k.cloned ? 'Cloné dans mon Carnet' : 'Cloner ce kit'}</span>
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-soft"
+                    style={{
+                      position: 'absolute',
+                      bottom: 10,
+                      right: 148,
+                      zIndex: 5,
+                      height: 30,
+                      fontSize: 11,
+                      padding: '0 10px',
+                    }}
+                    onClick={() => {
+                      onCloneStandardKit(k.id);
+                      onToast?.({
+                        title: k.cloned ? 'Kit mis à jour dans votre Carnet' : 'Kit cloné dans votre Carnet ✓',
+                        subtitle: `${k.title} (${kgLabel} kg)`,
+                      });
+                    }}
+                  >
+                    {k.cloned ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+                    <span>{k.cloned ? 'Cloné' : 'Cloner'}</span>
+                  </button>
                 </ClubStaggerCard>
               );
             })}
@@ -424,181 +422,8 @@ export function ClubCoffreDrawerBody({
     );
   }
 
-  const actionableLoans = canManageClubGear
-    ? vaultGear.filter((g) => g.loanId && (g.loanStatus === 'requested' || g.loanStatus === 'approved' || g.loanStatus === 'checked_out' || g.loanStatus === 'overdue'))
-    : [];
-
   return (
     <div className="club-drawer-pane-content" data-testid="club-vault-items-pane">
-      {/* Manager queue: À valider / Remis / Rendu */}
-      {actionableLoans.length > 0 ? (
-        <div className="club-glass-card" style={{ padding: '10px 12px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <b style={{ fontSize: 12.5, color: 'var(--label)' }}>À valider & Suivi des prêts</b>
-            <span className="club-badge-sage">{actionableLoans.length}</span>
-          </div>
-          {actionableLoans.slice(0, 8).map((g) => {
-            const isOverdue =
-              g.loanStatus === 'overdue' ||
-              (g.loanStatus === 'checked_out' && g.neededUntil && Date.parse(g.neededUntil) < Date.now());
-            const statusLabel = isOverdue
-              ? 'En retard'
-              : g.loanStatus === 'requested'
-                ? 'Demandé'
-                : g.loanStatus === 'approved'
-                  ? 'Validé'
-                  : 'Remis';
-            const condVal = loanConditionPick[g.loanId!] ?? 'good';
-            return (
-              <div
-                key={g.loanId}
-                style={{ paddingTop: 6, borderTop: '1px solid rgba(23, 64, 44, 0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <b style={{ fontSize: 12.5, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</b>
-                    <span style={{ fontSize: 11, color: 'var(--label2)' }}>
-                      {g.borrowerName || 'Membre'}{g.neededUntil ? ` · retour ${g.neededUntil}` : ''}
-                    </span>
-                  </div>
-                  <span
-                    className="club-badge-soft"
-                    style={isOverdue ? { color: '#b91c1c', background: 'rgba(185, 28, 28, 0.10)' } : undefined}
-                  >
-                    {statusLabel}
-                  </span>
-                </div>
-
-                {g.loanStatus === 'requested' ? (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
-                      onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'approved' })}
-                    >
-                      Valider
-                    </button>
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
-                      onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'declined' })}
-                    >
-                      Refuser
-                    </button>
-                  </div>
-                ) : null}
-
-                {g.loanStatus === 'approved' ? (
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <select
-                      aria-label={`État au départ pour ${g.name}`}
-                      className="club-glass-input"
-                      style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                      value={condVal}
-                      onChange={(e) =>
-                        setLoanConditionPick((prev) => ({
-                          ...prev,
-                          [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
-                        }))
-                      }
-                    >
-                      <option value="new">État départ : Neuf</option>
-                      <option value="good">État départ : Bon</option>
-                      <option value="worn">État départ : Usé</option>
-                    </select>
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ fontSize: 11.5 }}
-                      onClick={() =>
-                        onTransitionGearLoan?.({
-                          loanId: g.loanId!,
-                          gearItemId: g.id,
-                          status: 'checked_out',
-                          checkoutCondition: condVal,
-                        })
-                      }
-                    >
-                      Remis
-                    </button>
-                  </div>
-                ) : null}
-
-                {g.loanStatus === 'checked_out' || g.loanStatus === 'overdue' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <select
-                        aria-label={`État au retour pour ${g.name}`}
-                        className="club-glass-input"
-                        style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                        value={condVal}
-                        onChange={(e) =>
-                          setLoanConditionPick((prev) => ({
-                            ...prev,
-                            [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
-                          }))
-                        }
-                      >
-                        <option value="new">Retour : Neuf</option>
-                        <option value="good">Retour : Bon</option>
-                        <option value="worn">Retour : Usé</option>
-                        <option value="repair">Retour : À réparer</option>
-                      </select>
-                      <input
-                        type="text"
-                        className="club-glass-input"
-                        style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                        placeholder="Note retour…"
-                        value={loanReturnNote[g.loanId!] ?? ''}
-                        onChange={(e) =>
-                          setLoanReturnNote((prev) => ({ ...prev, [g.loanId!]: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
-                        onClick={() =>
-                          onTransitionGearLoan?.({
-                            loanId: g.loanId!,
-                            gearItemId: g.id,
-                            status: 'returned',
-                            returnCondition: condVal,
-                            conditionNote: loanReturnNote[g.loanId!] || undefined,
-                          })
-                        }
-                      >
-                        Rendu
-                      </button>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ fontSize: 11.5, color: '#b91c1c' }}
-                        onClick={() =>
-                          onTransitionGearLoan?.({
-                            loanId: g.loanId!,
-                            gearItemId: g.id,
-                            status: 'issue',
-                            returnCondition: condVal,
-                            conditionNote: loanReturnNote[g.loanId!] || undefined,
-                          })
-                        }
-                      >
-                        Incident
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
-
       {/* Search strip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>

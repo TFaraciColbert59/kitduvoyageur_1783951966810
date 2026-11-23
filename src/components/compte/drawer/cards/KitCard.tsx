@@ -314,6 +314,10 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
 
   useEffect(() => {
     if (view !== 2 || !kitId) return;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(kitId)) {
+      setInsightsLoading(false);
+      return;
+    }
     let cancelled = false;
     setInsightsLoading(true);
     setInsights([]);

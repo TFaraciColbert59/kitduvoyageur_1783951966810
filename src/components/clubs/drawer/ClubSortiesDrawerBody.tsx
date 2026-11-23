@@ -39,6 +39,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ClubG02Workspace } from '@/components/clubs/g02';
+import { OutingCard, type OutingCardData } from '@/components/compte/drawer/cards/OutingCard';
 import {
   AnimatedNumber,
   ClubStaggerCard,
@@ -714,205 +715,55 @@ export function ClubSortiesDrawerBody({
   }
 
   // ============================================================================
-  // D10 — 2.1 OUTINGS-WEATHER ("Météo et conditions massif")
+  // D10 — 2.1 OUTINGS-TICKETS ("Aperçu tickets des sorties à venir")
   // ============================================================================
   if (activeSubTab === 1) {
-    const windowStats: Record<
-      WeatherWindowId,
-      { iso: string; wind: string; visibility: string; riskLabel: string; temp1500: string; temp2500: string; temp3500: string }
-    > = {
-      morning: {
-        iso: activeClub.weatherIso || '3 100 m',
-        wind: activeClub.weatherWind || '15 km/h NO',
-        visibility: 'Excellente · Plafond > 3 500 m',
-        riskLabel: 'Créneau Optimal ✓',
-        temp1500: '11°C',
-        temp2500: '4°C',
-        temp3500: '-3°C',
-      },
-      afternoon: {
-        iso: '2 950 m (évolution cumulus)',
-        wind: '30 km/h NO sur crêtes',
-        visibility: 'Bonne · Bourgeonnements 15h',
-        riskLabel: 'Vigilance Crêtes',
-        temp1500: '14°C',
-        temp2500: '6°C',
-        temp3500: '-2°C',
-      },
-      weekend: {
-        iso: '3 050 m stable',
-        wind: '20 km/h · Anticyclonique',
-        visibility: 'Samedi clair · Dimanche voilé 16h',
-        riskLabel: 'Fenêtre Favorable ✓',
-        temp1500: '12°C',
-        temp2500: '5°C',
-        temp3500: '-2°C',
-      },
-    };
-    const currentW = windowStats[weatherWindow];
-
     return (
-      <div className="club-drawer-pane-content" data-testid="club-weather-pane">
-        {/* Créneau météo affiché en compact (filtre en bas à droite) */}
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#56665d', marginBottom: 6 }}>
-          Créneau :{' '}
-          <b style={{ color: '#172b24' }}>
-            {weatherWindow === 'morning' ? 'Matin' : weatherWindow === 'afternoon' ? 'Après-midi' : 'Week-end'}
-          </b>
-        </div>
-
-        {/* Altitude Thermal Etagement Card */}
-        <div
-          className="li nt club-glass-card"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="ttl">
-              <Thermometer size={14} aria-hidden="true" style={{ display: 'inline', marginRight: 6 }} />
-              <b>Étagement thermique & Isotherme 0°C</b>
-            </div>
-            <span className="club-badge-sage">Vérifié</span>
-          </div>
-          <div className="s2">{currentW.iso} · {currentW.visibility}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 2 }}>
-            <div className="club-kpi-box" style={{ padding: '6px 8px', borderRadius: 12, background: 'rgba(23,64,44,0.05)' }}>
-              <div className="s2">1 500 m (Forêt)</div>
-              <b style={{ fontSize: 13.5 }}>{currentW.temp1500}</b>
-            </div>
-            <div className="club-kpi-box" style={{ padding: '6px 8px', borderRadius: 12, background: 'rgba(23,64,44,0.05)' }}>
-              <div className="s2">2 500 m (Cols)</div>
-              <b style={{ fontSize: 13.5 }}>{currentW.temp2500}</b>
-            </div>
-            <div className="club-kpi-box" style={{ padding: '6px 8px', borderRadius: 12, background: 'rgba(23,64,44,0.05)' }}>
-              <div className="s2">3 500 m (Crêtes)</div>
-              <b style={{ fontSize: 13.5 }}>{currentW.temp3500}</b>
-            </div>
-          </div>
-        </div>
-
-        <div className="li nt club-glass-card">
-          <div>
-            <div className="ttl">
-              <Wind size={14} aria-hidden="true" style={{ display: 'inline', marginRight: 6 }} />
-              <span>Vent en altitude & Crêtes</span>
-            </div>
-            <div className="s2">{currentW.wind} · Vigilance passages exposés</div>
-          </div>
-          <span className="club-badge-soft">Info</span>
-        </div>
-
-        <div className="li nt club-glass-card">
-          <div>
-            <div className="ttl">
-              <span>État des sentiers & Refuges (Club)</span>
-            </div>
-            <div className="s2">{activeClub.weatherTrail}</div>
-          </div>
-          <button
-            type="button"
-            className="reseau-btn active club-icon-pill"
-            onClick={() => onFlyToCoords(activeClub.lat, activeClub.lng, `Météo ${activeClub.massif}`)}
-            aria-label="Carte 3D"
-            title="Carte 3D"
-          >
-            <Mountain size={16} aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Community Terrain Reports & Crowd-sourced observation form */}
-        <div
-          className="li nt club-glass-card"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <b style={{ fontSize: 12.5, color: '#172b24' }}>Observations Terrain de la Cordée ({terrainReports.length})</b>
-            <span className="club-badge-soft">Direct Club</span>
-          </div>
-
-          {terrainReports.map((rep) => (
-            <div
-              key={rep.id}
-              style={{
-                padding: '8px 10px',
-                borderRadius: 14,
-                background: 'rgba(255,255,255,0.62)',
-                border: '1px solid rgba(23,43,36,0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: 12 }}>{rep.author}</b>
-                <span className={rep.severity === 'ok' ? 'club-badge-sage' : 'club-badge-soft'}>
-                  {rep.category.toUpperCase()} · {rep.time}
-                </span>
-              </div>
-              <div className="s2">{rep.text}</div>
-            </div>
-          ))}
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!reportDraft.trim()) return;
-              const created: TerrainReport = {
-                id: `rep-${Date.now()}`,
-                author: 'Observation Membre',
-                time: 'À l’instant',
-                category: reportCategory,
-                text: reportDraft.trim(),
-                severity: reportCategory === 'vent' || reportCategory === 'neve' ? 'warn' : 'ok',
-              };
-              setTerrainReports((prev) => [created, ...prev]);
-              setReportDraft('');
-              onToast?.({
-                title: 'Observation terrain publiée',
-                subtitle: `${activeClub.massif} · ${created.category}`,
-                undo: () => setTerrainReports((prev) => prev.filter((r) => r.id !== created.id)),
-              });
+      <div className="club-drawer-pane-content" data-testid="club-outings-tickets-pane">
+        {upcomingOutings.length === 0 ? (
+          <ClubEmptyCard
+            icon={<Mountain size={22} />}
+            title="Aucune sortie à venir"
+            description="Les prochains départs du club apparaîtront ici en format ticket."
+          />
+        ) : (
+          <ul
+            style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
-            style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}
           >
-            <div className="club-form-pills">
-              {(
-                [
-                  { id: 'sentier', label: 'Sentier' },
-                  { id: 'neve', label: 'Névé / Glace' },
-                  { id: 'vent', label: 'Vent Crête' },
-                  { id: 'eau', label: 'Source / Refuge' },
-                ] as const
-              ).map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`reseau-btn ${reportCategory === c.id ? 'primary' : 'active'}`}
-                  style={{ fontSize: 11, padding: '3px 8px' }}
-                  onClick={() => setReportCategory(c.id)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input
-                type="text"
-                className="club-glass-input"
-                placeholder={`Signaler une condition sur ${activeClub.massif}…`}
-                aria-label="Signaler une condition terrain"
-                value={reportDraft}
-                onChange={(e) => setReportDraft(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="reseau-btn primary"
-                disabled={!reportDraft.trim()}
-              >
-                Publier
-              </button>
-            </div>
-          </form>
-        </div>
+            {upcomingOutings.map((o) => {
+              const cardData: OutingCardData = {
+                id: o.id,
+                title: o.title,
+                mass: o.massif,
+                date: o.dateLabel || o.date,
+                startedAt: o.startsAtIso || o.date,
+                km: o.km,
+                dplus: o.dplus,
+                proven: true,
+                photos: o.coverUrl ? [o.coverUrl] : [],
+                cover: o.coverUrl ?? null,
+                status: o.status,
+                visibility: 'public',
+                year: null,
+                monthLabel: '',
+              };
+              return (
+                <OutingCard
+                  key={o.id}
+                  outing={cardData}
+                  onToggle={() => onInspectOuting(o)}
+                />
+              );
+            })}
+          </ul>
+        )}
       </div>
     );
   }
