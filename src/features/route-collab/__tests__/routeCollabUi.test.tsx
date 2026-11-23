@@ -113,7 +113,8 @@ describe('RouteCollabWorkspace UI — Design Explorer (Carte + Pilule 3 points +
 
     // Onglet Analyser : banque d'informations et statistiques techniques épurées (mini sélecteur bas droite)
     fireEvent.click(screen.getByRole('tab', { name: 'Analyser' }));
-    expect(screen.getByTestId('surface-breakdown-card')).toBeTruthy();
+    // Vue simple : la synthèse en trois lignes ; les surfaces en pourcentage sont en vue experte (7.7, 7.10).
+    expect(screen.getByTestId('synthesis')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: /Sur le chemin/i }));
     expect(screen.getByLabelText(/Actualiser la banque d’informations/i)).toBeTruthy();
 

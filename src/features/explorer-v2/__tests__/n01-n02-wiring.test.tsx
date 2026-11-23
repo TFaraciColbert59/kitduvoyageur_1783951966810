@@ -5,6 +5,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { OfflineRuntimeStore } from '@/features/offline/offlineRuntimeStore';
 import { PREDEFINED_REGIONS_CATALOG } from '@/features/offline';
 
+// 10.4 : le tiroir de tracé lit le routeur (« Préparer avec ce tracé »).
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock('../offline/zone', () => ({
   registerOfflineWorker: vi.fn(async () => null),
   downloadZone: vi.fn(async () => ({ tiles: 12, bytes: 2048 })),

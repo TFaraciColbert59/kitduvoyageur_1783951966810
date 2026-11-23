@@ -50,6 +50,8 @@ export function useRouteIsland(ws: RouteWorkspaceApi) {
     openSubDrawer,
     workspace,
     currentUserId,
+    publishSyncIssue,
+    retryPublishSync,
   } = ws;
   const { undo, peek, busy } = useRouteUndo(ws);
   const [transient, setTransient] = useState<IslandView | null>(null);
@@ -238,6 +240,29 @@ export function useRouteIsland(ws: RouteWorkspaceApi) {
     setSheetOpen,
     setTabIndex,
   ]);
+
+  // Suites d'une publication (tracé du Compas, budget) : un échec est dit, avec « Réessayer ».
+  const issueSeen = useRef<number | null>(null);
+  useEffect(() => {
+    if (!publishSyncIssue || issueSeen.current === publishSyncIssue.id) return;
+    issueSeen.current = publishSyncIssue.id;
+    seq.current += 1;
+    present(
+      {
+        id: seq.current,
+        kind: 'status',
+        title: publishSyncIssue.message,
+        sub: 'La publication est enregistrée.',
+        tone: 'bad',
+        testId: 'publish-sync-issue',
+        actions: [
+          { label: 'Réessayer', onClick: retryPublishSync },
+          { label: '✕', ariaLabel: 'Fermer le message', title: 'Fermer', onClick: dismiss },
+        ],
+      },
+      SHOW_MS.publication
+    );
+  }, [publishSyncIssue, retryPublishSync, present, dismiss]);
 
   useEffect(() => clearTimer, [clearTimer]);
 

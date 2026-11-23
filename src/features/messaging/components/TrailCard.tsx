@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { trailMessageHref } from '@/features/route-collab/messageLink';
 import type { TrailMessageMeta } from '../types/messaging.types';
 
 interface TrailCardProps {
@@ -20,7 +21,8 @@ const formatDeniv = (m?: number | null): string | null => {
 };
 
 export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
-  const href = `/explorer?trail=${meta.id}`;
+  const href = trailMessageHref(meta);
+  const isStage = meta.stage_day != null && !!meta.workspace_id;
   const title = meta.name || 'Randonnée LKDV';
   const km = formatKm(meta.distance_km);
   const deniv = formatDeniv(meta.elevation_gain_m);
@@ -37,7 +39,7 @@ export const TrailCard: React.FC<TrailCardProps> = ({ meta, isMine }) => {
           isMine ? 'text-[color:var(--lkv-text-inverted)]/80' : 'text-[color:var(--lkv-forest-700)]'
         }`}
       >
-        🥾 Randonnée
+        {isStage ? `🥾 Jour ${meta.stage_day}` : '🥾 Randonnée'}
       </span>
       <p
         className={`text-[length:var(--lkv-text-caption)] font-bold leading-snug ${

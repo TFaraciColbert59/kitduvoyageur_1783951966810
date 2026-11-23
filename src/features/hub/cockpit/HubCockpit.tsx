@@ -850,6 +850,13 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
               <FieldReportForm tripId={data.key} defaultPoint={data.weatherPoint ?? daySteps.find((s) => s.coordinate)?.coordinate} isOnline={isOnline} />
             )}
 
+            {!fixture && data.publishedRoute && (
+              <Link href={data.publishedRoute.href} className={ds.btnSecondary} data-testid="cockpit-edit-in-compas">
+                Modifier dans le Compas · V{data.publishedRoute.revisionNo} · {number(data.publishedRoute.distanceKm)} km
+                {data.publishedRoute.hasNewerDraft ? ' · brouillon en cours' : ''} <Icon name="chevron-right" size={16} />
+              </Link>
+            )}
+
             {!fixture && (
               <Link href={'/hub/itineraire?jour=' + day} className={ds.btnSecondary}>
                 Ouvrir l’itinéraire complet <Icon name="chevron-right" size={16} />

@@ -85,6 +85,14 @@ export interface CockpitData {
     adoptedRevision: number | null;
     decisionPending: boolean;
   }[];
+  /** Version publiée de l'itinéraire collaboratif (10.3), lue côté serveur sous RLS ; absent sans publication. */
+  publishedRoute?: {
+    revisionNo: number;
+    distanceKm: number;
+    stagesCount: number;
+    hasNewerDraft: boolean;
+    href: string;
+  } | null;
   distance: number | null;
   elevation: number | null;
   steps: CockpitStep[];

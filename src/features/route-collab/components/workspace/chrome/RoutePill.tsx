@@ -1,5 +1,6 @@
 'use client';
 
+import { firstNameOf, initialsOf, presenceByStage, presenceLabel, stageAssignees } from '../../../team';
 import { useRouteViewMode } from '../expertMode';
 import { useRouteWorkspace } from '../WorkspaceContext';
 import { useRoutePillModel } from './useRoutePill';
@@ -28,9 +29,13 @@ export function RoutePill({ sayOpen, onToggleSay }: { sayOpen: boolean; onToggle
     openSubDrawer,
     setStatusMessage,
     canEditGeo,
+    presence,
+    currentUserId,
   } = ws;
   const { expert } = useRouteViewMode();
   const model = useRoutePillModel(ws);
+  // Équipe : qui s'occupe de quel jour (8.3) et qui y travaille en ce moment (8.4), sans curseur.
+  const here = presenceByStage(presence, currentUserId);
 
   const focusPoint = (pointId: string | undefined) => {
     const pt = pointId ? orderedPoints.find((p) => p.id === pointId) : undefined;
@@ -109,20 +114,36 @@ export function RoutePill({ sayOpen, onToggleSay }: { sayOpen: boolean; onToggle
 
       {model.days.length > 0 ? (
         <div className="rcw-pill-days" role="tablist" aria-label="Jour" data-testid="pill-days">
-          {model.days.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              role="tab"
-              className="rcw-day-chip"
-              aria-selected={selectedStage?.id === d.id}
-              aria-label={d.title}
-              title={d.title}
-              onClick={() => onDay(d.id)}
-            >
-              {d.label}
-            </button>
-          ))}
+          {model.days.map((d) => {
+            const owners = stageAssignees(workspace.members, d.id);
+            const present = here.get(d.id) ?? [];
+            const extra = [
+              owners.length > 0 ? `confié à ${owners.map((m) => firstNameOf(m.displayName)).join(', ')}` : null,
+              present.length > 0 ? presenceLabel(present) : null,
+            ].filter(Boolean);
+            const title = extra.length > 0 ? `${d.title} · ${extra.join(' · ')}` : d.title;
+            return (
+              <button
+                key={d.id}
+                type="button"
+                role="tab"
+                className="rcw-day-chip"
+                aria-selected={selectedStage?.id === d.id}
+                aria-label={title}
+                title={title}
+                data-present={present.length > 0 ? 'true' : undefined}
+                data-assigned={owners.length > 0 ? 'true' : undefined}
+                onClick={() => onDay(d.id)}
+              >
+                {d.label}
+                {owners.length > 0 ? (
+                  <span className="rcw-day-avatar" aria-hidden="true" data-testid={`day-avatar-${d.id}`}>
+                    {initialsOf(owners[0].displayName).charAt(0)}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       ) : null}
 

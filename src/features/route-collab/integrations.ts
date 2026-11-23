@@ -14,6 +14,7 @@ import { workspaceTotals } from './engine';
 import { buildItineraryHref } from './insights/deepLinks';
 import type { CarnetReturnRecord } from './offlinePackStore';
 import { activePointsOf } from './pointOrder';
+import { permissionsForMember } from './permissions';
 import type {
   CollaborativeKitItem,
   RouteRevisionSnapshot,
@@ -376,4 +377,45 @@ export function summarizePublishedRouteForHub(workspace: RouteWorkspaceState): P
     hasNewerDraft: workspace.headSeq > rev.basedOnSeq,
     href: workspace.tripId ? buildItineraryHref({ tripId: workspace.tripId }) : `/compas/itineraire?workspaceId=${encodeURIComponent(workspace.id)}`,
   };
+}
+
+/* =============================================================================
+   Clubs : la sortie reprend la VERSION PUBLIÉE (10.5)
+   ============================================================================= */
+
+export type ClubRouteFromPublishedResult =
+  | { readonly status: 'ok'; readonly snapshot: ClubRouteRevisionSnapshot }
+  | { readonly status: 'no_published' | 'no_pack' };
+
+/**
+ * Instantané Clubs de la version publiée d'un espace. Le contrôle (checksum) vient du pack de départ
+ * généré à la publication : sans pack, on ne fabrique pas de checksum (`no_pack`). Le nom du tracé et le
+ * point de rendez-vous ne sont pas repris : le RDV reste celui de l'organisateur de la sortie.
+ */
+export function clubRouteFromPublished(
+  workspace: RouteWorkspaceState,
+  eventId: string,
+  requiresParticipantDecision = true,
+): ClubRouteFromPublishedResult {
+  const rev = publishedRevisionOf(workspace);
+  if (!rev) return { status: 'no_published' };
+  const pack = workspace.packs.find((p) => p.revisionId === rev.id);
+  if (!pack) return { status: 'no_pack' };
+  return {
+    status: 'ok',
+    snapshot: {
+      ...toClubRouteRevisionSnapshot(rev, eventId, pack.checksum, requiresParticipantDecision),
+      routeName: workspace.title,
+    },
+  };
+}
+
+/**
+ * S'inscrire à une sortie de club ne donne AUCUN droit sur le tracé : une inscription RSVP correspond au
+ * rôle `participant` (lecture + téléchargement du pack), jamais `route.edit_*` ni `route.publish`. Le
+ * contrôle réel reste `permissionsForMember` (serveur, RLS) ; cette fonction le rend testable côté Clubs.
+ */
+export function rsvpGrantsRouteEdit(): boolean {
+  const perms = permissionsForMember({ userId: 'rsvp', displayName: 'rsvp', role: 'participant' });
+  return perms.has('route.edit_geometry') || perms.has('route.edit_stages') || perms.has('route.publish');
 }

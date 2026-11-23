@@ -1,0 +1,239 @@
+/* Onglet Analyser (7.1 à 7.10) : blocs de lecture, pentes colorées, synthèse. Jetons --lkv-* et --xp-* seulement. */
+.rcw-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rcw-sourced {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.rcw-prov {
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--xp-mut);
+}
+
+.rcw-synth-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--xp-ink) 6%, transparent);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--xp-txt);
+}
+
+.rcw-synth-line + .rcw-synth-line {
+  margin-top: 6px;
+}
+
+.rcw-synth-line b {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.rcw-synth-line[data-tone='good'] b {
+  color: var(--lkv-sage-600);
+}
+
+.rcw-synth-line[data-tone='warn'] b {
+  color: var(--lkv-amber-800);
+}
+
+.rcw-synth-line[data-tone='bad'] b {
+  color: var(--lkv-danger-dark);
+}
+
+.rcw-effort-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--xp-txt);
+}
+
+.rcw-effort-score {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.rcw-expert-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--xp-mut);
+}
+
+.rcw-expert-note ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.rcw-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--lkv-forest-900);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rcw-why {
+  padding: 0 12px;
+}
+
+.rcw-why summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--lkv-forest-900);
+  cursor: pointer;
+}
+
+.rcw-factors {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rcw-factors li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 8px;
+  font-size: 12.5px;
+  color: var(--xp-txt);
+}
+
+.rcw-factors small {
+  grid-column: 1 / -1;
+  font-size: 10.5px;
+  color: var(--xp-mut);
+}
+
+/* Pentes colorées : mêmes jetons que le tracé de la carte (map/mapTokens.ts). */
+.rcw-slopes {
+  display: flex;
+  height: 14px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: var(--lkv-ink-300);
+  touch-action: none;
+}
+
+.rcw-slopes i {
+  display: block;
+  height: 100%;
+}
+
+.rcw-slopes i[data-band='plat'],
+.rcw-legend i[data-band='plat'] {
+  background: var(--lkv-sage-300);
+}
+
+.rcw-slopes i[data-band='modere'],
+.rcw-legend i[data-band='modere'] {
+  background: var(--lkv-warning);
+}
+
+.rcw-slopes i[data-band='soutenu'],
+.rcw-legend i[data-band='soutenu'] {
+  background: var(--lkv-warm-700);
+}
+
+.rcw-slopes i[data-band='raide'],
+.rcw-legend i[data-band='raide'] {
+  background: var(--lkv-danger);
+}
+
+.rcw-slopes i[data-band='inconnu'],
+.rcw-legend i[data-band='inconnu'] {
+  background: var(--lkv-ink-300);
+}
+
+.rcw-slopes i[data-surface='goudron'] {
+  background: var(--lkv-info);
+}
+
+.rcw-slopes i[data-surface='piste'] {
+  background: var(--lkv-warm-700);
+}
+
+.rcw-slopes i[data-surface='sentier'] {
+  background: var(--lkv-forest-500);
+}
+
+.rcw-slopes i[data-surface='inconnu'] {
+  background: var(--lkv-ink-300);
+}
+
+.rcw-legend,
+.rcw-gaps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  color: var(--xp-mut);
+}
+
+.rcw-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.rcw-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.rcw-gaps {
+  flex-direction: column;
+  gap: 0;
+  font-size: 12px;
+  color: var(--xp-warn);
+}
+
+.rcw-water-row[data-level='confirmed_recent'] {
+  color: var(--lkv-sage-700);
+}
+
+.rcw-analyse-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcw-block * {
+    transition: none !important;
+  }
+}
+
+.rcw-src-contents {
+  display: contents;
+}

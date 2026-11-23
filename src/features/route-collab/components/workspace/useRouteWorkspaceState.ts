@@ -50,6 +50,7 @@ import type {
   RouteProposal,
   RouteVariant,
   RouteWorkspaceState,
+  ShareLinkConfig,
 } from '../../types';
 import { resolveDeepLinkTarget } from '../../entry';
 import { buildProfileModel, nearestProfileIndex, readProfileAt, type ProfileReadout } from '../../profileLink';
@@ -58,7 +59,24 @@ import { useOpTracker } from './chrome/useOpTracker';
 import { ROLE_LABELS } from './labels';
 import { routingQueryParams } from '../../routingProfiles';
 import { useRouteEntry } from './start/RouteEntryContext';
+import { isRealTripId } from '../../startPersist';
+import { useRouteRealtime } from './useRouteRealtime';
+import {
+  COMMENT_TARGET_LABEL,
+  DEFAULT_SHARE_LINK_HOURS,
+  anchorFor,
+  commentAnchorLabel,
+  conflictProposalTitle,
+  firstNameOf,
+  nextStageScope,
+  type CommentTarget,
+  type InvitableCollaborator,
+} from '../../team';
+import { describeOperation } from '../../undo';
 import type { SubDrawerId, RouteCollabWorkspaceProps } from './types';
+
+/** Lecture de sécurité quand Broadcast est ouvert : rattrape un message perdu sans solliciter la base toutes les secondes. */
+const REALTIME_SAFETY_POLL_MS = 20_000;
 
 function detectWebGL(): boolean {
   if (typeof window === 'undefined') return false;
@@ -85,7 +103,8 @@ export function useRouteWorkspaceState({
 }: RouteCollabWorkspaceProps) {
   const [workspace, setWorkspace] = useState<RouteWorkspaceState>(initialWorkspace);
   const [opLog, setOpLog] = useState<readonly RouteOperationRecord[]>([]);
-  const [presence, setPresence] = useState<readonly PresenceEntry[]>([]);
+  // Présence lue sur le serveur (repli) ; la présence affichée est `presence`, plus bas (Broadcast quand il est ouvert).
+  const [polledPresence, setPresence] = useState<readonly PresenceEntry[]>([]);
 
   // État du tiroir Explorer (pilule 3 points -> tiroir principal -> sous-tiroirs)
   const [sheetOpen, setSheetOpen] = useState<boolean>(forceNoWebGL || initialSheetOpen);
@@ -137,6 +156,11 @@ export function useRouteWorkspaceState({
     }>
   >([]);
   const [userSearchLoading, setUserSearchLoading] = useState<boolean>(false);
+  // 8.1 : collaborateurs du voyage pas encore sur l'itinéraire
+  const [invitable, setInvitable] = useState<readonly InvitableCollaborator[]>([]);
+  const [invitableLoading, setInvitableLoading] = useState<boolean>(false);
+  // 8.9 : le jeton d'un lien de partage n'est renvoyé qu'à la création ; il vit ici, en mémoire, jamais relu.
+  const [freshShareToken, setFreshShareToken] = useState<string | null>(null);
 
   // Départ : vérifications manuelles complémentaires
   const [departChecks, setDepartChecks] = useState<{
@@ -177,8 +201,13 @@ export function useRouteWorkspaceState({
   const [commentBody, setCommentBody] = useState<string>('');
   const [proposalTitle, setProposalTitle] = useState<string>('');
   const [proposalRationale, setProposalRationale] = useState<string>('');
+  const [proposalDraft, setProposalDraft] = useState<{
+    operations: readonly RouteOperationInput[];
+    summary: string;
+  } | null>(null);
   const [stageNotesDraft, setStageNotesDraft] = useState<string>('');
   const [carnetRecord, setCarnetRecord] = useState<CarnetReturnRecord | null>(null);
+  const [publishSyncIssue, setPublishSyncIssue] = useState<{ id: number; message: string } | null>(null);
   const [offlineTick, setOfflineTick] = useState<number>(0);
   // Carte (catégorie 2) : relevé des calques par sport (2.7), curseur profil <-> carte (2.6)
   const [knowledgeLoadedAt, setKnowledgeLoadedAt] = useState<string | null>(null);
@@ -280,7 +309,42 @@ export function useRouteWorkspaceState({
     });
   }, [onWorkspaceChange, workspace]);
 
-  // Synchronisation temps réel HTTP + présence multi-sessions
+  // Synchronisation : Broadcast (8.8) annonce les nouvelles versions et la présence ; la lecture périodique de
+  // `/changes` reste le filet (rythme lent quand Broadcast est ouvert, rythme d'origine s'il est indisponible).
+  const pollNowRef = useRef<() => void>(() => undefined);
+  const realtime = useRouteRealtime({
+    enabled: !!serverSynced && online && !shareToken,
+    workspaceId: workspace.id,
+    userId: currentUserId,
+    userName: currentUserName,
+    members: workspace.members,
+    activeStageId: selectedStageId,
+    selectedEntityId: selectedPointId ?? selectedSectionId,
+    mode: selectedPointId ? 'editing' : 'viewing',
+    headSeq: workspace.headSeq,
+    onNewVersion: () => pollNowRef.current(),
+  });
+  const realtimeLive = realtime.status === 'live';
+  // Broadcast ne renvoie pas ses propres messages : on se rajoute, comme le faisait la présence serveur.
+  const livePresence = useMemo<readonly PresenceEntry[]>(
+    () => [
+      {
+        userId: currentUserId,
+        displayName: currentUserName,
+        activeStageId: selectedStageId,
+        selectedEntityId: selectedPointId ?? selectedSectionId,
+        softLockEntityId: null,
+        softLockExpiresAt: null,
+        mode: selectedPointId ? 'editing' : 'viewing',
+        lastSeenAt: new Date().toISOString(),
+      },
+      ...realtime.presence,
+    ],
+    [currentUserId, currentUserName, selectedStageId, selectedPointId, selectedSectionId, realtime.presence]
+  );
+  const presence: readonly PresenceEntry[] = realtimeLive ? livePresence : polledPresence;
+  const announceVersion = realtime.announceVersion;
+
   useEffect(() => {
     if (!serverSynced || !online) return;
     let active = true;
@@ -317,16 +381,18 @@ export function useRouteWorkspaceState({
       }
     };
 
-    const timer = window.setInterval(() => void poll(), 1200);
+    pollNowRef.current = () => void poll();
+    const timer = window.setInterval(() => void poll(), realtimeLive ? REALTIME_SAFETY_POLL_MS : 1200);
     return () => {
       active = false;
+      pollNowRef.current = () => undefined;
       window.clearInterval(timer);
     };
-  }, [serverSynced, online, workspace.id, workspace.updatedAt, shareToken, commitState, trackAcked]);
+  }, [serverSynced, online, workspace.id, workspace.updatedAt, shareToken, commitState, trackAcked, realtimeLive]);
 
-  // Présence légère (étape active + entité sélectionnée)
+  // Présence légère (étape active + entité sélectionnée) : repli HTTP, seulement si Broadcast n'est pas ouvert.
   useEffect(() => {
-    if (!serverSynced || !online || shareToken) return;
+    if (!serverSynced || !online || shareToken || realtimeLive) return;
     void fetch(`/api/routes/${encodeURIComponent(workspace.id)}/presence`, {
       method: 'POST',
       credentials: 'include',
@@ -342,6 +408,7 @@ export function useRouteWorkspaceState({
     serverSynced,
     online,
     shareToken,
+    realtimeLive,
     workspace.id,
     selectedStageId,
     selectedPointId,
@@ -572,6 +639,7 @@ export function useRouteWorkspaceState({
           commitState(result.workspace);
           setLastImpactText(formatImpact(result.impact));
           trackAcked(result.workspace.headSeq);
+          if (serverSynced) announceVersion(result.workspace.headSeq);
           trackRecord({
             operation,
             before: currentWs,
@@ -615,10 +683,12 @@ export function useRouteWorkspaceState({
       return false;
     },
     [
+      announceVersion,
       commitState,
       currentUserId,
       executeOperation,
       online,
+      serverSynced,
       trackAcked,
       trackBegin,
       trackFailed,
@@ -889,8 +959,44 @@ export function useRouteWorkspaceState({
     );
   };
 
-  const handlePublish = async () => {
-    const summary = `Publication v${(workspace.publishedRevisionNo ?? 0) + 1}`;
+  /**
+   * Après une publication réussie (10.1, 10.6) : le tracé du Compas (`routeDraft`) et le budget prévu suivent la
+   * version publiée. Non bloquant : un échec est annoncé dans l'îlot avec « Réessayer », la publication reste valide.
+   * 401/403 du budget : la personne n'a pas la gestion du budget, il n'y a rien à annoncer.
+   */
+  const syncPublishedFollowUps = useCallback(async (tripId: string) => {
+    if (!isRealTripId(tripId)) return;
+    const post = async (url: string) => {
+      try {
+        return await fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tripId }),
+        });
+      } catch {
+        return null;
+      }
+    };
+    const [draft, budget] = await Promise.all([post('/api/itineraire/sync-draft'), post('/api/itineraire/budget-sync')]);
+    const draftFailed = !draft || !draft.ok;
+    const budgetFailed = !budget ? true : !budget.ok && budget.status !== 401 && budget.status !== 403;
+    if (!draftFailed && !budgetFailed) return;
+    const message = draftFailed && budgetFailed
+      ? 'Tracé du Compas et budget non mis à jour · réessayer'
+      : draftFailed
+        ? 'Tracé du Compas non mis à jour · réessayer'
+        : 'Budget prévu non mis à jour · réessayer';
+    setPublishSyncIssue({ id: Date.now(), message });
+  }, []);
+
+  const retryPublishSync = useCallback(() => {
+    setPublishSyncIssue(null);
+    void syncPublishedFollowUps(workspace.tripId);
+  }, [syncPublishedFollowUps, workspace.tripId]);
+
+  const handlePublish = async (customSummary?: string) => {
+    const summary = customSummary?.trim() || `Publication v${(workspace.publishedRevisionNo ?? 0) + 1}`;
     if (serverSynced) {
       const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/publish`, {
         method: 'POST',
@@ -911,6 +1017,7 @@ export function useRouteWorkspaceState({
       commitState(data.workspace);
       trackAcked(data.workspace.headSeq);
       setStatusMessage(`Version ${data.revision?.revisionNo} publiée et figée.`);
+      void syncPublishedFollowUps(data.workspace.tripId);
       return;
     }
 
@@ -974,19 +1081,19 @@ export function useRouteWorkspaceState({
     setStatusMessage(`Pack v${latestRev.revisionNo} téléchargé et vérifié localement.`);
   };
 
-  const handleAddComment = async (anchorPointId?: string) => {
+  /** Un commentaire se pose sur un point, un tronçon ou un jour (8.7) ; par défaut, sur le point actif. */
+  const handleAddComment = async (anchorPointId?: string, target: CommentTarget = 'point') => {
     if (!commentBody.trim() || !canComment) return;
-    const targetPt =
-      orderedPoints.find((p) => p.id === (anchorPointId ?? selectedPointId)) ?? orderedPoints[0];
-    if (!targetPt) return;
-    const anchor = {
-      anchorType: 'point' as const,
-      entityId: targetPt.id,
-      entityVersion: targetPt.entityVersion,
-      originalLat: targetPt.lat,
-      originalLon: targetPt.lon,
-      maxRelocateMeters: 250,
-    };
+    const anchor = anchorFor(workspace, target, {
+      pointId: anchorPointId ?? selectedPointId ?? orderedPoints[0]?.id,
+      sectionId: selectedSectionId,
+      stageId: selectedStage?.id,
+    });
+    if (!anchor) {
+      setStatusMessage(`Choisissez d’abord ${COMMENT_TARGET_LABEL[target]} à commenter.`);
+      return;
+    }
+    const where = commentAnchorLabel({ anchor }, workspace);
 
     if (serverSynced) {
       const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/comments`, {
@@ -998,8 +1105,11 @@ export function useRouteWorkspaceState({
       if (res.ok) {
         const data = (await res.json()) as { workspace?: RouteWorkspaceState };
         if (data.workspace) commitState(data.workspace);
+        announceVersion(data.workspace?.headSeq ?? workspace.headSeq, 'discussion');
         setCommentBody('');
-        setStatusMessage(`Commentaire ancré sur ${targetPt.name ?? targetPt.kind}.`);
+        setStatusMessage(`Commentaire posé : ${where}.`);
+      } else {
+        setStatusMessage('Commentaire refusé : vérifiez vos droits ou réessayez.');
       }
       return;
     }
@@ -1021,20 +1131,21 @@ export function useRouteWorkspaceState({
       updatedAt: new Date().toISOString(),
     });
     setCommentBody('');
-    setStatusMessage(`Commentaire ancré sur ${targetPt.name ?? targetPt.kind}.`);
+    setStatusMessage(`Commentaire posé : ${where}.`);
   };
 
-  const handleRelocateComment = async (commentId: string) => {
-    const targetPt = selectedPoint ?? orderedPoints[0];
-    if (!targetPt) return;
-    const newAnchor = {
-      anchorType: 'point' as const,
-      entityId: targetPt.id,
-      entityVersion: targetPt.entityVersion,
-      originalLat: targetPt.lat,
-      originalLon: targetPt.lon,
-      maxRelocateMeters: 250,
-    };
+  /** Replace un commentaire dont l'ancre a disparu sur la cible choisie (point, tronçon ou jour sélectionné). */
+  const handleRelocateComment = async (commentId: string, target: CommentTarget = 'point') => {
+    const newAnchor = anchorFor(workspace, target, {
+      pointId: selectedPoint?.id ?? orderedPoints[0]?.id,
+      sectionId: selectedSectionId,
+      stageId: selectedStage?.id,
+    });
+    if (!newAnchor) {
+      setStatusMessage(`Choisissez d’abord ${COMMENT_TARGET_LABEL[target]} où le replacer.`);
+      return;
+    }
+    const where = commentAnchorLabel({ anchor: newAnchor }, workspace);
     if (serverSynced) {
       const res = await fetch(
         `/api/routes/${encodeURIComponent(workspace.id)}/comments/${encodeURIComponent(commentId)}/relocate`,
@@ -1048,7 +1159,8 @@ export function useRouteWorkspaceState({
       if (res.ok) {
         const data = (await res.json()) as { workspace?: RouteWorkspaceState };
         if (data.workspace) commitState(data.workspace);
-        setStatusMessage(`Commentaire repositionné sur ${targetPt.name ?? targetPt.kind}.`);
+        announceVersion(data.workspace?.headSeq ?? workspace.headSeq, 'discussion');
+        setStatusMessage(`Commentaire replacé : ${where}.`);
       }
       return;
     }
@@ -1059,40 +1171,33 @@ export function useRouteWorkspaceState({
       ),
       updatedAt: new Date().toISOString(),
     });
-    setStatusMessage(`Commentaire repositionné sur ${targetPt.name ?? targetPt.kind}.`);
+    setStatusMessage(`Commentaire replacé : ${where}.`);
   };
 
-  const handleCreateProposal = async () => {
-    if (!proposalTitle.trim() || !canPropose || orderedPoints.length === 0) return;
-    const target = orderedPoints[Math.floor(orderedPoints.length / 2)];
-    const operations: RouteOperationInput[] = [
-      {
-        type: 'move_point',
-        pointId: target.id,
-        lat: Number((target.lat + 0.004).toFixed(5)),
-        lon: Number((target.lon + 0.004).toFixed(5)),
-      },
-    ];
-
+  /**
+   * Publie une proposition. Sans brouillon, on garde le geste historique (déplacer le point médian) ; avec un
+   * brouillon (par exemple « Ma version » issue d'un conflit), ce sont ses opérations réelles qui sont proposées.
+   */
+  const submitProposal = async (title: string, rationale: string, operations: RouteOperationInput[]) => {
     if (serverSynced) {
       const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/proposals`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: proposalTitle.trim(),
-          rationale: proposalRationale.trim() || 'Variante proposée',
-          operations,
-        }),
+        body: JSON.stringify({ title, rationale: rationale || 'Variante proposée', operations }),
       });
       if (res.ok) {
         const data = (await res.json()) as { workspace?: RouteWorkspaceState };
         if (data.workspace) commitState(data.workspace);
+        announceVersion(data.workspace?.headSeq ?? workspace.headSeq, 'discussion');
         setProposalTitle('');
         setProposalRationale('');
+        setProposalDraft(null);
         setStatusMessage('Proposition publiée pour relecture.');
+        return true;
       }
-      return;
+      setStatusMessage('Proposition refusée : vérifiez vos droits ou réessayez.');
+      return false;
     }
 
     const prop: RouteProposal = {
@@ -1101,9 +1206,11 @@ export function useRouteWorkspaceState({
       baseSeq: workspace.headSeq,
       createdBy: currentUserId,
       authorName: currentUserName,
-      title: proposalTitle.trim(),
-      rationale: proposalRationale.trim() || 'Variante proposée',
-      scopeEntityIds: [target.id],
+      title,
+      rationale: rationale || 'Variante proposée',
+      scopeEntityIds: Array.from(
+        new Set(operations.flatMap((op) => ('pointId' in op ? [op.pointId] : 'sectionId' in op ? [op.sectionId] : [])))
+      ),
       operations,
       impactPreview: null,
       status: 'open',
@@ -1117,7 +1224,43 @@ export function useRouteWorkspaceState({
     });
     setProposalTitle('');
     setProposalRationale('');
+    setProposalDraft(null);
     setStatusMessage('Proposition publiée pour relecture.');
+    return true;
+  };
+
+  const handleCreateProposal = async () => {
+    if (!proposalTitle.trim() || !canPropose || orderedPoints.length === 0) return;
+    let operations: RouteOperationInput[];
+    if (proposalDraft) {
+      operations = [...proposalDraft.operations];
+    } else {
+      const target = orderedPoints[Math.floor(orderedPoints.length / 2)];
+      operations = [
+        {
+          type: 'move_point',
+          pointId: target.id,
+          lat: Number((target.lat + 0.004).toFixed(5)),
+          lon: Number((target.lon + 0.004).toFixed(5)),
+        },
+      ];
+    }
+    await submitProposal(proposalTitle.trim(), proposalRationale.trim(), operations);
+  };
+
+  /** 8.5 « Proposer » : ma version du conflit devient une proposition à relire, au lieu d'écraser ou de s'effacer. */
+  const handleProposeFromConflict = () => {
+    if (!activeConflict) return;
+    if (!canPropose) {
+      setStatusMessage('Vous n’avez pas le droit de proposer sur cet itinéraire.');
+      return;
+    }
+    const op = activeConflict.pendingOp;
+    setProposalDraft({ operations: [op], summary: describeOperation(op, workspace) });
+    setProposalTitle(conflictProposalTitle(op, workspace));
+    setProposalRationale('Nous avons modifié le même point en même temps.');
+    setActiveConflict(null);
+    openSubDrawer('proposals');
   };
 
   const handleVoteProposal = async (proposalId: string, vote: 'up' | 'down') => {
@@ -1134,6 +1277,7 @@ export function useRouteWorkspaceState({
       if (res.ok) {
         const data = (await res.json()) as { workspace?: RouteWorkspaceState };
         if (data.workspace) commitState(data.workspace);
+        announceVersion(data.workspace?.headSeq ?? workspace.headSeq, 'discussion');
       }
       return;
     }
@@ -1161,7 +1305,10 @@ export function useRouteWorkspaceState({
         setStatusMessage(data.error ?? 'Impossible de traiter la proposition.');
         return;
       }
-      if (data.workspace) commitState(data.workspace);
+      if (data.workspace) {
+        commitState(data.workspace);
+        announceVersion(data.workspace.headSeq, data.workspace.headSeq > workspace.headSeq ? 'operation' : 'discussion');
+      }
       setStatusMessage(
         decision === 'accept' ? 'Proposition acceptée et appliquée.' : 'Proposition refusée.'
       );
@@ -1301,6 +1448,10 @@ export function useRouteWorkspaceState({
     commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
   };
 
+  /**
+   * 8.9 Lien de lecture : 48 h par défaut, zone de départ privée masquée, révocation immédiate. Le jeton n'est renvoyé
+   * qu'une fois, à la création : on le garde ici (mémoire de la page) pour l'afficher juste après, jamais ensuite.
+   */
   const handleManageShareLink = async (action: 'create' | 'revoke') => {
     if (!canManageMembers) return;
     if (serverSynced) {
@@ -1311,29 +1462,33 @@ export function useRouteWorkspaceState({
         body: JSON.stringify({
           kind: 'share_link',
           action,
-          expiresInHours: 48,
+          expiresInHours: DEFAULT_SHARE_LINK_HOURS,
           hidePrivateStartRadiusM: 300,
         }),
       });
       if (res.ok) {
-        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState; shareLink?: ShareLinkConfig | null };
         if (data.workspace) commitState(data.workspace);
+        setFreshShareToken(action === 'create' && data.shareLink?.token ? data.shareLink.token : null);
         setStatusMessage(
           action === 'create'
-            ? 'Lien lecture seule généré (48 h, zone de départ privée masquée).'
+            ? 'Lien lecture seule généré (48 h, zone de départ privée masquée). Copiez-le maintenant : il ne sera plus affiché.'
             : 'Lien de partage révoqué immédiatement.'
         );
+      } else {
+        setStatusMessage('Le lien n’a pas pu être modifié : réessayez.');
       }
       return;
     }
+    const localToken = `lk-${Date.now().toString(36)}`;
     commitState({
       ...workspace,
       shareLink:
         action === 'create'
           ? {
-              token: `lk-${Date.now().toString(36)}`,
+              token: localToken,
               audience: 'external_viewer',
-              expiresAt: new Date(Date.now() + 48 * 3600_000).toISOString(),
+              expiresAt: new Date(Date.now() + DEFAULT_SHARE_LINK_HOURS * 3600_000).toISOString(),
               revokedAt: null,
               hidePrivateStartRadiusM: 300,
               createdBy: currentUserId,
@@ -1344,6 +1499,7 @@ export function useRouteWorkspaceState({
             : null,
       updatedAt: new Date().toISOString(),
     });
+    setFreshShareToken(action === 'create' ? localToken : null);
     setStatusMessage(
       action === 'create'
         ? 'Lien lecture seule généré (48 h, zone de départ privée masquée).'
@@ -1533,6 +1689,25 @@ export function useRouteWorkspaceState({
     }
   };
 
+  /** Réponse d'une action sur les membres : relit l'état, prévient les autres, dit l'échec en clair. */
+  const postMemberAction = async (body: Record<string, unknown>, okMessage: string): Promise<boolean> => {
+    const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'member', ...body }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { workspace?: RouteWorkspaceState; error?: string };
+    if (!res.ok) {
+      setStatusMessage(data.error ?? 'Modification de l’équipe refusée.');
+      return false;
+    }
+    if (data.workspace) commitState(data.workspace);
+    announceVersion(data.workspace?.headSeq ?? workspace.headSeq, 'team');
+    setStatusMessage(okMessage);
+    return true;
+  };
+
   const handleMemberRoleAction = async (
     userId: string,
     role: 'co_organizer' | 'editor' | 'contributor' | 'participant',
@@ -1540,17 +1715,11 @@ export function useRouteWorkspaceState({
   ) => {
     if (!canManageMembers) return;
     if (serverSynced) {
-      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'role', userId, role, displayName }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
-        if (data.workspace) commitState(data.workspace);
-        setStatusMessage(`Droits mis à jour (${ROLE_LABELS[role] ?? role}).`);
-      }
+      // Corps aligné sur le schéma serveur (`kind: 'member'`, `targetUserId`) : l'ancien `kind: 'role'` était refusé en 400.
+      await postMemberAction(
+        { targetUserId: userId, role, displayName },
+        `Droits mis à jour (${ROLE_LABELS[role] ?? role}).`
+      );
       return;
     }
     const existing = workspace.members.find((m) => m.userId === userId);
@@ -1574,17 +1743,7 @@ export function useRouteWorkspaceState({
   const handleRevokeMember = async (userId: string) => {
     if (!canManageMembers) return;
     if (serverSynced) {
-      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'revoke', userId }),
-      });
-      if (res.ok) {
-        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
-        if (data.workspace) commitState(data.workspace);
-        setStatusMessage('Accès révoqué.');
-      }
+      await postMemberAction({ targetUserId: userId, revoke: true }, 'Accès révoqué.');
       return;
     }
     commitState({
@@ -1596,6 +1755,56 @@ export function useRouteWorkspaceState({
     });
     setStatusMessage('Accès révoqué.');
   };
+
+  /**
+   * 8.3 Confier un jour à quelqu'un (ou le lui retirer) : stocké dans `stageScopeIds` du membre. Une portée non vide
+   * limite aussi ses modifications de tracé à ces jours (`hasRoutePermission`) : l'interface le dit avant.
+   */
+  const handleAssignStage = async (userId: string, stageId: string, assigned: boolean) => {
+    if (!canManageMembers) return;
+    const member = workspace.members.find((m) => m.userId === userId && !m.revokedAt);
+    const stage = workspace.stages.find((s) => s.id === stageId);
+    if (!member || !stage) return;
+    const stageScopeIds = nextStageScope(member.stageScopeIds, stageId, assigned);
+    const sentence = assigned
+      ? `Jour ${stage.dayNumber} confié à ${firstNameOf(member.displayName)}.`
+      : `Jour ${stage.dayNumber} retiré à ${firstNameOf(member.displayName)}.`;
+    if (serverSynced) {
+      await postMemberAction({ targetUserId: userId, stageScopeIds }, sentence);
+      return;
+    }
+    commitState({
+      ...workspace,
+      members: workspace.members.map((m) => (m.userId === userId ? { ...m, stageScopeIds } : m)),
+      updatedAt: new Date().toISOString(),
+    });
+    setStatusMessage(sentence);
+  };
+
+  /** 8.1 Les invitables sont les collaborateurs du voyage, lus par l'API (RLS), pas une recherche dans toute la base. */
+  const loadInvitable = useCallback(async () => {
+    if (!serverSynced || shareToken) {
+      setInvitable([]);
+      return;
+    }
+    setInvitableLoading(true);
+    try {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/members`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { invitable?: InvitableCollaborator[] };
+        setInvitable(Array.isArray(data.invitable) ? data.invitable : []);
+      } else {
+        setInvitable([]);
+      }
+    } catch {
+      setInvitable([]);
+    } finally {
+      setInvitableLoading(false);
+    }
+  }, [serverSynced, shareToken, workspace.id]);
 
   const applyImportedCoordinates = useCallback(
     (
@@ -2125,6 +2334,8 @@ export function useRouteWorkspaceState({
     handleImportGpx,
     handleDownloadGpx,
     handlePublish,
+    publishSyncIssue,
+    retryPublishSync,
     handleDownloadPack,
     handleAddComment,
     handleRelocateComment,
@@ -2143,6 +2354,15 @@ export function useRouteWorkspaceState({
     handleSearchLkdvUsers,
     handleMemberRoleAction,
     handleRevokeMember,
+    handleAssignStage,
+    invitable,
+    invitableLoading,
+    loadInvitable,
+    freshShareToken,
+    realtimeStatus: realtime.status,
+    proposalDraft,
+    setProposalDraft,
+    handleProposeFromConflict,
     handleFreehandDrawComplete,
     snapSectionsAroundPoint,
     handleDragPoint,

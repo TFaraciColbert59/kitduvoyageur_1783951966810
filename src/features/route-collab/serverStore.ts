@@ -718,8 +718,10 @@ export function updateMemberRoleOrRevoke(params: {
   delegatedPublish?: boolean;
   revoke?: boolean;
   displayName?: string;
+  /** Étapes confiées au membre (8.3) ; absent = inchangé, `[]` = aucune. */
+  stageScopeIds?: readonly string[];
   nowIso?: string;
-}): { ok: true; workspace: RouteWorkspaceState } | { ok: false; status: 403 | 404; error: string } {
+}): { ok: true; workspace: RouteWorkspaceState } | { ok: false; status: 403 | 404 | 501; error: string } {
   const store = getStore();
   const rec = store.get(params.workspaceId);
   if (!rec) return { ok: false, status: 404, error: 'Itinéraire introuvable.' };
@@ -737,6 +739,7 @@ export function updateMemberRoleOrRevoke(params: {
             ...m,
             role: params.role ?? m.role,
             delegatedPublish: params.delegatedPublish ?? m.delegatedPublish,
+            stageScopeIds: params.stageScopeIds ? [...params.stageScopeIds] : m.stageScopeIds,
             revokedAt: params.revoke ? nowIso : null,
           }
         : m,
@@ -749,6 +752,7 @@ export function updateMemberRoleOrRevoke(params: {
         displayName: params.displayName ?? params.targetUserId,
         role: params.role ?? 'participant',
         delegatedPublish: params.delegatedPublish ?? false,
+        ...(params.stageScopeIds ? { stageScopeIds: [...params.stageScopeIds] } : {}),
         revokedAt: params.revoke ? nowIso : null,
       },
     ];

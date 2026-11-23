@@ -58,3 +58,6 @@ C5 = src/features/compas/v5 · CE = src/features/compas/engine
 - Matière : les lignes (`Li` → `RouteRow`), groupes (`Grp`), puces (`Chip`), boutons (`PBtn`), interrupteur et légendes (`Cap`) viennent de `v5/ui/primitives.tsx`, sous la portée `V5Scope` (`.v5 .rcw-v5`, `display: contents`). `v5.css` est importé par l'espace de travail.
 - Îlot : `IslandNote` (`v5/Island.tsx`) porte l'annonce unique de l'itinéraire ; `Island` du Compas partage son corps (`IslandNoteBody`).
 - Non réutilisé : `Flow` (capsule d'icônes, l'itinéraire garde la capsule d'onglets de l'Explorer avec libellés accessibles) et les `DRAWERS` du Compas.
+
+## Interconnexion réalisée (23/11/2026)
+Voir `INTERCONNEXION-LKDV.md` : règle de vérité du tracé, ponts HUB / Explorer / Clubs / Budget / Vérifs / Allure / Communauté / Admin et écarts connus.

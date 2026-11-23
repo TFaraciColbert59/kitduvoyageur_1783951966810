@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Grp, Li } from '@/features/compas/v5/ui/primitives';
 import type { V5IconName } from '@/features/compas/v5/ui/icons';
+import { dataSourceAttrs, type Provenance } from '../../../analyse/provenance';
 import { V5Scope } from './V5Scope';
 
 /**
@@ -36,10 +37,22 @@ export interface RouteRowProps {
   testId?: string;
   /** Ligne choisie (jour sélectionné). */
   current?: boolean;
+  /** Source et date de la valeur affichée (7.9) : posées en `data-source` / `data-source-at` sur la valeur. */
+  provenance?: Provenance;
+  /** Identifiant de la valeur (`data-analyse-value`), lu par le test de provenance. */
+  valueId?: string;
 }
 
-export function RouteRow({ icon, title, subtitle, value, state, trailing, onClick, ariaLabel, testId, current }: RouteRowProps) {
-  const shownValue = value ?? (state === 'unknown' ? 'Inconnu' : null);
+export function RouteRow({ icon, title, subtitle, value, state, trailing, onClick, ariaLabel, testId, current, provenance, valueId }: RouteRowProps) {
+  const plain = value ?? (state === 'unknown' ? 'Inconnu' : null);
+  const shownValue =
+    plain != null && provenance ? (
+      <span data-analyse-value={valueId ?? testId ?? 'valeur'} {...dataSourceAttrs(provenance)}>
+        {plain}
+      </span>
+    ) : (
+      plain
+    );
   const right =
     state || trailing ? (
       <>

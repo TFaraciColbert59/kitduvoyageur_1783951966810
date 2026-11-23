@@ -282,14 +282,19 @@ ALTER TABLE public.carnets
 -- 2. Aides internes (jamais exposées aux clients)
 -- ----------------------------------------------------------------------------
 
--- Nombre JSON => double precision, sinon NULL (aucune erreur de cast sur un type inattendu).
+-- Nombre JSON => double precision, sinon NULL (aucune erreur de cast sur un type inattendu). Un nombre hors
+-- bornes (1e400 : dépassement ; 1e-400 : sous-dépassement) ne lève JAMAIS d'exception de cast :
+--   |x| >= 1e300 => NULL ; sinon arrondi à 12 décimales (1e-400 => 0) avant le passage en double precision.
 CREATE OR REPLACE FUNCTION public.route_jf(p_value JSONB)
 RETURNS DOUBLE PRECISION
 LANGUAGE sql
 IMMUTABLE
 SET search_path = public
 AS $$
-  SELECT CASE WHEN jsonb_typeof(p_value) = 'number' THEN (p_value #>> '{}')::double precision END;
+  -- CASE imbriqués : l'ordre d'évaluation des opérandes d'un AND n'est pas garanti.
+  SELECT CASE WHEN jsonb_typeof(p_value) = 'number' THEN
+           CASE WHEN abs(p_value::numeric) < 1e300 THEN round(p_value::numeric, 12)::double precision END
+         END;
 $$;
 
 -- Chaîne JSON tronquée, sinon null JSON.

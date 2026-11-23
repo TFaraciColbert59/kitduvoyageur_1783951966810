@@ -1037,6 +1037,15 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       if (!hasRoutePermission(actor, 'route.manage_members')) {
         return { ok: false, status: 403, error: 'Gestion des membres réservée au responsable.' };
       }
+      // 8.3 : `set_route_member_tx` n'écrit pas `stage_scope_ids` (la migration 20261118120000 est figée). On refuse
+      // franchement plutôt que d'annoncer une étape confiée qui ne serait pas enregistrée.
+      if (params.stageScopeIds !== undefined) {
+        return {
+          ok: false,
+          status: 501,
+          error: 'Confier une étape n’est pas encore enregistrable en base (la fonction set_route_member_tx n’accepte pas de portée).',
+        };
+      }
       // route_workspace_members référence auth.users : seul un identifiant utilisateur (UUID) est valide.
       if (!UUID_RE.test(params.targetUserId)) {
         return { ok: false, status: 404, error: 'Utilisateur introuvable.' };

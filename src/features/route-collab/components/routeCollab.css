@@ -1210,3 +1210,144 @@
   font-size: 11px;
   color: var(--xp-mut);
 }
+
+/* ── Équipe (catégorie 8) : cibles ≥ 44 px, jetons existants uniquement ── */
+.rcw-tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.rcw-select-tap {
+  min-height: 44px;
+  font-size: 12.5px;
+}
+
+.rcw-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.rcw-assign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rcw-assign-day {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--xp-ink);
+}
+
+/* 8.5 Conflit : les deux positions côte à côte */
+.rcw-conflict-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rcw-conflict-side,
+.rcw-impact-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rc-white) 72%, transparent);
+  box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--rc-ink) 14%, transparent);
+}
+
+.rcw-conflict-cap {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--xp-mut);
+}
+
+.rcw-conflict-val {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--xp-ink);
+  overflow-wrap: anywhere;
+}
+
+.rcw-conflict-gap {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  color: var(--xp-mut);
+}
+
+/* 8.6 Propositions : avant / après */
+.rcw-impact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rcw-impact-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rcw-impact-sub {
+  font-size: 11.5px;
+  color: var(--xp-mut);
+}
+
+.rcw-impact-line {
+  margin: 0;
+  font-size: 12px;
+  color: var(--xp-txt);
+}
+
+.rcw-impact-kit {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 11.5px;
+  color: var(--xp-mut);
+}
+
+.rcw-relocate,
+.rcw-proposal-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rc-warn) 10%, transparent);
+}
+
+.rcw-inline-actions .is-active {
+  background: var(--rc-forest);
+  color: var(--rc-white);
+}
+
+/* 8.3 / 8.4 Pilule de jour : avatar de la personne à qui le jour est confié, contour de la présence (sans curseur) */
+.rcw-day-chip[data-present='true'] {
+  box-shadow: 0 0 0 2px var(--lkv-sage-500);
+}
+
+.rcw-day-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--lkv-sage-500);
+  color: var(--rc-white);
+  font-size: 9.5px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.rcw-day-chip[aria-selected='true'] .rcw-day-avatar {
+  background: var(--rc-white);
+  color: var(--rc-forest);
+}

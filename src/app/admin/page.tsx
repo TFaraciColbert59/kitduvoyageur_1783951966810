@@ -25,7 +25,7 @@ const SIDEBAR_ITEMS: { id: AdminSection; label: string; icon: string; badge?: st
   { id: 'toolbox', label: 'Toolbox', icon: 'WrenchScrewdriverIcon', group: 'Contenu' },
   { id: 'content', label: 'Guides', icon: 'BookOpenIcon', group: 'Contenu' },
   { id: 'users', label: 'Utilisateurs', icon: 'UsersIcon', group: 'Gestion' },
-  { id: 'moderation', label: 'Modération', icon: 'ShieldCheckIcon', badge: '7', group: 'Gestion' },
+  { id: 'moderation', label: 'Modération', icon: 'ShieldCheckIcon', group: 'Gestion' },
   { id: 'rewards', label: 'Récompenses & Sim', icon: 'GiftIcon', group: 'Gestion' },
   { id: 'progression', label: 'Barème & Simulation', icon: 'AdjustmentsHorizontalIcon', group: 'Gestion' },
   { id: 'audit', label: 'Audit & Paramètres', icon: 'Cog6ToothIcon', group: 'Gestion' },
@@ -71,21 +71,6 @@ const COUNTRIES_DATA = [
   { code: 'is', name: 'Islande', status: 'brouillon', lastSync: '2026-07-05', danger: 1 },
   { code: 'ma', name: 'Maroc', status: 'publié', lastSync: '2026-07-03', danger: 2 },
   { code: 'no', name: 'Norvège', status: 'à_vérifier', lastSync: '2026-06-15', danger: 1 },
-];
-
-const MODERATION_QUEUE = [
-  { id: 'm1', type: 'avis', content: 'Excellent kit, parfait pour le trek...', user: 'Pierre D.', date: '2026-07-09', product: 'Kit Népal' },
-  { id: 'm2', type: 'avis', content: 'Qualité décevante pour le prix...', user: 'Anne M.', date: '2026-07-09', product: 'Tente Big Agnes' },
-  { id: 'm3', type: 'forum', content: 'Quelqu\'un a testé le kit Patagonie ?', user: 'Marc T.', date: '2026-07-08', product: 'Forum' },
-  { id: 'm4', type: 'avis', content: 'Livraison rapide, produit conforme...', user: 'Julie R.', date: '2026-07-08', product: 'Sac Osprey' },
-];
-
-const AUDIT_LOG = [
-  { id: 'a1', admin: 'jean.admin', action: 'UPDATE', target: 'product', targetId: 'p2', at: '2026-07-09 14:32' },
-  { id: 'a2', admin: 'jean.admin', action: 'CREATE', target: 'kit', targetId: 'k6', at: '2026-07-09 11:15' },
-  { id: 'a3', admin: 'claire.modo', action: 'APPROVE', target: 'review', targetId: 'm1', at: '2026-07-08 16:44' },
-  { id: 'a4', admin: 'jean.admin', action: 'REFUND', target: 'order', targetId: '#8818', at: '2026-07-08 10:22' },
-  { id: 'a5', admin: 'jean.admin', action: 'ROLE_CHANGE', target: 'user', targetId: 'u4', at: '2026-07-07 09:10' },
 ];
 
 const TOOLBOX_ITEMS = [
@@ -603,57 +588,143 @@ function UsersSection() {
 }
 
 // ─── Section: Moderation ───────────────────────────────────────────────────────
+// Branchée sur le serveur (`/api/admin/moderation`, réservé aux modérateurs) : traces publiques, commentaires
+// et liens partagés d'itinéraire, statut lu dans `moderation_queue`, décision consignée dans `admin_audit_log`.
+type ModerationItem = {
+  type: 'route_public_trace' | 'route_comment' | 'route_share_link';
+  id: string;
+  preview: string | null;
+  createdAt: string | null;
+  status: 'en_attente' | 'approuve' | 'rejete' | 'signale';
+};
+const MODERATION_TYPE_LABEL: Record<ModerationItem['type'], string> = {
+  route_public_trace: 'Trace publiée',
+  route_comment: 'Commentaire d’itinéraire',
+  route_share_link: 'Lien partagé',
+};
+const MODERATION_STATUS_LABEL: Record<ModerationItem['status'], string> = {
+  en_attente: 'En attente',
+  approuve: 'Validé',
+  rejete: 'Rejeté',
+  signale: 'Signalé',
+};
+
 function ModerationSection() {
-  const [queue, setQueue] = useState(MODERATION_QUEUE);
+  const [items, setItems] = useState<ModerationItem[]>([]);
+  const [unavailable, setUnavailable] = useState<string[]>([]);
+  const [state, setState] = useState<'loading' | 'ready' | 'error' | 'forbidden'>('loading');
+  const [busyKey, setBusyKey] = useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    setState('loading');
+    try {
+      const res = await fetch('/api/admin/moderation', { cache: 'no-store' });
+      if (res.status === 401 || res.status === 403) return setState('forbidden');
+      const body = (await res.json()) as { status?: string; items?: ModerationItem[]; unavailable?: string[] };
+      if (!res.ok || body.status !== 'ok') return setState('error');
+      setItems(body.items ?? []);
+      setUnavailable(body.unavailable ?? []);
+      setState('ready');
+    } catch {
+      setState('error');
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const decide = async (item: ModerationItem, decision: 'approve' | 'reject' | 'flag') => {
+    const key = `${item.type}:${item.id}`;
+    setBusyKey(key);
+    try {
+      const res = await fetch('/api/admin/moderation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: item.type, id: item.id, decision }),
+      });
+      const body = (await res.json()) as { status?: string; statut?: ModerationItem['status'] };
+      if (res.ok && body.status === 'ok' && body.statut) {
+        setItems((list) => list.map((x) => (x.type === item.type && x.id === item.id ? { ...x, status: body.statut as ModerationItem['status'] } : x)));
+      } else {
+        setState('error');
+      }
+    } catch {
+      setState('error');
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const pending = items.filter((i) => i.status === 'en_attente' || i.status === 'signale');
+  if (state === 'loading') return <p className="text-sm text-white/50">Chargement de la file de modération…</p>;
+  if (state === 'forbidden') return <p className="text-sm text-white/50">Accès réservé aux modérateurs.</p>;
+  if (state === 'error')
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-white/60">⚠️ La file de modération n’a pas pu être lue.</p>
+        <button onClick={() => void load()} className="px-3 py-1.5 rounded-xl bg-white/10 text-xs text-white/70 hover:bg-white/15">Réessayer</button>
+      </div>
+    );
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-5 h-5 rounded-full bg-sand-400/20 text-sand-400 text-[10px] font-mono font-700 flex items-center justify-center" style={{ fontFamily: 'var(--font-mono)' }}>{queue.length}</span>
+          <span className="w-5 h-5 rounded-full bg-sand-400/20 text-sand-400 text-[10px] font-mono font-700 flex items-center justify-center" style={{ fontFamily: 'var(--font-mono)' }}>{pending.length}</span>
           <p className="text-sm text-white/60">éléments en attente de modération</p>
         </div>
       </div>
+      {unavailable.length > 0 && (
+        <p className="text-xs text-white/40" role="status">
+          Commentaires et liens partagés d’itinéraire : source non disponible (fonction d’audit non installée), non évalués.
+        </p>
+      )}
       <div className="space-y-3">
-        {queue.map(item => (
-          <div key={item.id} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border font-mono font-medium ${item.type === 'avis' ? 'text-blue-400 bg-blue-400/10 border-blue-400/20' : 'text-purple-400 bg-purple-400/10 border-purple-400/20'}`} style={{ fontFamily: 'var(--font-mono)' }}>
-                    {item.type}
-                  </span>
-                  <span className="text-xs text-white/30">{item.product}</span>
-                  <span className="text-xs text-white/20">·</span>
-                  <span className="text-xs text-white/30">{item.user}</span>
+        {items.map(item => {
+          const key = `${item.type}:${item.id}`;
+          return (
+            <div key={key} className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full border font-mono font-medium text-purple-400 bg-purple-400/10 border-purple-400/20" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {MODERATION_TYPE_LABEL[item.type]}
+                    </span>
+                    <span className="text-xs text-white/30">{MODERATION_STATUS_LABEL[item.status]}</span>
+                    {item.createdAt && <span className="text-xs text-white/20">· {item.createdAt.slice(0, 10)}</span>}
+                  </div>
+                  <p className="text-sm text-white/65 leading-relaxed">{item.preview ?? 'Aucun aperçu (identifiant seul).'}</p>
                 </div>
-                <p className="text-sm text-white/65 leading-relaxed">&quot;{item.content}&quot;</p>
-              </div>
-              <div className="flex gap-1.5 flex-shrink-0">
-                <button
-                  onClick={() => setQueue(q => q.filter(x => x.id !== item.id))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-500/15 text-forest-400 hover:bg-forest-500/25 transition-all text-xs font-medium"
-                >
-                  <Icon name="CheckIcon" size={12} variant="outline" />
-                  Valider
-                </button>
-                <button
-                  onClick={() => setQueue(q => q.filter(x => x.id !== item.id))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all text-xs font-medium"
-                >
-                  <Icon name="XMarkIcon" size={12} variant="outline" />
-                  Rejeter
-                </button>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <button
+                    disabled={busyKey === key}
+                    onClick={() => void decide(item, 'approve')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-forest-500/15 text-forest-400 hover:bg-forest-500/25 transition-all text-xs font-medium disabled:opacity-50"
+                  >
+                    <Icon name="CheckIcon" size={12} variant="outline" />
+                    Valider
+                  </button>
+                  <button
+                    disabled={busyKey === key}
+                    onClick={() => void decide(item, 'reject')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all text-xs font-medium disabled:opacity-50"
+                  >
+                    <Icon name="XMarkIcon" size={12} variant="outline" />
+                    Rejeter
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {queue.length === 0 && (
+          );
+        })}
+        {items.length === 0 && (
           <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-8 text-center">
             <Icon name="CheckCircleIcon" size={32} variant="outline" className="text-forest-400 mx-auto mb-3" />
             <p className="text-sm text-white/50">File de modération vide — tout est à jour.</p>
           </div>
         )}
       </div>
+      <p className="text-[11px] text-white/30">Une décision est consignée dans la file et le journal d’audit ; elle ne masque ni ne supprime encore le contenu.</p>
     </div>
   );
 }
@@ -762,17 +833,36 @@ function ContentSection() {
 
 // ─── Section: Audit & Settings ─────────────────────────────────────────────────
 function AuditSection() {
+  const [auditLog, setAuditLog] = useState<Array<{ id: string; action: string; target: string; targetId: string; at: string }>>([]);
+  const [auditState, setAuditState] = useState<'loading' | 'ready' | 'error'>('loading');
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/moderation?view=audit', { cache: 'no-store' })
+      .then((r) => r.json().then((b) => ({ ok: r.ok, b })))
+      .then(({ ok, b }) => {
+        if (!alive) return;
+        if (!ok || b.status !== 'ok') return setAuditState('error');
+        setAuditLog(b.entries ?? []);
+        setAuditState('ready');
+      })
+      .catch(() => alive && setAuditState('error'));
+    return () => {
+      alive = false;
+    };
+  }, []);
   return (
     <div className="space-y-5">
       <div className="bg-[color:var(--lkv-forest-900)] border border-white/8 rounded-xl p-4">
         <h3 className="text-sm font-semibold text-white mb-3">Journal d&apos;audit</h3>
         <div className="space-y-2">
-          {AUDIT_LOG.map(log => (
+          {auditState === 'loading' && <p className="text-xs text-white/40">Chargement…</p>}
+          {auditState === 'error' && <p className="text-xs text-white/50">⚠️ Journal indisponible.</p>}
+          {auditState === 'ready' && auditLog.length === 0 && <p className="text-xs text-white/40">Aucune entrée.</p>}
+          {auditLog.map(log => (
             <div key={log.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-700 ${ACTION_COLORS[log.action]}`} style={{ fontFamily: 'var(--font-mono)' }}>{log.action}</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-700 ${ACTION_COLORS[log.action] ?? ''}`} style={{ fontFamily: 'var(--font-mono)' }}>{log.action}</span>
               <span className="text-xs text-white/50 flex-1">{log.target} <span className="text-white/30">#{log.targetId}</span></span>
-              <span className="text-xs text-white/30 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{log.admin}</span>
-              <span className="text-xs text-white/20 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{log.at}</span>
+              <span className="text-xs text-white/20 font-mono" style={{ fontFamily: 'var(--font-mono)' }}>{log.at.slice(0, 16).replace('T', ' ')}</span>
             </div>
           ))}
         </div>

@@ -16,6 +16,11 @@ export function RoutePaceProvider({ members, children }: { members: readonly Pac
   return <MembersContext.Provider value={members}>{children}</MembersContext.Provider>;
 }
 
+/** Membres du groupe et leur allure déclarée (Compas), pour les moteurs qui ont besoin de chacun (effort, charge). */
+export function useGroupMembers(): readonly PaceMember[] {
+  return useContext(MembersContext);
+}
+
 const KEY = 'lkdv:itineraire:slowestKmh:v1';
 const EVENT = 'lkdv:itineraire:slowestKmh';
 

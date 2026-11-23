@@ -1,22 +1,10 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
+import { RelocateSchema } from '../../../../_teamSchemas';
 import { getAuthenticatedRouteActor } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
-
-const RelocateSchema = z.object({
-  newAnchor: z.object({
-    anchorType: z.enum(['point', 'section', 'stage', 'position']),
-    entityId: z.string().min(1),
-    entityVersion: z.number().int().nonnegative(),
-    fraction: z.number().min(0).max(1).optional(),
-    originalLat: z.number().min(-90).max(90),
-    originalLon: z.number().min(-180).max(180),
-    maxRelocateMeters: z.number().positive().default(250),
-  }),
-});
 
 export async function POST(
   request: Request,

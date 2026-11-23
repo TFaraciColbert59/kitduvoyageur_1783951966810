@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteOperationInput } from '@/features/route-collab/types';
-import { MAX_OPERATION_CHARS, RouteOperationSchema, readBoundedJson } from '../../_schemas';
+import { MAX_OPERATION_CHARS, readBoundedJson } from '../../_schemas';
+import { ProposalSchema } from '../../_teamSchemas';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
-
-const ProposalSchema = z.object({
-  title: z.string().min(2).max(160),
-  rationale: z.string().max(500).default(''),
-  // Chaque opération proposée est validée comme une opération directe (union discriminée).
-  operations: z.array(RouteOperationSchema).min(1).max(50),
-});
 
 export async function POST(
   request: Request,

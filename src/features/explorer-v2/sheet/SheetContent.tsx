@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { XpIcon } from '../ui/XpIcon';
 import {
   ExplorerSearchError,
@@ -1919,6 +1920,30 @@ function TrailTraceTab({
   const [customPace, setCustomPace] = React.useState(false);
   const [ebike, setEbike] = React.useState(false);
   const [selectedClimbId, setSelectedClimbId] = React.useState<string | null>(null);
+  const router = useRouter();
+  const [prepareState, setPrepareState] = React.useState<'idle' | 'busy' | 'error' | 'signin'>('idle');
+
+  // 10.4 : rattache ce tracé à un voyage (brouillon créé si besoin) puis ouvre l'atelier d'itinéraire.
+  const prepareWithTrack = async () => {
+    const routeId = Number(route?.id);
+    if (!Number.isInteger(routeId) || routeId <= 0 || prepareState === 'busy') return;
+    setPrepareState('busy');
+    try {
+      const res = await fetch('/api/itineraire/from-explorer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ routeId }),
+      });
+      const body = (await res.json().catch(() => null)) as { status?: string; href?: string } | null;
+      if (res.ok && body?.href) {
+        router.push(body.href);
+        return;
+      }
+      setPrepareState(res.status === 401 ? 'signin' : 'error');
+    } catch {
+      setPrepareState('error');
+    }
+  };
 
   const nearbyWater = ctx.pois.filter((p) => p.kind === 'water');
   const nearbyRefuges = ctx.pois.filter((p) => p.kind === 'refuge');
@@ -2027,6 +2052,17 @@ function TrailTraceTab({
         >
           Copier et modifier
         </button>
+        {/^\d+$/.test(String(route.id)) ? (
+          <button
+            type="button"
+            className="xp-chip"
+            data-testid="explorer-prepare-with-track"
+            disabled={prepareState === 'busy'}
+            onClick={() => void prepareWithTrack()}
+          >
+            {prepareState === 'busy' ? 'Préparation…' : 'Préparer avec ce tracé'}
+          </button>
+        ) : null}
         <button
           type="button"
           className="xp-chip"
@@ -2059,6 +2095,13 @@ function TrailTraceTab({
           Exporter GPX
         </button>
       </div>
+      {prepareState === 'signin' || prepareState === 'error' ? (
+        <p role="status" style={{ fontSize: 12, color: 'var(--lkv-text-muted)' }}>
+          {prepareState === 'signin'
+            ? 'Connecte-toi pour préparer une aventure avec ce tracé.'
+            : 'Impossible de préparer ce tracé pour le moment. Réessaie.'}
+        </p>
+      ) : null}
 
       <XpEyebrow>Effort &amp; rythme personnel</XpEyebrow>
       <div className="xp-chiprow" aria-label="Ajuster l'allure personnelle">

@@ -34,6 +34,9 @@ export interface TrailMessageMeta {
   workspace_id?: string | null;
   revision_no?: number | null;
   share_token?: string | null;
+  /** Carte d'étape (itinéraire collaboratif) : jour à ouvrir. */
+  stage_id?: string | null;
+  stage_day?: number | null;
   geojson?: { type: 'LineString'; coordinates: [number, number][] };
   coordinates?: [number, number][];
 }

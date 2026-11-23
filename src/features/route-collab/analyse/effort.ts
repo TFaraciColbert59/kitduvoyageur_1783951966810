@@ -192,6 +192,8 @@ export interface EffortOptions {
   readonly members: readonly MemberProfile[];
   /** Poids du sac de l'utilisateur en kg ; `null` : inconnu (charge non comptée, et dit). */
   readonly packWeightKg: number | null;
+  /** Objets du sac sans poids connu : leur charge n'est pas comptée, et c'est dit. */
+  readonly packUnweightedCount?: number;
   /** Température du moment (MET Norway) ; `null` : conditions neutres, et dit. */
   readonly tempC: number | null;
   readonly stages: readonly CollaborativeStage[];
@@ -317,6 +319,7 @@ export function buildEffortAnalysis(model: ProfileModel, sections: Parameters<ty
   const coveragePct = set.totalKm > 0 ? Math.round((set.knownKm / set.totalKm) * 100) : 0;
   const assumptions: string[] = [`Physiologie : profil de référence (${IEA_REFERENCE_WEIGHT_KG} kg, VO2max ${IEA_REFERENCE_VO2MAX_ML_KG_MIN})`];
   if (opts.packWeightKg == null) assumptions.push('Sac inconnu : charge portée non comptée');
+  else if ((opts.packUnweightedCount ?? 0) > 0) assumptions.push(`${opts.packUnweightedCount} objet(s) du sac sans poids connu : leur charge n’est pas comptée`);
   if (opts.tempC == null) assumptions.push('Météo non chargée : conditions neutres (14 °C)');
   if (set.segments.some((s) => s.altitudeM == null)) assumptions.push('Altitude inconnue sur une partie du tracé : effet de l’altitude non compté');
   if (coveragePct < 100) assumptions.push(`Dénivelé connu sur ${coveragePct} % du tracé seulement`);

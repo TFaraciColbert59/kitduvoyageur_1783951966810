@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
+import { VoteSchema } from '../../../../_teamSchemas';
 import { getAuthenticatedRouteActor } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
-
-const VoteSchema = z.object({ vote: z.enum(['up', 'down']) });
 
 export async function POST(
   request: Request,

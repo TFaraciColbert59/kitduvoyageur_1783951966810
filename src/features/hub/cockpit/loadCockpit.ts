@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { getPublishedRouteSummaryForTrip } from '@/features/route-collab/server/publishedRoute';
 import { listBookings, type BookingStore } from '@/features/booking/server/bookingPersistence';
 import { isOwnMediaUrl, parseMomentMeta } from '@/features/carnet/detail/momentTypes';
 import { privateMomentMediaPath } from '@/features/carnet/detail/privateMomentMedia';
@@ -69,7 +71,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
 
   const supabase = await createClient();
   const hasCachedViewer = data.viewer !== undefined;
-  const [session, participants, bookings, carnets, kit, clubRouteUpdates, stepExecutions] = await Promise.all([
+  const [session, participants, bookings, carnets, kit, clubRouteUpdates, stepExecutions, publishedRoute] = await Promise.all([
     hasCachedViewer
       ? Promise.resolve({ data: { user: data.viewer } })
       : supabase.auth.getUser(),
@@ -86,6 +88,8 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
     trip.kit_id ? supabase.from('materiel_kits').select('name').eq('id', trip.kit_id).eq('is_trashed', false).maybeSingle() : null,
     supabase.rpc('get_trip_club_route_updates', { p_trip_id: trip.id }),
     data.viewer !== null ? readStepExecutions(supabase, trip.id) : undefined,
+    // 10.3 : version publiée de l'itinéraire (lecture serveur sous RLS, null sans publication ou en cas de panne).
+    getPublishedRouteSummaryForTrip(trip.id, supabase as unknown as SupabaseClient),
   ]);
   const viewer = session.data.user;
   const selectedCarnet = carnets.data;
@@ -111,6 +115,15 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
   return {
     ...cockpit,
     stepExecutions,
+    publishedRoute: publishedRoute
+      ? {
+          revisionNo: publishedRoute.revisionNo,
+          distanceKm: publishedRoute.distanceKm,
+          stagesCount: publishedRoute.stagesCount,
+          hasNewerDraft: publishedRoute.hasNewerDraft,
+          href: publishedRoute.href,
+        }
+      : null,
     clubRouteUpdates: clubRouteUpdateRows.map((row) => ({
       eventId: row.event_id,
       title: row.event_title,

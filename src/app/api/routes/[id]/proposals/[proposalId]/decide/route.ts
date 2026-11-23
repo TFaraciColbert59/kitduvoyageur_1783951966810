@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
+import { DecideSchema } from '../../../../_teamSchemas';
 import { getAuthenticatedRouteActor } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
-
-const DecideSchema = z.object({
-  decision: z.enum(['accept', 'reject']),
-  expectedHeadSeq: z.number().int().nonnegative().optional(),
-});
 
 export async function POST(
   request: Request,

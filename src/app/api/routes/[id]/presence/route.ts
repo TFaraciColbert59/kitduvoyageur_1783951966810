@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
+import { PresenceSchema } from '../../_teamSchemas';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
-
-const PresenceSchema = z.object({
-  activeStageId: z.string().max(80).nullable().optional(),
-  selectedEntityId: z.string().max(80).nullable().optional(),
-  softLockEntityId: z.string().max(80).nullable().optional(),
-  mode: z.enum(['viewing', 'editing', 'reviewing']).default('viewing'),
-});
 
 export async function POST(
   request: Request,
