@@ -15,6 +15,13 @@
 - Migration `supabase/migrations/20261118120000_route_collab_20_10.sql` : **appliquée en production** le 23/11/2026 (projet Supabase `icxyvwzfjbflcbqukpfz`, par l'éditeur SQL : elle n'est donc PAS inscrite dans `supabase_migrations.schema_migrations` ; un futur `supabase db push` voudra la rejouer — elle est idempotente, mais mieux vaut la marquer comme appliquée). Retour arrière : `supabase/migrations_down/20261118120000_route_collab_20_10.down.sql`. Test : `supabase/tests/database/route_collab_20_10_rls.test.sql` (191 assertions, à jouer sur un Postgres local avec PostGIS + pgTAP).
 - Migration suivante en cours d'écriture : `supabase/migrations/20261123130000_route_collab_followups.sql` (préférences Simple/Expert par compte `user_ui_prefs`, RPC clubs `publish_club_event_route_from_workspace`, modération `admin_list_route_moderation` / `admin_apply_route_moderation`). **Non appliquée.** Avant application : relecture de sécurité indépendante, test SQL local vert, puis application. L'outil MCP Supabase demande une confirmation qui n'atteint pas toujours l'utilisateur : le plus sûr est que l'utilisateur colle le fichier dans l'éditeur SQL de Supabase, puis vérifier en base (tables en RLS, droits `anon`, conseillers de sécurité).
 
+### Attention : la production diverge des migrations du dépôt (constaté le 23/11)
+
+Toujours vérifier le schéma RÉEL en base avant d'écrire une migration (requêtes `information_schema` / `pg_proc` en lecture seule) ; un test sur Postgres local qui rejoue les migrations du dépôt ne suffit pas.
+- Les migrations clubs `20261119204829_publish_club_event_route`, `20261119205238_decide_club_event_route`, `20261121080207_club_route_revision_conflicts` ne sont PAS en production : pas de `publish_club_event_route`, `club_private.save_event_route_state`, `get_club_event_route_trace`, `get_trip_club_route_updates`, ni de table `club_event_route_decisions` ; `club_event_route_revisions` n'a que event_id, revision, route_id, checksum, distance_m, elevation_gain_m, updated_by, updated_at, requires_participant_decision ; `club_events` n'a pas `cancelled_at`.
+- `moderation_queue` en production est la file des annonces de la place de marché (listing_id, type, statut, soumis_par, traite_par…), pas une file générique.
+- La migration de suivi `20261123130000` est en cours d'adaptation à ce schéma réel (section clubs conditionnelle, modération journalisée dans `admin_audit_log`).
+
 ## Travail en cours au moment de la passation
 
 Trois lots sur les points partiels, modifications NON commitées dans l'arbre si l'agent précédent s'est arrêté :
