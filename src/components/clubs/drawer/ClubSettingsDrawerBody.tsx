@@ -1634,31 +1634,56 @@ export function ClubSettingsDrawerBody({
     }
   };
 
+  const cfgFieldStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '10px 12px',
+    borderRadius: 12,
+    border: '1px solid rgba(23, 43, 36, 0.11)',
+    background: 'rgba(23, 43, 36, 0.035)',
+    fontSize: 13,
+    lineHeight: 1.45,
+    color: '#172b24',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  const cfgCardStyle: React.CSSProperties = {
+    padding: 14,
+    borderRadius: 18,
+    background: 'rgba(255, 255, 255, 0.86)',
+    border: '0.5px solid rgba(23, 43, 36, 0.08)',
+    boxShadow: 'inset 0 1px 0 #fff, 0 2px 10px rgba(23, 43, 36, 0.04)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  };
+
+  const cfgLabelStyle: React.CSSProperties = {
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#56665d',
+    letterSpacing: '0.02em',
+    textTransform: 'uppercase',
+    display: 'block',
+    marginBottom: 4,
+  };
+
   return (
     <div className="club-drawer-pane-content" data-testid="club-settings-moderation-pane">
-      {/* Paramétrage complet du club */}
-      <form
-        onSubmit={handleSaveClubSettings}
-        className="club-glass-card"
-        style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Compass size={16} color="#17402c" aria-hidden="true" />
-            <b style={{ fontSize: 13.5, color: 'var(--label)' }}>Paramétrage du club</b>
+      <form onSubmit={handleSaveClubSettings} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Section 1 : Identité du club */}
+        <div style={cfgCardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Compass size={15} color="#17402c" aria-hidden="true" />
+            <b style={{ fontSize: 13.5, color: '#172b24' }}>Identité du club</b>
           </div>
-          <span className="club-badge-sage">
-            {cfgPrivacy === 'open' ? 'Ouvert' : cfgPrivacy === 'closed' ? 'Sur validation' : 'Secret'}
-          </span>
-        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
-            Nom du club
+          <div>
+            <label htmlFor="club-cfg-name" style={cfgLabelStyle}>Nom du club</label>
             <input
+              id="club-cfg-name"
               type="text"
-              className="club-glass-input"
-              style={{ width: '100%', marginTop: 3 }}
+              style={cfgFieldStyle}
               value={cfgName}
               onChange={(e) => setCfgName(e.target.value)}
               disabled={!canEditGovernance}
@@ -1666,97 +1691,144 @@ export function ClubSettingsDrawerBody({
               maxLength={80}
               required
             />
-          </label>
+          </div>
 
-          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
-            Massif / Territoire
+          <div>
+            <label htmlFor="club-cfg-zone" style={cfgLabelStyle}>Massif / Territoire</label>
             <input
+              id="club-cfg-zone"
               type="text"
-              className="club-glass-input"
-              style={{ width: '100%', marginTop: 3 }}
+              style={cfgFieldStyle}
               placeholder="Ex : Chamonix · Mont-Blanc"
               value={cfgZone}
               onChange={(e) => setCfgZone(e.target.value)}
               disabled={!canEditGovernance}
               maxLength={120}
             />
-          </label>
+          </div>
 
-          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
-            Présentation du club
+          <div>
+            <label htmlFor="club-cfg-desc" style={cfgLabelStyle}>Présentation</label>
             <textarea
-              className="club-glass-input"
-              rows={2}
-              style={{ width: '100%', marginTop: 3, resize: 'vertical', minHeight: 54 }}
+              id="club-cfg-desc"
+              rows={3}
+              style={{ ...cfgFieldStyle, resize: 'none' }}
               placeholder="Esprit de la cordée, disciplines, niveau habituel…"
               value={cfgDesc}
               onChange={(e) => setCfgDesc(e.target.value)}
               disabled={!canEditGovernance}
               maxLength={1000}
             />
-          </label>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Politique d’accès & visibilité</span>
-          <div style={{ display: 'flex', gap: 6 }}>
+        {/* Section 2 : Accès & Visibilité */}
+        <div style={cfgCardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Eye size={15} color="#17402c" aria-hidden="true" />
+              <b style={{ fontSize: 13.5, color: '#172b24' }}>Accès & Visibilité</b>
+            </div>
+            <span className="club-badge-sage">
+              {cfgPrivacy === 'open' ? 'Ouvert' : cfgPrivacy === 'closed' ? 'Sur validation' : 'Secret'}
+            </span>
+          </div>
+
+          <div
+            role="group"
+            aria-label="Politique d’accès et visibilité"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 3,
+              padding: 3,
+              borderRadius: 12,
+              background: 'rgba(23, 43, 36, 0.06)',
+            }}
+          >
             {(
               [
                 { id: 'open', label: 'Ouvert' },
                 { id: 'closed', label: 'Validation' },
                 { id: 'secret', label: 'Secret' },
               ] as const
-            ).map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={!canEditGovernance}
-                className={`reseau-btn ${cfgPrivacy === opt.id ? 'active' : ''}`}
-                style={{ flex: 1, fontSize: 11.5, padding: '6px 8px' }}
-                onClick={() => setCfgPrivacy(opt.id)}
-              >
-                {opt.label}
-              </button>
-            ))}
+            ).map((opt) => {
+              const active = cfgPrivacy === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={!canEditGovernance}
+                  onClick={() => setCfgPrivacy(opt.id)}
+                  style={{
+                    height: 32,
+                    borderRadius: 9,
+                    border: 0,
+                    background: active ? '#ffffff' : 'transparent',
+                    boxShadow: active ? '0 1px 4px rgba(23, 43, 36, 0.10)' : 'none',
+                    color: active ? '#17402c' : '#56665d',
+                    fontSize: 12,
+                    fontWeight: active ? 700 : 500,
+                    cursor: canEditGovernance ? 'pointer' : 'default',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
+
+          <span style={{ fontSize: 11.5, color: '#56665d', lineHeight: 1.4 }}>
+            {cfgPrivacy === 'open'
+              ? 'Tout membre peut découvrir le club et le rejoindre librement.'
+              : cfgPrivacy === 'closed'
+                ? 'Le club est visible mais chaque demande doit être validée par le bureau.'
+                : 'Le club est masqué de la recherche : accès uniquement sur invitation.'}
+          </span>
         </div>
 
-        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
-          Charte & règlement intérieur
-          <textarea
-            className="club-glass-input"
-            rows={2}
-            style={{ width: '100%', marginTop: 3, resize: 'vertical', minHeight: 52 }}
-            placeholder="Ex : Respect de la sécurité, matériel DVA obligatoire en hiver…"
-            value={cfgRules}
-            onChange={(e) => setCfgRules(e.target.value)}
-            disabled={!canEditGovernance}
-            maxLength={1000}
-          />
-        </label>
+        {/* Section 3 : Charte & Questions d'adhésion */}
+        <div style={cfgCardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Lock size={15} color="#17402c" aria-hidden="true" />
+            <b style={{ fontSize: 13.5, color: '#172b24' }}>Charte & Adhésion</b>
+          </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
-            Questions d’adhésion (optionnel)
-          </span>
-          <input
-            type="text"
-            className="club-glass-input"
-            placeholder="Question 1 (ex : Quelle est ton expérience en alpinisme ?)"
-            value={cfgJoinQ1}
-            onChange={(e) => setCfgJoinQ1(e.target.value)}
-            disabled={!canEditGovernance}
-            maxLength={160}
-          />
-          <input
-            type="text"
-            className="club-glass-input"
-            placeholder="Question 2 (ex : Es-tu autonome sur glacier ?)"
-            value={cfgJoinQ2}
-            onChange={(e) => setCfgJoinQ2(e.target.value)}
-            disabled={!canEditGovernance}
-            maxLength={160}
-          />
+          <div>
+            <label htmlFor="club-cfg-rules" style={cfgLabelStyle}>Règlement intérieur</label>
+            <textarea
+              id="club-cfg-rules"
+              rows={3}
+              style={{ ...cfgFieldStyle, resize: 'none' }}
+              placeholder="Ex : Respect de la sécurité, matériel DVA obligatoire en hiver…"
+              value={cfgRules}
+              onChange={(e) => setCfgRules(e.target.value)}
+              disabled={!canEditGovernance}
+              maxLength={1000}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={cfgLabelStyle}>Questions d’adhésion (optionnel)</span>
+            <input
+              type="text"
+              style={cfgFieldStyle}
+              placeholder="Question 1 — Ex : Quelle est ton expérience en alpinisme ?"
+              value={cfgJoinQ1}
+              onChange={(e) => setCfgJoinQ1(e.target.value)}
+              disabled={!canEditGovernance}
+              maxLength={160}
+            />
+            <input
+              type="text"
+              style={cfgFieldStyle}
+              placeholder="Question 2 — Ex : Es-tu autonome sur glacier ?"
+              value={cfgJoinQ2}
+              onChange={(e) => setCfgJoinQ2(e.target.value)}
+              disabled={!canEditGovernance}
+              maxLength={160}
+            />
+          </div>
         </div>
 
         {canEditGovernance ? (
@@ -1764,15 +1836,23 @@ export function ClubSettingsDrawerBody({
             type="submit"
             className="lkdv-carnet-btn-soft"
             disabled={cfgSaving}
-            style={{ width: '100%', justifyContent: 'center', height: 36, fontWeight: 700 }}
+            style={{
+              width: '100%',
+              justifyContent: 'center',
+              height: 40,
+              fontSize: 13,
+              fontWeight: 700,
+              background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.30), rgba(150, 186, 142, 0.16))',
+              color: '#17402c',
+            }}
           >
-            <Check size={14} aria-hidden="true" />
+            <Check size={15} aria-hidden="true" />
             <span>{cfgSaving ? 'Enregistrement…' : 'Enregistrer les paramètres'}</span>
           </button>
         ) : null}
       </form>
 
-      <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={cfgCardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Shield size={16} color="#17402c" aria-hidden="true" />
