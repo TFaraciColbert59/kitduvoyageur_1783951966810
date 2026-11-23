@@ -82,6 +82,7 @@ export interface ClubStatsHubDrawerBodyProps {
   windowKey?: ClubStatsWindow;
   onWindowChange?: (next: ClubStatsWindow) => void;
   memberSort?: MemberSortMetric;
+  memberRoleFilter?: MemberRoleFilter;
   onToggleJoinClub: (clubId: string) => Promise<boolean> | void;
   onInspectMember: (member: ClubMemberData) => void;
   onInspectOuting: (outing: ClubOutingData) => void;
@@ -96,7 +97,7 @@ export interface ClubStatsHubDrawerBodyProps {
 
 type ChartMetricId = 'distanceKm' | 'dplusM' | 'outingsCount';
 export type MemberSortMetric = 'distance' | 'dplus' | 'outings' | 'hours' | 'contributions';
-type MemberRoleFilter = 'all' | 'leaders' | 'members';
+export type MemberRoleFilter = 'all' | 'leaders' | 'members';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const statsCache = new Map<string, { data: ClubStatsPayload; ts: number }>();
@@ -429,7 +430,8 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const [memberSearch, setMemberSearch] = useState('');
   const [internalMemberSort] = useState<MemberSortMetric>('distance');
   const memberSort = props.memberSort ?? internalMemberSort;
-  const [memberRoleFilter] = useState<MemberRoleFilter>('all');
+  const [internalMemberRoleFilter] = useState<MemberRoleFilter>('all');
+  const memberRoleFilter = props.memberRoleFilter ?? internalMemberRoleFilter;
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [visibleMembersCount, setVisibleMembersCount] = useState(20);
   const [savingStoryPermId, setSavingStoryPermId] = useState<string | null>(null);

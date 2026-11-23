@@ -5,9 +5,19 @@ import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 export interface SortOption {
   value: string;
   label: string;
+  count?: number;
 }
 
 export type SortMenuOption = SortOption;
+
+export interface SortMenuGroup {
+  id?: string;
+  label: string;
+  value: string;
+  defaultValue: string;
+  options: SortOption[];
+  onChange: (value: string) => void;
+}
 
 export interface SortMenuButtonProps {
   /** Tri courant (valeur d'option). */
@@ -16,6 +26,8 @@ export interface SortMenuButtonProps {
   defaultValue: string;
   options: SortOption[];
   onChange: (value: string) => void;
+  /** Groupes optionnels additionnels (ex. Régime + Filtre dans le même menu). */
+  groups?: SortMenuGroup[];
   /** Libellé accessible du bouton (défaut : « Trier »). */
   label?: string;
   disabled?: boolean;
@@ -54,6 +66,7 @@ export function SortMenuButton({
   defaultValue,
   options,
   onChange,
+  groups,
   label = 'Trier',
   disabled = false,
 }: SortMenuButtonProps) {
@@ -62,15 +75,20 @@ export function SortMenuButton({
   const menuRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const menuId = useId();
-  const isModified = value !== defaultValue;
+  const resolvedGroups: SortMenuGroup[] =
+    groups && groups.length > 0
+      ? groups
+      : [{ id: 'default', label: 'Trier par', value, defaultValue, options, onChange }];
+  const flatOptions = resolvedGroups.flatMap((g) => g.options);
+  const isModified = resolvedGroups.some((g) => g.value !== g.defaultValue);
 
   const focusItem = useCallback((index: number) => {
-    if (options.length === 0) return;
-    const safe = ((index % options.length) + options.length) % options.length;
+    if (flatOptions.length === 0) return;
+    const safe = ((index % flatOptions.length) + flatOptions.length) % flatOptions.length;
     window.requestAnimationFrame(() => {
       itemRefs.current[safe]?.focus({ preventScroll: true });
     });
-  }, [options.length]);
+  }, [flatOptions.length]);
 
   const close = useCallback((restoreFocus: boolean) => {
     setOpen(false);
@@ -128,7 +146,7 @@ export function SortMenuButton({
       case 'ArrowUp':
         event.preventDefault();
         event.stopPropagation();
-        focusItem(currentIndex < 0 ? options.length - 1 : currentIndex - 1);
+        focusItem(currentIndex < 0 ? flatOptions.length - 1 : currentIndex - 1);
         return;
       case 'Home':
         event.preventDefault();
@@ -138,7 +156,7 @@ export function SortMenuButton({
       case 'End':
         event.preventDefault();
         event.stopPropagation();
-        focusItem(options.length - 1);
+        focusItem(flatOptions.length - 1);
         return;
       default:
         return;
@@ -191,29 +209,49 @@ export function SortMenuButton({
           tabIndex={-1}
           onKeyDown={handleMenuKeyDown}
         >
-          <span className="lkdv-sort-menu-title" aria-hidden="true">
-            Trier par
-          </span>
-          {options.map((option, index) => {
-            const checked = option.value === value;
-            return (
-              <button
-                key={option.value}
-                ref={(node) => {
-                  itemRefs.current[index] = node;
-                }}
-                type="button"
-                className="lkdv-sort-item"
-                role="menuitemradio"
-                aria-checked={checked}
-                tabIndex={-1}
-                onClick={() => selectOption(option)}
-              >
-                <span className="lkdv-sort-item-label">{option.label}</span>
-                {checked ? CHECK_ICON : null}
-              </button>
-            );
-          })}
+          {(() => {
+            let flatIdx = 0;
+            return resolvedGroups.map((group, gIdx) => (
+              <React.Fragment key={group.id ?? `${group.label}-${gIdx}`}>
+                {gIdx > 0 ? (
+                  <div
+                    role="separator"
+                    style={{ height: 1, margin: '4px 8px', background: 'var(--cv2-soft-line)' }}
+                  />
+                ) : null}
+                <span className="lkdv-sort-menu-title" aria-hidden="true">
+                  {group.label}
+                </span>
+                {group.options.map((option) => {
+                  const idx = flatIdx++;
+                  const checked = option.value === group.value;
+                  return (
+                    <button
+                      key={`${group.id ?? gIdx}:${option.value}`}
+                      ref={(node) => {
+                        itemRefs.current[idx] = node;
+                      }}
+                      type="button"
+                      className="lkdv-sort-item"
+                      role="menuitemradio"
+                      aria-checked={checked}
+                      tabIndex={-1}
+                      onClick={() => {
+                        group.onChange(option.value);
+                        close(true);
+                      }}
+                    >
+                      <span className="lkdv-sort-item-label">
+                        {option.label}
+                        {typeof option.count === 'number' ? ` (${option.count})` : ''}
+                      </span>
+                      {checked ? CHECK_ICON : null}
+                    </button>
+                  );
+                })}
+              </React.Fragment>
+            ));
+          })()}
         </div>
       ) : null}
     </div>

@@ -6,11 +6,14 @@ import dynamic from 'next/dynamic';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import type { PickerProduct } from '@/features/community/create/kit/types';
 import {
+  AlertTriangle,
   Check,
   Copy,
+  Eye,
   Layers,
   Package,
   Search,
+  ShieldCheck,
   X,
 } from 'lucide-react';
 import { KitCard, type KitEntry, type KitProductView } from '@/components/compte/drawer/cards/KitCard';
@@ -29,6 +32,7 @@ const KitProductSheetV2 = dynamic(
 );
 
 export type VaultFilterId = 'all' | 'available' | 'mine' | 'light';
+export type VaultScopeId = 'all' | 'club' | 'member';
 export type KitSeasonFilter = 'all' | 'summer' | 'winter';
 
 function resolveGearProductImage(name: string, category: string, imageUrl?: string): string {
@@ -73,16 +77,18 @@ export function ClubCoffreDrawerBody({
   members,
   kitSeason: controlledKitSeason,
   vaultFilter: controlledVaultFilter,
+  vaultScope: controlledVaultScope,
   onToggleReserveGear,
   onCloneStandardKit,
   onToast,
 }: ClubCoffreDrawerBodyProps & {
   kitSeason?: KitSeasonFilter;
   vaultFilter?: VaultFilterId;
+  vaultScope?: VaultScopeId;
 }) {
-  // D16 — Vault items search & filter state (filter controlled from bottom-right SortMenuButton)
+  // D16 — Vault items search & filter state (filter & scope controlled from bottom-right SortMenuButton)
   const [vaultSearch, setVaultSearch] = useState('');
-  const [vaultScope, setVaultScope] = useState<'all' | 'club' | 'member'>('all');
+  const vaultScope = controlledVaultScope ?? 'all';
   const vaultFilter = controlledVaultFilter ?? 'all';
   const [visibleVaultCount, setVisibleVaultCount] = useState(35);
   const [selectedGearIndex, setSelectedGearIndex] = useState<number | null>(null);
@@ -94,12 +100,6 @@ export function ClubCoffreDrawerBody({
   } | null>(null);
 
   const kitSeason = controlledKitSeason ?? 'all';
-
-  const clubInventoryCount = useMemo(
-    () => vaultGear.filter((g) => g.ownershipScope === 'club').length,
-    [vaultGear],
-  );
-  const memberInventoryCount = vaultGear.length - clubInventoryCount;
 
   const filteredVault = useMemo(() => {
     const q = normalizeText(vaultSearch.trim());
@@ -285,30 +285,6 @@ export function ClubCoffreDrawerBody({
         </div>
       </div>
 
-      {/* Regime switch: Parc du club vs Entraide membres */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-        {(
-          [
-            { id: 'all', label: `Tout (${vaultGear.length})` },
-            { id: 'club', label: `Parc du club (${clubInventoryCount})` },
-            { id: 'member', label: `Entraide membres (${memberInventoryCount})` },
-          ] as const
-        ).map((pill) => {
-          const active = vaultScope === pill.id;
-          return (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => setVaultScope(pill.id)}
-              className={active ? 'lkdv-carnet-btn-primary' : 'lkdv-carnet-btn-soft'}
-              style={{ fontSize: 11.5, padding: '5px 10px', borderRadius: 999 }}
-            >
-              {pill.label}
-            </button>
-          );
-        })}
-      </div>
-
       <div className="reseau-list">
         {filteredVault.length === 0 ? (
           <ClubEmptyCard
@@ -317,73 +293,152 @@ export function ClubCoffreDrawerBody({
             description="Mutualisez votre matériel technique avec les membres de la cordée."
           />
         ) : (
-          <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(() => {
-              const groups = new Map<string, typeof visibleVault>();
-              for (const g of visibleVault) {
-                const cat = g.category?.trim() || 'Équipement';
-                const list = groups.get(cat);
-                if (list) list.push(g);
-                else groups.set(cat, [g]);
+          <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {visibleVault.map((g, idx) => {
+              const isClubOwned = g.ownershipScope === 'club';
+              const qtyAvail = g.quantityAvailable ?? (g.available ? 1 : 0);
+              const qtyTotal = g.quantityTotal ?? 1;
+              const depositEur = g.depositCents ? Math.round(g.depositCents / 100) : 0;
+              const weightLabel =
+                g.weightG >= 1000
+                  ? `${(g.weightG / 1000).toFixed(1).replace('.', ',')} kg`
+                  : `${g.weightG} g`;
+              const conditionLabel =
+                g.conditionStatus === 'new'
+                  ? 'Neuf'
+                  : g.conditionStatus === 'worn'
+                    ? 'Usé'
+                    : g.conditionStatus === 'repair'
+                      ? 'À réparer'
+                      : g.condition || 'Bon état';
+
+              let epiState: 'ok' | 'warn' | 'expired' | null = null;
+              if (g.isEpi) {
+                if (g.epiExpiresAt) {
+                  const expMs = Date.parse(g.epiExpiresAt);
+                  const daysLeft = Number.isFinite(expMs) ? (expMs - Date.now()) / 86_400_000 : 999;
+                  epiState = daysLeft < 0 ? 'expired' : daysLeft < 30 ? 'warn' : 'ok';
+                } else {
+                  epiState = 'ok';
+                }
               }
-              return Array.from(groups.entries()).map(([cat, items]) => {
-                const totalWeightG = items.reduce((sum, x) => sum + (x.weightG || 0), 0);
-                const products: KitProductView[] = items.map((g) => {
-                  const isClubOwned = g.ownershipScope === 'club';
-                  const qtyAvail = g.quantityAvailable ?? (g.available ? 1 : 0);
-                  const qtyTotal = g.quantityTotal ?? 1;
-                  const depositEur = g.depositCents ? Math.round(g.depositCents / 100) : 0;
-                  const ownerText = isClubOwned
-                    ? `Parc ${activeClub.name} · ${qtyAvail}/${qtyTotal} dispo`
-                    : `Entraide · Prêté par ${g.ownerName} (@${g.ownerHandle})`;
-                  const extraBadges = [
-                    g.isEpi ? `EPI${g.epiExpiresAt ? ` (exp. ${g.epiExpiresAt})` : ''}` : null,
-                    depositEur > 0 ? `Caution ${depositEur} €` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ');
-                  return {
-                    id: g.id,
-                    name: g.name,
-                    category: g.category || cat,
-                    weightG: g.weightG || null,
-                    quantity: qtyTotal,
-                    condition: g.reservedByMe
-                      ? 'Réservé ✓'
-                      : isClubOwned
-                        ? `${qtyAvail}/${qtyTotal} dispo`
-                        : g.condition || 'Vérifié',
-                    priority: g.isEpi ? 'EPI' : null,
-                    vital: Boolean(g.isEpi),
-                    brand: g.brand || null,
-                    description: extraBadges ? `${ownerText} · ${extraBadges}` : ownerText,
-                    image: resolveGearProductImage(g.name, g.category, g.imageUrl),
-                    isLent: Boolean(g.reservedByMe),
-                  };
-                });
-                const kit: KitEntry = {
-                  id: `vault-cat-${cat}`,
-                  name: cat,
-                  desc: `${items.length} pièce${items.length > 1 ? 's' : ''} · Coffre ${activeClub.name}`,
-                  gen: `${items.length} pièce${items.length > 1 ? 's' : ''}`,
-                  total_weight_g: totalWeightG,
-                  w: totalWeightG,
-                  items: products.length,
-                  products,
-                };
-                return (
-                  <KitCard
-                    key={kit.id}
-                    kit={kit}
-                    viewer="visitor"
-                    onSelectProduct={(product) => {
-                      const idx = visibleVault.findIndex((item) => item.id === product.id);
-                      if (idx >= 0) setSelectedGearIndex(idx);
+
+              return (
+                <ClubStaggerCard
+                  key={g.id}
+                  className="li nt club-outing-row club-glass-card"
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}
+                  onClick={() => setSelectedGearIndex(idx)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={resolveGearProductImage(g.name, g.category, g.imageUrl)}
+                      alt={g.name}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        objectFit: 'cover',
+                        background: 'rgba(23, 64, 44, 0.06)',
+                        flex: 'none',
+                      }}
+                    />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <b
+                        style={{
+                          display: 'block',
+                          fontSize: 13.5,
+                          lineHeight: 1.25,
+                          color: 'var(--label)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {g.name}
+                      </b>
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: 'var(--label2)',
+                          marginTop: 2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {isClubOwned ? 'Parc du club' : g.ownerName} · {weightLabel} · {conditionLabel}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
+                        <span className={g.reservedByMe || (isClubOwned && qtyAvail > 0) ? 'club-badge-sage' : 'club-badge-soft'}>
+                          {g.reservedByMe
+                            ? 'Demandé ✓'
+                            : isClubOwned || qtyTotal > 1
+                              ? `${qtyAvail}/${qtyTotal} dispo`
+                              : g.available
+                                ? 'Disponible'
+                                : 'Prêté'}
+                        </span>
+                        {epiState ? (
+                          <span
+                            className="club-badge-soft"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 3,
+                              color:
+                                epiState === 'expired'
+                                  ? '#b91c1c'
+                                  : epiState === 'warn'
+                                    ? '#c2410c'
+                                    : '#17402c',
+                              background:
+                                epiState === 'expired'
+                                  ? 'rgba(185, 28, 28, 0.10)'
+                                  : epiState === 'warn'
+                                    ? 'rgba(194, 65, 12, 0.12)'
+                                    : undefined,
+                            }}
+                          >
+                            {epiState === 'ok' ? (
+                              <ShieldCheck size={11} aria-hidden="true" />
+                            ) : (
+                              <AlertTriangle size={11} aria-hidden="true" />
+                            )}
+                            EPI{g.epiExpiresAt ? ` · ${g.epiExpiresAt}` : ''}
+                          </span>
+                        ) : null}
+                        {depositEur > 0 ? (
+                          <span className="club-badge-soft">Caution {depositEur} €</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`reseau-btn ${g.reservedByMe ? 'active' : ''} club-icon-pill`}
+                    style={{ flex: 'none' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedGearIndex(idx);
                     }}
-                  />
-                );
-              });
-            })()}
+                    aria-label={g.reservedByMe ? 'Demandé · Voir la fiche' : 'Voir l’équipement'}
+                    title={g.reservedByMe ? 'Demandé · Voir' : 'Voir'}
+                  >
+                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                  </button>
+                </ClubStaggerCard>
+              );
+            })}
             {remainingVaultCount > 0 ? (
               <button
                 type="button"

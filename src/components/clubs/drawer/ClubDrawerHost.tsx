@@ -43,11 +43,11 @@ import './club-drawers-v2.css';
 import { ClubMotionRoot, LensTransition } from './ClubDrawerMotion';
 import { useClubDialog } from './useClubDialog';
 import { ClubIsland, type ClubIslandToast } from './ClubIsland';
-import { ClubStatsHubDrawerBody, type MemberSortMetric } from './ClubStatsHubDrawerBody';
+import { ClubStatsHubDrawerBody, type MemberRoleFilter, type MemberSortMetric } from './ClubStatsHubDrawerBody';
 import type { ClubStatsWindow } from './clubStatsTypes';
 import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
 import { ClubSortiesDrawerBody, type OutingFilterId, type WeatherWindowId } from './ClubSortiesDrawerBody';
-import { ClubCoffreDrawerBody, type KitSeasonFilter, type VaultFilterId } from './ClubCoffreDrawerBody';
+import { ClubCoffreDrawerBody, type KitSeasonFilter, type VaultFilterId, type VaultScopeId } from './ClubCoffreDrawerBody';
 import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
 import { ClubSettingsDrawerBody } from './ClubSettingsDrawerBody';
@@ -157,8 +157,10 @@ export function ClubDrawerHost({
   const [localToast, setLocalToast] = useState<ClubIslandToast | null>(null);
   const [statsWindow, setStatsWindow] = useState<ClubStatsWindow>('all');
   const [memberSort, setMemberSort] = useState<MemberSortMetric>('distance');
+  const [memberRoleFilter, setMemberRoleFilter] = useState<MemberRoleFilter>('all');
   const [outingFilter, setOutingFilter] = useState<OutingFilterId>('all');
   const [vaultFilter, setVaultFilter] = useState<VaultFilterId>('all');
+  const [vaultScope, setVaultScope] = useState<VaultScopeId>('all');
   const [weatherWindow, setWeatherWindow] = useState<WeatherWindowId>('morning');
   const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
 
@@ -457,16 +459,38 @@ export function ClubDrawerHost({
     if (tab === 0 && activeLensIndex === 1) {
       return (
         <SortMenuButton
-          label="Trier le classement"
+          label="Trier et filtrer le classement"
           value={memberSort}
           defaultValue="distance"
           onChange={(val) => setMemberSort(val as MemberSortMetric)}
-          options={[
-            { value: 'distance', label: 'Distance (km)' },
-            { value: 'dplus', label: 'Dénivelé (D+)' },
-            { value: 'outings', label: 'Sorties club' },
-            { value: 'hours', label: 'Temps d’effort (h)' },
-            { value: 'contributions', label: 'Contributions' },
+          options={[]}
+          groups={[
+            {
+              id: 'sort',
+              label: 'Trier par',
+              value: memberSort,
+              defaultValue: 'distance',
+              onChange: (val) => setMemberSort(val as MemberSortMetric),
+              options: [
+                { value: 'distance', label: 'Distance (km)' },
+                { value: 'dplus', label: 'Dénivelé (D+)' },
+                { value: 'outings', label: 'Sorties club' },
+                { value: 'hours', label: 'Temps d’effort (h)' },
+                { value: 'contributions', label: 'Contributions' },
+              ],
+            },
+            {
+              id: 'role',
+              label: 'Rôle',
+              value: memberRoleFilter,
+              defaultValue: 'all',
+              onChange: (val) => setMemberRoleFilter(val as MemberRoleFilter),
+              options: [
+                { value: 'all', label: 'Tous les membres' },
+                { value: 'leaders', label: 'Encadrants & Admins' },
+                { value: 'members', label: 'Membres actifs' },
+              ],
+            },
           ]}
         />
       );
@@ -488,6 +512,7 @@ export function ClubDrawerHost({
       );
     }
     if (tab === 2 && activeLensIndex === 0 && !inspectedOuting) {
+      const upcoming = outings.filter((o) => o.status !== 'completed' && o.status !== 'cancelled');
       return (
         <SortMenuButton
           label="Filtrer les sorties"
@@ -495,11 +520,23 @@ export function ClubDrawerHost({
           defaultValue="all"
           onChange={(val) => setOutingFilter(val as OutingFilterId)}
           options={[
-            { value: 'all', label: 'Toutes les sorties' },
+            { value: 'all', label: 'Toutes les sorties', count: upcoming.length },
             { value: 'weekend', label: 'Ce week-end' },
-            { value: 'carpool', label: 'Covoiturage dispo' },
-            { value: 'joined', label: 'Mes inscriptions' },
-            { value: 'available', label: 'Places disponibles' },
+            {
+              value: 'carpool',
+              label: 'Covoiturage dispo',
+              count: upcoming.filter((o) => (o.carpoolSeatsLeft ?? 0) > 0).length,
+            },
+            {
+              value: 'joined',
+              label: 'Mes inscriptions',
+              count: upcoming.filter((o) => o.rsvpJoined).length,
+            },
+            {
+              value: 'available',
+              label: 'Places disponibles',
+              count: upcoming.filter((o) => o.participantsCount < o.maxParticipants).length,
+            },
           ]}
         />
       );
@@ -520,17 +557,50 @@ export function ClubDrawerHost({
       );
     }
     if (tab === 3 && activeLensIndex === 0) {
+      const clubCount = vaultGear.filter((g) => g.ownershipScope === 'club').length;
+      const memberCount = vaultGear.length - clubCount;
+      const reservedCount = vaultGear.filter((g) => g.reservedByMe).length;
       return (
         <SortMenuButton
           label="Filtrer le coffre"
           value={vaultFilter}
           defaultValue="all"
           onChange={(val) => setVaultFilter(val as VaultFilterId)}
-          options={[
-            { value: 'all', label: 'Tout le coffre' },
-            { value: 'available', label: 'Disponibles' },
-            { value: 'mine', label: 'Mes emprunts' },
-            { value: 'light', label: 'Ultraléger (< 500 g)' },
+          options={[]}
+          groups={[
+            {
+              id: 'scope',
+              label: 'Régime',
+              value: vaultScope,
+              defaultValue: 'all',
+              onChange: (val) => setVaultScope(val as VaultScopeId),
+              options: [
+                { value: 'all', label: 'Tout', count: vaultGear.length },
+                { value: 'club', label: 'Parc du club', count: clubCount },
+                { value: 'member', label: 'Entraide membres', count: memberCount },
+              ],
+            },
+            {
+              id: 'filter',
+              label: 'Disponibilité',
+              value: vaultFilter,
+              defaultValue: 'all',
+              onChange: (val) => setVaultFilter(val as VaultFilterId),
+              options: [
+                { value: 'all', label: 'Tout le coffre', count: vaultGear.length },
+                {
+                  value: 'available',
+                  label: 'Disponibles',
+                  count: vaultGear.filter((g) => g.available && !g.reservedByMe).length,
+                },
+                { value: 'mine', label: 'Mes emprunts', count: reservedCount },
+                {
+                  value: 'light',
+                  label: 'Ultraléger (< 500 g)',
+                  count: vaultGear.filter((g) => g.weightG < 500).length,
+                },
+              ],
+            },
           ]}
         />
       );
@@ -551,7 +621,7 @@ export function ClubDrawerHost({
       );
     }
     return null;
-  }, [activeLensIndex, inspectedOuting, kitSeason, memberSort, outingFilter, statsWindow, tab, vaultFilter, weatherWindow]);
+  }, [activeLensIndex, inspectedOuting, kitSeason, memberRoleFilter, memberSort, outingFilter, outings, statsWindow, tab, vaultFilter, vaultGear, vaultScope, weatherWindow]);
 
   useEffect(() => {
     onTabChange?.(tab, activeLensId);
@@ -1074,6 +1144,7 @@ export function ClubDrawerHost({
                   windowKey={statsWindow}
                   onWindowChange={setStatsWindow}
                   memberSort={memberSort}
+                  memberRoleFilter={memberRoleFilter}
                   onToggleJoinClub={onToggleJoinClub}
                   onInspectMember={(m) => pushMember(m, index)}
                   onInspectOuting={(o) => pushOuting(o, index)}
@@ -1153,6 +1224,7 @@ export function ClubDrawerHost({
                   outings={outings}
                   kitSeason={kitSeason}
                   vaultFilter={vaultFilter}
+                  vaultScope={vaultScope}
                   onToggleReserveGear={onToggleReserveGear}
                   onCloneStandardKit={onCloneStandardKit}
                   onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
