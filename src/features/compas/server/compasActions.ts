@@ -2064,7 +2064,7 @@ const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
  */
 export async function compasCreateTripAction(
   input: z.input<typeof createTripSchema>
-): Promise<CompasActionResult & { slug?: string }> {
+): Promise<CompasActionResult & { slug?: string; id?: string }> {
   const parsed = createTripSchema.safeParse(input);
   if (!parsed.success) return actionError('compas.server.activity.invalid');
   try {
@@ -2136,7 +2136,7 @@ export async function compasCreateTripAction(
         error: await serverText('compas.server.create.openFailed'),
       };
     revalidatePath('/compas');
-    return { success: true, slug: created.slug };
+    return { success: true, slug: created.slug, id: created.id };
   } catch (err) {
     await reportServerError('compas.compasCreateTripAction', err);
     return actionError('compas.server.common.serverError');

@@ -15,12 +15,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import type { ExpressionSpecification, GeoJSONSource, Map as MlMap } from 'maplibre-gl';
-import {
-  ATLAS_TILES,
-  SMOOTH_MAPLIBRE_OPTIONS,
-  applySmoothMapPhysics,
-  createMapStyle,
-} from '@/components/map/engine/createMapStyle';
+import { ATLAS_TILES } from '@/components/map/engine/createMapStyle';
+import { createLiveMap, loadMaplibre, themeColor, type MlModule } from '@/components/map/engine/liveMapCore';
 import { prefersReducedMotion } from '@/components/map/engine/camera';
 import { formatNumber } from '@/lib/i18n/format';
 import { useTranslation } from '@/lib/i18n/context';
@@ -93,9 +89,6 @@ export interface LiveMapProps {
 
 /* ---------- Constantes ---------- */
 
-type MlModule = typeof import('maplibre-gl');
-
-const WORKER_URL = '/maplibre/maplibre-gl-worker.mjs';
 const SOURCE_DAYS = 'v5-days';
 const LAYER_HALO = 'v5-days-halo';
 const LAYER_LINE = 'v5-days-line';
@@ -183,16 +176,6 @@ function formatPrice(locale: Parameters<typeof formatNumber>[2], price: V5PriceH
 }
 
 const safeClass = (category: string | null) => (category ? category.toLowerCase().replace(/[^a-z0-9_-]/g, '') : '');
-
-/** Une couleur du thème (jeton CSS) lue sur l'élément, pour MapLibre qui ne lit pas les variables CSS. */
-function themeColor(el: Element, token: string, fallback: string): string {
-  try {
-    const v = getComputedStyle(el).getPropertyValue(token).trim();
-    return v || fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const;
 
@@ -377,36 +360,25 @@ export function LiveMap(props: LiveMapProps) {
 
     void (async () => {
       try {
-        const mod = await import('maplibre-gl');
+        const maplibre = await loadMaplibre();
         if (cancelled) return;
-        const maplibre = ((mod as unknown as { Map?: unknown }).Map ? mod : (mod as unknown as { default: MlModule }).default) as MlModule;
-        maplibre.setWorkerUrl?.(WORKER_URL);
 
         const d = latestView.current;
         const startBounds = tripBounds(d.geometry, []);
         const center: [number, number] = startBounds
           ? [(startBounds.west + startBounds.east) / 2, (startBounds.south + startBounds.north) / 2]
           : FALLBACK_CENTER;
-        const m = new maplibre.Map({
+        const m = createLiveMap(maplibre, {
           container,
-          style: createMapStyle(latestProps.current.base, { projection: 'mercator' }),
+          base: latestProps.current.base,
           center,
           zoom: startBounds ? 9 : 4,
-          minZoom: 2,
-          maxZoom: 18,
-          renderWorldCopies: false,
-          attributionControl: false,
-          dragRotate: false,
-          pitchWithRotate: false,
-          touchPitch: false,
-          locale: { 'Map.Title': tRef.current('compas.v5.carte.mapLabel') },
-          ...SMOOTH_MAPLIBRE_OPTIONS,
+          title: tRef.current('compas.v5.carte.mapLabel'),
         });
         instance = m;
         mapRef.current = m;
         // Crochet de test (hors production) : les parcours e2e et le banc visuel lisent la caméra.
         if (process.env.NODE_ENV !== 'production') (window as unknown as { __v5Map?: MlMap }).__v5Map = m;
-        applySmoothMapPhysics(m, { lockRotation: true });
 
         const forest = themeColor(container, '--lkv-primary', 'rgb(23, 64, 44)');
         const reduced = prefersReducedMotion();

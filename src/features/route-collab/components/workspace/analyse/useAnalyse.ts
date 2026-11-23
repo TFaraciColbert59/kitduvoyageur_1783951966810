@@ -83,10 +83,10 @@ export function useAnalyse(options: { load: boolean }): { analysis: Analysis; re
         performanceProfile,
         waterByStage: waterByStage.out,
         placesFetchedAtByStage: waterByStage.fetchedAt,
-        remote: { weather: remote.weather, fire: remote.fire, official: remote.official },
+        remote: { weather: remote.weather, fire: remote.fire, official: remote.official, world: remote.world },
       }),
     // `now` n'entre pas dans les dépendances : l'âge d'une observation se relit à chaque changement du plan ou des relevés.
-    [workspace, profileModel, days, members, currentUserId, performanceProfile, waterByStage, remote.weather, remote.fire, remote.official],
+    [workspace, profileModel, days, members, currentUserId, performanceProfile, waterByStage, remote.weather, remote.fire, remote.official, remote.world],
   );
 
   const reload = useCallback(() => void run(true), [run]);

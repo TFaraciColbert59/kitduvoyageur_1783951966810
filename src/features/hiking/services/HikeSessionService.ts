@@ -1,5 +1,5 @@
 import { HikeSession, GPSPosition, HikingStatistics } from '../types';
-import { clearHandoff, handoffBody, readHandoffFor } from '@/features/route-collab/depart/activityHandoff';
+import { clearHandoff, handoffBody, readHandoffFor, type ActivityHandoff } from '@/features/route-collab/depart/activityHandoff';
 
 export interface PersistedGpsTimedSample {
   lat: number;
@@ -23,6 +23,8 @@ export class HikeSessionService {
     kitId?: string | null;
     carnetId?: string | null;
     tripId?: string | null;
+    /** Passation lue au départ de la sortie (cockpit) ; à défaut, relue pour le voyage au moment d'enregistrer. */
+    handoff?: ActivityHandoff | null;
     startedAt: string;
     endedAt: string;
     distanceKm: number;
@@ -51,13 +53,14 @@ export class HikeSessionService {
 
     // 9.8 : la version d'itinéraire suivie et le sac emporté, laissés par « Démarrer l'activité » pour ce voyage.
     // Sans passation (cas historique), le corps est inchangé.
-    const handoff = params.tripId ? readHandoffFor(params.tripId) : null;
+    const { handoff: startHandoff, ...sessionParams } = params;
+    const handoff = startHandoff ?? (params.tripId ? readHandoffFor(params.tripId) : null);
 
     const res = await fetch(`${baseUrl}/api/hike-sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...params,
+        ...sessionParams,
         positionsTimed: positionsTimed.length >= 2 ? positionsTimed : undefined,
         ...handoffBody(handoff),
       }),

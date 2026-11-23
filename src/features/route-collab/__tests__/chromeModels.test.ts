@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isEditableTarget, levelToClose, levelToDrop } from '../components/workspace/chrome/levels';
 import { layoutForWidth } from '../components/workspace/chrome/layout';
-import { buildPillModel, readinessText, stageFacts } from '../components/workspace/chrome/pillModel';
+import { buildPillModel, dayChips, dayColorToken, readinessText, stageFacts } from '../components/workspace/chrome/pillModel';
 import { scanPublications } from '../components/workspace/chrome/publicationAlert';
 import { saveStatusOf, type SaveInputs } from '../components/workspace/chrome/saveStatus';
 import { computeStageMetrics, formatStageKm } from '../components/workspace/metrics';
@@ -203,5 +203,20 @@ describe('computeStageMetrics · une étape sans tronçon n’est pas à 0 km (4
     const m = computeStageMetrics(ws.stages[0], ws.points, ws.sections);
     expect(m.distanceKnown).toBe(true);
     expect(formatStageKm(m).replace(/\u202f/g, ' ')).toBe('10 km');
+  });
+});
+
+describe('couleur de jour · la même pour la pilule et le tracé (2.5)', () => {
+  it('le jour 1 prend le premier jeton, le cycle reprend après la palette', () => {
+    expect(dayColorToken(1)).toBe('--lkv-forest-500');
+    expect(dayColorToken(2)).toBe('--lkv-info');
+    expect(dayColorToken(9)).toBe(dayColorToken(1));
+    expect(dayColorToken(0)).toBe(dayColorToken(1));
+  });
+  it('chaque chip de jour porte son jeton', () => {
+    const ws = baseWorkspace({ id: 'w', tripId: 't', sport: 'marche' });
+    const chips = dayChips(ws);
+    expect(chips.length).toBeGreaterThan(0);
+    for (const c of chips) expect(c.colorToken).toBe(dayColorToken(c.dayNumber));
   });
 });

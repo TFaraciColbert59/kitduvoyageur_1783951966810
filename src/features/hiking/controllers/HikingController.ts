@@ -7,6 +7,7 @@ import { loadRouteDetail } from '../services/RouteService';
 import { closestOnRoute, computeRoutePois, haversineMeters, initialBearingDeg, routeBearingAt } from '../services/RouteGeom';
 import { getRouteOffline } from '@/lib/offlineStorage';
 import { createClient } from '@/lib/supabase/client';
+import { parseHandoff, readHandoffFor, type ActivityHandoff } from '@/features/route-collab/depart/activityHandoff';
 import {
   decryptLocalJson,
   encryptLocalJson,
@@ -49,6 +50,8 @@ export interface HikingControllerState {
   kitId: string | null;
   /** Phase 7 — voyage associé à la sortie (contexte URL), null si inconnu. */
   tripId: string | null;
+  /** 9.8 : version d'itinéraire suivie et sac emporté, lus au départ depuis la passation de l'itinéraire. */
+  routeHandoff: ActivityHandoff | null;
 }
 
 interface PoiEvent {
@@ -117,6 +120,7 @@ export class HikingController {
       routeName: null,
       kitId: null,
       tripId: null,
+      routeHandoff: null,
     };
 
     this.stateMachine.subscribe((nextState) => {
@@ -162,6 +166,8 @@ export class HikingController {
       routeId: routeId || null,
       kitId: kitId !== undefined ? kitId : this.state.kitId,
       tripId: tripId !== undefined ? tripId : this.state.tripId,
+      // 9.8 : la passation du voyage (version suivie, sac) est lue ici, une fois, au départ de la sortie.
+      routeHandoff: (tripId !== undefined ? tripId : this.state.tripId) ? readHandoffFor((tripId !== undefined ? tripId : this.state.tripId) as string) : null,
       routeName: null,
       routeTotalKm: null,
       distanceKm: 0,
@@ -232,6 +238,7 @@ export class HikingController {
           kitId: this.state.kitId,
           carnetId: carnetId || null,
           tripId: this.state.tripId,
+          handoff: this.state.routeHandoff,
           startedAt,
           endedAt,
           distanceKm: this.state.distanceKm,
@@ -654,6 +661,7 @@ export class HikingController {
         routeId: this.state.routeId,
         kitId: this.state.kitId,
         tripId: this.state.tripId,
+        routeHandoff: this.state.routeHandoff,
         routeName: this.state.routeName,
         routeTotalKm: this.state.routeTotalKm,
         distanceKm: this.state.distanceKm,
@@ -728,6 +736,7 @@ export class HikingController {
       routeId?: unknown;
       kitId?: unknown;
       tripId?: unknown;
+      routeHandoff?: unknown;
       routeName?: unknown;
       routeTotalKm?: unknown;
       distanceKm?: unknown;
@@ -740,6 +749,7 @@ export class HikingController {
       routeId: typeof record.routeId === 'string' ? record.routeId : null,
       kitId: typeof record.kitId === 'string' ? record.kitId : null,
       tripId: typeof record.tripId === 'string' ? record.tripId : null,
+      routeHandoff: parseHandoff(record.routeHandoff),
       routeName: typeof record.routeName === 'string' ? record.routeName : null,
       routeTotalKm: record.routeTotalKm != null ? Number(record.routeTotalKm) : null,
       distanceKm: Number(record.distanceKm) || 0,

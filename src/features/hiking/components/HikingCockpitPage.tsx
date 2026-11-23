@@ -38,6 +38,8 @@ const StatsSheet = dynamic(() => import('./sheets/StatsSheet'), {
 import CaptureSheet from './sheets/CaptureSheet';
 import { publishSignal } from '@/features/carnet/detail/signalDeBord';
 import CopilotSheet from './sheets/CopilotSheet';
+import FollowedVersionBadge from './FollowedVersionBadge';
+import { readHandoffFor, type ActivityHandoff } from '@/features/route-collab/depart/activityHandoff';
 import MoreSheet from './sheets/MoreSheet';
 import { TerrainLiveCockpitControl, useTerrainReports } from '@/features/terrain-live';
 import AdventureCockpitControl from '@/features/adventure-intelligence/ui/AdventureCockpitControl';
@@ -56,6 +58,11 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
   const adventureIdParam = searchParams?.get('adventureId');
 
   const hikingStore = useHikingStore();
+  // 9.8 : passation de l'itinéraire (version suivie, sac), lue avant le départ ; après, le store la porte.
+  const [pendingHandoff, setPendingHandoff] = useState<ActivityHandoff | null>(null);
+  useEffect(() => {
+    setPendingHandoff(tripIdParam ? readHandoffFor(tripIdParam) : null);
+  }, [tripIdParam]);
   const [activeTab, setActiveTab] = useState<DesktopDockTab | null>(null);
   const [isNightMode, setIsNightMode] = useState(false);
   const [showSafetyModal, setShowSafetyModal] = useState(false);
@@ -415,6 +422,8 @@ export default function HikingCockpitPage({ terrainEnabled = false }: HikingCock
                 onRecentre={() => setAutoFollow(true)}
                 terrainReports={terrain.reports}
               />
+
+              <FollowedVersionBadge handoff={hikingStore.routeHandoff ?? pendingHandoff} />
 
               {/* Sélecteur « Emporter un kit ? » — posé avant le départ, jamais rejoué */}
               <KitCarrySelector

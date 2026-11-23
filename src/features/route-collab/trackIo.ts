@@ -1,27 +1,28 @@
 /**
  * Import et export de traces (5.9) : fonctions pures. L'écran lit le fichier, ce module décide.
  *
- * Import : GPX, KML, TCX et GeoJSON passent par `parseTrackFile` ; FIT (binaire) est refusé avec un message
- * qui dit quoi faire. La trace garde sa géométrie (`imported_preserved`) : rien n'est recollé au réseau
+ * Import : GPX, KML, TCX, GeoJSON et FIT passent par `parseTrackFile` (FIT arrive en `ArrayBuffer`, 5.9) ;
+ * un FIT corrompu ou sans position est refusé avec sa raison. La trace garde sa géométrie (`imported_preserved`) : rien n'est recollé au réseau
  * sans que la personne le demande. L'import est une opération du moteur (`import_track`) : annulable,
  * journalisée et soumise aux mêmes droits que tout geste de tracé.
  *
  * Export : toujours relu par `validateGpx11` avant d'être proposé ; un GPX invalide n'est jamais téléchargé.
  */
 import { activePoints, exportWorkspaceGpx } from './engine';
-import { parseTrackFile, validateGpx11, type Gpx11Issue, type ParsedTrack } from './insights/formats';
+import { isFitFileName, parseTrackFile, validateGpx11, type Gpx11Issue, type ParsedTrack } from './insights/formats';
 import { MAX_IMPORT_GPX_CHARS, limitTrackPoints } from './startBuilders';
 import { workspaceWithTrack } from './startWorkspace';
 import type { RouteOperationInput, RouteWorkspaceState } from './types';
 
 export const MAX_IMPORT_FILE_BYTES = 25 * 1024 * 1024;
-export const TRACK_FILE_ACCEPT = '.gpx,.kml,.tcx,.geojson,.json,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json,application/json';
+export const TRACK_FILE_ACCEPT = '.gpx,.kml,.tcx,.geojson,.json,.fit,application/gpx+xml,application/vnd.google-earth.kml+xml,application/geo+json,application/json';
 
 export const FORMAT_LABEL: Record<ParsedTrack['format'], string> = {
   gpx: 'GPX',
   kml: 'KML',
   tcx: 'TCX',
   geojson: 'GeoJSON',
+  fit: 'FIT',
 };
 
 export type ImportOperation = Extract<RouteOperationInput, { type: 'import_track' }>;
@@ -43,24 +44,23 @@ export type TrackImportPlan =
     }
   | { readonly ok: false; readonly error: string };
 
-/** FIT se refuse avant même de lire le contenu (binaire) : même message que `parseTrackFile`. */
-export function rejectByFileName(name: string): string | null {
-  if (!/\.fit$/i.test(name)) return null;
-  const r = parseTrackFile('', name);
-  return r.ok ? null : r.error.message;
+/** Un fichier FIT se lit en binaire (`ArrayBuffer`), les autres en texte : l'écran choisit selon le nom. */
+export function isBinaryTrackName(name: string): boolean {
+  return isFitFileName(name);
 }
 
 export function planTrackImport(
   workspace: RouteWorkspaceState,
-  file: { name: string; size?: number; text: string },
+  file: { name: string; size?: number; text?: string; bytes?: ArrayBuffer },
   nowIso: string,
 ): TrackImportPlan {
-  const byName = rejectByFileName(file.name);
-  if (byName) return { ok: false, error: byName };
   if (file.size != null && file.size > MAX_IMPORT_FILE_BYTES) {
     return { ok: false, error: 'Ce fichier dépasse 25 Mo : exportez une version allégée de la trace.' };
   }
-  const parsed = parseTrackFile(file.text, file.name);
+  const binary = isBinaryTrackName(file.name);
+  if (binary && !file.bytes) return { ok: false, error: 'Un fichier FIT doit être lu en binaire : réessayez l’import.' };
+  const text = binary ? '' : (file.text ?? '');
+  const parsed = parseTrackFile(binary ? (file.bytes as ArrayBuffer) : text, file.name);
   if (!parsed.ok) return { ok: false, error: parsed.error.message };
   if (parsed.points.length < 2) return { ok: false, error: 'Le fichier contient moins de deux points exploitables.' };
   const limited = limitTrackPoints(parsed.points);
@@ -80,7 +80,7 @@ export function planTrackImport(
         sourceTitle: file.name.slice(0, 160),
         importedAt: nowIso,
         attribution: `Import ${FORMAT_LABEL[parsed.format]}`,
-        originalGpxXml: parsed.format === 'gpx' && file.text.length <= MAX_IMPORT_GPX_CHARS ? file.text : null,
+        originalGpxXml: parsed.format === 'gpx' && text.length <= MAX_IMPORT_GPX_CHARS ? text : null,
       },
       provider: `import-${parsed.format}`,
       keepGeometry: true,

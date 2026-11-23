@@ -7,7 +7,7 @@ import { XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
 import { XpIcon } from '@/features/explorer-v2/ui/XpIcon';
 import type { ImportableTrackEntry } from '@/app/api/routes/history/route';
 import type { RouteSport } from '@/features/adventure-prep/routeProfiles';
-import { parseTrackFile } from '../../../insights/formats';
+import { isFitFileName, parseTrackFile } from '../../../insights/formats';
 import {
   EXPLORER_IMPORT_KEY,
   readExplorerImport,
@@ -22,7 +22,8 @@ import { placeLabel, readGeocodeMatches, readStartPhrase, type PlaceMatch, type 
 import type { TripEntry } from '../../../entry';
 import type { RouteWorkspaceState } from '../../../types';
 import { useRouteViewMode } from '../expertMode';
-import type { RouteGoal, TripLinkState } from './RouteEntryContext';
+import { useRouteEntry, type RouteGoal, type TripLinkState } from './RouteEntryContext';
+import { loginHrefForRoute } from '../../../guestDraft';
 
 const SPORTS: ReadonlyArray<{ id: RouteSport; label: string }> = [
   { id: 'marche', label: 'À pied' },
@@ -53,6 +54,7 @@ const MAX_FILE_BYTES = 8_000_000;
  */
 export function StartScreen({ trip, tripLink, userId, userName, onStart }: StartScreenProps) {
   const { expert } = useRouteViewMode();
+  const entry = useRouteEntry();
   const [step, setStep] = useState<Step>('tiles');
   const [sport, setSport] = useState<RouteSport>(trip?.sport ?? 'marche');
   const [sportSource, setSportSource] = useState<SportSource>(trip ? (trip.sportFrom === 'draft' ? 'draft' : trip.sportFrom === 'activity' ? 'trip' : 'default') : 'default');
@@ -183,9 +185,18 @@ export function StartScreen({ trip, tripLink, userId, userName, onStart }: Start
         {!trip && step === 'tiles' ? (
           <p className="rcw-start-note" data-testid="start-attach-note">
             Cet itinéraire n’est rattaché à aucun voyage.{' '}
-            <Link href="/compas" className="rcw-start-link">
-              Rattacher à un voyage
-            </Link>
+            {entry.requestAttach ? (
+              <button type="button" className="rcw-start-link" onClick={entry.requestAttach} data-testid="start-attach-action">
+                Rattacher à un voyage
+              </button>
+            ) : (
+              <>
+                <Link href={loginHrefForRoute(null)} className="rcw-start-link">
+                  Rattacher à un voyage
+                </Link>{' '}
+                (après connexion : le choix du voyage vous sera proposé, votre tracé est gardé)
+              </>
+            )}
           </p>
         ) : null}
       </div>
@@ -426,14 +437,19 @@ function GpxPanel({
       setError('Fichier trop volumineux (8 Mo au plus).');
       return;
     }
-    let text: string;
+    let text = '';
+    let parsed: ReturnType<typeof parseTrackFile>;
     try {
-      text = await file.text();
+      // 5.9 : un FIT est binaire (ArrayBuffer), les autres formats sont lus en texte.
+      if (isFitFileName(file.name)) parsed = parseTrackFile(await file.arrayBuffer(), file.name);
+      else {
+        text = await file.text();
+        parsed = parseTrackFile(text, file.name);
+      }
     } catch {
       setError('Impossible de lire ce fichier.');
       return;
     }
-    const parsed = parseTrackFile(text, file.name);
     if (!parsed.ok) {
       setError(parsed.error.message);
       return;

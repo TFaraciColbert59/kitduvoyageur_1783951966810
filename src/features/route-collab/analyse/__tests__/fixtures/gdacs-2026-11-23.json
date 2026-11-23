@@ -1,0 +1,180 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "bbox": [
+    39.5,
+    6.5,
+    39.5,
+    6.5
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     39.5,
+     6.5
+    ]
+   },
+   "properties": {
+    "eventtype": "DR",
+    "eventid": 1027450,
+    "episodeid": 14,
+    "eventname": "East Africa, Central Sahel-2026",
+    "glide": "DR-2026-000117-ETH",
+    "name": "Drought in Burundi, Democratic Republic of Congo, Central African Republic, Cameroon, Eritrea, Ethiopia, Kenya, Rwanda, Sudan, South Sudan, Chad, Tanzania, Uganda",
+    "description": "Drought in Burundi, Democratic Republic of Congo, Central African Republic, Cameroon, Eritrea, Ethiopia, Kenya, Rwanda, Sudan, South Sudan, Chad, Tanzania, Uganda",
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=DR&eventid=1027450&episodeid=14",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1027450&episodeid=14&eventtype=DR",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=DR&eventid=1027450"
+    },
+    "alertlevel": "Orange",
+    "alertscore": 2,
+    "episodealertlevel": "Orange",
+    "episodealertscore": 1.5,
+    "istemporary": "false",
+    "iscurrent": "false",
+    "country": "Burundi, Democratic Republic of Congo, Central African Republic, Cameroon, Eritrea, Ethiopia, Kenya, Rwanda, Sudan, South Sudan, Chad, Tanzania, Uganda",
+    "fromdate": "2026-05-21T00:00:00",
+    "todate": "2026-11-21T00:00:00",
+    "datemodified": "2026-11-23T05:57:16",
+    "iso3": "BDI",
+    "source": "GDO",
+    "sourceid": "",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "affectedcountries": [
+     {
+      "iso2": "BI",
+      "iso3": "BDI",
+      "countryname": "Burundi"
+     },
+     {
+      "iso2": "CD",
+      "iso3": "COD",
+      "countryname": "Democratic Republic of Congo"
+     },
+     {
+      "iso2": "CF",
+      "iso3": "CAF",
+      "countryname": "Central African Republic"
+     },
+     {
+      "iso2": "CM",
+      "iso3": "CMR",
+      "countryname": "Cameroon"
+     },
+     {
+      "iso2": "ER",
+      "iso3": "ERI",
+      "countryname": "Eritrea"
+     },
+     {
+      "iso2": "ET",
+      "iso3": "ETH",
+      "countryname": "Ethiopia"
+     },
+     {
+      "iso2": "KE",
+      "iso3": "KEN",
+      "countryname": "Kenya"
+     },
+     {
+      "iso2": "RW",
+      "iso3": "RWA",
+      "countryname": "Rwanda"
+     },
+     {
+      "iso2": "SD",
+      "iso3": "SDN",
+      "countryname": "Sudan"
+     },
+     {
+      "iso2": "SS",
+      "iso3": "SSD",
+      "countryname": "South Sudan"
+     },
+     {
+      "iso2": "TD",
+      "iso3": "TCD",
+      "countryname": "Chad"
+     },
+     {
+      "iso2": "TZ",
+      "iso3": "TZA",
+      "countryname": "Tanzania"
+     },
+     {
+      "iso2": "UG",
+      "iso3": "UGA",
+      "countryname": "Uganda"
+     }
+    ],
+    "severitydata": {
+     "severity": 1435673,
+     "severitytext": "Medium impact for agricultural drought in 1435673 km2",
+     "severityunit": "km2"
+    }
+   }
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    80.2,
+    15.8,
+    80.2,
+    15.8
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     80.2,
+     15.8
+    ]
+   },
+   "properties": {
+    "eventtype": "TC",
+    "eventid": 1001346,
+    "episodeid": 10,
+    "eventname": "MURASU-26",
+    "glide": "TC-2026-000199-IND",
+    "name": "Tropical Cyclone MURASU-26",
+    "description": "Tropical Cyclone MURASU-26",
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1001346&episodeid=10",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1001346&episodeid=10&eventtype=TC",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1001346"
+    },
+    "alertlevel": "Red",
+    "alertscore": 3,
+    "episodealertlevel": "Red",
+    "episodealertscore": 3,
+    "istemporary": "false",
+    "iscurrent": "false",
+    "country": "India",
+    "fromdate": "2026-11-01T00:00:00",
+    "todate": "2026-11-03T06:00:00",
+    "datemodified": "2026-11-04T06:01:20",
+    "iso3": "IND",
+    "source": "JTWC",
+    "sourceid": "",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "countryonland": "",
+    "affectedcountries": [
+     {
+      "iso2": "IN",
+      "iso3": "IND",
+      "countryname": "India"
+     }
+    ],
+    "severitydata": {
+     "severity": 157.4064,
+     "severitytext": "Hurricane/Typhoon > 74 mph (maximum wind speed of 157 km/h)",
+     "severityunit": "km/h"
+    }
+   }
+  }
+ ]
+}

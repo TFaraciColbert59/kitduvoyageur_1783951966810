@@ -138,6 +138,23 @@
   inset: -5px 0;
 }
 
+.rcw-day-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* 2.5 : la couleur du jour, la même que le tracé sur la carte. */
+.rcw-day-swatch {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rcw-day-color, var(--lkv-forest-500));
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--lkv-surface) 85%, transparent);
+}
+
 .rcw-day-chip[aria-selected='true'] {
   background: var(--xp-ink);
   color: var(--lkv-text-inverted);
@@ -248,8 +265,57 @@
   gap: 6px;
 }
 
+/* ── Tiroir (4.2) : la coquille du Compas v5 (`.v5-sheet`), posée au bas de la carte avec trois hauteurs ───────── */
+.rcw-explorer-root .v5-sheet[data-dock] {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 5;
+  height: auto;
+  border-radius: 30px 30px 0 0;
+  opacity: 1;
+  transform: none;
+  transition: height 0.34s var(--v5-spring, cubic-bezier(0.32, 0.72, 0, 1));
+  will-change: height;
+}
+.rcw-explorer-root .v5-sheet[data-dock][data-dragging='true'] {
+  transition: none;
+}
+.rcw-explorer-root .v5-sheet[data-dock][data-detent='full'] {
+  z-index: 8;
+}
+/* La poignée garde sa prise au doigt et une cible de 44 px. */
+.rcw-explorer-root .v5-sheet[data-dock] .v5-sgrab {
+  min-height: 44px;
+  margin-bottom: -26px;
+  width: 100%;
+}
+.rcw-explorer-root .v5-sheet[data-dock] .v5-shead {
+  padding-top: 14px;
+}
+.rcw-explorer-root .rcw-sheet-body {
+  display: block;
+  padding: 2px 0 88px;
+  animation: xpIn 0.16s ease both;
+}
+.rcw-explorer-root .v5-sheet[data-dock] .v5-sx {
+  width: 44px;
+  height: 44px;
+  margin: -6px -8px -6px 0;
+}
+.rcw-explorer-root .v5-sheet[data-dock] .v5-sttl {
+  min-height: 32px;
+}
+.rcw-explorer-root .v5-sheet[data-dock] .v5-flow button {
+  min-width: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcw-explorer-root .rcw-sheet-body {
+    animation: none;
+  }
+}
+
 /* ── Tuiles chiffrées (4.4, 4.5) ─────────────────────────────────────────────────────────────────── */
-.rcw-explorer-root .xp-sheet-summary {
+.rcw-explorer-root .rcw-sheet-summary {
   flex: none;
 }
 
@@ -307,7 +373,7 @@
 }
 
 /* À l'aperçu, on garde les chiffres et leurs réserves, pas les méthodes. */
-.rcw-explorer-root .xp-sheet[data-detent='peek'] .rcw-tile-method {
+.rcw-explorer-root .v5-sheet[data-detent='peek'] .rcw-tile-method {
   display: none;
 }
 
@@ -426,7 +492,7 @@
   .rcw-pill *,
   .rcw-say *,
   .rcw-explorer-root .v5-island,
-  .rcw-explorer-root .xp-sheet {
+  .rcw-explorer-root .v5-sheet[data-dock] {
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto;
@@ -445,8 +511,8 @@
     --rcw-right: 0px;
   }
 
-  .rcw-explorer-root[data-layout='tablet'] .xp-sheet,
-  .rcw-explorer-root[data-layout='desktop'] .xp-sheet {
+  .rcw-explorer-root[data-layout='tablet'] .v5-sheet[data-dock],
+  .rcw-explorer-root[data-layout='desktop'] .v5-sheet[data-dock] {
     top: 0;
     left: auto;
     right: 0;
@@ -456,13 +522,13 @@
     border-radius: 28px 0 0 28px;
   }
 
-  .rcw-explorer-root[data-layout='tablet'] .xp-sheet-handle,
-  .rcw-explorer-root[data-layout='desktop'] .xp-sheet-handle {
+  .rcw-explorer-root[data-layout='tablet'] .v5-sheet[data-dock] .v5-sgrab,
+  .rcw-explorer-root[data-layout='desktop'] .v5-sheet[data-dock] .v5-sgrab {
     display: none;
   }
 
-  .rcw-explorer-root[data-layout='tablet'] .xp-sheet-head,
-  .rcw-explorer-root[data-layout='desktop'] .xp-sheet-head {
+  .rcw-explorer-root[data-layout='tablet'] .v5-sheet[data-dock] .v5-shead,
+  .rcw-explorer-root[data-layout='desktop'] .v5-sheet[data-dock] .v5-shead {
     padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
   }
 

@@ -133,8 +133,11 @@ export function RoutePill({ sayOpen, onToggleSay }: { sayOpen: boolean; onToggle
                 title={title}
                 data-present={present.length > 0 ? 'true' : undefined}
                 data-assigned={owners.length > 0 ? 'true' : undefined}
+                data-day-color={d.colorToken}
+                style={{ ['--rcw-day-color' as string]: `var(${d.colorToken})` }}
                 onClick={() => onDay(d.id)}
               >
+                <span className="rcw-day-swatch" aria-hidden="true" data-testid={`day-swatch-${d.dayNumber}`} />
                 {d.label}
                 {owners.length > 0 ? (
                   <span className="rcw-day-avatar" aria-hidden="true" data-testid={`day-avatar-${d.id}`}>

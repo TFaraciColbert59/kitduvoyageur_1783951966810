@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { RouteCollabWorkspace } from './RouteCollabWorkspace';
 import { StartScreen } from './workspace/start/StartScreen';
+import { AttachTripScreen } from './workspace/start/AttachTripScreen';
+import type { AttachTripChoice } from '../attach';
 import {
   RouteEntryProvider,
   type RouteGoal,
@@ -67,8 +70,19 @@ type Phase =
   | { readonly kind: 'checking' }
   | { readonly kind: 'start' }
   | { readonly kind: 'denied' }
+  | { readonly kind: 'attach'; readonly draft: RouteWorkspaceState | null }
   | { readonly kind: 'persisting'; readonly workspace: RouteWorkspaceState }
   | { readonly kind: 'ready'; readonly workspace: RouteWorkspaceState; readonly serverSynced: boolean };
+
+/** Routeur de l'application s'il est monté ; `null` hors application (tests, rendu isolé) : jamais d'exception. */
+function useOptionalRouter(): ReturnType<typeof useRouter> | null {
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useRouter();
+  } catch {
+    return null;
+  }
+}
 
 const NO_DEEP_LINK: Omit<ItineraryDeepLink, 'tripId'> = {};
 
@@ -90,6 +104,7 @@ export function RouteCollabPageClient({
   deepLink = NO_DEEP_LINK,
   paceProfile = null,
   performanceProfile = null,
+  attachChoices = null,
 }: {
   userId: string;
   userName: string;
@@ -104,7 +119,13 @@ export function RouteCollabPageClient({
   /** Allure apprise des sorties de la personne (10.8), lue côté serveur ; `null` : allure standard, dite. */
   paceProfile?: UserPaceProfile | null;
   performanceProfile?: PerformanceProfile | null;
+  /**
+   * 1.1 : voyages que la personne peut modifier (lus côté serveur, sous RLS), pour « Rattacher à un voyage ».
+   * `null` : la page n'a pas à proposer le rattachement (visiteur, ou itinéraire ouvert par son identifiant).
+   */
+  attachChoices?: ReadonlyArray<AttachTripChoice> | null;
 }) {
+  const router = useOptionalRouter();
   const [phase, setPhase] = useState<Phase>(() =>
     serverWorkspace ? { kind: 'ready', workspace: serverWorkspace, serverSynced: true } : { kind: 'checking' },
   );
@@ -113,6 +134,8 @@ export function RouteCollabPageClient({
   const [deepLinkNow, setDeepLinkNow] = useState(deepLink);
   const saveTimer = useRef<number | null>(null);
   const checkedRef = useRef(false);
+  const attachSkippedRef = useRef(false);
+  const latestWorkspaceRef = useRef<RouteWorkspaceState | null>(null);
 
   // Enregistre côté serveur quand c'est possible (compte + voyage réel), sinon garde le brouillon sur l'appareil.
   const settle = useCallback(
@@ -164,6 +187,12 @@ export function RouteCollabPageClient({
         return;
       }
     }
+    // 1 bis. Sans voyage (`?trip=` absent, illisible ou privé) : la personne connectée choisit ou crée le voyage
+    // avant de tracer ; le brouillon de l'appareil, s'il existe, est gardé tel quel (1.1).
+    if (!trip && authenticated && attachChoices && !requestedWorkspaceId && !attachSkippedRef.current) {
+      setPhase({ kind: 'attach', draft: readGuestWorkspace(null) });
+      return;
+    }
     // 2. Brouillon gardé sur l'appareil (tracé sans compte, repris après la connexion).
     const guest = readGuestWorkspace(trip?.tripId ?? null);
     if (guest) {
@@ -188,7 +217,7 @@ export function RouteCollabPageClient({
     }
     // 4. Sinon : l'écran de départ.
     setPhase({ kind: 'start' });
-  }, [phase.kind, requestedWorkspaceId, accessDeniedMessage, userId, userName, trip, settle]);
+  }, [phase.kind, requestedWorkspaceId, accessDeniedMessage, userId, userName, trip, settle, authenticated, attachChoices]);
 
   useEffect(
     () => () => {
@@ -199,10 +228,21 @@ export function RouteCollabPageClient({
 
   // Tant que l'itinéraire n'est pas enregistré côté serveur, chaque changement est gardé sur l'appareil.
   const onWorkspaceChange = useCallback((next: RouteWorkspaceState) => {
+    latestWorkspaceRef.current = next;
     if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
       saveGuestWorkspace(next);
     }, 500);
+  }, []);
+
+  // 1.1 : depuis l'atelier d'une personne connectée, « Rattacher à un voyage » garde d'abord le brouillon.
+  const requestAttach = useCallback(() => {
+    if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+    const current = latestWorkspaceRef.current;
+    if (current) saveGuestWorkspace(current);
+    attachSkippedRef.current = false;
+    checkedRef.current = false;
+    setPhase({ kind: 'checking' });
   }, []);
 
   const entryValue = useMemo(
@@ -214,8 +254,13 @@ export function RouteCollabPageClient({
       goal,
       localDraft: phase.kind === 'ready' && !phase.serverSynced,
       saveNote,
+      navigate: router ? (href: string) => router.push(href) : undefined,
+      requestAttach:
+        authenticated && attachChoices && !trip && (phase.kind === 'start' || (phase.kind === 'ready' && !phase.serverSynced))
+          ? requestAttach
+          : undefined,
     }),
-    [trip, tripLink, deepLinkNow, authenticated, goal, phase, saveNote],
+    [trip, tripLink, deepLinkNow, authenticated, goal, phase, saveNote, attachChoices, requestAttach, router],
   );
 
   if (phase.kind === 'denied') {
@@ -238,6 +283,21 @@ export function RouteCollabPageClient({
           </p>
         </div>
       </div>
+    );
+  }
+
+  if (phase.kind === 'attach') {
+    return (
+      <AttachTripScreen
+        choices={attachChoices ?? []}
+        draft={phase.draft}
+        tripLink={tripLink}
+        onSkip={() => {
+          attachSkippedRef.current = true;
+          checkedRef.current = false;
+          setPhase({ kind: 'checking' });
+        }}
+      />
     );
   }
 

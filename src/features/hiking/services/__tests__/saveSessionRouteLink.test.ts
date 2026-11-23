@@ -45,4 +45,11 @@ describe('HikeSessionService.saveSession · version suivie et sac emporté (9.8)
     expect(sent).not.toHaveProperty('routeWorkspaceId');
     expect(window.localStorage.getItem(HANDOFF_KEY)).not.toBeNull();
   });
+
+  it('9.8 passation lue au départ par le cockpit : jointe telle quelle, sans être mise dans le corps sous « handoff »', async () => {
+    const handoff = { tripId: 'trip-1', workspaceId: 'w9', revisionId: 'r9', revisionNo: 4, kitSnapshot: [], startedAt: new Date().toISOString() };
+    await HikeSessionService.saveSession({ ...base, handoff });
+    expect(sent).toMatchObject({ routeWorkspaceId: 'w9', routeRevisionId: 'r9' });
+    expect(sent).not.toHaveProperty('handoff');
+  });
 });

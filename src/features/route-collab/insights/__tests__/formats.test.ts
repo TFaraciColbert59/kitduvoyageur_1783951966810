@@ -57,10 +57,10 @@ describe('parseTrackFile', () => {
     expect(r.points).toEqual([{ lat: 45, lon: 6, ele: 1000 }, { lat: 45.1, lon: 6.1 }]);
     expect(r.waypoints).toEqual([{ lat: 45.05, lon: 6.05, name: 'Source' }]);
   });
-  it('FIT : erreur explicite en français', () => {
+  it('FIT lu en texte : refusé, il doit être lu en binaire (5.9)', () => {
     const r = parseTrackFile('\x0e\x10\x00\x00\x00\x00\x00\x00.FIT', 'sortie.fit');
     expect(r).toMatchObject({ ok: false, error: { code: 'unsupported_format' } });
-    if (!r.ok) expect(r.error.message).toContain('FIT');
+    if (!r.ok) expect(r.error.message).toContain('binaire');
   });
   it('fichier vide, XML mal formé, format inconnu, sans point', () => {
     expect(parseTrackFile('  ', 'a.gpx')).toMatchObject({ ok: false, error: { code: 'empty_file' } });

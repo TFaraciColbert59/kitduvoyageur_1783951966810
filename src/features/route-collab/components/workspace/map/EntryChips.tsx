@@ -25,9 +25,26 @@ export function EntryChips() {
         </span>
       ) : null}
       {!attached && !shareToken ? (
-        <Link href="/compas" className="rcw-chip rcw-chip--action" data-testid="attach-trip-banner" aria-label="Rattacher à un voyage">
-          Rattacher<span className="rcw-chip-more"> à un voyage</span>
-        </Link>
+        entry.authenticated && entry.requestAttach ? (
+          <button
+            type="button"
+            className="rcw-chip rcw-chip--action"
+            data-testid="attach-trip-banner"
+            aria-label="Rattacher à un voyage"
+            onClick={entry.requestAttach}
+          >
+            Rattacher<span className="rcw-chip-more"> à un voyage</span>
+          </button>
+        ) : (
+          <Link
+            href={entry.authenticated ? '/compas/itineraire' : loginHrefForRoute(null)}
+            className="rcw-chip rcw-chip--action"
+            data-testid="attach-trip-banner"
+            aria-label="Rattacher à un voyage"
+          >
+            Rattacher<span className="rcw-chip-more"> à un voyage</span>
+          </Link>
+        )
       ) : null}
       {!entry.authenticated && !shareToken ? (
         <Link

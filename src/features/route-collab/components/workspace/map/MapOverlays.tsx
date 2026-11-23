@@ -116,7 +116,7 @@ export function MapOverlays({
     <>
       <div className="rcw-map-left">
         <EntryChips />
-        {legendDays.length > 1 && lens === 'days' ? (
+        {expert && legendDays.length > 1 && lens === 'days' ? (
           <ul className="rcw-legend" aria-label="Légende des jours" data-testid="map-legend">
             {legendDays.map((d) => (
               <li key={d.stageId}>

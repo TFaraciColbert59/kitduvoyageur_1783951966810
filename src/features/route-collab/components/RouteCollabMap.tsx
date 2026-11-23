@@ -12,9 +12,9 @@ import type {
   Marker,
 } from 'maplibre-gl';
 import { ATLAS_TILES, createMapStyle } from '@/components/map/engine/createMapStyle';
+import { createLiveMap, leaseWebGL, loadMaplibre, webglSupport, type ArbiterLease } from '@/components/map/engine/liveMapCore';
 import { animationDuration, prefersReducedMotion } from '@/components/map/engine/camera';
 import type { MapBase } from '@/features/compas/engine/mapStyle';
-import { WebGLArbiter } from '@/features/hub/webgl/WebGLArbiter';
 import { simplify, smooth, type LngLat } from '@/features/community/create/carnet/traceEngine';
 import type { RouteCorridorPoi } from '../routeAnalysis';
 import type { PointRole } from '../pointInsertion';
@@ -47,7 +47,6 @@ import { useSheetHeight } from './workspace/map/useSheetHeight';
 import { useOptionalRouteWorkspace } from './workspace/WorkspaceContext';
 import { useRouteEntry } from './workspace/start/RouteEntryContext';
 
-const WORKER_URL = '/maplibre/maplibre-gl-worker.mjs';
 const HOLDER = 'route-map' as const;
 
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const;
@@ -283,46 +282,31 @@ export function RouteCollabMap({
     if (!container) return;
     let cancelled = false;
     let instance: MlMap | null = null;
-    const arbiter = WebGLArbiter.getInstance();
-    const cleanups: Array<() => void> = [];
+    let lease: ArbiterLease | null = null;
 
     (async () => {
       try {
-        const testCanvas = document.createElement('canvas');
-        const gl =
-          typeof window !== 'undefined' &&
-          window.WebGLRenderingContext &&
-          (testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl'));
-        if (!gl) {
-          if (!cancelled) latest.current.onMapError('WebGL indisponible sur ce navigateur');
-          return;
-        }
-        if (arbiter.isContextDegraded()) {
-          if (!cancelled) latest.current.onMapError('Contexte WebGL dégradé');
+        const support = webglSupport();
+        if (support !== 'ok') {
+          if (!cancelled) latest.current.onMapError(support === 'unsupported' ? 'WebGL indisponible sur ce navigateur' : 'Contexte WebGL dégradé');
           return;
         }
 
-        // 2.1 : un seul contexte WebGL vivant (ADR-002). La carte de l'itinéraire s'enregistre auprès de l'arbitre.
-        await arbiter.acquire(HOLDER);
-        cleanups.push(
-          arbiter.registerReleaseHandler(HOLDER, () => {
-            if (cancelled) return;
-            latest.current.onMapError('Carte libérée : une autre vue 3D est ouverte');
-          }),
-        );
-        cleanups.push(arbiter.registerRestoreHandler(HOLDER, () => !cancelled));
-        cleanups.push(
-          arbiter.onContextLost(() => {
-            if (!cancelled) latest.current.onMapError('Contexte WebGL perdu');
-          }),
-        );
+        // 2.1 : le moteur de la carte vivante du Compas (`liveMapCore`), un seul contexte WebGL vivant (ADR-002).
+        lease = await leaseWebGL(HOLDER, {
+          isCancelled: () => cancelled,
+          onReleased: () => latest.current.onMapError('Carte libérée : une autre vue 3D est ouverte'),
+          onLost: () => latest.current.onMapError('Contexte WebGL perdu'),
+        });
+        if (cancelled) {
+          lease.release();
+          lease = null;
+          return;
+        }
 
-        const maplibre = await import('maplibre-gl');
+        const maplibre = await loadMaplibre();
         if (cancelled) return;
         maplibreRef.current = maplibre;
-        if (typeof maplibre.setWorkerUrl === 'function') {
-          maplibre.setWorkerUrl(WORKER_URL);
-        }
 
         const L = latest.current;
         const first = L.points[0];
@@ -337,13 +321,15 @@ export function RouteCollabMap({
         setStartKind(start.kind);
 
         // Style de carte du Compas : mêmes fonds (Relief, Clair, Satellite) que la carte vivante, en Mercator.
-        instance = new maplibre.Map({
+        instance = createLiveMap(maplibre, {
           container,
-          style: createMapStyle(base, { withTiles: true, projection: 'mercator' }),
+          base,
           center,
           zoom,
-          attributionControl: false,
+          title: 'Carte de l’itinéraire',
+          style: createMapStyle(base, { withTiles: true, projection: 'mercator' }),
         });
+        lease.watch(instance);
         const map = instance;
 
         // Position déjà autorisée : la carte s'y place. La permission n'est JAMAIS demandée au chargement.
@@ -370,10 +356,6 @@ export function RouteCollabMap({
         map.on('error', () => {
           /* Erreurs de tuiles hors ligne silencieuses si WebGL tourne */
         });
-        map.on('webglcontextlost', () => {
-          if (!cancelled) arbiter.triggerContextLost();
-        });
-        map.on('webglcontextrestored', () => arbiter.notifyContextRestored());
 
         /* --- Toucher = point, appui long = menu --- */
         const press: { state: PressState | null; timer: number | null; lngLat: { lat: number; lng: number } | null; suppressUntil: number } = {
@@ -775,8 +757,8 @@ export function RouteCollabMap({
 
     return () => {
       cancelled = true;
-      cleanups.forEach((fn) => fn());
-      arbiter.release(HOLDER);
+      lease?.release();
+      lease = null;
       dragMarkersRef.current.forEach((m) => m.remove());
       dragMarkersRef.current = [];
       liveMarkerRef.current?.remove();

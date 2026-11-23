@@ -10,7 +10,7 @@ export function gpxDrawerHeader(ws: RouteWorkspaceApi): DrawerHeader {
   };
 }
 
-/** Import GPX, KML, TCX, GeoJSON (FIT refusé, message) ; export complet ou par étape, validé GPX 1.1 (5.9). */
+/** Import GPX, KML, TCX, GeoJSON, FIT (binaire) ; export complet ou par étape, validé GPX 1.1 (5.9). */
 export function GpxDrawer() {
   return (
     <div className="rcw-stack" data-testid="subdrawer-gpx">

@@ -7,10 +7,10 @@ import './workspace/chrome/chrome.css';
 
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
-import { ExplorerSheet } from '@/features/explorer-v2/sheet/ExplorerSheet';
 import type { RouteCollabMapProps } from './RouteCollabMap';
 import { useRouteLayout } from './workspace/chrome/layout';
 import { RouteLauncher } from './workspace/chrome/RouteLauncher';
+import { RouteSheet } from './workspace/chrome/RouteSheet';
 import { SheetSummary } from './workspace/chrome/SheetSummary';
 import { StageColumn } from './workspace/chrome/StageColumn';
 import { useRouteLevels } from './workspace/chrome/useRouteLevels';
@@ -192,9 +192,9 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
         {/* CARTE & AFFICHAGE : un seul bouton. Carte affichée, il vit dans ses commandes ; sinon ici. */}
         {listMode || !webglAvailable ? <MapSettingsDrawer /> : null}
 
-        {/* ÉLÉMENT 2 : TIROIR EXPLORER (ou pilule 3 petits points en bas lorsque fermé) */}
+        {/* ÉLÉMENT 2 : TIROIR DU COMPAS V5 (ou pilule 3 petits points en bas lorsque fermé) */}
         {sheetOpen ? (
-          <ExplorerSheet
+          <RouteSheet
             title={activeSubDrawer ? activeSubDrawer.title : ''}
             subtitle={activeSubDrawer ? activeSubDrawer.subtitle : null}
             tabs={activeSubDrawer ? undefined : tabs}
@@ -203,18 +203,12 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
             detent={detent}
             onDetent={(d) => setDetent(d)}
             onBack={activeSubDrawer ? () => setSubDrawer(null) : undefined}
-            onClose={
-              activeSubDrawer
-                ? () => {
-                    setSubDrawer(null);
-                    setSheetOpen(false);
-                  }
-                : undefined
-            }
-            bottomInset={64}
+            onClose={() => {
+              setSubDrawer(null);
+              setSheetOpen(false);
+            }}
+            dragCloses={Boolean(activeSubDrawer)}
             labelledBy="rcw-sheet-title"
-            tabsBottom={false}
-            threeDetents
             actions={<ViewModeSwitch />}
             summary={activeSubDrawer ? undefined : <SheetSummary />}
             mini={
@@ -237,7 +231,7 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
             }
           >
             {activeSubDrawer ? activeSubDrawer.body : null}
-          </ExplorerSheet>
+          </RouteSheet>
         ) : (
           <RouteLauncher />
         )}

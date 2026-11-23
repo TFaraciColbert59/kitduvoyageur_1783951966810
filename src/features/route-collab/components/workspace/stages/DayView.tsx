@@ -11,6 +11,7 @@ import { V5Scope } from '../ui/V5Scope';
 import { useRouteWorkspace } from '../WorkspaceContext';
 import { DayArrival, DayBailoutRow, DayDate, DayStats, DayWater, ScheduleForm } from './DayParts';
 import { DayTools } from './DayTools';
+import { ShareStageToChat } from './ShareStageToChat';
 import { NightPicker } from './NightPicker';
 import { ProfileCuts } from './ProfileCuts';
 import { useDayReadings } from './useDayReadings';
@@ -108,6 +109,8 @@ export function DayView({ stage }: { stage: CollaborativeStage }) {
         </Block>
 
         <DayTools stage={stage} reading={reading} />
+
+        <ShareStageToChat stage={stage} />
 
         {reading.kind !== 'rest' ? (
           <Btn onClick={() => tools.exportGpx(stage.id)} testId="export-stage">

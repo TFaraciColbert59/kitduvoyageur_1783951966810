@@ -60,7 +60,8 @@ import { ROLE_LABELS } from './labels';
 import { routingQueryParams } from '../../routingProfiles';
 import { describeRoutingFailure, type RoutingIssue } from '../../mapStart';
 import { useRouteEntry } from './start/RouteEntryContext';
-import { isRealTripId } from '../../startPersist';
+import { isRealTripId, persistWorkspaceToServer } from '../../startPersist';
+import { GUEST_USER_ID } from '../../guestDraft';
 import { handoffFromRevision, writeHandoff } from '../../depart/activityHandoff';
 import { useRouteRealtime } from './useRouteRealtime';
 import {
@@ -1616,7 +1617,7 @@ export function useRouteWorkspaceState({
     }
   };
 
-  const handleDuplicateFromCarnet = (session?: { sessionId: string; startedAt: string } | null) => {
+  const handleDuplicateFromCarnet = async (session?: { sessionId: string; startedAt: string } | null) => {
     const copy = duplicateWorkspaceWithProvenance({
       sourceWorkspace: workspace,
       newWorkspaceId: `ws-copy-${Date.now().toString(36)}`,
@@ -1628,11 +1629,31 @@ export function useRouteWorkspaceState({
       ownerName: currentUserName,
       nowIso: new Date().toISOString(),
     });
+    // 9.10 : le nouveau brouillon (provenance `activity_replay`, même voyage) est enregistré côté serveur par la
+    // création d'espace habituelle, puis ouvert. Sans compte, sans voyage réel ou en cas d'échec : il reste local,
+    // et la raison est dite.
+    let localNote = 'Nouveau brouillon indépendant créé avec provenance conservée.';
+    if (currentUserId !== GUEST_USER_ID && isRealTripId(copy.tripId)) {
+      const res = await persistWorkspaceToServer(copy);
+      if (res.ok && entry.navigate) {
+        const q = new URLSearchParams({ workspaceId: res.workspace.id, trip: copy.tripId });
+        entry.navigate(`/compas/itineraire?${q.toString()}`);
+        setStatusMessage('Nouveau brouillon enregistré, provenance conservée : ouverture…');
+        return;
+      }
+      localNote = res.ok
+        ? 'Nouveau brouillon enregistré sur le serveur (provenance conservée) ; ouvrez-le depuis vos itinéraires.'
+        : `Nouveau brouillon créé sur cet appareil, non enregistré : ${res.reason}`;
+      if (res.ok) {
+        setStatusMessage(localNote);
+        return;
+      }
+    }
     commitState(copy);
     setCarnetRecord(null);
     setSubDrawer(null);
     setTabIndex(0);
-    setStatusMessage('Nouveau brouillon indépendant créé avec provenance conservée.');
+    setStatusMessage(localNote);
   };
 
   const kitToRevalidateCount = workspace.kitItems.filter(

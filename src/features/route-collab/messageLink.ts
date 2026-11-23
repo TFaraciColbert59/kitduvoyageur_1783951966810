@@ -63,3 +63,41 @@ export function trailMessageHref(
   if (meta.share_token && TOKEN_RE.test(meta.share_token)) q.set('token', meta.share_token);
   return `/compas/itineraire?${q.toString()}`;
 }
+
+/* ---------- 8.10 : choix de la conversation d'envoi ---------- */
+
+export interface ShareConversationChoice {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: 'direct' | 'group';
+}
+
+interface ConversationLike {
+  readonly id: string;
+  readonly type: 'direct' | 'group';
+  readonly title?: string | null;
+  readonly status?: 'active' | 'pending' | 'rejected';
+  readonly is_archived?: boolean;
+  readonly left_at?: string | null;
+  readonly other_member?: { readonly full_name?: string | null; readonly username?: string | null } | null;
+}
+
+/**
+ * Conversations où l'on peut envoyer une étape : celles de la personne (déjà filtrées par ses adhésions et la RLS
+ * de la messagerie), actives, non archivées, hors démonstration. Une demande en attente ou refusée n'en fait pas partie.
+ */
+export function shareableConversations(list: ReadonlyArray<ConversationLike>): ShareConversationChoice[] {
+  const out: ShareConversationChoice[] = [];
+  for (const c of list) {
+    if (c.id.startsWith('demo-conv-')) continue;
+    if (c.status && c.status !== 'active') continue;
+    if (c.is_archived || c.left_at) continue;
+    const label =
+      c.title?.trim() ||
+      c.other_member?.full_name?.trim() ||
+      (c.other_member?.username ? `@${c.other_member.username}` : '') ||
+      (c.type === 'group' ? 'Groupe sans nom' : 'Conversation');
+    out.push({ id: c.id, label, kind: c.type });
+  }
+  return out;
+}

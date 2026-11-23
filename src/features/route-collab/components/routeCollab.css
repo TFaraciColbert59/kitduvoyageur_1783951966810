@@ -15,13 +15,13 @@
   bottom: calc(env(safe-area-inset-bottom, 0px) + 22px + var(--cookie-banner-h, 0px));
 }
 
-.rcw-explorer-root .xp-sheet-scroll {
+.rcw-explorer-root .rcw-sheet-body {
   padding-bottom: calc(36px + var(--cookie-banner-h, 0px));
 }
 
 /* Téléphone : la barre d'onglets flottante recouvre le pied du tiroir ; on réserve sa hauteur (espaceur de pied) pour
    que la dernière ligne se lise et se touche au-dessus d'elle. */
-.rcw-explorer-root[data-layout='mobile'] .xp-sheet-scroll {
+.rcw-explorer-root[data-layout='mobile'] .rcw-sheet-body {
   padding-bottom: calc(62px + 12px + 12px + 24px + env(safe-area-inset-bottom, 0px) + var(--cookie-banner-h, 0px));
 }
 
@@ -445,10 +445,6 @@
   gap: 10px;
 }
 
-.rcw-explorer-root .xp-sheet-title:empty {
-  display: none;
-}
-
 .rcw-stack {
   display: flex;
   flex-direction: column;
@@ -562,20 +558,10 @@
   gap: 10px;
 }
 
-.rcw-explorer-root .xp-sheet-title:empty {
+.rcw-explorer-root .rcw-sheet .v5-sttl h2:empty {
   display: none;
 }
 
-
-/* ── Sélecteur d'onglets du drawer : icônes uniquement ── */
-.rcw-explorer-root .xp-tab-label {
-  display: none;
-}
-
-.rcw-explorer-root .xp-tab {
-  justify-content: center;
-  min-width: 40px;
-}
 
 /* ── Cartes & composants visuels Analyser / Équipe / Départ ── */
 .rcw-visual-card {
@@ -1048,18 +1034,8 @@
 }
 
 
-/* ── Sélecteur d'onglets : icônes uniquement même sur l'onglet actif ── */
-.rcw-explorer-root .xp-tab .xp-tab-label,
-.rcw-explorer-root .xp-tab[aria-selected='true'] .xp-tab-label {
-  display: none !important;
-}
-
-/* ── Tiroir sans croix ni en-tête vide : contenu remonté + bottombar visible ── */
-.rcw-explorer-root .xp-sheet-head:has(.xp-sheet-title:empty):not(:has(button)) {
-  display: none;
-}
-
-.rcw-explorer-root .xp-sheet {
+/* ── Tiroir (4.2) : posé au-dessus de la barre d'onglets du site ; sa matière est `.v5-sheet` (Compas v5). ── */
+.rcw-explorer-root .v5-sheet[data-dock] {
   bottom: 64px !important;
 }
 

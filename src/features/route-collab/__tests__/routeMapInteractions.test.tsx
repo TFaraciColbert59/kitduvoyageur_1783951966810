@@ -244,11 +244,23 @@ describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne'
     expect(headSeq()).toBe(before);
   });
 
-  it('2.5 : une couleur par jour et une légende J1 / J2 ; les lentilles n’existent qu’en vue experte', async () => {
+  it('2.5 : chaque chip de la pilule porte la couleur de son jour (celle du tracé) ; la légende de la carte et les lentilles sont en vue experte', async () => {
     await mountMap();
+    // Pilule : une pastille par jour, du jeton du jour (le même que la couleur du tracé sur la carte).
+    const chip1 = screen.getByTestId('day-swatch-1').closest('.rcw-day-chip') as HTMLElement;
+    const chip2 = screen.getByTestId('day-swatch-2').closest('.rcw-day-chip') as HTMLElement;
+    expect(chip1.getAttribute('data-day-color')).toBe('--lkv-forest-500');
+    expect(chip2.getAttribute('data-day-color')).toBe('--lkv-info');
+    expect(chip1.style.getPropertyValue('--rcw-day-color')).toBe('var(--lkv-forest-500)');
+    // Vue simple : ni légende sur la carte ni lentille.
+    expect(screen.queryByTestId('map-legend')).toBeNull();
+    expect(screen.queryByTestId('map-lens')).toBeNull();
+    act(() => setRouteViewMode('expert'));
+    await screen.findByTestId('map-lens');
     expect(screen.getByTestId('legend-day-1')).toBeTruthy();
     expect(screen.getByTestId('legend-day-2')).toBeTruthy();
-    expect(screen.queryByTestId('map-lens')).toBeNull();
+    act(() => setRouteViewMode('simple'));
+    await waitFor(() => expect(screen.queryByTestId('map-lens')).toBeNull());
     const feats = lastLast().sources.get('rcw-sections')!.at(-1) as { features: Array<{ properties: { color: string; day: number } }> };
     expect(feats.features.map((f) => f.properties.day)).toEqual([1, 2]);
     expect(feats.features[0].properties.color).toBeTruthy();

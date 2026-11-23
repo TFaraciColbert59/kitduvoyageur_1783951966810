@@ -179,14 +179,14 @@ describe('Tiroir principal (4.1, 4.3 à 4.8)', () => {
 
   it('trois hauteurs : aperçu, moitié (par défaut), plein', () => {
     mount();
-    const sheet = document.querySelector('.xp-sheet') as HTMLElement;
+    const sheet = document.querySelector('.v5-sheet[data-dock]') as HTMLElement;
     expect(sheet.getAttribute('data-detent')).toBe('mid');
     const handle = screen.getByRole('button', { name: 'Ajuster la hauteur du tiroir' });
     fireEvent.keyDown(handle, { key: 'ArrowUp' });
-    expect(document.querySelector('.xp-sheet')?.getAttribute('data-detent')).toBe('full');
+    expect(document.querySelector('.v5-sheet[data-dock]')?.getAttribute('data-detent')).toBe('full');
     fireEvent.keyDown(handle, { key: 'ArrowDown' });
     fireEvent.keyDown(handle, { key: 'ArrowDown' });
-    expect(document.querySelector('.xp-sheet')?.getAttribute('data-detent')).toBe('peek');
+    expect(document.querySelector('.v5-sheet[data-dock]')?.getAttribute('data-detent')).toBe('peek');
   });
 
   it('en solo, « Équipe » devient « Inviter » ; en groupe, elle reste « Équipe »', () => {

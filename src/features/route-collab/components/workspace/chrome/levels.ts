@@ -38,3 +38,52 @@ export function isEditableTarget(target: EventTarget | null): boolean {
   const tag = el.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable === true;
 }
+
+/* ---------- Retour du navigateur : une entrée d'historique par niveau ouvert (4.6) ---------- */
+
+/** Clé posée dans `history.state` : le nombre d'entrées « niveau » empilées jusqu'à celle-ci. */
+export const LEVEL_STATE_KEY = 'rcwLevel';
+
+/** Combien de niveaux sont ouverts : menu de la carte, détail ou sous-tiroir (un seul des deux), tiroir. */
+export function openLevelCount(s: LevelState): number {
+  return (s.mapMenu ? 1 : 0) + (s.overlay || s.subDrawer ? 1 : 0) + (s.sheetOpen ? 1 : 0);
+}
+
+/**
+ * Le niveau ouvert à l'arrivée n'est pas un piège : « Retour » doit quitter la page, pas fermer un tiroir que
+ * personne n'a ouvert. La base suit donc le plus bas nombre de niveaux vu ; seul ce qui s'ouvre au-dessus compte.
+ */
+export function levelsAboveBase(count: number, base: number | null): { depth: number; base: number } {
+  const b = base == null ? count : Math.min(base, count);
+  return { depth: count - b, base: b };
+}
+
+/** Ce que l'historique doit faire pour suivre `depth` niveaux alors que `pushed` entrées sont empilées. */
+export function historyMove(depth: number, pushed: number): { push: number; back: number } {
+  if (depth > pushed) return { push: depth - pushed, back: 0 };
+  if (depth < pushed) return { push: 0, back: pushed - depth };
+  return { push: 0, back: 0 };
+}
+
+/** Profondeur d'empilement portée par une entrée d'historique (0 si l'entrée n'est pas la nôtre). */
+export function stackDepthOf(state: unknown): number {
+  if (!state || typeof state !== 'object') return 0;
+  const n = (state as Record<string, unknown>)[LEVEL_STATE_KEY];
+  return typeof n === 'number' && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+/** L'état une fois le niveau le plus haut refermé (même ordre que `levelToClose`). */
+export function afterClosing(s: LevelState): LevelState {
+  switch (levelToClose(s)) {
+    case 'map-menu':
+      return { ...s, mapMenu: false };
+    case 'overlay':
+      return { ...s, overlay: false };
+    case 'sub-drawer':
+      return { ...s, subDrawer: false };
+    case 'sheet':
+      return { ...s, sheetOpen: false };
+    default:
+      return s;
+  }
+}

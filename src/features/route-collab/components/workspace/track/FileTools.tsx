@@ -18,7 +18,7 @@ function nameForPasted(text: string): string {
   return 'collage.gpx';
 }
 
-/** Bouton d'import de fichier (GPX, KML, TCX, GeoJSON ; FIT refusé avec son message). */
+/** Bouton d'import de fichier (GPX, KML, TCX, GeoJSON, FIT). */
 export function ImportButton({ label = 'Importer un fichier' }: { label?: string }) {
   const tools = useTrackTools();
   const input = useRef<HTMLInputElement | null>(null);
@@ -63,7 +63,7 @@ export function FileTools() {
       <Block title="Importer une trace" testId="file-import">
         <ImportButton />
         <Note>
-          GPX, KML, TCX ou GeoJSON. La trace garde sa géométrie : rien n’est recollé aux routes sans votre demande. FIT (binaire) n’est pas pris en charge : exportez la sortie en GPX, TCX ou GeoJSON.
+          GPX, KML, TCX, GeoJSON ou FIT. La trace garde sa géométrie : rien n’est recollé aux routes sans votre demande. Un FIT n’est lu que pour ses positions GPS (altitude et heure si présentes) ; un fichier corrompu est refusé.
         </Note>
         {expert ? (
           <>

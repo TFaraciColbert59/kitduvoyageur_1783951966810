@@ -18,7 +18,7 @@ export function useSheetHeight(container: HTMLElement | null): number {
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => schedule()) : null;
 
     function measure() {
-      const sheet = root?.querySelector('.xp-sheet') ?? null;
+      const sheet = root?.querySelector('.v5-sheet[data-dock]') ?? null;
       if (sheet !== observed) {
         if (observed) ro?.unobserve(observed);
         observed = sheet;

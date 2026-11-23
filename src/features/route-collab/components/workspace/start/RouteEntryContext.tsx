@@ -24,6 +24,10 @@ export interface RouteEntryValue {
   readonly localDraft: boolean;
   /** Raison, dite telle quelle, pour laquelle l'enregistrement serveur n'a pas eu lieu (sinon `null`). */
   readonly saveNote: string | null;
+  /** 1.1 : ouvre l'écran « Rattacher à un voyage » (personne connectée, itinéraire sans voyage). */
+  readonly requestAttach?: () => void;
+  /** Navigation du client (`router.push`), fournie par la page ; absente hors page (tests, hors ligne). */
+  readonly navigate?: (href: string) => void;
 }
 
 const DEFAULT: RouteEntryValue = {

@@ -6,6 +6,8 @@ import {
   type RouteQualityLight,
 } from '../../../insights';
 import { legsStats, stageLegs } from '../../../insights/shared';
+import { dayColorIndex } from '../../../mapGeometry';
+import { DAY_COLOR_TOKENS } from '../map/mapTokens';
 import type { RouteWorkspaceState } from '../../../types';
 import { saveStatusOf, type SaveInputs, type SaveStatus } from './saveStatus';
 
@@ -20,6 +22,13 @@ export interface PillDay {
   readonly label: string;
   /** « Jour 2 · 14 km · D+ inconnu » : lu par les lecteurs d'écran et au survol. */
   readonly title: string;
+  /** Jeton `--lkv-*` de la couleur du jour : le même que le tracé sur la carte (2.5). */
+  readonly colorToken: string;
+}
+
+/** Jeton de couleur d'un jour : la source unique, partagée par la pilule, la légende et le tracé. */
+export function dayColorToken(dayNumber: number): string {
+  return DAY_COLOR_TOKENS[dayColorIndex(dayNumber, DAY_COLOR_TOKENS.length)];
 }
 
 export interface PillModel {
@@ -66,6 +75,7 @@ export function dayChips(ws: RouteWorkspaceState): PillDay[] {
         dayNumber: st.dayNumber,
         label: `J${st.dayNumber}`,
         title: `Jour ${st.dayNumber} · ${f.km} · ${f.ascent}`,
+        colorToken: dayColorToken(st.dayNumber),
       };
     });
 }

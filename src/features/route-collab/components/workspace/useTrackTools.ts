@@ -13,7 +13,7 @@ import {
   type SurfaceChoiceId,
 } from '../../routingProfiles';
 import { buildRoutingVariants, variantTarget, type VariantScope } from '../../routeClient';
-import { buildValidatedGpx, planTrackImport } from '../../trackIo';
+import { buildValidatedGpx, isBinaryTrackName, planTrackImport } from '../../trackIo';
 import { buildVersionTimeline, revertOperation, type VersionEntry } from '../../versionTimeline';
 import type { RouteRevisionSnapshot, RouteShapeMode } from '../../types';
 import { useRouteWorkspace } from './WorkspaceContext';
@@ -232,16 +232,16 @@ export function useTrackTools() {
       guard('import', async () => {
         if (!file) return;
         let text = '';
-        // FIT (binaire) est refusé avant la lecture : le message dit quoi exporter à la place.
-        if (!/\.fit$/i.test(file.name)) {
-          try {
-            text = await file.text();
-          } catch {
-            setStatusMessage('Impossible de lire ce fichier.');
-            return;
-          }
+        let bytes: ArrayBuffer | undefined;
+        // 5.9 : un FIT est binaire, il est lu en ArrayBuffer ; les autres formats en texte.
+        try {
+          if (isBinaryTrackName(file.name)) bytes = await file.arrayBuffer();
+          else text = await file.text();
+        } catch {
+          setStatusMessage('Impossible de lire ce fichier.');
+          return;
         }
-        const plan = planTrackImport(getWorkspace(), { name: file.name, size: file.size, text }, new Date().toISOString());
+        const plan = planTrackImport(getWorkspace(), { name: file.name, size: file.size, text, bytes }, new Date().toISOString());
         if (!plan.ok) {
           setStatusMessage(plan.error);
           return;

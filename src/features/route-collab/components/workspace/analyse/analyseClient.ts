@@ -4,17 +4,19 @@
  */
 import type { DayPassage, PassageWeather } from '../../../analyse/passageWeather';
 import type { FireAlertPayload, OfficialAlertsPayload } from '../../../analyse/alerts';
+import type { WorldHazardPayload } from '../../../analyse/gdacs';
 
 export interface AnalyseRemote {
   readonly status: 'idle' | 'loading' | 'ready' | 'error';
   readonly weather: readonly PassageWeather[] | null;
   readonly fire: FireAlertPayload | null;
   readonly official: OfficialAlertsPayload | null;
+  readonly world: WorldHazardPayload | null;
   readonly horizon: string | null;
   readonly fetchedAt: string | null;
 }
 
-export const NO_REMOTE: AnalyseRemote = { status: 'idle', weather: null, fire: null, official: null, horizon: null, fetchedAt: null };
+export const NO_REMOTE: AnalyseRemote = { status: 'idle', weather: null, fire: null, official: null, world: null, horizon: null, fetchedAt: null };
 
 export type AnalyseFetch = (
   url: string,
@@ -37,12 +39,13 @@ export async function fetchAnalyseRemote(
       }),
     });
     if (!res.ok) return { ...NO_REMOTE, status: 'error' };
-    const data = (await res.json()) as Partial<{ weather: PassageWeather[]; fire: FireAlertPayload | null; official: OfficialAlertsPayload | null; horizon: string | null; fetchedAt: string }>;
+    const data = (await res.json()) as Partial<{ weather: PassageWeather[]; fire: FireAlertPayload | null; official: OfficialAlertsPayload | null; world: WorldHazardPayload | null; horizon: string | null; fetchedAt: string }>;
     return {
       status: 'ready',
       weather: Array.isArray(data.weather) ? data.weather : null,
       fire: data.fire ?? null,
       official: data.official ?? null,
+      world: data.world ?? null,
       horizon: data.horizon ?? null,
       fetchedAt: typeof data.fetchedAt === 'string' ? data.fetchedAt : null,
     };

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyWorkspaceOperation } from '../engine';
-import { buildValidatedGpx, planTrackImport, rejectByFileName } from '../trackIo';
+import { buildValidatedGpx, planTrackImport } from '../trackIo';
+import { buildFit, semi } from '../insights/__tests__/fitBuilder';
 import { validateGpx11 } from '../insights/formats';
 import { baseWorkspace, pt, section, stage } from '../insights/__tests__/fixtures';
 import type { RouteWorkspaceState } from '../types';
@@ -72,11 +73,27 @@ describe('5.9 import GPX / KML / TCX / GeoJSON', () => {
     expect(plan.message).toMatch(/D\+ et D− restent inconnus/);
   });
 
-  it('FIT est refusé avec un message qui dit quoi faire, avant toute lecture', () => {
-    expect(rejectByFileName('montre.fit')).toMatch(/FIT \(binaire\) n’est pas pris en charge/);
-    const plan = planTrackImport(ws(), { name: 'montre.FIT', text: '\u0000binaire' }, NOW);
+  it('5.9 FIT : lu en binaire, positions, altitude et provenance « Import FIT » (aucun texte lu)', () => {
+    const bytes = buildFit({ records: [{ lat: 45.0, lon: 6.0, alt: 1000, ts: 1_100_000_000 }, { lat: 45.01, lon: 6.01, alt: 1010, ts: 1_100_000_060 }, { lat: 45.02, lon: 6.02, alt: 1030, ts: 1_100_000_120 }] });
+    const plan = planTrackImport(ws(), { name: 'montre.fit', bytes: bytes.buffer.slice(0) as ArrayBuffer }, NOW);
+    if (!plan.ok) throw new Error(plan.error);
+    expect(plan.format).toBe('fit');
+    expect(plan.pointCount).toBe(3);
+    expect(plan.hasElevation).toBe(true);
+    expect(plan.message).toMatch(/^FIT « montre »/);
+    expect(plan.operation.sourceOrigin.originalGpxXml).toBeNull();
+    expect(semi(45)).toBeGreaterThan(0);
+  });
+
+  it('5.9 FIT corrompu ou lu en texte : refusé avec sa raison', () => {
+    const bytes = buildFit({ records: [{ lat: 45, lon: 6, ts: 1_100_000_000 }, { lat: 45.1, lon: 6.1, ts: 1_100_000_060 }] });
+    const cut = bytes.slice(0, bytes.length - 10);
+    const plan = planTrackImport(ws(), { name: 'coupe.fit', bytes: cut.buffer.slice(0) as ArrayBuffer }, NOW);
     expect(plan.ok).toBe(false);
-    if (!plan.ok) expect(plan.error).toMatch(/GPX, TCX ou GeoJSON/);
+    if (!plan.ok) expect(plan.error).toMatch(/incomplet ou corrompu/);
+    const asText = planTrackImport(ws(), { name: 'montre.fit', text: '\u0000binaire' }, NOW);
+    expect(asText.ok).toBe(false);
+    if (!asText.ok) expect(asText.error).toMatch(/binaire/);
   });
 
   it('refuse les fichiers vides, illisibles, inconnus ou trop lourds', () => {

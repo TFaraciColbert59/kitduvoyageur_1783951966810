@@ -1,10 +1,12 @@
 /**
- * Lecture de fichiers de trace : GPX, KML, TCX, GeoJSON. FIT (binaire) est refusé explicitement.
+ * Lecture de fichiers de trace : GPX, KML, TCX, GeoJSON et FIT (binaire, `fit.ts`, reçu en `ArrayBuffer`).
  * Analyseur XML léger interne (sans DOM) : même résultat dans le navigateur, sur le serveur et en test ;
  * les entités personnalisées d'un DOCTYPE ne sont jamais développées.
  */
 
-export type TrackFormat = 'gpx' | 'kml' | 'tcx' | 'geojson';
+import { decodeFit } from './fit';
+
+export type TrackFormat = 'gpx' | 'kml' | 'tcx' | 'geojson' | 'fit';
 
 export interface TrackPoint {
   readonly lat: number;
@@ -263,11 +265,44 @@ function fromGeoJson(data: unknown): TrackParseResult {
 
 /* ---------- Entrée publique ---------- */
 
-export function parseTrackFile(text: string, filename: string): TrackParseResult {
+export type TrackFileContent = string | ArrayBuffer | ArrayBufferView;
+
+/** Un fichier FIT se lit en binaire : `.fit` ou signature « .FIT » aux octets 8 à 11 de l'en-tête. */
+export function isFitFileName(name: string): boolean {
+  return /\.fit$/i.test(name || '');
+}
+
+function hasFitSignature(bytes: Uint8Array): boolean {
+  return bytes.length >= 12 && bytes[8] === 0x2e && bytes[9] === 0x46 && bytes[10] === 0x49 && bytes[11] === 0x54;
+}
+
+function fromFit(bytes: Uint8Array): TrackParseResult {
+  const r = decodeFit(bytes);
+  if (!r.ok) return fail(r.code, r.message);
+  return {
+    ok: true,
+    format: 'fit',
+    name: null,
+    points: r.points,
+    waypoints: [],
+    skippedPoints: r.skippedPoints,
+  };
+}
+
+export function parseTrackFile(content: TrackFileContent, filename: string): TrackParseResult {
   const lower = (filename || '').toLowerCase();
+  if (typeof content !== 'string') {
+    const bytes =
+      content instanceof ArrayBuffer
+        ? new Uint8Array(content)
+        : new Uint8Array(content.buffer, content.byteOffset, content.byteLength);
+    if (lower.endsWith('.fit') || hasFitSignature(bytes)) return fromFit(bytes);
+    return parseTrackFile(new TextDecoder('utf-8').decode(bytes), filename);
+  }
+  const text = content;
   const head = text.slice(0, 16);
   if (lower.endsWith('.fit') || head.slice(8, 12) === '.FIT') {
-    return fail('unsupported_format', 'Le format FIT (binaire) n’est pas pris en charge : exportez la sortie en GPX, TCX ou GeoJSON depuis votre application ou votre montre.');
+    return fail('unsupported_format', 'Un fichier FIT est binaire : il doit être lu en binaire (ArrayBuffer), pas en texte.');
   }
   const body = text.replace(/^﻿/, '').trim();
   if (body === '') return fail('empty_file', 'Le fichier est vide.');

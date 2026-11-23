@@ -113,6 +113,8 @@ export interface AnalysisInput {
     readonly weather: readonly PassageWeather[] | null;
     readonly fire: FireAlertPayload | null;
     readonly official?: OfficialAlertsPayload | null;
+    /** Catastrophes mondiales (GDACS, 7.6) ; absent : source pas encore lue. */
+    readonly world?: WorldHazardPayload | null;
   };
 }
 
@@ -216,7 +218,7 @@ export function buildAnalysis(input: AnalysisInput): Analysis {
     ...w,
     provenance: { source: w.source, at: w.fetchedAt },
   }));
-  const alerts = readAlerts(ws.stages, input.remote.fire, now, input.remote.official ?? null);
+  const alerts = readAlerts(ws.stages, input.remote.fire, now, input.remote.official ?? null, input.remote.world ?? null);
 
   const longestGaps = water.map((w) => w.gap.gapKm).filter((g): g is number => g != null);
   const synthesis = threeLineSynthesis(ws, {

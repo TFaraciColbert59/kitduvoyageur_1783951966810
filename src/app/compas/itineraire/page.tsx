@@ -3,6 +3,7 @@ import { getAuthenticatedRouteActor } from '@/app/api/routes/[id]/_auth';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { parseEntryParams, type TripEntry } from '@/features/route-collab/entry';
 import { loadTripEntry } from '@/features/route-collab/server/loadTripEntry';
+import { listAttachableTrips } from '@/features/route-collab/server/listAttachableTrips';
 import { getPaceContextForUser } from '@/features/route-collab/server/paceProfile';
 import { RouteCollabPageClient } from '@/features/route-collab/components/RouteCollabPageClient';
 import type { TripLinkState } from '@/features/route-collab/components/workspace/start/RouteEntryContext';
@@ -48,6 +49,7 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
   const paceContext = actor ? await getPaceContextForUser(actor.userId) : null;
 
   let serverWorkspace = null;
+  let attachChoices: Awaited<ReturnType<typeof listAttachableTrips>> | null = null;
   let accessDeniedMessage: string | null = null;
 
   try {
@@ -63,8 +65,13 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
       // Un seul tracé par voyage : s'il existe déjà un itinéraire rattaché à ce voyage, on l'ouvre.
       const mine = await store.listWorkspacesForActor(actor.userId);
       serverWorkspace = mine.find((w) => w.tripId === trip.tripId) ?? null;
+    } else if (!trip && actor) {
+      // 1.1 : sans voyage, la personne choisit ou crée le voyage (lecture sous RLS) ; ceux qui ont déjà un tracé sont dits.
+      const mine = await store.listWorkspacesForActor(actor.userId);
+      attachChoices = await listAttachableTrips(actor.userId, new Set(mine.map((w) => w.tripId)));
     }
   } catch {
+    if (!workspaceId && !trip && actor) attachChoices = await listAttachableTrips(actor.userId);
     if (workspaceId) accessDeniedMessage = 'Itinéraire momentanément indisponible. Réessayez.';
   }
 
@@ -82,6 +89,7 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
       deepLink={entryParams.deepLink}
       paceProfile={paceContext?.pace ?? null}
       performanceProfile={paceContext?.performance ?? null}
+      attachChoices={attachChoices}
     />
   );
 }

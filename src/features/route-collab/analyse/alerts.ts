@@ -2,11 +2,14 @@
  * Alertes datées (7.6) : fermetures, vigilance et incendie, chacune avec sa source, sa date de relevé et la fin de
  * sa validité. Pur. Seules les sources déjà intégrées sont lues :
  * - les dangers déclarés sur les étapes (`RouteHazard` : fermeture, alerte météo, terrain, accès) ;
- * - les feux : NASA FIRMS via `analyzeFireAlerts` (point chaud satellite = information, jamais une fermeture).
+ * - les feux : NASA FIRMS via `analyzeFireAlerts` (point chaud satellite = information, jamais une fermeture) ;
+ * - hors Europe : NWS (États-Unis) et ECCC (Canada) par le service du Compas (`getOfficialAlerts`, interrupteur
+ *   `COMPAS_ALERTS_WORLD`) et GDACS (catastrophes mondiales Orange / Rouge, `gdacs.ts`).
  * Une alerte sans fin de validité dit « fin de validité inconnue » ; une alerte échue est marquée expirée et
  * n'est jamais comptée comme active.
  */
 import type { RouteHazard } from '../types';
+import { GDACS_TYPE_LABEL, type WorldHazardPayload } from './gdacs';
 
 export type AlertKind = 'closure' | 'vigilance' | 'fire' | 'terrain' | 'access';
 
@@ -59,6 +62,8 @@ export interface OfficialAlertsPayload {
   readonly status: 'lues' | 'partielles' | 'pas_encore_publiees' | 'non_couvert' | 'zone_non_rapprochee' | 'indisponibles';
   readonly service: string | null;
   readonly readAt: string | null;
+  /** Lecture NWS / ECCC (hors Europe) : `off` quand l'interrupteur du serveur est éteint. Absent : inconnu. */
+  readonly worldSwitch?: 'on' | 'off';
   readonly alerts: readonly {
     readonly id: string;
     readonly source: string;
@@ -139,6 +144,25 @@ export function alertsFromStages(
   return out;
 }
 
+export function alertsFromWorld(world: WorldHazardPayload | null, now: Date): DatedAlert[] {
+  if (!world) return [];
+  return world.impacts.map((i) => {
+    const validUntil = i.validUntil && Number.isFinite(Date.parse(i.validUntil)) ? i.validUntil : null;
+    return {
+      id: `world:${i.id}`,
+      kind: 'vigilance' as const,
+      title: `${GDACS_TYPE_LABEL[i.eventType]} (${i.level}) · ${i.title}`,
+      source: world.source ?? 'GDACS',
+      observedAt: i.observedAt && Number.isFinite(Date.parse(i.observedAt)) ? i.observedAt : world.retrievedAt,
+      validUntil,
+      expired: isExpired(validUntil, now),
+      severity: i.level === 'rouge' ? ('critical' as const) : ('warning' as const),
+      day: null,
+      detail: `Point de référence de l’événement à ${i.distanceKm} km du tracé (position approximative, pas une emprise).`,
+    };
+  });
+}
+
 export function alertsFromFire(fire: FireAlertPayload | null, now: Date): DatedAlert[] {
   if (!fire) return [];
   return fire.impacts.map((i) => {
@@ -171,8 +195,14 @@ export function readAlerts(
   fire: FireAlertPayload | null,
   now: Date,
   official: OfficialAlertsPayload | null = null,
+  world: WorldHazardPayload | null = null,
 ): AlertsReading {
-  const alerts = [...alertsFromStages(stages, now), ...alertsFromOfficial(official, now), ...alertsFromFire(fire, now)].sort(
+  const alerts = [
+    ...alertsFromStages(stages, now),
+    ...alertsFromOfficial(official, now),
+    ...alertsFromWorld(world, now),
+    ...alertsFromFire(fire, now),
+  ].sort(
     (a, b) => Number(a.expired) - Number(b.expired) || (b.observedAt ?? '').localeCompare(a.observedAt ?? ''),
   );
   const gaps: string[] = [];
@@ -180,9 +210,14 @@ export function readAlerts(
   else if (fire.status === 'unavailable') gaps.push(fire.reason ?? 'Feux : source indisponible, aucun « aucun feu » affiché.');
   if (!official) gaps.push('Vigilance officielle : source pas encore lue (il faut des étapes datées).');
   else {
-    const g = OFFICIAL_STATUS_GAP[official.status];
+    const g =
+      official.status === 'non_couvert' && official.worldSwitch === 'off'
+        ? 'Vigilance officielle hors Europe (NWS États-Unis, ECCC Canada) : lecture désactivée sur ce serveur (COMPAS_ALERTS_WORLD), aucun « aucune alerte » n’est affiché.'
+        : OFFICIAL_STATUS_GAP[official.status];
     if (g) gaps.push(g);
   }
+  if (!world) gaps.push('Catastrophes mondiales (GDACS) : source pas encore lue.');
+  else if (world.status === 'unavailable') gaps.push(world.reason ?? 'Catastrophes mondiales (GDACS) : source indisponible, aucun « rien à signaler » affiché.');
   gaps.push('Fermetures : seules celles déclarées sur les étapes sont connues (aucune source de fermetures n’est intégrée).');
   return { alerts, active: alerts.filter((a) => !a.expired), expiredCount: alerts.filter((a) => a.expired).length, gaps };
 }

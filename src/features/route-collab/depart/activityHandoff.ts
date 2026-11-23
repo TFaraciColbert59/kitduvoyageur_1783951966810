@@ -63,6 +63,22 @@ export function writeHandoff(h: ActivityHandoff, storage: Pick<Storage, 'setItem
   }
 }
 
+/** Forme d'une passation (stockage local ou brouillon de sortie) ; `null` si elle est inexploitable. */
+export function parseHandoff(raw: unknown): ActivityHandoff | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const h = raw as Partial<ActivityHandoff>;
+  if (typeof h.tripId !== 'string' || typeof h.workspaceId !== 'string' || typeof h.revisionId !== 'string' || typeof h.startedAt !== 'string') return null;
+  if (!h.tripId || !h.workspaceId || !h.revisionId) return null;
+  return {
+    tripId: h.tripId,
+    workspaceId: h.workspaceId,
+    revisionId: h.revisionId,
+    revisionNo: typeof h.revisionNo === 'number' && Number.isFinite(h.revisionNo) ? h.revisionNo : 0,
+    kitSnapshot: Array.isArray(h.kitSnapshot) ? (h.kitSnapshot as HandoffKitItem[]).slice(0, MAX_SNAPSHOT_ITEMS) : [],
+    startedAt: h.startedAt,
+  };
+}
+
 export function readHandoffFor(
   tripId: string,
   nowMs: number = Date.now(),
@@ -72,21 +88,22 @@ export function readHandoffFor(
   try {
     const raw = storage.getItem(HANDOFF_KEY);
     if (!raw) return null;
-    const h = JSON.parse(raw) as Partial<ActivityHandoff>;
-    if (h.tripId !== tripId || typeof h.workspaceId !== 'string' || typeof h.revisionId !== 'string' || typeof h.startedAt !== 'string') return null;
+    const h = parseHandoff(JSON.parse(raw));
+    if (!h || h.tripId !== tripId) return null;
     const at = Date.parse(h.startedAt);
     if (!Number.isFinite(at) || nowMs - at > HANDOFF_MAX_AGE_MS || at - nowMs > 3600_000) return null;
-    return {
-      tripId: h.tripId,
-      workspaceId: h.workspaceId,
-      revisionId: h.revisionId,
-      revisionNo: typeof h.revisionNo === 'number' ? h.revisionNo : 0,
-      kitSnapshot: Array.isArray(h.kitSnapshot) ? (h.kitSnapshot as HandoffKitItem[]).slice(0, MAX_SNAPSHOT_ITEMS) : [],
-      startedAt: h.startedAt,
-    };
+    return h;
   } catch {
     return null;
   }
+}
+
+/** Texte du cockpit : la version d'itinéraire suivie (9.8), avec le sac emporté s'il est connu. */
+export function followedVersionLabel(h: Pick<ActivityHandoff, 'revisionNo' | 'kitSnapshot'> | null): string | null {
+  if (!h) return null;
+  const version = h.revisionNo > 0 ? `Version v${h.revisionNo} suivie` : 'Version publiée suivie';
+  const n = h.kitSnapshot.length;
+  return n > 0 ? `${version} · ${n} objet${n > 1 ? 's' : ''} du sac` : version;
 }
 
 export function clearHandoff(storage: Pick<Storage, 'removeItem'> | null = typeof window !== 'undefined' ? window.localStorage : null): void {
