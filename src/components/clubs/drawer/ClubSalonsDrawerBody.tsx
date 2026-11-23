@@ -567,10 +567,13 @@ export function ClubSalonsDrawerBody({
               alignItems: 'center',
               gap: 6,
               height: 32,
-              padding: '0 10px 0 6px',
+              padding: '0 12px 0 8px',
               borderRadius: 999,
-              border: 0,
-              background: 'rgba(23, 64, 44, 0.08)',
+              border: '0.5px solid rgba(255, 255, 255, 0.85)',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42))',
+              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+              backdropFilter: 'blur(24px) saturate(180%)',
+              boxShadow: 'inset 0 1px 0 #fff, 0 2px 8px rgba(23, 43, 36, 0.08)',
               color: '#17402c',
               fontWeight: 700,
               fontSize: 12.5,
@@ -867,12 +870,11 @@ export function ClubSalonsDrawerBody({
                             display: 'flex',
                             alignItems: 'flex-start',
                             gap: 10,
-                            padding: isGrouped ? '2px 6px' : '7px 6px 4px',
+                            padding: isGrouped ? '3px 6px' : '6px 6px 4px',
                             marginTop: isGrouped ? 0 : 4,
-                            borderRadius: 12,
-                            background: isSelected ? 'rgba(23, 64, 44, 0.06)' : 'transparent',
+                            borderRadius: 18,
                             cursor: 'pointer',
-                            transition: 'background-color 0.12s ease',
+                            transition: 'transform 0.12s ease',
                           }}
                         >
                           {/* Avatar colonne gauche (36px fixe, style Discord) */}
@@ -920,35 +922,8 @@ export function ClubSalonsDrawerBody({
                             )}
                           </div>
 
-                          {/* Contenu message colonne droite */}
+                          {/* Contenu message colonne droite (bulle Liquid Glass style Messagerie) */}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            {parsed.replyTo ? (
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                  fontSize: 11,
-                                  color: '#56665d',
-                                  marginBottom: 3,
-                                  paddingLeft: 6,
-                                  borderLeft: '2px solid rgba(23, 64, 44, 0.3)',
-                                }}
-                              >
-                                <CornerUpLeft size={11} aria-hidden="true" style={{ flex: 'none' }} />
-                                <b style={{ flex: 'none', color: '#17402c' }}>{parsed.replyTo}</b>
-                                <span
-                                  style={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {parsed.quote}
-                                </span>
-                              </div>
-                            ) : null}
-
                             {!isGrouped ? (
                               <div
                                 style={{
@@ -956,10 +931,11 @@ export function ClubSalonsDrawerBody({
                                   alignItems: 'center',
                                   flexWrap: 'wrap',
                                   gap: 6,
-                                  marginBottom: 2,
+                                  marginBottom: 4,
+                                  paddingLeft: 2,
                                 }}
                               >
-                                <b style={{ fontSize: 13.5, color: author.isMine ? '#17402c' : '#172b24' }}>
+                                <b style={{ fontSize: 13, fontWeight: 700, color: author.isMine ? '#17402c' : '#172b24' }}>
                                   {author.name}
                                 </b>
                                 {author.role && author.role !== 'Membre actif' ? (
@@ -975,27 +951,78 @@ export function ClubSalonsDrawerBody({
                                     {author.role}
                                   </span>
                                 ) : null}
-                                <span style={{ fontSize: 10.5, color: '#6b7d73' }}>
+                                <span style={{ fontSize: 10, fontWeight: 500, color: '#6b7d73', fontVariantNumeric: 'tabular-nums' }}>
                                   {formatMsgTime(msg.createdAt)}
                                 </span>
                               </div>
                             ) : null}
 
-                            <p
+                            <div
                               style={{
-                                margin: 0,
-                                fontSize: 13.5,
-                                lineHeight: 1.42,
-                                color: '#172b24',
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
+                                display: 'inline-block',
+                                maxWidth: '100%',
+                                padding: '8px 12px',
+                                borderRadius: 18,
+                                borderBottomLeftRadius: author.isMine ? 18 : 6,
+                                borderBottomRightRadius: author.isMine ? 6 : 18,
+                                background: author.isMine
+                                  ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12)), linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.46))'
+                                  : 'linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.46))',
+                                WebkitBackdropFilter: 'blur(24px) saturate(180%) brightness(1.04)',
+                                backdropFilter: 'blur(24px) saturate(180%) brightness(1.04)',
+                                boxShadow: isSelected
+                                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1px rgba(23, 64, 44, 0.26), 0 6px 18px rgba(23, 43, 36, 0.11)'
+                                  : author.isMine
+                                    ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 64, 44, 0.16), 0 4px 14px rgba(23, 43, 36, 0.08)'
+                                    : 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 14px rgba(23, 43, 36, 0.07)',
+                                transition: 'box-shadow 0.15s ease',
                               }}
                             >
-                              {parsed.text}
-                            </p>
+                              {parsed.replyTo ? (
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    fontSize: 11,
+                                    fontWeight: 500,
+                                    color: '#56665d',
+                                    marginBottom: 4,
+                                    paddingLeft: 7,
+                                    borderLeft: '2px solid rgba(23, 64, 44, 0.28)',
+                                  }}
+                                >
+                                  <CornerUpLeft size={11} aria-hidden="true" style={{ flex: 'none' }} />
+                                  <b style={{ flex: 'none', color: '#17402c' }}>{parsed.replyTo}</b>
+                                  <span
+                                    style={{
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {parsed.quote}
+                                  </span>
+                                </div>
+                              ) : null}
+
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 13,
+                                  lineHeight: 1.38,
+                                  letterSpacing: '-0.13px',
+                                  color: '#172b24',
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',
+                                }}
+                              >
+                                {parsed.text}
+                              </p>
+                            </div>
 
                             {reactionEntries.length > 0 ? (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                                 {reactionEntries.map(([emoji, count]) => (
                                   <button
                                     key={emoji}
@@ -1008,12 +1035,14 @@ export function ClubSalonsDrawerBody({
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       gap: 4,
-                                      padding: '2px 7px',
+                                      height: 20,
+                                      padding: '0 7px',
                                       borderRadius: 999,
-                                      border: '1px solid rgba(23, 64, 44, 0.2)',
-                                      background: 'rgba(23, 64, 44, 0.08)',
-                                      fontSize: 11.5,
-                                      fontWeight: 700,
+                                      border: '0.5px solid rgba(23, 64, 44, 0.18)',
+                                      background: 'rgba(150, 186, 142, 0.2)',
+                                      fontSize: 10.5,
+                                      fontWeight: 600,
+                                      fontVariantNumeric: 'tabular-nums',
                                       color: '#17402c',
                                       cursor: 'pointer',
                                     }}
@@ -1025,7 +1054,7 @@ export function ClubSalonsDrawerBody({
                               </div>
                             ) : null}
 
-                            {/* Barre d'actions Discord au tap */}
+                            {/* Barre d'actions Liquid Glass au tap (style Messagerie) */}
                             {isSelected && !msg.id.startsWith('temp-') ? (
                               <div
                                 onClick={(e) => e.stopPropagation()}
@@ -1035,10 +1064,13 @@ export function ClubSalonsDrawerBody({
                                   flexWrap: 'wrap',
                                   gap: 4,
                                   marginTop: 6,
-                                  padding: '4px 6px',
-                                  borderRadius: 12,
-                                  background: 'rgba(255, 255, 255, 0.92)',
-                                  boxShadow: '0 4px 12px rgba(16, 32, 25, 0.1), inset 0 0 0 0.5px rgba(23, 64, 44, 0.12)',
+                                  padding: '5px 7px',
+                                  borderRadius: 18,
+                                  border: '0.5px solid rgba(255, 255, 255, 0.88)',
+                                  background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.68))',
+                                  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+                                  backdropFilter: 'blur(28px) saturate(180%)',
+                                  boxShadow: 'inset 0 1px 0 #fff, 0 8px 24px rgba(23, 43, 36, 0.12), 0 0 0 0.5px rgba(23, 43, 36, 0.10)',
                                 }}
                               >
                                 {QUICK_REACTIONS.map((emoji) => (
@@ -1193,17 +1225,30 @@ export function ClubSalonsDrawerBody({
                   data-hscroll="true"
                   role="tablist"
                   aria-label="Salons du club"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onWheel={(e) => {
+                    const el = e.currentTarget;
+                    if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                      el.scrollLeft += e.deltaY;
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'flex-start',
                     gap: 6,
                     overflowX: 'auto',
                     scrollbarWidth: 'none',
+                    touchAction: 'pan-x',
+                    overscrollBehaviorX: 'contain',
+                    WebkitOverflowScrolling: 'touch',
                     padding: '2px 0',
                   }}
                 >
-                  {channels.map((ch) => {
+                  {channels.map((ch, idx) => {
                     const isCur = ch.id === (activeChannel?.id ?? null);
                     return (
                       <button
@@ -1219,15 +1264,25 @@ export function ClubSalonsDrawerBody({
                         }}
                         style={{
                           flex: 'none',
+                          marginLeft: idx === 0 ? 'auto' : undefined,
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: 5,
                           height: 28,
-                          padding: '0 10px',
+                          padding: '0 11px',
                           borderRadius: 999,
-                          border: isCur ? '0.5px solid rgba(255,255,255,0.22)' : '0.5px solid rgba(23, 64, 44, 0.14)',
-                          background: isCur ? '#17402c' : 'rgba(255, 255, 255, 0.86)',
-                          color: isCur ? '#ffffff' : '#172b24',
+                          border: isCur
+                            ? '0.5px solid rgba(23, 64, 44, 0.22)'
+                            : '0.5px solid rgba(255, 255, 255, 0.85)',
+                          background: isCur
+                            ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.28), rgba(150, 186, 142, 0.14)), linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65))'
+                            : 'linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46))',
+                          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                          backdropFilter: 'blur(24px) saturate(180%)',
+                          boxShadow: isCur
+                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.08)'
+                            : 'inset 0 1px 0 #fff, 0 2px 6px rgba(23, 43, 36, 0.05)',
+                          color: isCur ? '#17402c' : '#172b24',
                           fontSize: 11.5,
                           fontWeight: isCur ? 700 : 600,
                           whiteSpace: 'nowrap',
@@ -1249,8 +1304,11 @@ export function ClubSalonsDrawerBody({
                         width: 28,
                         height: 28,
                         borderRadius: '50%',
-                        border: '0.5px solid rgba(23, 64, 44, 0.14)',
-                        background: 'rgba(255, 255, 255, 0.86)',
+                        border: '0.5px solid rgba(255, 255, 255, 0.85)',
+                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42))',
+                        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                        backdropFilter: 'blur(24px) saturate(180%)',
+                        boxShadow: 'inset 0 1px 0 #fff, 0 2px 8px rgba(23, 43, 36, 0.08)',
                         color: '#17402c',
                         display: 'grid',
                         placeItems: 'center',
@@ -1269,9 +1327,13 @@ export function ClubSalonsDrawerBody({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: 8,
-                    padding: '5px 10px',
-                    borderRadius: 12,
-                    background: 'rgba(23, 64, 44, 0.07)',
+                    padding: '6px 12px',
+                    borderRadius: 14,
+                    border: '0.5px solid rgba(23, 64, 44, 0.16)',
+                    background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.2), rgba(150, 186, 142, 0.1))',
+                    WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+                    backdropFilter: 'blur(20px) saturate(160%)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.85)',
                     fontSize: 11.5,
                     color: '#17402c',
                   }}
@@ -1297,10 +1359,14 @@ export function ClubSalonsDrawerBody({
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    padding: '5px 6px 5px 14px',
+                    padding: '4px 5px 4px 15px',
+                    minHeight: 40,
                     borderRadius: 999,
-                    background: 'rgba(255, 255, 255, 0.94)',
-                    boxShadow: 'inset 0 0 0 1px rgba(23, 64, 44, 0.14), 0 4px 12px rgba(16, 32, 25, 0.06)',
+                    border: '0.5px solid rgba(255, 255, 255, 0.85)',
+                    background: 'rgba(255, 255, 255, 0.65)',
+                    WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+                    backdropFilter: 'blur(28px) saturate(180%)',
+                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(23, 43, 36, 0.06)',
                   }}
                 >
                   <input
@@ -1316,7 +1382,8 @@ export function ClubSalonsDrawerBody({
                       minWidth: 0,
                       border: 0,
                       background: 'transparent',
-                      fontSize: 13.5,
+                      fontSize: 13,
+                      letterSpacing: '-0.13px',
                       color: '#172b24',
                       outline: 'none',
                     }}
@@ -1326,20 +1393,25 @@ export function ClubSalonsDrawerBody({
                     disabled={sending || !draft.trim()}
                     aria-label="Envoyer le message"
                     style={{
-                      width: 34,
-                      height: 34,
+                      width: 32,
+                      height: 32,
                       borderRadius: '50%',
                       border: 0,
-                      background: draft.trim() ? '#17402c' : 'rgba(23, 64, 44, 0.12)',
+                      background: draft.trim()
+                        ? 'linear-gradient(180deg, #275d3f, #17402c)'
+                        : 'rgba(23, 43, 36, 0.08)',
+                      boxShadow: draft.trim()
+                        ? '0 4px 12px rgba(23, 64, 44, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35)'
+                        : 'none',
                       color: draft.trim() ? '#ffffff' : '#56665d',
                       display: 'grid',
                       placeItems: 'center',
                       flex: 'none',
                       cursor: draft.trim() ? 'pointer' : 'default',
-                      transition: 'background-color 0.15s ease',
+                      transition: 'transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease',
                     }}
                   >
-                    <Send size={15} aria-hidden="true" />
+                    <Send size={14} aria-hidden="true" />
                   </button>
                 </form>
               ) : activeChannel?.readOnlyForMembers ? (
