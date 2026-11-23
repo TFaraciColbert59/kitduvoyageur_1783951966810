@@ -182,54 +182,30 @@ export function ClubCoffreDrawerBody({
                   <KitCard
                     kit={entry}
                     viewer="visitor"
-                    renderProductPane={({ product: p, products: list, index: idx, totalWeightG, onPrev, onNext, onBack }) => {
-                      const pickerProduct: PickerProduct = {
-                        key: p.id,
-                        source: 'inventory',
-                        id: p.id,
-                        name: p.name,
-                        brand: p.brand || null,
-                        category: p.category || null,
-                        weightG: p.weightG || null,
-                        image: p.image || null,
-                        wear: null,
-                        conditionLabel: p.condition || 'Équipement club',
-                        description: p.description || `Inclus dans ${k.title}.`,
-                        priceLabel: null,
-                        owner: null,
-                        cartable: null,
-                        ownershipId: null,
-                        productId: null,
-                      };
-                      return (
-                        <KitProductSheetV2
-                          embedded
-                          product={pickerProduct}
-                          initialCategory={p.category || undefined}
-                          currentKitWeightG={totalWeightG || k.totalWeightG}
-                          alreadyInKit
-                          positionLabel={`${idx + 1} / ${list.length}`}
-                          hasPrev={idx > 0}
-                          hasNext={idx < list.length - 1}
-                          onPrev={onPrev}
-                          onNext={onNext}
-                          onAdd={() => onBack()}
-                          onClose={onBack}
-                        />
-                      );
-                    }}
+                    onSelectProduct={(_product, products, index) =>
+                      setSelectedKitProductState({
+                        products,
+                        index,
+                        kitTitle: k.title,
+                        totalWeightG: k.totalWeightG,
+                      })
+                    }
                   />
                   <button
                     type="button"
                     className="lkdv-carnet-btn-soft"
+                    aria-label={k.cloned ? 'Kit cloné dans votre Carnet' : 'Cloner ce kit'}
+                    title={k.cloned ? 'Kit cloné' : 'Cloner ce kit'}
                     style={{
                       position: 'absolute',
-                      bottom: 10,
-                      right: 148,
+                      top: 10,
+                      right: 10,
                       zIndex: 5,
-                      height: 30,
-                      fontSize: 11,
-                      padding: '0 10px',
+                      width: 32,
+                      height: 32,
+                      padding: 0,
+                      borderRadius: '50%',
+                      justifyContent: 'center',
                     }}
                     onClick={() => {
                       onCloneStandardKit(k.id);
@@ -239,8 +215,7 @@ export function ClubCoffreDrawerBody({
                       });
                     }}
                   >
-                    {k.cloned ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
-                    <span>{k.cloned ? 'Cloné' : 'Cloner'}</span>
+                    {k.cloned ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
                   </button>
                 </ClubStaggerCard>
               );

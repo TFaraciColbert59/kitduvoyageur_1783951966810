@@ -416,13 +416,14 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
     try { navigator.vibrate?.(pattern); } catch { /* optionnel */ }
   };
 
+  const maxView = onSelectProduct ? 1 : 2;
   const goTo = useCallback((next: number) => {
-    const bounded = Math.max(0, Math.min(2, next));
+    const bounded = Math.max(0, Math.min(maxView, next));
     if (bounded === 2 && !products.length) return;
     if (bounded === view) return;
     haptic(bounded === 2 ? 12 : 7);
     setView(bounded);
-  }, [products.length, view]);
+  }, [maxView, products.length, view]);
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button,a,input,textarea')) return;
@@ -926,11 +927,17 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
 
       <div className="lkdv-kit-selector" role="tablist" aria-label={`États du kit ${name}`}>
         <span className="lkdv-kit-lens" aria-hidden="true" style={{ '--i': view } as React.CSSProperties} />
-        {[
-          { icon: LayoutGrid, label: 'Vue du kit' },
-          { icon: Layers, label: 'Composition du kit' },
-          { icon: Package, label: 'Détail du produit' },
-        ].map((item, index) => {
+        {(onSelectProduct
+          ? [
+              { icon: LayoutGrid, label: 'Vue du kit' },
+              { icon: Layers, label: 'Composition du kit' },
+            ]
+          : [
+              { icon: LayoutGrid, label: 'Vue du kit' },
+              { icon: Layers, label: 'Composition du kit' },
+              { icon: Package, label: 'Détail du produit' },
+            ]
+        ).map((item, index) => {
           const Icon = item.icon;
           return (
             <button

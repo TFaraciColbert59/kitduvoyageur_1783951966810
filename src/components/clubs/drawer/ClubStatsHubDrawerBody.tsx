@@ -437,6 +437,16 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const [savingStoryPermId, setSavingStoryPermId] = useState<string | null>(null);
   const kitsPaneRef = useRef<HTMLDivElement | null>(null);
   const [kitsCompact, setKitsCompact] = useState(false);
+  const eventsScrollRef = useRef<HTMLDivElement | null>(null);
+  const eventsTouchYRef = useRef<number | null>(null);
+  const [eventsCompact, setEventsCompact] = useState(false);
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeSubTab !== 1 || !active) {
+      setEventsCompact(false);
+    }
+  }, [active, activeSubTab]);
 
   useEffect(() => {
     if (activeSubTab !== 2 || !active) {
@@ -627,21 +637,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
         >
           {tierBadge.label}
         </span>
-        {isRealUuid ? (
-          <button
-            type="button"
-            className="reseau-btn club-icon-pill"
-            aria-label="Actualiser les statistiques du club"
-            onClick={() => void fetchStats(true)}
-            style={{ width: 28, minWidth: 28, height: 28 }}
-          >
-            <RefreshCw
-              size={12}
-              aria-hidden="true"
-              style={loading ? { animation: 'spin 0.8s linear infinite' } : undefined}
-            />
-          </button>
-        ) : null}
       </div>
     </div>
   );
@@ -651,90 +646,257 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   // ============================================================================
   if (activeSubTab === 1) {
     const eb = stats.eventsBreakdown;
-    return (
-      <div className="club-drawer-pane-content" data-testid="club-stats-events-pane">
-        {renderTopControls()}
+    const activeDisc =
+      stats.disciplines.find((d) => d.name === selectedDiscipline) ?? null;
 
-        {/* Profil d'exploration Komoot — Terrains & Massifs */}
-        {stats.terrains.length > 0 ? (
-          <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Compass size={15} color="#17402c" aria-hidden="true" />
-                <b style={{ fontSize: 13, color: '#172b24' }}>Empreinte & Massifs parcourus</b>
-              </div>
-              <span style={{ fontSize: 11, color: '#56665d' }}>{stats.terrains.length} secteurs</span>
-            </div>
-            {stats.terrains.map((t, idx) => (
-              <div key={t.name} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 11.5 }}>
-                  <b style={{ color: '#172b24' }}>{t.name}</b>
-                  <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums' }}>
-                    {t.outingsCount} sortie{t.outingsCount > 1 ? 's' : ''} · {t.distanceKm} km · +{t.dplusM.toLocaleString('fr-FR')} m
-                  </span>
+    const forwardHeaderWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+      const scroller = eventsScrollRef.current;
+      if (!scroller) return;
+      scroller.scrollTop += e.deltaY;
+      if (e.deltaY > 6) setEventsCompact(true);
+      else if (scroller.scrollTop <= 6 && e.deltaY < -6) setEventsCompact(false);
+    };
+
+    const forwardHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+      eventsTouchYRef.current = e.touches[0]?.clientY ?? null;
+    };
+
+    const forwardHeaderTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+      const prevY = eventsTouchYRef.current;
+      const curY = e.touches[0]?.clientY ?? null;
+      if (prevY == null || curY == null) return;
+      const dy = prevY - curY;
+      eventsTouchYRef.current = curY;
+      const scroller = eventsScrollRef.current;
+      if (scroller) scroller.scrollTop += dy;
+      if (dy > 4) setEventsCompact(true);
+      else if ((!scroller || scroller.scrollTop <= 6) && dy < -4) setEventsCompact(false);
+    };
+
+    return (
+      <div
+        className="club-drawer-pane-content"
+        data-testid="club-stats-events-pane"
+        style={{
+          flex: '1 1 0',
+          height: '100%',
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
+        {/* En-tête fixe qui se replie au scroll (même en scrollant directement dessus) */}
+        <div
+          style={{ flex: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}
+          onWheel={forwardHeaderWheel}
+          onTouchStart={forwardHeaderTouchStart}
+          onTouchMove={forwardHeaderTouchMove}
+        >
+          {renderTopControls()}
+
+          {stats.terrains.length > 0 ? (
+            <div
+              className="club-glass-card"
+              onClick={() => eventsCompact && setEventsCompact(false)}
+              style={{
+                padding: eventsCompact ? '8px 12px' : 12,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: eventsCompact ? 6 : 9,
+                cursor: eventsCompact ? 'pointer' : 'default',
+                transition: 'padding 0.18s ease, gap 0.18s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Compass size={15} color="#17402c" aria-hidden="true" />
+                  <b style={{ fontSize: 13, color: '#172b24' }}>Empreinte & Massifs parcourus</b>
                 </div>
-                <div className="club-progress-track" style={{ height: 6 }}>
-                  <div
-                    className="club-progress-fill"
+                <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>{stats.terrains.length} secteurs</span>
+              </div>
+
+              {eventsCompact ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    height: 6,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    gap: 2,
+                    background: 'rgba(23, 64, 44, 0.06)',
+                  }}
+                  aria-hidden="true"
+                >
+                  {stats.terrains.map((t, idx) => (
+                    <div
+                      key={t.name}
+                      style={{
+                        width: `${Math.max(5, t.sharePct)}%`,
+                        background: CHART_COLORS[idx % CHART_COLORS.length],
+                        borderRadius: 999,
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                stats.terrains.map((t, idx) => (
+                  <div key={t.name} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 11.5 }}>
+                      <b style={{ color: '#172b24' }}>{t.name}</b>
+                      <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums' }}>
+                        {t.outingsCount} sortie{t.outingsCount > 1 ? 's' : ''} · {t.distanceKm} km · +{t.dplusM.toLocaleString('fr-FR')} m
+                      </span>
+                    </div>
+                    <div className="club-progress-track" style={{ height: 6 }}>
+                      <div
+                        className="club-progress-fill"
+                        style={{
+                          width: `${t.sharePct}%`,
+                          background: CHART_COLORS[idx % CHART_COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Zone scrollable indépendante */}
+        <div
+          ref={eventsScrollRef}
+          onScroll={(e) => {
+            const top = e.currentTarget.scrollTop;
+            setEventsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+          }}
+          style={{
+            flex: '1 1 0',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            paddingBottom: 56,
+          }}
+        >
+        {/* Disciplines pratiquées — interactif */}
+        {stats.disciplines.length > 0 ? (
+          <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Mountain size={15} color="#17402c" aria-hidden="true" />
+                <b style={{ fontSize: 13, color: '#172b24' }}>Disciplines du club</b>
+              </div>
+              {activeDisc ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDiscipline(null)}
+                  style={{ border: 0, background: 'none', color: '#56665d', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Tout voir
+                </button>
+              ) : null}
+            </div>
+            <div style={{ display: 'flex', height: 12, borderRadius: 999, overflow: 'hidden', gap: 2 }}>
+              {stats.disciplines.map((d, i) => {
+                const isSel = selectedDiscipline === d.name;
+                const dimmed = selectedDiscipline !== null && !isSel;
+                return (
+                  <button
+                    key={d.name}
+                    type="button"
+                    aria-label={`${d.name} (${d.sharePct}%)`}
+                    aria-pressed={isSel}
+                    onClick={() => setSelectedDiscipline((cur) => (cur === d.name ? null : d.name))}
                     style={{
-                      width: `${t.sharePct}%`,
-                      background: CHART_COLORS[idx % CHART_COLORS.length],
+                      width: `${d.sharePct}%`,
+                      height: '100%',
+                      border: 0,
+                      padding: 0,
+                      cursor: 'pointer',
+                      background: CHART_COLORS[i % CHART_COLORS.length],
+                      opacity: dimmed ? 0.35 : 1,
+                      transform: isSel ? 'scaleY(1.15)' : 'none',
+                      transition: 'opacity 0.16s ease, transform 0.16s ease',
                     }}
                   />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-
-        {/* Disciplines pratiquées */}
-        {stats.disciplines.length > 0 ? (
-          <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Mountain size={15} color="#17402c" aria-hidden="true" />
-              <b style={{ fontSize: 13, color: '#172b24' }}>Disciplines du club</b>
-            </div>
-            <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2 }}>
-              {stats.disciplines.map((d, i) => (
-                <div
-                  key={d.name}
-                  title={`${d.name} (${d.sharePct}%)`}
-                  style={{
-                    width: `${d.sharePct}%`,
-                    background: CHART_COLORS[i % CHART_COLORS.length],
-                  }}
-                />
-              ))}
+                );
+              })}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {stats.disciplines.map((d, i) => (
-                <span
-                  key={d.name}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    fontSize: 11,
-                    padding: '3px 8px',
-                    borderRadius: 999,
-                    background: 'rgba(23, 64, 44, 0.06)',
-                    color: '#172b24',
-                    fontWeight: 600,
-                  }}
-                >
-                  <span
+              {stats.disciplines.map((d, i) => {
+                const isSel = selectedDiscipline === d.name;
+                return (
+                  <button
+                    key={d.name}
+                    type="button"
+                    aria-pressed={isSel}
+                    onClick={() => setSelectedDiscipline((cur) => (cur === d.name ? null : d.name))}
                     style={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      background: CHART_COLORS[i % CHART_COLORS.length],
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      fontSize: 11.5,
+                      padding: '4px 9px',
+                      borderRadius: 999,
+                      border: isSel ? '1px solid rgba(23, 64, 44, 0.32)' : '1px solid transparent',
+                      background: isSel ? 'rgba(150, 186, 142, 0.26)' : 'rgba(23, 64, 44, 0.06)',
+                      color: isSel ? '#17402c' : '#172b24',
+                      fontWeight: isSel ? 700 : 600,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease, border-color 0.15s ease',
                     }}
-                  />
-                  <span>{d.name}</span>
-                  <span style={{ color: '#56665d' }}>{d.sharePct}%</span>
-                </span>
-              ))}
+                  >
+                    <span
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        background: CHART_COLORS[i % CHART_COLORS.length],
+                      }}
+                    />
+                    <span>{d.name}</span>
+                    <span style={{ color: isSel ? '#17402c' : '#56665d' }}>{d.sharePct}%</span>
+                  </button>
+                );
+              })}
             </div>
+            {activeDisc ? (
+              <div
+                style={{
+                  padding: '9px 11px',
+                  borderRadius: 14,
+                  background: 'rgba(150, 186, 142, 0.14)',
+                  border: '0.5px solid rgba(23, 64, 44, 0.16)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ fontSize: 12.5, color: '#17402c', display: 'block' }}>
+                    {activeDisc.name} · {activeDisc.sharePct} % du club
+                  </b>
+                  <span style={{ fontSize: 11, color: '#4a5c53' }}>
+                    ~{Math.max(1, Math.round((eb.organized * activeDisc.sharePct) / 100))} sorties ·{' '}
+                    {Math.round((stats.summary.totalDistanceKm * activeDisc.sharePct) / 100).toLocaleString('fr-FR')} km cumulés
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  style={{ height: 28, padding: '0 10px', fontSize: 11, flex: 'none' }}
+                  onClick={() => onSwitchTabAndLens(2, 0)}
+                >
+                  Sorties →
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
@@ -799,6 +961,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
           <Calendar size={14} aria-hidden="true" />
           <span>Ouvrir l’agenda des sorties ({eb.organized})</span>
         </button>
+        </div>
       </div>
     );
   }
@@ -973,42 +1136,14 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                     key={k.id}
                     kit={entry}
                     viewer="visitor"
-                    renderProductPane={({ product: p, products: list, index: idx, totalWeightG, onPrev, onNext, onBack }) => {
-                      const pickerProduct: PickerProduct = {
-                        key: p.id,
-                        source: 'inventory',
-                        id: p.id,
-                        name: p.name,
-                        brand: p.brand || null,
-                        category: p.category || null,
-                        weightG: p.weightG || null,
-                        image: p.image || null,
-                        wear: null,
-                        conditionLabel: p.condition || 'Équipement club',
-                        description: p.description || `Inclus dans ${k.title}.`,
-                        priceLabel: null,
-                        owner: null,
-                        cartable: null,
-                        ownershipId: null,
-                        productId: null,
-                      };
-                      return (
-                        <KitProductSheetV2
-                          embedded
-                          product={pickerProduct}
-                          initialCategory={p.category || undefined}
-                          currentKitWeightG={totalWeightG || k.totalWeightG}
-                          alreadyInKit
-                          positionLabel={`${idx + 1} / ${list.length}`}
-                          hasPrev={idx > 0}
-                          hasNext={idx < list.length - 1}
-                          onPrev={onPrev}
-                          onNext={onNext}
-                          onAdd={() => onBack()}
-                          onClose={onBack}
-                        />
-                      );
-                    }}
+                    onSelectProduct={(_product, products, index) =>
+                      setSelectedKitProductState({
+                        products,
+                        index,
+                        kitTitle: k.title,
+                        totalWeightG: k.totalWeightG,
+                      })
+                    }
                   />
                 );
               })}

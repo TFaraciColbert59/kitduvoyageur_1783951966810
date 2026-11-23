@@ -14,12 +14,12 @@ import {
   Megaphone,
   MessageCircle,
   Plus,
-  RefreshCw,
   Search,
   Send,
   Trash2,
   X,
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 import type { ClubChannel, ClubChannelKind, ClubChannelMessage } from '@/features/clubs';
 import '@/components/messaging/messages-grammar.css';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
@@ -36,6 +36,23 @@ interface CachedSalonData {
 const salonsCache = new Map<string, CachedSalonData>();
 const SALONS_TTL_MS = 30_000;
 const QUICK_REACTIONS = ['🏔️', '👍', '🔥', '❤️'] as const;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function mapRealtimeMessage(row: Record<string, unknown>): ClubChannelMessage {
+  return {
+    id: String(row.id ?? ''),
+    channelId: String(row.channel_id ?? ''),
+    clubId: String(row.club_id ?? ''),
+    authorId: String(row.author_id ?? ''),
+    body: typeof row.body === 'string' ? row.body : '',
+    createdAt: typeof row.created_at === 'string' ? row.created_at : new Date().toISOString(),
+    editedAt: typeof row.edited_at === 'string' ? row.edited_at : null,
+    hiddenByModeratorId:
+      typeof row.hidden_by_moderator_id === 'string' ? row.hidden_by_moderator_id : null,
+    hiddenReason: typeof row.hidden_reason === 'string' ? row.hidden_reason : null,
+    deletedAt: typeof row.deleted_at === 'string' ? row.deleted_at : null,
+  };
+}
 
 export interface ClubSalonsDrawerBodyProps {
   activeSubTab?: number;
@@ -129,7 +146,6 @@ export function ClubSalonsDrawerBody({
   const [messages, setMessages] = useState<ClubChannelMessage[]>(cachedInit?.messages ?? []);
   const [canPost, setCanPost] = useState<boolean>(cachedInit?.canPost ?? true);
   const [loading, setLoading] = useState<boolean>(!cachedInit);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [draft, setDraft] = useState('');
@@ -209,8 +225,7 @@ export function ClubSalonsDrawerBody({
         return;
       }
 
-      if (force) setRefreshing(true);
-      else if (!hit) setLoading(true);
+      if (!force && !hit) setLoading(true);
       setError(null);
 
       try {
@@ -257,7 +272,6 @@ export function ClubSalonsDrawerBody({
         setError('Erreur réseau lors du chargement des salons.');
       } finally {
         setLoading(false);
-        setRefreshing(false);
       }
     },
     [activeClub.id],
@@ -266,6 +280,78 @@ export function ClubSalonsDrawerBody({
   useEffect(() => {
     if (!active) return;
     void loadChannel(activeChannelId);
+  }, [active, activeChannelId, loadChannel]);
+
+  // Synchronisation temps réel automatique (Supabase Realtime + resync retour d'onglet)
+  useEffect(() => {
+    if (!active || !activeChannelId || !UUID_RE.test(activeChannelId)) return;
+
+    let supabase: ReturnType<typeof createClient> | null = null;
+    try {
+      supabase = createClient();
+    } catch {
+      supabase = null;
+    }
+
+    const realtimeChannel = supabase
+      ? supabase
+          .channel(`club-salon-live-${activeChannelId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'club_channel_messages',
+              filter: `channel_id=eq.${activeChannelId}`,
+            },
+            (payload) => {
+              if (payload.eventType === 'DELETE') {
+                const oldRow = payload.old as Record<string, unknown> | null;
+                const deletedId = oldRow?.id ? String(oldRow.id) : null;
+                if (!deletedId) return;
+                setMessages((prev) => prev.filter((m) => m.id !== deletedId));
+                return;
+              }
+              const newRow = payload.new as Record<string, unknown> | null;
+              if (!newRow || !newRow.id) return;
+              const mapped = mapRealtimeMessage(newRow);
+              setMessages((prev) => {
+                if (payload.eventType === 'UPDATE') {
+                  return prev.map((m) => (m.id === mapped.id ? mapped : m));
+                }
+                if (prev.some((m) => m.id === mapped.id)) return prev;
+                const withoutMatchingTemp = prev.filter(
+                  (m) =>
+                    !(
+                      m.id.startsWith('temp-') &&
+                      m.authorId === mapped.authorId &&
+                      m.body === mapped.body
+                    ),
+                );
+                return [...withoutMatchingTemp, mapped];
+              });
+            },
+          )
+          .subscribe()
+      : null;
+
+    const handleVisibility = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        void loadChannel(activeChannelId, true);
+      }
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
+      if (supabase && realtimeChannel) {
+        void supabase.removeChannel(realtimeChannel);
+      }
+    };
   }, [active, activeChannelId, loadChannel]);
 
   useEffect(() => {
@@ -606,28 +692,14 @@ export function ClubSalonsDrawerBody({
 
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
           {view === 'chat' ? (
-            <>
-              <button
-                type="button"
-                className={`reseau-btn ${searchOpen ? 'active' : ''} club-icon-pill`}
-                aria-label="Rechercher dans le salon"
-                onClick={() => setSearchOpen((v) => !v)}
-              >
-                <Search size={14} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="reseau-btn club-icon-pill"
-                aria-label="Actualiser les messages"
-                onClick={() => void loadChannel(activeChannelId, true)}
-              >
-                <RefreshCw
-                  size={14}
-                  aria-hidden="true"
-                  style={refreshing ? { animation: 'spin 0.8s linear infinite' } : undefined}
-                />
-              </button>
-            </>
+            <button
+              type="button"
+              className={`reseau-btn ${searchOpen ? 'active' : ''} club-icon-pill`}
+              aria-label="Rechercher dans le salon"
+              onClick={() => setSearchOpen((v) => !v)}
+            >
+              <Search size={14} aria-hidden="true" />
+            </button>
           ) : canManageChannels ? (
             <button
               type="button"
