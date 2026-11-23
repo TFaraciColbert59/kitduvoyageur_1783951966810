@@ -170,26 +170,18 @@ export function ClubChallengesPanel({
 
   return (
     <section className={styles.screen} aria-label="Défis du club">
-      <div className={styles.sectionHeader}>
-        <div>
-          <p className={styles.eyebrow}>Défis · progression</p>
-          <h2 className={styles.title}>Défis en cours</h2>
-          <p className={styles.subtitle}>
-            Un défi de club additionne les activités validées de ses membres ; un défi individuel
-            attribue son badge au premier objectif atteint.
-          </p>
-        </div>
-        {canCreate && onCreate ? (
+      {canCreate && onCreate ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             type="button"
-            className={cx(styles.button, styles.small, styles.primary)}
+            className={cx(styles.button, styles.small, styles.primary, 'lkdv-carnet-btn-primary')}
             onClick={() => setCreateOpen((open) => !open)}
             aria-expanded={createOpen}
           >
             {createOpen ? 'Fermer' : 'Créer un défi'}
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {createOpen && canCreate && onCreate ? (
         <form className={styles.card} onSubmit={(event) => void submitCreate(event)}>
@@ -299,7 +291,7 @@ export function ClubChallengesPanel({
             </p>
           ) : null}
           <div>
-            <button type="submit" className={cx(styles.button, styles.primary)} disabled={pendingId === 'create'}>
+            <button type="submit" className={cx(styles.button, styles.primary, 'lkdv-carnet-btn-primary')} disabled={pendingId === 'create'}>
               {pendingId === 'create' ? 'Création…' : 'Créer le défi'}
             </button>
           </div>
@@ -326,18 +318,17 @@ export function ClubChallengesPanel({
                 <article className={styles.card} aria-label={challenge.title}>
                   <div className={styles.cardHeader}>
                     <div>
-                      <div className={styles.wrap}>
-                        <span className={styles.badge}>{scopeLabel(challenge.scope)}</span>
-                        <span className={styles.badge}>{challenge.sport ?? 'Tous sports'}</span>
-                        <span className={styles.badge}>{METRIC_LABELS[challenge.metric]}</span>
-                        {state === 'ended' ? <span className={styles.badge}>Terminé</span> : null}
-                        {summary.isCompleted ? (
-                          <span className={cx(styles.badge, styles.badgeSage)}>
-                            {summary.badgeAwarded?.icon ?? '🏅'} Badge obtenu
-                          </span>
-                        ) : null}
-                      </div>
-                      <h3 className={styles.cardTitle} style={{ marginTop: 6 }}>
+                      {state === 'ended' || summary.isCompleted ? (
+                        <div className={styles.wrap} style={{ marginBottom: 4 }}>
+                          {state === 'ended' ? <span className={styles.badge}>Terminé</span> : null}
+                          {summary.isCompleted ? (
+                            <span className={cx(styles.badge, styles.badgeSage)}>
+                              {summary.badgeAwarded?.icon ?? '🏅'} Badge obtenu
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      <h3 className={styles.cardTitle}>
                         {challenge.title}
                       </h3>
                       <p className={styles.cardMeta}>{challenge.description}</p>
@@ -375,7 +366,7 @@ export function ClubChallengesPanel({
                     {state !== 'ended' && !mine ? (
                       <button
                         type="button"
-                        className={cx(styles.button, styles.small, styles.primary)}
+                        className={cx(styles.button, styles.small, styles.primary, 'lkdv-carnet-btn-primary')}
                         disabled={busy}
                         onClick={() => void join(challenge)}
                       >

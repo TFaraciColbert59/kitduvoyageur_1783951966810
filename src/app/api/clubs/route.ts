@@ -177,6 +177,7 @@ export async function POST(request: NextRequest) {
       status: founderMember.status,
       joined_at: nowIso,
       leaderboard_opt_in: founderMember.leaderboardOptIn ?? true,
+      can_manage_stories: true,
     });
     if (memberError) {
       const { error: cleanupError } = await supabase.from('clubs').delete().eq('id', club.id);

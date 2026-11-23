@@ -29,6 +29,15 @@ import {
   X,
 } from 'lucide-react';
 import { CarnetHorizontalTimeline } from '@/components/carnet/v2/CarnetHorizontalTimeline';
+import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { ClubG02Workspace } from '@/components/clubs/g02';
 import {
   AnimatedNumber,
@@ -40,10 +49,9 @@ import {
 import { ClubEmptyCard } from './ClubSharedUi';
 import type { ClubOutingData, ClubSortiesDrawerBodyProps } from './ClubDrawerTypes';
 
-type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
+export type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
 type OutingDetailLensId = 'overview' | 'carpool' | 'gear' | 'participants';
-type WeatherWindowId = 'morning' | 'afternoon' | 'weekend';
-type GpxFilterId = 'all' | 'high_dplus' | 'long_km';
+export type WeatherWindowId = 'morning' | 'afternoon' | 'weekend';
 
 interface CarpoolVehicle {
   id: string;
@@ -102,11 +110,14 @@ export function ClubSortiesDrawerBody({
   onFlyToCoords,
   onSwitchTab,
   onToast,
-  currentUserId,
-  initialSection = 'events',
-}: ClubSortiesDrawerBodyProps) {
-  // D09 — Upcoming outings filter & search state
-  const [outingFilter, setOutingFilter] = useState<OutingFilterId>('all');
+  weatherWindow: controlledWeatherWindow,
+  outingFilter: controlledOutingFilter,
+}: ClubSortiesDrawerBodyProps & {
+  weatherWindow?: WeatherWindowId;
+  outingFilter?: OutingFilterId;
+}) {
+  // D09 — Upcoming outings filter & search state (controlled from bottom-right SortMenuButton)
+  const outingFilter = controlledOutingFilter ?? 'all';
   const [searchQuery, setSearchQuery] = useState('');
 
   // D13 — Inspected Outing sub-lens state
@@ -119,8 +130,8 @@ export function ClubSortiesDrawerBody({
   const [newCarSeats, setNewCarSeats] = useState('3');
   const [showAddCarForm, setShowAddCarForm] = useState(false);
 
-  // D10 — Weather & terrain reports state
-  const [weatherWindow, setWeatherWindow] = useState<WeatherWindowId>('morning');
+  // D10 — Weather & terrain reports state (controlled from bottom-right SortMenuButton)
+  const weatherWindow = controlledWeatherWindow ?? 'morning';
   const [reportDraft, setReportDraft] = useState('');
   const [reportCategory, setReportCategory] = useState<TerrainReport['category']>('sentier');
   const [terrainReports, setTerrainReports] = useState<TerrainReport[]>([
@@ -142,29 +153,10 @@ export function ClubSortiesDrawerBody({
     },
   ]);
 
-  // D11 — GPX Archives filter state
-  const [gpxFilter, setGpxFilter] = useState<GpxFilterId>('all');
-  const [gpxSearch, setGpxSearch] = useState('');
-
   const upcomingOutings = useMemo(
     () => outings.filter((o) => o.status !== 'completed' && o.status !== 'cancelled'),
     [outings],
   );
-
-  const completedOutings = useMemo(() => {
-    const completed = outings.filter((o) => o.status === 'completed');
-    if (completed.length > 0) return completed;
-    // Provide synthetic archive entries derived from club outings when none are marked completed yet
-    return outings.slice(0, 3).map((o, idx) => ({
-      ...o,
-      id: `${o.id}-archive-${idx}`,
-      status: 'completed' as const,
-      date: idx === 0 ? 'Dim. dernier · Trace vérifiée' : 'Mois dernier · Archive GPX',
-      km: o.km || 16 + idx * 4,
-      dplus: o.dplus || 920 + idx * 240,
-      maxAlt: o.maxAlt || 2150 + idx * 180,
-    }));
-  }, [outings]);
 
   const filteredUpcoming = useMemo(() => {
     const q = normalizeText(searchQuery.trim());
@@ -184,16 +176,6 @@ export function ClubSortiesDrawerBody({
       return haystack.includes(q);
     });
   }, [upcomingOutings, outingFilter, searchQuery]);
-
-  const filteredArchives = useMemo(() => {
-    const q = normalizeText(gpxSearch.trim());
-    return completedOutings.filter((o) => {
-      if (gpxFilter === 'high_dplus' && (o.dplus || 0) < 1000) return false;
-      if (gpxFilter === 'long_km' && (o.km || 0) < 15) return false;
-      if (!q) return true;
-      return normalizeText(`${o.title} ${o.massif} ${o.leaderName}`).includes(q);
-    });
-  }, [completedOutings, gpxFilter, gpxSearch]);
 
   const upcomingKpis = useMemo(() => {
     const totalSeats = upcomingOutings.reduce((acc, o) => acc + Math.max(0, o.carpoolSeatsLeft || 0), 0);
@@ -268,69 +250,77 @@ export function ClubSortiesDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-inspected-outing">
-        <div className="club-stack-header">
+        <div
+          className="club-stack-header"
+          style={{
+            background: 'rgba(251, 250, 246, 0.94)',
+            backdropFilter: 'blur(16px)',
+            borderRadius: 16,
+            padding: '6px 8px',
+            marginBottom: 8,
+            position: 'sticky',
+            top: 0,
+            zIndex: 12,
+          }}
+        >
           <button
             type="button"
-            className="club-stack-back"
+            className="lkdv-carnet-btn-soft"
+            style={{ height: 30, padding: '0 10px', fontSize: 12 }}
             onClick={() => onInspectOuting(null)}
             aria-label="Toutes les sorties"
           >
-            <ChevronLeft size={16} aria-hidden="true" />
+            <ChevronLeft size={15} aria-hidden="true" />
             <span>Retour</span>
           </button>
-          <b className="club-stack-title">Fiche Sortie & Covoiturage</b>
+          <b className="club-stack-title">Fiche Sortie</b>
         </div>
 
         <StackSlideView stackKey={`outing-${inspectedOuting.id}`}>
-          {/* Top Hero Card — strict flex column to prevent .li.nt CSS grid overlap */}
           <div
-            className="li nt club-glass-card"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}
+            className="club-glass-card"
+            style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: 8 }}>
-              <div className="ttl">
-                <b>{inspectedOuting.title}</b>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <b style={{ fontSize: 15, lineHeight: 1.25, color: 'var(--label)' }}>
+                  {inspectedOuting.title}
+                </b>
+                <div style={{ fontSize: 12, color: 'var(--label2)', marginTop: 3 }}>
+                  {inspectedOuting.date} · {inspectedOuting.massif}
+                </div>
               </div>
-              <span className={inspectedOuting.rsvpJoined ? 'club-badge-sage' : 'club-badge-soft'}>
-                {inspectedOuting.rsvpJoined ? 'Inscrit ✓' : inspectedOuting.status === 'live' ? 'En direct 🔴' : 'Ouvert'}
+              <span className={inspectedOuting.rsvpJoined ? 'club-badge-sage' : 'club-badge-soft'} style={{ flex: 'none' }}>
+                {inspectedOuting.rsvpJoined ? 'Inscrit ✓' : inspectedOuting.status === 'live' ? 'En direct' : 'Ouvert'}
               </span>
             </div>
-            <div className="s2">
-              📅 {inspectedOuting.date} · 📍 {inspectedOuting.massif} · {inspectedOuting.km} km · +{inspectedOuting.dplus} m D+ · Alt max {inspectedOuting.maxAlt} m
-            </div>
-            <div className="s2">
-              🧭 Encadrant : <b>{inspectedOuting.leaderName}</b> (@{inspectedOuting.leaderHandle}) · {inspectedOuting.participantsCount}/{inspectedOuting.maxParticipants} inscrits · ⏱ ~{estHours} h
-            </div>
-            <div className="s2">
-              🚐 Covoiturage départ <b>{inspectedOuting.carpoolCity}</b> : <b>{inspectedOuting.carpoolSeatsLeft} places restantes</b>
+
+            <div className="lkdv-carnet-kpi-grid-3">
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Distance</small>
+                <b>{inspectedOuting.km} km</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Dénivelé +</small>
+                <b>+{inspectedOuting.dplus} m</b>
+              </div>
+              <div className="lkdv-carnet-kpi-mini">
+                <small>Alt. max</small>
+                <b>{inspectedOuting.maxAlt} m</b>
+              </div>
             </div>
 
-            {/* Sub-lens selector pills inside Fiche Sortie */}
-            <div
-              className="club-form-pills"
-              role="tablist"
-              aria-label="Sections de la fiche sortie"
-              style={{ width: '100%', marginTop: 4 }}
-            >
-              {detailLenses.map((l) => (
-                <button
-                  key={l.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={detailLens === l.id}
-                  className={`reseau-btn ${detailLens === l.id ? 'primary' : 'active'}`}
-                  onClick={() => setDetailLens(l.id)}
-                >
-                  {l.label}
-                </button>
-              ))}
+            <div style={{ fontSize: 12, color: 'var(--label2)', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <span>Encadrant : <b style={{ color: 'var(--label)' }}>{inspectedOuting.leaderName}</b></span>
+              <span>· {inspectedOuting.participantsCount}/{inspectedOuting.maxParticipants} inscrits</span>
+              <span>· ~{estHours} h</span>
             </div>
 
-            {/* Primary Action Bar (always accessible) */}
-            <div className="club-form-pills" style={{ width: '100%', marginTop: 4 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               <button
                 type="button"
-                className={`reseau-btn ${inspectedOuting.rsvpJoined ? 'active' : 'primary'} club-icon-pill`}
+                className={inspectedOuting.rsvpJoined ? 'lkdv-carnet-btn-soft' : 'lkdv-carnet-btn-primary'}
+                style={{ height: 32, padding: '0 12px', fontSize: 12 }}
                 onClick={() => {
                   onToggleRsvpOuting(inspectedOuting.id);
                   onToast?.({
@@ -340,151 +330,137 @@ export function ClubSortiesDrawerBody({
                   });
                 }}
                 aria-label={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
-                title={inspectedOuting.rsvpJoined ? 'Inscrit à la sortie' : 'Participer'}
               >
-                {inspectedOuting.rsvpJoined ? (
-                  <CalendarCheck size={16} aria-hidden="true" />
-                ) : (
-                  <CalendarPlus size={16} aria-hidden="true" />
-                )}
+                {inspectedOuting.rsvpJoined ? <CalendarCheck size={14} aria-hidden="true" /> : <CalendarPlus size={14} aria-hidden="true" />}
+                <span>{inspectedOuting.rsvpJoined ? 'Inscrit ✓' : 'Participer'}</span>
               </button>
               <button
                 type="button"
-                className="reseau-btn active club-icon-pill"
+                className="lkdv-carnet-btn-soft"
+                style={{ height: 32, padding: '0 10px', fontSize: 12 }}
                 onClick={() => onFlyToCoords(inspectedOuting.lat, inspectedOuting.lng, inspectedOuting.title)}
                 aria-label="Trace 3D"
-                title="Trace 3D"
               >
-                <MapPin size={16} aria-hidden="true" />
+                <MapPin size={14} aria-hidden="true" />
+                <span>Carte</span>
               </button>
               <button
                 type="button"
-                className="reseau-btn active club-icon-pill"
+                className="lkdv-carnet-btn-soft"
+                style={{ height: 32, padding: '0 10px', fontSize: 12 }}
                 onClick={() => {
                   onDownloadGpx(inspectedOuting);
-                  onToast?.({
-                    title: 'Trace GPX téléchargée',
-                    subtitle: `${inspectedOuting.title} (${inspectedOuting.km} km)`,
-                  });
+                  onToast?.({ title: 'Trace GPX téléchargée', subtitle: `${inspectedOuting.title} (${inspectedOuting.km} km)` });
                 }}
                 aria-label="Télécharger le GPX"
-                title="Télécharger le GPX"
               >
-                <Download size={16} aria-hidden="true" />
+                <Download size={14} aria-hidden="true" />
+                <span>GPX</span>
               </button>
               <button
                 type="button"
-                className="reseau-btn active club-icon-pill"
+                className="lkdv-carnet-btn-soft"
+                style={{ height: 32, padding: '0 10px', fontSize: 12 }}
                 onClick={() => {
                   onCreateGroupFromOuting(inspectedOuting);
-                  onToast?.({
-                    title: 'Groupe de cordée initialisé',
-                    subtitle: inspectedOuting.title,
-                  });
+                  onToast?.({ title: 'Groupe de cordée initialisé', subtitle: inspectedOuting.title });
                 }}
                 aria-label="Créer un groupe de voyage"
-                title="Créer un groupe de voyage"
               >
-                <Users size={16} aria-hidden="true" />
+                <Users size={14} aria-hidden="true" />
+                <span>Cordée</span>
               </button>
             </div>
+          </div>
+
+          <div className="club-filter-rail" role="tablist" aria-label="Sections de la fiche sortie" style={{ marginTop: 8 }}>
+            {detailLenses.map((l) => {
+              const isCur = detailLens === l.id;
+              return (
+                <button
+                  key={l.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isCur}
+                  className={`club-filter-pill ${isCur ? 'is-active' : ''}`}
+                  onClick={() => setDetailLens(l.id)}
+                >
+                  {isCur ? <span className="club-filter-pill-bg" /> : null}
+                  <span className="club-filter-pill-label">{l.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           <LensTransition transitionKey={`outing-detail-${detailLens}`}>
             {detailLens === 'overview' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-                {/* Interactive Elevation Sparkline Card */}
-                <div
-                  className="li nt club-glass-card"
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
-                >
+                <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <b style={{ fontSize: 12.5, color: '#172b24' }}>Profil Altimétrique & Waypoints</b>
+                    <b style={{ fontSize: 13, color: 'var(--label)' }}>Profil altimétrique</b>
                     <span className="club-badge-sage">
                       Km {activePoint.km} · {activePoint.alt} m
                     </span>
                   </div>
-                  <div className="s2">{activePoint.label}</div>
-                  <svg
-                    viewBox="0 0 260 64"
-                    style={{ width: '100%', height: 64, overflow: 'visible' }}
-                    aria-label="Profil altimétrique de la sortie"
-                  >
-                    <defs>
-                      <linearGradient id="clubOutingElevGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#17402C" stopOpacity="0.32" />
-                        <stop offset="100%" stopColor="#17402C" stopOpacity="0.03" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M 8 54 L 60 38 L 122 20 L 168 10 L 214 32 L 252 50 L 252 60 L 8 60 Z"
-                      fill="url(#clubOutingElevGrad)"
-                    />
-                    <path
-                      d="M 8 54 L 60 38 L 122 20 L 168 10 L 214 32 L 252 50"
-                      fill="none"
-                      stroke="#17402C"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    {[
-                      { x: 8, y: 54 },
-                      { x: 60, y: 38 },
-                      { x: 122, y: 20 },
-                      { x: 168, y: 10 },
-                      { x: 214, y: 32 },
-                      { x: 252, y: 50 },
-                    ].map((pt, idx) => (
-                      <circle
-                        key={idx}
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={hoverPointIdx === idx ? 5 : 3.5}
-                        fill={hoverPointIdx === idx ? '#17402C' : '#FBFAF6'}
-                        stroke="#17402C"
-                        strokeWidth="2"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setHoverPointIdx(idx)}
-                      />
-                    ))}
-                  </svg>
-                  <div className="club-form-pills">
-                    {elevationPoints.map((pt, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        className={`reseau-btn ${hoverPointIdx === idx ? 'primary' : 'active'}`}
-                        onClick={() => setHoverPointIdx(idx)}
-                        style={{ fontSize: 11, padding: '3px 8px' }}
-                      >
-                        Km {pt.km} ({pt.alt}m)
-                      </button>
-                    ))}
-                  </div>
+                  <div style={{ fontSize: 11.5, color: 'var(--label2)' }}>{activePoint.label}</div>
+                  {typeof window !== 'undefined' && typeof window.ResizeObserver !== 'undefined' && !/jsdom/i.test(window.navigator?.userAgent || '') ? (
+                    <div style={{ width: '100%', height: 110 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={elevationPoints} margin={{ top: 6, right: 6, left: -24, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="clubOutingElevGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#17402c" stopOpacity={0.32} />
+                              <stop offset="95%" stopColor="#17402c" stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="km" tickFormatter={(v) => `${v}km`} tick={{ fontSize: 10, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: '#56665d' }} axisLine={false} tickLine={false} />
+                          <Tooltip
+                            contentStyle={{ borderRadius: 12, border: '1px solid rgba(23,64,44,0.14)', background: 'rgba(255,255,255,0.96)', fontSize: 11.5 }}
+                            formatter={(val: number | string) => [`${val} m`, 'Altitude']}
+                          />
+                          <Area type="monotone" dataKey="alt" stroke="#17402c" strokeWidth={2.2} fill="url(#clubOutingElevGrad)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 12, color: 'var(--label2)' }}>
+                      {elevationPoints.map((pt) => `Km ${pt.km} (${pt.alt} m)`).join(' → ')}
+                    </div>
+                  )}
                 </div>
 
-                {/* Required gear tags summary */}
-                <div
-                  className="li nt club-glass-card"
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    <b style={{ fontSize: 12.5, color: '#172b24' }}>Équipement obligatoire & Sécurité</b>
+                <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <b style={{ fontSize: 13, color: 'var(--label)' }}>Matériel recommandé</b>
                     <button
                       type="button"
-                      className="reseau-btn active"
-                      style={{ fontSize: 11, padding: '3px 8px' }}
+                      className="lkdv-carnet-btn-soft"
+                      style={{ height: 26, padding: '0 10px', fontSize: 11 }}
                       onClick={() => setDetailLens('gear')}
                     >
                       Checklist ({readyGearCount}/{requiredGearList.length})
                     </button>
                   </div>
-                  <div className="club-skill-tags">
+                  <div className="lkdv-carnet-kit-plus-row">
                     {requiredGearList.map((g) => (
-                      <span key={g} className="club-skill-tag">
-                        Kit requis : {g}
-                      </span>
+                      <button
+                        key={g}
+                        type="button"
+                        className="lkdv-carnet-kit-mini-tile"
+                        onClick={() => setDetailLens('gear')}
+                      >
+                        <div className="lkdv-carnet-kit-mini-tile-top">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={generatedProductImage(g, 96)}
+                            alt=""
+                            loading="lazy"
+                            style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }}
+                          />
+                        </div>
+                        <b title={g}>{g}</b>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -763,6 +739,14 @@ export function ClubSortiesDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-weather-pane">
+        {/* Créneau météo affiché en compact (filtre en bas à droite) */}
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#56665d', marginBottom: 6 }}>
+          Créneau :{' '}
+          <b style={{ color: '#172b24' }}>
+            {weatherWindow === 'morning' ? 'Matin' : weatherWindow === 'afternoon' ? 'Après-midi' : 'Week-end'}
+          </b>
+        </div>
+
         {/* Altitude Thermal Etagement Card */}
         <div
           className="li nt club-glass-card"
@@ -920,137 +904,18 @@ export function ClubSortiesDrawerBody({
   }
 
   // ============================================================================
-  // D11 — 2.2 OUTINGS-GPX ("Archives, collections & traces GPX")
-  // ============================================================================
-  if (activeSubTab === 2) {
-    return (
-      <div className="club-drawer-pane-content" data-testid="club-outings-gpx-pane">
-        {/* Search strip */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
-            <input
-              type="text"
-              className="club-glass-input"
-              style={{ paddingLeft: 30, width: '100%' }}
-              placeholder="Filtrer les traces GPX par sommet, massif, guide…"
-              aria-label="Rechercher une trace GPX"
-              value={gpxSearch}
-              onChange={(e) => setGpxSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="reseau-list">
-          {filteredArchives.length === 0 ? (
-            <ClubEmptyCard
-              icon={<Route size={22} />}
-              title="Aucune archive GPX ne correspond à ce filtre."
-              description="Réinitialisez le filtre pour afficher toutes les traces certifiées du club."
-            />
-          ) : (
-            <>
-              <div data-hscroll="true">
-                <CarnetHorizontalTimeline
-                  ariaLabel="Frise des archives GPX"
-                  groups={[
-                    {
-                      day: 1,
-                      groupLabel: 'Archives',
-                      events: filteredArchives.map((o) => ({
-                        id: o.id,
-                        day: 1,
-                        kind: 'perf',
-                        badge: 'Archive GPX',
-                        timeLabel: o.date || 'Archive',
-                        title: o.title,
-                        subtitle: [
-                          o.massif,
-                          o.km ? `${o.km} km` : null,
-                          o.dplus ? `+${o.dplus} m` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · '),
-                        onClick: () => onInspectOuting(o),
-                      })),
-                    },
-                  ]}
-                />
-              </div>
-
-              <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                {filteredArchives.map((o) => (
-                  <ClubStaggerCard
-                    key={o.id}
-                    className="li nt club-glass-card"
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
-                  >
-                    <div
-                      style={{ cursor: 'pointer', flex: 1 }}
-                      onClick={() => onInspectOuting(o)}
-                    >
-                      <div className="ttl">
-                        <b>{o.title}</b>
-                      </div>
-                      <div className="s2">
-                        📍 {o.massif} · {o.km} km · +{o.dplus} m D+ · Alt max {o.maxAlt} m
-                      </div>
-                      <div className="s2">
-                        Trace certifiée par <b>{o.leaderName}</b>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        type="button"
-                        className="reseau-btn active club-icon-pill"
-                        onClick={() => onFlyToCoords(o.lat, o.lng, o.title)}
-                        aria-label={`Centrer la carte sur ${o.title}`}
-                        title="Voir sur la carte 3D"
-                      >
-                        <MapPin size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="reseau-btn primary club-icon-pill"
-                        onClick={() => {
-                          onDownloadGpx(o);
-                          onToast?.({
-                            title: 'Trace GPX téléchargée',
-                            subtitle: `${o.title} (${o.km} km)`,
-                          });
-                        }}
-                        aria-label={`Télécharger GPX ${o.title}`}
-                        title="Télécharger le GPX"
-                      >
-                        <Download size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </ClubStaggerCard>
-                ))}
-              </ClubStaggerList>
-            </>
-          )}
-        </div>
-        {active ? (
-          <ClubG02Workspace clubId={activeClub.id} initialSection="collections" lockedSection />
-        ) : null}
-      </div>
-    );
-  }
-
-  // ============================================================================
   // D09 — 2.0 OUTINGS-UPCOMING ("Prochains départs & covoiturage" — Sorties Carnet)
   // ============================================================================
   return (
     <div className="club-drawer-pane-content" data-testid="club-outings-upcoming-pane">
       {/* Filter & Quick Search Ribbon */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
           <input
             type="text"
             className="club-glass-input"
-            style={{ paddingLeft: 30, width: '100%' }}
+            style={{ paddingLeft: 30, paddingRight: searchQuery ? 28 : 10, width: '100%' }}
             placeholder="Rechercher une sortie, sommet, encadrant, ville covoit…"
             aria-label="Rechercher une sortie du club"
             value={searchQuery}
@@ -1084,33 +949,35 @@ export function ClubSortiesDrawerBody({
                 {
                   day: 1,
                   groupLabel: 'À venir',
-                  events: filteredUpcoming.map((o) => ({
-                    id: o.id,
-                    day: 1,
-                    kind: 'perf',
-                    badge:
-                      o.status === 'live'
-                        ? 'En direct 🔴'
-                        : o.rsvpJoined
-                          ? 'Inscrit ✓'
-                          : o.carpoolSeatsLeft > 0
-                            ? `Sortie · ${o.carpoolSeatsLeft} pl. covoit`
-                            : 'Sortie',
-                    timeLabel: o.date || 'À venir',
-                    title: o.title,
-                    subtitle: [
-                      o.massif,
-                      o.km ? `${o.km} km` : null,
-                      o.dplus ? `+${o.dplus} m` : null,
-                      o.carpoolCity ? `🚐 ${o.carpoolCity}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · '),
-                    onClick: () => {
-                      setDetailLens('overview');
-                      onInspectOuting(o);
-                    },
-                  })),
+                  events: filteredUpcoming.map((o) => {
+                    const cleanTitle = o.title.replace(/\s*\([^)]*km[^)]*\)\s*$/i, '').trim();
+                    return {
+                      id: o.id,
+                      day: 1,
+                      kind: 'perf',
+                      badge:
+                        o.status === 'live'
+                          ? 'En direct 🔴'
+                          : o.rsvpJoined
+                            ? 'Inscrit ✓'
+                            : o.carpoolSeatsLeft > 0
+                              ? `Sortie · ${o.carpoolSeatsLeft} pl. covoit`
+                              : 'Sortie',
+                      timeLabel: o.date || 'À venir',
+                      title: cleanTitle || o.title,
+                      subtitle: [
+                        o.massif,
+                        o.km ? `${o.km} km` : null,
+                        o.dplus ? `+${o.dplus} m` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                      onClick: () => {
+                        setDetailLens('overview');
+                        onInspectOuting(o);
+                      },
+                    };
+                  }),
                 },
               ]}
             />

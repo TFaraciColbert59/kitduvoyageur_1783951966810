@@ -19,6 +19,7 @@ export interface ClubItemData {
   level: string;
   membersCount: number;
   outingsCount: number;
+  salonsCount?: number;
   totalKm: number;
   totalDplus: number;
   joined: boolean;
@@ -35,6 +36,8 @@ export interface ClubItemData {
   lng: number;
   coverUrl?: string;
   viewerRole?: ClubRole | null;
+  viewerCanManageStories?: boolean;
+  viewerCanManageGear?: boolean;
   membershipStatus?: MembershipStatus | null;
   pendingRequestsCount?: number;
   isVerified?: boolean;
@@ -75,7 +78,18 @@ export interface ClubMemberData {
   isProAthlete?: boolean;
   verifiedSports?: string[];
   outingsCount?: number;
+  distanceKm?: number;
+  dplusM?: number;
+  hours?: number;
+  postsCount?: number;
+  gearCount?: number;
+  shareClubLocation?: boolean;
+  lastLat?: number | null;
+  lastLng?: number | null;
   avatarUrl?: string;
+  canManageStories?: boolean;
+  canManageGear?: boolean;
+  isCertifiedLeader?: boolean;
 }
 
 export type ClubOutingStatus = 'upcoming' | 'live' | 'completed' | 'cancelled';
@@ -109,6 +123,7 @@ export interface ClubOutingData {
 export interface ClubGearVaultItem {
   id: string;
   clubId: string;
+  ownershipScope?: 'club' | 'member';
   name: string;
   brand: string;
   category: string;
@@ -116,11 +131,26 @@ export interface ClubGearVaultItem {
   ownerName: string;
   ownerHandle: string;
   available: boolean;
+  quantityTotal?: number;
+  quantityAvailable?: number;
+  conditionStatus?: 'new' | 'good' | 'worn' | 'repair';
+  depositCents?: number;
+  isEpi?: boolean;
+  epiExpiresAt?: string | null;
   reservedByMe?: boolean;
   imageUrl?: string;
   condition?: string;
   loanId?: string;
-  loanStatus?: 'requested' | 'approved' | 'returned' | 'declined';
+  loanStatus?:
+    | 'requested'
+    | 'approved'
+    | 'checked_out'
+    | 'returned'
+    | 'overdue'
+    | 'issue'
+    | 'declined'
+    | 'cancelled';
+  eventId?: string | null;
   neededFrom?: string | null;
   neededUntil?: string | null;
   borrowerName?: string;
@@ -192,7 +222,9 @@ export type ClubRuntimeOverlayKind =
   | 'story'
   | 'post_modal'
   | 'quick_circle'
-  | 'create_group';
+  | 'create_group'
+  | 'club_switcher'
+  | 'club_search';
 
 export interface ClubRuntimeOverlayState {
   kind: ClubRuntimeOverlayKind;
@@ -261,10 +293,19 @@ export interface ClubDrawerHostProps {
     payload: { outingId?: string; slot?: 'sam' | 'dim' | 'we'; note?: string },
   ) => Promise<boolean> | void;
   onRetractBinome?: (member: ClubMemberData) => Promise<void> | void;
+  onUpdateMyAvailability?: (payload: {
+    availableWeekend: boolean;
+    days: Array<'sam' | 'dim'>;
+    objective: string;
+  }) => Promise<void> | void;
   onChangeMemberRole?: (
     member: ClubMemberData,
     nextRole: 'admin' | 'moderator' | 'member',
   ) => Promise<void> | void;
+  onToggleMemberStoryPermission?: (
+    userId: string,
+    canManageStories: boolean,
+  ) => Promise<boolean> | void;
   onCreateBinomeGroup?: (member: ClubMemberData, outingId?: string) => Promise<void> | void;
   onToggleRsvpOuting: (outingId: string) => void;
   onCreateGroupFromOuting: (outing: ClubOutingData) => void;
@@ -297,7 +338,20 @@ export interface ClubDrawerHostProps {
     brand: string;
     weightG: number;
     category: string;
+    ownershipScope?: 'club' | 'member';
+    quantityTotal?: number;
+    depositCents?: number;
+    isEpi?: boolean;
+    epiExpiresAt?: string;
   }) => void;
+  onToggleMemberGearPermission?: (
+    userId: string,
+    canManageGear: boolean,
+  ) => Promise<boolean> | void;
+  onToggleMemberLeaderBadge?: (
+    userId: string,
+    isCertifiedLeader: boolean,
+  ) => Promise<boolean> | void;
   onCreateNewClub: (payload: {
     name: string;
     massif: string;
@@ -377,6 +431,10 @@ export interface ClubCordeeDrawerBodyProps {
     member: ClubMemberData,
     nextRole: 'admin' | 'moderator' | 'member',
   ) => Promise<void> | void;
+  onToggleMemberStoryPermission?: (
+    userId: string,
+    canManageStories: boolean,
+  ) => Promise<boolean> | void;
   onCreateBinomeGroup?: (member: ClubMemberData, outingId?: string) => Promise<void> | void;
   onBorrowGear?: (gearId: string) => void;
   onSwitchTabAndLens: ClubDrawerNavHandler;
@@ -419,6 +477,22 @@ export interface ClubCoffreDrawerBodyProps {
   onToast?: (toast: ClubToastPayload) => void;
 }
 
+export interface ClubStatsDrawerBodyProps {
+  activeSubTab: number;
+  active: boolean;
+  activeClub: ClubItemData;
+  members: ClubMemberData[];
+  outings: ClubOutingData[];
+  posts: ClubFeedPostItem[];
+  vaultGear: ClubGearVaultItem[];
+  challenges: ClubChallengeItem[];
+  currentUserId?: string | null;
+  onInspectMember: (member: ClubMemberData) => void;
+  onOpenMemberProfile: (handle: string) => void;
+  onSwitchTabAndLens: ClubDrawerNavHandler;
+  onToast?: (toast: ClubToastPayload) => void;
+}
+
 export interface ClubCreateDrawerBodyProps {
   activeTab: number;
   activeClub: ClubItemData;
@@ -439,6 +513,7 @@ export interface ClubRuntimeOverlaysProps {
   members: ClubMemberData[];
   outings: ClubOutingData[];
   vaultGear: ClubGearVaultItem[];
+  standardKits?: ClubStandardKit[];
   challenges: ClubChallengeItem[];
   posts: ClubFeedPostItem[];
   currentUserId?: string | null;
@@ -447,6 +522,7 @@ export interface ClubRuntimeOverlaysProps {
   onToggleRsvpOuting: (outingId: string) => void;
   onCreateGroupFromOuting: (outing: ClubOutingData) => void;
   onOpenClubDrawer: (tab: number, subTab?: number, extras?: Partial<ClubDrawerIntent>) => void;
+  onOpenCreateClub?: () => void;
   onFlyToCoords: (lat: number, lng: number, label: string) => void;
   onToast: (toast: ClubToastPayload) => void;
 }

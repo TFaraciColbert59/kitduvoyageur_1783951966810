@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClubDrawerHost, type ClubItemData, type ClubMemberData, type ClubOutingData, type ClubGearVaultItem } from '../ClubDrawerHost';
 import { ClubIsland } from '../ClubIsland';
+import { ClubRuntimeOverlays } from '../ClubRuntimeOverlays';
 import type { ClubFeedPostItem } from '../../feed/ClubInlineFeed';
 
 vi.mock('next/navigation', () => ({
@@ -245,11 +246,12 @@ function renderHost(overrides: Partial<React.ComponentProps<typeof ClubDrawerHos
   );
 }
 
-describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05–D08)', () => {
-  it('D01: renders each SlotShell lens uniquely (FN-19 fix) and shows skeleton/error states', () => {
+describe('Milestone M1 — ClubDrawerHost, Pure Stats Hub (Tab 0) & Cordée (D05–D08)', () => {
+  it('D01: renders pure Statistics Hub in Tab 0 uniquely and shows error/retry states', () => {
     const { unmount } = renderHost();
-    // "Club actif" is rendered strictly ONCE (pane 0), not duplicated across panes 1 & 2
-    expect(screen.getAllByText('Club actif')).toHaveLength(1);
+    // Score de performance rendered strictly ONCE in pane 0.0
+    expect(screen.getAllByTestId('club-performance-score-card')).toHaveLength(1);
+    expect(screen.getByTestId('club-stats-perf-pane')).toBeTruthy();
     unmount();
 
     const onRetry = vi.fn();
@@ -288,32 +290,118 @@ describe('Milestone M1 — ClubDrawerHost, Explorer (D02–D04) & Cordée (D05�
     expect(onDismiss).toHaveBeenCalledTimes(2);
   });
 
-  it('D02 & D03: renders my-clubs (0.0) and hides secret clubs in discover-clubs (0.1)', () => {
-    renderHost({ initialTab: 0, initialSubTab: 1 });
-    const activePane = within(screen.getByTestId('slot-content'));
-    expect(activePane.getByText('Vercors Nordique')).toBeTruthy();
-    expect(activePane.queryByText('Cercle Secret Invisibilité')).toBeNull();
+  it('Tab 0 Statistics adapts strictly by hierarchy tier: visitor vs member vs admin + story permission toggle', () => {
+    // 1. Visitor: sees public score + join CTA, NO personal contribution, NO management panel
+    const { unmount: unmountVisitor } = renderHost({
+      initialTab: 0,
+      initialSubTab: 0,
+      activeClub: { ...ACTIVE_CLUB, joined: false, role: 'Membre', viewerRole: null },
+      currentUserId: null,
+    });
+    expect(screen.getByTestId('club-stats-visitor-cta')).toBeTruthy();
+    expect(screen.queryByTestId('club-stats-my-contribution')).toBeNull();
+    unmountVisitor();
+
+    // 2. Regular member: sees my contribution, NO management panel on subTab 3
+    const { unmount: unmountMember } = renderHost({
+      initialTab: 0,
+      initialSubTab: 3,
+      activeClub: { ...ACTIVE_CLUB, joined: true, role: 'Membre actif', viewerRole: 'member' },
+      currentUserId: 'u-3',
+    });
+    expect(screen.getByTestId('club-stats-members-pane')).toBeTruthy();
+    expect(screen.queryByTestId('club-stats-management-panel')).toBeNull();
+    unmountMember();
+
+    // 3. Admin / Founder: sees management panel AND story permission switch inside member accordion
+    const onToggleStoryPerm = vi.fn().mockResolvedValue(true);
+    renderHost({
+      initialTab: 0,
+      initialSubTab: 3,
+      activeClub: { ...ACTIVE_CLUB, joined: true, role: 'Fondateur', viewerRole: 'admin' },
+      currentUserId: 'u-1',
+      onToggleMemberStoryPermission: onToggleStoryPerm,
+    });
+    expect(screen.getByTestId('club-stats-management-panel')).toBeTruthy();
+    const claraRowBtn = within(screen.getByTestId('club-stats-members-pane'))
+      .getAllByRole('button')
+      .find((b) => b.hasAttribute('aria-expanded') && b.textContent?.includes('Clara Bivouac'));
+    expect(claraRowBtn).toBeTruthy();
+    fireEvent.click(claraRowBtn!);
+    const permSwitch = screen.getByRole('switch', { name: /Habilité aux stories à la une/i });
+    fireEvent.click(permSwitch);
+    expect(onToggleStoryPerm).toHaveBeenCalledTimes(1);
   });
 
-  it('D04: search-all (0.2) matches NFD accents, renders posts, and navigates to outing without corrupting tab 0 subTab', () => {
-    const { container } = renderHost({ initialTab: 0, initialSubTab: 2 });
-    const input = container.querySelector<HTMLInputElement>('[data-autofocus="true"]')!;
-    expect(input).toBeTruthy();
+  it('Tab 0 sub-lenses render events/records (0.1), kits/vault (0.2), and header overlays support club_switcher & club_search', () => {
+    const { unmount: unmountEv } = renderHost({ initialTab: 0, initialSubTab: 1 });
+    expect(screen.getByTestId('club-stats-events-pane')).toBeTruthy();
+    expect(within(screen.getByTestId('slot-content')).getAllByText(/Arête des Écrins/).length).toBeGreaterThan(0);
+    unmountEv();
 
-    fireEvent.change(input, { target: { value: 'ecrin' } });
-    const activePane = within(screen.getByTestId('slot-content'));
-    expect(activePane.getByText('Refuge du Glacier Blanc')).toBeTruthy();
-    expect(activePane.getByText(/Arête des/)).toBeTruthy();
+    const { unmount: unmountKits } = renderHost({
+      initialTab: 0,
+      initialSubTab: 2,
+      standardKits: [
+        { id: 'kit-1', title: 'Kit Alpinisme Club', season: 'Été', totalWeightG: 4100, itemsCount: 5, items: ['Tente'] },
+      ],
+    });
+    expect(screen.getByTestId('club-stats-kits-pane')).toBeTruthy();
+    expect(within(screen.getByTestId('slot-content')).getByText('Kit Alpinisme Club')).toBeTruthy();
+    unmountKits();
 
-    // Select outing item from search -> opens Sortie detail (tab 2)
-    const outingItem = activePane.getByText(/Arête des/).closest('[cmdk-item]')!;
-    expect(outingItem).toBeTruthy();
-    fireEvent.click(outingItem);
-    expect(within(screen.getByTestId('slot-content')).getByText('Fiche Sortie & Covoiturage')).toBeTruthy();
+    // Header Option 1 overlays: club_switcher & club_search
+    const onSelectClub = vi.fn();
+    const onOpenClubDrawer = vi.fn();
+    const { rerender } = render(
+      <ClubRuntimeOverlays
+        overlay={{ kind: 'club_switcher' }}
+        onClose={vi.fn()}
+        activeClub={ACTIVE_CLUB}
+        clubs={CLUBS}
+        members={MEMBERS}
+        outings={OUTINGS}
+        vaultGear={GEAR}
+        standardKits={[]}
+        challenges={[]}
+        posts={POSTS}
+        onSelectClub={onSelectClub}
+        onToggleJoinClub={vi.fn()}
+        onToggleRsvpOuting={vi.fn()}
+        onCreateGroupFromOuting={vi.fn()}
+        onOpenClubDrawer={onOpenClubDrawer}
+        onFlyToCoords={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('club-runtime-overlay-club_switcher')).toBeTruthy();
+    expect(screen.getByText('Sentiers pour Tous')).toBeTruthy();
 
-    // Pop back via Retour -> must return to tab 0 lens 2 (search-all) cleanly
-    fireEvent.click(within(screen.getByTestId('slot-content')).getByRole('button', { name: 'Toutes les sorties' }));
-    expect(container.querySelector('[data-club-tab="0"][data-club-lens="search-all"]')).toBeTruthy();
+    rerender(
+      <ClubRuntimeOverlays
+        overlay={{ kind: 'club_search' }}
+        onClose={vi.fn()}
+        activeClub={ACTIVE_CLUB}
+        clubs={CLUBS}
+        members={MEMBERS}
+        outings={OUTINGS}
+        vaultGear={GEAR}
+        standardKits={[]}
+        challenges={[]}
+        posts={POSTS}
+        onSelectClub={onSelectClub}
+        onToggleJoinClub={vi.fn()}
+        onToggleRsvpOuting={vi.fn()}
+        onCreateGroupFromOuting={vi.fn()}
+        onOpenClubDrawer={onOpenClubDrawer}
+        onFlyToCoords={vi.fn()}
+        onToast={vi.fn()}
+      />,
+    );
+    const searchInput = screen.getByRole('searchbox', { name: 'Rechercher dans Sentiers pour Tous' });
+    fireEvent.change(searchInput, { target: { value: 'ecrin' } });
+    fireEvent.click(screen.getByText('Arête des Écrins'));
+    expect(onOpenClubDrawer).toHaveBeenCalledWith(2, 0, { outingId: 'out-1' });
   });
 
   it('D05, D06, D07: Cordée lenses filter members, guides, and availableWeekend binômes accurately using Carnet crew cards', () => {

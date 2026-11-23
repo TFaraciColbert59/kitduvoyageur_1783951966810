@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Check, Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -180,18 +181,15 @@ function ClubCommentsPanel({
 }
 
 function ClubSharePanel({
-  post,
   clubName,
   copied,
   onCopy,
-  onFlyToSpot,
-  onClose,
 }: {
   post: ClubFeedPostItem;
   clubName: string;
   copied: boolean;
   onCopy: () => void;
-  onFlyToSpot: (post: ClubFeedPostItem) => void;
+  onFlyToSpot?: (post: ClubFeedPostItem) => void;
   onClose: () => void;
 }) {
   const [sharedTo, setSharedTo] = useState<string | null>(null);
@@ -200,16 +198,6 @@ function ClubSharePanel({
       <div className="lkdv-share-actions">
         <button type="button" className="lkdv-share-btn" onClick={onCopy}>
           <span>{copied ? 'Lien copié ✓' : 'Copier le lien'}</span>
-        </button>
-        <button
-          type="button"
-          className="lkdv-share-btn"
-          onClick={() => {
-            onFlyToSpot(post);
-            onClose();
-          }}
-        >
-          <span>Centrer la carte 3D</span>
         </button>
       </div>
 
@@ -262,7 +250,9 @@ function ClubPostCard({
   onOpenOutingDetail: (outingId: string) => void;
 }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [reported, setReported] = useState(false);
   const hasMedia = post.kind !== 'text' && Boolean(post.mediaUrl);
 
   const copyLink = async () => {
@@ -305,18 +295,27 @@ function ClubPostCard({
     onToggleLike: () => onToggleLike(post.id),
     onToggleSave: () => onToggleSave(post.id),
     onCopyLink: copyLink,
+    onRepost: () => {
+      void copyLink();
+    },
+    onReport: () => {
+      if (!reported) setReported(true);
+    },
     author: {
-      onClick: () => onFlyToSpot(post),
+      onClick: () => {
+        const handle = (post.authorHandle || '').replace(/^@/, '').trim();
+        if (!handle) return;
+        const href = `/u/${encodeURIComponent(handle)}`;
+        try {
+          router.push(href);
+        } catch {
+          window.location.assign(href);
+        }
+      },
       meta: metaParts,
       badge: post.authorRole,
       pinned: post.pinned,
     },
-    menuExtras: [
-      { id: 'fly', label: 'Voir en 3D', icon: <SfIcon name="map-pin" />, onSelect: () => onFlyToSpot(post) },
-      ...(post.outingId
-        ? [{ id: 'outing', label: 'Fiche sortie', icon: <SfIcon name="mountain" />, onSelect: () => onOpenOutingDetail(post.outingId!) }]
-        : []),
-    ],
     overlay: (
       <div className="club-post-bottom-left">
         {post.poleName ? (
@@ -417,6 +416,29 @@ export function ClubInlineFeed({
   const [newPoleName, setNewPoleName] = useState('');
   const [newPoleSpecialty, setNewPoleSpecialty] = useState('');
   const [cardHost, setCardHost] = useState<HTMLElement | null>(null);
+  const polesDockRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!polesMenuOpen) return;
+    const onDocDown = (e: MouseEvent) => {
+      if (polesDockRef.current && !polesDockRef.current.contains(e.target as Node)) {
+        setPolesMenuOpen(false);
+        setShowAddPoleForm(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPolesMenuOpen(false);
+        setShowAddPoleForm(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [polesMenuOpen]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -455,6 +477,7 @@ export function ClubInlineFeed({
   const polesBottomRightDock =
     poles.length > 0 || (isLargeClubWithoutPoles && onEnableRecommendedPoles) ? (
       <div
+        ref={polesDockRef}
         className={cardHost ? 'club-poles-float' : 'club-poles-float club-poles-float--inline'}
         aria-label="Filtres de pôles du club"
       >

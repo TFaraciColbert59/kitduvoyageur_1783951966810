@@ -121,6 +121,7 @@ export interface ProfileSettings {
   links: ProfileLink[];
   visibility: 'public' | 'prive';
   defaultOutingVisibility: 'private' | 'followers' | 'public' | 'collective_anonymized';
+  shareClubLocation?: boolean;
   notificationPrefs: NotificationPrefs;
   sportProfilePrefs: SportProfilePreferences;
   twoFaEnabled: boolean;
@@ -551,6 +552,7 @@ export async function loadProfileSettings(
     links: parseLinks(row.links),
     visibility: text(row.profile_visibility) === 'prive' ? 'prive' : 'public',
     defaultOutingVisibility: parseDefaultOutingVisibility(row.default_outing_visibility),
+    shareClubLocation: row.share_club_location === true,
     notificationPrefs: parsePrefs(row.notification_prefs),
     sportProfilePrefs: normalizeSportProfilePreferences(row.sport_profile_prefs),
     twoFaEnabled: row.two_fa_enabled === true,
@@ -567,6 +569,9 @@ export interface ProfilePatch {
   links?: ProfileLink[];
   visibility?: 'public' | 'prive';
   defaultOutingVisibility?: 'private' | 'followers' | 'public' | 'collective_anonymized';
+  shareClubLocation?: boolean;
+  lastLat?: number | null;
+  lastLng?: number | null;
   notificationPrefs?: Partial<NotificationPrefs>;
   sportProfilePrefs?: SportProfilePreferencesPatch;
 }
@@ -612,6 +617,14 @@ export async function updateProfileSettings(
   if (patch.visibility !== undefined) update.profile_visibility = patch.visibility;
   if (patch.defaultOutingVisibility !== undefined) {
     update.default_outing_visibility = parseDefaultOutingVisibility(patch.defaultOutingVisibility);
+  }
+  if (patch.shareClubLocation !== undefined) {
+    update.share_club_location = Boolean(patch.shareClubLocation);
+  }
+  if (patch.lastLat !== undefined && patch.lastLng !== undefined) {
+    update.last_lat = patch.lastLat;
+    update.last_lng = patch.lastLng;
+    update.last_location_at = new Date().toISOString();
   }
   if (patch.notificationPrefs !== undefined) {
     const current = parsePrefs((await supabase

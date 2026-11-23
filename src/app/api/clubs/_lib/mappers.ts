@@ -56,7 +56,7 @@ export function iso(value: unknown, fallback = new Date(0).toISOString()): strin
   return Number.isFinite(time) ? new Date(time).toISOString() : fallback;
 }
 
-const ROLES: readonly ClubRole[] = ['admin', 'moderator', 'member'];
+const ROLES: readonly ClubRole[] = ['founder', 'admin', 'moderator', 'member'];
 const MEMBERSHIP_STATUSES: readonly MembershipStatus[] = ['active', 'pending', 'removed', 'banned'];
 
 export function mapClubRole(value: unknown): ClubRole {
@@ -100,18 +100,31 @@ export function mapClubRow(row: Row): Club {
 }
 
 export function mapMemberRow(row: Row, profile?: PublicProfile): ClubMember {
+  const role = mapClubRole(row.role);
   return {
     clubId: String(row.club_id ?? ''),
     userId: String(row.user_id ?? ''),
     displayName: profile?.full_name ?? asString(row.display_name) ?? 'Membre',
     avatarUrl: profile?.avatar_url ?? asString(row.avatar_url),
-    role: mapClubRole(row.role),
+    role,
     status: mapMembershipStatus(row.status),
     joinedAt: iso(row.joined_at),
     mutedUntil: asString(row.muted_until) ? iso(row.muted_until) : null,
     leaderboardOptIn: row.leaderboard_opt_in === false ? false : true,
     isProAthlete: asBoolean(row.is_pro_athlete),
     verifiedSports: asStringArray(row.verified_sports),
+    canManageStories:
+      typeof row.can_manage_stories === 'boolean'
+        ? row.can_manage_stories
+        : role === 'founder' || role === 'admin' || role === 'moderator',
+    canManageGear:
+      typeof row.can_manage_gear === 'boolean'
+        ? row.can_manage_gear
+        : role === 'founder' || role === 'admin',
+    isCertifiedLeader:
+      typeof row.is_certified_leader === 'boolean'
+        ? row.is_certified_leader
+        : false,
   };
 }
 

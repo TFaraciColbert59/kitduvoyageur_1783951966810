@@ -17,6 +17,23 @@
   --club-warn-ink: #926614;
   --club-danger-bg: #f5ddd9;
   --club-danger-ink: #a8443a;
+  --lkv-on-primary: #ffffff;
+  --lkv-forest-900: #17402c;
+  --btn-tint-solid: #17402c;
+  --btn-on-solid: #ffffff;
+  --btn-tint: rgba(255, 255, 255, 0.86);
+  --btn-content: #17402c;
+  --btn-glass-border: rgba(23, 64, 44, 0.16);
+  --btn-rim: none;
+  --btn-shadow: none;
+  --btn-radius: 999px;
+  --btn-font-size: 12.5px;
+  --btn-font-weight: 600;
+  --cv2-menu-bg: rgba(255, 255, 255, 0.96);
+  --cv2-menu-blur: 24px;
+  --cv2-menu-shadow: 0 14px 36px rgba(16, 32, 25, 0.18);
+  --cv2-menu-border: rgba(23, 64, 44, 0.14);
+  --cv2-soft-line: rgba(23, 64, 44, 0.14);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -102,16 +119,11 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   min-height: 56px !important;
   padding: 4px !important;
   border-radius: 9999px !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)),
-    rgba(23, 29, 26, 0.76) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.18) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
-    0 10px 30px rgba(0, 0, 0, 0.22) !important;
+  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78))) !important;
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%)) !important;
+  backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%)) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.1) !important;
+  box-shadow: var(--lg-bar-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 8px 24px rgba(16, 32, 25, 0.1)) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule .sel-lens,
@@ -121,20 +133,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   left: 4px !important;
   width: calc((100% - 8px) / var(--n, 5)) !important;
   border-radius: 9999px !important;
+  background: var(--lg-thumb-bg, rgba(255, 255, 255, 0.96)) !important;
+  box-shadow: var(--lg-thumb-shadow, 0 2px 8px rgba(16, 32, 25, 0.1), inset 0 1px 0 #fff) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button,
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button {
   position: relative;
   height: 48px !important;
-  color: rgba(255, 255, 255, 0.64) !important;
+  color: var(--lg-ink, #56665d) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"],
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"] {
-  color: #d8f3de !important;
+  color: var(--lg-on, #17402c) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-selector .badge-count,
@@ -155,6 +169,21 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 0 1.5px rgba(23, 29, 26, 0.72);
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-carnet-btn-primary,
+.lkdv-club-carnet-drawer .lkdv-carnet-btn-primary {
+  background: linear-gradient(180deg, #1f543a 0%, #17402c 100%) !important;
+  color: #ffffff !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 4px 12px rgba(23, 64, 44, 0.2) !important;
+}
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-carnet-btn-soft,
+.lkdv-club-carnet-drawer .lkdv-carnet-btn-soft {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #17402c !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.16) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 8px rgba(16, 32, 25, 0.06) !important;
 }
 
 /* Bottom-right 30px lens tabs with isolation halo (UI-04) */
@@ -193,6 +222,29 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
     #000 calc(100% - 22px),
     transparent 100%
   );
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]),
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) {
+  padding: 2px 10px 10px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) > .lkdv-carnet-drawer-pane,
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) > .lkdv-carnet-drawer-pane {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 0 !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .club-drawer-pane-content,

@@ -170,10 +170,13 @@ const DEFAULT_FALLBACK_CLUB: ClubItemData = {
 };
 
 const TIROIR_TAB_MAP: Record<string, number> = {
-  explorer: 0,
+  stats: 0,
+  statistiques: 0,
+  performance: 0,
   cordee: 1,
   sorties: 2,
   coffre: 3,
+  salons: 4,
 };
 
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
@@ -449,6 +452,16 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           return;
         }
 
+        if (action === 'openClubSwitcher') {
+          setRuntimeOverlay({ kind: 'club_switcher' });
+          return;
+        }
+
+        if (action === 'openClubSearch') {
+          setRuntimeOverlay({ kind: 'club_search' });
+          return;
+        }
+
         if (action === 'openUserProfile' && typeof val === 'string') {
           const cleanHandle = val.replace(/^@/, '').trim();
           if (cleanHandle) {
@@ -533,15 +546,19 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             outingId: sortieParam,
             memberId: membreParam,
           };
-          act('openClubDrawer', `${tIdx}:${Math.min(2, sIdx)}`);
+          act('openClubDrawer', `${tIdx}:${Math.min(3, sIdx)}`);
         } else if (initialTab === 'carnets') {
           act('igtab', 0);
         } else if (initialTab === 'sorties' || initialTab === 'aventures') {
           act('igtab', 1);
         } else if (initialTab === 'membres') {
           act('openClubDrawer', '1:0');
+        } else if (initialTab === 'salons') {
+          act('openClubDrawer', '4:0');
+        } else if (initialTab === 'stats' || initialTab === 'statistiques') {
+          act('openClubDrawer', '0:0');
         } else if (initialTab === 'parametres') {
-          act('openClubDrawer', '4:2');
+          act('openClubDrawer', '0:0');
         }
       }
 
@@ -665,7 +682,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const [membersRes, topicsRes, eventsRes, allClubsRes] = await Promise.all([
         supabase
           .from('club_members')
-          .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in')
+          .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in, can_manage_stories')
           .eq('club_id', clubRow.id)
           .limit(600),
         supabase
@@ -694,16 +711,20 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const allClubRows: any[] = allClubsRes.data || [];
 
       const myClubRoles = new Map<string, string>();
+      const myClubStoryPerms = new Map<string, boolean>();
       if (user?.id) {
         try {
           const { data: myRows } = await supabase
             .from('club_members')
-            .select('club_id, role, status')
+            .select('club_id, role, status, can_manage_stories')
             .eq('user_id', user.id)
             .limit(50);
           for (const mr of myRows || []) {
             if (!mr.status || mr.status === 'active') {
               myClubRoles.set(mr.club_id, mr.role || 'member');
+              if (typeof mr.can_manage_stories === 'boolean') {
+                myClubStoryPerms.set(mr.club_id, mr.can_manage_stories);
+              }
             }
           }
         } catch {
@@ -751,6 +772,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
       const followedSet = new Set<string>();
       const blockedList: string[] = [];
+      const memberLocationMap = new Map<string, { share: boolean; lat: number | null; lng: number | null }>();
       if (user?.id && userIds.length > 0) {
         try {
           const followChunks: string[][] = [];
@@ -772,6 +794,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           }
           for (const b of blocksRes.data || []) {
             if (b.blocked_id) blockedList.push(b.blocked_id);
+          }
+          const followedIds = Array.from(followedSet);
+          if (followedIds.length > 0) {
+            const { data: locRows } = await supabase
+              .from('user_profiles')
+              .select('id, share_club_location, last_lat, last_lng')
+              .in('id', followedIds.slice(0, 150));
+            for (const lr of locRows || []) {
+              if (lr.id && lr.share_club_location === true) {
+                memberLocationMap.set(lr.id, {
+                  share: true,
+                  lat: typeof lr.last_lat === 'number' ? lr.last_lat : null,
+                  lng: typeof lr.last_lng === 'number' ? lr.last_lng : null,
+                });
+              }
+            }
           }
         } catch {
           // ignore if minimal mock does not implement .in()
@@ -806,6 +844,24 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         });
       }
 
+      const memberPostsCount = new Map<string, number>();
+      for (const t of topicRows) {
+        if (t.author_id) {
+          memberPostsCount.set(t.author_id, (memberPostsCount.get(t.author_id) ?? 0) + 1);
+        }
+      }
+      const memberEventStats = new Map<string, { count: number; km: number; dplus: number }>();
+      for (const ev of eventRows) {
+        const uid = ev.organizer_id || ev.created_by;
+        if (!uid) continue;
+        const prev = memberEventStats.get(uid) ?? { count: 0, km: 0, dplus: 0 };
+        memberEventStats.set(uid, {
+          count: prev.count + 1,
+          km: prev.km + (Number(ev.distance_km) || 0),
+          dplus: prev.dplus + (Number(ev.elevation_gain_m) || 0),
+        });
+      }
+
       const memberRoleByUserId = new Map<string, string>();
       const mappedMembers: ClubMemberData[] = memberSourceRows.map((m: any) => {
         const p = profilesMap[m.user_id];
@@ -827,6 +883,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                   ? 'Nouveau'
                   : 'Membre actif';
         memberRoleByUserId.set(m.user_id, mappedRole);
+        const evStat = memberEventStats.get(m.user_id);
 
         return {
           id: m.user_id,
@@ -841,11 +898,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           skills: [p?.location || clubRow.primary_sport || clubRow.category || 'Outdoor'],
           followed: followedSet.has(m.user_id),
           availableWeekend: Boolean(m.available_weekend ?? true),
+          canManageStories:
+            typeof m.can_manage_stories === 'boolean'
+              ? m.can_manage_stories
+              : m.user_id === clubRow.created_by || m.role === 'admin' || m.role === 'moderator',
           isNew7d,
           joinedAt: m.joined_at || undefined,
           mutedUntil: m.muted_until ?? null,
           isProAthlete: Boolean(m.is_pro_athlete),
           verifiedSports: Array.isArray(m.verified_sports) ? m.verified_sports : undefined,
+          outingsCount: evStat?.count ?? 0,
+          distanceKm: evStat?.km ?? 0,
+          dplusM: evStat?.dplus ?? 0,
+          postsCount: memberPostsCount.get(m.user_id) ?? 0,
+          shareClubLocation: memberLocationMap.get(m.user_id)?.share ?? false,
+          lastLat: memberLocationMap.get(m.user_id)?.lat ?? null,
+          lastLng: memberLocationMap.get(m.user_id)?.lng ?? null,
         };
       });
 
@@ -937,6 +1005,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         };
       });
 
+      let resolvedSalonsCount: number | undefined;
       // Hydrate secondary club endpoints safely (strictly UUID + fetch guarded)
       if (isUuid(clubRow.id) && typeof fetch === 'function') {
         const requests: Array<Promise<Response | null>> = [
@@ -1062,7 +1131,9 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           try {
             const sj = await salonsRes.json();
             const msgs: any[] = sj?.data?.messages || [];
-            const channelId: string | null = sj?.data?.activeChannelId || sj?.data?.channels?.[0]?.id || null;
+            const channelsArr: any[] = Array.isArray(sj?.data?.channels) ? sj.data.channels : [];
+            resolvedSalonsCount = channelsArr.length;
+            const channelId: string | null = sj?.data?.activeChannelId || channelsArr[0]?.id || null;
             setActiveSalonChannelId(channelId);
             const msgAuthorIds = Array.from(new Set(msgs.map((m) => m.authorId).filter((id) => id && !profilesMap[id])));
             if (msgAuthorIds.length > 0) {
@@ -1156,11 +1227,28 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           membersCount: resolvedMembersCount,
           poles,
           outingsCount: row.id === clubRow.id ? mappedOutings.length : 0,
+          salonsCount: row.id === clubRow.id ? resolvedSalonsCount : undefined,
           totalKm: row.id === clubRow.id ? currentTotalKm : 0,
           totalDplus: row.id === clubRow.id ? currentTotalDplus : 0,
           joined: joinedFlag,
           role: resolvedRoleLabel,
           viewerRole: (rawRole as ClubRole) || null,
+          viewerCanManageStories:
+            row.id === clubRow.id
+              ? Boolean(
+                  user?.id &&
+                    (row.created_by === user.id ||
+                      (typeof currentMemberRow?.can_manage_stories === 'boolean'
+                        ? currentMemberRow.can_manage_stories
+                        : currentMemberRow?.role === 'admin' || currentMemberRow?.role === 'moderator')),
+                )
+              : Boolean(
+                  user?.id &&
+                    (row.created_by === user.id ||
+                      (myClubStoryPerms.has(row.id)
+                        ? myClubStoryPerms.get(row.id)
+                        : rawRole === 'admin' || rawRole === 'moderator')),
+                ),
           visibility,
           bio: row.description || 'Club communautaire Le Kit du Voyageur.',
           charter: row.rules || 'Respect strict de la montagne, de la sécurité et zéro trace.',
@@ -1435,21 +1523,55 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleBorrowGear = useCallback(
-    (gearId: string) => {
+    async (gearId: string) => {
+      const target = vaultGear.find((g) => g.id === gearId);
+      const willReserve = target ? !target.reservedByMe : true;
       setVaultGear((prev) =>
         prev.map((g) => {
           if (g.id !== gearId) return g;
-          const nextAvail = !g.available;
+          const nextAvail = !willReserve;
           return {
             ...g,
             available: nextAvail,
-            reservedByMe: !nextAvail,
+            reservedByMe: willReserve,
           };
         }),
       );
-      showIslandToast('Coffre Matériel Club ✓', 'Équipement réservé pour la prochaine sortie');
+      if (user?.id && isUuid(activeClub.id) && isUuid(gearId) && typeof fetch === 'function') {
+        try {
+          if (willReserve) {
+            const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'request_loan', gearItemId: gearId, quantity: 1 }),
+            });
+            if (res.ok) {
+              const payload = (await res.json().catch(() => null)) as { loan?: { id?: string } } | null;
+              if (payload?.loan?.id) {
+                setVaultGear((prev) =>
+                  prev.map((g) => (g.id === gearId ? { ...g, loanId: payload.loan!.id, loanStatus: 'requested' } : g)),
+                );
+              }
+            }
+          } else if (target?.loanId && isUuid(target.loanId)) {
+            await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'update_loan', loanId: target.loanId, status: 'cancelled' }),
+            });
+          }
+        } catch {
+          // optimistic fallback kept
+        }
+      }
+      showIslandToast(
+        willReserve ? 'Coffre Matériel Club ✓' : 'Réservation annulée',
+        willReserve ? 'Demande d’emprunt enregistrée' : 'Équipement remis disponible',
+      );
     },
-    [showIslandToast],
+    [activeClub.id, showIslandToast, user?.id, vaultGear],
   );
 
   const handleCloneKit = useCallback(
@@ -1477,11 +1599,46 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   }, []);
 
   const handleTogglePostSave = useCallback((postId: string) => {
+    let wasSaved = false;
     setClubPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, saved: !p.saved } : p)),
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        wasSaved = Boolean(p.saved);
+        return { ...p, saved: !p.saved };
+      }),
     );
-    showIslandToast('Publication enregistrée ✓', 'Ajoutée aux favoris du club');
+    showIslandToast(
+      wasSaved ? 'Retirée des favoris' : 'Publication enregistrée ✓',
+      wasSaved ? 'Supprimée de vos favoris du club' : 'Ajoutée aux favoris du club',
+    );
   }, [showIslandToast]);
+
+  const handleUpdateMyAvailability = useCallback(
+    (payload: { availableWeekend: boolean; days: Array<'sam' | 'dim'>; objective: string }) => {
+      try {
+        window.localStorage.setItem(
+          `lkdv.club.myAvail.${activeClub.id}`,
+          JSON.stringify(payload),
+        );
+      } catch {
+        // ignore storage quota errors
+      }
+      if (!user?.id) return;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === user.id || m.id === user.id
+            ? {
+                ...m,
+                availableWeekend: payload.availableWeekend,
+                availableDays: payload.days,
+                seekingObjective: payload.objective,
+              }
+            : m,
+        ),
+      );
+    },
+    [activeClub.id, user?.id],
+  );
 
   const handleAddPostComment = useCallback(
     (postId: string, text: string) => {
@@ -1586,23 +1743,71 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleLendGearToVault = useCallback(
-    (payload: { name: string; brand: string; weightG: number; category: string }) => {
+    async (payload: {
+      name: string;
+      brand: string;
+      weightG: number;
+      category: string;
+      ownershipScope?: 'club' | 'member';
+      quantityTotal?: number;
+      depositCents?: number;
+      isEpi?: boolean;
+      epiExpiresAt?: string;
+    }) => {
+      const tempId = 'vg-' + Date.now();
       const item: ClubGearVaultItem = {
-        id: 'vg-' + Date.now(),
+        id: tempId,
         clubId: activeClub.id,
+        ownershipScope: payload.ownershipScope ?? 'member',
         name: payload.name,
         brand: payload.brand,
         category: payload.category,
         weightG: payload.weightG,
-        ownerName: 'Toi',
+        quantityTotal: payload.quantityTotal ?? 1,
+        quantityAvailable: payload.quantityTotal ?? 1,
+        depositCents: payload.depositCents ?? 0,
+        isEpi: Boolean(payload.isEpi),
+        epiExpiresAt: payload.epiExpiresAt ?? null,
+        ownerName: payload.ownershipScope === 'club' ? activeClub.name : 'Toi',
         ownerHandle: activeHandle || 'tony_frc',
         available: true,
       };
       setVaultGear((prev) => [item, ...prev]);
+      if (user?.id && isUuid(activeClub.id) && typeof fetch === 'function') {
+        try {
+          const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'add_item',
+              ownershipScope: payload.ownershipScope ?? 'member',
+              name: payload.name,
+              brand: payload.brand || null,
+              category: payload.category,
+              weightG: payload.weightG,
+              quantityTotal: payload.quantityTotal ?? 1,
+              depositCents: payload.depositCents ?? 0,
+              isEpi: Boolean(payload.isEpi),
+              epiExpiresAt: payload.epiExpiresAt || null,
+            }),
+          });
+          if (res.ok) {
+            const json = (await res.json().catch(() => null)) as { item?: { id?: string } } | null;
+            if (json?.item?.id) {
+              setVaultGear((prev) =>
+                prev.map((g) => (g.id === tempId ? { ...g, id: json.item!.id! } : g)),
+              );
+            }
+          }
+        } catch {
+          // optimistic fallback kept
+        }
+      }
       triggerAct('closeSheet');
       showIslandToast('Ajouté au Coffre Matériel ✓', `${payload.brand} ${payload.name} (${payload.weightG} g)`);
     },
-    [activeClub.id, activeHandle, showIslandToast, triggerAct],
+    [activeClub.id, activeClub.name, activeHandle, showIslandToast, triggerAct, user?.id],
   );
 
   const handleCreateNewClub = useCallback(
@@ -1738,20 +1943,128 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     );
     showIslandToast('Pôles de spécialité activés ✓', `${recommended.length} pôles configurés pour ${activeClub.name}`);
   }, [activeClub.category, activeClub.id, activeClub.name, showIslandToast]);
-  const canManageClubStories =
-    activeClub.viewerRole === 'admin' ||
-    activeClub.viewerRole === 'moderator' ||
-    Boolean(user?.id && activeClub.createdBy && user.id === activeClub.createdBy) ||
-    /fondateur|admin|modérateur|encadrant|guide/i.test(activeClub.role || '') ||
-    clubMembers.some(
-      (m) =>
-        Boolean(user?.id && (m.userId === user.id || m.id === user.id)) &&
-        (m.rawRole === 'admin' ||
-          m.rawRole === 'moderator' ||
-          m.role === 'Fondateur' ||
-          m.role === 'Guide & Sécurité' ||
-          m.role === 'Encadrant'),
-    );
+  const handleToggleMemberStoryPermission = useCallback(
+    async (targetUserId: string, canManageStories: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'story_permission',
+            userId: targetUserId,
+            canManageStories,
+          }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? { ...m, canManageStories }
+              : m,
+          ),
+        );
+        if (targetUserId === user.id) {
+          setClubsDirectory((prev) =>
+            prev.map((c) =>
+              c.id === activeClub.id ? { ...c, viewerCanManageStories: canManageStories } : c,
+            ),
+          );
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleToggleMemberGearPermission = useCallback(
+    async (targetUserId: string, canManageGear: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'gear_permission', userId: targetUserId, canManageGear }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageGear } : m)),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleToggleMemberLeaderBadge = useCallback(
+    async (targetUserId: string, isCertifiedLeader: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'leader_badge', userId: targetUserId, isCertifiedLeader }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, isCertifiedLeader } : m)),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleChangeMemberRole = useCallback(
+    async (targetUserId: string, nextRole: 'founder' | 'admin' | 'moderator' | 'member'): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function' || nextRole === 'founder') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'role', userId: targetUserId, role: nextRole }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? {
+                  ...m,
+                  rawRole: nextRole,
+                  role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
+                }
+              : m,
+          ),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  // Strict DB-backed authorization for Stories à la une creation/editing
+  const canManageClubStories = Boolean(
+    user?.id &&
+      (activeClub.createdBy === user.id ||
+        activeClub.viewerCanManageStories === true ||
+        clubMembers.some(
+          (m) =>
+            (m.userId === user.id || m.id === user.id) &&
+            Boolean(m.canManageStories),
+        )),
+  );
 
   // Hydrate or derive Stories à la une for the active club
   useEffect(() => {
@@ -1782,17 +2095,23 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     }));
 
     const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const diverseCovers = [
+      '/assets/images/mountain-1.jpg',
+      '/assets/images/club-bivouac.jpg',
+      '/assets/images/club-trail.jpg',
+      '/assets/images/journal-refuge.jpg',
+    ];
     const defaultHighlights: ClubStoryHighlight[] = [
       {
         id: 'hl-sorties',
         title: 'Sorties',
-        coverUrl: clubOutings[0]?.coverUrl || coverBase,
+        coverUrl: clubOutings[0]?.coverUrl || diverseCovers[0],
         subtitle: activeClub.nextOutingTitle || 'Reconnaissances & départs du club',
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-sorties-s1',
-            image: clubOutings[0]?.coverUrl || coverBase,
+            image: clubOutings[0]?.coverUrl || diverseCovers[0],
             caption: `${activeClub.name} · ${activeClub.nextOutingTitle || 'Sorties & traces vérifiées'}`,
           },
         ],
@@ -1802,13 +2121,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       {
         id: 'hl-terrain',
         title: activeClub.massif || 'Terrain',
-        coverUrl: coverBase,
+        coverUrl: diverseCovers[1],
         subtitle: `Reconnaissances ${activeClub.massif}`,
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-terrain-s1',
-            image: coverBase,
+            image: diverseCovers[1],
             caption: `${activeClub.massif} · Conditions & traces du club`,
           },
         ],
@@ -1818,13 +2137,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       {
         id: 'hl-charte',
         title: 'Esprit Club',
-        coverUrl: coverBase,
+        coverUrl: diverseCovers[2] || coverBase,
         subtitle: activeClub.charter,
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-charte-s1',
-            image: coverBase,
+            image: diverseCovers[2] || coverBase,
             caption: activeClub.charter || `Bienvenue dans ${activeClub.name}`,
           },
         ],
@@ -1834,6 +2153,59 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     ];
     setClubHighlights(defaultHighlights);
   }, [activeClub.charter, activeClub.coverUrl, activeClub.id, activeClub.massif, activeClub.membersCount, activeClub.name, activeClub.nextOutingTitle, clubMembers, clubOutings]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const baseLat = Number.isFinite(activeClub.lat) ? activeClub.lat : 45.9237;
+    const baseLng = Number.isFinite(activeClub.lng) ? activeClub.lng : 6.8694;
+    const outingsForMap = clubOutings.slice(0, 24).map((o, idx) => {
+      const oLat = Number.isFinite(o.lat) && o.lat !== 0 ? o.lat : baseLat + ((idx % 5) - 2) * 0.04;
+      const oLng = Number.isFinite(o.lng) && o.lng !== 0 ? o.lng : baseLng + (((idx * 3) % 5) - 2) * 0.05;
+      const r = Math.min(0.06, Math.max(0.015, (o.km || 14) / 600));
+      const trackCoords: Array<[number, number]> = [
+        [oLng - r * 0.6, oLat - r * 0.4],
+        [oLng - r * 0.2, oLat + r * 0.5],
+        [oLng + r * 0.4, oLat + r * 0.6],
+        [oLng + r * 0.7, oLat + r * 0.1],
+        [oLng + r * 0.2, oLat - r * 0.5],
+        [oLng - r * 0.6, oLat - r * 0.4],
+      ];
+      return {
+        id: o.id,
+        title: o.title,
+        date: o.date,
+        massif: o.massif,
+        km: o.km,
+        dplus: o.dplus,
+        status: o.status,
+        lat: oLat,
+        lng: oLng,
+        trackCoords,
+      };
+    });
+    const membersForMap = clubMembers
+      .filter((m) => m.followed && m.shareClubLocation)
+      .slice(0, 20)
+      .map((m, idx) => ({
+        id: m.userId || m.id,
+        name: m.name,
+        handle: m.handle,
+        avatarUrl: m.avatarUrl || null,
+        lat: typeof m.lastLat === 'number' ? m.lastLat : baseLat + ((idx % 3) - 1) * 0.025,
+        lng: typeof m.lastLng === 'number' ? m.lastLng : baseLng + (((idx + 1) % 3) - 1) * 0.03,
+      }));
+    const payload = {
+      clubId: activeClub.id,
+      clubName: activeClub.name,
+      center: [baseLng, baseLat] as [number, number],
+      outings: outingsForMap,
+      members: membersForMap,
+    };
+    (window as any).__lkdvClubMapData = payload;
+    if (typeof (window as any).__lkdvSyncClubMap === 'function') {
+      (window as any).__lkdvSyncClubMap(payload);
+    }
+  }, [activeClub.id, activeClub.lat, activeClub.lng, activeClub.name, clubMembers, clubOutings]);
 
   const persistHighlights = useCallback(
     (next: ClubStoryHighlight[]) => {
@@ -1864,7 +2236,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
   const handleAddHighlight = useCallback(() => {
     if (!canManageClubStories) return;
-    const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const pool = [
+      '/assets/images/journal-refuge.jpg',
+      '/assets/images/community-hikers.jpg',
+      '/assets/images/mountain-2.jpg',
+      '/assets/images/club-bivouac.jpg',
+      '/assets/images/club-trail.jpg',
+    ];
+    const coverBase = pool[clubHighlights.length % pool.length] || activeClub.coverUrl || '/assets/images/account-bg.webp';
     const newHl: ClubStoryHighlight = {
       id: `hl-${Date.now()}`,
       title: 'Nouvelle',
@@ -2013,6 +2392,11 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onToggleJoinClub={handleToggleJoinClub}
             onToggleFollowMember={handleToggleFollowMember}
             onProposeBinome={handleProposeBinome}
+            onUpdateMyAvailability={handleUpdateMyAvailability}
+            onChangeMemberRole={handleChangeMemberRole}
+            onToggleMemberStoryPermission={handleToggleMemberStoryPermission}
+            onToggleMemberGearPermission={handleToggleMemberGearPermission}
+            onToggleMemberLeaderBadge={handleToggleMemberLeaderBadge}
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {
@@ -2364,6 +2748,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         members={clubMembers}
         outings={clubOutings}
         vaultGear={vaultGear}
+        standardKits={standardKits}
         challenges={challenges}
         posts={clubPosts}
         currentUserId={user?.id ?? null}
@@ -2373,7 +2758,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         onCreateGroupFromOuting={handleCreateGroupFromOuting}
         onOpenClubDrawer={(t, s = 0, extras) => {
           pendingDrawerIntentRef.current = { tab: t, subTab: s, ...extras };
-          triggerAct('openClubDrawer', `${t}:${Math.min(2, s)}`);
+          triggerAct('openClubDrawer', `${t}:${Math.min(3, s)}`);
+        }}
+        onOpenCreateClub={() => {
+          setCommunityCreateKind('club');
+          setCommunityCreatePrefill(null);
+          setCommunityCreateOpen(true);
         }}
         onFlyToCoords={(lat, lng, label) => flyMapToCoords([lng, lat], label)}
         onToast={handleToast}

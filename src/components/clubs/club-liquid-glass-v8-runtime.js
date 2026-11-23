@@ -2650,7 +2650,14 @@ renderIgTabContent = function (D) {
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || '/assets/images/no_image.png';
+          const fallbackCovers = [
+            '/assets/images/mountain-1.jpg',
+            '/assets/images/club-trail.jpg',
+            '/assets/images/club-bivouac.jpg',
+            '/assets/images/mountain-2.jpg',
+            '/assets/images/journal-refuge.jpg',
+          ];
+          const photo = o.coverImage || fallbackCovers[idx % fallbackCovers.length];
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
           const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
           return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
@@ -2687,7 +2694,7 @@ card = function () {
   const isJoined = X.clubJoined !== false;
 
   const stats = me
-    ? [[D.pubCount, 'publications', 'igtab', '0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openClubDrawer', '1:0'], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'openClubDrawer', '2:0']]
+    ? [[Number(D.totalKm || 0).toLocaleString('fr-FR'), 'km club', 'openClubDrawer', '0:0'], [Number(P.followersCount || 0).toLocaleString('fr-FR'), 'membres', 'openClubDrawer', '1:0'], [Number(D.totalOutings || D.followingCount || 0).toLocaleString('fr-FR'), 'sorties', 'openClubDrawer', '2:0']]
     : [[String(club?.members || 0), 'membres', 'openClubDrawer', '1:0'], [1, 'sorties', 'openClubDrawer', '2:0'], [1, 'organisateur', 'openClubDrawer', '1:1']];
 
   // ADR-012: Legacy profile meta template retained for preview synchronizers & schema contracts
@@ -2801,14 +2808,14 @@ renderTop = function () {
     : null;
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
-    <button class="lg ig-handle rp" id="rpvis" data-a="openClubDrawer" data-v="0:0" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
+    <button class="lg ig-handle rp" id="rpvis" data-a="openClubSwitcher" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
       <span class="club-top-pill-name">${esc(me ? (P.name || P.handle) : club.n)}</span>
       <span class="club-top-pill-chev" aria-hidden="true">▾</span>
     </button>
     <div class="ig-top-r">
       <button class="lg gbtn ig-top-btn" data-a="openClubSearch" aria-label="Rechercher un club, un membre, une sortie ou un matériel"><svg class="ic s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       <button class="lg gbtn ig-top-btn" data-a="openClubCreate" aria-label="Publier dans le club, proposer une sortie, prêter un équipement ou fonder un club">${ic(IC.plus, "s")}</button>
-      <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="1:0" aria-label="Espaces du club : cordée, sorties et coffre matériel">${ic(IC.sliders, "s")}</button>
+      <button class="lg gbtn ig-top-btn" data-a="openClubDrawer" data-v="1:0" aria-label="Espaces du club : cordée, sorties, coffre, salons et statistiques">${ic(IC.sliders, "s")}</button>
     </div></div>
   <button class="cs mini xp-sheet-pill-launcher club-top-card-pill" data-a="mapbig" aria-label="Réduire la carte et revenir au club"><span class="xp-pill-dots" aria-hidden="true"><span></span><span></span><span></span></span></button>
   <div class="card cs" id="card">${cardHtml}</div>`;
@@ -4191,11 +4198,18 @@ var EXA = {
     }
     openStory('hl1');
   },
-  openClubSearch: () => { openSheet('club_drawer', 0, 'card', { drawerTab: 0, drawerSubTab: 2 }); haptic(8); },
+  openClubSwitcher: () => {
+    notifyHostAction('openClubSwitcher');
+    haptic(8);
+  },
+  openClubSearch: () => {
+    notifyHostAction('openClubSearch');
+    haptic(8);
+  },
   openClubDrawer: v => {
     const parts = String(v || '0:0').split(':');
     const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 4);
-    const dSub = clamp(parseInt(parts[1], 10) || 0, 0, 2);
+    const dSub = clamp(parseInt(parts[1], 10) || 0, 0, 3);
     openSheet('club_drawer', dTab, 'card', { drawerTab: dTab, drawerSubTab: dSub });
     haptic(8);
   },
@@ -4214,7 +4228,7 @@ var EXA = {
     haptic(nowJoined ? [10, 25] : 8);
     notifyHostAction('toggleJoinActiveClub', { joined: nowJoined });
   },
-  openAccountDrawer: () => { X.drawerTab = 0; openSheet('club_drawer', 4, 'card', { drawerTab: 4, drawerSubTab: 2 }); haptic(8); },
+  openAccountDrawer: () => { X.drawerTab = 0; openSheet('club_drawer', 0, 'card', { drawerTab: 0, drawerSubTab: 0 }); haptic(8); },
   signout: () => {
     closeVisMenu(true);
     island('Déconnexion effectuée', 'À bientôt sur les sentiers LKDV', false);
@@ -5322,6 +5336,97 @@ function setup3DMap() {
         });
         new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map);
       });
+
+      // 5. Dynamic Club Outings (completed + upcoming routes & markers) & Followed Members
+      const syncClubMap = (clubData) => {
+        if (!clubData || !map) return;
+        try {
+          if (Array.isArray(X.clubMapMarkers)) {
+            X.clubMapMarkers.forEach((mk) => { try { mk.remove(); } catch (_) {} });
+          }
+          X.clubMapMarkers = [];
+
+          const features = (clubData.outings || [])
+            .filter((o) => Array.isArray(o.trackCoords) && o.trackCoords.length >= 2)
+            .map((o) => ({
+              type: 'Feature',
+              properties: { id: o.id, title: o.title, status: o.status || 'upcoming' },
+              geometry: { type: 'LineString', coordinates: o.trackCoords },
+            }));
+
+          const fc = { type: 'FeatureCollection', features };
+          const existingSrc = map.getSource('club-outings-routes');
+          if (existingSrc && typeof existingSrc.setData === 'function') {
+            existingSrc.setData(fc);
+          } else {
+            map.addSource('club-outings-routes', { type: 'geojson', data: fc });
+            map.addLayer({
+              id: 'club-outings-routes-completed',
+              type: 'line',
+              source: 'club-outings-routes',
+              filter: ['==', ['get', 'status'], 'completed'],
+              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              paint: { 'line-color': '#17402c', 'line-width': 3.5, 'line-opacity': 0.85 },
+            });
+            map.addLayer({
+              id: 'club-outings-routes-upcoming',
+              type: 'line',
+              source: 'club-outings-routes',
+              filter: ['!=', ['get', 'status'], 'completed'],
+              layout: { 'line-cap': 'round', 'line-join': 'round' },
+              paint: { 'line-color': '#2e7d4f', 'line-width': 4, 'line-dasharray': [2, 1.4], 'line-opacity': 0.95 },
+            });
+          }
+
+          (clubData.outings || []).forEach((o) => {
+            if (typeof o.lng !== 'number' || typeof o.lat !== 'number') return;
+            const isUpcoming = o.status !== 'completed' && o.status !== 'cancelled';
+            const el = document.createElement('div');
+            el.className = `club-map-outing-pin ${isUpcoming ? 'is-upcoming' : 'is-completed'}`;
+            const shortTitle = String(o.title || 'Sortie').replace(/\s*\([^)]*\)\s*$/, '').slice(0, 26);
+            el.innerHTML = `<div class="club-map-outing-badge">${isUpcoming ? '▶ ' : '✓ '}${esc(shortTitle)}</div><div class="club-map-outing-dot"></div>`;
+            el.addEventListener('click', (e) => {
+              e.stopPropagation();
+              map.flyTo({ center: [o.lng, o.lat], zoom: 12.6, pitch: 58, bearing: -25, duration: 1400, essential: true });
+              if (typeof island === 'function') {
+                island(o.title, `${o.massif || 'Sortie'} · ${o.km || 0} km · +${o.dplus || 0} m`, false);
+              }
+            });
+            const mk = new maplibregl.Marker({ element: el }).setLngLat([o.lng, o.lat]).addTo(map);
+            X.clubMapMarkers.push(mk);
+          });
+
+          (clubData.members || []).forEach((m) => {
+            if (typeof m.lng !== 'number' || typeof m.lat !== 'number') return;
+            const el = document.createElement('div');
+            el.className = 'club-map-member-pin';
+            const initial = String(m.name || 'M').charAt(0).toUpperCase();
+            const avatarInner = m.avatarUrl
+              ? `<img src="${esc(m.avatarUrl)}" alt="" />`
+              : `<span>${esc(initial)}</span>`;
+            el.innerHTML = `<div class="club-map-member-avi">${avatarInner}</div><div class="club-map-member-name">${esc(m.name)}</div>`;
+            el.addEventListener('click', (e) => {
+              e.stopPropagation();
+              map.flyTo({ center: [m.lng, m.lat], zoom: 13.2, pitch: 55, duration: 1200, essential: true });
+              if (typeof island === 'function') {
+                island(m.name, `@${m.handle} · Position partagée`, false);
+              }
+            });
+            const mk = new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(map);
+            X.clubMapMarkers.push(mk);
+          });
+
+          if (Array.isArray(clubData.center) && clubData.center.length === 2) {
+            const firstOuting = (clubData.outings || [])[0];
+            const targetCenter = firstOuting ? [firstOuting.lng, firstOuting.lat] : clubData.center;
+            map.flyTo({ center: targetCenter, zoom: 9.2, pitch: 50, bearing: -20, duration: 1400, essential: true });
+          }
+        } catch (_) {}
+      };
+      window.__lkdvSyncClubMap = syncClubMap;
+      if (window.__lkdvClubMapData) {
+        syncClubMap(window.__lkdvClubMapData);
+      }
 
       // Execute pending post teleportation or marker highlight if post was clicked before map finished loading
       if (X.pendingTeleport) {

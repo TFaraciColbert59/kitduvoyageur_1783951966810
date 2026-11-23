@@ -26,6 +26,9 @@ const Patch = z
     defaultOutingVisibility: z
       .enum(['private', 'followers', 'public', 'collective_anonymized'])
       .optional(),
+    shareClubLocation: z.boolean().optional(),
+    lastLat: z.number().min(-90).max(90).nullable().optional(),
+    lastLng: z.number().min(-180).max(180).nullable().optional(),
     notificationPrefs: z
       .object({
         social: z.boolean().optional(),
