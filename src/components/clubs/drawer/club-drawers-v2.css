@@ -225,7 +225,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]),
-.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) {
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]),
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-stats-kits-pane"]),
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-stats-kits-pane"]) {
   padding: 2px 10px 10px !important;
   overflow: hidden !important;
   display: flex !important;
@@ -237,7 +239,9 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) > .lkdv-carnet-drawer-pane,
-.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) > .lkdv-carnet-drawer-pane {
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-salons-discord"]) > .lkdv-carnet-drawer-pane,
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-stats-kits-pane"]) > .lkdv-carnet-drawer-pane,
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-stats-kits-pane"]) > .lkdv-carnet-drawer-pane {
   flex: 1 1 0 !important;
   min-height: 0 !important;
   height: 100% !important;
@@ -245,6 +249,20 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   flex-direction: column !important;
   overflow: hidden !important;
   padding: 0 !important;
+}
+
+/* Frise horizontale Sorties 2.0 : bord à bord dans le drawer */
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-body:has([data-testid="club-outings-upcoming-pane"]),
+.lkdv-club-carnet-drawer .lkdv-slot-body:has([data-testid="club-outings-upcoming-pane"]),
+.lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-outings-upcoming-pane"]),
+.lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-outings-upcoming-pane"]) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+[data-testid="club-outings-upcoming-pane"] .lkdv-carnet-htimeline {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .club-drawer-pane-content,

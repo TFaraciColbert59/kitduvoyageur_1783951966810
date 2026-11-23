@@ -829,7 +829,7 @@ export function ClubSortiesDrawerBody({
   return (
     <div className="club-drawer-pane-content" data-testid="club-outings-upcoming-pane">
       {/* Filter & Quick Search Ribbon */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, paddingInline: 10 }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
           <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
           <input

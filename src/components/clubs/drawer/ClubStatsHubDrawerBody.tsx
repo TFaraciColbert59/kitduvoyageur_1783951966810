@@ -655,47 +655,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       <div className="club-drawer-pane-content" data-testid="club-stats-events-pane">
         {renderTopControls()}
 
-        {/* Bilan Événements */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Événements organisés</span>
-            <b style={{ fontSize: 18, color: '#172b24' }}>
-              <StatsAnimatedNumber value={eb.organized} />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>
-              {eb.completed} réalisés · {eb.upcoming} à venir
-            </span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Remplissage moyen</span>
-            <b style={{ fontSize: 18, color: '#17402c' }}>
-              <StatsAnimatedNumber value={eb.avgFillRatePct} suffix=" %" />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>
-              {eb.totalRegistrations} inscriptions cumulées
-            </span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Moyenne par sortie</span>
-            <b style={{ fontSize: 16, color: '#172b24' }}>
-              <StatsAnimatedNumber value={stats.summary.avgOutingKm} decimals={1} suffix=" km" />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>
-              +{stats.summary.avgOutingDplusM.toLocaleString('fr-FR')} m D+ moyen
-            </span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Activités GPS membres</span>
-            <b style={{ fontSize: 18, color: '#172b24' }}>
-              <StatsAnimatedNumber value={stats.summary.recordedActivitiesCount} />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>Traces synchronisées</span>
-          </div>
-        </div>
-
         {/* Profil d'exploration Komoot — Terrains & Massifs */}
         {stats.terrains.length > 0 ? (
           <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -850,93 +809,120 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   if (activeSubTab === 2) {
     const kv = stats.kitsAndVault;
     return (
-      <div ref={kitsPaneRef} className="club-drawer-pane-content" data-testid="club-stats-kits-pane">
-        {renderTopControls()}
+      <div
+        ref={kitsPaneRef}
+        className="club-drawer-pane-content"
+        data-testid="club-stats-kits-pane"
+        style={{
+          flex: '1 1 0',
+          height: '100%',
+          minHeight: 0,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
+        <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {renderTopControls()}
 
-        {/* Catégories du coffre — barre segmentée + lignes lisibles (se réduit au scroll) */}
-        {kv.categories.length > 0 ? (() => {
-          const totalItems = Math.max(1, kv.categories.reduce((acc, c) => acc + c.count, 0));
-          const maxCount = Math.max(1, ...kv.categories.map((c) => c.count));
-          return (
-            <div
-              className="club-glass-card"
-              style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 4,
-                padding: kitsCompact ? '8px 12px' : 12,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: kitsCompact ? 6 : 10,
-                transition: 'padding 0.18s ease, gap 0.18s ease',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Package size={15} color="#17402c" aria-hidden="true" />
-                  <b style={{ fontSize: 13, color: '#172b24' }}>Répartition du coffre matériel</b>
-                </div>
-                <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>{kv.vaultItemsCount} pièces</span>
-              </div>
-
-              {/* Barre segmentée proportionnelle */}
+          {/* Catégories du coffre — fixe en haut, se réduit au scroll du contenu dessous */}
+          {kv.categories.length > 0 ? (() => {
+            const totalItems = Math.max(1, kv.categories.reduce((acc, c) => acc + c.count, 0));
+            const maxCount = Math.max(1, ...kv.categories.map((c) => c.count));
+            return (
               <div
+                className="club-glass-card"
                 style={{
+                  padding: kitsCompact ? '8px 12px' : 12,
                   display: 'flex',
-                  height: kitsCompact ? 6 : 10,
-                  borderRadius: 999,
-                  overflow: 'hidden',
-                  gap: 2,
-                  background: 'rgba(23, 64, 44, 0.06)',
-                  transition: 'height 0.18s ease',
+                  flexDirection: 'column',
+                  gap: kitsCompact ? 6 : 10,
+                  transition: 'padding 0.18s ease, gap 0.18s ease',
                 }}
-                aria-hidden="true"
               >
-                {kv.categories.map((cat, idx) => {
-                  const segPct = Math.max(4, Math.round((cat.count / totalItems) * 100));
-                  return (
-                    <div
-                      key={cat.category}
-                      style={{
-                        width: `${segPct}%`,
-                        background: CHART_COLORS[idx % CHART_COLORS.length],
-                        borderRadius: 999,
-                      }}
-                    />
-                  );
-                })}
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Package size={15} color="#17402c" aria-hidden="true" />
+                    <b style={{ fontSize: 13, color: '#172b24' }}>Répartition du coffre matériel</b>
+                  </div>
+                  <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>{kv.vaultItemsCount} pièces</span>
+                </div>
 
-              {!kitsCompact ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {/* Barre segmentée proportionnelle */}
+                <div
+                  style={{
+                    display: 'flex',
+                    height: kitsCompact ? 6 : 10,
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    gap: 2,
+                    background: 'rgba(23, 64, 44, 0.06)',
+                    transition: 'height 0.18s ease',
+                  }}
+                  aria-hidden="true"
+                >
                   {kv.categories.map((cat, idx) => {
-                    const pct = Math.round((cat.count / totalItems) * 100);
-                    const barPct = Math.max(8, Math.round((cat.count / maxCount) * 100));
-                    const color = CHART_COLORS[idx % CHART_COLORS.length];
+                    const segPct = Math.max(4, Math.round((cat.count / totalItems) * 100));
                     return (
-                      <div key={cat.category} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, gap: 8 }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: 'none' }} />
-                            <b style={{ color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {cat.category}
-                            </b>
-                          </div>
-                          <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flex: 'none' }}>
-                            <b style={{ color: '#17402c' }}>{cat.count}</b> ({pct}%) · {cat.totalWeightKg} kg
-                          </span>
-                        </div>
-                        <div className="club-progress-track" style={{ height: 5 }}>
-                          <div className="club-progress-fill" style={{ width: `${barPct}%`, background: color }} />
-                        </div>
-                      </div>
+                      <div
+                        key={cat.category}
+                        style={{
+                          width: `${segPct}%`,
+                          background: CHART_COLORS[idx % CHART_COLORS.length],
+                          borderRadius: 999,
+                        }}
+                      />
                     );
                   })}
                 </div>
-              ) : null}
-            </div>
-          );
-        })() : null}
+
+                {!kitsCompact ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    {kv.categories.map((cat, idx) => {
+                      const pct = Math.round((cat.count / totalItems) * 100);
+                      const barPct = Math.max(8, Math.round((cat.count / maxCount) * 100));
+                      const color = CHART_COLORS[idx % CHART_COLORS.length];
+                      return (
+                        <div key={cat.category} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, gap: 8 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: 'none' }} />
+                              <b style={{ color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {cat.category}
+                              </b>
+                            </div>
+                            <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flex: 'none' }}>
+                              <b style={{ color: '#17402c' }}>{cat.count}</b> ({pct}%) · {cat.totalWeightKg} kg
+                            </span>
+                          </div>
+                          <div className="club-progress-track" style={{ height: 5 }}>
+                            <div className="club-progress-fill" style={{ width: `${barPct}%`, background: color }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })() : null}
+        </div>
+
+        {/* Zone scrollable indépendante sous l'en-tête fixe */}
+        <div
+          onScroll={(e) => setKitsCompact(e.currentTarget.scrollTop > 18)}
+          style={{
+            flex: '1 1 0',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            paddingBottom: 56,
+          }}
+        >
 
         {/* Kits officiels proposés par le club (KitCard canonique Profil/Carnet) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -1064,6 +1050,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
             ))}
           </div>
         ) : null}
+        </div>
 
         {selectedKitProductState &&
         selectedKitProductState.products[selectedKitProductState.index] &&
@@ -1270,33 +1257,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                 <b style={{ fontSize: 14, color: '#17402c' }}>{mgmt.storiesAuthorizedCount}</b>
               </div>
             </div>
-
-            {mgmt.topOrganizers.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', color: '#56665d' }}>
-                  Top encadrants / organisateurs
-                </span>
-                {mgmt.topOrganizers.slice(0, 3).map((org) => (
-                  <div
-                    key={org.userId}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      fontSize: 12,
-                      padding: '5px 8px',
-                      borderRadius: 10,
-                      background: 'rgba(255, 255, 255, 0.72)',
-                    }}
-                  >
-                    <b style={{ color: '#172b24' }}>{org.displayName}</b>
-                    <span style={{ color: '#56665d', fontSize: 11 }}>
-                      {org.eventsOrganized} sorties · {org.totalParticipants} inscrits
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
           </div>
         ) : null}
 
