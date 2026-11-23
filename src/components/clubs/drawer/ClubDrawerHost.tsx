@@ -168,6 +168,26 @@ export function ClubDrawerHost({
   const [stack, setStack] = useState<ClubStackEntry[]>([]);
   const [inspectedMember, setInspectedMember] = useState<ClubMemberData | null>(null);
   const [memberLensIndex, setMemberLensIndex] = useState(0);
+  const [memberHeaderCompact, setMemberHeaderCompact] = useState(false);
+
+  useEffect(() => {
+    setMemberHeaderCompact(false);
+  }, [inspectedMember?.id, memberLensIndex]);
+
+  useEffect(() => {
+    if (tab !== 1 || !inspectedMember) return;
+    const root = paneRootRef.current;
+    if (!root) return;
+    const handleScrollCapture = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || typeof target.scrollTop !== 'number') return;
+      if (target.classList.contains('lkdv-lens-pane') || target.closest('.lkdv-lens-pane')) {
+        setMemberHeaderCompact(target.scrollTop > 18);
+      }
+    };
+    root.addEventListener('scroll', handleScrollCapture, true);
+    return () => root.removeEventListener('scroll', handleScrollCapture, true);
+  }, [tab, inspectedMember]);
   const [inspectedOuting, setInspectedOuting] = useState<ClubOutingData | null>(null);
   const [g02Section, setG02Section] = useState<ClubG02Section | undefined>(initialSection);
   const [chatDraftPrefill, setChatDraftPrefill] = useState('');
@@ -426,7 +446,6 @@ export function ClubDrawerHost({
             { id: 'm-stats', label: 'Perf & Stats', icon: <BarChart2 size={15} aria-hidden="true" /> },
             { id: 'm-outings', label: 'Sorties', icon: <Calendar size={15} aria-hidden="true" /> },
             { id: 'm-gear', label: 'Sac', icon: <Backpack size={15} aria-hidden="true" /> },
-            { id: 'm-media', label: 'Contributions', icon: <MessageSquare size={15} aria-hidden="true" /> },
           ]
         : [
             { id: 'members-all', label: 'Tous les membres', icon: <Users size={15} aria-hidden="true" /> },
@@ -1076,11 +1095,76 @@ export function ClubDrawerHost({
                           ? 'newcomer'
                           : 'member';
 
+                if (memberHeaderCompact) {
+                  return (
+                    <div
+                      className="lkdv-club-member-hero-card is-compact"
+                      data-role-tone={roleBadgeTone}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        padding: '6px 10px',
+                        borderRadius: 22,
+                        background: 'rgba(255, 255, 255, 0.86)',
+                        border: '0.5px solid rgba(23, 43, 36, 0.10)',
+                        boxShadow: 'inset 0 1px 0 #fff, 0 2px 10px rgba(23, 43, 36, 0.06)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                        {inspectedMember.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={inspectedMember.avatarUrl}
+                            alt=""
+                            style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flex: 'none' }}
+                          />
+                        ) : (
+                          <span
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: '50%',
+                              background: 'rgba(23, 64, 44, 0.12)',
+                              color: '#17402c',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              display: 'grid',
+                              placeItems: 'center',
+                              flex: 'none',
+                            }}
+                          >
+                            {mName.slice(0, 1).toUpperCase()}
+                          </span>
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <b style={{ fontSize: 12.5, color: '#172b24', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {mName}
+                          </b>
+                          <span style={{ fontSize: 10.5, color: '#56665d' }}>
+                            {inspectedMember.role || 'Membre'}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="lkdv-cv2x-member-cta"
+                        onClick={() => pushMember(null)}
+                      >
+                        <ChevronLeft size={13} />
+                        <span>Cordée</span>
+                      </button>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile lkdv-club-member-hero-card${
                       inspectedMember.avatarUrl ? ' has-cover-bg' : ''
                     }`}
+                    style={{ borderRadius: 22, overflow: 'hidden' }}
                     data-role-tone={roleBadgeTone}
                   >
                     {inspectedMember.avatarUrl ? (

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,8 +12,15 @@ import {
   Users,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
+import { CarnetHorizontalTimeline } from '@/components/carnet/v2/CarnetHorizontalTimeline';
 import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
+import type { PickerProduct } from '@/features/community/create/kit/types';
 import { createClient } from '@/lib/supabase/client';
+
+const KitProductSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
+  { ssr: false },
+);
 import {
   StaggerCard,
   StaggerList,
@@ -256,6 +265,11 @@ function InspectedMemberPane({
     };
   }, [active, lensId, member.id, member.userId]);
 
+  const [selectedGearIndex, setSelectedGearIndex] = useState<number | null>(null);
+  useEffect(() => {
+    setSelectedGearIndex(null);
+  }, [member.id, lensId]);
+
   const pName = member.name?.trim() || member.handle?.trim() || 'Voyageur';
   const normHandle = (member.handle || '').trim().toLowerCase();
   const normName = (member.name || '').trim().toLowerCase();
@@ -349,178 +363,51 @@ function InspectedMemberPane({
               </div>
             </>
           ) : null}
-          {textPosts.length > 0 ? (
-            <>
-              <span className="lkdv-carnet-kit-eyebrow">
-                Publications ({textPosts.length})
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {textPosts.map((post) => (
-                  <button
-                    key={post.id}
-                    type="button"
-                    className="club-glass-card"
-                    style={{ textAlign: 'left', width: '100%', border: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
-                    onClick={() => {
-                      onClose();
-                      document
-                        .getElementById(`club-feed-post-${post.id}`)
-                        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <b style={{ fontSize: 13, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {post.spot || 'Publication club'}
-                      </b>
-                      {post.timeAgo ? (
-                        <span className="club-badge-soft" style={{ whiteSpace: 'nowrap', flex: 'none' }}>
-                          {post.timeAgo}
-                        </span>
-                      ) : null}
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 12,
-                        lineHeight: 1.4,
-                        color: 'var(--label2)',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {post.caption || post.spot || 'Publication dans le club'}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-          {memberGear.length > 0 ? (
-            <>
-              <span className="lkdv-carnet-kit-eyebrow">
-                Matériel mutualisé ({memberGear.length})
-              </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {memberGear.map((g) => {
-                  const weightLabel = g.weightG
-                    ? g.weightG >= 1000
-                      ? `${(g.weightG / 1000).toFixed(1).replace('.', ',')} kg`
-                      : `${g.weightG} g`
-                    : null;
-                  return (
-                    <button
-                      key={g.id}
-                      type="button"
-                      className="club-glass-card"
-                      style={{
-                        width: '100%',
-                        border: 0,
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 10,
-                      }}
-                      onClick={() => onSwitchTabAndLens(3, 0, { highlightGearId: g.id })}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={resolveMemberGearImage(g.name, g.category, g.imageUrl)}
-                          alt={g.name}
-                          loading="lazy"
-                          decoding="async"
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 10,
-                            objectFit: 'cover',
-                            background: 'rgba(23, 64, 44, 0.06)',
-                            flex: 'none',
-                          }}
-                        />
-                        <div style={{ minWidth: 0 }}>
-                          <b style={{ display: 'block', fontSize: 13, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {g.name}
-                          </b>
-                          <div style={{ fontSize: 11.5, color: 'var(--label2)', marginTop: 2 }}>
-                            {[g.category, weightLabel].filter(Boolean).join(' · ')}
-                          </div>
-                        </div>
-                      </div>
-                      <span className={g.available ? 'club-badge-sage' : 'club-badge-soft'} style={{ whiteSpace: 'nowrap', flex: 'none' }}>
-                        {g.available ? 'Disponible' : 'Emprunté'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          ) : null}
-          {!hasAnySharedContent ? (
-            <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>
-              Aucun contenu partagé par ce membre dans ce club.
-            </p>
-          ) : null}
         </>
       ) : null}
 
       {lensId === 'm-outings' ? (
         memberOutings.length > 0 || publicCarnets.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {memberOutings.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                className="club-glass-card"
-                style={{
-                  width: '100%',
-                  border: 0,
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
-                }}
-                onClick={() => onSwitchTabAndLens(2, 0, { inspectOuting: o })}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <span className="club-badge-sage" style={{ whiteSpace: 'nowrap' }}>
-                    {o.date || 'À venir'}
-                  </span>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
-                    {o.km > 0 ? (
-                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
-                        {o.km} km
-                      </span>
-                    ) : null}
-                    {o.dplus > 0 ? (
-                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
-                        +{o.dplus} m
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <b style={{ fontSize: 13.5, lineHeight: 1.3, color: 'var(--label)' }}>{o.title}</b>
-                {o.massif ? (
-                  <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{o.massif}</small>
-                ) : null}
-              </button>
-            ))}
-            {publicCarnets.map((c) => (
-              <div key={c.id} className="club-glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ minWidth: 0 }}>
-                  <b style={{ display: 'block', fontSize: 13, color: 'var(--label)' }}>{c.title}</b>
-                  {c.massif ? <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>{c.massif}</small> : null}
-                </div>
-                <span className="club-badge-soft" style={{ whiteSpace: 'nowrap' }}>
-                  {c.distance_km ? `${Math.round(c.distance_km)} km` : 'Carnet'}
-                </span>
-              </div>
-            ))}
+          <div data-hscroll="true" style={{ marginInline: -10 }}>
+            <CarnetHorizontalTimeline
+              ariaLabel={`Frise des sorties de ${pName}`}
+              groups={[
+                {
+                  day: 1,
+                  groupLabel: 'Sorties',
+                  events: [
+                    ...memberOutings.map((o) => {
+                      const cleanTitle = o.title.replace(/\s*\([^)]*km[^)]*\)\s*$/i, '').trim();
+                      return {
+                        id: o.id,
+                        day: 1,
+                        kind: 'perf' as const,
+                        badge: o.status === 'live' ? 'En direct 🔴' : 'Sortie',
+                        timeLabel: o.date || 'À venir',
+                        title: cleanTitle || o.title,
+                        subtitle: [
+                          o.massif,
+                          o.km > 0 ? `${o.km} km` : null,
+                          o.dplus > 0 ? `+${o.dplus} m` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · '),
+                        onClick: () => onSwitchTabAndLens(2, 0, { inspectOuting: o }),
+                      };
+                    }),
+                    ...publicCarnets.map((c) => ({
+                      id: `carnet-${c.id}`,
+                      day: 1,
+                      kind: 'perf' as const,
+                      badge: 'Carnet',
+                      timeLabel: c.distance_km ? `${Math.round(c.distance_km)} km` : 'Carnet',
+                      title: c.title,
+                      subtitle: c.massif || '',
+                    })),
+                  ],
+                },
+              ]}
+            />
           </div>
         ) : (
           <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>
@@ -557,18 +444,13 @@ function InspectedMemberPane({
                   <div className="lkdv-carnet-kit-plus-row">
                     {groupItems.map((item) => {
                       const wG = item.weightG ?? 0;
+                      const flatIndex = memberGear.findIndex((g) => g.id === item.id);
                       return (
                         <button
                           key={item.id}
                           type="button"
                           className="lkdv-carnet-kit-mini-tile"
-                          onClick={() => {
-                            if (onBorrowGear && item.available) {
-                              onBorrowGear(item.id);
-                            } else {
-                              onSwitchTabAndLens(3, 0, { highlightGearId: item.id });
-                            }
-                          }}
+                          onClick={() => setSelectedGearIndex(flatIndex >= 0 ? flatIndex : 0)}
                         >
                           <div className="lkdv-carnet-kit-mini-tile-top">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -611,105 +493,66 @@ function InspectedMemberPane({
         )
       ) : null}
 
-      {lensId === 'm-media' ? (
-        <>
-          <div className="lkdv-carnet-kpi-grid-3">
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Sorties</small>
-              <b>{outingsCount}</b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Publications</small>
-              <b>{memberPosts.length}</b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Matériel</small>
-              <b>{memberGear.length}</b>
-            </div>
-          </div>
-          {memberPosts.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {memberPosts.map((exp) => (
-                <button
-                  key={exp.id}
-                  type="button"
-                  className="club-glass-card"
-                  style={{
-                    width: '100%',
-                    border: 0,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
+      {selectedGearIndex !== null &&
+      memberGear[selectedGearIndex] &&
+      typeof document !== 'undefined'
+        ? createPortal(
+            (() => {
+              const g = memberGear[selectedGearIndex];
+              const pickerProduct: PickerProduct = {
+                key: g.id,
+                source: g.available ? 'pret' : 'inventory',
+                id: g.id,
+                name: g.name,
+                brand: g.brand || null,
+                category: g.category || null,
+                weightG: g.weightG || null,
+                image: g.imageUrl || resolveMemberGearImage(g.name, g.category, g.imageUrl),
+                wear: null,
+                conditionLabel: g.condition || (g.available ? 'Disponible au prêt' : 'Emprunté'),
+                description: `Équipement partagé par ${pName}.`,
+                priceLabel: null,
+                owner: {
+                  id: member.userId || member.id,
+                  name: pName,
+                  avatarUrl: member.avatarUrl || null,
+                  trustScore: null,
+                },
+                cartable: null,
+                ownershipId: null,
+                productId: null,
+              };
+              const totalWeightG = memberGear.reduce((s, it) => s + (it.weightG ?? 0), 0);
+              return (
+                <KitProductSheetV2
+                  product={pickerProduct}
+                  initialCategory={g.category || undefined}
+                  currentKitWeightG={totalWeightG}
+                  alreadyInKit={false}
+                  positionLabel={`${selectedGearIndex + 1} / ${memberGear.length}`}
+                  hasPrev={selectedGearIndex > 0}
+                  hasNext={selectedGearIndex < memberGear.length - 1}
+                  onPrev={() =>
+                    setSelectedGearIndex((idx) => (idx !== null && idx > 0 ? idx - 1 : idx))
+                  }
+                  onNext={() =>
+                    setSelectedGearIndex((idx) =>
+                      idx !== null && idx < memberGear.length - 1 ? idx + 1 : idx,
+                    )
+                  }
+                  onAdd={() => {
+                    if (onBorrowGear && g.available) {
+                      onBorrowGear(g.id);
+                    }
+                    setSelectedGearIndex(null);
                   }}
-                  onClick={() => {
-                    onClose();
-                    document
-                      .getElementById(`club-feed-post-${exp.id}`)
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                >
-                  {exp.mediaUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={exp.mediaUrl}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 12,
-                        objectFit: 'cover',
-                        flex: 'none',
-                      }}
-                    />
-                  ) : null}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <b
-                        style={{
-                          fontSize: 13,
-                          color: 'var(--label)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {exp.spot || 'Publication club'}
-                      </b>
-                      <span className="club-badge-soft" style={{ whiteSpace: 'nowrap', flex: 'none' }}>
-                        {exp.timeAgo || 'Club'}
-                      </span>
-                    </div>
-                    {exp.caption ? (
-                      <p
-                        style={{
-                          margin: '3px 0 0',
-                          fontSize: 11.5,
-                          lineHeight: 1.35,
-                          color: 'var(--label2)',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {exp.caption}
-                      </p>
-                    ) : null}
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>
-              Aucune publication partagée par ce voyageur.
-            </p>
-          )}
-        </>
-      ) : null}
+                  onClose={() => setSelectedGearIndex(null)}
+                />
+              );
+            })(),
+            document.body,
+          )
+        : null}
     </div>
   );
 }

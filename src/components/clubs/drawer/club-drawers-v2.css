@@ -251,18 +251,28 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   padding: 0 !important;
 }
 
-/* Frise horizontale Sorties 2.0 : bord à bord dans le drawer */
+/* Frise horizontale Sorties 2.0 : bord à bord dans le drawer, scroll vertical désactivé */
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-body:has([data-testid="club-outings-upcoming-pane"]),
 .lkdv-club-carnet-drawer .lkdv-slot-body:has([data-testid="club-outings-upcoming-pane"]),
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-outings-upcoming-pane"]),
 .lkdv-club-carnet-drawer .lkdv-lens-pane:has([data-testid="club-outings-upcoming-pane"]) {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-y: none !important;
+  touch-action: pan-x !important;
 }
 
 [data-testid="club-outings-upcoming-pane"] .lkdv-carnet-htimeline {
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+
+/* Carte en-tête profil membre : border-radius harmonisé 22px + repli compact au scroll */
+.lkdv-club-member-hero-card {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  transition: padding 0.2s ease, min-height 0.2s ease !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .club-drawer-pane-content,
