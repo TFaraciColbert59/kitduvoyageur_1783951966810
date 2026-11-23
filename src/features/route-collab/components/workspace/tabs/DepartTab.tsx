@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { publishPreview } from '../../../depart/publishSummary';
 import { ReadinessRadialRing } from '../../RouteAnalysisVisuals';
 import { Banners } from '../Banners';
+import { ClubRouteBlock } from '../depart/ClubRouteBlock';
+import { TilePackBlock, useTilePack } from '../depart/TilePackBlock';
 import { ActivityBlock, ChecklistBlock, PackBlock, ParticipantsBlock, PublishPanel, ReadinessBlock } from '../depart/DepartBlocks';
 import { useDepart } from '../depart/useDepart';
 import { useRouteWorkspace } from '../WorkspaceContext';
@@ -26,6 +28,7 @@ export function DepartTab() {
   } = useRouteWorkspace();
   const { linked, data, toggle, contacts, participants, reading } = useDepart({ load: true });
   const preview = useMemo(() => publishPreview(workspace), [workspace]);
+  const tiles = useTilePack();
   const latestPack = workspace.packs[workspace.packs.length - 1] ?? null;
   return (
     <div className="rcw-stack" data-testid="tab-panel-depart">
@@ -48,8 +51,15 @@ export function DepartTab() {
         workspace={workspace}
         latest={latestPack}
         deviceRevisionNo={verifiedPack?.manifest.revisionNo ?? null}
-        onDownload={() => void handleDownloadPack(false)}
+        onDownload={() => {
+          void handleDownloadPack(false);
+          // 2.10 : la copie hors ligne comprend le fond de carte du corridor (taille annoncée plus bas).
+          if (tiles.plan.fits) void tiles.start();
+        }}
       />
+      <TilePackBlock state={tiles} />
+
+      <ClubRouteBlock workspaceId={workspace.id} canPublish={canPublish} hasPublished={workspace.publishedRevisionNo != null} />
 
       <ChecklistBlock linked={linked} data={data} onToggle={(id, done) => void toggle(id, done)} />
 

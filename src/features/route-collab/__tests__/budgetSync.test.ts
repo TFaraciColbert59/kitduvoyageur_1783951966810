@@ -58,3 +58,41 @@ describe('Budget depuis l\'itinéraire publié (10.6)', () => {
     expect(planBudgetSync(gone, [{ id: 'e1', isPlanned: false, amount: 36, metadata: base }]).remove).toEqual([]);
   });
 });
+
+describe('Transports et achats (10.6)', () => {
+  const base = published([{ id: 's1', day: 1, hint: null }]);
+  const rev = (base.revisions as unknown as Array<Record<string, unknown>>)[0];
+  const withExtras = (transports: unknown[], kitSnapshot: unknown[]): RouteWorkspaceState => ({
+    ...base,
+    revisions: [{ ...rev, stages: [{ ...(rev.stages as Array<Record<string, unknown>>)[0], transports }], kitSnapshot }],
+  }) as unknown as RouteWorkspaceState;
+  const t = (over: Record<string, unknown>) => ({ id: 't1', direction: 'aller', mode: 'train', amount: 42.5, currency: 'EUR', ...over });
+
+  it('un transport avec montant saisi = une ligne « transport », total du groupe, jamais multiplié', () => {
+    const lines = desiredBudgetLines(withExtras([t({})], []), 4);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ key: 'ws:s1:transport:t1', category: 'transport', amount: 42.5, currency: 'EUR', title: 'Transport aller · train · jour 1', expenseDate: '2026-12-01' });
+  });
+
+  it('« à estimer » (montant absent), montant nul ou devise inconnue : aucune ligne, rien d’inventé', () => {
+    expect(desiredBudgetLines(withExtras([t({ amount: null }), t({ id: 't2', amount: 0 }), t({ id: 't3', currency: 'XYZ' })], []), 2)).toEqual([]);
+  });
+
+  it('un achat prévu du sac donne une ligne « matériel » ; sans montant, rien', () => {
+    const kit = (id: string, plannedPurchase: unknown) => ({ id, name: 'Réchaud', plannedPurchase });
+    const lines = desiredBudgetLines(withExtras([], [kit('k1', { amount: 35, currency: 'EUR' }), kit('k2', null), kit('k3', undefined)]), 2);
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ key: 'ws:kit:k1:purchase', category: 'matériel', amount: 35, title: 'Achat prévu · Réchaud', expenseDate: null });
+  });
+
+  it('idempotent, une ligne retouchée à la main n’est jamais écrasée, un transport retiré disparaît seulement s’il n’a pas été retouché', () => {
+    const [line] = desiredBudgetLines(withExtras([t({})], []), 2);
+    const row = { id: 'e1', isPlanned: true, amount: 42.5, metadata: { route_collab_key: line.key, route_collab_amount: 42.5 } };
+    expect(planBudgetSync([line], [row])).toEqual({ insert: [], update: [], remove: [] });
+    const [changed] = desiredBudgetLines(withExtras([t({ amount: 60 })], []), 2);
+    expect(planBudgetSync([changed], [row]).update).toEqual([{ id: 'e1', line: changed }]);
+    expect(planBudgetSync([changed], [{ ...row, amount: 50 }])).toEqual({ insert: [], update: [], remove: [] });
+    expect(planBudgetSync([], [row]).remove).toEqual(['e1']);
+    expect(planBudgetSync([], [{ ...row, amount: 50 }]).remove).toEqual([]);
+  });
+});

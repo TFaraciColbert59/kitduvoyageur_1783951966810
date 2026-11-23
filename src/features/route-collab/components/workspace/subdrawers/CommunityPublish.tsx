@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildPublicRouteShare } from '../../../communityShare';
 import { hasRoutePermission } from '../../../permissions';
 import { Block, Btn, Note } from '../track/atoms';
@@ -12,13 +12,26 @@ import { useRouteWorkspace } from '../WorkspaceContext';
  * serveur construira (`buildPublicRouteShare`) : zone de départ masquée, aucune coordonnée exacte, ni nuit, ni sac,
  * ni membres. Rien ne part avant la confirmation.
  */
-type Audience = 'abonnies' | 'public';
+type Audience = 'abonnies' | 'public' | 'club';
+type Target = 'post' | 'story' | 'carnet';
+interface ClubOption {
+  readonly id: string;
+  readonly name: string;
+}
 type Phase = 'idle' | 'confirm' | 'sending' | 'done' | 'error';
 
 const AUDIENCE_LABEL: Record<Audience, string> = {
   abonnies: 'Mes abonnés',
   public: 'Public',
+  club: 'Mon club',
 };
+
+const TARGET_LABEL: Record<Target, string> = {
+  post: 'Post dans le fil',
+  story: 'Story (24 h)',
+  carnet: 'Carnet lié',
+};
+const TARGET_ORDER: Target[] = ['post', 'story', 'carnet'];
 
 const ERROR_TEXT: Record<string, string> = {
   unauthenticated: 'Connectez-vous pour publier.',
@@ -26,6 +39,7 @@ const ERROR_TEXT: Record<string, string> = {
   not_found: 'Itinéraire introuvable côté serveur : enregistrez-le d’abord.',
   no_published: 'Aucune version publiée : publiez d’abord une version.',
   rejected: 'La communauté a refusé cette publication.',
+  not_club_member: 'Vous n’êtes pas membre actif de ce club.',
   invalid: 'Demande invalide.',
 };
 
@@ -36,9 +50,30 @@ export function CommunityPublish() {
   const [audience, setAudience] = useState<Audience>('abonnies');
   const [caption, setCaption] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [targets, setTargets] = useState<Record<Target, boolean>>({ post: true, story: false, carnet: false });
+  const [clubs, setClubs] = useState<ClubOption[]>([]);
+  const [clubId, setClubId] = useState('');
   // Une seule clé d'idempotence par intention : un double clic ou une relance ne publie pas deux fois.
   const requestId = useRef<string | null>(null);
   const share = useMemo(() => buildPublicRouteShare(workspace), [workspace]);
+
+  // L'audience « Mon club » n'est proposée que si la personne est membre actif d'au moins un club (lecture sous RLS).
+  useEffect(() => {
+    if (phase !== 'confirm' || clubs.length > 0) return;
+    let live = true;
+    void fetch('/api/itineraire/share-community')
+      .then((r) => (r.ok ? r.json() : { clubs: [] }))
+      .then((b: { clubs?: ClubOption[] }) => {
+        if (live && Array.isArray(b.clubs)) {
+          setClubs(b.clubs);
+          if (b.clubs[0]) setClubId((c) => c || b.clubs![0].id);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [phase, clubs.length]);
 
   if (!canManageMembers || !hasRoutePermission(me, 'route.manage_privacy')) return null;
 
@@ -60,14 +95,28 @@ export function CommunityPublish() {
         body: JSON.stringify({
           workspaceId: workspace.id,
           audience,
+          ...(audience === 'club' ? { clubId } : {}),
+          targets,
           ...(caption.trim() ? { caption: caption.trim() } : {}),
           ...(requestId.current ? { clientRequestId: requestId.current } : {}),
         }),
       });
-      const body = (await res.json().catch(() => ({}))) as { status?: string; idempotent?: boolean };
+      const body = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        idempotent?: boolean;
+        results?: Partial<Record<Target, { status: string; idempotent?: boolean }>>;
+      };
       if (res.ok && body.status === 'ok') {
         setMessage(body.idempotent ? 'Déjà publié : aucun doublon créé.' : 'Publié dans la communauté.');
         setPhase('done');
+        return;
+      }
+      if (body.status === 'partial' && body.results) {
+        const lines = TARGET_ORDER.filter((t) => body.results?.[t]).map(
+          (t) => `${TARGET_LABEL[t]} : ${body.results?.[t]?.status === 'ok' ? 'publié' : 'non publié'}`,
+        );
+        setMessage(`Publication partielle. ${lines.join(' · ')}. Réessayez pour la suite : rien n’est publié deux fois.`);
+        setPhase('error');
         return;
       }
       setMessage(ERROR_TEXT[body.status ?? ''] ?? 'Publication impossible pour le moment. Réessayez.');
@@ -115,22 +164,51 @@ export function CommunityPublish() {
               Zone de départ masquée sur {share.radiusM} m (le départ exact, les nuits, le sac et les membres ne sont jamais publiés)
             </li>
           </ul>
+          <fieldset className="rts-field" data-testid="community-targets">
+            <legend>Où publier</legend>
+            {TARGET_ORDER.map((t) => (
+              <label key={t}>
+                <input
+                  type="checkbox"
+                  checked={targets[t]}
+                  onChange={(e) => setTargets((cur) => ({ ...cur, [t]: e.target.checked }))}
+                  data-testid={`community-target-${t}`}
+                />{' '}
+                {TARGET_LABEL[t]}
+              </label>
+            ))}
+          </fieldset>
+          {audience === 'club' && targets.carnet ? (
+            <Note>Un carnet n’a pas d’audience club : il reste privé ; le post et la story vont au club.</Note>
+          ) : null}
           <label className="rts-field">
             Public concerné
             <select value={audience} onChange={(e) => setAudience(e.target.value as Audience)}>
-              {(Object.keys(AUDIENCE_LABEL) as Audience[]).map((a) => (
+              {(Object.keys(AUDIENCE_LABEL) as Audience[]).filter((a) => a !== 'club' || clubs.length > 0).map((a) => (
                 <option key={a} value={a}>
                   {AUDIENCE_LABEL[a]}
                 </option>
               ))}
             </select>
           </label>
+          {audience === 'club' && clubs.length > 0 ? (
+            <label className="rts-field">
+              Club
+              <select value={clubId} onChange={(e) => setClubId(e.target.value)} data-testid="community-club-select">
+                {clubs.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label className="rts-field">
             Un mot (facultatif)
             <textarea value={caption} maxLength={2000} rows={3} onChange={(e) => setCaption(e.target.value)} />
           </label>
           <div className="rts-actions">
-            <Btn tone="primary" testId="community-publish-confirm" disabled={phase === 'sending'} onClick={() => void send()}>
+            <Btn tone="primary" testId="community-publish-confirm" disabled={phase === 'sending' || !(targets.post || targets.story || targets.carnet) || (audience === 'club' && !clubId)} onClick={() => void send()}>
               {phase === 'sending' ? 'Publication…' : `Confirmer : publier (${AUDIENCE_LABEL[audience].toLowerCase()})`}
             </Btn>
             <Btn testId="community-publish-cancel" disabled={phase === 'sending'} onClick={() => setPhase('idle')}>

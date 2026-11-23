@@ -7,13 +7,15 @@ import { ROUTE_MODERATION_TYPES } from '@/features/route-collab/moderationModel'
 
 export const dynamic = 'force-dynamic';
 
-const HTTP: Record<string, number> = { unauthenticated: 401, forbidden: 403, error: 500 };
+const HTTP: Record<string, number> = { unauthenticated: 401, forbidden: 403, invalid: 400, not_found: 404, error: 500 };
 
 const decisionSchema = z
   .object({
     type: z.enum(ROUTE_MODERATION_TYPES),
     id: z.string().trim().min(1).max(80),
     decision: z.enum(['approve', 'reject', 'flag']),
+    /** Rejet seulement : masquer / supprimer un commentaire, révoquer un lien, retirer une trace. */
+    action: z.enum(['hide', 'remove', 'revoke']).optional(),
   })
   .strict();
 
@@ -32,6 +34,7 @@ export async function POST(request: Request) {
   }
   const parsed = decisionSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ status: 'invalid' }, { status: 400 });
+  if (parsed.data.action && parsed.data.decision !== 'reject') return NextResponse.json({ status: 'invalid' }, { status: 400 });
   const result = await decideRouteModeration(parsed.data);
   return NextResponse.json(result, { status: HTTP[result.status] ?? 200 });
 }

@@ -23,6 +23,8 @@ import { layersForSport, type SportLayerId } from '../mapLayers';
 import { LONG_PRESS_MS, TAP_TOLERANCE_PX, insertionThresholdM, pressDown, pressElapsed, pressMove, type PressState } from '../mapGesture';
 import { boundsOf, focusOffsetPx, framePadding, framingTarget } from '../mapFraming';
 import { fetchPreviewPath } from '../routePreview';
+import { readTilePack, TILE_STYLE_URL } from '../offlineTiles';
+import { OPENFREEMAP_CREDIT, prepareVectorBase } from '@/components/map/engine/standardBase';
 import { HIKING_ZOOM, addPointGate, isUnverifiedSection, readLastKnown, startView, writeLastKnown, type StartKind } from '../mapStart';
 import { activePointsOf } from '../pointOrder';
 import type {
@@ -154,6 +156,7 @@ export function RouteCollabMap({
   const [menu, setMenu] = useState<{ x: number; y: number; lat: number; lon: number } | null>(null);
   const [dragInfo, setDragInfo] = useState<string | null>(null);
   const [startKind, setStartKind] = useState<StartKind | null>(null);
+  const [offlineBase, setOfflineBase] = useState(false);
   const [legendFocus, setLegendFocus] = useState<{ stageId: string; nonce: number } | null>(null);
   const sport = ws?.workspace.sport ?? 'marche';
   const sportLayers = useMemo(() => layersForSport(sport), [sport]);
@@ -818,10 +821,50 @@ export function RouteCollabMap({
     for (const mode of ['osm', 'topo', 'satellite'] as const) {
       const id = `atlas-tile-${mode}`;
       if (map.getLayer(id)) {
-        map.setLayoutProperty(id, 'visibility', mode === base ? 'visible' : 'none');
+        map.setLayoutProperty(id, 'visibility', mode === base && !offlineBase ? 'visible' : 'none');
       }
     }
-  }, [base, ready]);
+  }, [base, ready, offlineBase]);
+
+  // 2.10 : hors ligne, avec une copie du corridor sur l'appareil, le fond est celui qui a été téléchargé (tuiles
+  // vectorielles d'OpenFreeMap, servies par le service worker) ; en ligne, le fond choisi revient.
+  const workspaceId = ws?.workspace.id ?? null;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const ids = (): string[] => (map.getStyle?.()?.layers ?? []).map((l) => l.id).filter((id) => id.startsWith('ofm-'));
+    if (online || !workspaceId || !readTilePack(workspaceId)) {
+      for (const id of ids()) map.setLayoutProperty(id, 'visibility', 'none');
+      setOfflineBase(false);
+      return;
+    }
+    if (ids().length > 0) {
+      for (const id of ids()) map.setLayoutProperty(id, 'visibility', 'visible');
+      setOfflineBase(true);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(TILE_STYLE_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const plan = prepareVectorBase(await res.json(), true);
+        if (!plan || cancelled || mapRef.current !== map) return;
+        if (plan.glyphs && !map.getGlyphs()) map.setGlyphs(plan.glyphs);
+        if (plan.sprite && map.getSprite().length === 0) map.setSprite(plan.sprite);
+        for (const [id, source] of Object.entries(plan.sources)) if (!map.getSource(id)) map.addSource(id, source);
+        const before = map.getLayer('rcw-sections-halo') ? 'rcw-sections-halo' : undefined;
+        for (const layer of plan.layers) if (!map.getLayer(layer.id)) map.addLayer(layer, before);
+        setOfflineBase(true);
+      } catch {
+        // Style illisible hors ligne : la carte garde son fond et le tracé reste lisible.
+        if (!cancelled) setOfflineBase(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [online, ready, workspaceId]);
 
   // Points d'intérêt visibles : ceux des calques cochés pour ce sport, plus celui qu'on regarde (2.7).
   const visiblePois = useMemo(() => {
@@ -1090,6 +1133,7 @@ export function RouteCollabMap({
       className="xp-map"
       data-testid="route-collab-map"
       data-offline={online ? 'false' : 'true'}
+      data-offline-base={offlineBase ? 'true' : 'false'}
       data-lens={effLens}
       style={{
         ...(drawingMode ? { cursor: 'crosshair', touchAction: 'none' } : null),
@@ -1133,7 +1177,7 @@ export function RouteCollabMap({
         aria-hidden="true"
         style={{ top: 'auto', bottom: 8, pointerEvents: 'none' }}
       >
-        {tileInfo.short}
+        {offlineBase ? OPENFREEMAP_CREDIT.short : tileInfo.short}
       </div>
     </div>
   );

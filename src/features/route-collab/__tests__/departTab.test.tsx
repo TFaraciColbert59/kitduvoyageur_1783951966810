@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { RouteCollabWorkspace } from '../components/RouteCollabWorkspace';
+import { RouteEntryProvider } from '../components/workspace/start/RouteEntryContext';
 import { PlanVsActualBlock } from '../components/workspace/depart/PlanVsActual';
 import { HANDOFF_KEY } from '../depart/activityHandoff';
 import { baseWorkspace, kit, pt, section, stage } from '../insights/__tests__/fixtures';
@@ -195,5 +196,36 @@ describe('Carnet · plan contre réel', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Activité & Carnet/ }));
     fireEvent.click(await screen.findByTestId('replay-sess-9'));
     await waitFor(() => expect(screen.getByTestId('status-message').textContent).toMatch(/provenance conservée/));
+  });
+
+  it('9.10 « Reprendre cette sortie » enregistre le brouillon côté serveur (activity_replay, même voyage) puis l’ouvre', async () => {
+    const posts: Array<Record<string, unknown>> = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: RequestInfo | URL, init?: { method?: string; body?: string }) => {
+      const u = String(url);
+      if (u.startsWith('/api/itineraire/sorties')) return new Response(JSON.stringify({ status: 'ok', sessions: [{ sessionId: 'sess-9', startedAt: '2026-07-10T08:00:00Z', endedAt: null, distanceKm: 5, durationSeconds: 3600, elevationGainM: null, track: [], kitSnapshot: null, routeRevisionId: null }] }), { status: 200 });
+      if (u === '/api/routes/workspaces' && init?.method === 'POST') {
+        const body = JSON.parse(init.body ?? '{}') as { workspace: RouteWorkspaceState };
+        posts.push(body as unknown as Record<string, unknown>);
+        return new Response(JSON.stringify({ workspace: body.workspace }), { status: 201 });
+      }
+      return new Response('{}', { status: 503 });
+    }));
+    const navigate = vi.fn();
+    render(
+      <RouteEntryProvider value={{ trip: null, tripLink: 'none', deepLink: {}, authenticated: true, goal: null, localDraft: false, saveNote: null, navigate }}>
+        <RouteCollabWorkspace initialWorkspace={ws()} currentUserId="u1" currentUserName="Alice" forceNoWebGL />
+      </RouteEntryProvider>,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Départ' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Activité & Carnet/ }));
+    fireEvent.click(await screen.findByTestId('replay-sess-9'));
+    await waitFor(() => expect(navigate).toHaveBeenCalled());
+    const sent = posts[0] as unknown as { tripId: string; workspace: RouteWorkspaceState };
+    expect(sent.tripId).toBe(TRIP);
+    expect(sent.workspace.sourceOrigin.kind).toBe('activity_replay');
+    expect(sent.workspace.sourceOrigin.sourceId).toBe('sess-9');
+    const href = String(navigate.mock.calls[0][0]);
+    expect(href).toContain('/compas/itineraire?workspaceId=ws-copy-');
+    expect(href).toContain(`trip=${TRIP}`);
   });
 });

@@ -329,6 +329,12 @@ function inverseOf(entry: JournalEntry, ctx: UndoContext): Inverse {
       };
     }
 
+    case 'set_stage_transports': {
+      const st = before.stages.find((s) => s.id === op.stageId);
+      if (!st) return { blocked: 'Cette journée n’existait pas : rien à rétablir.' };
+      return { steps: [step({ type: 'set_stage_transports', stageId: st.id, transports: st.transports ?? [] })] };
+    }
+
     case 'set_sport_profile':
       return {
         steps: [
@@ -395,6 +401,8 @@ export function describeOperation(op: RouteOperationInput, before?: RouteWorkspa
       return 'note de journée';
     case 'set_overnight':
       return op.overnightPlace ? 'choix de la nuit' : 'retrait de la nuit';
+    case 'set_stage_transports':
+      return 'transports de la journée';
     case 'set_sport_profile':
       return 'changement de profil de routage';
     case 'add_variant':

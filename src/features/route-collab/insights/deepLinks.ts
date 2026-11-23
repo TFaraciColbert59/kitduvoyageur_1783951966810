@@ -56,3 +56,16 @@ export function buildItineraryHref(link: ItineraryDeepLink = {}): string {
   const qs = q.toString();
   return qs ? `${ITINERARY_BASE_PATH}?${qs}` : ITINERARY_BASE_PATH;
 }
+
+/**
+ * 9.10 : lien « Reprendre le tracé » d'un carnet. Le carnet est relu côté serveur (RLS, masques du lecteur) ;
+ * `trip` est facultatif (sans lui, le voyage du carnet est retrouvé s'il appartient à la personne).
+ */
+export function buildCarnetReplayHref(carnetId: string, tripId?: string | null): string {
+  const q = new URLSearchParams();
+  const trip = cleanId(tripId ?? undefined);
+  if (trip) q.set('trip', trip);
+  q.set('from', 'carnet');
+  q.set('carnetId', carnetId);
+  return `${ITINERARY_BASE_PATH}?${q.toString()}`;
+}

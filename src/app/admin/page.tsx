@@ -602,6 +602,21 @@ const MODERATION_TYPE_LABEL: Record<ModerationItem['type'], string> = {
   route_comment: 'Commentaire d’itinéraire',
   route_share_link: 'Lien partagé',
 };
+const DEFAULT_ENFORCEMENT: Record<ModerationItem['type'], 'hide' | 'remove' | 'revoke'> = {
+  route_comment: 'hide',
+  route_share_link: 'revoke',
+  route_public_trace: 'remove',
+};
+const ENFORCED_NOTICE: Record<'hide' | 'remove' | 'revoke', string> = {
+  hide: 'Commentaire masqué : son texte est remplacé dans l’itinéraire.',
+  remove: 'Contenu supprimé de l’itinéraire ou de la communauté.',
+  revoke: 'Lien partagé révoqué : il ne s’ouvre plus.',
+};
+const REJECT_LABEL: Record<ModerationItem['type'], string> = {
+  route_comment: 'Masquer',
+  route_share_link: 'Révoquer le lien',
+  route_public_trace: 'Retirer la trace',
+};
 const MODERATION_STATUS_LABEL: Record<ModerationItem['status'], string> = {
   en_attente: 'En attente',
   approuve: 'Validé',
@@ -614,6 +629,7 @@ function ModerationSection() {
   const [unavailable, setUnavailable] = useState<string[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error' | 'forbidden'>('loading');
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setState('loading');
@@ -634,18 +650,24 @@ function ModerationSection() {
     void load();
   }, [load]);
 
-  const decide = async (item: ModerationItem, decision: 'approve' | 'reject' | 'flag') => {
+  // Un rejet est APPLIQUÉ côté serveur (masquer / supprimer un commentaire, révoquer un lien, retirer une trace) ;
+  // valider ou signaler est seulement consigné.
+  const decide = async (item: ModerationItem, decision: 'approve' | 'reject' | 'flag', action?: 'hide' | 'remove' | 'revoke') => {
     const key = `${item.type}:${item.id}`;
     setBusyKey(key);
+    setNotice(null);
     try {
       const res = await fetch('/api/admin/moderation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: item.type, id: item.id, decision }),
+        body: JSON.stringify({ type: item.type, id: item.id, decision, ...(action ? { action } : {}) }),
       });
-      const body = (await res.json()) as { status?: string; statut?: ModerationItem['status'] };
+      const body = (await res.json()) as { status?: string; statut?: ModerationItem['status']; enforced?: boolean };
       if (res.ok && body.status === 'ok' && body.statut) {
         setItems((list) => list.map((x) => (x.type === item.type && x.id === item.id ? { ...x, status: body.statut as ModerationItem['status'] } : x)));
+        if (body.enforced) setNotice(ENFORCED_NOTICE[action ?? DEFAULT_ENFORCEMENT[item.type]]);
+      } else if (res.status === 404) {
+        setNotice('Ce contenu n’existe plus : rien à appliquer.');
       } else {
         setState('error');
       }
@@ -676,7 +698,12 @@ function ModerationSection() {
       </div>
       {unavailable.length > 0 && (
         <p className="text-xs text-white/40" role="status">
-          Commentaires et liens partagés d’itinéraire : source non disponible (fonction d’audit non installée), non évalués.
+          Commentaires et liens partagés d’itinéraire : source non disponible (la lecture a échoué), non évalués.
+        </p>
+      )}
+      {notice && (
+        <p className="text-xs text-forest-400" role="status" data-testid="moderation-notice">
+          {notice}
         </p>
       )}
       <div className="space-y-3">
@@ -710,8 +737,18 @@ function ModerationSection() {
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all text-xs font-medium disabled:opacity-50"
                   >
                     <Icon name="XMarkIcon" size={12} variant="outline" />
-                    Rejeter
+                    {REJECT_LABEL[item.type]}
                   </button>
+                  {item.type === 'route_comment' && (
+                    <button
+                      disabled={busyKey === key}
+                      onClick={() => void decide(item, 'reject', 'remove')}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-all text-xs font-medium disabled:opacity-50"
+                    >
+                      <Icon name="XMarkIcon" size={12} variant="outline" />
+                      Supprimer
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -724,7 +761,7 @@ function ModerationSection() {
           </div>
         )}
       </div>
-      <p className="text-[11px] text-white/30">Une décision est consignée dans la file et le journal d’audit ; elle ne masque ni ne supprime encore le contenu.</p>
+      <p className="text-[11px] text-white/30">Un rejet est appliqué (commentaire masqué ou supprimé, lien révoqué, trace retirée) et consigné dans la file et le journal d’audit ; valider ne change rien au contenu.</p>
     </div>
   );
 }

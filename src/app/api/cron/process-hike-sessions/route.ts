@@ -8,6 +8,11 @@ import {
   type HikeSessionRow,
 } from '@/features/adventure-intelligence/server/processHikeSession';
 import type { SegmentCandidate } from '@/features/adventure-intelligence/domain/mapMatching';
+import {
+  profileIsUpToDate,
+  recomputeProfileAfterSession,
+  supabaseProfileBuildClient,
+} from '@/features/adventure-intelligence/server/recomputeProfileAfterSession';
 import { awardHikeSessionProcessed } from '@/features/progression/server/producerHooks';
 
 export const dynamic = 'force-dynamic';
@@ -133,6 +138,9 @@ export async function POST(request: NextRequest) {
   let processed = 0;
   let skipped = 0;
   let failed = 0;
+  // 10.8 : une reconstruction du profil par personne et par exécution (au plus CLAIM_LIMIT).
+  const profileDone = new Set<string>();
+  const profileBuild = supabaseProfileBuildClient(supabase);
 
   for (const session of sessions) {
     try {
@@ -143,6 +151,13 @@ export async function POST(request: NextRequest) {
         // T09 — le débrief kit n'est plus attribué ici : son intention est
         // différée (finalisation) et consommée par le worker des intentions.
         await awardHikeSessionProcessed(session.id);
+        // 10.8 : le Profil Terrain suit les sorties terminées (consentement revérifié, idempotent, non bloquant).
+        await recomputeProfileAfterSession(session.user_id, {
+          consent: client,
+          build: profileBuild,
+          upToDate: (userId) => profileIsUpToDate(supabase, userId),
+          done: profileDone,
+        });
       } else if (result.status === 'skipped') skipped += 1;
       else failed += 1;
     } catch (err) {

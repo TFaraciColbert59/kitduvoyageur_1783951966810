@@ -96,6 +96,12 @@ export function StartScreen({ trip, tripLink, userId, userName, onStart }: Start
         </p>
         <h1 className="rcw-start-title">D’où pars-tu ?</h1>
 
+        {entry.saveNote && !trip ? (
+          <p className="rcw-start-note" role="status" data-testid="start-entry-note">
+            {entry.saveNote}
+          </p>
+        ) : null}
+
         {tripLink === 'invalid' || tripLink === 'not_found' || tripLink === 'error' ? (
           <p className="rcw-start-note" role="status" data-testid="start-trip-note">
             {tripLink === 'invalid'

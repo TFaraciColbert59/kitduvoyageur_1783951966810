@@ -23,8 +23,34 @@ export function kitDrawerHeader(ws: RouteWorkspaceApi): DrawerHeader {
 const DEP_LABEL = { overnight: 'la nuit', water: 'l’eau', weather: 'la météo', duration: 'la durée', distance: 'la distance' } as const;
 const kg = (g: number) => `${(g / 1000).toFixed(1).replace('.', ',')} kg`;
 
+/** 10.6 Achat prévu : montant saisi pour le groupe ; vide = pas d'achat prévu (rien n'est estimé ni écrit au budget). */
+function PurchaseField({ name, value, canEdit, onSave }: { name: string; value: number | null; canEdit: boolean; onSave: (amount: number | null) => void }) {
+  const [text, setText] = useState(value == null ? '' : String(value));
+  const clean = text.trim().replace(',', '.');
+  const valid = clean === '' || /^\d{1,7}(\.\d{1,2})?$/.test(clean);
+  const next = clean === '' ? null : Number(clean);
+  if (!canEdit && value == null) return null;
+  return (
+    <div className="rcw-inline-actions" data-testid="kit-purchase">
+      <input
+        aria-label={`Achat prévu pour ${name} (total, en euros)`}
+        inputMode="decimal"
+        placeholder="Achat prévu (€)"
+        value={text}
+        disabled={!canEdit}
+        onChange={(e) => setText(e.target.value)}
+      />
+      {canEdit ? (
+        <button type="button" className="xp-secondary" disabled={!valid || next === value} onClick={() => onSave(next)}>
+          {next == null ? 'Retirer l’achat' : 'Enregistrer l’achat'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function KitDrawer() {
-  const { workspace, handleAssignKitItem, handleAssignKitItems, handleRevalidateKitItem, handleAddKitItems } = useRouteWorkspace();
+  const { workspace, handleAssignKitItem, handleAssignKitItems, handleRevalidateKitItem, handleAddKitItems, handleSetKitPurchase, canEditStages } = useRouteWorkspace();
   const { expert } = useRouteViewMode();
   const paceMembers = useGroupMembers();
   const [importNote, setImportNote] = useState<string | null>(null);
@@ -167,6 +193,13 @@ export function KitDrawer() {
                 </button>
               ) : null}
             </div>
+            <PurchaseField
+              key={`${item.id}-${item.plannedPurchase?.amount ?? 'none'}`}
+              name={item.name}
+              value={item.plannedPurchase?.amount ?? null}
+              canEdit={canEditStages}
+              onSave={(amount) => void handleSetKitPurchase(item.id, amount == null ? null : { amount, currency: 'EUR' })}
+            />
           </div>
         ))}
       </XpRows>

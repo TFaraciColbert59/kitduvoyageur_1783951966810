@@ -50,3 +50,16 @@ describe('Audit de modération des itinéraires (10.10)', () => {
     expect(out[0].status).toBe('approuve');
   });
 });
+
+describe('mise en œuvre d’un rejet (10.10)', () => {
+  it('chaque type n’admet que les actions qui lui conviennent ; défaut = la moins destructive', async () => {
+    const { defaultEnforcement, isEnforcementAllowed } = await import('../moderationModel');
+    expect(defaultEnforcement('route_comment')).toBe('hide');
+    expect(defaultEnforcement('route_share_link')).toBe('revoke');
+    expect(defaultEnforcement('route_public_trace')).toBe('remove');
+    expect(isEnforcementAllowed('route_comment', 'remove')).toBe(true);
+    expect(isEnforcementAllowed('route_comment', 'revoke')).toBe(false);
+    expect(isEnforcementAllowed('route_share_link', 'hide')).toBe(false);
+    expect(isEnforcementAllowed('route_public_trace', 'hide')).toBe(false);
+  });
+});

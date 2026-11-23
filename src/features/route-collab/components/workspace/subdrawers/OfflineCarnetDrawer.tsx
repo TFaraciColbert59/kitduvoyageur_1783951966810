@@ -5,6 +5,7 @@ import type { DrawerHeader } from '../types';
 import { PlanVsActualBlock } from '../depart/PlanVsActual';
 import { useLinkedSessions } from '../depart/useDepart';
 import { Banners } from '../Banners';
+import { TilePackBlock, useTilePack } from '../depart/TilePackBlock';
 import { useRouteWorkspace, type RouteWorkspaceApi } from '../WorkspaceContext';
 
 export function offlineCarnetDrawerHeader(ws: RouteWorkspaceApi): DrawerHeader {
@@ -37,6 +38,7 @@ export function OfflineCarnetDrawer() {
     handleDuplicateFromCarnet,
   } = useRouteWorkspace();
   const sessions = useLinkedSessions(true);
+  const tiles = useTilePack();
   const announce = packAnnouncement(workspace, workspace.packs[workspace.packs.length - 1] ?? null);
   return (
     <div className="rcw-stack" data-testid="subdrawer-offline-carnet">
@@ -80,10 +82,18 @@ export function OfflineCarnetDrawer() {
             Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
           </button>
         ) : null}
-        <button type="button" className="xp-primary" onClick={() => void handleDownloadPack(false)}>
+        <button
+          type="button"
+          className="xp-primary"
+          onClick={() => {
+            void handleDownloadPack(false);
+            if (tiles.plan.fits) void tiles.start();
+          }}
+        >
           Télécharger le pack
         </button>
       </div>
+      <TilePackBlock state={tiles} />
       <div className="rcw-inline-actions">
         <button
           type="button"

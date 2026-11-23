@@ -1445,6 +1445,25 @@ export function useRouteWorkspaceState({
     commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
   };
 
+  /** 10.6 Achat prévu d'un objet du sac : montant saisi (total du groupe) ou retiré (`null`). Jamais estimé. */
+  const handleSetKitPurchase = async (itemId: string, purchase: { amount: number; currency: string } | null) => {
+    if (serverSynced) {
+      const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_purchase', itemId, purchase }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) commitState(data.workspace);
+      }
+      return;
+    }
+    const nextKit: CollaborativeKitItem[] = workspace.kitItems.map((item) => (item.id === itemId ? { ...item, plannedPurchase: purchase } : item));
+    commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
+  };
+
   const handleRevalidateKitItem = async (itemId: string) => {
     if (serverSynced) {
       const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
@@ -1643,7 +1662,7 @@ export function useRouteWorkspaceState({
       }
       localNote = res.ok
         ? 'Nouveau brouillon enregistré sur le serveur (provenance conservée) ; ouvrez-le depuis vos itinéraires.'
-        : `Nouveau brouillon créé sur cet appareil, non enregistré : ${res.reason}`;
+        : `Nouveau brouillon créé sur cet appareil avec provenance conservée, non enregistré sur le serveur : ${res.reason}`;
       if (res.ok) {
         setStatusMessage(localNote);
         return;
@@ -2450,6 +2469,7 @@ export function useRouteWorkspaceState({
     handleCreateDetourVariant,
     handleAssignKitItem,
     handleRevalidateKitItem,
+    handleSetKitPurchase,
     handleManageShareLink,
     handleStartActivity,
     handleAddKitItems,

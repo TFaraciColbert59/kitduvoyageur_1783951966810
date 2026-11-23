@@ -8,7 +8,9 @@
  *  - le repère est dit comme tel (`metadata.basis`) et la ligne est « prévue », jamais « payée » ;
  *  - idempotent : une clé stable par étape (`route_collab_key`) ; rejouer la synchronisation ne double rien ;
  *  - une ligne retouchée à la main (montant différent de celui posé par la synchronisation) n'est jamais écrasée ;
- *  - transports et achats : l'espace d'itinéraire n'en porte pas encore de choix chiffré, rien n'est écrit.
+ *  - transports (par journée : aller / retour, type, montant) et achats prévus du sac : seul un MONTANT SAISI donne une
+ *    ligne (total du groupe, jamais multiplié ni estimé) ; « à estimer » (montant absent) n'écrit rien. Clés stables
+ *    `<espace>:<étape>:transport:<id>` et `<espace>:kit:<objet>:purchase`, même règle d'idempotence et de non-écrasement.
  */
 import { publishedRevisionOf } from './integrations';
 import type { RouteWorkspaceState } from './types';
@@ -20,7 +22,7 @@ export interface DesiredBudgetLine {
   readonly title: string;
   readonly amount: number;
   readonly currency: string;
-  readonly category: 'hébergement';
+  readonly category: 'hébergement' | 'transport' | 'matériel';
   readonly expenseDate: string | null;
   readonly basis: string;
   readonly revisionNo: number;
@@ -54,6 +56,40 @@ export function desiredBudgetLines(workspace: RouteWorkspaceState, partySize: nu
       category: 'hébergement',
       expenseDate: stage.dateIso && /^\d{4}-\d{2}-\d{2}$/.test(stage.dateIso) ? stage.dateIso : null,
       basis: hint.basis === 'partenaire' ? 'repère partenaire × personnes' : 'repère du barème Compas × personnes (pas le tarif du lieu)',
+      revisionNo: rev.revisionNo,
+    });
+  }
+  // Transports saisis : une ligne par transport avec montant (montant total du groupe, tel que saisi).
+  const MODE_LABEL: Record<string, string> = { train: 'train', bus: 'bus', avion: 'avion', voiture: 'voiture', taxi: 'taxi', bateau: 'bateau', autre: 'autre transport' };
+  for (const stage of rev.stages) {
+    for (const t of stage.transports ?? []) {
+      if (t.amount == null || !Number.isFinite(t.amount) || t.amount <= 0) continue;
+      if (!(BUDGET_SYNC_CURRENCIES as readonly string[]).includes(t.currency)) continue;
+      lines.push({
+        key: `${workspace.id}:${stage.id}:transport:${t.id}`.slice(0, 120),
+        title: `Transport ${t.direction} · ${MODE_LABEL[t.mode] ?? t.mode} · jour ${stage.dayNumber}`.slice(0, 100),
+        amount: Math.round(t.amount * 100) / 100,
+        currency: t.currency,
+        category: 'transport',
+        expenseDate: stage.dateIso && /^\d{4}-\d{2}-\d{2}$/.test(stage.dateIso) ? stage.dateIso : null,
+        basis: 'montant saisi dans l’itinéraire (total du groupe)',
+        revisionNo: rev.revisionNo,
+      });
+    }
+  }
+  // Achats prévus du sac (version publiée).
+  for (const item of rev.kitSnapshot ?? []) {
+    const p = item.plannedPurchase;
+    if (!p || !Number.isFinite(p.amount) || p.amount <= 0) continue;
+    if (!(BUDGET_SYNC_CURRENCIES as readonly string[]).includes(p.currency)) continue;
+    lines.push({
+      key: `${workspace.id}:kit:${item.id}:purchase`.slice(0, 120),
+      title: `Achat prévu · ${item.name}`.slice(0, 100),
+      amount: Math.round(p.amount * 100) / 100,
+      currency: p.currency,
+      category: 'matériel',
+      expenseDate: null,
+      basis: 'montant saisi dans le sac (total du groupe)',
       revisionNo: rev.revisionNo,
     });
   }

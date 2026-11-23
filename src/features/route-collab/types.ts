@@ -177,6 +177,19 @@ export interface CollaborativeRouteSection {
  */
 export type StageKind = 'walk' | 'rest' | 'short';
 
+/**
+ * Transport saisi pour une journée (10.6) : aller ou retour, type, montant. `amount: null` = « à estimer » : jamais
+ * un montant inventé, la ligne de budget n'existe que lorsqu'un montant est saisi. Additif : absent des anciens espaces.
+ */
+export type StageTransportMode = 'train' | 'bus' | 'avion' | 'voiture' | 'taxi' | 'bateau' | 'autre';
+export interface StageTransport {
+  readonly id: string;
+  readonly direction: 'aller' | 'retour';
+  readonly mode: StageTransportMode;
+  readonly amount: number | null;
+  readonly currency: string;
+}
+
 export interface CollaborativeStage {
   readonly id: string;
   readonly workspaceId: string;
@@ -190,6 +203,8 @@ export interface CollaborativeStage {
   readonly startPointId: string;
   readonly endPointId: string;
   readonly overnightPlace: OvernightPlace | null;
+  /** Transports saisis pour la journée (10.6) ; absent = aucun. */
+  readonly transports?: readonly StageTransport[];
   readonly notes: string;
   readonly waterObservations: readonly WaterObservation[];
   readonly weatherSlice: WeatherSlice | null;
@@ -279,6 +294,8 @@ export interface CollaborativeKitItem {
   readonly dependsOn: readonly ('overnight' | 'water' | 'weather' | 'duration' | 'distance')[];
   readonly status: 'confirmed' | 'needs_revalidation' | 'unassigned';
   readonly revalidationReason?: string | null;
+  /** Achat prévu pour ce départ (10.6) : montant saisi seulement, jamais estimé. Absent / null = pas d'achat prévu. */
+  readonly plannedPurchase?: { readonly amount: number; readonly currency: string } | null;
 }
 
 export interface RouteImpactSummary {
@@ -397,6 +414,12 @@ export type RouteOperationInput =
       readonly type: 'set_overnight';
       readonly stageId: string;
       readonly overnightPlace: OvernightPlace | null;
+    }
+  | {
+      /** Remplace les transports saisis d'une journée (10.6). */
+      readonly type: 'set_stage_transports';
+      readonly stageId: string;
+      readonly transports: readonly StageTransport[];
     }
   | {
       readonly type: 'set_sport_profile';

@@ -974,6 +974,16 @@ export function applyWorkspaceOperation(
       break;
     }
 
+    case 'set_stage_transports': {
+      if (!nextStages.some((s) => s.id === op.stageId)) return deny('Étape introuvable.');
+      if (op.transports.length > 6) return deny('Six transports au plus par journée.');
+      if (op.transports.some((t) => t.amount != null && !(Number.isFinite(t.amount) && t.amount >= 0))) return deny('Montant de transport invalide.');
+      nextStages = nextStages.map((s) =>
+        s.id === op.stageId ? { ...s, transports: op.transports.length > 0 ? op.transports : undefined, entityVersion: s.entityVersion + 1 } : s,
+      );
+      break;
+    }
+
     case 'set_shape_mode': {
       nextShapeMode = op.shapeMode;
       const beforePoints = activePoints(workspace);

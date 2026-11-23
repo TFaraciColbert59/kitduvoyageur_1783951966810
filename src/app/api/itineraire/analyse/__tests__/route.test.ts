@@ -6,6 +6,8 @@ vi.mock('@/lib/rate-limit', () => ({ clientIpFromHeaders: vi.fn(() => '203.0.113
 vi.mock('@/lib/api/requireUser', () => ({ requireUser: vi.fn() }));
 vi.mock('@/features/route-collab/server/sharedChecks', () => ({ getSharedChecks: vi.fn() }));
 vi.mock('@/features/compas/server/officialAlerts', () => ({ getOfficialAlerts: vi.fn() }));
+vi.mock('@/features/route-collab/server/gdacsAlerts', () => ({ readWorldHazards: vi.fn(async () => ({ status: 'clear', source: 'GDACS', retrievedAt: '2026-11-24T08:00:00.000Z', reason: null, impacts: [] })) }));
+vi.mock('@/features/compas/server/worldAlerts', () => ({ worldAlertsEnabled: vi.fn(() => false) }));
 vi.mock('@/app/api/explorer/v2/fires/route', () => ({ parseFirmsCsv: vi.fn(() => []) }));
 
 import { requireUser } from '@/lib/api/requireUser';
@@ -13,6 +15,7 @@ import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { getSharedChecks } from '@/features/route-collab/server/sharedChecks';
 import { getOfficialAlerts } from '@/features/compas/server/officialAlerts';
 import { parseFirmsCsv } from '@/app/api/explorer/v2/fires/route';
+import { readWorldHazards } from '@/features/route-collab/server/gdacsAlerts';
 import { POST } from '../route';
 
 const call = (body: unknown, raw?: string) =>
@@ -131,5 +134,20 @@ describe('POST /api/itineraire/analyse', () => {
   it('respecte la limite de débit', async () => {
     vi.mocked(enforceRateLimit).mockResolvedValue(NextResponse.json({ error: 'Trop' }, { status: 429 }));
     expect((await call({ days: [day] })).status).toBe(429);
+  });
+  it('7.6 : relaie les catastrophes mondiales (GDACS) et dit que NWS / ECCC sont éteints', async () => {
+    vi.mocked(getSharedChecks).mockResolvedValue(checks(null, 'non_couvert'));
+    vi.mocked(readWorldHazards).mockResolvedValueOnce({ status: 'alerts', source: 'GDACS', retrievedAt: '2026-11-24T08:00:00.000Z', reason: null, impacts: [] } as never);
+    const body = await (await call({ days: [day] })).json();
+    expect(body.world.status).toBe('alerts');
+    expect(body.official).toMatchObject({ status: 'non_couvert', worldSwitch: 'off' });
+    expect(readWorldHazards).toHaveBeenCalledWith([{ lat: day.lat, lon: day.lon }]);
+  });
+
+  it('7.6 : sans jour ni tracé, GDACS n’est pas interrogé (world: null)', async () => {
+    vi.mocked(readWorldHazards).mockClear();
+    const body = await (await call({ days: [] })).json();
+    expect(body.world).toBeNull();
+    expect(readWorldHazards).not.toHaveBeenCalled();
   });
 });

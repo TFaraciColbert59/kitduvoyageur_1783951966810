@@ -3,11 +3,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import {
   ROUTE_MODERATION_TYPES,
+  defaultEnforcement,
+  isEnforcementAllowed,
   toAuditRow,
   toItems,
   toQueueRow,
   withQueueStatus,
   type ModerationDecision,
+  type ModerationEnforcement,
   type ModerationStatus,
   type RouteModerationItem,
   type RouteModerationType,
@@ -18,11 +21,11 @@ import {
  * même mécanisme que `/api/admin/*`). Écritures sous RLS : `moderation_queue` (« modos_manage_moderation_queue »)
  * et `admin_audit_log` (« admins_insert_audit_log » : is_moderateur()). Sources :
  *  - traces publiques : `community_posts` créés par « Publier le tracé » (`creation_meta.created_from = route_collab`) ;
- *  - commentaires et liens partagés : RPC `admin_list_route_moderation` PROPOSÉE (SQL dans
- *    `docs/itineraire-collaboratif/MIGRATION-PROPOSEE-ADMIN.sql`, non appliquée) : tant qu'elle est absente,
- *    ces deux sources sont déclarées « indisponibles », jamais affichées vides comme si tout allait bien.
- * Une décision est CONSIGNÉE (file + journal) ; sa mise en œuvre (masquer, supprimer, révoquer) reste une
- * action distincte, pas encore branchée (`enforced: false`).
+ *  - commentaires et liens partagés : RPC `admin_list_route_moderation` (migration 20261123130000) ; si elle est
+ *    absente ou en erreur, ces deux sources sont déclarées « indisponibles », jamais affichées vides.
+ * Un REJET est APPLIQUÉ par la RPC `admin_apply_route_moderation` (masquer / supprimer un commentaire, révoquer un
+ * lien, retirer une trace publique ; file + journal dans la même transaction) : `enforced: true`. Valider ou
+ * signaler est seulement consigné (`enforced: false`) : il n'y a rien à appliquer.
  */
 export type ModerationListResult =
   | {
@@ -94,18 +97,34 @@ export async function listRouteModeration(): Promise<ModerationListResult> {
 }
 
 export type ModerationDecisionResult =
-  | { status: 'ok'; enforced: false; statut: ModerationStatus }
-  | { status: 'unauthenticated' | 'forbidden' | 'error' };
+  | { status: 'ok'; enforced: boolean; applied?: 'applied' | 'noop'; statut: ModerationStatus }
+  | { status: 'unauthenticated' | 'forbidden' | 'invalid' | 'not_found' | 'error' };
 
 export async function decideRouteModeration(input: {
   type: RouteModerationType;
   id: string;
   decision: ModerationDecision;
+  /** Rejet seulement ; défaut selon le type (`defaultEnforcement`). */
+  action?: ModerationEnforcement;
 }): Promise<ModerationDecisionResult> {
   try {
     const client = (await createClient()) as unknown as SupabaseClient;
     const who = await moderatorId(client);
     if (typeof who === 'string') return { status: who };
+
+    if (input.decision === 'reject') {
+      const action = input.action ?? defaultEnforcement(input.type);
+      if (!isEnforcementAllowed(input.type, action)) return { status: 'invalid' };
+      const { data, error } = await client.rpc('admin_apply_route_moderation', { p_kind: input.type, p_id: input.id, p_action: action });
+      if (error) {
+        const code = (error as { code?: string }).code;
+        return { status: code === '42501' ? 'forbidden' : code === '22023' ? 'invalid' : 'error' };
+      }
+      const outcome = (data as { status?: string } | null)?.status;
+      if (outcome === 'not_found') return { status: 'not_found' };
+      if (outcome !== 'applied' && outcome !== 'noop') return { status: 'error' };
+      return { status: 'ok', enforced: true, applied: outcome, statut: 'rejete' };
+    }
 
     const { data: existing } = await client
       .from('moderation_queue')

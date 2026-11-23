@@ -67,6 +67,7 @@ import {
   StackSlideView,
 } from './CarnetDrawerMotion';
 import { CarnetFilDrawerBody } from './CarnetFilDrawerBody';
+import { buildCarnetReplayHref } from '@/features/route-collab/insights/deepLinks';
 
 const KitProductSheetV2 = dynamic(
   () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
@@ -852,7 +853,7 @@ export function CarnetDrawerV2({
                   style={{ justifyContent: 'center', width: '100%' }}
                   onClick={() => {
                     onClose();
-                    router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
+                    router.push(buildCarnetReplayHref(detail.id));
                   }}
                 >
                   <Route size={14} aria-hidden="true" />
@@ -1493,7 +1494,7 @@ export function CarnetDrawerV2({
           }}
           onClick={() => {
             onClose();
-            router.push(`/compas?nouvelle=1&etape=ou&carnetId=${encodeURIComponent(detail.id)}`);
+            router.push(buildCarnetReplayHref(detail.id));
           }}
         >
           <Route size={14} aria-hidden="true" />

@@ -184,6 +184,15 @@ const HazardSchema = z.strictObject({
   source: ShortText,
 });
 
+const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY'] as const;
+export const StageTransportSchema = z.strictObject({
+  id: IdSchema,
+  direction: z.enum(['aller', 'retour']),
+  mode: z.enum(['train', 'bus', 'avion', 'voiture', 'taxi', 'bateau', 'autre']),
+  amount: z.number().min(0).max(1_000_000).nullable(),
+  currency: z.enum(CURRENCIES),
+});
+
 export const StageSchema = z.strictObject({
   id: IdSchema,
   workspaceId: IdSchema.optional(),
@@ -197,6 +206,7 @@ export const StageSchema = z.strictObject({
   startPointId: IdSchema,
   endPointId: IdSchema,
   overnightPlace: OvernightPlaceSchema.nullable(),
+  transports: z.array(StageTransportSchema).max(6).optional(),
   notes: z.string().max(5000),
   waterObservations: z.array(WaterObservationSchema).max(100),
   weatherSlice: WeatherSliceSchema.nullable(),
@@ -217,6 +227,7 @@ export const KitItemSchema = z.strictObject({
   dependsOn: z.array(z.enum(['overnight', 'water', 'weather', 'duration', 'distance'])).max(5),
   status: z.enum(['confirmed', 'needs_revalidation', 'unassigned']),
   revalidationReason: z.string().max(500).nullish(),
+  plannedPurchase: z.strictObject({ amount: z.number().min(0).max(1_000_000), currency: z.enum(CURRENCIES) }).nullish(),
 });
 
 export const SourceOriginSchema = z.strictObject({
@@ -325,6 +336,7 @@ export const RouteOperationSchema = z.discriminatedUnion('type', [
     stageId: IdSchema,
     overnightPlace: OvernightPlaceSchema.nullable(),
   }),
+  z.strictObject({ type: z.literal('set_stage_transports'), stageId: IdSchema, transports: z.array(StageTransportSchema).max(6) }),
   z.strictObject({
     type: z.literal('set_sport_profile'),
     sport: SportSchema,

@@ -70,7 +70,7 @@ describe('10.9 « Publier dans la communauté »', () => {
     expect(within(preview).getByTestId('community-preview-facts').textContent).toMatch(/30 km · 700 m D\+ · 0 étape · version 3/);
     expect(within(preview).getByTestId('community-preview-mask').textContent).toMatch(/Zone de départ masquée sur 500 m/);
     // Rien n'est parti avant la confirmation.
-    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('share-community'))).toHaveLength(0);
+    expect(fetchMock.mock.calls.filter(([u, init]) => String(u).includes('share-community') && (init as RequestInit | undefined)?.method === 'POST')).toHaveLength(0);
 
     fetchMock.mockImplementation(async (url: RequestInfo | URL) =>
       String(url).includes('share-community')
@@ -79,7 +79,7 @@ describe('10.9 « Publier dans la communauté »', () => {
     );
     fireEvent.click(within(preview).getByTestId('community-publish-confirm'));
     await waitFor(() => expect(within(drawer).getByTestId('community-publish-result').textContent).toBe('Publié dans la communauté.'));
-    const call = fetchMock.mock.calls.find(([u]) => String(u).includes('share-community'))!;
+    const call = fetchMock.mock.calls.find(([u, init]) => String(u).includes('share-community') && (init as RequestInit | undefined)?.method === 'POST')!;
     const body = JSON.parse((call[1] as RequestInit).body as string);
     expect(body).toMatchObject({ workspaceId: WS, audience: 'abonnies' });
     expect(JSON.stringify(body)).not.toMatch(/lat|lon|coordinates/);
@@ -105,5 +105,38 @@ describe('10.9 « Publier dans la communauté »', () => {
   it('un participant qui n’est pas propriétaire ne voit rien', () => {
     const drawer = openSharing('u3', true);
     expect(within(drawer).queryByTestId('community-publish')).toBeNull();
+  });
+
+  it('10.9 story, carnet et club : cibles cochées, club proposé seulement aux membres, club envoyé', async () => {
+    fetchMock.mockImplementation(async (url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).includes('share-community') && init?.method === 'POST') {
+        return { ok: true, status: 200, json: async () => ({ status: 'ok', postId: 'p', idempotent: false, results: {} }) };
+      }
+      if (String(url).includes('share-community')) {
+        return { ok: true, status: 200, json: async () => ({ clubs: [{ id: '22222222-2222-4222-8222-222222222222', name: 'Les Marcheurs' }] }) };
+      }
+      return { ok: false, status: 503, json: async () => ({}) };
+    });
+    const drawer = openSharing('u1', true);
+    fireEvent.click(within(drawer).getByTestId('community-publish-open'));
+    const preview = within(drawer).getByTestId('community-publish-preview');
+    await waitFor(() => expect(within(preview).getByRole('option', { name: 'Mon club' })).toBeTruthy());
+    fireEvent.click(within(preview).getByTestId('community-target-story'));
+    fireEvent.click(within(preview).getByTestId('community-target-carnet'));
+    fireEvent.change(within(preview).getByDisplayValue('Mes abonnés'), { target: { value: 'club' } });
+    expect(within(preview).getByText(/Un carnet n’a pas d’audience club/)).toBeTruthy();
+    fireEvent.click(within(preview).getByTestId('community-publish-confirm'));
+    await waitFor(() => expect(within(drawer).getByTestId('community-publish-result').textContent).toBe('Publié dans la communauté.'));
+    const call = fetchMock.mock.calls.find(([u, init]) => String(u).includes('share-community') && (init as RequestInit | undefined)?.method === 'POST')!;
+    const body = JSON.parse((call[1] as RequestInit).body as string);
+    expect(body).toMatchObject({ audience: 'club', clubId: '22222222-2222-4222-8222-222222222222', targets: { post: true, story: true, carnet: true } });
+  });
+
+  it('10.9 sans club : l’audience « Mon club » n’est pas proposée', async () => {
+    const drawer = openSharing('u1', true);
+    fireEvent.click(within(drawer).getByTestId('community-publish-open'));
+    const preview = within(drawer).getByTestId('community-publish-preview');
+    await waitFor(() => expect(fetchMock.mock.calls.some(([u]) => String(u).includes('share-community'))).toBe(true));
+    expect(within(preview).queryByRole('option', { name: 'Mon club' })).toBeNull();
   });
 });

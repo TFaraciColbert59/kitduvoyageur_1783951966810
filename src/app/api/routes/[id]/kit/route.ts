@@ -7,9 +7,10 @@ import { getAuthenticatedRouteActor } from '../_auth';
 export const dynamic = 'force-dynamic';
 
 const KitSchema = z.object({
-  action: z.enum(['assign', 'revalidate', 'add']),
+  action: z.enum(['assign', 'revalidate', 'add', 'set_purchase']),
   itemId: z.string().min(1).max(80).optional(),
   assigneeUserId: z.string().max(120).nullable().optional(),
+  purchase: z.object({ amount: z.number().min(0).max(1_000_000), currency: z.enum(['EUR', 'USD', 'GBP', 'CHF', 'CAD', 'JPY']) }).strict().nullable().optional(),
   newItem: z
     .object({
       id: z.string().min(1).max(80),
@@ -47,6 +48,10 @@ export async function POST(
     return NextResponse.json({ error: 'Requête kit invalide.' }, { status: 400 });
   }
 
+  if (parsed.data.action === 'set_purchase' && (!parsed.data.itemId || parsed.data.purchase === undefined)) {
+    return NextResponse.json({ error: 'Requête kit invalide.' }, { status: 400 });
+  }
+
   try {
     const store = await getRouteCollabStore();
     const res = await store.updateWorkspaceKitItem({
@@ -56,6 +61,7 @@ export async function POST(
       itemId: parsed.data.itemId,
       assigneeUserId: parsed.data.assigneeUserId,
       newItem: parsed.data.newItem,
+      purchase: parsed.data.purchase,
     });
     if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
     return NextResponse.json(res);

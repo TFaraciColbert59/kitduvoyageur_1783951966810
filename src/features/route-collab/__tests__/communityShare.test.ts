@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { buildPublicRouteShare, toCommunityPostPayload, toStoryRouteSticker } from '../communityShare';
+import { buildPublicRouteShare, carnetVisibilityFor, storyVisibilityFor, toCarnetPayload, toCommunityPostPayload, toStoryRouteSticker, toStoryRow } from '../communityShare';
 import { createWorkspaceRecord, publishWorkspace, resetRouteCollabStoreForTests } from '../serverStore';
 import type { RouteWorkspaceState } from '../types';
 
@@ -71,5 +71,32 @@ describe('Publier le tracé dans la communauté (10.9)', () => {
     const share = buildPublicRouteShare(published())!;
     expect(toCommunityPostPayload(share, { audience: 'club', clubId: '22222222-2222-4222-8222-222222222222' })).toMatchObject({ club_id: '22222222-2222-4222-8222-222222222222' });
     expect(toStoryRouteSticker(share)).toEqual({ distanceKm: 30, place: null, altitudeM: null });
+  });
+
+  it('10.9 carnet : tracé assaini seulement, jamais de position de départ, de nuit ni de voyage ; club = carnet privé', () => {
+    const share = buildPublicRouteShare(published())!;
+    const p = toCarnetPayload(share, { audience: 'club', clubId: '22222222-2222-4222-8222-222222222222', caption: 'Belle crête', clientRequestId: '11111111-1111-4111-8111-111111111111' });
+    const text = JSON.stringify(p);
+    expect(text).not.toContain('trip-secret-1');
+    expect(text).not.toContain('Chez moi');
+    for (const k of ['start_lat', 'start_lng', 'lieu_depart', 'lieu_arrivee', 'club_id']) expect(p).not.toHaveProperty(k);
+    expect(p).toMatchObject({ visibility: 'private', nights: [], moments: [], media: [], collaborators: [], post: { enabled: false }, client_request_id: '11111111-1111-4111-8111-111111111111:carnet' });
+    expect((p.map_points as { trace: unknown[] }).trace.length).toBe(share.line.length);
+    expect(toCarnetPayload(share, { audience: 'public' })).toMatchObject({ visibility: 'public' });
+    expect(carnetVisibilityFor('abonnies')).toBe('friends');
+  });
+
+  it('10.9 story : texte et distance seulement, sans lieu ni coordonnée ; club et abonnés mappés', () => {
+    const share = buildPublicRouteShare(published())!;
+    const row = toStoryRow(share, { audience: 'club', clubId: '22222222-2222-4222-8222-222222222222', clientRequestId: '11111111-1111-4111-8111-111111111111' }, 'alice', 'story-1', 'carnet-1');
+    expect(row).toMatchObject({ media_type: 'text', image_url: null, storage_path: null, visibility: 'club', club_id: '22222222-2222-4222-8222-222222222222', author_id: 'alice', linked_carnet_id: 'carnet-1', client_request_id: '11111111-1111-4111-8111-111111111111:story' });
+    const text = JSON.stringify(row);
+    expect(text).not.toMatch(/"lat"|"lng"|lieu|trip-secret-1|Chez moi/);
+    expect(row.composition).toEqual([
+      expect.objectContaining({ type: 'text', text: 'Crête du Mont' }),
+      { type: 'sticker', kind: 'distance', value: 30 },
+    ]);
+    expect(storyVisibilityFor('abonnies')).toBe('followers');
+    expect(toStoryRow(share, { audience: 'public' }, 'alice', 's', null)).not.toHaveProperty('club_id');
   });
 });

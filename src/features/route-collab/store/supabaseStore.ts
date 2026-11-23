@@ -1023,6 +1023,8 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
           nextKit = nextKit.map((item) =>
             item.id === params.itemId ? { ...item, status: 'confirmed', revalidationReason: null } : item,
           );
+        } else if (params.action === 'set_purchase' && params.itemId) {
+          nextKit = nextKit.map((item) => (item.id === params.itemId ? { ...item, plannedPurchase: params.purchase ?? null } : item));
         }
         return { write: true, value: nextKit, result: null };
       });

@@ -179,9 +179,15 @@ describe('branchement', () => {
     expect(readFileSync('src/components/map/engine/standardBase.ts', 'utf8')).toContain('process.env.NEXT_PUBLIC_MAP_STANDARD');
   });
 
-  it('hors ligne : le service worker ne met pas en cache les tuiles OpenFreeMap (lot J)', () => {
+  it('hors ligne : le service worker de l\'app ne met pas en cache les tuiles OpenFreeMap à la volée (lot J)', () => {
     const swPath = existsSync('public/sw-v18.js') ? 'public/sw-v18.js' : 'public/sw.js';
     expect(readFileSync(swPath, 'utf8')).not.toContain('openfreemap');
+  });
+
+  it('seule la copie du corridor d\'un itinéraire (2.10) est servie hors ligne : module dédié, sans cache à la volée', () => {
+    const src = readFileSync('public/sw-route-tiles.js', 'utf8');
+    expect(src).toContain('lkdv-route-tiles:');
+    expect(src).not.toMatch(/cache\.put|\.put\(/);
   });
 
   it('la CSP (rapport) autorise tiles.openfreemap.org en connexion', () => {

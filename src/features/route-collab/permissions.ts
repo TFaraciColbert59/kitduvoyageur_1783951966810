@@ -95,6 +95,7 @@ export function requiredPermissionForOperation(op: RouteOperationInput): RoutePe
     case 'move_day_boundary':
     case 'update_stage_note':
     case 'set_overnight':
+    case 'set_stage_transports':
     case 'cut_stage_at':
     case 'apply_stage_split':
     case 'set_stage_schedule':

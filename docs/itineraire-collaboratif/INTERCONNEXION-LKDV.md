@@ -16,22 +16,19 @@
 |---|---|---|
 | 10.3 HUB | `getPublishedRouteSummaryForTrip` ; `PublishedRouteCard` (`/hub/itineraire`) ; `CockpitData.publishedRoute` | lecture de la version PUBLIÉE, jamais du brouillon |
 | 10.4 Explorer | `POST /api/itineraire/from-explorer` ; `explorer-v2/server/prepareWithTrack.ts` | tracé relu côté serveur, brouillon par `compasCreateTripAction` si besoin, provenance `explorer_route` ; une version publiée existante n'est pas remplacée |
-| 10.5 Clubs | `clubRouteFromPublished`, `rsvpGrantsRouteEdit` (`integrations.ts`) ; `server/clubRoute.ts` | voir écart ci-dessous |
-| 10.6 Budget | `POST /api/itineraire/budget-sync` ; `budgetSync.ts` | lignes « prévues » des seules nuits qui ont un repère de prix ; clé stable, idempotent, lignes retouchées jamais écrasées ; transports et achats : rien de chiffré dans l'espace, rien écrit |
+| 10.5 Clubs | RPC `publish_club_event_route_from_workspace` ; `server/clubRoute.ts` ; `POST/GET /api/itineraire/club-route` ; `depart/ClubRouteBlock.tsx` | migration 20261123130000 (à appliquer) ; organisateur de la sortie ET propriétaire / co-organisateur délégué de l'espace ; version publiée seule, départ privé masqué si la sortie n'est ni `club_only` ni `private` ; idempotent ; s'inscrire (RSVP) n'a aucun droit d'édition |
+| 10.6 Budget | `POST /api/itineraire/budget-sync` ; `budgetSync.ts` | lignes « prévues » : nuits au barème, transports saisis par journée (aller / retour, type, montant) et achats prévus du sac ; montant SAISI seulement (« à estimer » n'écrit rien) ; clé stable, idempotent, lignes retouchées jamais écrasées |
 | 10.7 Vérifs | `server/sharedChecks.ts` (`getSharedChecks`) | mêmes sources que les tiroirs Météo/Vérifs du Compas v5 : `getCompasWeather`, `getOfficialAlerts`, `assessDanger`. À brancher dans l'onglet Analyser (autre périmètre) en lui passant les jours lus sous RLS |
-| 10.8 Allure | `server/paceProfile.ts` (`getPaceProfileForUser`) | lit `user_performance_profiles` (propriétaire seulement) ; profil à froid ou vide = `null` |
+| 10.8 Allure | `server/paceProfile.ts` (lecture) ; `adventure-intelligence/server/recomputeProfileAfterSession.ts` (recalcul, cron `process-hike-sessions`) | lit `user_performance_profiles` (propriétaire seulement) ; recalculé après chaque session traitée, avec consentement, idempotent et borné ; profil à froid ou vide = `null` |
 | 10.9 Communauté | `POST /api/itineraire/share-community` ; `communityShare.ts` | version publiée assainie par `shareSanitize.ts` (zone de départ masquée), ligne décimée à 150 points, RPC `create_community_post` ; propriétaire de l'espace seulement |
-| 10.10 Admin | `GET/POST /api/admin/moderation` ; `server/adminModeration.ts` ; section Modération et Audit de `app/admin/page.tsx` | `is_moderateur()` ; file `moderation_queue` + journal `admin_audit_log` |
+| 10.10 Admin | `GET/POST /api/admin/moderation` ; `server/adminModeration.ts` ; RPC `admin_list_route_moderation` et `admin_apply_route_moderation` ; section Modération et Audit de `app/admin/page.tsx` | `is_moderateur()` ; un rejet est APPLIQUÉ (commentaire masqué ou supprimé, lien révoqué, trace retirée) et journalisé dans `admin_audit_log` (`enforced: true`) ; migration 20261123130000 (à appliquer) |
 
 ## Écarts connus (à ne pas masquer)
-- 10.5 : la RPC `publish_club_event_route` n'accepte qu'un `route_id` du catalogue (`hiking_routes`). Reprendre la version
-  publiée d'un espace dans une sortie demande une RPC dédiée (migration, hors périmètre). L'instantané Clubs est prêt et testé ;
-  s'inscrire (RSVP) n'a aucun droit d'édition (`rsvpGrantsRouteEdit() === false`).
-- 10.8 : `user_performance_profiles` est lu, mais rien en production n'appelle `buildUserProfile` (aucun adaptateur Supabase du
-  `ProfileBuildClient`) : les sorties terminées produisent des observations (cron `process-hike-sessions`, avec consentement) sans
-  recalcul du profil. Le profil reste donc « à froid » tant que ce déclencheur n'existe pas (chantier adventure-intelligence).
-- 10.10 : les commentaires (`route_comments`) et les liens partagés (`route_workspaces`) ne sont lisibles que par les membres (RLS) ;
-  la fonction `admin_list_route_moderation` est PROPOSÉE dans `MIGRATION-PROPOSEE-ADMIN.sql` (non appliquée). Sans elle, ces deux
-  sources sont déclarées « non disponibles ». Une décision est consignée (file + journal) mais ne masque/supprime/révoque pas
-  encore le contenu (`enforced: false`).
+- Migration `20261123130000_route_collab_followups.sql` : écrite et validée sur PostgreSQL local, PAS encore appliquée en production.
+  Tant qu'elle ne l'est pas : préférences par compte (4.1) gardées sur l'appareil, proposition à un club (10.5) refusée,
+  commentaires et liens de la modération (10.10) « indisponibles ».
+- 10.5 : `app/sorties/[id]/page.tsx` et `trip_club_route_updates` filtrent encore `canonical_revision_id IS NOT NULL` ; ils ne lisent pas
+  `club_event_route_revisions.trace` (périmètre Clubs). La RPC d'adoption et la lecture du tracé (`get_club_event_route_trace`) l'acceptent déjà.
+- 10.10 : « masquer » remplace le texte du commentaire (non réversible) ; la table `route_comments` n'est pas alimentée (les commentaires
+  vivent dans `route_workspaces.state_snapshot`).
 - Les appels `sync-draft` et `budget-sync` après publication sont à câbler dans les composants de l'atelier (hors de ce périmètre).

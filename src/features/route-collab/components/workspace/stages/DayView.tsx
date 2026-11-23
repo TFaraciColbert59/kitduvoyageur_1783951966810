@@ -12,6 +12,7 @@ import { useRouteWorkspace } from '../WorkspaceContext';
 import { DayArrival, DayBailoutRow, DayDate, DayStats, DayWater, ScheduleForm } from './DayParts';
 import { DayTools } from './DayTools';
 import { ShareStageToChat } from './ShareStageToChat';
+import { StageTransports } from './StageTransports';
 import { NightPicker } from './NightPicker';
 import { ProfileCuts } from './ProfileCuts';
 import { useDayReadings } from './useDayReadings';
@@ -95,6 +96,8 @@ export function DayView({ stage }: { stage: CollaborativeStage }) {
             </label>
           </Block>
         ) : null}
+
+        <StageTransports key={`${stage.id}-${stage.entityVersion}`} stage={stage} canEdit={canEditStages} runOperation={runOperation} />
 
         <Block title="Notes de journée">
           <label className="rts-field">

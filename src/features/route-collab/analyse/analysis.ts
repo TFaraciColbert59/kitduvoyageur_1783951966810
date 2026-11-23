@@ -11,6 +11,7 @@ import { threeLineSynthesis, type ThreeLineSynthesis } from '../insights/summary
 import { waterEvidenceLevel, type WaterEvidence, type WaterGap } from '../insights/water';
 import type { ProfileModel } from '../profileLink';
 import type { CollaborativeKitItem, RouteWorkspaceState, WaterObservation } from '../types';
+import type { WorldHazardPayload } from './gdacs';
 import { readAlerts, type AlertsReading, type FireAlertPayload, type OfficialAlertsPayload } from './alerts';
 import { readDifficulty, type DifficultyReading } from './difficulty';
 import { buildEffortAnalysis, type EffortAnalysis, type MemberProfile } from './effort';

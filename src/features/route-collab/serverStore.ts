@@ -671,10 +671,12 @@ export function markParticipantPackState(params: {
 export function updateWorkspaceKitItem(params: {
   workspaceId: string;
   actorId: string;
-  action: 'assign' | 'revalidate' | 'add';
+  action: 'assign' | 'revalidate' | 'add' | 'set_purchase';
   itemId?: string;
   assigneeUserId?: string | null;
   newItem?: CollaborativeKitItem;
+  /** 10.6 : montant saisi d'un achat prévu ; `null` le retire. Jamais estimé. */
+  purchase?: { amount: number; currency: string } | null;
 }): { ok: true; workspace: RouteWorkspaceState } | { ok: false; status: 403 | 404; error: string } {
   const store = getStore();
   const rec = store.get(params.workspaceId);
@@ -703,6 +705,8 @@ export function updateWorkspaceKitItem(params: {
     nextKit = nextKit.map((item) =>
       item.id === params.itemId ? { ...item, status: 'confirmed', revalidationReason: null } : item,
     );
+  } else if (params.action === 'set_purchase' && params.itemId) {
+    nextKit = nextKit.map((item) => (item.id === params.itemId ? { ...item, plannedPurchase: params.purchase ?? null } : item));
   }
 
   rec.state = { ...rec.state, kitItems: nextKit, updatedAt: new Date().toISOString() };

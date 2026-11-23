@@ -10,6 +10,24 @@ export const ROUTE_MODERATION_TYPES = ['route_public_trace', 'route_comment', 'r
 export type RouteModerationType = (typeof ROUTE_MODERATION_TYPES)[number];
 
 export type ModerationDecision = 'approve' | 'reject' | 'flag';
+
+/**
+ * Mise en œuvre d'un REJET (RPC `admin_apply_route_moderation`) : masquer ou supprimer un commentaire, révoquer un
+ * lien partagé, retirer une trace publique. Valider ou signaler ne modifie aucun contenu.
+ */
+export type ModerationEnforcement = 'hide' | 'remove' | 'revoke';
+const ALLOWED_ENFORCEMENT: Record<RouteModerationType, readonly ModerationEnforcement[]> = {
+  route_comment: ['hide', 'remove'],
+  route_share_link: ['revoke'],
+  route_public_trace: ['remove'],
+};
+export function isEnforcementAllowed(type: RouteModerationType, action: ModerationEnforcement): boolean {
+  return ALLOWED_ENFORCEMENT[type].includes(action);
+}
+/** Action par défaut d'un rejet : la moins destructive que le type permet (commentaire masqué plutôt que supprimé). */
+export function defaultEnforcement(type: RouteModerationType): ModerationEnforcement {
+  return ALLOWED_ENFORCEMENT[type][0];
+}
 export type ModerationStatus = 'en_attente' | 'approuve' | 'rejete' | 'signale';
 export type AuditAction = 'APPROVE' | 'REJECT' | 'UPDATE';
 

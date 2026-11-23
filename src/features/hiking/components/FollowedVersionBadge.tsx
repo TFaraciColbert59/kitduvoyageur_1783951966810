@@ -13,7 +13,7 @@ export default function FollowedVersionBadge({ handoff }: { handoff: ActivityHan
   return (
     <div
       className="absolute left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 rounded-full bg-[color:var(--glass-bg-medium)] saturate-[var(--glass-sat)] backdrop-blur-[var(--glass-blur-sm)] border border-[color:var(--lkv-forest-200)]/40 font-mono text-[10px] tracking-[0.1em] uppercase text-[color:var(--lkv-text-primary)] select-none"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }} // lkdv-safe-area-ok : posé au-dessus de la barre d'outils du cockpit
       role="status"
       data-testid="followed-version-badge"
     >

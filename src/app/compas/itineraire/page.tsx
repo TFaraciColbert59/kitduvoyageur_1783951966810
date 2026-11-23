@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getAuthenticatedRouteActor } from '@/app/api/routes/[id]/_auth';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { parseEntryParams, type TripEntry } from '@/features/route-collab/entry';
+import { carnetReplayNote, parseCarnetReplayParams, type CarnetReplay, type CarnetReplayState } from '@/features/route-collab/carnetReplay';
+import { loadCarnetReplay } from '@/features/route-collab/server/loadCarnetReplay';
 import { loadTripEntry } from '@/features/route-collab/server/loadTripEntry';
 import { listAttachableTrips } from '@/features/route-collab/server/listAttachableTrips';
 import { getPaceContextForUser } from '@/features/route-collab/server/paceProfile';
@@ -26,16 +28,23 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
   const workspaceId = first('workspaceId');
   const token = first('token');
   const entryParams = parseEntryParams(raw);
+  const carnetParams = parseCarnetReplayParams(raw);
 
   const actor = await getAuthenticatedRouteActor();
   const userId = actor?.userId ?? 'guest-local';
   const userName = actor?.displayName ?? 'Voyageur';
 
   // 1.1 : le voyage d'entrée (`?trip=`), lu sous RLS ; un lien faux ou privé est annoncé, jamais corrigé.
+  // 9.10 : « Reprendre le tracé » d'un carnet (`?from=carnet&carnetId=`), lu sous RLS avec les masques du lecteur.
+  const carnetState: CarnetReplayState = carnetParams ? await loadCarnetReplay(carnetParams.carnetId) : { status: 'none' };
+  const carnetReplay: CarnetReplay | null = carnetState.status === 'ok' ? carnetState.replay : null;
+  const carnetNote = carnetReplayNote(carnetState);
+  const tripIdToLoad = entryParams.tripId ?? (carnetState.status === 'ok' ? carnetState.tripId ?? undefined : undefined);
+
   let trip: TripEntry | null = null;
   let tripLink: TripLinkState = entryParams.tripInvalid ? 'invalid' : 'none';
-  if (entryParams.tripId) {
-    const res = await loadTripEntry(entryParams.tripId);
+  if (tripIdToLoad) {
+    const res = await loadTripEntry(tripIdToLoad);
     if (res.status === 'ok') {
       trip = res.entry;
       tripLink = 'ok';
@@ -61,17 +70,17 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
       } else {
         accessDeniedMessage = res.error;
       }
-    } else if (trip && actor) {
+    } else if (trip && actor && !carnetReplay) {
       // Un seul tracé par voyage : s'il existe déjà un itinéraire rattaché à ce voyage, on l'ouvre.
       const mine = await store.listWorkspacesForActor(actor.userId);
       serverWorkspace = mine.find((w) => w.tripId === trip.tripId) ?? null;
-    } else if (!trip && actor) {
+    } else if (!trip && actor && !carnetReplay) {
       // 1.1 : sans voyage, la personne choisit ou crée le voyage (lecture sous RLS) ; ceux qui ont déjà un tracé sont dits.
       const mine = await store.listWorkspacesForActor(actor.userId);
       attachChoices = await listAttachableTrips(actor.userId, new Set(mine.map((w) => w.tripId)));
     }
   } catch {
-    if (!workspaceId && !trip && actor) attachChoices = await listAttachableTrips(actor.userId);
+    if (!workspaceId && !trip && actor && !carnetReplay) attachChoices = await listAttachableTrips(actor.userId);
     if (workspaceId) accessDeniedMessage = 'Itinéraire momentanément indisponible. Réessayez.';
   }
 
@@ -90,6 +99,8 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
       paceProfile={paceContext?.pace ?? null}
       performanceProfile={paceContext?.performance ?? null}
       attachChoices={attachChoices}
+      carnetReplay={carnetReplay}
+      carnetNote={carnetNote}
     />
   );
 }

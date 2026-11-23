@@ -6,6 +6,7 @@ import { RouteCollabWorkspace } from './RouteCollabWorkspace';
 import { StartScreen } from './workspace/start/StartScreen';
 import { AttachTripScreen } from './workspace/start/AttachTripScreen';
 import type { AttachTripChoice } from '../attach';
+import { buildCarnetReplayWorkspace, type CarnetReplay } from '../carnetReplay';
 import {
   RouteEntryProvider,
   type RouteGoal,
@@ -77,7 +78,6 @@ type Phase =
 /** Routeur de l'application s'il est monté ; `null` hors application (tests, rendu isolé) : jamais d'exception. */
 function useOptionalRouter(): ReturnType<typeof useRouter> | null {
   try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     return useRouter();
   } catch {
     return null;
@@ -105,6 +105,8 @@ export function RouteCollabPageClient({
   paceProfile = null,
   performanceProfile = null,
   attachChoices = null,
+  carnetReplay = null,
+  carnetNote = null,
 }: {
   userId: string;
   userName: string;
@@ -124,13 +126,17 @@ export function RouteCollabPageClient({
    * `null` : la page n'a pas à proposer le rattachement (visiteur, ou itinéraire ouvert par son identifiant).
    */
   attachChoices?: ReadonlyArray<AttachTripChoice> | null;
+  /** 9.10 : tracé du carnet à reprendre (`?from=carnet&carnetId=`), lu côté serveur sous RLS. */
+  carnetReplay?: CarnetReplay | null;
+  /** Raison dite quand le carnet demandé n'a pas pu servir de départ. */
+  carnetNote?: string | null;
 }) {
   const router = useOptionalRouter();
   const [phase, setPhase] = useState<Phase>(() =>
     serverWorkspace ? { kind: 'ready', workspace: serverWorkspace, serverSynced: true } : { kind: 'checking' },
   );
   const [goal, setGoal] = useState<RouteGoal | null>(null);
-  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(carnetNote);
   const [deepLinkNow, setDeepLinkNow] = useState(deepLink);
   const saveTimer = useRef<number | null>(null);
   const checkedRef = useRef(false);
@@ -187,6 +193,27 @@ export function RouteCollabPageClient({
         return;
       }
     }
+    // 1 ter. « Reprendre le tracé » d'un carnet : brouillon indépendant (provenance `activity_replay`), rattaché
+    // au voyage d'entrée s'il y en a un et enregistré côté serveur ; sans voyage, la personne connectée le choisit.
+    if (carnetReplay && !requestedWorkspaceId && !attachSkippedRef.current) {
+      const replayWs = buildCarnetReplayWorkspace(carnetReplay, {
+        userId,
+        userName,
+        tripId: trip?.tripId ?? null,
+        sport: trip?.sport ?? 'marche',
+        nowIso: new Date().toISOString(),
+        idSeed: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      });
+      if (replayWs) {
+        if (!trip && authenticated && attachChoices) {
+          saveGuestWorkspace(replayWs);
+          setPhase({ kind: 'attach', draft: replayWs });
+        } else {
+          void settle(replayWs);
+        }
+        return;
+      }
+    }
     // 1 bis. Sans voyage (`?trip=` absent, illisible ou privé) : la personne connectée choisit ou crée le voyage
     // avant de tracer ; le brouillon de l'appareil, s'il existe, est gardé tel quel (1.1).
     if (!trip && authenticated && attachChoices && !requestedWorkspaceId && !attachSkippedRef.current) {
@@ -217,7 +244,7 @@ export function RouteCollabPageClient({
     }
     // 4. Sinon : l'écran de départ.
     setPhase({ kind: 'start' });
-  }, [phase.kind, requestedWorkspaceId, accessDeniedMessage, userId, userName, trip, settle, authenticated, attachChoices]);
+  }, [phase.kind, requestedWorkspaceId, accessDeniedMessage, userId, userName, trip, settle, authenticated, attachChoices, carnetReplay]);
 
   useEffect(
     () => () => {

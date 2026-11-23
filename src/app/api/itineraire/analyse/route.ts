@@ -4,6 +4,8 @@
 //    l'horizon de prévision la valeur reste inconnue ;
 //  - 7.6 les alertes officielles Meteoalarm (même service que le tiroir Vérifs, `getOfficialAlerts`, lu avec
 //    leur fin de validité) ;
+//  - 7.6 hors Europe : NWS / ECCC par ce même service (interrupteur `COMPAS_ALERTS_WORLD`, dit quand il est éteint) et
+//    les catastrophes mondiales GDACS (flux public sans clé, Orange / Rouge) ;
 //  - 7.6 les feux (NASA FIRMS, déjà intégré à l'Explorer) passés par `analyzeFireAlerts` sur le tracé.
 // Session exigée, entrée validée par zod, lecture seule. Rien n'est comblé : une source muette rend « indisponible ».
 import { NextRequest } from 'next/server';
@@ -14,6 +16,8 @@ import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import { getSharedChecks } from '@/features/route-collab/server/sharedChecks';
 import { getOfficialAlerts } from '@/features/compas/server/officialAlerts';
+import { worldAlertsEnabled } from '@/features/compas/server/worldAlerts';
+import { readWorldHazards } from '@/features/route-collab/server/gdacsAlerts';
 import { analyzeFireAlerts, type FireIncident, type FireSource } from '@/features/routes/analysis/fire';
 import { parseFirmsCsv } from '@/app/api/explorer/v2/fires/route';
 import { passageWeatherOf, type DayPassage, type PassageWeather } from '@/features/route-collab/analyse/passageWeather';
@@ -138,7 +142,7 @@ export async function POST(request: NextRequest) {
       return passageWeatherOf(passageOf(d), forecast, { horizon, fetchedAt: res ? fetchedAt : null });
     });
     if (checks) {
-      official = { status: checks.alertsStatus, service: checks.alertsService, readAt: checks.alertsReadAt, alerts: [] };
+      official = { status: checks.alertsStatus, service: checks.alertsService, readAt: checks.alertsReadAt, worldSwitch: worldAlertsEnabled() ? 'on' : 'off', alerts: [] };
       if (checks.alertsStatus === 'lues' || checks.alertsStatus === 'partielles') {
         // Même service que le tiroir Vérifs (cache de 5 minutes) : relu pour garder la fin de validité de chaque alerte.
         const dated = days.slice().sort((a, b) => a.dateIso.localeCompare(b.dateIso));
@@ -148,6 +152,7 @@ export async function POST(request: NextRequest) {
             status: got.status,
             service: checks.alertsService,
             readAt: got.readAt ?? checks.alertsReadAt,
+            worldSwitch: worldAlertsEnabled() ? 'on' : 'off',
             alerts: got.alerts.map((a) => ({ id: a.id, source: a.source, hazard: a.hazard, level: a.level, area: a.area, onset: a.onset, expires: a.expires, sent: a.sent ?? null, fetchedAt: a.fetchedAt, headline: a.headline ?? null })),
           };
         }
@@ -159,5 +164,8 @@ export async function POST(request: NextRequest) {
   }
 
   const fire = track ? await readFire(track, request.signal) : null;
-  return ok({ status: 'ok', fetchedAt, horizon, weather, fire, official });
+  // GDACS : situé sur le tracé s'il y en a un, sinon sur les points de passage des jours.
+  const where = track && track.length >= 2 ? track : days.map((d) => ({ lat: d.lat, lon: d.lon }));
+  const world = where.length > 0 ? await readWorldHazards(where) : null;
+  return ok({ status: 'ok', fetchedAt, horizon, weather, fire, official, world });
 }
