@@ -392,40 +392,46 @@ export function ClubSettingsDrawerBody({
                 ) : null}
 
                 {canEditGovernance ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6, paddingTop: 4, borderTop: '1px solid rgba(23, 64, 44, 0.08)' }}>
-                    <Switch
-                      checked={Boolean(m.isCertifiedLeader)}
-                      disabled={busyKey === `leader:${targetUid}`}
-                      onCheckedChange={(checked) => {
-                        if (onToggleMemberLeaderBadge) {
-                          void runAction(`leader:${targetUid}`, () => onToggleMemberLeaderBadge(targetUid, checked));
-                        }
-                      }}
-                      label="Encadrant / Guide sorties"
-                      aria-label={`Nommer ${m.name} Encadrant sorties`}
-                    />
-                    <Switch
-                      checked={Boolean(m.canManageGear || rawRole === 'founder' || rawRole === 'admin')}
-                      disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `gear:${targetUid}`}
-                      onCheckedChange={(checked) => {
-                        if (onToggleMemberGearPermission) {
-                          void runAction(`gear:${targetUid}`, () => onToggleMemberGearPermission(targetUid, checked));
-                        }
-                      }}
-                      label="Référent Matériel & Prêts"
-                      aria-label={`Autoriser ${m.name} à gérer l’inventaire matériel`}
-                    />
-                    <Switch
-                      checked={Boolean(m.canManageStories || rawRole === 'founder' || rawRole === 'admin')}
-                      disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `stories:${targetUid}`}
-                      onCheckedChange={(checked) => {
-                        if (onToggleMemberStoryPermission) {
-                          void runAction(`stories:${targetUid}`, () => onToggleMemberStoryPermission(targetUid, checked));
-                        }
-                      }}
-                      label="Référent Com & Stories à la une"
-                      aria-label={`Autoriser ${m.name} à gérer les stories`}
-                    />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, borderTop: '1px solid rgba(23, 64, 44, 0.08)', width: '100%' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <Switch
+                        checked={Boolean(m.isCertifiedLeader)}
+                        disabled={busyKey === `leader:${targetUid}`}
+                        onCheckedChange={(checked) => {
+                          if (onToggleMemberLeaderBadge) {
+                            void runAction(`leader:${targetUid}`, () => onToggleMemberLeaderBadge(targetUid, checked));
+                          }
+                        }}
+                        label="Encadrant / Guide sorties"
+                        aria-label={`Nommer ${m.name} Encadrant sorties`}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <Switch
+                        checked={Boolean(m.canManageGear || rawRole === 'founder' || rawRole === 'admin')}
+                        disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `gear:${targetUid}`}
+                        onCheckedChange={(checked) => {
+                          if (onToggleMemberGearPermission) {
+                            void runAction(`gear:${targetUid}`, () => onToggleMemberGearPermission(targetUid, checked));
+                          }
+                        }}
+                        label="Référent Matériel & Prêts"
+                        aria-label={`Autoriser ${m.name} à gérer l’inventaire matériel`}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                      <Switch
+                        checked={Boolean(m.canManageStories || rawRole === 'founder' || rawRole === 'admin')}
+                        disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `stories:${targetUid}`}
+                        onCheckedChange={(checked) => {
+                          if (onToggleMemberStoryPermission) {
+                            void runAction(`stories:${targetUid}`, () => onToggleMemberStoryPermission(targetUid, checked));
+                          }
+                        }}
+                        label="Référent Com & Stories à la une"
+                        aria-label={`Autoriser ${m.name} à gérer les stories`}
+                      />
+                    </div>
                     {isFounder && !isTargetFounder && !isSelf ? (
                       confirmTransferId === targetUid ? (
                         <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
