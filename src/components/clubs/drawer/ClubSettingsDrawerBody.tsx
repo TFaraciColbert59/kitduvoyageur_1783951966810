@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Award,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Compass,
   Eye,
   Lock,
@@ -12,7 +14,6 @@ import {
   Shield,
   Sparkles,
   UserCheck,
-  Users,
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
@@ -79,6 +80,7 @@ export function ClubSettingsDrawerBody({
   onToast,
 }: ClubSettingsDrawerBodyProps) {
   const [memberSearch, setMemberSearch] = useState('');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [joinRequests, setJoinRequests] = useState<ClubJoinRequest[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
@@ -312,6 +314,156 @@ export function ClubSettingsDrawerBody({
 
   // 2 — Équipe, Rôles & Pôles (Permissions)
   if (activeSubTab === 2) {
+    const selectedMember = selectedMemberId
+      ? members.find((m) => (m.userId || m.id) === selectedMemberId) ?? null
+      : null;
+
+    if (selectedMember) {
+      const targetUid = selectedMember.userId || selectedMember.id;
+      const rawRole: ClubRole = selectedMember.rawRole ?? 'member';
+      const isTargetFounder = rawRole === 'founder';
+      const isSelf = Boolean(currentUserId && targetUid === currentUserId);
+      const canEditThisRole =
+        canEditGovernance && !isTargetFounder && !isSelf && (rawRole !== 'admin' || isFounder);
+
+      const assignableRoles: Array<{ id: ClubRole; label: string }> = [
+        ...(isFounder ? [{ id: 'admin' as ClubRole, label: 'Admin' }] : []),
+        { id: 'moderator', label: 'Modérateur' },
+        { id: 'member', label: 'Membre' },
+      ];
+
+      return (
+        <div className="club-drawer-pane-content" data-testid="club-settings-member-detail-pane">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <button
+              type="button"
+              className="lkdv-carnet-btn-soft"
+              style={{ height: 32, padding: '0 10px' }}
+              onClick={() => {
+                setSelectedMemberId(null);
+                setConfirmTransferId(null);
+              }}
+            >
+              <ChevronLeft size={15} aria-hidden="true" />
+              <span>Retour à l’équipe</span>
+            </button>
+          </div>
+
+          <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ minWidth: 0 }}>
+                <b style={{ fontSize: 14, color: 'var(--label)', display: 'block' }}>{selectedMember.name}</b>
+                <span style={{ fontSize: 12, color: 'var(--label2)' }}>
+                  @{selectedMember.handle} · {roleLabel(rawRole)}
+                </span>
+              </div>
+              <span className={isTargetFounder ? 'club-badge-sage' : 'club-badge-soft'}>
+                {isTargetFounder ? 'Fondateur (protégé)' : roleLabel(rawRole)}
+              </span>
+            </div>
+
+            {canEditThisRole && onChangeMemberRole ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 8, borderTop: '1px solid rgba(23, 64, 44, 0.08)' }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label2)' }}>Grade dans le club</span>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }} role="group" aria-label={`Grade de ${selectedMember.name}`}>
+                  {assignableRoles.map((r) => {
+                    const active = rawRole === r.id;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        disabled={busyKey === `role:${targetUid}`}
+                        className={`reseau-btn ${active ? 'active' : ''}`}
+                        style={{ fontSize: 12, padding: '5px 12px' }}
+                        onClick={() => void runAction(`role:${targetUid}`, () => onChangeMemberRole(targetUid, r.id))}
+                      >
+                        {r.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 8, borderTop: '1px solid rgba(23, 64, 44, 0.08)' }}>
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label2)', marginBottom: 2 }}>Pôles & Responsabilités</span>
+              <Switch
+                className="w-full justify-between"
+                checked={Boolean(selectedMember.isCertifiedLeader)}
+                disabled={!canEditGovernance || busyKey === `leader:${targetUid}`}
+                onCheckedChange={(checked) => {
+                  if (onToggleMemberLeaderBadge) {
+                    void runAction(`leader:${targetUid}`, () => onToggleMemberLeaderBadge(targetUid, checked));
+                  }
+                }}
+                label="Encadrant / Guide sorties"
+                aria-label={`Nommer ${selectedMember.name} Encadrant sorties`}
+              />
+              <Switch
+                className="w-full justify-between"
+                checked={Boolean(selectedMember.canManageGear || rawRole === 'founder' || rawRole === 'admin')}
+                disabled={!canEditGovernance || rawRole === 'founder' || rawRole === 'admin' || busyKey === `gear:${targetUid}`}
+                onCheckedChange={(checked) => {
+                  if (onToggleMemberGearPermission) {
+                    void runAction(`gear:${targetUid}`, () => onToggleMemberGearPermission(targetUid, checked));
+                  }
+                }}
+                label="Référent Matériel & Prêts"
+                aria-label={`Autoriser ${selectedMember.name} à gérer l’inventaire matériel`}
+              />
+              <Switch
+                className="w-full justify-between"
+                checked={Boolean(selectedMember.canManageStories || rawRole === 'founder' || rawRole === 'admin')}
+                disabled={!canEditGovernance || rawRole === 'founder' || rawRole === 'admin' || busyKey === `stories:${targetUid}`}
+                onCheckedChange={(checked) => {
+                  if (onToggleMemberStoryPermission) {
+                    void runAction(`stories:${targetUid}`, () => onToggleMemberStoryPermission(targetUid, checked));
+                  }
+                }}
+                label="Référent Com & Stories à la une"
+                aria-label={`Autoriser ${selectedMember.name} à gérer les stories`}
+              />
+            </div>
+
+            {isFounder && !isTargetFounder && !isSelf ? (
+              <div style={{ paddingTop: 8, borderTop: '1px solid rgba(23, 64, 44, 0.08)' }}>
+                {confirmTransferId === targetUid ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ flex: 1, justifyContent: 'center', fontSize: 11.5, color: '#b91c1c' }}
+                      disabled={busyKey === `transfer:${targetUid}`}
+                      onClick={() => void handleTransferOwnership(targetUid, selectedMember.name)}
+                    >
+                      Confirmer le transfert
+                    </button>
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ fontSize: 11.5 }}
+                      onClick={() => setConfirmTransferId(null)}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-soft"
+                    style={{ fontSize: 11.5 }}
+                    onClick={() => setConfirmTransferId(targetUid)}
+                  >
+                    Transférer la propriété du club…
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="club-drawer-pane-content" data-testid="club-settings-team-pane">
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: 8 }}>
@@ -337,157 +489,66 @@ export function ClubSettingsDrawerBody({
           ) : null}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filteredMembers.slice(0, 40).map((m) => {
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {filteredMembers.slice(0, 50).map((m) => {
             const targetUid = m.userId || m.id;
             const rawRole: ClubRole = m.rawRole ?? 'member';
             const isTargetFounder = rawRole === 'founder';
-            const isSelf = Boolean(currentUserId && targetUid === currentUserId);
-            const canEditThisRole = canEditGovernance && !isTargetFounder && !isSelf && (rawRole !== 'admin' || isFounder);
-
-            const assignableRoles: Array<{ id: ClubRole; label: string }> = [
-              ...(isFounder ? [{ id: 'admin' as ClubRole, label: 'Admin' }] : []),
-              { id: 'moderator', label: 'Modérateur' },
-              { id: 'member', label: 'Membre' },
-            ];
-
             return (
-              <div
+              <button
                 key={m.id}
+                type="button"
                 className="club-glass-card"
-                style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}
+                onClick={() => setSelectedMemberId(targetUid)}
+                style={{
+                  padding: '10px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  width: '100%',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  border: 'none',
+                }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <b style={{ fontSize: 13, color: 'var(--label)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {m.name}
-                    </b>
-                    <span style={{ fontSize: 11.5, color: 'var(--label2)' }}>
-                      @{m.handle} · {roleLabel(rawRole)}
-                    </span>
-                  </div>
-                  <span className={isTargetFounder ? 'club-badge-sage' : 'club-badge-soft'}>
-                    {isTargetFounder ? 'Fondateur (protégé)' : roleLabel(rawRole)}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <b style={{ fontSize: 13.5, color: 'var(--label)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.name}
+                  </b>
+                  <span style={{ fontSize: 11.5, color: 'var(--label2)' }}>
+                    @{m.handle} · {roleLabel(rawRole)}
                   </span>
+                  {(m.isCertifiedLeader || m.canManageGear || m.canManageStories) ? (
+                    <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                      {m.isCertifiedLeader ? (
+                        <span className="club-badge-sage" style={{ fontSize: 10 }}>
+                          <Award size={10} style={{ marginRight: 2 }} aria-hidden="true" />
+                          Encadrant
+                        </span>
+                      ) : null}
+                      {m.canManageGear ? (
+                        <span className="club-badge-soft" style={{ fontSize: 10 }}>
+                          <Package size={10} style={{ marginRight: 2 }} aria-hidden="true" />
+                          Matériel
+                        </span>
+                      ) : null}
+                      {m.canManageStories ? (
+                        <span className="club-badge-soft" style={{ fontSize: 10 }}>
+                          <Sparkles size={10} style={{ marginRight: 2 }} aria-hidden="true" />
+                          Stories
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-
-                {canEditThisRole && onChangeMemberRole ? (
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }} role="group" aria-label={`Grade de ${m.name}`}>
-                    {assignableRoles.map((r) => {
-                      const active = rawRole === r.id;
-                      return (
-                        <button
-                          key={r.id}
-                          type="button"
-                          disabled={busyKey === `role:${targetUid}`}
-                          className={`reseau-btn ${active ? 'active' : ''}`}
-                          style={{ fontSize: 11, padding: '4px 9px' }}
-                          onClick={() => void runAction(`role:${targetUid}`, () => onChangeMemberRole(targetUid, r.id))}
-                        >
-                          {r.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-
-                {canEditGovernance ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4, borderTop: '1px solid rgba(23, 64, 44, 0.08)', width: '100%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Switch
-                        checked={Boolean(m.isCertifiedLeader)}
-                        disabled={busyKey === `leader:${targetUid}`}
-                        onCheckedChange={(checked) => {
-                          if (onToggleMemberLeaderBadge) {
-                            void runAction(`leader:${targetUid}`, () => onToggleMemberLeaderBadge(targetUid, checked));
-                          }
-                        }}
-                        label="Encadrant / Guide sorties"
-                        aria-label={`Nommer ${m.name} Encadrant sorties`}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Switch
-                        checked={Boolean(m.canManageGear || rawRole === 'founder' || rawRole === 'admin')}
-                        disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `gear:${targetUid}`}
-                        onCheckedChange={(checked) => {
-                          if (onToggleMemberGearPermission) {
-                            void runAction(`gear:${targetUid}`, () => onToggleMemberGearPermission(targetUid, checked));
-                          }
-                        }}
-                        label="Référent Matériel & Prêts"
-                        aria-label={`Autoriser ${m.name} à gérer l’inventaire matériel`}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                      <Switch
-                        checked={Boolean(m.canManageStories || rawRole === 'founder' || rawRole === 'admin')}
-                        disabled={rawRole === 'founder' || rawRole === 'admin' || busyKey === `stories:${targetUid}`}
-                        onCheckedChange={(checked) => {
-                          if (onToggleMemberStoryPermission) {
-                            void runAction(`stories:${targetUid}`, () => onToggleMemberStoryPermission(targetUid, checked));
-                          }
-                        }}
-                        label="Référent Com & Stories à la une"
-                        aria-label={`Autoriser ${m.name} à gérer les stories`}
-                      />
-                    </div>
-                    {isFounder && !isTargetFounder && !isSelf ? (
-                      confirmTransferId === targetUid ? (
-                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-                          <button
-                            type="button"
-                            className="lkdv-carnet-btn-soft"
-                            style={{ flex: 1, justifyContent: 'center', fontSize: 11, color: '#b91c1c' }}
-                            disabled={busyKey === `transfer:${targetUid}`}
-                            onClick={() => void handleTransferOwnership(targetUid, m.name)}
-                          >
-                            Confirmer le transfert
-                          </button>
-                          <button
-                            type="button"
-                            className="lkdv-carnet-btn-soft"
-                            style={{ fontSize: 11 }}
-                            onClick={() => setConfirmTransferId(null)}
-                          >
-                            Annuler
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="lkdv-carnet-btn-soft"
-                          style={{ alignSelf: 'flex-start', fontSize: 11, marginTop: 2 }}
-                          onClick={() => setConfirmTransferId(targetUid)}
-                        >
-                          Transférer la propriété…
-                        </button>
-                      )
-                    ) : null}
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                    {m.isCertifiedLeader ? (
-                      <span className="club-badge-sage">
-                        <Award size={11} style={{ marginRight: 3 }} aria-hidden="true" />
-                        Encadrant
-                      </span>
-                    ) : null}
-                    {m.canManageGear ? (
-                      <span className="club-badge-soft">
-                        <Package size={11} style={{ marginRight: 3 }} aria-hidden="true" />
-                        Matériel
-                      </span>
-                    ) : null}
-                    {m.canManageStories ? (
-                      <span className="club-badge-soft">
-                        <Sparkles size={11} style={{ marginRight: 3 }} aria-hidden="true" />
-                        Stories
-                      </span>
-                    ) : null}
-                  </div>
-                )}
-              </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+                  <span className={isTargetFounder ? 'club-badge-sage' : 'club-badge-soft'}>
+                    {roleLabel(rawRole)}
+                  </span>
+                  <ChevronRight size={15} style={{ opacity: 0.55 }} aria-hidden="true" />
+                </div>
+              </button>
             );
           })}
         </div>

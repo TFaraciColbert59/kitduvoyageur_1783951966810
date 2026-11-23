@@ -858,7 +858,7 @@ export function ClubDrawerHost({
               setSettingsSubTab(idx);
             }}
             selector={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '4px 2px' }}>
                 <button
                   type="button"
                   className="lkdv-carnet-btn-soft"
@@ -867,20 +867,11 @@ export function ClubDrawerHost({
                   aria-label="Retour au club"
                 >
                   <ChevronLeft size={16} aria-hidden="true" />
+                  <span>Retour</span>
                 </button>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <CapsuleTabs
-                    className="lkdv-slot-selector"
-                    items={settingsTabs}
-                    activeIndex={settingsSubTab}
-                    onIndexChange={(next) => {
-                      haptic('selection');
-                      setSettingsSubTab(next);
-                    }}
-                    ariaLabel="Réglages du club"
-                    size="default"
-                  />
-                </div>
+                <b style={{ fontSize: 14, color: 'var(--label)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {activeSettingsTab.label}
+                </b>
               </div>
             }
             renderLens={(_lens, index) => (

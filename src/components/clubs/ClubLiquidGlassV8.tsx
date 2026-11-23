@@ -2047,115 +2047,123 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     );
     showIslandToast('Pôles de spécialité activés ✓', `${recommended.length} pôles configurés pour ${activeClub.name}`);
   }, [activeClub.category, activeClub.id, activeClub.name, showIslandToast]);
-  const handleToggleMemberStoryPermission = useCallback(
-    async (targetUserId: string, canManageStories: boolean): Promise<boolean> => {
-      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+  const patchClubMember = useCallback(
+    async (body: Record<string, unknown>, successTitle: string, successSub?: string): Promise<boolean> => {
+      if (!user?.id) {
+        showIslandToast('Connexion requise', 'Connecte-toi pour modifier les permissions du club');
+        return false;
+      }
+      if (!isUuid(activeClub.id) || typeof fetch !== 'function') {
+        showIslandToast('Club local', 'Permissions disponibles uniquement sur un club synchronisé');
+        return false;
+      }
       try {
         const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'story_permission',
-            userId: targetUserId,
-            canManageStories,
-          }),
+          body: JSON.stringify(body),
         });
-        if (!res.ok) return false;
-        setClubMembers((prev) =>
-          prev.map((m) =>
-            m.userId === targetUserId || m.id === targetUserId
-              ? { ...m, canManageStories }
-              : m,
-          ),
-        );
-        if (targetUserId === user.id) {
-          setClubsDirectory((prev) =>
-            prev.map((c) =>
-              c.id === activeClub.id ? { ...c, viewerCanManageStories: canManageStories } : c,
-            ),
+        if (!res.ok) {
+          const errJson = (await res.json().catch(() => null)) as { error?: string; message?: string } | null;
+          showIslandToast(
+            'Action refusée',
+            errJson?.message || errJson?.error || `Erreur ${res.status}`,
           );
+          return false;
         }
+        showIslandToast(successTitle, successSub);
         return true;
       } catch {
+        showIslandToast('Erreur réseau', 'Impossible de contacter le serveur');
         return false;
       }
     },
-    [activeClub.id, user?.id],
+    [activeClub.id, showIslandToast, user?.id],
+  );
+
+  const handleToggleMemberStoryPermission = useCallback(
+    async (targetUserId: string, canManageStories: boolean): Promise<boolean> => {
+      const ok = await patchClubMember(
+        { action: 'story_permission', userId: targetUserId, canManageStories },
+        canManageStories ? 'Pôle Stories activé ✓' : 'Pôle Stories retiré',
+      );
+      if (!ok) return false;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageStories } : m,
+        ),
+      );
+      if (targetUserId === user?.id) {
+        setClubsDirectory((prev) =>
+          prev.map((c) =>
+            c.id === activeClub.id ? { ...c, viewerCanManageStories: canManageStories } : c,
+          ),
+        );
+      }
+      return true;
+    },
+    [activeClub.id, patchClubMember, user?.id],
   );
 
   const handleToggleMemberGearPermission = useCallback(
     async (targetUserId: string, canManageGear: boolean): Promise<boolean> => {
-      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
-      try {
-        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'gear_permission', userId: targetUserId, canManageGear }),
-        });
-        if (!res.ok) return false;
-        setClubMembers((prev) =>
-          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageGear } : m)),
-        );
-        return true;
-      } catch {
-        return false;
-      }
+      const ok = await patchClubMember(
+        { action: 'gear_permission', userId: targetUserId, canManageGear },
+        canManageGear ? 'Référent Matériel activé ✓' : 'Référent Matériel retiré',
+      );
+      if (!ok) return false;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageGear } : m,
+        ),
+      );
+      return true;
     },
-    [activeClub.id, user?.id],
+    [patchClubMember],
   );
 
   const handleToggleMemberLeaderBadge = useCallback(
     async (targetUserId: string, isCertifiedLeader: boolean): Promise<boolean> => {
-      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
-      try {
-        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'leader_badge', userId: targetUserId, isCertifiedLeader }),
-        });
-        if (!res.ok) return false;
-        setClubMembers((prev) =>
-          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, isCertifiedLeader } : m)),
-        );
-        return true;
-      } catch {
-        return false;
-      }
+      const ok = await patchClubMember(
+        { action: 'leader_badge', userId: targetUserId, isCertifiedLeader },
+        isCertifiedLeader ? 'Badge Encadrant activé ✓' : 'Badge Encadrant retiré',
+      );
+      if (!ok) return false;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === targetUserId || m.id === targetUserId ? { ...m, isCertifiedLeader } : m,
+        ),
+      );
+      return true;
     },
-    [activeClub.id, user?.id],
+    [patchClubMember],
   );
 
   const handleChangeMemberRole = useCallback(
     async (targetUserId: string, nextRole: 'founder' | 'admin' | 'moderator' | 'member'): Promise<boolean> => {
-      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function' || nextRole === 'founder') return false;
-      try {
-        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'role', userId: targetUserId, role: nextRole }),
-        });
-        if (!res.ok) return false;
-        setClubMembers((prev) =>
-          prev.map((m) =>
-            m.userId === targetUserId || m.id === targetUserId
-              ? {
-                  ...m,
-                  rawRole: nextRole,
-                  role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
-                }
-              : m,
-          ),
-        );
-        return true;
-      } catch {
-        return false;
-      }
+      if (nextRole === 'founder') return false;
+      const ok = await patchClubMember(
+        { action: 'role', userId: targetUserId, role: nextRole },
+        'Grade mis à jour ✓',
+        `Nouveau grade : ${nextRole === 'admin' ? 'Admin' : nextRole === 'moderator' ? 'Modérateur' : 'Membre'}`,
+      );
+      if (!ok) return false;
+      setClubMembers((prev) =>
+        prev.map((m) =>
+          m.userId === targetUserId || m.id === targetUserId
+            ? {
+                ...m,
+                rawRole: nextRole,
+                role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
+                ...(nextRole === 'member' ? { canManageStories: false, canManageGear: false } : {}),
+              }
+            : m,
+        ),
+      );
+      return true;
     },
-    [activeClub.id, user?.id],
+    [patchClubMember],
   );
 
   // Strict DB-backed authorization for Stories à la une creation/editing
