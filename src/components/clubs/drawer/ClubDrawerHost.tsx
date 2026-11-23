@@ -13,15 +13,19 @@ import {
   ChevronLeft,
   CloudSun,
   Compass,
+  Eye,
   Handshake,
   MessageCircle,
   MessageSquare,
   MessageSquarePlus,
   Package,
   PlusCircle,
+  Settings,
+  Shield,
   ShieldCheck,
   TrendingUp,
   Trophy,
+  UserCheck,
   Users,
 } from 'lucide-react';
 import {
@@ -39,13 +43,14 @@ import './club-drawers-v2.css';
 import { ClubMotionRoot, LensTransition } from './ClubDrawerMotion';
 import { useClubDialog } from './useClubDialog';
 import { ClubIsland, type ClubIslandToast } from './ClubIsland';
-import { ClubStatsHubDrawerBody } from './ClubStatsHubDrawerBody';
+import { ClubStatsHubDrawerBody, type MemberSortMetric } from './ClubStatsHubDrawerBody';
 import type { ClubStatsWindow } from './clubStatsTypes';
 import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
-import { ClubSortiesDrawerBody, type WeatherWindowId } from './ClubSortiesDrawerBody';
-import { ClubCoffreDrawerBody, type KitSeasonFilter } from './ClubCoffreDrawerBody';
+import { ClubSortiesDrawerBody, type OutingFilterId, type WeatherWindowId } from './ClubSortiesDrawerBody';
+import { ClubCoffreDrawerBody, type KitSeasonFilter, type VaultFilterId } from './ClubCoffreDrawerBody';
 import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
+import { ClubSettingsDrawerBody } from './ClubSettingsDrawerBody';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type {
   ClubDrawerHostProps,
@@ -109,6 +114,8 @@ export function ClubDrawerHost({
   onUpdateMyAvailability,
   onChangeMemberRole,
   onToggleMemberStoryPermission,
+  onToggleMemberGearPermission,
+  onToggleMemberLeaderBadge,
   onCreateBinomeGroup,
   onToggleRsvpOuting,
   onCreateGroupFromOuting,
@@ -128,7 +135,8 @@ export function ClubDrawerHost({
   onClose,
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
-  const [internalMode, setInternalMode] = useState<'main' | 'create'>(mode);
+  const [internalMode, setInternalMode] = useState<'main' | 'create' | 'settings'>(mode);
+  const [settingsSubTab, setSettingsSubTab] = useState(0);
   const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(4, Math.max(0, initialTab)));
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialTab === 0 ? Math.min(3, Math.max(0, initialSubTab)) : 0,
@@ -148,6 +156,9 @@ export function ClubDrawerHost({
   const [createPrefillMassif, setCreatePrefillMassif] = useState<string | undefined>(undefined);
   const [localToast, setLocalToast] = useState<ClubIslandToast | null>(null);
   const [statsWindow, setStatsWindow] = useState<ClubStatsWindow>('all');
+  const [memberSort, setMemberSort] = useState<MemberSortMetric>('distance');
+  const [outingFilter, setOutingFilter] = useState<OutingFilterId>('all');
+  const [vaultFilter, setVaultFilter] = useState<VaultFilterId>('all');
   const [weatherWindow, setWeatherWindow] = useState<WeatherWindowId>('morning');
   const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
 
@@ -443,6 +454,23 @@ export function ClubDrawerHost({
   const activeLensId = activeSecondaryItems[activeLensIndex]?.id ?? 'stats-perf';
 
   const bottomRightFilterNode = useMemo(() => {
+    if (tab === 0 && activeLensIndex === 1) {
+      return (
+        <SortMenuButton
+          label="Trier le classement"
+          value={memberSort}
+          defaultValue="distance"
+          onChange={(val) => setMemberSort(val as MemberSortMetric)}
+          options={[
+            { value: 'distance', label: 'Distance (km)' },
+            { value: 'dplus', label: 'Dénivelé (D+)' },
+            { value: 'outings', label: 'Sorties club' },
+            { value: 'hours', label: 'Temps d’effort (h)' },
+            { value: 'contributions', label: 'Contributions' },
+          ]}
+        />
+      );
+    }
     if (tab === 0) {
       return (
         <SortMenuButton
@@ -459,6 +487,23 @@ export function ClubDrawerHost({
         />
       );
     }
+    if (tab === 2 && activeLensIndex === 0 && !inspectedOuting) {
+      return (
+        <SortMenuButton
+          label="Filtrer les sorties"
+          value={outingFilter}
+          defaultValue="all"
+          onChange={(val) => setOutingFilter(val as OutingFilterId)}
+          options={[
+            { value: 'all', label: 'Toutes les sorties' },
+            { value: 'weekend', label: 'Ce week-end' },
+            { value: 'carpool', label: 'Covoiturage dispo' },
+            { value: 'joined', label: 'Mes inscriptions' },
+            { value: 'available', label: 'Places disponibles' },
+          ]}
+        />
+      );
+    }
     if (tab === 2 && activeLensIndex === 1 && !inspectedOuting) {
       return (
         <SortMenuButton
@@ -470,6 +515,22 @@ export function ClubDrawerHost({
             { value: 'morning', label: 'Matin' },
             { value: 'afternoon', label: 'Après-midi' },
             { value: 'weekend', label: 'Week-end' },
+          ]}
+        />
+      );
+    }
+    if (tab === 3 && activeLensIndex === 0) {
+      return (
+        <SortMenuButton
+          label="Filtrer le coffre"
+          value={vaultFilter}
+          defaultValue="all"
+          onChange={(val) => setVaultFilter(val as VaultFilterId)}
+          options={[
+            { value: 'all', label: 'Tout le coffre' },
+            { value: 'available', label: 'Disponibles' },
+            { value: 'mine', label: 'Mes emprunts' },
+            { value: 'light', label: 'Ultraléger (< 500 g)' },
           ]}
         />
       );
@@ -490,7 +551,7 @@ export function ClubDrawerHost({
       );
     }
     return null;
-  }, [activeLensIndex, inspectedOuting, kitSeason, statsWindow, tab, weatherWindow]);
+  }, [activeLensIndex, inspectedOuting, kitSeason, memberSort, outingFilter, statsWindow, tab, vaultFilter, weatherWindow]);
 
   useEffect(() => {
     onTabChange?.(tab, activeLensId);
@@ -690,6 +751,91 @@ export function ClubDrawerHost({
     );
   }
 
+  if (internalMode === 'settings') {
+    const settingsTabs = [
+      { id: 'settings-general', label: 'Général & Visibilité', icon: <Eye size={16} aria-hidden="true" /> },
+      { id: 'settings-access', label: 'Accès & Adhésions', icon: <UserCheck size={16} aria-hidden="true" /> },
+      { id: 'settings-team', label: 'Équipe, Rôles & Pôles', icon: <Users size={16} aria-hidden="true" /> },
+      { id: 'settings-mod', label: 'Modération & Sécurité', icon: <Shield size={16} aria-hidden="true" /> },
+    ];
+    const activeSettingsTab = settingsTabs[settingsSubTab] ?? settingsTabs[0];
+
+    return (
+      <ClubMotionRoot>
+        <motion.div
+          ref={attachPaneRoot}
+          {...dragProps}
+          style={{ y }}
+          onKeyDown={handleRootKeyDown}
+          className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Réglages et permissions du club"
+          tabIndex={-1}
+          data-outdoor={isOutdoor ? 'true' : undefined}
+          data-reduce-motion={reduceMotion ? 'true' : undefined}
+        >
+          <SlotShell
+            slot={activeSettingsTab.id}
+            viewer="owner"
+            title="Réglages & Permissions"
+            lenses={settingsTabs}
+            activeLensIndex={settingsSubTab}
+            onLensChange={(idx) => {
+              haptic('selection');
+              setSettingsSubTab(idx);
+            }}
+            selector={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  style={{ height: 36, padding: '0 10px', flex: 'none' }}
+                  onClick={() => setInternalMode('main')}
+                  aria-label="Retour au club"
+                >
+                  <ChevronLeft size={16} aria-hidden="true" />
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <CapsuleTabs
+                    className="lkdv-slot-selector"
+                    items={settingsTabs}
+                    activeIndex={settingsSubTab}
+                    onIndexChange={(next) => {
+                      haptic('selection');
+                      setSettingsSubTab(next);
+                    }}
+                    ariaLabel="Réglages du club"
+                    size="default"
+                  />
+                </div>
+              </div>
+            }
+            renderLens={(_lens, index) => (
+              <LensTransition transitionKey={`settings:${index}`}>
+                <div className="lkdv-carnet-drawer-pane">
+                  <ClubSettingsDrawerBody
+                    activeSubTab={index}
+                    activeClub={activeClub}
+                    members={members}
+                    currentUserId={currentUserId}
+                    onToggleClubVisibility={onToggleClubVisibility}
+                    onChangeMemberRole={onChangeMemberRole}
+                    onToggleMemberStoryPermission={onToggleMemberStoryPermission}
+                    onToggleMemberGearPermission={onToggleMemberGearPermission}
+                    onToggleMemberLeaderBadge={onToggleMemberLeaderBadge}
+                    onToast={emitToast}
+                  />
+                </div>
+              </LensTransition>
+            )}
+          />
+          <ClubIsland toast={localToast} onDismiss={() => setLocalToast(null)} />
+        </motion.div>
+      </ClubMotionRoot>
+    );
+  }
+
   const slotState =
     syncStatus === 'error'
       ? 'error'
@@ -753,26 +899,44 @@ export function ClubDrawerHost({
           }}
           selector={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
-              <CapsuleTabs
-                className="lkdv-slot-selector"
-                items={mainTabDefs.map((t) => ({
-                  id: t.id,
-                  label: t.label,
-                  icon: t.icon,
-                  badge: t.badge,
-                }))}
-                activeIndex={tab}
-                onIndexChange={(nextTab) => {
-                  haptic('selection');
-                  setStack([]);
-                  setInspectedMember(null);
-                  setInspectedOuting(null);
-                  setMemberLensIndex(0);
-                  setTab(nextTab);
-                }}
-                ariaLabel="Onglets du club"
-                size="default"
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <CapsuleTabs
+                    className="lkdv-slot-selector"
+                    items={mainTabDefs.map((t) => ({
+                      id: t.id,
+                      label: t.label,
+                      icon: t.icon,
+                      badge: t.badge,
+                    }))}
+                    activeIndex={tab}
+                    onIndexChange={(nextTab) => {
+                      haptic('selection');
+                      setStack([]);
+                      setInspectedMember(null);
+                      setInspectedOuting(null);
+                      setMemberLensIndex(0);
+                      setTab(nextTab);
+                    }}
+                    ariaLabel="Onglets du club"
+                    size="default"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  style={{ height: 38, width: 38, padding: 0, flex: 'none', justifyContent: 'center' }}
+                  onClick={() => {
+                    haptic('selection');
+                    setSettingsSubTab(0);
+                    setInternalMode('settings');
+                  }}
+                  aria-label="Réglages et permissions du club"
+                  title="Réglages & Permissions"
+                >
+                  <Settings size={16} aria-hidden="true" />
+                </button>
+              </div>
               {tab === 1 && inspectedMember ? (() => {
                 const mName = inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'Voyageur';
                 const normH = (inspectedMember.handle || '').trim().toLowerCase();
@@ -909,6 +1073,7 @@ export function ClubDrawerHost({
                   currentUserId={currentUserId}
                   windowKey={statsWindow}
                   onWindowChange={setStatsWindow}
+                  memberSort={memberSort}
                   onToggleJoinClub={onToggleJoinClub}
                   onInspectMember={(m) => pushMember(m, index)}
                   onInspectOuting={(o) => pushOuting(o, index)}
@@ -974,6 +1139,7 @@ export function ClubDrawerHost({
                   currentUserId={currentUserId}
                   initialSection={g02Section ?? 'events'}
                   weatherWindow={weatherWindow}
+                  outingFilter={outingFilter}
                 />
               ) : null}
 
@@ -986,6 +1152,7 @@ export function ClubDrawerHost({
                   members={members}
                   outings={outings}
                   kitSeason={kitSeason}
+                  vaultFilter={vaultFilter}
                   onToggleReserveGear={onToggleReserveGear}
                   onCloneStandardKit={onCloneStandardKit}
                   onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}

@@ -45,7 +45,7 @@ export interface ViewerPrivacyContext {
 // Rôles, adhésion & vérification (S5.10)
 // ---------------------------------------------------------------------------
 
-export type ClubRole = 'admin' | 'moderator' | 'member';
+export type ClubRole = 'founder' | 'admin' | 'moderator' | 'member';
 
 export type MembershipStatus = 'active' | 'pending' | 'removed' | 'banned';
 
@@ -65,6 +65,10 @@ export interface ClubMember {
   verifiedSports?: readonly string[];
   /** Droit granulaire de création / gestion des stories à la une du club. */
   canManageStories?: boolean;
+  /** Droit granulaire de gestion du parc matériel & validation des prêts club. */
+  canManageGear?: boolean;
+  /** Badge terrain cumulable : Encadrant / Guide certifié du club. */
+  isCertifiedLeader?: boolean;
 }
 
 export interface ClubJoinRequest {

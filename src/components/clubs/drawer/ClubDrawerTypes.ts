@@ -37,6 +37,7 @@ export interface ClubItemData {
   coverUrl?: string;
   viewerRole?: ClubRole | null;
   viewerCanManageStories?: boolean;
+  viewerCanManageGear?: boolean;
   membershipStatus?: MembershipStatus | null;
   pendingRequestsCount?: number;
   isVerified?: boolean;
@@ -87,6 +88,8 @@ export interface ClubMemberData {
   lastLng?: number | null;
   avatarUrl?: string;
   canManageStories?: boolean;
+  canManageGear?: boolean;
+  isCertifiedLeader?: boolean;
 }
 
 export type ClubOutingStatus = 'upcoming' | 'live' | 'completed' | 'cancelled';
@@ -120,6 +123,7 @@ export interface ClubOutingData {
 export interface ClubGearVaultItem {
   id: string;
   clubId: string;
+  ownershipScope?: 'club' | 'member';
   name: string;
   brand: string;
   category: string;
@@ -127,11 +131,26 @@ export interface ClubGearVaultItem {
   ownerName: string;
   ownerHandle: string;
   available: boolean;
+  quantityTotal?: number;
+  quantityAvailable?: number;
+  conditionStatus?: 'new' | 'good' | 'worn' | 'repair';
+  depositCents?: number;
+  isEpi?: boolean;
+  epiExpiresAt?: string | null;
   reservedByMe?: boolean;
   imageUrl?: string;
   condition?: string;
   loanId?: string;
-  loanStatus?: 'requested' | 'approved' | 'returned' | 'declined';
+  loanStatus?:
+    | 'requested'
+    | 'approved'
+    | 'checked_out'
+    | 'returned'
+    | 'overdue'
+    | 'issue'
+    | 'declined'
+    | 'cancelled';
+  eventId?: string | null;
   neededFrom?: string | null;
   neededUntil?: string | null;
   borrowerName?: string;
@@ -319,7 +338,20 @@ export interface ClubDrawerHostProps {
     brand: string;
     weightG: number;
     category: string;
+    ownershipScope?: 'club' | 'member';
+    quantityTotal?: number;
+    depositCents?: number;
+    isEpi?: boolean;
+    epiExpiresAt?: string;
   }) => void;
+  onToggleMemberGearPermission?: (
+    userId: string,
+    canManageGear: boolean,
+  ) => Promise<boolean> | void;
+  onToggleMemberLeaderBadge?: (
+    userId: string,
+    isCertifiedLeader: boolean,
+  ) => Promise<boolean> | void;
   onCreateNewClub: (payload: {
     name: string;
     massif: string;

@@ -55,6 +55,20 @@ const patchSchema = z.discriminatedUnion('action', [
     .strict(),
   z
     .object({
+      action: z.literal('gear_permission'),
+      userId: z.string().uuid(),
+      canManageGear: z.boolean(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('leader_badge'),
+      userId: z.string().uuid(),
+      isCertifiedLeader: z.boolean(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.literal('remove'),
       userId: z.string().uuid(),
       mode: z.enum(['leave', 'remove', 'ban']),
@@ -254,7 +268,7 @@ export async function PATCH(
           role: action.role,
           ...(action.role === 'admin' || action.role === 'moderator'
             ? { can_manage_stories: true }
-            : {}),
+            : { can_manage_stories: false, can_manage_gear: false }),
         })
         .eq('club_id', id)
         .eq('user_id', action.userId);
@@ -277,6 +291,44 @@ export async function PATCH(
         data: {
           userId: action.userId,
           canManageStories: action.canManageStories,
+        },
+      });
+    }
+
+    if (action.action === 'gear_permission') {
+      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
+      if (!canGrant) return errorJson('forbidden', 403);
+      const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
+      if (!target) return errorJson('not_found', 404);
+      const { error } = await supabase
+        .from('club_members')
+        .update({ can_manage_gear: action.canManageGear })
+        .eq('club_id', id)
+        .eq('user_id', action.userId);
+      if (error) return dbFailure('PATCH gear_permission', error);
+      return json({
+        data: {
+          userId: action.userId,
+          canManageGear: action.canManageGear,
+        },
+      });
+    }
+
+    if (action.action === 'leader_badge') {
+      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
+      if (!canGrant) return errorJson('forbidden', 403);
+      const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
+      if (!target) return errorJson('not_found', 404);
+      const { error } = await supabase
+        .from('club_members')
+        .update({ is_certified_leader: action.isCertifiedLeader })
+        .eq('club_id', id)
+        .eq('user_id', action.userId);
+      if (error) return dbFailure('PATCH leader_badge', error);
+      return json({
+        data: {
+          userId: action.userId,
+          isCertifiedLeader: action.isCertifiedLeader,
         },
       });
     }

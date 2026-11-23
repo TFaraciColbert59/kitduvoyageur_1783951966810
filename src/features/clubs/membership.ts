@@ -16,6 +16,7 @@ const ROLE_RANK: Record<ClubRole, number> = {
   member: 1,
   moderator: 2,
   admin: 3,
+  founder: 4,
 };
 
 export interface CreateClubInput {
@@ -259,8 +260,8 @@ export function changeMemberRole(params: {
     };
   }
 
-  // Invariant 2 : seul un admin peut changer un rôle
-  if (actor.role !== 'admin') {
+  // Invariant 2 : seul le fondateur ou un admin peut changer un rôle
+  if (actor.role !== 'founder' && actor.role !== 'admin') {
     if (actorUserId === targetUserId && ROLE_RANK[newRole] > ROLE_RANK[actor.role]) {
       return {
         ok: false,
@@ -275,10 +276,29 @@ export function changeMemberRole(params: {
     };
   }
 
-  // Invariant 3 : protection du dernier admin
-  if (target.role === 'admin' && newRole !== 'admin') {
+  if (target.role === 'founder' && newRole !== 'founder') {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Le fondateur du club ne peut pas être rétrogradé.',
+    };
+  }
+
+  const hasFounder = memberships.some(
+    (m) => m.clubId === clubId && m.status === 'active' && m.role === 'founder',
+  );
+  if (hasFounder && (target.role === 'admin' || newRole === 'admin' || newRole === 'founder') && actor.role !== 'founder') {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Seul le fondateur peut nommer ou rétrograder un administrateur.',
+    };
+  }
+
+  // Invariant 3 : protection du dernier admin/fondateur
+  if ((target.role === 'admin' || target.role === 'founder') && newRole !== 'admin' && newRole !== 'founder') {
     const activeAdminsCount = memberships.filter(
-      (m) => m.clubId === clubId && m.status === 'active' && m.role === 'admin',
+      (m) => m.clubId === clubId && m.status === 'active' && (m.role === 'admin' || m.role === 'founder'),
     ).length;
     if (activeAdminsCount <= 1) {
       return {

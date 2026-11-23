@@ -135,13 +135,19 @@ export function isManager(bundle: ClubBundle): boolean {
   return Boolean(
     bundle.viewerMembership &&
       isActiveMember(bundle.viewerMembership) &&
-      (bundle.viewerMembership.role === 'admin' || bundle.viewerMembership.role === 'moderator'),
+      (bundle.viewerMembership.role === 'founder' ||
+        bundle.viewerMembership.role === 'admin' ||
+        bundle.viewerMembership.role === 'moderator'),
   );
 }
 
 export function isAdmin(bundle: ClubBundle): boolean {
   return Boolean(
-    bundle.viewerMembership && isActiveMember(bundle.viewerMembership) && bundle.viewerMembership.role === 'admin',
+    bundle.viewerMembership &&
+      isActiveMember(bundle.viewerMembership) &&
+      (bundle.viewerMembership.role === 'founder' ||
+        bundle.viewerMembership.role === 'admin' ||
+        bundle.club.createdBy === bundle.viewerMembership.userId),
   );
 }
 

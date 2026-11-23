@@ -1523,21 +1523,55 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleBorrowGear = useCallback(
-    (gearId: string) => {
+    async (gearId: string) => {
+      const target = vaultGear.find((g) => g.id === gearId);
+      const willReserve = target ? !target.reservedByMe : true;
       setVaultGear((prev) =>
         prev.map((g) => {
           if (g.id !== gearId) return g;
-          const nextAvail = !g.available;
+          const nextAvail = !willReserve;
           return {
             ...g,
             available: nextAvail,
-            reservedByMe: !nextAvail,
+            reservedByMe: willReserve,
           };
         }),
       );
-      showIslandToast('Coffre Matériel Club ✓', 'Équipement réservé pour la prochaine sortie');
+      if (user?.id && isUuid(activeClub.id) && isUuid(gearId) && typeof fetch === 'function') {
+        try {
+          if (willReserve) {
+            const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'request_loan', gearItemId: gearId, quantity: 1 }),
+            });
+            if (res.ok) {
+              const payload = (await res.json().catch(() => null)) as { loan?: { id?: string } } | null;
+              if (payload?.loan?.id) {
+                setVaultGear((prev) =>
+                  prev.map((g) => (g.id === gearId ? { ...g, loanId: payload.loan!.id, loanStatus: 'requested' } : g)),
+                );
+              }
+            }
+          } else if (target?.loanId && isUuid(target.loanId)) {
+            await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'update_loan', loanId: target.loanId, status: 'cancelled' }),
+            });
+          }
+        } catch {
+          // optimistic fallback kept
+        }
+      }
+      showIslandToast(
+        willReserve ? 'Coffre Matériel Club ✓' : 'Réservation annulée',
+        willReserve ? 'Demande d’emprunt enregistrée' : 'Équipement remis disponible',
+      );
     },
-    [showIslandToast],
+    [activeClub.id, showIslandToast, user?.id, vaultGear],
   );
 
   const handleCloneKit = useCallback(
@@ -1709,23 +1743,71 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleLendGearToVault = useCallback(
-    (payload: { name: string; brand: string; weightG: number; category: string }) => {
+    async (payload: {
+      name: string;
+      brand: string;
+      weightG: number;
+      category: string;
+      ownershipScope?: 'club' | 'member';
+      quantityTotal?: number;
+      depositCents?: number;
+      isEpi?: boolean;
+      epiExpiresAt?: string;
+    }) => {
+      const tempId = 'vg-' + Date.now();
       const item: ClubGearVaultItem = {
-        id: 'vg-' + Date.now(),
+        id: tempId,
         clubId: activeClub.id,
+        ownershipScope: payload.ownershipScope ?? 'member',
         name: payload.name,
         brand: payload.brand,
         category: payload.category,
         weightG: payload.weightG,
-        ownerName: 'Toi',
+        quantityTotal: payload.quantityTotal ?? 1,
+        quantityAvailable: payload.quantityTotal ?? 1,
+        depositCents: payload.depositCents ?? 0,
+        isEpi: Boolean(payload.isEpi),
+        epiExpiresAt: payload.epiExpiresAt ?? null,
+        ownerName: payload.ownershipScope === 'club' ? activeClub.name : 'Toi',
         ownerHandle: activeHandle || 'tony_frc',
         available: true,
       };
       setVaultGear((prev) => [item, ...prev]);
+      if (user?.id && isUuid(activeClub.id) && typeof fetch === 'function') {
+        try {
+          const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'add_item',
+              ownershipScope: payload.ownershipScope ?? 'member',
+              name: payload.name,
+              brand: payload.brand || null,
+              category: payload.category,
+              weightG: payload.weightG,
+              quantityTotal: payload.quantityTotal ?? 1,
+              depositCents: payload.depositCents ?? 0,
+              isEpi: Boolean(payload.isEpi),
+              epiExpiresAt: payload.epiExpiresAt || null,
+            }),
+          });
+          if (res.ok) {
+            const json = (await res.json().catch(() => null)) as { item?: { id?: string } } | null;
+            if (json?.item?.id) {
+              setVaultGear((prev) =>
+                prev.map((g) => (g.id === tempId ? { ...g, id: json.item!.id! } : g)),
+              );
+            }
+          }
+        } catch {
+          // optimistic fallback kept
+        }
+      }
       triggerAct('closeSheet');
       showIslandToast('Ajouté au Coffre Matériel ✓', `${payload.brand} ${payload.name} (${payload.weightG} g)`);
     },
-    [activeClub.id, activeHandle, showIslandToast, triggerAct],
+    [activeClub.id, activeClub.name, activeHandle, showIslandToast, triggerAct, user?.id],
   );
 
   const handleCreateNewClub = useCallback(
@@ -1890,6 +1972,80 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             ),
           );
         }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleToggleMemberGearPermission = useCallback(
+    async (targetUserId: string, canManageGear: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'gear_permission', userId: targetUserId, canManageGear }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageGear } : m)),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleToggleMemberLeaderBadge = useCallback(
+    async (targetUserId: string, isCertifiedLeader: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'leader_badge', userId: targetUserId, isCertifiedLeader }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? { ...m, isCertifiedLeader } : m)),
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleChangeMemberRole = useCallback(
+    async (targetUserId: string, nextRole: 'founder' | 'admin' | 'moderator' | 'member'): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function' || nextRole === 'founder') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'role', userId: targetUserId, role: nextRole }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? {
+                  ...m,
+                  rawRole: nextRole,
+                  role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
+                }
+              : m,
+          ),
+        );
         return true;
       } catch {
         return false;
@@ -2237,7 +2393,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onToggleFollowMember={handleToggleFollowMember}
             onProposeBinome={handleProposeBinome}
             onUpdateMyAvailability={handleUpdateMyAvailability}
+            onChangeMemberRole={handleChangeMemberRole}
             onToggleMemberStoryPermission={handleToggleMemberStoryPermission}
+            onToggleMemberGearPermission={handleToggleMemberGearPermission}
+            onToggleMemberLeaderBadge={handleToggleMemberLeaderBadge}
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {

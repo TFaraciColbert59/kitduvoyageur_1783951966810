@@ -49,7 +49,7 @@ const KitProductSheetV2 = dynamic(
   () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
   { ssr: false },
 );
-import { ClubEmptyCard, ClubFilterPopoverButton, normalizeSearchText } from './ClubSharedUi';
+import { ClubEmptyCard, normalizeSearchText } from './ClubSharedUi';
 import type {
   ClubChallengeItem,
   ClubDrawerNavHandler,
@@ -81,6 +81,7 @@ export interface ClubStatsHubDrawerBodyProps {
   currentUserId?: string | null;
   windowKey?: ClubStatsWindow;
   onWindowChange?: (next: ClubStatsWindow) => void;
+  memberSort?: MemberSortMetric;
   onToggleJoinClub: (clubId: string) => Promise<boolean> | void;
   onInspectMember: (member: ClubMemberData) => void;
   onInspectOuting: (outing: ClubOutingData) => void;
@@ -94,7 +95,7 @@ export interface ClubStatsHubDrawerBodyProps {
 }
 
 type ChartMetricId = 'distanceKm' | 'dplusM' | 'outingsCount';
-type MemberSortMetric = 'distance' | 'dplus' | 'outings' | 'hours' | 'contributions';
+export type MemberSortMetric = 'distance' | 'dplus' | 'outings' | 'hours' | 'contributions';
 type MemberRoleFilter = 'all' | 'leaders' | 'members';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -426,8 +427,9 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const setWindowKey = props.onWindowChange ?? setLocalWindowKey;
   const [chartMetric, setChartMetric] = useState<ChartMetricId>('distanceKm');
   const [memberSearch, setMemberSearch] = useState('');
-  const [memberSort, setMemberSort] = useState<MemberSortMetric>('distance');
-  const [memberRoleFilter, setMemberRoleFilter] = useState<MemberRoleFilter>('all');
+  const [internalMemberSort] = useState<MemberSortMetric>('distance');
+  const memberSort = props.memberSort ?? internalMemberSort;
+  const [memberRoleFilter] = useState<MemberRoleFilter>('all');
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [visibleMembersCount, setVisibleMembersCount] = useState(20);
   const [savingStoryPermId, setSavingStoryPermId] = useState<string | null>(null);
@@ -832,7 +834,10 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
         {renderTopControls()}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div
+            className="club-glass-card"
+            style={{ gridColumn: '1 / -1', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}
+          >
             <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Kits créés par le club</span>
             <b style={{ fontSize: 18, color: '#172b24' }}>
               <StatsAnimatedNumber value={kv.standardKitsCount} />
@@ -840,14 +845,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
             <span style={{ fontSize: 10.5, color: '#56665d' }}>
               {kv.ultralightKitsCount} ultraléger{kv.ultralightKitsCount > 1 ? 's' : ''} (≤ 4,5 kg)
             </span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Poids de base moyen</span>
-            <b style={{ fontSize: 18, color: '#17402c' }}>
-              <StatsAnimatedNumber value={kv.avgBaseWeightG / 1000} decimals={2} suffix=" kg" />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>Sur les kits officiels</span>
           </div>
 
           <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1297,30 +1294,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
               </button>
             ) : null}
           </div>
-          <ClubFilterPopoverButton<MemberSortMetric>
-            value={memberSort}
-            defaultValue="distance"
-            ariaLabel="Trier et filtrer le classement des membres"
-            onChange={setMemberSort}
-            options={[
-              { id: 'distance', label: 'Distance (km)' },
-              { id: 'dplus', label: 'Dénivelé (D+)' },
-              { id: 'outings', label: 'Sorties club' },
-              { id: 'hours', label: 'Temps d’effort (h)' },
-              { id: 'contributions', label: 'Contributions' },
-            ]}
-            extraGroup={{
-              label: 'Rôle',
-              value: memberRoleFilter,
-              defaultValue: 'all',
-              onChange: (next) => setMemberRoleFilter(next as MemberRoleFilter),
-              options: [
-                { id: 'all', label: 'Tous les membres' },
-                { id: 'leaders', label: 'Encadrants & Admins' },
-                { id: 'members', label: 'Membres actifs' },
-              ],
-            }}
-          />
         </div>
 
         {mv.excludedOptOutCount > 0 ? (
@@ -1459,18 +1432,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                           <b style={{ fontSize: 12 }}>{row.hours} h</b>
                         </div>
                       </div>
-
-                      {mgmt?.canManagePermissions ? (
-                        <div style={{ padding: '6px 9px', borderRadius: 12, background: 'rgba(23, 64, 44, 0.05)' }}>
-                          <Switch
-                            checked={row.canManageStories}
-                            disabled={savingStoryPermId === row.userId}
-                            onCheckedChange={(checked) => void handleToggleStoryPerm(row, checked)}
-                            label="Habilité aux stories à la une"
-                            aria-label={`Autoriser ${row.displayName} à gérer les stories à la une`}
-                          />
-                        </div>
-                      ) : null}
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: '#56665d' }}>
                         <span>{row.postsCount} pub. · {row.gearCount} matériel prêté</span>

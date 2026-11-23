@@ -46,10 +46,10 @@ import {
   LensTransition,
   StackSlideView,
 } from './ClubDrawerMotion';
-import { ClubEmptyCard, ClubFilterPopoverButton } from './ClubSharedUi';
+import { ClubEmptyCard } from './ClubSharedUi';
 import type { ClubOutingData, ClubSortiesDrawerBodyProps } from './ClubDrawerTypes';
 
-type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
+export type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
 type OutingDetailLensId = 'overview' | 'carpool' | 'gear' | 'participants';
 export type WeatherWindowId = 'morning' | 'afternoon' | 'weekend';
 
@@ -111,11 +111,13 @@ export function ClubSortiesDrawerBody({
   onSwitchTab,
   onToast,
   weatherWindow: controlledWeatherWindow,
+  outingFilter: controlledOutingFilter,
 }: ClubSortiesDrawerBodyProps & {
   weatherWindow?: WeatherWindowId;
+  outingFilter?: OutingFilterId;
 }) {
-  // D09 — Upcoming outings filter & search state
-  const [outingFilter, setOutingFilter] = useState<OutingFilterId>('all');
+  // D09 — Upcoming outings filter & search state (controlled from bottom-right SortMenuButton)
+  const outingFilter = controlledOutingFilter ?? 'all';
   const [searchQuery, setSearchQuery] = useState('');
 
   // D13 — Inspected Outing sub-lens state
@@ -930,27 +932,6 @@ export function ClubSortiesDrawerBody({
             </button>
           ) : null}
         </div>
-        <ClubFilterPopoverButton<OutingFilterId>
-          value={outingFilter}
-          defaultValue="all"
-          ariaLabel="Filtrer les sorties du club"
-          onChange={setOutingFilter}
-          options={[
-            { id: 'all', label: 'Toutes les sorties', count: upcomingOutings.length },
-            { id: 'weekend', label: 'Ce week-end' },
-            {
-              id: 'carpool',
-              label: 'Covoiturage dispo',
-              count: upcomingOutings.filter((o) => (o.carpoolSeatsLeft ?? 0) > 0).length,
-            },
-            { id: 'joined', label: 'Mes inscriptions', count: upcomingKpis.joinedCount },
-            {
-              id: 'available',
-              label: 'Places disponibles',
-              count: upcomingOutings.filter((o) => o.participantsCount < o.maxParticipants).length,
-            },
-          ]}
-        />
       </div>
 
       <div className="reseau-list">
