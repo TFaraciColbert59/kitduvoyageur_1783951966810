@@ -141,7 +141,6 @@ export function ClubRuntimeOverlays({
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', flex: 'none' }}>
             <div>
-              <span className="club-sec-eyebrow">{activeClub.massif} · {activeClub.category}</span>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: '#172b24' }}>
                 {titles[overlay.kind] || activeClub.name}
               </div>
