@@ -40,10 +40,10 @@ export const TILE_CACHE_PREFIX = 'lkdv-route-tiles:';
 export const TILE_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
 export const TILE_PROVIDER_CREDIT = 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap';
 
-/** Octets moyens par tuile vectorielle, par zoom : mesurés le 23 nov. 2026 (centre de Paris, donc plutôt hauts). */
-const AVG_TILE_BYTES: Readonly<Record<number, number>> = { 10: 130_000, 11: 80_000, 12: 40_000, 13: 20_000, 14: 15_000 };
-/** Style, TileJSON, pictogrammes et glyphes. */
-const FIXED_BYTES = 1_500_000;
+/** Octets moyens par tuile vectorielle, par zoom : ordre de grandeur mesuré le 23 nov. 2026 (campagne ≈ 10 à 30 Ko au zoom 14, centre de Paris ≈ 200 Ko) ; c'est une estimation, la taille réelle est lue après. */
+const AVG_TILE_BYTES: Readonly<Record<number, number>> = { 10: 130_000, 11: 90_000, 12: 60_000, 13: 40_000, 14: 40_000 };
+/** Style, TileJSON, pictogrammes (≈ 0,25 Mo) et glyphes (≈ 0,6 Mo), mesurés le 23 nov. 2026. */
+const FIXED_BYTES = 1_000_000;
 
 /* ---------- Tuiles ---------- */
 
@@ -172,7 +172,7 @@ export function planCorridorTiles(line: readonly LonLat[], capBytes = TILE_PACK_
     capBytes,
     fits: true,
     reduced,
-    announcement: `Fond de carte du corridor (environ 1 km de part et d'autre) : ${tiles.length} tuiles, ${zoomText}, environ ${formatMo(total)}.`,
+    announcement: `Fond de carte du corridor (environ 1 km de part et d'autre) : ${tiles.length} tuiles, ${zoomText}, environ ${formatMo(total)} (estimation ; la taille réelle s'affiche après le téléchargement).`,
     capMessage,
   };
 }

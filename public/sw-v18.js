@@ -21,6 +21,8 @@ const IS_DEV_HOST =
   self.location.hostname.startsWith('10.') ||
   self.location.port === '4000' ||
   self.location.port === '3000';
+// Fond de carte hors ligne du corridor d'un itinéraire (2.10) : sa propre logique, ses propres caches.
+importScripts('/sw-route-tiles.js');
 const STATIC_CACHE = `lkdv-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `lkdv-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `lkdv-images-${CACHE_VERSION}`;
@@ -98,7 +100,7 @@ self.addEventListener('activate', (event) => {
           .filter(
             (k) =>
               (IS_DEV_HOST && k.startsWith('lkdv-static-')) ||
-              (k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE && k !== 'lkdv-tiles-v1')
+              (k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== IMAGE_CACHE && k !== 'lkdv-tiles-v1' && !k.startsWith('lkdv-route-tiles:'))
           )
           .map((k) => caches.delete(k))
       );
