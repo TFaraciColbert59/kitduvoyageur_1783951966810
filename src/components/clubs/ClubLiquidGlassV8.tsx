@@ -2084,11 +2084,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
   const handleToggleMemberStoryPermission = useCallback(
     async (targetUserId: string, canManageStories: boolean): Promise<boolean> => {
-      const ok = await patchClubMember(
-        { action: 'story_permission', userId: targetUserId, canManageStories },
-        canManageStories ? 'Pôle Stories activé ✓' : 'Pôle Stories retiré',
-      );
-      if (!ok) return false;
+      // Optimistic instant update (0ms latency on switch)
       setClubMembers((prev) =>
         prev.map((m) =>
           m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageStories } : m,
@@ -2101,6 +2097,28 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           ),
         );
       }
+      const ok = await patchClubMember(
+        { action: 'story_permission', userId: targetUserId, canManageStories },
+        canManageStories ? 'Pôle Stories activé ✓' : 'Pôle Stories retiré',
+      );
+      if (!ok) {
+        // Rollback on failure
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? { ...m, canManageStories: !canManageStories }
+              : m,
+          ),
+        );
+        if (targetUserId === user?.id) {
+          setClubsDirectory((prev) =>
+            prev.map((c) =>
+              c.id === activeClub.id ? { ...c, viewerCanManageStories: !canManageStories } : c,
+            ),
+          );
+        }
+        return false;
+      }
       return true;
     },
     [activeClub.id, patchClubMember, user?.id],
@@ -2108,33 +2126,60 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
   const handleToggleMemberGearPermission = useCallback(
     async (targetUserId: string, canManageGear: boolean): Promise<boolean> => {
-      const ok = await patchClubMember(
-        { action: 'gear_permission', userId: targetUserId, canManageGear },
-        canManageGear ? 'Référent Matériel activé ✓' : 'Référent Matériel retiré',
-      );
-      if (!ok) return false;
+      // Optimistic instant update (0ms latency on switch)
       setClubMembers((prev) =>
         prev.map((m) =>
           m.userId === targetUserId || m.id === targetUserId ? { ...m, canManageGear } : m,
         ),
       );
+      if (targetUserId === user?.id) {
+        setClubsDirectory((prev) =>
+          prev.map((c) =>
+            c.id === activeClub.id ? { ...c, viewerCanManageGear: canManageGear } : c,
+          ),
+        );
+      }
+      const ok = await patchClubMember(
+        { action: 'gear_permission', userId: targetUserId, canManageGear },
+        canManageGear ? 'Référent Matériel activé ✓' : 'Référent Matériel retiré',
+      );
+      if (!ok) {
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? { ...m, canManageGear: !canManageGear }
+              : m,
+          ),
+        );
+        return false;
+      }
       return true;
     },
-    [patchClubMember],
+    [activeClub.id, patchClubMember, user?.id],
   );
 
   const handleToggleMemberLeaderBadge = useCallback(
     async (targetUserId: string, isCertifiedLeader: boolean): Promise<boolean> => {
-      const ok = await patchClubMember(
-        { action: 'leader_badge', userId: targetUserId, isCertifiedLeader },
-        isCertifiedLeader ? 'Badge Encadrant activé ✓' : 'Badge Encadrant retiré',
-      );
-      if (!ok) return false;
+      // Optimistic instant update (0ms latency on switch)
       setClubMembers((prev) =>
         prev.map((m) =>
           m.userId === targetUserId || m.id === targetUserId ? { ...m, isCertifiedLeader } : m,
         ),
       );
+      const ok = await patchClubMember(
+        { action: 'leader_badge', userId: targetUserId, isCertifiedLeader },
+        isCertifiedLeader ? 'Badge Encadrant activé ✓' : 'Badge Encadrant retiré',
+      );
+      if (!ok) {
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? { ...m, isCertifiedLeader: !isCertifiedLeader }
+              : m,
+          ),
+        );
+        return false;
+      }
       return true;
     },
     [patchClubMember],
@@ -2143,25 +2188,32 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const handleChangeMemberRole = useCallback(
     async (targetUserId: string, nextRole: 'founder' | 'admin' | 'moderator' | 'member'): Promise<boolean> => {
       if (nextRole === 'founder') return false;
+      let previousSnapshot: ClubMemberData | null = null;
+      setClubMembers((prev) =>
+        prev.map((m) => {
+          if (m.userId !== targetUserId && m.id !== targetUserId) return m;
+          previousSnapshot = m;
+          return {
+            ...m,
+            rawRole: nextRole,
+            role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
+            ...(nextRole === 'member' ? { canManageStories: false, canManageGear: false } : {}),
+          };
+        }),
+      );
       const ok = await patchClubMember(
         { action: 'role', userId: targetUserId, role: nextRole },
         'Grade mis à jour ✓',
         `Nouveau grade : ${nextRole === 'admin' ? 'Admin' : nextRole === 'moderator' ? 'Modérateur' : 'Membre'}`,
       );
-      if (!ok) return false;
-      setClubMembers((prev) =>
-        prev.map((m) =>
-          m.userId === targetUserId || m.id === targetUserId
-            ? {
-                ...m,
-                rawRole: nextRole,
-                role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
-                ...(nextRole === 'member' ? { canManageStories: false, canManageGear: false } : {}),
-              }
-            : m,
-        ),
-      );
-      return true;
+      if (!ok && previousSnapshot) {
+        const restore = previousSnapshot;
+        setClubMembers((prev) =>
+          prev.map((m) => (m.userId === targetUserId || m.id === targetUserId ? restore : m)),
+        );
+        return false;
+      }
+      return ok;
     },
     [patchClubMember],
   );
