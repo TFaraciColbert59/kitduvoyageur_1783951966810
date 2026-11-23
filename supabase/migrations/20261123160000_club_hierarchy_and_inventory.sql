@@ -137,7 +137,8 @@ AS $$
     WHEN p_user_id IS NULL THEN false
     WHEN EXISTS (
       SELECT 1 FROM public.clubs c
-      WHERE c.id = p_club_id AND c.created_by = p_user_id
+      JOIN public.club_members m ON m.club_id = c.id AND m.user_id = c.created_by
+      WHERE c.id = p_club_id AND c.created_by = p_user_id AND m.status = 'active'
     ) THEN true
     ELSE COALESCE((
       SELECT COALESCE(
@@ -277,7 +278,7 @@ BEGIN
         USING ERRCODE = '42501';
     END IF;
 
-    IF (OLD.role = 'admin' OR NEW.role IN ('founder', 'admin')) AND actor_role <> 'founder' THEN
+    IF (OLD.role = 'admin' OR NEW.role IN ('founder', 'admin')) AND actor_role IS DISTINCT FROM 'founder' THEN
       RAISE EXCEPTION 'club_members: seul le fondateur peut nommer ou rétrograder un administrateur'
         USING ERRCODE = '42501';
     END IF;
