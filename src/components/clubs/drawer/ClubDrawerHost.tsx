@@ -137,8 +137,22 @@ export function ClubDrawerHost({
   onClose,
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
+  const canAccessClubAdmin = Boolean(
+    (currentUserId && activeClub.createdBy === currentUserId) ||
+      activeClub.viewerRole === 'founder' ||
+      activeClub.viewerRole === 'admin' ||
+      activeClub.viewerRole === 'moderator' ||
+      activeClub.viewerCanManageGear ||
+      activeClub.viewerCanManageStories,
+  );
   const [internalMode, setInternalMode] = useState<'main' | 'create' | 'settings'>(mode);
   const [settingsSubTab, setSettingsSubTab] = useState(0);
+
+  useEffect(() => {
+    if (internalMode === 'settings' && !canAccessClubAdmin) {
+      setInternalMode('main');
+    }
+  }, [internalMode, canAccessClubAdmin]);
   const [tab, setTab] = useState<number>(initialSearch ? 0 : Math.min(4, Math.max(0, initialTab)));
   const [subTabs, setSubTabs] = useState<Record<number, number>>({
     0: initialTab === 0 ? Math.min(3, Math.max(0, initialSubTab)) : 0,
@@ -808,7 +822,7 @@ export function ClubDrawerHost({
     );
   }
 
-  if (internalMode === 'settings') {
+  if (internalMode === 'settings' && canAccessClubAdmin) {
     const settingsTabs = [
       { id: 'settings-general', label: 'Général & Visibilité', icon: <Eye size={16} aria-hidden="true" /> },
       { id: 'settings-access', label: 'Accès & Adhésions', icon: <UserCheck size={16} aria-hidden="true" /> },
@@ -827,7 +841,7 @@ export function ClubDrawerHost({
           className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
           role="dialog"
           aria-modal="true"
-          aria-label="Réglages et permissions du club"
+          aria-label="Administration du club"
           tabIndex={-1}
           data-outdoor={isOutdoor ? 'true' : undefined}
           data-reduce-motion={reduceMotion ? 'true' : undefined}
@@ -835,7 +849,7 @@ export function ClubDrawerHost({
           <SlotShell
             slot={activeSettingsTab.id}
             viewer="owner"
-            title="Réglages & Permissions"
+            title="Administration du club"
             lenses={settingsTabs}
             activeLensIndex={settingsSubTab}
             onLensChange={(idx) => {
@@ -972,20 +986,22 @@ export function ClubDrawerHost({
                     size="default"
                   />
                 </div>
-                <button
-                  type="button"
-                  className="lkdv-carnet-btn-soft"
-                  style={{ height: 38, width: 38, padding: 0, flex: 'none', justifyContent: 'center' }}
-                  onClick={() => {
-                    haptic('selection');
-                    setSettingsSubTab(0);
-                    setInternalMode('settings');
-                  }}
-                  aria-label="Réglages et permissions du club"
-                  title="Réglages & Permissions"
-                >
-                  <Settings size={16} aria-hidden="true" />
-                </button>
+                {canAccessClubAdmin ? (
+                  <button
+                    type="button"
+                    className="lkdv-carnet-btn-soft"
+                    style={{ height: 38, width: 38, padding: 0, flex: 'none', justifyContent: 'center' }}
+                    onClick={() => {
+                      haptic('selection');
+                      setSettingsSubTab(0);
+                      setInternalMode('settings');
+                    }}
+                    aria-label="Administration du club"
+                    title="Administration du club"
+                  >
+                    <Settings size={16} aria-hidden="true" />
+                  </button>
+                ) : null}
               </div>
               {tab === 1 && inspectedMember ? (() => {
                 const mName = inspectedMember.name?.trim() || inspectedMember.handle?.trim() || 'Voyageur';

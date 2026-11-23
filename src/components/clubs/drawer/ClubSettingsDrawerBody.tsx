@@ -214,6 +214,22 @@ export function ClubSettingsDrawerBody({
     });
   };
 
+  const canAccessAdminDrawer = Boolean(
+    canReviewAccess || canManageClubGear || activeClub.viewerCanManageStories,
+  );
+
+  if (!canAccessAdminDrawer) {
+    return (
+      <div className="club-drawer-pane-content" data-testid="club-settings-forbidden-pane">
+        <ClubEmptyCard
+          icon={<Lock size={22} />}
+          title="Espace réservé à l’administration"
+          description="Seuls les membres autorisés (fondateur, bureau, modérateurs et référents) peuvent accéder à la plateforme d’administration du club."
+        />
+      </div>
+    );
+  }
+
   // 0 — Général & Visibilité
   if (activeSubTab === 0) {
     const visLabel =
