@@ -237,3 +237,56 @@
 .rcw-src-contents {
   display: contents;
 }
+
+.rcw-publish-sentence {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--xp-txt);
+}
+
+.rcw-checks {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rcw-checks .rcw-check-row {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--xp-txt);
+}
+
+.rcw-overlay {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--xp-ink) 6%, transparent);
+}
+
+.rcw-overlay path {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rcw-overlay-plan,
+.rcw-overlay-key.plan {
+  stroke: var(--lkv-sage-500);
+  background: var(--lkv-sage-500);
+}
+
+.rcw-overlay-real,
+.rcw-overlay-key.real {
+  stroke: var(--lkv-forest-900);
+  background: var(--lkv-forest-900);
+}
+
+.rcw-overlay path.rcw-overlay-plan {
+  stroke-dasharray: 6 4;
+}

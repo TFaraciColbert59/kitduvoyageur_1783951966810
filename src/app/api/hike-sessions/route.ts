@@ -24,6 +24,7 @@ import {
   type TraceImportSummaryPayload,
 } from '@/features/hiking/import/seriesContract';
 import { TRACE_IMPORT_MAX_PAYLOAD_SAMPLES } from '@/features/hiking/import/series';
+import { isMissingColumnError, resolveRouteLink } from './routeLink';
 
 const logger = createStructuredLogger({ service: 'api.hike-sessions' });
 
@@ -108,6 +109,13 @@ interface SaveHikeSessionBody {
    * Sans ce champ, le comportement historique (carnet auto) reste actif.
    */
   createCarnet?: boolean;
+  /**
+   * 9.8 — version d'itinéraire suivie et sac emporté. Champs additifs : absents ou invalides, la route garde son
+   * comportement historique. Le lien n'est gardé que si la personne lit l'espace (RLS).
+   */
+  routeWorkspaceId?: string | null;
+  routeRevisionId?: string | null;
+  kitSnapshot?: unknown;
 }
 
 /** Texte borné, jamais une valeur inventée quand la source est absente. */
@@ -544,30 +552,36 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Insert the hike session
-    const { data: session, error: sessionError } = await supabase
+    const routeLink = await resolveRouteLink(supabase, body);
+    const sessionRow = {
+      user_id: userId,
+      route_id: body.routeId ? Number(body.routeId) : null,
+      kit_id: body.kitId || null,
+      carnet_id: carnetId,
+      trip_id: tripId,
+      started_at: body.startedAt,
+      ended_at: body.endedAt,
+      distance_km: body.distanceKm,
+      duration_seconds: body.durationSeconds,
+      elevation_gain_m: body.elevationGainM ?? null,
+      positions_geojson: positionsGeojson,
+      positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
+      poi_events: body.poiEvents || [],
+      title: boundedTitle(body.title),
+      notes: boundedText(body.notes, 2000),
+      max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
+      visibility: 'private',
+      correlation_id: correlationId,
+    };
+    let { data: session, error: sessionError } = await supabase
       .from('hike_sessions')
-      .insert({
-        user_id: userId,
-        route_id: body.routeId ? Number(body.routeId) : null,
-        kit_id: body.kitId || null,
-        carnet_id: carnetId,
-        trip_id: tripId,
-        started_at: body.startedAt,
-        ended_at: body.endedAt,
-        distance_km: body.distanceKm,
-        duration_seconds: body.durationSeconds,
-        elevation_gain_m: body.elevationGainM ?? null,
-        positions_geojson: positionsGeojson,
-        positions_timed: positionsTimed.length >= 2 ? positionsTimed : null,
-        poi_events: body.poiEvents || [],
-        title: boundedTitle(body.title),
-        notes: boundedText(body.notes, 2000),
-        max_altitude_m: boundedInteger(body.maxAltitudeM, -500, 9000),
-        visibility: 'private',
-        correlation_id: correlationId,
-      })
+      .insert(routeLink ? { ...sessionRow, ...routeLink } : sessionRow)
       .select('id')
       .single();
+    // Migration route-collab pas encore appliquée : la sortie s'enregistre sans le lien (rétrocompatible).
+    if (routeLink && isMissingColumnError(sessionError)) {
+      ({ data: session, error: sessionError } = await supabase.from('hike_sessions').insert(sessionRow).select('id').single());
+    }
 
     if (sessionError || !session) {
       console.error('[hike-sessions] Insert error:', sessionError);

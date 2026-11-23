@@ -60,6 +60,7 @@ import { ROLE_LABELS } from './labels';
 import { routingQueryParams } from '../../routingProfiles';
 import { useRouteEntry } from './start/RouteEntryContext';
 import { isRealTripId } from '../../startPersist';
+import { handoffFromRevision, writeHandoff } from '../../depart/activityHandoff';
 import { useRouteRealtime } from './useRouteRealtime';
 import {
   COMMENT_TARGET_LABEL,
@@ -1513,9 +1514,73 @@ export function useRouteWorkspaceState({
       setStatusMessage('Publiez d’abord une version ou téléchargez un pack avant de démarrer.');
       return;
     }
-    startActivityFromRevision(currentUserId, rev, new Date().toISOString());
+    const nowIso = new Date().toISOString();
+    startActivityFromRevision(currentUserId, rev, nowIso);
+    // 9.8 : le cockpit (suivi en direct, contact de sécurité) joint cette version et ce sac à la sortie enregistrée.
+    const handoffOk = isRealTripId(workspace.tripId) && writeHandoff(handoffFromRevision(workspace.tripId, rev, nowIso));
     setOfflineTick((v) => v + 1);
-    setStatusMessage(`Activité démarrée avec la version ${rev.revisionNo} et le snapshot du kit.`);
+    setStatusMessage(
+      handoffOk
+        ? `Activité démarrée avec la version ${rev.revisionNo} et le sac figé : la sortie les gardera.`
+        : `Activité démarrée avec la version ${rev.revisionNo} (voyage non rattaché : la sortie ne gardera pas ce lien).`
+    );
+  };
+
+  /** 9.3 : plusieurs attributions d'un coup (une seule écriture : pas d'attribution perdue par un état périmé). */
+  const handleAssignKitItems = async (assignments: readonly { itemId: string; userId: string }[]) => {
+    if (assignments.length === 0) return;
+    if (serverSynced) {
+      let latest: RouteWorkspaceState | null = null;
+      for (const a of assignments) {
+        const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'assign', itemId: a.itemId, assigneeUserId: a.userId }),
+        });
+        if (!res.ok) {
+          setStatusMessage('Une partie des attributions n’a pas pu être enregistrée · réessayer');
+          break;
+        }
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) latest = data.workspace;
+      }
+      if (latest) commitState(latest);
+      return;
+    }
+    const byItem = new Map(assignments.map((a) => [a.itemId, a.userId]));
+    const nextKit: CollaborativeKitItem[] = workspace.kitItems.map((item) => {
+      const userId = byItem.get(item.id);
+      if (!userId) return item;
+      const member = workspace.members.find((m) => m.userId === userId);
+      return { ...item, assigneeUserId: userId, assigneeName: member?.displayName ?? null, status: 'confirmed' };
+    });
+    commitState({ ...workspace, kitItems: nextKit, updatedAt: new Date().toISOString() });
+  };
+
+  /** 9.1 : ajoute au sac de l'itinéraire des objets du voyage ; serveur (`/api/routes/[id]/kit`) ou local. */
+  const handleAddKitItems = async (items: readonly CollaborativeKitItem[]) => {
+    if (items.length === 0) return;
+    if (serverSynced) {
+      let latest: RouteWorkspaceState | null = null;
+      for (const newItem of items) {
+        const res = await fetch(`/api/routes/${encodeURIComponent(workspace.id)}/kit`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', newItem }),
+        });
+        if (!res.ok) {
+          setStatusMessage('Une partie du sac n’a pas pu être ajoutée · réessayer');
+          break;
+        }
+        const data = (await res.json()) as { workspace?: RouteWorkspaceState };
+        if (data.workspace) latest = data.workspace;
+      }
+      if (latest) commitState(latest);
+      return;
+    }
+    commitState({ ...workspace, kitItems: [...workspace.kitItems, ...items], updatedAt: new Date().toISOString() });
   };
 
   const handleFinishToCarnet = () => {
@@ -1536,11 +1601,14 @@ export function useRouteWorkspaceState({
     }
   };
 
-  const handleDuplicateFromCarnet = () => {
+  const handleDuplicateFromCarnet = (session?: { sessionId: string; startedAt: string } | null) => {
     const copy = duplicateWorkspaceWithProvenance({
       sourceWorkspace: workspace,
       newWorkspaceId: `ws-copy-${Date.now().toString(36)}`,
-      newTripId: `trip-copy-${Date.now().toString(36)}`,
+      // Même voyage : un brouillon n'est jamais rattaché à un voyage inventé.
+      newTripId: workspace.tripId,
+      sourceSessionId: session?.sessionId ?? null,
+      sourceSessionDate: session?.startedAt ?? null,
       ownerId: currentUserId,
       ownerName: currentUserName,
       nowIso: new Date().toISOString(),
@@ -2347,6 +2415,8 @@ export function useRouteWorkspaceState({
     handleRevalidateKitItem,
     handleManageShareLink,
     handleStartActivity,
+    handleAddKitItems,
+    handleAssignKitItems,
     handleFinishToCarnet,
     handleDuplicateFromCarnet,
     refreshKnowledgeBank,

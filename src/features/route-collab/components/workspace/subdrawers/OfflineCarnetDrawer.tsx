@@ -1,5 +1,9 @@
 import { XpEyebrow, XpMetrics, XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
+import { packAnnouncement } from '../../../depart/packInfo';
+import { publishPreview } from '../../../depart/publishSummary';
 import type { DrawerHeader } from '../types';
+import { PlanVsActualBlock } from '../depart/PlanVsActual';
+import { useLinkedSessions } from '../depart/useDepart';
 import { Banners } from '../Banners';
 import { useRouteWorkspace, type RouteWorkspaceApi } from '../WorkspaceContext';
 
@@ -32,6 +36,8 @@ export function OfflineCarnetDrawer() {
     handleFinishToCarnet,
     handleDuplicateFromCarnet,
   } = useRouteWorkspace();
+  const sessions = useLinkedSessions(true);
+  const announce = packAnnouncement(workspace, workspace.packs[workspace.packs.length - 1] ?? null);
   return (
     <div className="rcw-stack" data-testid="subdrawer-offline-carnet">
       <Banners />
@@ -64,9 +70,13 @@ export function OfflineCarnetDrawer() {
         </div>
       ) : null}
 
+      <p className="rcw-sub-note" data-testid="drawer-pack-size">
+        {announce.text}. {announce.mapNote}
+      </p>
+
       <div className="rcw-inline-actions">
         {canPublish ? (
-          <button type="button" className="xp-primary" onClick={() => void handlePublish()}>
+          <button type="button" className="xp-primary" onClick={() => void handlePublish(publishPreview(workspace).summary)}>
             Publier v{(workspace.publishedRevisionNo ?? 0) + 1}
           </button>
         ) : null}
@@ -152,19 +162,27 @@ export function OfflineCarnetDrawer() {
 
       {carnetRecord ? (
         <div className="rcw-stack" data-testid="carnet-return-card">
-          <XpEyebrow>Bilan Carnet (immuable)</XpEyebrow>
+          <XpEyebrow>Sortie terminée</XpEyebrow>
           <XpMetrics
             items={[
               { label: 'Plan suivi', value: `v${carnetRecord.plannedRevisionNo}` },
-              { label: 'Distance', value: `${carnetRecord.recordedDistanceKm} km` },
               { label: 'Kit emporté', value: `${carnetRecord.kitSnapshot.length} art.` },
             ]}
           />
-          <button type="button" className="xp-primary" onClick={handleDuplicateFromCarnet}>
+          <p className="rcw-sub-note">Les distances et temps réels viennent de la sortie enregistrée (ci-dessous), pas du plan.</p>
+          <button type="button" className="xp-primary" onClick={() => handleDuplicateFromCarnet(null)}>
             Reprendre cette sortie
           </button>
         </div>
       ) : null}
+
+      <PlanVsActualBlock
+        workspace={workspace}
+        sessions={sessions.sessions}
+        status={sessions.status}
+        reason={sessions.reason}
+        onReplay={(s) => handleDuplicateFromCarnet(s)}
+      />
     </div>
   );
 }

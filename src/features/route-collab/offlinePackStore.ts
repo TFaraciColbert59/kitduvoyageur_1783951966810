@@ -311,8 +311,12 @@ export function duplicateWorkspaceWithProvenance(params: {
   ownerId: string;
   ownerName: string;
   nowIso: string;
+  /** Sortie enregistrée (`hike_sessions`) d'où l'on reprend : devient la provenance du brouillon (9.10). */
+  sourceSessionId?: string | null;
+  sourceSessionDate?: string | null;
 }): RouteWorkspaceState {
-  const { sourceWorkspace, newWorkspaceId, newTripId, ownerId, ownerName, nowIso } = params;
+  const { sourceWorkspace, newWorkspaceId, newTripId, ownerId, ownerName, nowIso, sourceSessionId, sourceSessionDate } = params;
+  const sessionDay = sourceSessionDate && Number.isFinite(Date.parse(sourceSessionDate)) ? sourceSessionDate.slice(0, 10).split('-').reverse().join('/') : null;
   return {
     ...sourceWorkspace,
     id: newWorkspaceId,
@@ -325,10 +329,10 @@ export function duplicateWorkspaceWithProvenance(params: {
     publishedRevisionNo: null,
     sourceOrigin: {
       kind: 'activity_replay',
-      sourceId: sourceWorkspace.id,
+      sourceId: sourceSessionId ?? sourceWorkspace.id,
       sourceTitle: sourceWorkspace.title,
       importedAt: nowIso,
-      attribution: `Repris depuis ${sourceWorkspace.title}`,
+      attribution: sessionDay ? `Repris depuis la sortie du ${sessionDay} (${sourceWorkspace.title})` : `Repris depuis ${sourceWorkspace.title}`,
     },
     points: sourceWorkspace.points.map((p) => ({ ...p, workspaceId: newWorkspaceId, entityVersion: 1 })),
     sections: sourceWorkspace.sections.map((s) => ({ ...s, workspaceId: newWorkspaceId, entityVersion: 1 })),

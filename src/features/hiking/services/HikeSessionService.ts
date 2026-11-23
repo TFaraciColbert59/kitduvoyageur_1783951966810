@@ -1,4 +1,5 @@
 import { HikeSession, GPSPosition, HikingStatistics } from '../types';
+import { clearHandoff, handoffBody, readHandoffFor } from '@/features/route-collab/depart/activityHandoff';
 
 export interface PersistedGpsTimedSample {
   lat: number;
@@ -48,12 +49,17 @@ export class HikeSessionService {
         return sample;
       });
 
+    // 9.8 : la version d'itinéraire suivie et le sac emporté, laissés par « Démarrer l'activité » pour ce voyage.
+    // Sans passation (cas historique), le corps est inchangé.
+    const handoff = params.tripId ? readHandoffFor(params.tripId) : null;
+
     const res = await fetch(`${baseUrl}/api/hike-sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         ...params,
         positionsTimed: positionsTimed.length >= 2 ? positionsTimed : undefined,
+        ...handoffBody(handoff),
       }),
     });
 
@@ -62,6 +68,7 @@ export class HikeSessionService {
       throw new Error(err.error || 'Erreur de sauvegarde de session');
     }
 
+    if (handoff) clearHandoff();
     return res.json();
   }
 
