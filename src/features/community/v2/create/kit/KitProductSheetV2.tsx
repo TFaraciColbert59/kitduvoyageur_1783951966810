@@ -607,7 +607,13 @@ export function KitProductSheetV2({
           ? {
               position: 'relative',
               inset: 'auto',
+              left: 'auto',
+              right: 'auto',
+              top: 'auto',
+              bottom: 'auto',
+              transform: 'none',
               width: '100%',
+              maxWidth: '100%',
               height: '100%',
               maxHeight: '100%',
               borderRadius: 0,

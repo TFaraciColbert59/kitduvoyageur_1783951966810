@@ -5580,6 +5580,33 @@
   border-top: 1px solid #e5e7eb;
 }
 
+.lkdv-cv2c-stack-overlay.is-level2.is-product-sheet.is-embedded {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  z-index: 1 !important;
+}
+
+.lkdv-cv2c-stack-overlay.is-product-sheet.is-embedded .lkdv-cv2c-ps-head {
+  background: transparent !important;
+  padding: 2px 6px 6px !important;
+}
+
+.lkdv-cv2c-stack-overlay.is-product-sheet.is-embedded .lkdv-cv2c-stack-float-dock {
+  display: none !important;
+}
+
 .lkdv-cv2c-ps-head {
   display: flex;
   align-items: center;
