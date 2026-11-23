@@ -1043,7 +1043,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                 const p = selectedKitProductState.products[selectedKitProductState.index];
                 const product: PickerProduct = {
                   key: p.id,
-                  source: 'sac',
+                  source: 'inventory',
                   id: p.id,
                   name: p.name,
                   brand: p.brand || null,
@@ -1078,7 +1078,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                         s && s.index < s.products.length - 1 ? { ...s, index: s.index + 1 } : s,
                       )
                     }
-                    onToggleInKit={() => setSelectedKitProductState(null)}
+                    onAdd={() => setSelectedKitProductState(null)}
                     onClose={() => setSelectedKitProductState(null)}
                   />
                 );

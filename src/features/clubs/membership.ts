@@ -82,10 +82,12 @@ export function createClubWithFounder(input: CreateClubInput): ClubResult<{
     userId: input.creatorUserId,
     displayName: input.creatorDisplayName,
     avatarUrl: input.creatorAvatarUrl ?? null,
-    role: 'admin',
+    role: 'founder',
     status: 'active',
     joinedAt: input.nowIso,
     leaderboardOptIn: true,
+    canManageStories: true,
+    canManageGear: true,
   };
 
   return { ok: true, data: { club, founderMember } };
@@ -276,25 +278,6 @@ export function changeMemberRole(params: {
     };
   }
 
-  if (target.role === 'founder' && newRole !== 'founder') {
-    return {
-      ok: false,
-      error: 'FORBIDDEN',
-      message: 'Le fondateur du club ne peut pas être rétrogradé.',
-    };
-  }
-
-  const hasFounder = memberships.some(
-    (m) => m.clubId === clubId && m.status === 'active' && m.role === 'founder',
-  );
-  if (hasFounder && (target.role === 'admin' || newRole === 'admin' || newRole === 'founder') && actor.role !== 'founder') {
-    return {
-      ok: false,
-      error: 'FORBIDDEN',
-      message: 'Seul le fondateur peut nommer ou rétrograder un administrateur.',
-    };
-  }
-
   // Invariant 3 : protection du dernier admin/fondateur
   if ((target.role === 'admin' || target.role === 'founder') && newRole !== 'admin' && newRole !== 'founder') {
     const activeAdminsCount = memberships.filter(
@@ -307,6 +290,22 @@ export function changeMemberRole(params: {
         message: 'Impossible de rétrograder le dernier administrateur du club.',
       };
     }
+  }
+
+  if (target.role === 'founder' && newRole !== 'founder') {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Le fondateur du club ne peut pas être rétrogradé.',
+    };
+  }
+
+  if ((target.role === 'admin' || newRole === 'admin' || newRole === 'founder') && actor.role !== 'founder') {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Seul le fondateur peut nommer ou rétrograder un administrateur.',
+    };
   }
 
   const updated = memberships.map((m) =>

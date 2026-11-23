@@ -141,7 +141,7 @@ describe('G02 Clubs — Adhésion, rôles, confidentialité & invitations', () =
     expect(created.ok).toBe(true);
     if (!created.ok) return;
     expect(created.data.club.privacy).toBe('secret');
-    expect(created.data.founderMember.role).toBe('admin');
+    expect(created.data.founderMember.role).toBe('founder');
 
     // Un club secret refuse toute adhésion directe sans invitation
     const joinSecret = requestOrJoinClub({

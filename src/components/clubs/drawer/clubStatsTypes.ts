@@ -1,3 +1,5 @@
+import type { ClubRole } from '@/features/clubs/types';
+
 export type ClubStatsWindow = '7d' | '30d' | 'season' | 'all';
 
 export type ClubHierarchyTier = 'visitor' | 'member' | 'staff' | 'admin';
@@ -73,7 +75,7 @@ export interface ClubMemberEffortStat {
   displayName: string;
   handle: string;
   avatarUrl: string | null;
-  role: 'admin' | 'moderator' | 'member';
+  role: ClubRole;
   roleLabel: string;
   distanceKm: number;
   dplusM: number;

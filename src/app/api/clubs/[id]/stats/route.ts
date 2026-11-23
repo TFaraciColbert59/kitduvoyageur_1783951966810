@@ -66,11 +66,11 @@ function resolvePrevWindowRange(
   return { start: start - span, end: start };
 }
 
-function roleLabelOf(role: 'admin' | 'moderator' | 'member', isFounder: boolean): string {
-  if (isFounder) return 'Fondateur';
+function roleLabelOf(role: 'founder' | 'admin' | 'moderator' | 'member', isFounder: boolean): string {
+  if (isFounder || role === 'founder') return 'Fondateur';
   if (role === 'admin') return 'Admin';
-  if (role === 'moderator') return 'Encadrant';
-  return 'Membre actif';
+  if (role === 'moderator') return 'Modérateur';
+  return 'Membre';
 }
 
 function scoreGrade(total: number): string {

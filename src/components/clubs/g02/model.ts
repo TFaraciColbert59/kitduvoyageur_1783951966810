@@ -34,6 +34,7 @@ export const PRIVACY_HINTS: Record<ClubPrivacy, string> = {
 };
 
 export const ROLE_LABELS: Record<ClubRole, string> = {
+  founder: 'Fondateur',
   admin: 'Administrateur',
   moderator: 'Modérateur',
   member: 'Membre',
@@ -324,7 +325,7 @@ export function initials(name: string): string {
 }
 
 export function sortMembersForDisplay(members: readonly ClubMember[]): ClubMember[] {
-  const rank: Record<ClubRole, number> = { admin: 0, moderator: 1, member: 2 };
+  const rank: Record<ClubRole, number> = { founder: 0, admin: 1, moderator: 2, member: 3 };
   return [...members]
     .filter((member) => member.status === 'active' || member.status === 'pending')
     .sort((a, b) => {

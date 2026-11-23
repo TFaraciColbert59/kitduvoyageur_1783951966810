@@ -299,9 +299,9 @@ export interface ClubDrawerHostProps {
     objective: string;
   }) => Promise<void> | void;
   onChangeMemberRole?: (
-    member: ClubMemberData,
-    nextRole: 'admin' | 'moderator' | 'member',
-  ) => Promise<void> | void;
+    userId: string,
+    nextRole: ClubRole,
+  ) => Promise<boolean> | void;
   onToggleMemberStoryPermission?: (
     userId: string,
     canManageStories: boolean,
@@ -428,9 +428,9 @@ export interface ClubCordeeDrawerBodyProps {
     objective: string;
   }) => Promise<void> | void;
   onChangeMemberRole?: (
-    member: ClubMemberData,
-    nextRole: 'admin' | 'moderator' | 'member',
-  ) => Promise<void> | void;
+    userId: string,
+    nextRole: ClubRole,
+  ) => Promise<boolean> | void;
   onToggleMemberStoryPermission?: (
     userId: string,
     canManageStories: boolean,

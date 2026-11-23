@@ -14,7 +14,7 @@ function resolveRealProductImage(name: string, category: string): string {
   if (/secours|pharmacie|couverture/.test(hay)) return '/assets/images/adventure-bivouac.jpg';
   return '/assets/images/product-backpack.jpg';
 }
-import type { ClubStandardKitData } from './ClubDrawerTypes';
+import type { ClubStandardKit } from './ClubDrawerTypes';
 
 function inferCategoryFromLabel(label: string): string {
   const s = label.toLowerCase();
@@ -54,6 +54,10 @@ export function mapClubStandardKitToKitEntry(kit: {
       category,
       quantity: 1,
       weightG: perItemWeight,
+      condition: null,
+      priority: null,
+      vital: false,
+      brand: null,
       image: resolveRealProductImage(itemName, category),
       description: kit.season ? `Inclus dans ${kit.title} (${kit.season}).` : `Inclus dans ${kit.title}.`,
     };
@@ -62,10 +66,10 @@ export function mapClubStandardKitToKitEntry(kit: {
   return {
     id: kit.id,
     name: kit.title,
-    weight_g: kit.totalWeightG,
-    weight: kit.totalWeightG,
+    w: kit.totalWeightG,
+    total_weight_g: kit.totalWeightG,
+    items: count,
     desc: kit.description || (kit.season ? `Kit club · ${kit.season}` : 'Kit officiel du club'),
     products,
-    wear: 18,
   };
 }
