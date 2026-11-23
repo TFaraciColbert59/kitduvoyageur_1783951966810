@@ -846,8 +846,8 @@
 }
 
 .lkdv-clubs-v8 .phone.map-collapsed {
-  /* 78px (.tb bottom 24 + height 54) + 1px + 28px (pill) + 1px = 108px */
-  grid-template-rows: calc(100% - 108px) 108px !important;
+  /* 78px (.tb bottom 24 + height 54) + 5px + 28px (pill) + 5px = 116px */
+  grid-template-rows: calc(100% - 116px) 116px !important;
 }
 
 .lkdv-clubs-v8 .phone.map-collapsed .top {
@@ -856,7 +856,7 @@
 
 /* Quand un drawer est ouvert (.sheet-open), la bottombar disparaît : on descend le drawer et la pilule au plus bas */
 .lkdv-clubs-v8 .phone.sheet-open.map-collapsed {
-  grid-template-rows: calc(100% - 36px) 36px !important;
+  grid-template-rows: calc(100% - 38px) 38px !important;
 }
 
 .lkdv-clubs-v8 .phone.sheet-open .sw-wrap[data-det="medium"] .sheet {
@@ -864,29 +864,29 @@
 }
 
 .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] {
-  bottom: 36px !important;
+  bottom: 38px !important;
 }
 
 .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="medium"] .sheet {
-  bottom: 36px !important;
+  bottom: 38px !important;
 }
 
 @media (max-width: 600px) {
   .lkdv-clubs-v8 .phone.map-collapsed {
-    /* Mobile .tb: bottom 12px + safe-area + height 54px = 66px -> + 1px + 28px + 1px = 96px */
-    grid-template-rows: calc(100% - 96px - env(safe-area-inset-bottom, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    /* Mobile .tb: bottom 12px + safe-area + height 54px = 66px -> + 5px + 28px + 5px = 104px */
+    grid-template-rows: calc(100% - 104px - env(safe-area-inset-bottom, 0px)) calc(104px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .lkdv-clubs-v8 .phone.map-collapsed .top {
     padding-bottom: 0 !important;
   }
   .lkdv-clubs-v8 .phone.sheet-open.map-collapsed {
-    grid-template-rows: calc(100% - 36px - env(safe-area-inset-bottom, 0px)) calc(36px + env(safe-area-inset-bottom, 0px)) !important;
+    grid-template-rows: calc(100% - 38px - env(safe-area-inset-bottom, 0px)) calc(38px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="card"] {
-    bottom: calc(36px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(38px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .lkdv-clubs-v8 .phone.sheet-open.map-collapsed .sw-wrap[data-det="medium"] .sheet {
-    bottom: calc(36px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: calc(38px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -973,7 +973,7 @@
 .lkdv-clubs-v8 #club-map-pill.club-map-pill-launcher {
   position: absolute !important;
   left: 50% !important;
-  top: 1px !important;
+  top: 5px !important;
   bottom: auto !important;
   z-index: 35 !important;
   opacity: 0 !important;
