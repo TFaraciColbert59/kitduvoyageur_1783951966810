@@ -16,11 +16,20 @@ import { saveClubRouteDecision } from './clubRouteDecisionAction';
 const EMPTY_ROUTE: Array<[number, number]> = [];
 
 async function fetchRoute(eventId: string, revision: number, signal: AbortSignal) {
-  const { data, error } = await createClient().rpc('get_club_event_route_trace', {
+  const client = createClient();
+  const { data, error } = await client.rpc('get_club_event_route_trace', {
     p_event_id: eventId, p_revision: revision,
   }).abortSignal(signal);
-  if (error) throw error;
-  const segments = clubRouteSegments(data);
+  let geometry: unknown = data;
+  if (error || !data) {
+    // Base sans la fonction (20261119205238 non appliquée) ou révision issue d'un espace : la géométrie est la
+    // colonne `trace` de la révision, lue sous la RLS de la table.
+    const direct = await client.from('club_event_route_revisions').select('trace')
+      .eq('event_id', eventId).eq('revision', revision).abortSignal(signal).maybeSingle();
+    if (direct.error && error) throw error;
+    geometry = (direct.data as { trace?: unknown } | null)?.trace ?? null;
+  }
+  const segments = clubRouteSegments(geometry);
   if (segments.length === 0) throw new Error('Club route geometry is unavailable');
   return segments;
 }
@@ -66,6 +75,7 @@ export default function ClubEventRouteProposal({
   routeName,
   distanceM,
   elevationGainM,
+  sourceRevisionNo = null,
   canDecide,
   decision,
   adoptedRevision,
@@ -76,6 +86,8 @@ export default function ClubEventRouteProposal({
   routeName: string | null;
   distanceM: number | null;
   elevationGainM: number | null;
+  /** Version de l'espace d'itinéraire d'origine (null : révision du catalogue). */
+  sourceRevisionNo?: number | null;
   canDecide: boolean;
   decision: boolean | null;
   adoptedRevision: number | null;
@@ -158,6 +170,11 @@ export default function ClubEventRouteProposal({
           elevationGainM != null ? formatElevationM(elevationGainM) : null,
         ].filter(Boolean).join(' · ')}
       </p>
+      {sourceRevisionNo != null && (
+        <p className="lkdv-event-muted" data-testid="club-route-source">
+          Proposé depuis l’itinéraire · version {sourceRevisionNo}
+        </p>
+      )}
       {isOnline && (
         <button type="button" className="lkdv-event-secondary" aria-expanded={mapRevision === revision}
           aria-controls={geometryId} disabled={!currentViewer} onClick={() => toggleMap(revision)}>

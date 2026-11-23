@@ -8,6 +8,7 @@ import { listOwnedTripLinkChoices } from '@/features/trips/server/discoverTrips'
 import EventDetailClient, { type EventDetailData } from './EventDetailClient';
 import EventHubLink from './EventHubLink';
 import ClubEventRouteProposal from './ClubEventRouteProposal';
+import { readClubRouteProposal } from './readClubRouteProposal';
 import './event-detail.css';
 
 export const dynamic = 'force-dynamic';
@@ -100,8 +101,7 @@ export default async function SortiePage({ params, searchParams }: {
       user ? resolveEventAdventure(eventRef) : null,
       canLink && user ? listOwnedTripLinkChoices(user.id) : null,
       canLoadRoute
-        ? supabase.from('club_event_route_revisions').select('route_name,distance_m,elevation_gain_m')
-          .eq('event_id', id).eq('revision', revision).not('canonical_revision_id', 'is', null).maybeSingle()
+        ? readClubRouteProposal(supabase, id, revision as number).then((data) => ({ data }))
         : { data: null },
       canLoadRoute && user
         ? supabase.from('club_event_route_decisions').select('adopted')
@@ -242,9 +242,10 @@ export default async function SortiePage({ params, searchParams }: {
           viewerId={user.id}
           eventId={id}
           revision={revision}
-          routeName={asString(proposal.route_name)}
-          distanceM={asNumber(proposal.distance_m)}
-          elevationGainM={asNumber(proposal.elevation_gain_m)}
+          routeName={proposal.routeName}
+          distanceM={proposal.distanceM}
+          elevationGainM={proposal.elevationGainM}
+          sourceRevisionNo={proposal.sourceRevisionNo}
           canDecide={myStatus === 'registered'}
           decision={typeof routeDecision?.adopted === 'boolean' ? routeDecision.adopted : null}
           adoptedRevision={asNumber(routeState?.adopted_revision)}

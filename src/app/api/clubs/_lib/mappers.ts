@@ -294,6 +294,7 @@ export function mapRouteSnapshot(row: Row): RouteRevisionSnapshot {
     distanceM: asNumber(row.distance_m) ?? 0,
     elevationGainM: asNumber(row.elevation_gain_m),
     canonicalRevisionId: asString(row.canonical_revision_id),
+    sourceRevisionNo: asNumber(row.source_revision_no),
     routeName: asString(row.route_name),
     meetingPoint: asString(row.meeting_point),
     updatedBy: String(row.updated_by ?? ''),

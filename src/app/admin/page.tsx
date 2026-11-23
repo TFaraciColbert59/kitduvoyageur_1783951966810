@@ -589,7 +589,7 @@ function UsersSection() {
 
 // ─── Section: Moderation ───────────────────────────────────────────────────────
 // Branchée sur le serveur (`/api/admin/moderation`, réservé aux modérateurs) : traces publiques, commentaires
-// et liens partagés d'itinéraire, statut lu dans `moderation_queue`, décision consignée dans `admin_audit_log`.
+// et liens partagés d'itinéraire, statut lu dans `admin_audit_log` (dernière décision), décision consignée dans `admin_audit_log`.
 type ModerationItem = {
   type: 'route_public_trace' | 'route_comment' | 'route_share_link';
   id: string;
@@ -761,7 +761,7 @@ function ModerationSection() {
           </div>
         )}
       </div>
-      <p className="text-[11px] text-white/30">Un rejet est appliqué (commentaire masqué ou supprimé, lien révoqué, trace retirée) et consigné dans la file et le journal d’audit ; valider ne change rien au contenu.</p>
+      <p className="text-[11px] text-white/30">Un rejet est appliqué (commentaire masqué ou supprimé, lien révoqué, trace retirée) et consigné dans le journal d’audit ; valider ne change rien au contenu.</p>
     </div>
   );
 }

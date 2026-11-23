@@ -84,6 +84,8 @@ export interface CockpitData {
     revision: number;
     adoptedRevision: number | null;
     decisionPending: boolean;
+    /** Version de l'espace d'itinéraire d'où vient la révision (null : révision du catalogue). */
+    sourceRevisionNo?: number | null;
   }[];
   /** Version publiée de l'itinéraire collaboratif (10.3), lue côté serveur sous RLS ; absent sans publication. */
   publishedRoute?: {

@@ -90,6 +90,25 @@ describe('G02 — fiche sortie K5.21/K5.23/S5.14', () => {
     await waitFor(() => expect(onDecideRoute).toHaveBeenCalledWith(2, false));
   });
 
+  it('révision issue d’un espace d’itinéraire : mention de version et mêmes gestes de décision', async () => {
+    const onDecideRoute = vi.fn();
+    renderDetail({
+      latestRevision: {
+        eventId: makeEvent().id, routeId: 'ws-1', canonicalRevisionId: null, sourceRevisionNo: 3, revision: 2,
+        checksum: 'sum', distanceM: 3300, elevationGainM: 200, updatedBy: 'admin', updatedAt: NOW,
+        requiresParticipantDecision: true,
+      },
+      routeSyncState: {
+        eventId: makeEvent().id, userId: 'admin', lastSyncedRevision: 2, pendingRevision: 2,
+        decisionRequired: true, revoked: false, syncedAt: NOW,
+      },
+      onDecideRoute,
+    });
+    expect(screen.getByTestId('route-source').textContent).toBe('Proposé depuis l’itinéraire · version 3');
+    fireEvent.click(screen.getByRole('button', { name: 'Adopter ce tracé' }));
+    await waitFor(() => expect(onDecideRoute).toHaveBeenCalledWith(2, true));
+  });
+
   it('publie le tracé choisi dans le catalogue et la révision attendue', async () => {
     const onPublishRoute = vi.fn();
     renderDetail({ onPublishRoute });

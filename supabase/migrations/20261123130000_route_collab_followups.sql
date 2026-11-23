@@ -1,10 +1,11 @@
 -- Suites de l'itinéraire collaboratif (/compas/itineraire), après 20261118120000_route_collab_20_10 :
 --   4.1  préférences d'interface par compte (Simple / Expert), table privée sous RLS ;
 --   10.5 sortie de club : la version PUBLIÉE d'un espace devient une révision de tracé de la sortie ;
---   10.10 modération : lecture et APPLICATION réelle des décisions (commentaire, lien partagé, trace publique).
+--   10.10 modération : lecture et APPLICATION réelle des décisions (commentaire, lien partagé, trace publique),
+--         journalisées dans admin_audit_log (moderation_queue n'est pas utilisée).
 -- Retour arrière : supabase/migrations_down/20261123130000_route_collab_followups.down.sql.
 -- Prérequis : 20261118120000 (route_*), 20261119204829 / 20261119205238 (révisions de tracé des clubs),
--- 20260710110000 (admin_roles, moderation_queue, admin_audit_log, is_moderateur).
+-- 20260710110000 (admin_roles, admin_audit_log, is_moderateur). La section 2 (clubs) est conditionnelle (voir plus bas).
 
 -- ----------------------------------------------------------------------------
 -- 1. 4.1 Préférences d'interface par compte. Jamais exposées par une vue publique.
@@ -29,169 +30,242 @@ CREATE POLICY user_ui_prefs_update_own ON public.user_ui_prefs
   FOR UPDATE TO authenticated USING (user_id = (SELECT auth.uid())) WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- ----------------------------------------------------------------------------
--- 2. 10.5 Clubs : révision de tracé issue d'un espace d'itinéraire
+-- 2. 10.5 Clubs : révision de tracé issue d'un espace d'itinéraire (CONDITIONNEL)
 -- ----------------------------------------------------------------------------
 -- La géométrie vit dans la révision (`trace`, GeoJSON) : un espace n'a pas de ligne dans hiking_route_revisions.
 -- `trace.sanitized` dit si la zone de départ privée a été masquée (sortie publique) au moment de la copie.
-ALTER TABLE public.club_event_route_revisions
-  ADD COLUMN IF NOT EXISTS source_workspace_id UUID REFERENCES public.route_workspaces(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS source_revision_no BIGINT,
-  ADD COLUMN IF NOT EXISTS trace JSONB;
-CREATE INDEX IF NOT EXISTS club_event_route_revisions_source_ws_idx
-  ON public.club_event_route_revisions (source_workspace_id) WHERE source_workspace_id IS NOT NULL;
-
--- Une révision portant sa propre géométrie est adoptable au même titre qu'une révision du catalogue.
-DO $$
-DECLARE
-  def text := pg_get_functiondef('club_private.save_event_route_state(uuid,integer,boolean)'::regprocedure);
-  needle constant text := 'current_revision.canonical_revision_id IS NULL';
+-- Tout ce bloc dépend du socle clubs (club_events, club_event_route_revisions, lkdv_is_club_moderator) et des
+-- fonctions de 20261118120000. Il s'applique avec le schéma de production (révisions sans canonical_revision_id,
+-- sans route_name / meeting_point, sans cancelled_at, sans fonctions de 20261119*) comme avec celui du dépôt complet :
+-- la RPC écrit par `jsonb_populate_record`, qui ignore les colonnes absentes. Socle absent : NOTICE, rien n'est créé.
+DO $clubs$
 BEGIN
-  IF position('current_revision.trace' IN def) > 0 THEN RETURN; END IF;
-  IF regexp_count(def, needle) <> 1 THEN
-    RAISE EXCEPTION 'Définition inattendue pour club_private.save_event_route_state.';
-  END IF;
-  EXECUTE replace(def, needle, needle || ' AND current_revision.trace IS NULL');
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_club_event_route_trace(p_event_id uuid, p_revision integer)
-RETURNS jsonb
-LANGUAGE sql STABLE SECURITY INVOKER SET search_path = ''
-AS $$
-  SELECT COALESCE(public.st_asgeojson(c.geom)::jsonb, r.trace)
-  FROM public.club_event_route_revisions AS r
-  LEFT JOIN public.hiking_route_revisions AS c ON c.id = r.canonical_revision_id
-  WHERE r.event_id = p_event_id AND r.revision = p_revision;
-$$;
-
--- Propose à la sortie la version PUBLIÉE d'un espace. Règles :
---   * l'appelant organise la sortie ou modère le club (règle de publish_club_event_route) ;
---   * ET possède l'espace (owner) ou y est co_organizer avec la publication déléguée : proposer un tracé à un club est
---     une publication. Une inscription à la sortie ne donne aucun droit d'écriture sur l'espace ;
---   * seule la version publiée est copiée (jamais le brouillon) ; sortie ni 'club_only' ni 'private' : zone de départ
---     privée masquée (route_sanitize_snapshot_for_share, 500 m au moins) ;
---   * idempotent : même version, même contrôle, même mode de masquage = aucune nouvelle révision ni notification.
-CREATE OR REPLACE FUNCTION public.publish_club_event_route_from_workspace(p_event_id uuid, p_workspace_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
-AS $$
-DECLARE
-  actor uuid := (SELECT auth.uid());
-  e public.club_events%ROWTYPE;
-  ws public.route_workspaces%ROWTYPE;
-  rev public.route_revisions%ROWTYPE;
-  cur public.club_event_route_revisions%ROWTYPE;
-  published public.club_event_route_revisions%ROWTYPE;
-  v_role text;
-  v_delegated boolean := false;
-  v_checksum text;
-  v_dist numeric;
-  v_gain numeric;
-  v_unknown integer;
-  v_sanitize boolean;
-  v_snap jsonb;
-  v_coords jsonb;
-  v_trace jsonb;
-  next_revision integer;
-BEGIN
-  IF actor IS NULL THEN
-    RAISE EXCEPTION 'Authentification requise.' USING ERRCODE = '42501';
+  IF to_regclass('public.club_event_route_revisions') IS NULL
+     OR to_regclass('public.club_events') IS NULL
+     OR to_regclass('public.route_workspaces') IS NULL
+     OR to_regclass('public.departure_packs') IS NULL
+     OR to_regprocedure('public.lkdv_is_club_moderator(uuid)') IS NULL
+     OR to_regprocedure('public.route_workspace_effective_role(uuid,uuid)') IS NULL
+     OR to_regprocedure('public.route_sanitize_snapshot_for_share(uuid,jsonb,bigint,numeric)') IS NULL
+     OR to_regprocedure('public.notify_activity(uuid,text,text,text,text,uuid,text,uuid,text)') IS NULL
+     OR (SELECT count(*) FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'club_events'
+            AND column_name IN ('club_id', 'organizer_id', 'title', 'visibility', 'meeting_point', 'lat', 'lng', 'route_id', 'route_revision')) <> 9
+  THEN
+    RAISE NOTICE '10.5 ignoré : socle clubs (club_event_route_revisions, club_events, lkdv_is_club_moderator, route_*) incomplet.';
+    RETURN;
   END IF;
 
-  SELECT * INTO e FROM public.club_events AS ev
-    WHERE ev.id = p_event_id AND (ev.organizer_id = actor OR public.lkdv_is_club_moderator(ev.club_id))
-    FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Publication réservée à l’organisateur ou à la modération du club.' USING ERRCODE = '42501';
-  END IF;
-  IF e.cancelled_at IS NOT NULL THEN
-    RAISE EXCEPTION 'Cette sortie est annulée.' USING ERRCODE = '55000';
+  ALTER TABLE public.club_event_route_revisions
+    ADD COLUMN IF NOT EXISTS source_workspace_id UUID REFERENCES public.route_workspaces(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS source_revision_no BIGINT,
+    ADD COLUMN IF NOT EXISTS trace JSONB;
+  -- Le dénivelé d'un tracé sans altitude est inconnu (NULL), jamais 0 (déjà fait par 20261119204829 quand il est passé).
+  ALTER TABLE public.club_event_route_revisions ALTER COLUMN elevation_gain_m DROP NOT NULL;
+  CREATE INDEX IF NOT EXISTS club_event_route_revisions_source_ws_idx
+    ON public.club_event_route_revisions (source_workspace_id) WHERE source_workspace_id IS NOT NULL;
+
+  -- Une révision portant sa propre géométrie est adoptable au même titre qu'une révision du catalogue
+  -- (seulement si le socle de décision de 20261119205238 est là).
+  IF to_regprocedure('club_private.save_event_route_state(uuid,integer,boolean)') IS NOT NULL THEN
+    DECLARE
+      def text := pg_get_functiondef('club_private.save_event_route_state(uuid,integer,boolean)'::regprocedure);
+      needle constant text := 'current_revision.canonical_revision_id IS NULL';
+    BEGIN
+      IF position('current_revision.trace' IN def) = 0 THEN
+        IF regexp_count(def, needle) <> 1 THEN
+          RAISE EXCEPTION 'Définition inattendue pour club_private.save_event_route_state.';
+        END IF;
+        EXECUTE replace(def, needle, needle || ' AND current_revision.trace IS NULL');
+      END IF;
+    END;
   END IF;
 
-  v_role := public.route_workspace_effective_role(p_workspace_id, actor);
-  IF v_role = 'co_organizer' THEN
-    SELECT m.delegated_publish INTO v_delegated FROM public.route_workspace_members AS m
-      WHERE m.workspace_id = p_workspace_id AND m.user_id = actor AND m.revoked_at IS NULL;
-  END IF;
-  -- COALESCE : sans rôle (espace inconnu, étranger), v_role est NULL et NOT (NULL OR false) ne lèverait rien.
-  IF NOT (COALESCE(v_role, '') = 'owner' OR (COALESCE(v_role, '') = 'co_organizer' AND COALESCE(v_delegated, false))) THEN
-    RAISE EXCEPTION 'Publication réservée au propriétaire de l’itinéraire ou à son co-organisateur délégué.' USING ERRCODE = '42501';
-  END IF;
-
-  SELECT * INTO ws FROM public.route_workspaces AS w WHERE w.id = p_workspace_id FOR SHARE;
-  IF ws.status = 'archived' THEN
-    RAISE EXCEPTION 'Cet itinéraire est archivé.' USING ERRCODE = '55000';
-  END IF;
-  SELECT * INTO rev FROM public.route_revisions AS r WHERE r.id = ws.published_revision_id;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Aucune version publiée.' USING ERRCODE = 'P0002';
-  END IF;
-  SELECT p.checksum INTO v_checksum FROM public.departure_packs AS p
-    WHERE p.revision_id = rev.id ORDER BY p.generated_at DESC LIMIT 1;
-  IF v_checksum IS NULL THEN
-    RAISE EXCEPTION 'Pack de départ absent : publie de nouveau l’itinéraire.' USING ERRCODE = 'P0002';
+  -- Lecture du tracé : COALESCE(catalogue, trace de la révision). Remplace la fonction de 20261119205238 si présente ;
+  -- absente, rien n'est créé (la fiche lit alors `trace` directement, sous la RLS de la table).
+  IF to_regprocedure('public.get_club_event_route_trace(uuid,integer)') IS NOT NULL THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION public.get_club_event_route_trace(p_event_id uuid, p_revision integer)
+      RETURNS jsonb
+      LANGUAGE sql STABLE SECURITY INVOKER SET search_path = ''
+      AS $b$
+        SELECT COALESCE(public.st_asgeojson(c.geom)::jsonb, r.trace)
+        FROM public.club_event_route_revisions AS r
+        LEFT JOIN public.hiking_route_revisions AS c ON c.id = r.canonical_revision_id
+        WHERE r.event_id = p_event_id AND r.revision = p_revision;
+      $b$ $fn$;
   END IF;
 
-  -- Distance et dénivelé de la version publiée ; un tronçon sans distance rend la version inexploitable,
-  -- un tronçon sans dénivelé rend le dénivelé inconnu (NULL, jamais 0).
-  SELECT round(sum(public.route_jf(s -> 'distanceKm'))::numeric * 1000, 1),
-         CASE WHEN count(*) FILTER (WHERE public.route_jf(s -> 'ascentM') IS NULL) = 0
-              THEN greatest(round(sum(public.route_jf(s -> 'ascentM'))::numeric), 0) END,
-         count(*) FILTER (WHERE public.route_jf(s -> 'distanceKm') IS NULL)
-    INTO v_dist, v_gain, v_unknown
-  FROM jsonb_array_elements(CASE WHEN jsonb_typeof(rev.snapshot -> 'sections') = 'array' THEN rev.snapshot -> 'sections' ELSE '[]'::jsonb END) AS s
-  WHERE jsonb_typeof(s) = 'object' AND COALESCE(s ->> 'deletedAt', '') = '';
-  IF v_dist IS NULL OR v_unknown > 0 OR v_dist <= 0 THEN
-    RAISE EXCEPTION 'Distance de la version publiée inconnue.' USING ERRCODE = '22023';
+  -- HUB : get_trip_club_route_updates (enveloppe INVOKER inchangée) lit trip_private.trip_club_route_updates, qui
+  -- portait le filtre `canonical_revision_id IS NOT NULL`. Signature, droits, SECURITY DEFINER et search_path restent
+  -- ceux de 20261119205238 ; seul le filtre change.
+  IF to_regprocedure('trip_private.trip_club_route_updates(uuid)') IS NOT NULL THEN
+    EXECUTE $fn$
+      CREATE OR REPLACE FUNCTION trip_private.trip_club_route_updates(p_trip_id uuid)
+      RETURNS TABLE (event_id uuid, event_title text, revision integer, route_name text, adopted_revision integer, decision_pending boolean)
+      LANGUAGE sql STABLE SECURITY DEFINER SET search_path = ''
+      AS $b$
+        SELECT e.id, e.title, r.revision, r.route_name, s.adopted_revision,
+          r.requires_participant_decision
+            AND EXISTS (SELECT 1 FROM club_private.active_event_route_participants(e.id, (SELECT auth.uid())))
+            AND d.revision IS NULL
+        FROM trip_private.visible_event_trip_links AS l
+        JOIN public.club_events AS e ON e.id = l.event_id
+        JOIN public.club_event_route_revisions AS r ON r.event_id = e.id AND r.revision = e.route_revision
+        LEFT JOIN public.club_event_route_sync AS s ON s.event_id = e.id AND s.user_id = (SELECT auth.uid())
+        LEFT JOIN public.club_event_route_decisions AS d ON d.event_id = e.id AND d.user_id = (SELECT auth.uid())
+          AND d.revision = r.revision
+        WHERE l.trip_id = p_trip_id AND l.source_kind = 'club_event'
+          AND (r.canonical_revision_id IS NOT NULL OR r.trace IS NOT NULL)
+        ORDER BY r.updated_at DESC, e.id;
+      $b$ $fn$;
   END IF;
 
-  v_sanitize := e.visibility NOT IN ('club_only', 'private');
-  SELECT * INTO cur FROM public.club_event_route_revisions AS r WHERE r.event_id = e.id AND r.revision = e.route_revision;
-  IF FOUND AND cur.source_workspace_id = ws.id AND cur.source_revision_no = rev.revision_no AND cur.checksum = v_checksum
-     AND COALESCE((cur.trace ->> 'sanitized')::boolean, false) = v_sanitize THEN
-    RETURN jsonb_build_object('event', to_jsonb(e), 'snapshot', to_jsonb(cur) - 'trace');
-  END IF;
+  -- Propose à la sortie la version PUBLIÉE d'un espace. Règles :
+  --   * l'appelant organise la sortie ou modère le club (règle de publish_club_event_route) ;
+  --   * ET possède l'espace (owner) ou y est co_organizer avec la publication déléguée : proposer un tracé à un club
+  --     est une publication. Une inscription à la sortie ne donne aucun droit d'écriture sur l'espace ;
+  --   * seule la version publiée est copiée (jamais le brouillon) ; sortie ni 'club_only' ni 'private' : zone de
+  --     départ privée masquée (route_sanitize_snapshot_for_share, 500 m au moins) ;
+  --   * idempotent : même version, même contrôle, même mode de masquage = aucune nouvelle révision ni notification ;
+  --   * notification des inscrits : active_event_route_participants si elle existe, sinon club_event_registrations
+  --     (statut 'registered'), sinon aucune.
+  EXECUTE $fn$
+    CREATE OR REPLACE FUNCTION public.publish_club_event_route_from_workspace(p_event_id uuid, p_workspace_id uuid)
+    RETURNS jsonb
+    LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = ''
+    AS $b$
+    DECLARE
+      actor uuid := (SELECT auth.uid());
+      e public.club_events%ROWTYPE;
+      ws public.route_workspaces%ROWTYPE;
+      rev public.route_revisions%ROWTYPE;
+      cur public.club_event_route_revisions%ROWTYPE;
+      published public.club_event_route_revisions%ROWTYPE;
+      v_role text;
+      v_delegated boolean := false;
+      v_checksum text;
+      v_dist numeric;
+      v_gain numeric;
+      v_unknown integer;
+      v_sanitize boolean;
+      v_snap jsonb;
+      v_coords jsonb;
+      v_trace jsonb;
+      next_revision integer;
+      v_recipient uuid;
+    BEGIN
+      IF actor IS NULL THEN
+        RAISE EXCEPTION 'Authentification requise.' USING ERRCODE = '42501';
+      END IF;
 
-  v_snap := rev.snapshot || jsonb_build_object('shapeMode', ws.state_snapshot -> 'shapeMode');
-  IF v_sanitize THEN
-    v_snap := public.route_sanitize_snapshot_for_share(
-      ws.id, v_snap, rev.based_on_seq,
-      greatest(500, COALESCE(public.route_jf(ws.state_snapshot -> 'shareLink' -> 'hidePrivateStartRadiusM'), 500))::numeric);
-  END IF;
-  SELECT jsonb_agg(t.s #> '{geometry,coordinates}' ORDER BY t.o) INTO v_coords
-  FROM jsonb_array_elements(CASE WHEN jsonb_typeof(v_snap -> 'sections') = 'array' THEN v_snap -> 'sections' ELSE '[]'::jsonb END)
-       WITH ORDINALITY AS t(s, o)
-  WHERE jsonb_typeof(t.s) = 'object' AND COALESCE(t.s ->> 'deletedAt', '') = ''
-    AND jsonb_typeof(t.s #> '{geometry,coordinates}') = 'array' AND jsonb_array_length(t.s #> '{geometry,coordinates}') >= 2;
-  v_trace := jsonb_build_object('type', 'MultiLineString', 'coordinates', v_coords, 'sanitized', v_sanitize);
-  IF v_coords IS NULL OR length(v_trace::text) > 3000000 THEN
-    RAISE EXCEPTION 'Tracé indisponible (vide après masquage de la zone privée, ou trop volumineux).' USING ERRCODE = '22023';
-  END IF;
+      SELECT * INTO e FROM public.club_events AS ev
+        WHERE ev.id = p_event_id AND (ev.organizer_id = actor OR public.lkdv_is_club_moderator(ev.club_id))
+        FOR UPDATE;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Publication réservée à l’organisateur ou à la modération du club.' USING ERRCODE = '42501';
+      END IF;
+      -- `cancelled_at` n'existe qu'à partir de 20261119202544 : lu sans colonne typée.
+      IF COALESCE(to_jsonb(e) ->> 'cancelled_at', '') <> '' THEN
+        RAISE EXCEPTION 'Cette sortie est annulée.' USING ERRCODE = '55000';
+      END IF;
 
-  SELECT GREATEST(e.route_revision, COALESCE(max(r.revision), 0)) + 1 INTO next_revision
-  FROM public.club_event_route_revisions AS r WHERE r.event_id = e.id;
-  INSERT INTO public.club_event_route_revisions (
-    event_id, revision, route_id, checksum, distance_m, elevation_gain_m, updated_by, requires_participant_decision,
-    route_name, meeting_point, previous_meeting, source_workspace_id, source_revision_no, trace
-  ) VALUES (
-    e.id, next_revision, ws.id::text, v_checksum, v_dist, v_gain, actor, true,
-    left(ws.title, 160), e.meeting_point, jsonb_build_object('place', e.meeting_point, 'lat', e.lat, 'lng', e.lng),
-    ws.id, rev.revision_no, v_trace
-  ) RETURNING * INTO published;
-  UPDATE public.club_events SET route_id = published.route_id, route_revision = published.revision
-  WHERE id = e.id RETURNING * INTO e;
+      v_role := public.route_workspace_effective_role(p_workspace_id, actor);
+      IF v_role = 'co_organizer' THEN
+        SELECT m.delegated_publish INTO v_delegated FROM public.route_workspace_members AS m
+          WHERE m.workspace_id = p_workspace_id AND m.user_id = actor AND m.revoked_at IS NULL;
+      END IF;
+      -- COALESCE : sans rôle (espace inconnu, étranger), v_role est NULL et NOT (NULL OR false) ne lèverait rien.
+      IF NOT (COALESCE(v_role, '') = 'owner' OR (COALESCE(v_role, '') = 'co_organizer' AND COALESCE(v_delegated, false))) THEN
+        RAISE EXCEPTION 'Publication réservée au propriétaire de l’itinéraire ou à son co-organisateur délégué.' USING ERRCODE = '42501';
+      END IF;
 
-  PERFORM public.notify_activity(
-    p.user_id, 'club_route_revision', 'social',
-    'Nouveau parcours proposé', e.title || ' · révision ' || next_revision,
-    actor, 'club_event', e.id, '/sorties/' || e.id::text || '?source=club#parcours')
-  FROM club_private.active_event_route_participants(e.id) AS p;
+      SELECT * INTO ws FROM public.route_workspaces AS w WHERE w.id = p_workspace_id FOR SHARE;
+      IF ws.status = 'archived' THEN
+        RAISE EXCEPTION 'Cet itinéraire est archivé.' USING ERRCODE = '55000';
+      END IF;
+      SELECT * INTO rev FROM public.route_revisions AS r WHERE r.id = ws.published_revision_id;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Aucune version publiée.' USING ERRCODE = 'P0002';
+      END IF;
+      SELECT p.checksum INTO v_checksum FROM public.departure_packs AS p
+        WHERE p.revision_id = rev.id ORDER BY p.generated_at DESC LIMIT 1;
+      IF v_checksum IS NULL THEN
+        RAISE EXCEPTION 'Pack de départ absent : publie de nouveau l’itinéraire.' USING ERRCODE = 'P0002';
+      END IF;
 
-  RETURN jsonb_build_object('event', to_jsonb(e), 'snapshot', to_jsonb(published) - 'trace');
-END;
-$$;
-REVOKE ALL ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid) TO authenticated;
+      -- Distance et dénivelé de la version publiée ; un tronçon sans distance rend la version inexploitable,
+      -- un tronçon sans dénivelé rend le dénivelé inconnu (NULL, jamais 0).
+      SELECT round(sum(public.route_jf(s -> 'distanceKm'))::numeric * 1000, 1),
+             CASE WHEN count(*) FILTER (WHERE public.route_jf(s -> 'ascentM') IS NULL) = 0
+                  THEN greatest(round(sum(public.route_jf(s -> 'ascentM'))::numeric), 0) END,
+             count(*) FILTER (WHERE public.route_jf(s -> 'distanceKm') IS NULL)
+        INTO v_dist, v_gain, v_unknown
+      FROM jsonb_array_elements(CASE WHEN jsonb_typeof(rev.snapshot -> 'sections') = 'array' THEN rev.snapshot -> 'sections' ELSE '[]'::jsonb END) AS s
+      WHERE jsonb_typeof(s) = 'object' AND COALESCE(s ->> 'deletedAt', '') = '';
+      IF v_dist IS NULL OR v_unknown > 0 OR v_dist <= 0 THEN
+        RAISE EXCEPTION 'Distance de la version publiée inconnue.' USING ERRCODE = '22023';
+      END IF;
+
+      v_sanitize := e.visibility NOT IN ('club_only', 'private');
+      SELECT * INTO cur FROM public.club_event_route_revisions AS r WHERE r.event_id = e.id AND r.revision = e.route_revision;
+      IF FOUND AND cur.source_workspace_id = ws.id AND cur.source_revision_no = rev.revision_no AND cur.checksum = v_checksum
+         AND COALESCE((cur.trace ->> 'sanitized')::boolean, false) = v_sanitize THEN
+        RETURN jsonb_build_object('event', to_jsonb(e), 'snapshot', to_jsonb(cur) - 'trace');
+      END IF;
+
+      v_snap := rev.snapshot || jsonb_build_object('shapeMode', ws.state_snapshot -> 'shapeMode');
+      IF v_sanitize THEN
+        v_snap := public.route_sanitize_snapshot_for_share(
+          ws.id, v_snap, rev.based_on_seq,
+          greatest(500, COALESCE(public.route_jf(ws.state_snapshot -> 'shareLink' -> 'hidePrivateStartRadiusM'), 500))::numeric);
+      END IF;
+      SELECT jsonb_agg(t.s #> '{geometry,coordinates}' ORDER BY t.o) INTO v_coords
+      FROM jsonb_array_elements(CASE WHEN jsonb_typeof(v_snap -> 'sections') = 'array' THEN v_snap -> 'sections' ELSE '[]'::jsonb END)
+           WITH ORDINALITY AS t(s, o)
+      WHERE jsonb_typeof(t.s) = 'object' AND COALESCE(t.s ->> 'deletedAt', '') = ''
+        AND jsonb_typeof(t.s #> '{geometry,coordinates}') = 'array' AND jsonb_array_length(t.s #> '{geometry,coordinates}') >= 2;
+      v_trace := jsonb_build_object('type', 'MultiLineString', 'coordinates', v_coords, 'sanitized', v_sanitize);
+      IF v_coords IS NULL OR length(v_trace::text) > 3000000 THEN
+        RAISE EXCEPTION 'Tracé indisponible (vide après masquage de la zone privée, ou trop volumineux).' USING ERRCODE = '22023';
+      END IF;
+
+      SELECT GREATEST(e.route_revision, COALESCE(max(r.revision), 0)) + 1 INTO next_revision
+      FROM public.club_event_route_revisions AS r WHERE r.event_id = e.id;
+      -- jsonb_populate_record ignore les clés sans colonne : route_name / meeting_point / previous_meeting n'existent
+      -- qu'après 20261119204829. Les défauts de colonne ne s'appliquent pas : tout ce qui est NOT NULL est fourni.
+      INSERT INTO public.club_event_route_revisions
+      SELECT * FROM jsonb_populate_record(NULL::public.club_event_route_revisions, jsonb_build_object(
+        'event_id', e.id, 'revision', next_revision, 'route_id', ws.id::text, 'checksum', v_checksum,
+        'distance_m', v_dist, 'elevation_gain_m', v_gain, 'updated_by', actor, 'updated_at', now(), 'requires_participant_decision', true,
+        'route_name', left(ws.title, 160), 'meeting_point', e.meeting_point,
+        'previous_meeting', jsonb_build_object('place', e.meeting_point, 'lat', e.lat, 'lng', e.lng),
+        'source_workspace_id', ws.id, 'source_revision_no', rev.revision_no, 'trace', v_trace))
+      RETURNING * INTO published;
+      UPDATE public.club_events SET route_id = published.route_id, route_revision = published.revision
+      WHERE id = e.id RETURNING * INTO e;
+
+      IF to_regprocedure('club_private.active_event_route_participants(uuid,uuid)') IS NOT NULL THEN
+        FOR v_recipient IN EXECUTE 'SELECT user_id FROM club_private.active_event_route_participants($1)' USING e.id LOOP
+          PERFORM public.notify_activity(v_recipient, 'club_route_revision', 'social',
+            'Nouveau parcours proposé', e.title || ' · révision ' || next_revision,
+            actor, 'club_event', e.id, '/sorties/' || e.id::text || '?source=club#parcours');
+        END LOOP;
+      ELSIF to_regclass('public.club_event_registrations') IS NOT NULL THEN
+        FOR v_recipient IN EXECUTE 'SELECT user_id FROM public.club_event_registrations WHERE event_id = $1 AND status = ''registered''' USING e.id LOOP
+          PERFORM public.notify_activity(v_recipient, 'club_route_revision', 'social',
+            'Nouveau parcours proposé', e.title || ' · révision ' || next_revision,
+            actor, 'club_event', e.id, '/sorties/' || e.id::text || '?source=club#parcours');
+        END LOOP;
+      END IF;
+
+      RETURN jsonb_build_object('event', to_jsonb(e), 'snapshot', to_jsonb(published) - 'trace');
+    END;
+    $b$ $fn$;
+  REVOKE ALL ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid) FROM PUBLIC, anon;
+  GRANT EXECUTE ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid) TO authenticated;
+END
+$clubs$;
 
 -- ----------------------------------------------------------------------------
 -- 3. 10.10 Modération des itinéraires (fonction proposée en amont, durcie ici)
@@ -237,7 +311,8 @@ $$;
 REVOKE ALL ON FUNCTION public.admin_list_route_moderation(integer) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_list_route_moderation(integer) TO authenticated;
 
--- Applique la décision de rejet et la journalise (file + audit), dans une seule transaction.
+-- Applique la décision de rejet et la journalise (admin_audit_log seulement : moderation_queue est la file des annonces
+-- de la place de marché), dans une seule transaction. Le statut d'un élément = `apres.statut` de sa dernière ligne.
 --   route_comment      : 'hide' (texte remplacé, commentaire gardé) | 'remove' (retiré du snapshot) ;
 --   route_share_link   : 'revoke' (lien révoqué, même effet que manage_route_share_link_tx) ;
 --   route_public_trace : 'remove' (publication communautaire créée par « Publier le tracé » seulement).
@@ -312,17 +387,10 @@ BEGIN
     END IF;
   END IF;
 
-  IF v_status <> 'not_found' THEN
-    UPDATE public.moderation_queue SET statut = 'rejete', moderateur_id = actor, updated_at = now()
-      WHERE contenu_type = p_kind AND contenu_id = p_id;
-    IF NOT FOUND THEN
-      INSERT INTO public.moderation_queue (contenu_type, contenu_id, statut, moderateur_id) VALUES (p_kind, p_id, 'rejete', actor);
-    END IF;
-  END IF;
   IF v_status = 'applied' THEN
     INSERT INTO public.admin_audit_log (admin_id, action, cible_type, cible_id, avant, apres)
-    VALUES (actor, CASE WHEN p_action = 'remove' THEN 'DELETE' ELSE 'UPDATE' END::public.audit_action, p_kind, p_id,
-            NULL, jsonb_build_object('enforced', p_action));
+    VALUES (actor, 'REJECT'::public.audit_action, p_kind, p_id,
+            NULL, jsonb_build_object('statut', 'rejete', 'enforced', p_action));
   END IF;
   RETURN jsonb_build_object('status', v_status);
 END;

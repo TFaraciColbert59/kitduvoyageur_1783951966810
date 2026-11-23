@@ -4,8 +4,10 @@
 --   • 10.5 publish_club_event_route_from_workspace : organisateur ET propriétaire/co-organisateur délégué,
 --          version publiée seule, zone de départ masquée si la sortie est publique, idempotence, adoption possible
 --   • 10.10 admin_list_route_moderation / admin_apply_route_moderation : modérateurs seulement, décision appliquée
---          et journalisée, jamais de jeton
--- Exécution : pgTAP, transaction annulée (ROLLBACK).
+--          et journalisée dans admin_audit_log (jamais moderation_queue), jamais de jeton
+-- Exécution : pgTAP, transaction annulée (ROLLBACK). Ne dépend que du schéma de PRODUCTION (révisions sans
+-- canonical_revision_id ; sans les fonctions de décision de 20261119*) : adoption, HUB et sortie annulée sont dans
+-- route_collab_followups_clubs_full.test.sql, qui suppose 20261119* appliquées.
 -- ============================================================================
 \set a 'cf000000-0000-4000-8000-00000000000a'
 \set b 'cf000000-0000-4000-8000-00000000000b'
@@ -25,13 +27,15 @@
 \set ev5 'cf000000-4000-4000-8000-000000000005'
 \set po1 'cf000000-5000-4000-8000-000000000001'
 \set po2 'cf000000-5000-4000-8000-000000000002'
+
 BEGIN;
-SELECT plan(68);
+SELECT plan(65);
 
 -- Fixtures (superuser). A propriétaire de l'espace W1 et organisateur ; B co-organisateur délégué ; C co-organisateur
 -- sans délégation ; D inscrit à la sortie (participant) ; E modérateur ; F organisateur d'une autre sortie.
 INSERT INTO auth.users(id, email) VALUES (:'a','a@x.test'),(:'b','b@x.test'),(:'c','c@x.test'),(:'d','d@x.test'),(:'e','e@x.test'),(:'f','f@x.test');
-INSERT INTO public.user_profiles(id) VALUES (:'a'),(:'b'),(:'c'),(:'d'),(:'e'),(:'f');
+INSERT INTO public.user_profiles(id, email) VALUES (:'a','a@x.test'),(:'b','b@x.test'),(:'c','c@x.test'),(:'d','d@x.test'),(:'e','e@x.test'),(:'f','f@x.test')
+ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.admin_roles(user_id) VALUES (:'e');
 INSERT INTO public.clubs(id, slug, name, privacy, created_by) VALUES (:'club','cf','Club','open',:'a');
 INSERT INTO public.club_events(id, club_id, organizer_id, title, meeting_point, visibility) VALUES
@@ -108,9 +112,9 @@ SELECT ok(NOT ((public.publish_club_event_route_from_workspace(:'ev1', :'w1') ->
 RESET ROLE;
 SELECT is((SELECT route_revision FROM public.club_events WHERE id = :'ev1'), 1, 'la sortie pointe la révision 1');
 SELECT is((SELECT count(*)::int FROM public.club_event_route_revisions WHERE event_id = :'ev1'), 1, 'répéter ne crée pas de révision');
-SELECT is((SELECT count(*)::int FROM public.stub_notifications WHERE event_id = :'ev1'), 1, 'répéter ne renotifie pas');
-SELECT ok((SELECT distance_m = 3300 AND elevation_gain_m = 200 AND checksum = 'sum-v1' AND route_name = 'Traversée'
-                  AND source_workspace_id = :'w1'::uuid AND source_revision_no = 1 AND canonical_revision_id IS NULL AND requires_participant_decision
+SELECT is((SELECT count(*)::int FROM public.notifications WHERE related_id = :'ev1' AND type = 'club_route_revision' AND user_id = :'d'), 1, 'répéter ne renotifie pas');
+SELECT ok((SELECT distance_m = 3300 AND elevation_gain_m = 200 AND checksum = 'sum-v1' 
+                  AND source_workspace_id = :'w1'::uuid AND source_revision_no = 1 AND requires_participant_decision
            FROM public.club_event_route_revisions WHERE event_id = :'ev1' AND revision = 1), 'distance, dénivelé, contrôle et origine repris de la version publiée');
 SELECT ok((SELECT (trace ->> 'sanitized')::boolean FROM public.club_event_route_revisions WHERE event_id = :'ev1'), 'sortie publique : tracé assaini');
 SELECT ok((SELECT min(public.ST_DistanceSphere(public.ST_MakePoint((c ->> 0)::float8, (c ->> 1)::float8), public.ST_MakePoint(6.1294, 45.8992))) >= 500
@@ -135,20 +139,6 @@ SELECT ok((SELECT (trace ->> 'sanitized')::boolean FROM public.club_event_route_
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'b', true);
 SELECT is((public.publish_club_event_route_from_workspace(:'ev5', :'w1') -> 'snapshot' ->> 'revision')::int, 1, 'co-organisateur délégué publie sur sa sortie');
--- Lecture et adoption par un inscrit
-SELECT set_config('request.jwt.claim.sub', :'d', true);
-SELECT is((SELECT count(*)::int FROM public.club_event_route_revisions WHERE event_id = :'ev1'), 1, 'un inscrit lit la révision');
-SELECT ok(NOT has_table_privilege('authenticated','public.club_event_route_revisions','INSERT, UPDATE, DELETE'), 'et ne peut pas l’écrire');
-SELECT is(public.get_club_event_route_trace(:'ev1', 1) ->> 'type', 'MultiLineString', 'le tracé de la révision est lisible');
-SELECT is((public.save_event_route_state(:'ev1', 1, true) ->> 'adopted_revision')::int, 1, 'l’inscrit peut adopter cette révision');
--- Une révision sans aucune géométrie reste inadoptable
-RESET ROLE;
-INSERT INTO public.club_event_route_revisions(event_id, revision, route_id, checksum, distance_m, updated_by)
-VALUES (:'ev3', 1, 'x', 'x', 10, :'f');
-UPDATE public.club_events SET route_revision = 1 WHERE id = :'ev3';
-SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claim.sub', :'d', true);
-SELECT throws_ok(format('SELECT public.save_event_route_state(%L, 1, true)', :'ev3'), '55000', NULL, 'sans géométrie, pas d’adoption');
 -- Nouvelle version publiée de l'espace => nouvelle révision
 RESET ROLE;
 INSERT INTO public.route_revisions(id, workspace_id, revision_no, based_on_seq, created_by, kind, snapshot)
@@ -159,10 +149,9 @@ SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'a', true);
 SELECT is((public.publish_club_event_route_from_workspace(:'ev1', :'w1') -> 'snapshot' ->> 'revision')::int, 2, 'version 2 de l’espace : révision 2 de la sortie');
 RESET ROLE;
-UPDATE public.club_events SET cancelled_at = now() WHERE id = :'ev5';
-SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claim.sub', :'b', true);
-SELECT throws_ok(format('SELECT public.publish_club_event_route_from_workspace(%L,%L)', :'ev5', :'w1'), '55000', NULL, 'sortie annulée');
+SELECT is((SELECT count(*)::int FROM public.club_event_route_revisions WHERE event_id = :'ev1'), 2, 'deux révisions pour la sortie');
+SELECT is((SELECT count(*)::int FROM public.notifications WHERE related_id = :'ev1' AND type = 'club_route_revision' AND user_id = :'d'), 2, 'l’inscrit est notifié à chaque nouvelle révision');
+SELECT ok((SELECT source_revision_no = 2 AND trace IS NOT NULL AND source_workspace_id = :'w1'::uuid FROM public.club_event_route_revisions WHERE event_id = :'ev1' AND revision = 2), 'la révision 2 vient de la version 2 de l’espace');
 
 -- ----------------------------------------------------------------------------
 -- 10.10 Modération
@@ -187,8 +176,8 @@ SELECT ok((SELECT state_snapshot -> 'comments' -> 0 ->> 'body' = '[Commentaire m
               AND state_snapshot -> 'comments' -> 0 ->> 'moderation' = 'hidden'
               AND state_snapshot -> 'comments' -> 1 ->> 'body' = 'Texte abusif 2' AND state_version = 1
            FROM public.route_workspaces WHERE id = :'w1'), 'seul c1 est masqué, la version de l’espace avance');
-SELECT is((SELECT count(*)::int FROM public.admin_audit_log WHERE cible_type = 'route_comment' AND action = 'UPDATE' AND admin_id = :'e'), 1, 'décision journalisée');
-SELECT is((SELECT statut::text FROM public.moderation_queue WHERE contenu_type = 'route_comment' AND contenu_id = :'w1' || ':c1'), 'rejete', 'file mise à jour');
+SELECT is((SELECT count(*)::int FROM public.admin_audit_log WHERE cible_type = 'route_comment' AND action = 'REJECT' AND admin_id = :'e' AND apres ->> 'statut' = 'rejete' AND apres ->> 'enforced' = 'hide'), 1, 'décision journalisée (REJECT, statut rejete)');
+SELECT is((SELECT count(*)::int FROM public.moderation_queue), 0, 'la file des annonces de la place de marché n’est pas touchée');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'e', true);
 SELECT is(public.admin_apply_route_moderation('route_comment', :'w1' || ':c1', 'hide') ->> 'status', 'noop', 'masquer deux fois : sans effet');
@@ -197,7 +186,7 @@ SELECT is(public.admin_apply_route_moderation('route_comment', :'w1' || ':c2', '
 RESET ROLE;
 SELECT is((SELECT jsonb_array_length(state_snapshot -> 'comments') FROM public.route_workspaces WHERE id = :'w1'), 1, 'un seul commentaire reste');
 SELECT is((SELECT count(*)::int FROM public.admin_audit_log WHERE cible_type = 'route_comment'), 2, 'pas de doublon dans le journal');
-SELECT ok(EXISTS (SELECT 1 FROM public.admin_audit_log WHERE action = 'DELETE' AND cible_id = :'w1' || ':c2'), 'la suppression est un DELETE');
+SELECT ok(EXISTS (SELECT 1 FROM public.admin_audit_log WHERE action = 'REJECT' AND apres ->> 'enforced' = 'remove' AND cible_id = :'w1' || ':c2'), 'la suppression est journalisée (enforced remove)');
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', :'e', true);
 SELECT is(public.admin_apply_route_moderation('route_share_link', :'w1', 'revoke') ->> 'status', 'applied', 'lien révoqué');

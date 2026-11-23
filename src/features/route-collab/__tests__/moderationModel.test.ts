@@ -4,14 +4,12 @@ import {
   previewOf,
   toAuditRow,
   toItems,
-  toQueueRow,
-  withQueueStatus,
+  withAuditStatus,
 } from '../moderationModel';
 
 describe('Audit de modération des itinéraires (10.10)', () => {
-  it('une décision devient une ligne de file et une ligne de journal, sans contenu de tracé', () => {
+  it('une décision devient une ligne de journal, sans contenu de tracé', () => {
     const input = { type: 'route_share_link', id: 'ws-1', moderatorId: 'mod-1', decision: 'reject' } as const;
-    expect(toQueueRow(input)).toEqual({ contenu_type: 'route_share_link', contenu_id: 'ws-1', statut: 'rejete', moderateur_id: 'mod-1' });
     expect(toAuditRow({ ...input, before: 'en_attente' })).toEqual({
       admin_id: 'mod-1', action: 'REJECT', cible_type: 'route_share_link', cible_id: 'ws-1',
       avant: { statut: 'en_attente' }, apres: { statut: 'rejete' },
@@ -24,7 +22,7 @@ describe('Audit de modération des itinéraires (10.10)', () => {
     expect(['APPROVE', 'REJECT', 'UPDATE']).toContain(a.action);
     expect(f.action).toBe('UPDATE');
     expect(a.avant).toBeNull();
-    expect(toQueueRow({ type: 'route_comment', id: 'c', moderatorId: 'm', decision: 'flag' }).statut).toBe('signale');
+    expect(f.apres).toEqual({ statut: 'signale' });
   });
 
   it('refuse un type hors périmètre', () => {
@@ -42,10 +40,11 @@ describe('Audit de modération des itinéraires (10.10)', () => {
   it('applique le dernier statut consigné et ignore les lignes sans identifiant', () => {
     const items = toItems('route_public_trace', [{ id: 'p1', preview: 'Crête', created_at: '2026-11-20T00:00:00Z' }, { preview: 'sans id' }]);
     expect(items).toHaveLength(1);
-    const out = withQueueStatus(items, [
-      { contenu_type: 'route_public_trace', contenu_id: 'p1', statut: 'signale' },
-      { contenu_type: 'route_public_trace', contenu_id: 'p1', statut: 'approuve' },
-      { contenu_type: 'route_comment', contenu_id: 'p1', statut: 'rejete' },
+    const out = withAuditStatus(items, [
+      { cible_type: 'route_public_trace', cible_id: 'p1', apres: { statut: 'signale' } },
+      { cible_type: 'route_public_trace', cible_id: 'p1', apres: { statut: 'approuve' } },
+      { cible_type: 'route_comment', cible_id: 'p1', apres: { statut: 'rejete' } },
+      { cible_type: 'route_public_trace', cible_id: 'p1', apres: { enforced: 'remove' } },
     ]);
     expect(out[0].status).toBe('approuve');
   });

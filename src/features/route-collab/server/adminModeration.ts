@@ -6,9 +6,9 @@ import {
   defaultEnforcement,
   isEnforcementAllowed,
   toAuditRow,
+  statusOfDecision,
   toItems,
-  toQueueRow,
-  withQueueStatus,
+  withAuditStatus,
   type ModerationDecision,
   type ModerationEnforcement,
   type ModerationStatus,
@@ -18,8 +18,9 @@ import {
 
 /**
  * Audit de modération des itinéraires (10.10), côté serveur, réservé aux modérateurs (`is_moderateur()`,
- * même mécanisme que `/api/admin/*`). Écritures sous RLS : `moderation_queue` (« modos_manage_moderation_queue »)
- * et `admin_audit_log` (« admins_insert_audit_log » : is_moderateur()). Sources :
+ * même mécanisme que `/api/admin/*`). Écritures sous RLS : `admin_audit_log` seulement (« admins_insert_audit_log » :
+ * is_moderateur()) ; `moderation_queue` est la file des annonces de la place de marché et n'est jamais touchée. Le
+ * statut d'un élément est la dernière décision du journal. Sources :
  *  - traces publiques : `community_posts` créés par « Publier le tracé » (`creation_meta.created_from = route_collab`) ;
  *  - commentaires et liens partagés : RPC `admin_list_route_moderation` (migration 20261123130000) ; si elle est
  *    absente ou en erreur, ces deux sources sont déclarées « indisponibles », jamais affichées vides.
@@ -84,13 +85,15 @@ export async function listRouteModeration(): Promise<ModerationListResult> {
       }
     }
 
-    const { data: queue } = await client
-      .from('moderation_queue')
-      .select('contenu_type, contenu_id, statut')
-      .in('contenu_type', [...ROUTE_MODERATION_TYPES])
-      .order('updated_at', { ascending: true })
+    const { data: audit } = await client
+      .from('admin_audit_log')
+      .select('cible_type, cible_id, apres')
+      .in('cible_type', [...ROUTE_MODERATION_TYPES])
+      .order('created_at', { ascending: false })
       .limit(500);
-    return { status: 'ok', items: withQueueStatus(items, (queue ?? []) as Array<Record<string, unknown>>), unavailable };
+    // Les 500 plus récentes, relues de la plus ancienne à la plus récente : la dernière décision gagne.
+    const history = ((audit ?? []) as Array<Record<string, unknown>>).slice().reverse();
+    return { status: 'ok', items: withAuditStatus(items, history), unavailable };
   } catch {
     return { status: 'error' };
   }
@@ -126,23 +129,20 @@ export async function decideRouteModeration(input: {
       return { status: 'ok', enforced: true, applied: outcome, statut: 'rejete' };
     }
 
-    const { data: existing } = await client
-      .from('moderation_queue')
-      .select('id, statut')
-      .eq('contenu_type', input.type)
-      .eq('contenu_id', input.id)
-      .order('updated_at', { ascending: false })
+    const { data: last } = await client
+      .from('admin_audit_log')
+      .select('apres')
+      .eq('cible_type', input.type)
+      .eq('cible_id', input.id.slice(0, 80))
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    const before = ((existing as { statut?: ModerationStatus } | null)?.statut ?? null) as ModerationStatus | null;
-    const row = toQueueRow({ ...input, moderatorId: who.id });
-    const write = existing
-      ? await client.from('moderation_queue').update({ statut: row.statut, moderateur_id: row.moderateur_id }).eq('id', (existing as { id: string }).id)
-      : await client.from('moderation_queue').insert(row);
-    if (write.error) return { status: 'error' };
+    const prior = (last as { apres?: { statut?: unknown } | null } | null)?.apres?.statut;
+    const before = (typeof prior === 'string' ? prior : null) as ModerationStatus | null;
+    const statut = statusOfDecision(input.decision);
     const audit = await client.from('admin_audit_log').insert(toAuditRow({ ...input, moderatorId: who.id, before }));
     if (audit.error) return { status: 'error' };
-    return { status: 'ok', enforced: false, statut: row.statut };
+    return { status: 'ok', enforced: false, statut };
   } catch {
     return { status: 'error' };
   }

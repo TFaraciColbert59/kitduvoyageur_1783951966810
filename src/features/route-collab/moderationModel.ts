@@ -1,8 +1,9 @@
 /**
  * Modération des traces publiques, commentaires d'itinéraire et liens partagés (10.10). Module pur, testé.
  *
- * Tables existantes : `moderation_queue` (contenu_type / contenu_id / statut / moderateur_id) et
- * `admin_audit_log` (admin_id / action / cible_type / cible_id / avant / apres). Aucun contenu de tracé,
+ * Table existante : `admin_audit_log` (admin_id / action / cible_type / cible_id / avant / apres). `moderation_queue`
+ * n'est PAS utilisée (c'est la file des annonces de la place de marché) : le statut d'un élément est la dernière
+ * décision journalisée (`apres.statut`). Aucun contenu de tracé,
  * aucune coordonnée, aucun jeton de partage n'entre dans la file ni dans le journal : seulement un type, un
  * identifiant et un statut. Un aperçu de commentaire est borné à 120 caractères.
  */
@@ -54,15 +55,6 @@ export interface QueueRowInput {
   readonly decision: ModerationDecision;
 }
 
-export function toQueueRow(input: QueueRowInput) {
-  return {
-    contenu_type: input.type,
-    contenu_id: input.id.slice(0, 80),
-    statut: STATUS_OF[input.decision],
-    moderateur_id: input.moderatorId,
-  };
-}
-
 export function toAuditRow(input: QueueRowInput & { readonly before: ModerationStatus | null }) {
   return {
     admin_id: input.moderatorId,
@@ -111,15 +103,19 @@ export function toItems(
   return out;
 }
 
-/** Applique à chaque élément le dernier statut consigné dans `moderation_queue`. */
-export function withQueueStatus(
+/**
+ * Applique à chaque élément le dernier statut journalisé dans `admin_audit_log` (`apres.statut`). Les lignes doivent
+ * arriver de la plus ancienne à la plus récente : la dernière gagne.
+ */
+export function withAuditStatus(
   items: readonly RouteModerationItem[],
-  queue: ReadonlyArray<{ contenu_type?: unknown; contenu_id?: unknown; statut?: unknown }>,
+  audit: ReadonlyArray<{ cible_type?: unknown; cible_id?: unknown; apres?: unknown }>,
 ): RouteModerationItem[] {
   const byKey = new Map<string, ModerationStatus>();
-  for (const q of queue) {
-    if (typeof q.contenu_type !== 'string' || typeof q.contenu_id !== 'string') continue;
-    if (STATUSES.includes(q.statut as ModerationStatus)) byKey.set(`${q.contenu_type}:${q.contenu_id}`, q.statut as ModerationStatus);
+  for (const q of audit) {
+    if (typeof q.cible_type !== 'string' || typeof q.cible_id !== 'string') continue;
+    const statut = q.apres && typeof q.apres === 'object' ? (q.apres as { statut?: unknown }).statut : undefined;
+    if (STATUSES.includes(statut as ModerationStatus)) byKey.set(`${q.cible_type}:${q.cible_id}`, statut as ModerationStatus);
   }
   return items.map((it) => ({ ...it, status: byKey.get(`${it.type}:${it.id}`) ?? it.status }));
 }

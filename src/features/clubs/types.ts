@@ -293,6 +293,8 @@ export interface RouteRevisionSnapshot {
   distanceM: number;
   elevationGainM: number | null;
   canonicalRevisionId?: string | null;
+  /** Version de l'espace d'itinéraire collaboratif d'où vient la révision (tracé propre à la révision, sans catalogue). */
+  sourceRevisionNo?: number | null;
   routeName?: string | null;
   meetingPoint?: string | null;
   updatedBy: string;

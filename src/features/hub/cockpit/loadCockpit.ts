@@ -10,6 +10,7 @@ import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import type { HubAdventureData } from '../server/getHubAdventureData';
 import { buildCockpitReservations } from './booking';
 import { buildCockpit, type CockpitData } from './model';
+import { indexClubRouteSources } from './clubRouteSources';
 import { momentClock } from './day';
 import { readStepExecutions } from './stepExecutionServer';
 
@@ -112,6 +113,17 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
     ? (clubRouteUpdates.data as ClubRouteUpdateRow[])
     : [];
 
+  // 10.5 : version de l'espace d'itinéraire d'origine des révisions listées (colonne ajoutée par 20261123130000 ;
+  // lecture sous RLS, une erreur ou une colonne absente laisse simplement la mention de côté).
+  let sourceVersions = new Map<string, number>();
+  if (clubRouteUpdateRows.length > 0) {
+    const { data: sources } = await supabase.from('club_event_route_revisions')
+      .select('event_id,revision,source_revision_no')
+      .in('event_id', clubRouteUpdateRows.map((row) => row.event_id))
+      .not('source_revision_no', 'is', null);
+    sourceVersions = indexClubRouteSources(sources);
+  }
+
   return {
     ...cockpit,
     stepExecutions,
@@ -130,6 +142,7 @@ export async function loadCockpit(data: HubAdventureData): Promise<CockpitData> 
       revision: row.revision,
       adoptedRevision: row.adopted_revision,
       decisionPending: row.decision_pending,
+      sourceRevisionNo: sourceVersions.get(`${row.event_id}:${row.revision}`) ?? null,
     })),
     peopleCount: cockpit.peopleCount == null ? null : Math.max(cockpit.peopleCount, people.size),
     people: [...people.values()].map((person) => {

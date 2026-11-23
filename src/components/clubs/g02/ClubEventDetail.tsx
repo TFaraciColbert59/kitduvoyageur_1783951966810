@@ -369,6 +369,12 @@ export function ClubEventDetail({
           ) : null}
         </div>
 
+        {latestRevision?.sourceRevisionNo != null ? (
+          <p className={styles.tiny} style={{ margin: 0 }} data-testid="route-source">
+            Proposé depuis l’itinéraire · version {latestRevision.sourceRevisionNo}
+          </p>
+        ) : null}
+
         {latestRevision ? (
           <div className={styles.grid}>
             <div className={styles.metric}>
@@ -410,7 +416,7 @@ export function ClubEventDetail({
           </button>
         ) : null}
 
-        {latestRevision?.canonicalRevisionId && rsvp === 'registered' && !event.cancelledAt
+        {(latestRevision?.canonicalRevisionId || latestRevision?.sourceRevisionNo != null) && rsvp === 'registered' && !event.cancelledAt
           && routeSyncState?.pendingRevision === latestRevision.revision && onDecideRoute && (
           <div className={styles.formRow}>
             <button type="button" className={cx(styles.button, styles.primary)}

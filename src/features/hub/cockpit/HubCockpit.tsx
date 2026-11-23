@@ -813,9 +813,12 @@ export function HubCockpit({ data, fixture = false, adventureControl }: {
                     <span className={ds.rowBody}>
                       <span className={ds.rowTitle}>{update.title}</span>
                       <span className={ds.rowSub}>
-                        {update.decisionPending ? 'Parcours à valider'
-                          : update.adoptedRevision != null ? `Tracé adopté · R${update.adoptedRevision}`
-                            : `Parcours publié · R${update.revision}`}
+                        {[
+                          update.decisionPending ? 'Parcours à valider'
+                            : update.adoptedRevision != null ? `Tracé adopté · R${update.adoptedRevision}`
+                              : `Parcours publié · R${update.revision}`,
+                          update.sourceRevisionNo != null ? `Proposé depuis l’itinéraire · version ${update.sourceRevisionNo}` : null,
+                        ].filter(Boolean).join(' · ')}
                       </span>
                     </span>
                     <Icon name="chevron-right" size={16} />
