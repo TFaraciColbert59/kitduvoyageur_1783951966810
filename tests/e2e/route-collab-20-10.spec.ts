@@ -307,8 +307,9 @@ test.describe('Recette E2E LKDV 20/10 — Design Explorer (Carte + Pilule 3 poin
 
     await ctx2.setOffline(false);
     await page2.evaluate(() => window.dispatchEvent(new Event('online')));
-    await page2.getByRole('button', { name: /Synchroniser \(1\)/i }).click();
+    // 3.6 : au retour du réseau, les changements gardés partent d'eux-mêmes (plus de bouton à presser).
     await expect(page2.getByTestId('status-message')).toContainText('1 appliquée(s)');
+    await expect(page2.getByRole('button', { name: /Synchroniser/i })).toHaveCount(0);
 
     await ctx2.close();
     fs.rmSync(userDataDir, { recursive: true, force: true });

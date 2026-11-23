@@ -162,6 +162,8 @@ export interface SayPlan {
   /** Tronçons à recalculer après application : les nouveaux seulement, ou tous les tronçons calculés. */
   readonly recalc: 'none' | 'placeholders' | 'all';
   readonly summary: { readonly before: string; readonly after: string };
+  /** Itinéraire obtenu en rejouant les opérations sur la copie (pour savoir quels tronçons recalculer). */
+  readonly after: RouteWorkspaceState;
 }
 
 export interface SayPlanContext {
@@ -409,5 +411,22 @@ export function planSayCommands(
     blocked,
     recalc,
     summary: { before: shortLine(workspace), after: shortLine(working) },
+    after: working,
   };
+}
+
+/**
+ * Tronçons à recalculer sur le réseau après l'application d'un plan : les tronçons recréés en simple segment
+ * (`placeholders`) ou tous les tronçons calculés (`all`). Les tronçons tracés à la main ou importés ne sont
+ * jamais recalculés sans qu'on le demande.
+ */
+export function sectionsToRecalc(plan: Pick<SayPlan, 'recalc' | 'after'>): string[] {
+  if (plan.recalc === 'none') return [];
+  return plan.after.sections
+    .filter((s) => {
+      if (s.mode !== 'routed') return false;
+      if (plan.recalc === 'all') return true;
+      return s.provenance.provider == null && s.provenance.calculatedAt == null;
+    })
+    .map((s) => s.id);
 }

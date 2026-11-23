@@ -40,3 +40,14 @@ export function readToken(name: string): string {
 export function readTokens(names: readonly string[]): string[] {
   return names.map(readToken);
 }
+
+/** Couleur des repères d'un calque : un jeton par catégorie de point d'intérêt. */
+export const POI_COLOR_TOKENS: Readonly<Record<string, string>> = {
+  water: '--lkv-info',
+  shelter: '--lkv-warm-700',
+  summit: '--lkv-forest-800',
+  food_lodging: '--lkv-brick-600',
+  access: '--lkv-ink-500',
+  bike_workshop: '--lkv-sage-700',
+};
+export const POI_DEFAULT_COLOR_TOKEN = '--lkv-sage-500';

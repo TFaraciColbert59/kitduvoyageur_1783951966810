@@ -52,3 +52,9 @@ C5 = src/features/compas/v5 · CE = src/features/compas/engine
 ## Compte / Admin
 - Effort : `src/components/compte/overlay/EffortSubDrawers.tsx`, `CompteOverlayHost.tsx`.
 - Admin : `src/app/admin/page.tsx` (modération/audit en constantes en dur), tables `admin_audit_log`, `moderation_queue`, `comment_reports`.
+
+## Tiroir de l'itinéraire : ce qui est réutilisé du Compas v5 (état du 22/11/2026)
+- Contenant : `ExplorerSheet` reste le conteneur du tiroir. `V5Sheet` ne prend aucune prop (il est piloté par `useV5()` et le registre `DRAWERS`, donc lié au voyage du Compas) : il ne peut pas porter l'atelier d'itinéraire. On y a ajouté, sans changer les autres écrans, `threeDetents` (aperçu, moitié par défaut, plein) et le bandeau `summary` (tuiles chiffrées).
+- Matière : les lignes (`Li` → `RouteRow`), groupes (`Grp`), puces (`Chip`), boutons (`PBtn`), interrupteur et légendes (`Cap`) viennent de `v5/ui/primitives.tsx`, sous la portée `V5Scope` (`.v5 .rcw-v5`, `display: contents`). `v5.css` est importé par l'espace de travail.
+- Îlot : `IslandNote` (`v5/Island.tsx`) porte l'annonce unique de l'itinéraire ; `Island` du Compas partage son corps (`IslandNoteBody`).
+- Non réutilisé : `Flow` (capsule d'icônes, l'itinéraire garde la capsule d'onglets de l'Explorer avec libellés accessibles) et les `DRAWERS` du Compas.

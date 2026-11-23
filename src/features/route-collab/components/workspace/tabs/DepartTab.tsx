@@ -44,7 +44,7 @@ export function DepartTab() {
               ? 'Préparation avancée'
               : 'Préparation à finaliser'
         }
-        sublabel={`${totals.distanceKm} km · ${workspace.stages.length} étape(s) · ${
+        sublabel={`${workspace.sections.length > 0 ? `${totals.distanceKm} km` : 'distance inconnue'} · ${workspace.stages.length} étape(s) · ${
           workspace.publishedRevisionNo
             ? `Version v${workspace.publishedRevisionNo}`
             : `Brouillon seq ${workspace.headSeq}`

@@ -97,8 +97,18 @@ export function OfflineCarnetDrawer() {
                 icon="clock"
                 tone="warn"
                 title={q.operation.type}
-                sub={`Base seq ${q.baseSeq} · ${q.queuedAt.slice(11, 19)}`}
-                badge={{ label: 'En attente', tone: 'warn' }}
+                sub={
+                  q.status === 'conflict' || q.status === 'rejected'
+                    ? `${q.status === 'conflict' ? 'Refusé : le tracé a changé entre-temps' : 'Refusé par le serveur'}${q.errorMessage ? ` · ${q.errorMessage}` : ''}`
+                    : `Base seq ${q.baseSeq} · ${q.queuedAt.slice(11, 19)}`
+                }
+                badge={
+                  q.status === 'conflict'
+                    ? { label: 'En conflit', tone: 'bad' }
+                    : q.status === 'rejected'
+                      ? { label: 'Refusé', tone: 'bad' }
+                      : { label: 'En attente', tone: 'warn' }
+                }
               />
             ))}
           </XpRows>

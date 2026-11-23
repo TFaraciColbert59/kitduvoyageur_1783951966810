@@ -48,6 +48,7 @@ export function Li({
   ariaLabel,
   testId,
   state,
+  current,
 }: {
   icon?: V5IconName;
   photo?: string | null;
@@ -62,6 +63,8 @@ export function Li({
   /** Repères de test et de style posés sur la ligne (utilisés par l'itinéraire : `data-testid`, `data-state`). */
   testId?: string;
   state?: string;
+  /** Ligne choisie dans une liste (jour sélectionné) : `aria-current`. */
+  current?: boolean;
 }) {
   const body = (
     <>
@@ -75,11 +78,11 @@ export function Li({
     </>
   );
   return onClick ? (
-    <button type="button" className="v5-li" onClick={onClick} disabled={disabled} aria-label={ariaLabel} data-testid={testId} data-state={state}>
+    <button type="button" className="v5-li" onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-current={current ? 'true' : undefined} data-testid={testId} data-state={state}>
       {body}
     </button>
   ) : (
-    <div className="v5-li" data-testid={testId} data-state={state}>
+    <div className="v5-li" aria-current={current ? 'true' : undefined} data-testid={testId} data-state={state}>
       {body}
     </div>
   );
@@ -117,6 +120,7 @@ export function Chip({
   tone,
   onClick,
   disabled,
+  className = '',
   ...rest
 }: {
   children: ReactNode;
@@ -128,7 +132,7 @@ export function Chip({
   return (
     <button
       type="button"
-      className={`v5-chip${tone ? ` ${tone}` : ''}`}
+      className={`v5-chip${tone ? ` ${tone}` : ''}${className ? ` ${className}` : ''}`}
       aria-pressed={pressed}
       onClick={onClick}
       disabled={disabled}

@@ -22,6 +22,8 @@ export interface RouteEntryValue {
   readonly goal: RouteGoal | null;
   /** Brouillon gardé sur l'appareil (atelier non enregistré en base). */
   readonly localDraft: boolean;
+  /** Raison, dite telle quelle, pour laquelle l'enregistrement serveur n'a pas eu lieu (sinon `null`). */
+  readonly saveNote: string | null;
 }
 
 const DEFAULT: RouteEntryValue = {
@@ -31,6 +33,7 @@ const DEFAULT: RouteEntryValue = {
   authenticated: true,
   goal: null,
   localDraft: false,
+  saveNote: null,
 };
 
 const Ctx = createContext<RouteEntryValue>(DEFAULT);

@@ -36,10 +36,12 @@ export interface ExplorerSheetProps {
    * Facultatif et désactivé par défaut : les autres écrans gardent leurs deux crans.
    */
   threeDetents?: boolean;
+  /**
+   * Bandeau fixe entre l'en-tête et les onglets (chiffres de tête du tiroir d'itinéraire). Absent par défaut :
+   * les autres écrans ne changent pas.
+   */
+  summary?: React.ReactNode;
 }
-
-const PEEK = 176;
-const LOW = 300;
 
 const DETENTS: Detent[] = ['peek', 'low', 'mid', 'full'];
 const THREE_DETENTS: Detent[] = ['peek', 'mid', 'full'];
@@ -81,6 +83,7 @@ export function ExplorerSheet({
   tabsBottom = false,
   onClose,
   threeDetents = false,
+  summary,
 }: ExplorerSheetProps) {
   const [viewport, setViewport] = useState(844);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -280,6 +283,8 @@ export function ExplorerSheet({
           ) : null}
         </div>
       </header>
+
+      {summary ? <div className="xp-sheet-summary">{summary}</div> : null}
 
       <div className="xp-sheet-body">
         {tabs && tabs.length > 1 && !tabsBottom ? (

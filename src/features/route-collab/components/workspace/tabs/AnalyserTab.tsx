@@ -10,7 +10,9 @@ import {
   SurfaceStackedVisual,
   WeatherForecastChart,
 } from '../../RouteAnalysisVisuals';
+import { profileIndexAtDistance } from '../../../profileLink';
 import { Banners } from '../Banners';
+import { ProfileReadoutLine } from '../map/ProfileReadoutLine';
 import { useRouteWorkspace } from '../WorkspaceContext';
 
 export function AnalyserTab() {
@@ -30,7 +32,9 @@ export function AnalyserTab() {
     setOverlayDetail,
     setHoveredCoord,
     elevation,
-    flattenedCoords,
+    profileModel,
+    profileReadout,
+    setProfileCursor,
     totalWarnings,
     terrainStats,
     elevationStats,
@@ -50,15 +54,21 @@ export function AnalyserTab() {
             minEleM={elevationStats.minEleM}
             avgEleM={terrainStats.avgAltitudeM}
             maxEleM={elevationStats.maxEleM}
-            onHoverRatio={(ratio) => {
-              if (ratio == null || flattenedCoords.length === 0) {
+            cursorKm={profileReadout ? profileReadout.km : null}
+            onHoverKm={(km) => {
+              // Profil → carte (2.6) : le kilomètre survolé est lu dans le modèle de profil, pas deviné par ratio.
+              if (km == null) {
                 setHoveredCoord(null);
+                setProfileCursor(null);
                 return;
               }
-              const idx = Math.floor(ratio * Math.max(0, flattenedCoords.length - 1));
-              if (flattenedCoords[idx]) setHoveredCoord(flattenedCoords[idx]);
+              const idx = profileIndexAtDistance(profileModel, km * 1000);
+              setProfileCursor(idx);
+              const hit = idx == null ? null : profileModel.points[idx];
+              setHoveredCoord(hit ? [hit.lon, hit.lat] : null);
             }}
           />
+          <ProfileReadoutLine readout={profileReadout} hasElevation={profileModel.hasElevation} />
 
           <EffortRadialGauge stats={terrainStats} />
 

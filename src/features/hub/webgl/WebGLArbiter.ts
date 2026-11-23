@@ -4,7 +4,7 @@
  *
  * INVARIANTS:
  * 1. iOS WKWebView cannot reliably sustain two concurrent heavy WebGL contexts.
- *    WebGLArbiter enforces `camp-map` XOR `bag-scene`.
+ *    WebGLArbiter enforces `camp-map` XOR `bag-scene` XOR `route-map` (carte de /compas/itineraire).
  * 2. Entering Studio saves MapLibre viewpoint and unmounts map;
  *    exiting Studio unmounts Three.js and restores map viewpoint.
  * 3. On `webglcontextlost`, attempts restoration ONCE; if no handler restores
@@ -13,7 +13,7 @@
  *    and automatic GPU release after 30s in background (`BACKGROUND_RELEASE_MS`).
  */
 
-export type WebGLHolder = 'camp-map' | 'bag-scene';
+export type WebGLHolder = 'camp-map' | 'bag-scene' | 'route-map';
 
 export interface MapViewState {
   center: [number, number]; // [lng, lat]

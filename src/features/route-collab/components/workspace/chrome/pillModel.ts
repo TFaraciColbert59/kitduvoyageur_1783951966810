@@ -42,16 +42,31 @@ export function readinessText(r: Readiness): string {
   return `${r.label} · ${n} ${n > 1 ? 'points' : 'point'}`;
 }
 
-export function dayChips(ws: RouteWorkspaceState): PillDay[] {
+/** Distance et D+ d'une étape, en toutes lettres : un chiffre inconnu est dit inconnu, jamais écrit 0. */
+export function stageFacts(
+  ws: Pick<RouteWorkspaceState, 'points' | 'sections' | 'stages'>,
+  st: RouteWorkspaceState['stages'][number]
+): { km: string; ascent: string; known: boolean } {
   const fmt = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+  const stats = legsStats(stageLegs(ws, st));
+  if (stats.legCount === 0 || stats.missingSections === stats.legCount) return { km: 'distance inconnue', ascent: 'D+ inconnu', known: false };
+  const km = `${fmt.format(stats.distanceKm)} km${stats.missingSections > 0 ? ' · tracé incomplet' : ''}`;
+  const ascent = stats.ascentM != null ? `D+ ${new Intl.NumberFormat('fr-FR').format(stats.ascentM)} m` : 'D+ inconnu';
+  return { km, ascent, known: stats.missingSections === 0 };
+}
+
+export function dayChips(ws: RouteWorkspaceState): PillDay[] {
   return ws.stages
     .slice()
     .sort((a, b) => a.dayNumber - b.dayNumber)
     .map((st) => {
-      const stats = legsStats(stageLegs(ws, st));
-      const km = stats.legCount > 0 ? `${fmt.format(stats.distanceKm)} km` : 'distance inconnue';
-      const d = stats.ascentM != null ? `D+ ${stats.ascentM} m` : 'D+ inconnu';
-      return { id: st.id, dayNumber: st.dayNumber, label: `J${st.dayNumber}`, title: `Jour ${st.dayNumber} · ${km} · ${d}` };
+      const f = stageFacts(ws, st);
+      return {
+        id: st.id,
+        dayNumber: st.dayNumber,
+        label: `J${st.dayNumber}`,
+        title: `Jour ${st.dayNumber} · ${f.km} · ${f.ascent}`,
+      };
     });
 }
 

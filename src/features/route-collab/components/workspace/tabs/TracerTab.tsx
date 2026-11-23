@@ -9,10 +9,19 @@ import {
   Undo2,
   Upload,
 } from 'lucide-react';
-import { XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
 import { XpIcon } from '@/features/explorer-v2/ui/XpIcon';
 import { RouteShapeMiniStrip } from '../../RouteAnalysisVisuals';
 import { Banners } from '../Banners';
+import { useRouteViewMode } from '../expertMode';
+import { PointList } from '../track/PointList';
+import { ProfilePicker } from '../track/ProfilePicker';
+import { SectionList } from '../track/SectionTools';
+import { PendingRouting, ShapeTools } from '../track/ShapeTools';
+import { VersionTimeline } from '../track/VersionTimeline';
+import { Block, Btn } from '../track/atoms';
+import { RouteRow, RouteRows } from '../ui/RouteRow';
+import { useTrackTools } from '../useTrackTools';
+import { TRACK_FILE_ACCEPT } from '../../../trackIo';
 import { useRouteWorkspace } from '../WorkspaceContext';
 
 export function TracerTab() {
@@ -40,10 +49,13 @@ export function TracerTab() {
     handleCenterMyPosition,
     handleLoadHistory,
     handleImportHistoryEntry,
-    handleFileImport,
     handleRemoveLastSegment,
     handleClearTrack,
+    openSubDrawer,
+    listMode,
   } = useRouteWorkspace();
+  const { expert } = useRouteViewMode();
+  const tools = useTrackTools();
   return (
     <div className="rcw-stack" data-testid="tab-panel-tracer">
       <Banners />
@@ -72,19 +84,19 @@ export function TracerTab() {
             <Upload size={15} />
           </span>
           <span className="rcw-import-card-text">
-            <strong>Importer un GPX</strong>
-            <span>Fichier .gpx ou GeoJSON</span>
+            <strong>Importer un fichier</strong>
+            <span>GPX, KML, TCX ou GeoJSON</span>
           </span>
         </button>
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept=".gpx,application/gpx+xml,application/geo+json,application/json"
+        accept={TRACK_FILE_ACCEPT}
         className="xp-visually-hidden"
-        aria-label="Importer un fichier GPX ou GeoJSON"
+        aria-label="Importer un fichier GPX, KML, TCX ou GeoJSON"
         onChange={(e) => {
-          void handleFileImport(e.target.files?.[0]);
+          void tools.importFile(e.target.files?.[0]);
           e.target.value = '';
         }}
       />
@@ -104,23 +116,19 @@ export function TracerTab() {
               Aucune sortie GPS ou randonnée enregistrée trouvée pour ce compte.
             </p>
           ) : (
-            <XpRows>
+            <RouteRows testId="history-rows">
               {historyItems.map((entry) => (
-                <XpRow
+                <RouteRow
                   key={entry.id}
-                  icon={
-                    entry.kind === 'carnet' ? 'book' : entry.kind === 'sortie' ? 'run' : 'route'
-                  }
-                  tone={
-                    entry.kind === 'sortie' ? 'good' : entry.kind === 'carnet' ? 'water' : 'ink'
-                  }
+                  icon={entry.kind === 'carnet' ? 'map' : entry.kind === 'sortie' ? 'hike' : 'route'}
                   title={entry.title}
-                  sub={`${entry.subtitle}${entry.distanceKm != null ? ` · ${entry.distanceKm} km` : ''}${entry.ascentM != null ? ` · D+ ${entry.ascentM} m` : ''}`}
-                  badge={{ label: entry.kind, tone: 'muted' }}
+                  subtitle={`${entry.subtitle}${entry.distanceKm != null ? ` · ${entry.distanceKm} km` : ''}${entry.ascentM != null ? ` · D+ ${entry.ascentM} m` : ''}`}
+                  value={entry.kind}
                   onClick={() => handleImportHistoryEntry(entry)}
+                  testId={`history-row-${entry.id}`}
                 />
               ))}
-            </XpRows>
+            </RouteRows>
           )}
         </div>
       ) : null}
@@ -234,6 +242,24 @@ export function TracerTab() {
           </>
         ) : null}
       </div>
+
+      <ProfilePicker />
+      <ShapeTools />
+      <PendingRouting />
+      {/* Mode liste : la surface liste de l'écran énumère déjà les points (un toucher ouvre leur tiroir, où se modifient nom, coordonnées et suppression). */}
+      {listMode ? null : <PointList />}
+      {expert ? <SectionList /> : null}
+      <Block title="Aller plus loin" testId="track-more">
+        <div className="rts-actions">
+          <Btn onClick={() => openSubDrawer('variants')} testId="open-variants">
+            Comparer des variantes
+          </Btn>
+          <Btn onClick={() => openSubDrawer('gpx')} testId="open-files">
+            Importer / exporter
+          </Btn>
+        </div>
+      </Block>
+      <VersionTimeline />
 
       <RouteShapeMiniStrip
         coords={flattenedCoords}

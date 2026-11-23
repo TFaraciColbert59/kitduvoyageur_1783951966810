@@ -1,4 +1,5 @@
 import { XpEmpty, XpEyebrow, XpMetrics, XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
+import { PointEditor } from '../track/PointEditor';
 import type { DrawerHeader } from '../types';
 import { Banners } from '../Banners';
 import { useRouteWorkspace, type RouteWorkspaceApi } from '../WorkspaceContext';
@@ -13,18 +14,7 @@ export function pointDrawerHeader(ws: RouteWorkspaceApi): DrawerHeader {
 }
 
 export function PointDrawer() {
-  const {
-    workspace,
-    setSubDrawer,
-    commentBody,
-    setCommentBody,
-    canEditGeo,
-    canComment,
-    orderedPoints,
-    selectedPoint,
-    runOperation,
-    handleAddComment,
-  } = useRouteWorkspace();
+  const { workspace, commentBody, setCommentBody, canComment, selectedPoint, handleAddComment } = useRouteWorkspace();
   const pt = selectedPoint;
   if (!pt) {
     return (
@@ -45,45 +35,7 @@ export function PointDrawer() {
           { label: 'Altitude', value: pt.eleM != null ? `${Math.round(pt.eleM)} m` : 'Inconnue' },
         ]}
       />
-      {canEditGeo ? (
-        <>
-          <XpEyebrow>Actions sur ce point</XpEyebrow>
-          <div className="rcw-inline-actions">
-            <button
-              type="button"
-              className="xp-primary"
-              onClick={() =>
-                void runOperation(
-                  {
-                    type: 'move_point',
-                    pointId: pt.id,
-                    lat: Number((pt.lat + 0.003).toFixed(5)),
-                    lon: Number((pt.lon + 0.003).toFixed(5)),
-                  },
-                  { [pt.id]: pt.entityVersion }
-                )
-              }
-            >
-              Déplacer (+300 m NE)
-            </button>
-            {orderedPoints.length > 2 ? (
-              <button
-                type="button"
-                className="xp-secondary"
-                onClick={() => {
-                  void runOperation(
-                    { type: 'delete_point', pointId: pt.id },
-                    { [pt.id]: pt.entityVersion }
-                  );
-                  setSubDrawer(null);
-                }}
-              >
-                Supprimer ce point
-              </button>
-            ) : null}
-          </div>
-        </>
-      ) : null}
+      <PointEditor key={`${pt.id}-${pt.entityVersion}`} point={pt} />
 
       <XpEyebrow>Commentaires ancrés ({ptComments.length})</XpEyebrow>
       {ptComments.length > 0 ? (

@@ -1111,6 +1111,25 @@ export function applyWorkspaceOperation(
     case 'apply_variant': {
       const variant = nextVariants.find((v) => v.id === op.variantId);
       if (variant) {
+        // Une variante calculée avant un déplacement de point ne se recolle plus au tracé : refusée, jamais appliquée de travers.
+        const pointsNow = activePoints({ ...workspace, points: nextPoints });
+        for (const rep of variant.replacements) {
+          const target = nextSections.find((s) => s.id === rep.sectionId);
+          if (!target) return deny('Variante périmée : le tronçon concerné n’existe plus. Recréez la comparaison.');
+          const first = rep.geometry.coordinates[0];
+          const last = rep.geometry.coordinates[rep.geometry.coordinates.length - 1];
+          const from = pointsNow.find((p) => p.id === target.fromPointId);
+          const to = pointsNow.find((p) => p.id === target.toPointId);
+          if (
+            first &&
+            last &&
+            from &&
+            to &&
+            (distanceToKm(from, { lat: first[1], lon: first[0] }) > 0.15 || distanceToKm(to, { lat: last[1], lon: last[0] }) > 0.15)
+          ) {
+            return deny('Variante périmée : un point a bougé depuis son calcul. Recréez la comparaison.');
+          }
+        }
         const repBySec = new Map(variant.replacements.map((r) => [r.sectionId, r]));
         nextSections = nextSections.map((sec) => {
           const rep = repBySec.get(sec.id);
@@ -1122,7 +1141,11 @@ export function applyWorkspaceOperation(
             durationMin: rep.durationMin,
             ascentM: rep.ascentM,
             descentM: rep.descentM,
+            // La surface et le profil d'altitude de l'ancien tracé ne valent plus pour le nouveau : inconnus.
+            elevationSamples: undefined,
+            surfaceSegments: [{ fromRatio: 0, toRatio: 1, surface: 'unknown' as const, source: null }],
             provenance: rep.provenance,
+            warnings: [],
             entityVersion: sec.entityVersion + 1,
           };
         });
@@ -1553,10 +1576,12 @@ export function applyWorkspaceOperation(
         .slice(0, -1)
         .every((p, i) => op.sections.some((s) => s.fromPointId === p.id && s.toPointId === incoming[i + 1].id));
       if (!chained) return deny('Trace importée incohérente : les tronçons ne suivent pas les points.');
+      // Un identifiant repris par la trace remplace l'ancien point : jamais deux points au même identifiant.
+      const incomingIds = new Set(incoming.map((p) => p.id));
       nextPoints = [
-        ...workspace.points.map((p) =>
-          p.deletedAt ? p : { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 },
-        ),
+        ...workspace.points
+          .filter((p) => !incomingIds.has(p.id))
+          .map((p) => (p.deletedAt ? p : { ...p, deletedAt: nowIso, entityVersion: p.entityVersion + 1 })),
         ...incoming.map((p) => ({ ...p, workspaceId: workspace.id })),
       ];
       nextSections = incoming

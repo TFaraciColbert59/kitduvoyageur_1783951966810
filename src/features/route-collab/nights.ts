@@ -46,6 +46,23 @@ export function overnightFromStay(option: V5StayOption, nowIso: string): Overnig
   };
 }
 
+/** Lieu de nuit réel (candidat d'un découpage) retenu pour la nuit d'une étape. */
+export function overnightFromCandidate(c: OvernightCandidate, nowIso: string, countryCode: string | null = null): OvernightPlace {
+  const kind: V5StayKind = c.type === 'refuge' || c.type === 'hut' ? 'refuge' : c.type === 'camp' ? 'camping' : c.type === 'bivouac' ? 'bivouac' : 'hebergement';
+  const price = stayPriceHint(kind, countryCode);
+  return {
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    lat: c.lat,
+    lon: c.lon,
+    bookingStatus: 'unknown',
+    provenance: 'OpenStreetMap',
+    lastVerifiedAt: nowIso,
+    priceHint: price ? { perPerson: price.perPerson, currency: price.currency, basis: price.basis, asOf: price.asOf } : null,
+  };
+}
+
 /** Nuit notée à la main (nom saisi par la personne) : pas de position propre, donc celle de l'arrivée. */
 export function overnightFromNote(
   name: string,

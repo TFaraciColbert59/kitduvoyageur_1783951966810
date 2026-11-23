@@ -18,3 +18,8 @@ export function useRouteWorkspace(): RouteWorkspaceApi {
   }
   return value;
 }
+
+/** Comme `useRouteWorkspace`, mais `null` hors fournisseur (la carte reste utilisable seule, en test). */
+export function useOptionalRouteWorkspace(): RouteWorkspaceApi | null {
+  return useContext(RouteWorkspaceContext);
+}

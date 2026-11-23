@@ -25,6 +25,8 @@ import { HubOublisSection } from '@/features/hub/components/possession/HubOublis
 import { HubInvitationsSection } from '@/features/hub/components/collectif/HubInvitationsSection';
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 import { loadTripSection } from '@/lib/tripSection';
+import { PublishedRouteCard } from '@/features/hub/components/itinerary/PublishedRouteCard';
+import { getPublishedRouteSummaryForTrip } from '@/features/route-collab/server/publishedRoute';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
 import { getTripKitDetails } from '@/lib/queries-trip-kit';
 import { getTripItemImages } from '@/features/hub/server/getTripItemImages';
@@ -182,8 +184,12 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
         elevation_loss_m: s.elevation_loss_m ? Number(s.elevation_loss_m) : null,
       }));
 
+      // 10.3 : la version PUBLIÉE de l'itinéraire collaboratif (lecture serveur, RLS) ; null sans publication.
+      const published = await getPublishedRouteSummaryForTrip(trip.id, supabase);
+
       return (
         <>
+          {published && <PublishedRouteCard summary={published} />}
           <div className="hidden lg:block">
             <ItineraryPlannerClient trip={trip} initialSteps={initialSteps} />
           </div>

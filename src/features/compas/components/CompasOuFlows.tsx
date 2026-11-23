@@ -2,7 +2,9 @@
 
 import { notedStay } from '../engine/stayProposal';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import Icon from '@/components/ui/Icon';
+import { buildItineraryHref } from '@/features/route-collab/insights/deepLinks';
 import type { CompasLevel, CompasNights, CompasTerrain } from '../engine/compasModel';
 import { sourceLabel, adaptationTextFor, type CtxField } from '../engine/projectContext';
 import { addDaysIso, capitalize, weatherLabel } from '../engine/format';
@@ -181,6 +183,7 @@ type RouteMode = 'etapes' | 'autour' | 'mine' | 'cherche';
 export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint }) {
   const { data } = ctl;
   const m = data.model;
+  const router = useRouter();
   const { t, locale } = useTranslation();
   const f = useCompasFormat();
   const miles = useCompasUnits().distance === 'mi';
@@ -333,6 +336,29 @@ export function ParcoursFlow({ ctl, hint }: { ctl: CompasCtl; hint?: FlowHint })
         </span>
         {data.route.id != null && <Chip icon="map-pin">{t('compas.ouRoute.catalogue')}</Chip>}
       </div>
+
+      {/* 10.2 : l'itinéraire collaboratif (page dédiée) ; l'éditeur ci-dessous reste tant que la fusion n'est pas complète. */}
+      <button
+        type="button"
+        className="cp-row"
+        data-testid="compas-open-itinerary"
+        onClick={() => router.push(buildItineraryHref({ tripId: m.tripId }))}
+      >
+        <span className="cp-thumb" aria-hidden="true">
+          <Icon name="map-pin" size={18} />
+        </span>
+        <span className="cp-row__t">
+          <b>{t('compas.routeEditor.openItinerary')}</b>
+          <span>
+            {data.publishedRoute
+              ? t('compas.routeEditor.openItineraryPublished', { version: data.publishedRoute.revisionNo })
+              : t('compas.routeEditor.openItineraryHint')}
+          </span>
+        </span>
+        <span className="cp-row__end">
+          <Icon name="chevron-right" size={16} aria-hidden="true" />
+        </span>
+      </button>
 
       {canEditRoute && (
         <button type="button" className="cp-row" onClick={() => setEditing(true)}>

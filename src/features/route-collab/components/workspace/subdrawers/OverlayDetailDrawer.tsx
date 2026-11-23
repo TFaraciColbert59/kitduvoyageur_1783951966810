@@ -1,7 +1,7 @@
 import { ExplorerSheet } from '@/features/explorer-v2/sheet/ExplorerSheet';
 import { XpChips, XpEyebrow, XpMetrics, XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
 import type { OvernightChipValue } from '../labels';
-import { computeStageMetrics } from '../metrics';
+import { computeStageMetrics, formatStageKm } from '../metrics';
 import { useRouteWorkspace } from '../WorkspaceContext';
 
 /** Tiroir superposé hiérarchique (Étapes -> Catégories -> Sous-catégories avec +/- précision). */
@@ -37,7 +37,7 @@ export function OverlayDetailDrawer() {
           return (
             <ExplorerSheet
               title={`Jour ${st.dayNumber} · ${st.title}`}
-              subtitle={`${stM.distanceKm} km · Précision ${overlayDetail.precision}/3`}
+              subtitle={`${formatStageKm(stM)} · Précision ${overlayDetail.precision}/3`}
               tab={0}
               onTab={() => undefined}
               detent="mid"
@@ -84,11 +84,11 @@ export function OverlayDetailDrawer() {
                 </div>
                 <XpMetrics
                   items={[
-                    { label: 'Distance', value: `${stM.distanceKm} km` },
-                    { label: 'D+', value: stM.ascentM != null ? `${stM.ascentM} m` : '—' },
+                    { label: 'Distance', value: formatStageKm(stM) },
+                    { label: 'D+', value: stM.ascentM != null ? `${stM.ascentM} m` : 'Inconnu' },
                     {
                       label: 'Durée',
-                      value: stM.durationMin != null ? `${stM.durationMin} min` : '—',
+                      value: stM.durationMin != null ? `${stM.durationMin} min` : 'Inconnue',
                     },
                   ]}
                 />

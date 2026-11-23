@@ -1,8 +1,19 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RouteCollabWorkspace } from './RouteCollabWorkspace';
+import { StartScreen } from './workspace/start/StartScreen';
+import {
+  RouteEntryProvider,
+  type RouteGoal,
+  type TripLinkState,
+} from './workspace/start/RouteEntryContext';
+import type { ItineraryDeepLink } from '../insights/deepLinks';
+import type { TripEntry } from '../entry';
+import { buildWorkspaceFromRouteDraft } from '../compasDraft';
+import { adoptGuestWorkspace, clearGuestWorkspace, readGuestWorkspace, saveGuestWorkspace } from '../guestDraft';
 import { getLastVerifiedPack } from '../offlinePackStore';
+import { isRealTripId, persistWorkspaceToServer } from '../startPersist';
 import type { RouteWorkspaceState } from '../types';
 
 function buildWorkspaceFromVerifiedPack(
@@ -50,284 +61,208 @@ function buildWorkspaceFromVerifiedPack(
   };
 }
 
-function buildDefaultWorkspace(userId: string, userName: string): RouteWorkspaceState {
-  const nowIso = new Date().toISOString();
-  const wsId = 'ws-default-compas';
-  let title = 'Nouvel itinéraire collaboratif';
-  let sourceKind: 'blank' | 'explorer_route' = 'blank';
-  let sourceId: string | null = null;
-  let attribution: string | null = null;
-  let coords: Array<[number, number]> = [
-    [5.512, 45.052],
-    [5.535, 45.068],
-    [5.558, 45.084],
-  ];
+type Phase =
+  | { readonly kind: 'checking' }
+  | { readonly kind: 'start' }
+  | { readonly kind: 'denied' }
+  | { readonly kind: 'persisting'; readonly workspace: RouteWorkspaceState }
+  | { readonly kind: 'ready'; readonly workspace: RouteWorkspaceState; readonly serverSynced: boolean };
 
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = window.sessionStorage.getItem('lkdv:compas:explorerImport:v1');
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          routeId?: string;
-          title?: string;
-          geojson?: { coordinates?: Array<[number, number]> };
-          attribution?: string;
-        };
-        if (parsed.title) title = parsed.title;
-        if (parsed.routeId) sourceId = parsed.routeId;
-        if (parsed.attribution) attribution = parsed.attribution;
-        if (Array.isArray(parsed.geojson?.coordinates) && parsed.geojson!.coordinates.length >= 2) {
-          coords = parsed.geojson!.coordinates;
-          sourceKind = 'explorer_route';
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }
+const NO_DEEP_LINK: Omit<ItineraryDeepLink, 'tripId'> = {};
 
-  const start = coords[0];
-  const mid = coords[Math.floor(coords.length / 2)];
-  const end = coords[coords.length - 1];
-
-  return {
-    id: wsId,
-    tripId: 'trip-compas-active',
-    title,
-    status: 'draft',
-    sport: 'marche',
-    shapeMode: 'one_way',
-    routingOptions: {},
-    headSeq: 0,
-    reviewedSeq: null,
-    publishedRevisionId: null,
-    publishedRevisionNo: null,
-    sourceOrigin: {
-      kind: sourceKind,
-      sourceId,
-      sourceTitle: title,
-      attribution,
-      importedAt: nowIso,
-    },
-    points: [
-      {
-        id: 'pt-start',
-        workspaceId: wsId,
-        kind: 'start',
-        orderKey: 'A',
-        lat: start[1],
-        lon: start[0],
-        eleM: 1100,
-        name: 'Départ',
-        entityVersion: 1,
-      },
-      {
-        id: 'pt-mid',
-        workspaceId: wsId,
-        kind: 'stage_boundary',
-        orderKey: 'M',
-        lat: mid[1],
-        lon: mid[0],
-        eleM: 1450,
-        name: 'Refuge intermédiaire',
-        semanticKind: 'refuge',
-        entityVersion: 1,
-      },
-      {
-        id: 'pt-end',
-        workspaceId: wsId,
-        kind: 'finish',
-        orderKey: 'Z',
-        lat: end[1],
-        lon: end[0],
-        eleM: 1250,
-        name: 'Arrivée',
-        entityVersion: 1,
-      },
-    ],
-    sections: [
-      {
-        id: 'sec-1',
-        workspaceId: wsId,
-        fromPointId: 'pt-start',
-        toPointId: 'pt-mid',
-        mode: sourceKind === 'explorer_route' ? 'imported_preserved' : 'routed',
-        geometry: {
-          type: 'LineString',
-          coordinates: [start, mid],
-        },
-        distanceKm: 8.4,
-        durationMin: 155,
-        ascentM: 420,
-        descentM: 70,
-        surfaceSegments: [{ fromRatio: 0, toRatio: 1, surface: 'trail', source: attribution }],
-        routingInputHash: null,
-        provenance: {
-          provider: sourceKind === 'explorer_route' ? 'explorer-catalog' : 'compas',
-          calculatedAt: nowIso,
-          profile: 'marche',
-          confidence: 'estimated',
-        },
-        warnings: [],
-        entityVersion: 1,
-      },
-      {
-        id: 'sec-2',
-        workspaceId: wsId,
-        fromPointId: 'pt-mid',
-        toPointId: 'pt-end',
-        mode: sourceKind === 'explorer_route' ? 'imported_preserved' : 'routed',
-        geometry: {
-          type: 'LineString',
-          coordinates: [mid, end],
-        },
-        distanceKm: 7.9,
-        durationMin: 140,
-        ascentM: 180,
-        descentM: 380,
-        surfaceSegments: [{ fromRatio: 0, toRatio: 1, surface: 'unknown', source: null }],
-        routingInputHash: null,
-        provenance: {
-          provider: sourceKind === 'explorer_route' ? 'explorer-catalog' : 'compas',
-          calculatedAt: nowIso,
-          profile: 'marche',
-          confidence: 'estimated',
-        },
-        warnings: [],
-        entityVersion: 1,
-      },
-    ],
-    stages: [
-      {
-        id: 'stage-1',
-        workspaceId: wsId,
-        orderKey: '001',
-        dayNumber: 1,
-        title: 'Jour 1',
-        dateIso: null,
-        departureTimeLocal: '08:30',
-        timezone: 'Europe/Paris',
-        startPointId: 'pt-start',
-        endPointId: 'pt-mid',
-        overnightPlace: {
-          id: 'stay-1',
-          name: 'Refuge intermédiaire',
-          type: 'refuge',
-          lat: mid[1],
-          lon: mid[0],
-          bookingStatus: 'planned',
-          provenance: 'Catalogue LKDV',
-          lastVerifiedAt: nowIso,
-        },
-        notes: '',
-        waterObservations: [],
-        weatherSlice: null,
-        hazards: [],
-        entityVersion: 1,
-      },
-      {
-        id: 'stage-2',
-        workspaceId: wsId,
-        orderKey: '002',
-        dayNumber: 2,
-        title: 'Jour 2',
-        dateIso: null,
-        departureTimeLocal: '08:30',
-        timezone: 'Europe/Paris',
-        startPointId: 'pt-mid',
-        endPointId: 'pt-end',
-        overnightPlace: null,
-        notes: '',
-        waterObservations: [],
-        weatherSlice: null,
-        hazards: [],
-        entityVersion: 1,
-      },
-    ],
-    variants: [],
-    proposals: [],
-    comments: [],
-    kitItems: [
-      {
-        id: 'kit-water',
-        name: 'Poche à eau 2 L',
-        category: 'hydratation',
-        weightGrams: 180,
-        quantity: 1,
-        shared: false,
-        assigneeUserId: userId,
-        assigneeName: userName,
-        dependsOn: ['water', 'distance', 'duration'],
-        status: 'confirmed',
-      },
-      {
-        id: 'kit-tent',
-        name: 'Tente 3 places',
-        category: 'abri',
-        weightGrams: 2150,
-        quantity: 1,
-        shared: true,
-        assigneeUserId: userId,
-        assigneeName: userName,
-        dependsOn: ['overnight', 'weather'],
-        status: 'confirmed',
-      },
-    ],
-    members: [{ userId, displayName: userName, role: 'owner' }],
-    revisions: [],
-    packs: [],
-    participantPacks: [],
-    updatedAt: nowIso,
-  };
-}
-
+/**
+ * Entrée de /compas/itineraire. Ordre de reprise, du plus fidèle au plus neutre : l'itinéraire du serveur
+ * (ou sa copie hors ligne), puis le brouillon gardé sur l'appareil (1.7), puis le tracé que le Compas a déjà
+ * calculé pour ce voyage (1.2), sinon l'écran de départ (1.3). Aucun itinéraire d'exemple n'est jamais posé.
+ */
 export function RouteCollabPageClient({
   userId,
   userName,
+  authenticated = userId !== 'guest-local',
   serverWorkspace = null,
   requestedWorkspaceId = null,
   shareToken = null,
   accessDeniedMessage = null,
+  trip = null,
+  tripLink = 'none',
+  deepLink = NO_DEEP_LINK,
 }: {
   userId: string;
   userName: string;
+  authenticated?: boolean;
   serverWorkspace?: RouteWorkspaceState | null;
   requestedWorkspaceId?: string | null;
   shareToken?: string | null;
   accessDeniedMessage?: string | null;
+  trip?: TripEntry | null;
+  tripLink?: TripLinkState;
+  deepLink?: Omit<ItineraryDeepLink, 'tripId'>;
 }) {
-  const resolved = useMemo(() => {
-    if (serverWorkspace) {
-      return { workspace: serverWorkspace, serverSynced: true };
-    }
+  const [phase, setPhase] = useState<Phase>(() =>
+    serverWorkspace ? { kind: 'ready', workspace: serverWorkspace, serverSynced: true } : { kind: 'checking' },
+  );
+  const [goal, setGoal] = useState<RouteGoal | null>(null);
+  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const [deepLinkNow, setDeepLinkNow] = useState(deepLink);
+  const saveTimer = useRef<number | null>(null);
+  const checkedRef = useRef(false);
+
+  // Enregistre côté serveur quand c'est possible (compte + voyage réel), sinon garde le brouillon sur l'appareil.
+  const settle = useCallback(
+    async (workspace: RouteWorkspaceState) => {
+      if (authenticated && isRealTripId(workspace.tripId)) {
+        setPhase({ kind: 'persisting', workspace });
+        const res = await persistWorkspaceToServer(workspace);
+        if (res.ok) {
+          clearGuestWorkspace();
+          setSaveNote(null);
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('workspaceId', res.workspace.id);
+            window.history.replaceState(null, '', url.toString());
+          } catch {
+            /* l'adresse n'est qu'un confort */
+          }
+          setPhase({ kind: 'ready', workspace: res.workspace, serverSynced: true });
+          return;
+        }
+        saveGuestWorkspace(workspace);
+        setSaveNote(res.reason);
+        setPhase({ kind: 'ready', workspace, serverSynced: false });
+        return;
+      }
+      saveGuestWorkspace(workspace);
+      setSaveNote(
+        authenticated
+          ? 'Itinéraire non rattaché à un voyage : gardé sur cet appareil.'
+          : 'Itinéraire non enregistré : connectez-vous pour le garder.',
+      );
+      setPhase({ kind: 'ready', workspace, serverSynced: false });
+    },
+    [authenticated],
+  );
+
+  useEffect(() => {
+    if (phase.kind !== 'checking' || checkedRef.current) return;
+    checkedRef.current = true;
+    // 1. Copie hors ligne d'un itinéraire demandé par son identifiant.
     if (requestedWorkspaceId) {
       const offline = buildWorkspaceFromVerifiedPack(userId, userName, requestedWorkspaceId);
-      if (offline) return { workspace: offline, serverSynced: true };
-      if (accessDeniedMessage) return { workspace: null, serverSynced: false };
+      if (offline) {
+        setPhase({ kind: 'ready', workspace: offline, serverSynced: true });
+        return;
+      }
+      if (accessDeniedMessage) {
+        setPhase({ kind: 'denied' });
+        return;
+      }
     }
-    return { workspace: buildDefaultWorkspace(userId, userName), serverSynced: false };
-  }, [serverWorkspace, requestedWorkspaceId, userId, userName, accessDeniedMessage]);
+    // 2. Brouillon gardé sur l'appareil (tracé sans compte, repris après la connexion).
+    const guest = readGuestWorkspace(trip?.tripId ?? null);
+    if (guest) {
+      void settle(adoptGuestWorkspace(guest, { userId, userName, tripId: trip?.tripId ?? null }));
+      return;
+    }
+    // 3. Tracé déjà calculé par le Compas pour ce voyage.
+    if (trip?.routeDraft) {
+      void settle(
+        buildWorkspaceFromRouteDraft({
+          draft: trip.routeDraft,
+          workspaceId: `ws-trip-${trip.tripId}`,
+          tripId: trip.tripId,
+          title: trip.title,
+          userId,
+          userName,
+          nowIso: new Date().toISOString(),
+          days: trip.days,
+        }),
+      );
+      return;
+    }
+    // 4. Sinon : l'écran de départ.
+    setPhase({ kind: 'start' });
+  }, [phase.kind, requestedWorkspaceId, accessDeniedMessage, userId, userName, trip, settle]);
 
-  if (!resolved.workspace) {
+  useEffect(
+    () => () => {
+      if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+    },
+    [],
+  );
+
+  // Tant que l'itinéraire n'est pas enregistré côté serveur, chaque changement est gardé sur l'appareil.
+  const onWorkspaceChange = useCallback((next: RouteWorkspaceState) => {
+    if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      saveGuestWorkspace(next);
+    }, 500);
+  }, []);
+
+  const entryValue = useMemo(
+    () => ({
+      trip,
+      tripLink,
+      deepLink: deepLinkNow,
+      authenticated,
+      goal,
+      localDraft: phase.kind === 'ready' && !phase.serverSynced,
+      saveNote,
+    }),
+    [trip, tripLink, deepLinkNow, authenticated, goal, phase, saveNote],
+  );
+
+  if (phase.kind === 'denied') {
     return (
       <div className="xp-root rcw-empty-screen" data-theme="light" data-testid="route-collab-denied">
         <div className="rcw-empty-card">
           <strong>Accès refusé</strong>
+          <p className="rcw-sub-note">{accessDeniedMessage ?? 'Vous n’avez pas accès à cet itinéraire.'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase.kind === 'checking' || phase.kind === 'persisting') {
+    return (
+      <div className="xp-root rcw-empty-screen" data-theme="light" data-testid="route-collab-loading" role="status">
+        <div className="rcw-empty-card">
           <p className="rcw-sub-note">
-            {accessDeniedMessage ?? 'Vous n’avez pas accès à cet itinéraire.'}
+            {phase.kind === 'persisting' ? 'Enregistrement de l’itinéraire…' : 'Ouverture de l’itinéraire…'}
           </p>
         </div>
       </div>
     );
   }
 
+  if (phase.kind === 'start') {
+    return (
+      <RouteEntryProvider value={entryValue}>
+        <StartScreen
+          trip={trip}
+          tripLink={tripLink}
+          userId={userId}
+          userName={userName}
+          onStart={(workspace, nextGoal) => {
+            setGoal(nextGoal);
+            setDeepLinkNow(NO_DEEP_LINK);
+            void settle(workspace);
+          }}
+        />
+      </RouteEntryProvider>
+    );
+  }
+
   return (
-    <RouteCollabWorkspace
-      initialWorkspace={resolved.workspace}
-      currentUserId={userId}
-      currentUserName={userName}
-      serverSynced={resolved.serverSynced}
-      shareToken={shareToken}
-    />
+    <RouteEntryProvider value={entryValue}>
+      <RouteCollabWorkspace
+        key={phase.workspace.id}
+        initialWorkspace={phase.workspace}
+        currentUserId={userId}
+        currentUserName={userName}
+        serverSynced={phase.serverSynced}
+        shareToken={shareToken}
+        onWorkspaceChange={phase.serverSynced ? undefined : onWorkspaceChange}
+      />
+    </RouteEntryProvider>
   );
 }

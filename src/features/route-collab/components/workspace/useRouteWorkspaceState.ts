@@ -51,8 +51,13 @@ import type {
   RouteVariant,
   RouteWorkspaceState,
 } from '../../types';
+import { resolveDeepLinkTarget } from '../../entry';
+import { buildProfileModel, nearestProfileIndex, readProfileAt, type ProfileReadout } from '../../profileLink';
+import { planLineDrag, planPointInsertion, type PointRole } from '../../pointInsertion';
 import { useOpTracker } from './chrome/useOpTracker';
 import { ROLE_LABELS } from './labels';
+import { routingQueryParams } from '../../routingProfiles';
+import { useRouteEntry } from './start/RouteEntryContext';
 import type { SubDrawerId, RouteCollabWorkspaceProps } from './types';
 
 function detectWebGL(): boolean {
@@ -175,6 +180,10 @@ export function useRouteWorkspaceState({
   const [stageNotesDraft, setStageNotesDraft] = useState<string>('');
   const [carnetRecord, setCarnetRecord] = useState<CarnetReturnRecord | null>(null);
   const [offlineTick, setOfflineTick] = useState<number>(0);
+  // Carte (catégorie 2) : relevé des calques par sport (2.7), curseur profil <-> carte (2.6)
+  const [knowledgeLoadedAt, setKnowledgeLoadedAt] = useState<string | null>(null);
+  const [profileCursor, setProfileCursor] = useState<number | null>(null);
+  const entry = useRouteEntry();
   // Suivi des opérations : accusés serveur, file hors ligne, journal des gestes annulables (3.4 à 3.6)
   const opTracker = useOpTracker({ serverSynced, initialHeadSeq: initialWorkspace.headSeq });
   const {
@@ -375,6 +384,29 @@ export function useRouteWorkspaceState({
     () => workspace.sections.flatMap((s) => s.geometry.coordinates),
     [workspace.sections]
   );
+  // Profil lié à la carte (2.6) : un seul modèle, lu dans les deux sens (carte → profil, profil → carte).
+  const profileModel = useMemo(
+    () =>
+      buildProfileModel({
+        orderedPoints,
+        sections: workspace.sections,
+        stages: workspace.stages,
+      }),
+    [orderedPoints, workspace.sections, workspace.stages]
+  );
+  const profileReadout: ProfileReadout | null = useMemo(
+    () =>
+      profileCursor == null || profileModel.points.length === 0
+        ? null
+        : readProfileAt(profileModel, Math.min(profileCursor, profileModel.points.length - 1)),
+    [profileCursor, profileModel]
+  );
+  const cursorFromCoord = useCallback(
+    (coord: readonly [number, number] | null) => {
+      setProfileCursor(coord ? nearestProfileIndex(profileModel, coord) : null);
+    },
+    [profileModel]
+  );
 
   useEffect(() => {
     setStageNotesDraft(selectedStage?.notes ?? '');
@@ -400,6 +432,45 @@ export function useRouteWorkspaceState({
     setSheetOpen(true);
     setDetent('mid');
     setSubDrawer(id);
+  }, []);
+
+  // Liens profonds (1.9) : `?jour=`, `?point=`, `?troncon=` ouvrent l'endroit visé, une seule fois à l'arrivée.
+  // Un élément absent de cet itinéraire est annoncé tel quel, jamais remplacé par un autre.
+  const deepLinkDone = useRef(false);
+  useEffect(() => {
+    if (deepLinkDone.current) return;
+    deepLinkDone.current = true;
+    const link = entry.deepLink;
+    if (link.day == null && !link.pointId && !link.sectionId) return;
+    const ws = workspaceRef.current;
+    const { target, missing } = resolveDeepLinkTarget(ws, link);
+    if (target?.kind === 'point') {
+      const pt = activePoints(ws).find((p) => p.id === target.pointId);
+      setSelectedPointId(target.pointId);
+      if (target.stageId) setSelectedStageId(target.stageId);
+      if (pt) setFocusCoord([pt.lon, pt.lat]);
+      openSubDrawer('point');
+    } else if (target?.kind === 'section') {
+      const sec = ws.sections.find((s) => s.id === target.sectionId);
+      const coords = sec?.geometry.coordinates ?? [];
+      const mid = coords[Math.floor(coords.length / 2)];
+      setSelectedSectionId(target.sectionId);
+      if (target.stageId) setSelectedStageId(target.stageId);
+      if (mid) setFocusCoord([mid[0], mid[1]]);
+      openSubDrawer('section');
+    } else if (target?.kind === 'stage') {
+      const st = ws.stages.find((s) => s.id === target.stageId);
+      const start = st ? activePoints(ws).find((p) => p.id === st.startPointId) : undefined;
+      setSelectedStageId(target.stageId);
+      if (start) setFocusCoord([start.lon, start.lat]);
+      openSubDrawer('stage');
+    }
+    if (missing.length > 0) {
+      const names = missing.map((m) => (m === 'jour' ? `le jour ${link.day}` : m === 'point' ? 'le point' : 'le tronçon'));
+      setStatusMessage(`Dans le lien : ${names.join(', ')} introuvable dans cet itinéraire.`);
+    }
+    // Une seule fois à l'arrivée : le lien décrit l'entrée, pas l'état courant.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatImpact = (imp: {
@@ -631,9 +702,16 @@ export function useRouteWorkspaceState({
     });
     setRoutingBusy(true);
     try {
-      const ptsParam = `${fromPt.lon},${fromPt.lat};${toPt.lon},${toPt.lat}`;
+      // Profil et options (surface, marches, bacs, assistance) : ceux de l'empreinte, jamais le sport seul.
       const res = await fetch(
-        `/api/route?points=${encodeURIComponent(ptsParam)}&sport=${encodeURIComponent(ws.sport)}&snap=1`
+        `/api/route?${routingQueryParams(
+          [
+            [fromPt.lon, fromPt.lat],
+            [toPt.lon, toPt.lat],
+          ],
+          ws.sport,
+          ws.routingOptions
+        ).toString()}`
       );
       if (!res.ok) {
         setStatusMessage('Routeur indisponible : tronçon conservé en ligne droite (mode manuel).');
@@ -703,7 +781,7 @@ export function useRouteWorkspaceState({
         /* altitude indisponible : on reste honnête sans inventer */
       }
 
-      await runOperation(
+      const accepted = await runOperation(
         {
           type: 'apply_routing_result',
           sectionId: sec.id,
@@ -717,7 +795,7 @@ export function useRouteWorkspaceState({
           provenance: {
             provider: data.provider ?? 'valhalla',
             calculatedAt: new Date().toISOString(),
-            profile: workspace.sport,
+            profile: ws.sport,
             confidence: 'verified',
           },
         },
@@ -725,6 +803,8 @@ export function useRouteWorkspaceState({
         // Recollage silencieux = suite d'un geste (ajout, déplacement) : annulé avec lui.
         { source: silent ? 'derived' : 'user' }
       );
+      // Résultat rejeté (tronçon modifié pendant le calcul) : le message du moteur reste affiché, jamais écrasé.
+      if (!accepted) return;
       setStatusMessage(
         silent
           ? 'Tronçon recollé au réseau.'
@@ -1355,6 +1435,7 @@ export function useRouteWorkspaceState({
       setNearbyRoutes(data.nearbyRoutes);
       setPlaceLabel(data.placeLabel);
       setKnowledgeSources(data.sources);
+      setKnowledgeLoadedAt(new Date().toISOString());
     } finally {
       setKnowledgeLoading(false);
     }
@@ -1730,6 +1811,61 @@ export function useRouteWorkspaceState({
     [runOperation, snapSectionsAroundPoint]
   );
 
+  /**
+   * Pose un point (2.2, 2.3) : toucher = point de passage, appui long = Arrêt, Fin d'étape ou Repère.
+   * Le point s'insère dans le tronçon voisin s'il est posé près du tracé (`thresholdM`), sinon en fin de liste.
+   * Tout le geste est annulable d'un seul « Annuler ».
+   */
+  const placePoint = useCallback(
+    async (req: { role: PointRole; lat: number; lon: number; thresholdM: number; name?: string }) => {
+      const ws = workspaceRef.current;
+      const pointId = `pt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+      const plan = planPointInsertion(ws, { pointId, ...req });
+      if (!plan.ok) {
+        setStatusMessage(plan.reason);
+        return false;
+      }
+      const gesture = `place-${pointId}`;
+      let allOk = true;
+      for (const op of plan.ops) {
+        const ok = await runOperation(op, {}, { gesture });
+        if (!ok) {
+          allOk = false;
+          // Hors ligne, chaque opération est mise en file : on les met toutes, dans l'ordre.
+          if (online) break;
+        }
+      }
+      if (!allOk) return false;
+      setSelectedPointId(pointId);
+      setFocusCoord([plan.lon, plan.lat]);
+      if (plan.needsRouting) await snapSectionsAroundPoint(pointId);
+      return true;
+    },
+    [online, runOperation, snapSectionsAroundPoint]
+  );
+
+  /** Glisser une ligne (2.4) : le point déposé s'insère dans le tronçon glissé, puis les deux moitiés sont recollées au réseau. */
+  const dragSectionLine = useCallback(
+    async (sectionId: string, lat: number, lon: number) => {
+      const ws = workspaceRef.current;
+      const pointId = `pt-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+      const plan = planLineDrag(ws, sectionId, pointId, lat, lon);
+      if (!plan) {
+        setStatusMessage('Ce tronçon ne peut pas être déformé ici.');
+        return false;
+      }
+      const gesture = `drag-${pointId}`;
+      for (const op of plan.ops) {
+        const ok = await runOperation(op, {}, { gesture });
+        if (!ok) return false;
+      }
+      setSelectedPointId(pointId);
+      await snapSectionsAroundPoint(pointId);
+      return true;
+    },
+    [runOperation, snapSectionsAroundPoint]
+  );
+
   const handleCenterMyPosition = async () => {
     try {
       const pos = await getCurrentGeoPosition({ enableHighAccuracy: true, timeout: 10_000 });
@@ -1982,6 +2118,8 @@ export function useRouteWorkspaceState({
     handleRedo,
     openSubDrawer,
     runOperation,
+    /** Atelier le plus récent, y compris juste après une opération (le rendu n'a pas encore eu lieu). */
+    getWorkspace: () => workspaceRef.current,
     handleRealRouteSection,
     handleReplayOffline,
     handleImportGpx,
@@ -2008,6 +2146,14 @@ export function useRouteWorkspaceState({
     handleFreehandDrawComplete,
     snapSectionsAroundPoint,
     handleDragPoint,
+    placePoint,
+    dragSectionLine,
+    knowledgeLoadedAt,
+    profileModel,
+    profileCursor,
+    setProfileCursor,
+    profileReadout,
+    cursorFromCoord,
     handleCenterMyPosition,
     handleLoadHistory,
     handleImportHistoryEntry,

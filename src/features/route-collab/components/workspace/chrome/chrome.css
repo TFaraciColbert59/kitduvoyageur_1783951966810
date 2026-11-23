@@ -1,0 +1,511 @@
+/*
+ * Habillage de l'itinéraire : pilule, îlot, tuiles chiffrées, lignes, interrupteur Simple / Expert et mise en
+ * page à deux ou trois colonnes. Jetons `--lkv-*` / `--xp-*` seulement ; les teintes translucides sortent de
+ * `color-mix()`. Seuls `transform` et `opacity` s'animent ; `prefers-reduced-motion` les coupe.
+ */
+
+/* Portée des primitives du Compas v5 : porte les jetons `--v5-*`, sans boîte propre. */
+.rcw-v5 {
+  display: contents;
+}
+
+/* ── Pilule : une ligne qui parle, les jours à glisser, un état honnête ───────────────────────────── */
+.rcw-explorer-root {
+  --rcw-left: 0px;
+  --rcw-right: 0px;
+  --rc-bad: var(--lkv-brick-600);
+  --rc-good: var(--lkv-forest-500);
+}
+
+.rcw-pill {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: min(366px, 100%);
+  max-width: 100%;
+  padding: 2px 6px 6px;
+  border-radius: 24px;
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--xp-bar-shadow);
+  color: var(--xp-txt);
+}
+
+.rcw-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rcw-pill-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rcw-pill-light {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.rcw-light-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--rc-idle);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc-idle) 28%, transparent);
+}
+
+.rcw-pill-light[data-level='green'] .rcw-light-dot {
+  background: var(--rc-good);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc-good) 28%, transparent);
+}
+
+.rcw-pill-light[data-level='orange'] .rcw-light-dot {
+  background: var(--xp-warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--xp-warn) 30%, transparent);
+}
+
+.rcw-pill-light[data-level='red'] .rcw-light-dot {
+  background: var(--rc-bad);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rc-bad) 28%, transparent);
+}
+
+.rcw-pill-say {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--xp-ink);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.rcw-pill-say[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--xp-ink) 10%, transparent);
+}
+
+.rcw-pill-days {
+  display: flex;
+  gap: 4px;
+  padding: 0 4px 2px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  touch-action: pan-x;
+}
+
+.rcw-pill-days::-webkit-scrollbar {
+  display: none;
+}
+
+.rcw-day-chip {
+  position: relative;
+  flex: none;
+  min-width: 44px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--xp-ink) 7%, transparent);
+  color: var(--xp-txt);
+  font-size: 12.5px;
+  font-weight: 700;
+  scroll-snap-align: center;
+}
+
+/* Zone de toucher portée à 44 px sans grossir la pastille. */
+.rcw-day-chip::after,
+.rcw-vm-chip::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+
+.rcw-day-chip[aria-selected='true'] {
+  background: var(--xp-ink);
+  color: var(--lkv-text-inverted);
+}
+
+.rcw-pill-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 8px;
+  margin: 0;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--xp-mut2);
+  text-align: center;
+}
+
+.rcw-pill-facts {
+  flex-basis: 100%;
+  color: var(--xp-mut);
+}
+
+.rcw-save {
+  position: relative;
+  font-weight: 700;
+  color: var(--xp-mut2);
+}
+
+.rcw-save-btn {
+  position: relative;
+  padding: 0;
+}
+
+/* Zone de toucher portée à 44 px de haut. */
+.rcw-save-btn::after {
+  content: '';
+  position: absolute;
+  inset: -14px -6px;
+}
+
+.rcw-save[data-kind='saved'] {
+  color: var(--rc-good);
+}
+
+.rcw-save[data-kind='unsaved'],
+.rcw-save[data-kind='queued'] {
+  color: var(--xp-warn);
+}
+
+.rcw-save[data-kind='conflict'] {
+  color: var(--rc-bad);
+}
+
+/* ── Dis-le : un champ, un aperçu, puis « Appliquer » ─────────────────────────────────────────────── */
+.rcw-say {
+  pointer-events: auto;
+  width: min(366px, 100%);
+  margin-top: 6px;
+  padding: 10px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rcw-say-form {
+  display: flex;
+  gap: 6px;
+}
+
+.rcw-say-form .v5-inp {
+  flex: 1;
+  min-height: 44px;
+}
+
+.rcw-say-form .v5-pbtn {
+  flex: none;
+  width: auto;
+  padding: 0 16px;
+}
+
+.rcw-say-list {
+  margin: 0;
+  padding: 0 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.rcw-say-list[data-tone='warn'] {
+  color: var(--v5-warn);
+}
+
+.rcw-say-diff {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--v5-label2);
+}
+
+.rcw-say-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ── Tuiles chiffrées (4.4, 4.5) ─────────────────────────────────────────────────────────────────── */
+.rcw-explorer-root .xp-sheet-summary {
+  flex: none;
+}
+
+.rcw-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 12px 8px;
+}
+
+@media (max-width: 380px) {
+  .rcw-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rcw-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px 7px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--xp-ink) 6%, transparent);
+}
+
+.rcw-tile .v5-cap {
+  padding: 0;
+  font-size: 10px;
+}
+
+.rcw-tile-value {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--xp-txt);
+}
+
+.rcw-tile[data-known='false'] .rcw-tile-value {
+  font-weight: 600;
+  color: var(--xp-mut2);
+}
+
+.rcw-tile-note {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--xp-warn);
+}
+
+.rcw-tile-method {
+  font-size: 10px;
+  line-height: 1.25;
+  color: var(--xp-mut);
+}
+
+/* À l'aperçu, on garde les chiffres et leurs réserves, pas les méthodes. */
+.rcw-explorer-root .xp-sheet[data-detent='peek'] .rcw-tile-method {
+  display: none;
+}
+
+/* ── Lignes (4.7) ────────────────────────────────────────────────────────────────────────────────── */
+.rcw-rows {
+  overflow: hidden;
+}
+
+.rcw-row-state {
+  flex: none;
+  min-height: 24px;
+  font-size: 11px;
+}
+
+.rcw-rows .v5-li[data-state='to_check'] .fi {
+  background: var(--v5-warn-bg);
+  color: var(--v5-warn);
+}
+
+.rcw-rows .v5-li[aria-current='true'] {
+  background: color-mix(in srgb, var(--xp-ink) 8%, transparent);
+}
+
+/* ── Interrupteur Simple / Expert (4.1) ──────────────────────────────────────────────────────────── */
+.rcw-vm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--xp-ink) 7%, transparent);
+}
+
+.rcw-vm-chip {
+  position: relative;
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 600;
+  background: transparent;
+}
+
+.rcw-vm-chip[aria-pressed='true'] {
+  background: var(--xp-ink);
+  color: var(--lkv-text-inverted);
+}
+
+/* ── Inviter (4.8) ───────────────────────────────────────────────────────────────────────────────── */
+.rcw-invite-lead {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--xp-mut2);
+}
+
+/* ── Colonne des étapes (bureau, 4.9) ────────────────────────────────────────────────────────────── */
+.rcw-stage-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: var(--rcw-left);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px 16px;
+  overflow-y: auto;
+  background: var(--xp-sheet-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+  box-shadow: 1px 0 0 color-mix(in srgb, var(--xp-ink) 10%, transparent);
+}
+
+.rcw-stage-col-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--xp-mut2);
+}
+
+/* ── Îlot : sous la pilule, jamais par-dessus ────────────────────────────────────────────────────── */
+.rcw-explorer-root .v5-island[data-s='note'] {
+  top: max(150px, calc(env(safe-area-inset-top, 0px) + 140px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rcw-pill *,
+  .rcw-say *,
+  .rcw-explorer-root .v5-island,
+  .rcw-explorer-root .xp-sheet {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto;
+  }
+}
+
+/* ── Mise en page : tablette = deux colonnes (carte, détail) ─────────────────────────────────────── */
+@media (min-width: 640px) {
+  .rcw-explorer-root[data-layout='tablet'],
+  .rcw-explorer-root[data-layout='desktop'] {
+    --rcw-right: min(400px, 44vw);
+  }
+
+  .rcw-explorer-root[data-layout='tablet'][data-sheet-open='false'],
+  .rcw-explorer-root[data-layout='desktop'][data-sheet-open='false'] {
+    --rcw-right: 0px;
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .xp-sheet,
+  .rcw-explorer-root[data-layout='desktop'] .xp-sheet {
+    top: 0;
+    left: auto;
+    right: 0;
+    bottom: 0 !important;
+    width: var(--rcw-right);
+    height: auto !important;
+    border-radius: 28px 0 0 28px;
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .xp-sheet-handle,
+  .rcw-explorer-root[data-layout='desktop'] .xp-sheet-handle {
+    display: none;
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .xp-sheet-head,
+  .rcw-explorer-root[data-layout='desktop'] .xp-sheet-head {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .xp-map,
+  .rcw-explorer-root[data-layout='desktop'] .xp-map {
+    left: var(--rcw-left) !important;
+    right: var(--rcw-right) !important;
+    width: auto !important;
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .rcw-top-stack,
+  .rcw-explorer-root[data-layout='desktop'] .rcw-top-stack {
+    left: calc(var(--rcw-left) + 56px);
+    right: calc(var(--rcw-right) + 56px);
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .rcw-map-topright,
+  .rcw-explorer-root[data-layout='desktop'] .rcw-map-topright {
+    right: calc(var(--rcw-right) + 12px);
+  }
+
+  .rcw-explorer-root[data-layout='tablet'] .xp-sheet-pill-launcher,
+  .rcw-explorer-root[data-layout='desktop'] .xp-sheet-pill-launcher {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 22px) !important;
+  }
+}
+
+/* ── Bureau : trois colonnes (étapes, carte, détail) dès 1 024 px ────────────────────────────────── */
+@media (min-width: 1024px) {
+  .rcw-explorer-root[data-layout='desktop'] {
+    --rcw-left: 300px;
+  }
+}
+
+/* ── Lanceur du tiroir fermé : il parle au lieu de trois points muets (3.1) ───────────────────────── */
+.rcw-explorer-root .xp-sheet-pill-launcher.rcw-launcher {
+  width: auto;
+  max-width: calc(100vw - 32px);
+  height: auto;
+  min-height: 44px;
+  padding: 0 18px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rcw-launcher-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rc-idle);
+}
+
+.rcw-launcher[data-light='green'] .rcw-launcher-dot {
+  background: var(--rc-good);
+}
+
+.rcw-launcher[data-light='orange'] .rcw-launcher-dot {
+  background: var(--xp-warn);
+}
+
+.rcw-launcher[data-light='red'] .rcw-launcher-dot {
+  background: var(--rc-bad);
+}
+
+.rcw-launcher-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

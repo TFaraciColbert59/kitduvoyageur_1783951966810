@@ -42,9 +42,15 @@ import {
  * Limites connues :
  *  - présence : en mémoire process (comme `serverStore.ts`), elle passera par Supabase Realtime
  *    Broadcast plus tard (non fiable entre instances serverless en attendant) ;
- *  - les droits fins (par rôle) des parties comments / proposals / kitItems / participantPacks sont
- *    contrôlés ici ; la RPC `write_route_workspace_part_tx` n'exige que l'appartenance non révoquée
- *    (hors external_viewer) ;
+ *  - les droits fins des parties comments / proposals / kitItems / participantPacks / notifications sont
+ *    contrôlés ici (messages précis) ET par rôle dans `write_route_workspace_part_tx` (trip_viewer et
+ *    external_viewer refusés, `p_expected_version` obligatoire) ; la liste est toutefois remplacée en
+ *    bloc : le contrôle par auteur reste côté Next ;
+ *  - lecteurs externes (lien de partage ou membre `external_viewer`) : ils ne lisent jamais les tables
+ *    (RLS) ; la base renvoie une vue assainie (RPC `get_shared_route_workspace_tx` /
+ *    `get_route_external_view_tx`) que `sanitizeWorkspaceForShareLink` revérifie ici ;
+ *  - le jeton de partage est généré et haché en base : `manageShareLink` le renvoie UNE fois à la
+ *    création ; une relecture ultérieure du lien ne le contient plus (`token` vide) ;
  *  - un collaborateur du voyage absent de `state_snapshot.members` voit l'itinéraire (RLS) mais le
  *    moteur ne lui accorde aucun droit d'écriture tant qu'il n'est pas inscrit comme membre ;
  *  - l'identité vient de la session Supabase : le cookie signé de repli (`LKDV_COLLAB_SESSION_SECRET`)
@@ -67,6 +73,18 @@ function radiusFromShared(shared: Record<string, unknown>): number {
 
 function isRecord(value: unknown): value is Json {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** JSON à clés triées : compare deux objets sans dépendre de l'ordre des clés (jsonb le réordonne). */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
 }
 
 function asArray<T>(value: unknown): T[] {
@@ -103,6 +121,16 @@ const DENIED_MESSAGES: Readonly<Record<string, string>> = {
   delegated_publish_requires_owner: 'La délégation de publication est réservée au responsable.',
   share_management_requires_owner_or_co_organizer: 'Gestion du partage réservée au responsable.',
   idempotency_payload_mismatch: 'Clé d’idempotence réutilisée avec un contenu différent.',
+  not_eligible: 'Cette personne ne peut pas être ajoutée à cet itinéraire (collaborateur du voyage requis).',
+  reactivation_requires_owner: 'Seul un responsable peut réactiver un membre révoqué.',
+  workspace_archived: 'Cet itinéraire est archivé : il est en lecture seule.',
+  payload_too_large: 'Contenu trop volumineux.',
+  invalid_snapshot_shape: 'Contenu de l’itinéraire invalide.',
+  invalid_radius: 'Rayon de la zone de départ privée invalide (200 m minimum).',
+  invalid_expiry: 'Date d’expiration du lien invalide.',
+  expected_version_required: 'Version attendue manquante.',
+  snapshot_head_mismatch: 'L’instantané à publier ne correspond plus à la tête de l’itinéraire.',
+  snapshot_content_mismatch: 'L’instantané à publier ne correspond pas au contenu enregistré.',
 };
 
 function deniedMessage(reason: unknown): string {
@@ -130,6 +158,8 @@ function hydrate(
     ...rest,
     id,
     headSeq,
+    // Le jeton n'est jamais relu depuis la base (seul son hash y est) : `token` vide hors création.
+    shareLink: isRecord(rest.shareLink) ? { ...rest.shareLink, token: '' } : null,
     routingOptions: isRecord(rest.routingOptions) ? rest.routingOptions : {},
     points: asArray(rest.points),
     sections: asArray(rest.sections),
@@ -255,6 +285,7 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
     workspaceId: string,
     opId: string,
     workspace: RouteWorkspaceState,
+    expectedOperation: RouteOperationInput,
   ): Promise<RouteOperationRecord | null> {
     const { data, error } = await supabase
       .from('route_operations')
@@ -263,13 +294,14 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       .eq('op_id', opId)
       .maybeSingle();
     if (error) throw new RouteCollabStoreError(500, 'Lecture du journal d’opérations impossible.');
-    return data ? toOperationRecord(data, workspaceId, workspace) : null;
+    return data ? toOperationRecord(data, workspaceId, workspace, expectedOperation) : null;
   }
 
   function toOperationRecord(
     row: unknown,
     workspaceId: string,
     workspace: RouteWorkspaceState,
+    expectedOperation?: RouteOperationInput,
   ): RouteOperationRecord | null {
     if (!isRecord(row) || !isRecord(row.payload)) return null;
     const actorId = String(row.actor_id);
@@ -281,7 +313,13 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       actorId,
       actorName: actor?.displayName ?? `Voyageur ${actorId.slice(0, 6)}`,
       baseSeq: Number(row.base_seq),
-      payloadHash: String(row.payload_hash),
+      // Le hash stocké est un SHA-256 calculé en base. Le moteur compare des `stableHash` : on le recalcule
+      // ici ; si le contenu stocké est identique (à l'ordre des clés près, jsonb les réordonne) à
+      // l'opération rejouée, on renvoie le hash de CELLE-CI pour que la rejouabilité soit reconnue.
+      payloadHash:
+        expectedOperation && canonicalJson(row.payload) === canonicalJson(expectedOperation)
+          ? stableHash(expectedOperation)
+          : stableHash(row.payload),
       operation: row.payload as unknown as RouteOperationInput,
       expectedVersions: isRecord(row.entity_versions)
         ? (row.entity_versions as Record<string, number>)
@@ -340,7 +378,7 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       const { loaded } = read;
       last = loaded;
 
-      const existing = await loadOperationById(workspaceId, command.opId, loaded.workspace);
+      const existing = await loadOperationById(workspaceId, command.opId, loaded.workspace, command.operation);
       const { result } = applyWorkspaceOperation(
         loaded.workspace,
         existing ? [existing] : [],
@@ -403,6 +441,21 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
     return read.ok ? read.loaded.workspace : fallback;
   }
 
+  /** Vue assainie renvoyée par la base (lien de partage ou external_viewer), revérifiée côté Next. */
+  function readSanitizedView(workspaceId: string, res: Json) {
+    if (res.status !== 'ok') return null;
+    const snapshot = isRecord(res.snapshot) ? res.snapshot : null;
+    const loaded = snapshot ? hydrate(workspaceId, Number(snapshot.headSeq ?? 0), 0, snapshot) : null;
+    if (!loaded) return null;
+    return {
+      ok: true as const,
+      workspace: sanitizeWorkspaceForShareLink(loaded.workspace, radiusFromShared(res)),
+      notifications: [] as GroupedRouteNotification[],
+      presence: [] as PresenceEntry[],
+      accessMode: 'share_link' as const,
+    };
+  }
+
   /* ---------- Implémentation du contrat ---------- */
 
   const store: RouteCollabStore = {
@@ -440,9 +493,22 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
     async getWorkspaceForActor(workspaceId, actorId, shareToken) {
       const read = await loadRow(workspaceId);
       if (read.ok) {
+        const { workspace } = read.loaded;
+        // Défense en profondeur : un lecteur externe ne devrait pas voir la ligne (RLS), mais s'il la voit,
+        // il reçoit la même vue assainie que par le lien de partage.
+        const me = actorId ? workspace.members.find((m) => m.userId === actorId) : undefined;
+        if (me?.role === 'external_viewer' && !me.revokedAt) {
+          return {
+            ok: true,
+            workspace: sanitizeWorkspaceForShareLink(workspace, workspace.shareLink?.hidePrivateStartRadiusM),
+            notifications: [],
+            presence: [],
+            accessMode: 'share_link',
+          };
+        }
         return {
           ok: true,
-          workspace: read.loaded.workspace,
+          workspace,
           notifications: read.loaded.notifications,
           presence: prunePresence(presenceFor(workspaceId)),
           accessMode: 'member',
@@ -458,27 +524,21 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
           p_workspace_id: workspaceId,
           p_token: shareToken,
         });
-        if (shared.status === 'ok') {
-          const snapshot = isRecord(shared.snapshot) ? shared.snapshot : null;
-          const loaded = snapshot
-            ? hydrate(workspaceId, Number(snapshot.headSeq ?? 0), 0, snapshot)
-            : null;
-          if (loaded) {
-            return {
-              ok: true,
-              workspace: sanitizeWorkspaceForShareLink(loaded.workspace, radiusFromShared(shared)),
-              notifications: [],
-              presence: [],
-              accessMode: 'share_link',
-            };
-          }
-        }
+        const view = readSanitizedView(workspaceId, shared);
+        if (view) return view;
         if (shared.status === 'revoked') {
           return { ok: false, status: 403, error: 'Ce lien de partage a été révoqué.' };
         }
         if (shared.status === 'expired') {
           return { ok: false, status: 403, error: 'Ce lien de partage a expiré.' };
         }
+      }
+
+      // Membre external_viewer : pas de lecture des tables, uniquement la vue assainie de la base.
+      if (actorId) {
+        const external = await rpc('get_route_external_view_tx', { p_workspace_id: workspaceId });
+        const view = readSanitizedView(workspaceId, external);
+        if (view) return view;
       }
 
       if (!actorId) return { ok: false, status: 401, error: 'Authentification requise.' };
@@ -1011,16 +1071,16 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       }
       const now = Date.now();
       const create = params.action === 'create';
+      // Le jeton est généré en base (256 bits) : seul son SHA-256 y est conservé, et il n'est renvoyé
+      // qu'ici, une seule fois. Le rayon (200 à 5000 m) est validé par la base.
       const res = await rpc('manage_route_share_link_tx', {
         p_workspace_id: params.workspaceId,
         p_action: params.action,
-        // Jeton non devinable (256 bits) : il tient lieu de secret pour la lecture anonyme.
-        p_token: create ? `shr-${crypto.randomBytes(32).toString('base64url')}` : null,
         p_expires_at:
           create && params.expiresInHours
             ? new Date(now + params.expiresInHours * 3600_000).toISOString()
             : null,
-        p_hide_radius_m: Math.round(params.hidePrivateStartRadiusM ?? 500),
+        p_hide_radius_m: Math.round(params.hidePrivateStartRadiusM ?? DEFAULT_PRIVATE_START_RADIUS_M),
       });
       if (res.status === 'not_found') {
         return { ok: false, status: 404, error: 'Itinéraire introuvable.' };
@@ -1028,10 +1088,13 @@ export function createSupabaseRouteCollabStore(supabase: SupabaseClient): RouteC
       if (res.status !== 'ok') {
         return { ok: false, status: 403, error: deniedMessage(res.reason) };
       }
-      const workspace = await reloadWorkspace(params.workspaceId, read.loaded.workspace);
+      const reloaded = await reloadWorkspace(params.workspaceId, read.loaded.workspace);
+      const token = create && typeof res.token === 'string' ? res.token : '';
       const shareLink: ShareLinkConfig | null = isRecord(res.shareLink)
-        ? (res.shareLink as unknown as ShareLinkConfig)
-        : workspace.shareLink ?? null;
+        ? ({ ...res.shareLink, token } as unknown as ShareLinkConfig)
+        : reloaded.shareLink ?? null;
+      // Le jeton figure dans la réponse de création uniquement (jamais relu depuis la base ensuite).
+      const workspace = create && shareLink ? { ...reloaded, shareLink } : reloaded;
       return { ok: true, shareLink, workspace };
     },
 

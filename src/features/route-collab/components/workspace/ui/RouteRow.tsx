@@ -34,9 +34,11 @@ export interface RouteRowProps {
   onClick?: () => void;
   ariaLabel?: string;
   testId?: string;
+  /** Ligne choisie (jour sélectionné). */
+  current?: boolean;
 }
 
-export function RouteRow({ icon, title, subtitle, value, state, trailing, onClick, ariaLabel, testId }: RouteRowProps) {
+export function RouteRow({ icon, title, subtitle, value, state, trailing, onClick, ariaLabel, testId, current }: RouteRowProps) {
   const shownValue = value ?? (state === 'unknown' ? 'Inconnu' : null);
   const right =
     state || trailing ? (
@@ -60,6 +62,7 @@ export function RouteRow({ icon, title, subtitle, value, state, trailing, onClic
       ariaLabel={ariaLabel}
       testId={testId}
       state={state}
+      current={current}
     />
   );
 }

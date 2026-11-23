@@ -29,7 +29,7 @@ export function useOpTracker({
   const [ackedSeq, setAckedSeq] = useState(serverSynced ? initialHeadSeq : -1);
   const [failedReason, setFailedReason] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncOutcome | null>(null);
-  const [recordedAt, setRecordedAt] = useState(0);
+  const [recordCount, setRecordCount] = useState(0);
   const journal = useRef<JournalEntry[]>([]);
 
   const begin = useCallback(() => setPending((n) => n + 1), []);
@@ -70,7 +70,7 @@ export function useOpTracker({
           gesture: entry.gesture,
         },
       ];
-      setRecordedAt(at);
+      setRecordCount((n) => n + 1);
     },
     []
   );
@@ -79,7 +79,6 @@ export function useOpTracker({
   const consume = useCallback((entries: readonly JournalEntry[]) => {
     const gone = new Set(entries);
     journal.current = journal.current.filter((e) => !gone.has(e));
-    setRecordedAt(Date.now());
   }, []);
 
   const replayed = useCallback((res: { applied: number; conflicts: number; rejected: number }) => {
@@ -94,7 +93,7 @@ export function useOpTracker({
       ackedSeq,
       failedReason,
       sync,
-      recordedAt,
+      recordCount,
       journal,
       begin,
       settle,
@@ -105,7 +104,7 @@ export function useOpTracker({
       replayed,
       clearSync,
     }),
-    [pending, ackedSeq, failedReason, sync, recordedAt, begin, settle, acked, failed, record, consume, replayed, clearSync]
+    [pending, ackedSeq, failedReason, sync, recordCount, begin, settle, acked, failed, record, consume, replayed, clearSync]
   );
 }
 

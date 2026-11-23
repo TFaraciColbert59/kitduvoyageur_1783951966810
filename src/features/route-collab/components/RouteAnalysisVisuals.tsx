@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import {
   Area,
   AreaChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -32,6 +33,8 @@ import type { LiveWeatherInfo, TechnicalTerrainStats } from '../routeAnalysis';
 export interface ElevationChartSample {
   km?: number;
   distanceKm?: number;
+  /** Distance cumulée en mètres (celle de `buildElevationProfile`). */
+  distanceM?: number;
   elevationM: number | null;
 }
 
@@ -41,23 +44,39 @@ export function ElevationAreaChart({
   avgEleM,
   maxEleM,
   onHoverRatio,
+  onHoverKm,
+  cursorKm = null,
 }: {
   samples: readonly ElevationChartSample[];
   minEleM: number | null;
   avgEleM: number | null;
   maxEleM: number | null;
   onHoverRatio?: (ratio: number | null) => void;
+  /** Kilomètre réel survolé (profil → carte, 2.6) ; `null` quand le doigt ou la souris quitte le profil. */
+  onHoverKm?: (km: number | null) => void;
+  /** Curseur posé par la carte (carte → profil, 2.6), en km depuis le départ. */
+  cursorKm?: number | null;
 }) {
   const data = useMemo(
     () =>
       samples
         .filter((s): s is ElevationChartSample & { elevationM: number } => typeof s.elevationM === 'number' && Number.isFinite(s.elevationM))
-        .map((s, idx) => ({
-          km: Number(((s.km ?? s.distanceKm ?? idx * 0.1) as number).toFixed(1)),
-          alt: Math.round(s.elevationM),
-        })),
+        .map((s, idx) => {
+          const rawKm = s.km ?? s.distanceKm ?? (s.distanceM != null ? s.distanceM / 1000 : idx * 0.1);
+          return {
+            km: Number(rawKm.toFixed(1)),
+            rawKm,
+            alt: Math.round(s.elevationM),
+          };
+        }),
     [samples],
   );
+  const cursorX = useMemo(() => {
+    if (cursorKm == null || data.length < 2) return null;
+    let best = data[0];
+    for (const d of data) if (Math.abs(d.rawKm - cursorKm) < Math.abs(best.rawKm - cursorKm)) best = d;
+    return best.km;
+  }, [cursorKm, data]);
 
   if (data.length < 2) {
     return (
@@ -84,7 +103,10 @@ export function ElevationAreaChart({
 
       <div
         className="rcw-chart-box"
-        onMouseLeave={() => onHoverRatio?.(null)}
+        onMouseLeave={() => {
+          onHoverRatio?.(null);
+          onHoverKm?.(null);
+        }}
       >
         {typeof ResizeObserver !== 'undefined' ? (
           <ResponsiveContainer width="100%" height={128}>
@@ -95,6 +117,8 @@ export function ElevationAreaChart({
                 const idx = typeof state?.activeTooltipIndex === 'number' ? state.activeTooltipIndex : null;
                 if (idx != null && data.length > 1) {
                   onHoverRatio?.(idx / (data.length - 1));
+                  const hit = data[idx];
+                  if (hit) onHoverKm?.(hit.rawKm);
                 }
               }}
             >
@@ -130,6 +154,9 @@ export function ElevationAreaChart({
                   padding: '4px 9px',
                 }}
               />
+              {cursorX != null ? (
+                <ReferenceLine x={cursorX} stroke="var(--lkv-forest-900)" strokeDasharray="3 3" strokeWidth={1.5} />
+              ) : null}
               <Area
                 type="monotone"
                 dataKey="alt"
@@ -379,8 +406,9 @@ export function WeatherForecastChart({
 
   const chartData = weather.hourlyPreview.map((h) => ({
     time: h.time,
-    temp: h.tempC ?? 0,
-    rain: h.rainProbPct ?? 0,
+    // Une mesure absente reste absente (trou dans la courbe), jamais 0 °C ni 0 %.
+    temp: h.tempC ?? null,
+    rain: h.rainProbPct ?? null,
   }));
 
   return (
@@ -405,7 +433,7 @@ export function WeatherForecastChart({
         </div>
       </div>
 
-      {chartData.length >= 2 && typeof ResizeObserver !== 'undefined' ? (
+      {chartData.filter((d) => d.temp != null).length >= 2 && typeof ResizeObserver !== 'undefined' ? (
         <div className="rcw-chart-box rcw-chart-box--sm">
           <ResponsiveContainer width="100%" height={92}>
             <AreaChart data={chartData} margin={{ top: 6, right: 6, left: -26, bottom: 0 }}>

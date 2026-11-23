@@ -169,3 +169,29 @@ export function readProfileAt(model: ProfileModel, index: number): ProfileReadou
     lat: p.lat,
   };
 }
+
+export interface ReadoutPart {
+  readonly key: 'km' | 'elevation' | 'slope' | 'time';
+  readonly label: string;
+  /** Texte tel qu'affiché ; « inconnue » / « inconnu » quand la donnée manque, jamais 0. */
+  readonly value: string;
+  readonly known: boolean;
+}
+
+const nf1 = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+
+/** Les quatre valeurs du curseur (km, altitude, pente, heure de passage), dans l'ordre de lecture. */
+export function readoutParts(readout: ProfileReadout, hasElevation: boolean): ReadoutPart[] {
+  return [
+    { key: 'km', label: 'Distance', value: `km ${nf1(readout.km)}`, known: true },
+    readout.elevationM != null
+      ? { key: 'elevation', label: 'Altitude', value: `${readout.elevationM.toLocaleString('fr-FR')} m`, known: true }
+      : { key: 'elevation', label: 'Altitude', value: hasElevation ? 'inconnue ici' : 'inconnue', known: false },
+    readout.slopePct != null
+      ? { key: 'slope', label: 'Pente', value: `${readout.slopePct > 0 ? '+' : ''}${nf1(readout.slopePct)} %`, known: true }
+      : { key: 'slope', label: 'Pente', value: 'inconnue', known: false },
+    readout.passageTime
+      ? { key: 'time', label: 'Passage', value: readout.passageTime.replace(':', ' h '), known: true }
+      : { key: 'time', label: 'Passage', value: 'inconnu', known: false },
+  ];
+}

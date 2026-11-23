@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteOperationInput } from '@/features/route-collab/types';
+import { RouteOperationSchema, operationSizeLimit, readBoundedJson } from '../../_schemas';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,8 @@ const BodySchema = z.object({
   opId: z.string().min(1).max(120),
   baseSeq: z.number().int().nonnegative(),
   expectedVersions: z.record(z.string(), z.number().int().nonnegative()).optional(),
-  operation: z.record(z.string(), z.unknown()),
+  // Union discriminée de toutes les opérations du domaine (coordonnées, longueurs et tailles bornées).
+  operation: RouteOperationSchema,
 });
 
 export async function POST(
@@ -23,15 +25,16 @@ export async function POST(
   if (!actor) {
     return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
   }
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'JSON invalide.' }, { status: 400 });
+  const read = await readBoundedJson(request);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
-  const parsed = BodySchema.safeParse(body);
-  if (!parsed.success || typeof parsed.data.operation.type !== 'string') {
+  const parsed = BodySchema.safeParse(read.body);
+  if (!parsed.success) {
     return NextResponse.json({ error: 'Opération invalide.' }, { status: 400 });
+  }
+  if (JSON.stringify(parsed.data.operation).length > operationSizeLimit(parsed.data.operation.type)) {
+    return NextResponse.json({ error: 'Opération trop volumineuse.' }, { status: 413 });
   }
 
   try {
@@ -42,7 +45,7 @@ export async function POST(
       actorId: actor.userId,
       actorName: actor.displayName,
       expectedVersions: parsed.data.expectedVersions,
-      operation: parsed.data.operation as unknown as RouteOperationInput,
+      operation: parsed.data.operation as RouteOperationInput,
     });
 
     if (res.status === 'not_found') {

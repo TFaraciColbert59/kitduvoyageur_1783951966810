@@ -1,0 +1,343 @@
+/* Calques flottants de la carte de /compas/itineraire. Jetons --lkv-* / --xp-* uniquement. */
+
+.rcw-map-left,
+.rcw-map-right,
+.rcw-map-bottom {
+  position: absolute;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.rcw-map-left > *,
+.rcw-map-right > *,
+.rcw-map-bottom > * {
+  pointer-events: auto;
+}
+
+.rcw-map-left {
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  left: 12px;
+  align-items: flex-start;
+  max-width: calc(50% - 20px);
+}
+
+/* Sous le bouton « Carte et affichage » (haut droite, 40 px). */
+.rcw-map-right {
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  right: 12px;
+  align-items: flex-end;
+}
+
+/* Au-dessus du tiroir : sa hauteur réelle est posée par la carte (--rcw-sheet-h). */
+.rcw-map-bottom {
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--rcw-sheet-h, 0px) + 12px + env(safe-area-inset-bottom, 0px) * 0);
+  align-items: flex-start;
+}
+
+.rcw-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  max-width: 100%;
+  padding: 4px 12px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--xp-bar-shadow);
+  font-size: var(--lkv-text-footnote);
+  font-weight: var(--lkv-weight-semibold);
+  color: var(--xp-txt);
+  text-decoration: none;
+}
+.rcw-chip--action {
+  min-height: 44px;
+  color: var(--lkv-forest-800);
+}
+.rcw-chip--warn {
+  color: var(--lkv-warning-dark);
+}
+.rcw-chip--offline {
+  color: var(--lkv-warning-dark);
+  background: var(--lkv-warning-bg);
+}
+.rcw-chip--info {
+  color: var(--lkv-info);
+}
+.rcw-chip--off_track {
+  color: var(--lkv-danger-dark);
+  background: var(--lkv-danger-bg);
+}
+.rcw-chip--on_track {
+  color: var(--lkv-forest-800);
+}
+.rcw-chip--poi {
+  border-radius: var(--lkv-radius-lg);
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rcw-entry-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.rcw-legend {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-radius: var(--lkv-radius-lg);
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--xp-bar-shadow);
+}
+.rcw-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: transparent;
+  font: inherit;
+  font-size: var(--lkv-text-footnote);
+  font-weight: var(--lkv-weight-semibold);
+  color: var(--xp-txt);
+  cursor: pointer;
+}
+.rcw-legend-item--static {
+  min-height: 28px;
+  cursor: default;
+}
+.rcw-legend-item[aria-pressed='true'] {
+  background: var(--lkv-primary-subtle);
+}
+.rcw-legend-swatch {
+  width: 14px;
+  height: 6px;
+  border-radius: var(--lkv-radius-full);
+  flex: none;
+}
+.rcw-legend-km {
+  font-variant-numeric: tabular-nums;
+  color: var(--xp-mut);
+  font-weight: var(--lkv-weight-regular);
+}
+
+.rcw-lens {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--lkv-radius-full);
+  background: var(--xp-bar);
+  box-shadow: var(--xp-bar-shadow);
+}
+.rcw-lens-btn {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-full);
+  background: transparent;
+  font: inherit;
+  font-size: var(--lkv-text-footnote);
+  font-weight: var(--lkv-weight-semibold);
+  color: var(--xp-txt);
+  cursor: pointer;
+}
+.rcw-lens-btn[aria-pressed='true'] {
+  background: var(--lkv-forest-800);
+  color: var(--lkv-on-primary);
+}
+
+.rcw-layers {
+  width: 248px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 12px;
+  border-radius: var(--lkv-radius-popover);
+  background: var(--xp-sheet-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  box-shadow: var(--xp-bar-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rcw-layer-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--lkv-text-footnote);
+  font-weight: var(--lkv-weight-semibold);
+  color: var(--xp-ink);
+}
+.rcw-layer-label input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--lkv-forest-800);
+}
+.rcw-layer-note {
+  margin: -4px 0 4px 30px;
+  font-size: var(--lkv-text-caption-1);
+  color: var(--xp-mut);
+}
+
+.rcw-readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--lkv-text-footnote);
+  color: var(--xp-txt);
+  font-variant-numeric: tabular-nums;
+}
+.rcw-readout--map {
+  padding: 6px 12px;
+  border-radius: var(--lkv-radius-lg);
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  backdrop-filter: blur(20px) saturate(1.8);
+  box-shadow: var(--xp-bar-shadow);
+}
+.rcw-readout-label {
+  color: var(--xp-mut);
+}
+.rcw-readout-part[data-known='false'] strong {
+  font-weight: var(--lkv-weight-regular);
+  color: var(--xp-mut);
+}
+
+/* Menu de l'appui long. */
+.rcw-role-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+.rcw-role-menu {
+  position: absolute;
+  z-index: 14;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: var(--lkv-radius-popover);
+  background: var(--xp-sheet-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+  backdrop-filter: blur(22px) saturate(1.7);
+  box-shadow: var(--xp-bar-shadow);
+}
+.rcw-role-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 48px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--lkv-radius-md);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: var(--xp-ink);
+  cursor: pointer;
+}
+.rcw-role-item:hover,
+.rcw-role-item:focus-visible {
+  background: var(--lkv-primary-subtle);
+}
+.rcw-role-item strong {
+  font-size: var(--lkv-text-footnote);
+}
+.rcw-role-item span {
+  font-size: var(--lkv-text-caption-1);
+  color: var(--xp-mut);
+}
+
+/* Position en direct : point bleu, cap. Animations : transform seulement. */
+.rcw-live-dot {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--lkv-info);
+  border: 3px solid var(--lkv-surface);
+  box-shadow: 0 0 0 1px var(--lkv-info);
+}
+.rcw-live-dot[data-heading='true']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 11px solid var(--lkv-info);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rcw-role-menu {
+    animation: rcw-role-in 0.16s ease-out;
+  }
+}
+@keyframes rcw-role-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (min-width: 1024px) {
+  .rcw-map-left {
+    max-width: 320px;
+  }
+}
+
+/* Mode liste : ajout d'un point par adresse (1.10). */
+.rcw-address {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--lkv-radius-card);
+  background: var(--xp-bar);
+  box-shadow: var(--xp-bar-shadow);
+}
+.rcw-address-label {
+  font-size: var(--lkv-text-caption-1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--xp-mut);
+}
+.rcw-address-row {
+  display: flex;
+  gap: 8px;
+}
+.rcw-address-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--lkv-field-border);
+  border-radius: var(--lkv-radius-control);
+  background: var(--lkv-field-bg);
+  font: inherit;
+  color: var(--xp-txt);
+}

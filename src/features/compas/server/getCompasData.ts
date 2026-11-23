@@ -59,6 +59,10 @@ import { keepTrialEnabled } from '@/features/demo/keepTrial';
 import { getRequestLocale } from '@/lib/i18n/serverLocale';
 import { getRequestUnits } from '@/lib/i18n/serverUnits';
 import { readRouteDraft, type RouteDraft } from '@/features/adventure-prep/routeRevision';
+import { loadPublishedWorkspaceForTrip } from '@/features/route-collab/server/publishedRoute';
+import { planRouteDraftSync } from '@/features/route-collab/publishedSync';
+import { summarizePublishedRouteForHub, type PublishedRouteHubSummary } from '@/features/route-collab/integrations';
+import { parseRouteDraft, writeTripRouteDraft } from './routeDraftWrite';
 
 /**
  * Compas — chargeur serveur unique.
@@ -182,6 +186,11 @@ export interface CompasData {
    * ou null. Elle ne modifie ni `hiking_routes` ni les séances déjà liées.
    */
   routeDraft?: RouteDraft | null;
+  /**
+   * Version publiée de l'itinéraire collaboratif de ce voyage (10.1/10.2), ou null : quand elle existe, elle
+   * gagne sur le routeDraft (le Compas propose « Ouvrir dans l'itinéraire »). Jamais de coordonnée.
+   */
+  publishedRoute?: PublishedRouteHubSummary | null;
   /**
    * Coordonnées de la première étape géolocalisée (météo, recherches autour), PAS le
    * lieu de départ du voyageur : celui-ci est `originName` / `originSaid`.
@@ -534,7 +543,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
   const locale = await getRequestLocale();
   const units = await getRequestUnits(locale);
 
-  const [inventory, bookings, shop, pendingInvites, profile, traveller] = await traceStage('compas.wave1', () =>
+  const [inventory, bookings, shop, pendingInvites, profile, traveller, publishedWorkspace] = await traceStage('compas.wave1', () =>
     Promise.all([
       traceStage('compas.inventory', () => loadInventory(client, viewerId)),
       traceStage('compas.bookings', () => loadBookings(client, trip.id)),
@@ -543,13 +552,41 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
       traceStage('compas.profile', () => readProfile(client as never, viewerId)),
       // Sa propre devise, par la RLS de la personne ; jamais pour un essai sans compte.
       traceStage('compas.traveller', () => readTraveller(client, user?.is_anonymous === true ? null : viewerId)),
+      // Version publiée de l'itinéraire (lecture légère sous RLS ; null si aucune ou en cas de panne).
+      traceStage('compas.publishedRoute', () => loadPublishedWorkspaceForTrip(trip.id, client)),
     ])
   );
 
   const members = toMembers(trip, hub.group?.members ?? []);
   const compasMeta = readCompasMeta(trip.metadata);
   // Révision locale de l'éditeur (R01) : lue défensivement, sans toucher au parcours du catalogue.
-  const routeDraft = readRouteDraft(trip.metadata);
+  let routeDraft = readRouteDraft(trip.metadata);
+  // Un seul tracé par voyage (10.1) : la version publiée de l'itinéraire gagne. La copie est reprise ici
+  // (même règle et même écrivain que la publication : `planRouteDraftSync` + `writeTripRouteDraft`), sans
+  // jamais écraser un tracé enregistré dans l'éditeur APRÈS la publication.
+  const publishedRoute = publishedWorkspace ? summarizePublishedRouteForHub(publishedWorkspace) : null;
+  if (publishedWorkspace) {
+    const plan = planRouteDraftSync({
+      tripId: trip.id,
+      metadata: trip.metadata,
+      workspaces: [publishedWorkspace],
+    });
+    if (plan.action === 'write') {
+      routeDraft = readRouteDraft({ compas: { routeDraft: plan.draft } }) ?? routeDraft;
+      const valid = trip.permissions?.canEdit ? parseRouteDraft(plan.draft) : null;
+      if (valid) {
+        // Best effort : la lecture ne dépend jamais de cette écriture (idempotente, sous RLS `can_edit_trip`).
+        try {
+          await writeTripRouteDraft(client as never, trip.id, valid, {
+            kind: 'itineraire_publie',
+            id: plan.workspaceId,
+          });
+        } catch {
+          /* la lecture suit sans cette copie */
+        }
+      }
+    }
+  }
   const input: CompasInput = {
     trip: {
       id: trip.id,
@@ -810,6 +847,7 @@ async function getCompasDataUntraced(): Promise<CompasData | null> {
     weather,
     route: { id: routeId, name: hub.hiking?.routeName ?? null },
     routeDraft,
+    publishedRoute,
     origin,
     zone,
     dayZones: Object.fromEntries(

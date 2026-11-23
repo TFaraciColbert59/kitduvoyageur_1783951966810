@@ -19,7 +19,8 @@ const MemberActionSchema = z.discriminatedUnion('kind', [
     kind: z.literal('share_link'),
     action: z.enum(['create', 'revoke']),
     expiresInHours: z.number().positive().max(720).optional(),
-    hidePrivateStartRadiusM: z.number().min(0).max(5000).optional(),
+    // 200 m minimum : la zone de départ privée ne peut pas être désactivée (aligné sur la base).
+    hidePrivateStartRadiusM: z.number().min(200).max(5000).optional(),
   }),
 ]);
 

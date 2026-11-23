@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { storeErrorResponse } from '@/features/route-collab/store/httpErrors';
 import type { RouteOperationInput } from '@/features/route-collab/types';
+import { MAX_OPERATION_CHARS, RouteOperationSchema, readBoundedJson } from '../../_schemas';
 import { getAuthenticatedRouteActor } from '../_auth';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +11,8 @@ export const dynamic = 'force-dynamic';
 const ProposalSchema = z.object({
   title: z.string().min(2).max(160),
   rationale: z.string().max(500).default(''),
-  operations: z.array(z.record(z.string(), z.unknown())).min(1),
+  // Chaque opération proposée est validée comme une opération directe (union discriminée).
+  operations: z.array(RouteOperationSchema).min(1).max(50),
 });
 
 export async function POST(
@@ -22,15 +24,17 @@ export async function POST(
   if (!actor) {
     return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
   }
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'JSON invalide.' }, { status: 400 });
+  const read = await readBoundedJson(request, MAX_OPERATION_CHARS * 5);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
-  const parsed = ProposalSchema.safeParse(body);
+  const parsed = ProposalSchema.safeParse(read.body);
   if (!parsed.success) {
     return NextResponse.json({ error: 'Proposition invalide.' }, { status: 400 });
+  }
+  // La proposition est stockée dans le snapshot (partie `proposals`, 1 Mo maximum côté base).
+  if (JSON.stringify(parsed.data.operations).length > 600_000) {
+    return NextResponse.json({ error: 'Proposition trop volumineuse.' }, { status: 413 });
   }
 
   try {
@@ -41,7 +45,7 @@ export async function POST(
       actorName: actor.displayName,
       title: parsed.data.title,
       rationale: parsed.data.rationale,
-      operations: parsed.data.operations as unknown as RouteOperationInput[],
+      operations: parsed.data.operations as RouteOperationInput[],
     });
     if (!res.ok) {
       return NextResponse.json({ error: res.error }, { status: res.status });

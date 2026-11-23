@@ -1,0 +1,472 @@
+/*
+ * Tracer (5.x) et Étapes (6.x) de /compas/itineraire : matière du Compas v5 (verre, lignes `.v5-li`, puces), jetons
+ * `--lkv-*` / `--v5-*` seulement, aucune couleur littérale. Toutes les cibles tactiles font au moins 44 px.
+ * `.v5.rcw-v5` ne prête que les jetons du Compas : l'écran du Compas est une grille pleine page, ici sans boîte.
+ */
+.v5.rcw-v5 {
+  display: contents;
+}
+
+.rts-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rts-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rts-chips .v5-chip,
+.rts-btn,
+.rts-icon-btn {
+  min-height: 44px;
+}
+
+.rts-chips .v5-chip {
+  padding: 0 14px;
+}
+
+.rts-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--v5-fill);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--v5-label);
+  transition: transform 0.15s;
+}
+
+.rts-btn:active {
+  transform: scale(0.98);
+}
+
+.rts-btn.primary {
+  background: var(--v5-pg);
+  box-shadow: var(--v5-pg-sh);
+}
+
+.rts-btn.warn {
+  background: var(--v5-warn-bg);
+  color: var(--v5-warn);
+}
+
+.rts-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rts-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 44px;
+  border-radius: 14px;
+  background: var(--v5-fill);
+  color: var(--v5-label2);
+}
+
+.rts-icon-btn[disabled] {
+  opacity: 0.4;
+}
+
+.rts-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rts-actions > .rts-btn {
+  flex: 1 1 140px;
+}
+
+.rts-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v5-label2);
+}
+
+.rts-field input,
+.rts-field select,
+.rts-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--v5-sep);
+  background: var(--v5-fill2);
+  color: var(--v5-label);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.rts-field textarea {
+  padding: 10px 12px;
+  min-height: 72px;
+}
+
+.rts-field input:focus-visible,
+.rts-field select:focus-visible,
+.rts-field textarea:focus-visible {
+  outline: 2px solid var(--v5-accent);
+  outline-offset: 1px;
+}
+
+.rts-row-form {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.rts-row-form > .rts-field {
+  flex: 1;
+}
+
+.rts-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--v5-label3);
+}
+
+.rts-note.warn {
+  color: var(--v5-warn);
+  font-weight: 600;
+}
+
+.rts-note.bad {
+  color: var(--v5-bad);
+  font-weight: 600;
+}
+
+.rts-method {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--v5-label3);
+}
+
+.rts-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--v5-fill);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--v5-label2);
+}
+
+.rts-pill.warn {
+  background: var(--v5-warn-bg);
+  color: var(--v5-warn);
+}
+
+.rts-pill.good {
+  background: var(--v5-mint);
+  color: var(--v5-good);
+}
+
+.rts-pill.bad {
+  background: var(--v5-bad-bg);
+  color: var(--v5-bad);
+}
+
+.rts-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--v5-fill);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Heure d'arrivée estimée : orange quand elle dépasse le coucher du soleil (6.5). */
+.rts-arrival[data-late='true'] {
+  color: var(--v5-warn);
+}
+
+.rts-arrival[data-late='true'] b {
+  background: var(--v5-warn-bg);
+  border-radius: 8px;
+  padding: 1px 6px;
+}
+
+/* Jour : carte de l'onglet Étapes. */
+.rts-day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rts-day-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 4px;
+  text-align: left;
+}
+
+.rts-day-head .t {
+  flex: 1;
+  min-width: 0;
+}
+
+.rts-day-head b {
+  display: block;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.rts-day-head small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--v5-label2);
+}
+
+.rts-between {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+/* Profil et coupures glissables (6.2). */
+.rts-profile {
+  position: relative;
+  padding: 10px 10px 6px;
+  border-radius: 18px;
+  background: var(--v5-fill2);
+  touch-action: none;
+  user-select: none;
+}
+
+.rts-profile svg {
+  display: block;
+  width: 100%;
+  height: 120px;
+  overflow: visible;
+}
+
+.rts-profile .area {
+  fill: var(--v5-soft);
+}
+
+.rts-profile .line {
+  fill: none;
+  stroke: var(--v5-good);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.rts-profile .flat {
+  fill: none;
+  stroke: var(--v5-label3);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.rts-profile .cut {
+  stroke: var(--v5-tint);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.rts-profile .cut.locked {
+  stroke: var(--v5-label3);
+  stroke-dasharray: 4 3;
+}
+
+.rts-profile .cut.live {
+  stroke: var(--v5-amber);
+}
+
+.rts-handle {
+  position: absolute;
+  top: 0;
+  width: 44px;
+  height: 100%;
+  margin-left: -22px;
+  cursor: ew-resize;
+  border-radius: 12px;
+}
+
+.rts-handle:focus-visible {
+  outline: 2px solid var(--v5-accent);
+}
+
+.rts-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  background: var(--v5-paper);
+  box-shadow: 0 0 0 2px var(--v5-tint);
+}
+
+.rts-handle[data-locked='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.rts-live {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12.5px;
+}
+
+.rts-live div {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--v5-paper);
+  box-shadow: var(--v5-shadow-1);
+}
+
+.rts-live b {
+  display: block;
+}
+
+/* Frise des versions (5.10). */
+.rts-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--v5-sep);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rts-timeline li {
+  position: relative;
+  padding-left: 10px;
+}
+
+.rts-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--v5-paper);
+  box-shadow: 0 0 0 2px var(--v5-label3);
+}
+
+.rts-timeline li[data-kind='draft']::before {
+  box-shadow: 0 0 0 2px var(--v5-amber);
+}
+
+.rts-timeline li[data-published='true']::before {
+  background: var(--v5-good);
+  box-shadow: 0 0 0 2px var(--v5-good);
+}
+
+.rts-timeline .head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Variantes côte à côte (5.8). */
+.rts-compare {
+  display: grid;
+  gap: 8px;
+}
+
+.rts-compare-card {
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: var(--v5-paper);
+  box-shadow: var(--v5-shadow-1);
+}
+
+.rts-compare-card[data-stale='true'] {
+  box-shadow: inset 0 0 0 1px var(--v5-warn-bg);
+}
+
+.rts-compare table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.rts-compare th,
+.rts-compare td {
+  padding: 5px 4px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.rts-compare th:first-child,
+.rts-compare td:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+.rts-compare thead th {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v5-label3);
+}
+
+.rts-compare .good {
+  color: var(--v5-good);
+  font-weight: 600;
+}
+
+.rts-compare .warn {
+  color: var(--v5-warn);
+  font-weight: 600;
+}
+
+/* Découpage proposé (6.1). */
+.rts-proposal {
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--v5-paper);
+  box-shadow: var(--v5-shadow-1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rts-proposal strong {
+  font-size: 15px;
+}
+
+.rts-thresholds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rts-btn {
+    transition: none;
+  }
+}

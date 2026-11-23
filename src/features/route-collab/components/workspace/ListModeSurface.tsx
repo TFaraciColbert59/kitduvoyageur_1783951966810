@@ -1,5 +1,8 @@
+import './map/map.css';
 import { XpEyebrow, XpRow, XpRows } from '@/features/explorer-v2/sheet/blocks';
-import { computeStageMetrics } from './metrics';
+import { AddByAddress } from './AddByAddress';
+import { EntryChips } from './map/EntryChips';
+import { computeStageMetrics, formatStageKm } from './metrics';
 import { useRouteWorkspace } from './WorkspaceContext';
 
 /** Surface liste accessible, utilisée quand la carte WebGL est absente ou désactivée. */
@@ -22,8 +25,16 @@ export function ListModeSurface() {
     >
       <div className="rcw-list-surface-inner">
         <XpEyebrow>
-          Mode liste sans carte · {workspace.title} ({totals.distanceKm} km)
+          Mode liste sans carte · {workspace.title}
+          {workspace.sections.length > 0 ? ` (${totals.distanceKm} km)` : ' (distance inconnue)'}
         </XpEyebrow>
+        <EntryChips />
+        <AddByAddress />
+        {orderedPoints.length === 0 ? (
+          <p className="rcw-sub-note" data-testid="list-mode-empty">
+            Aucun point pour l’instant : cherchez une adresse pour poser le départ.
+          </p>
+        ) : null}
         <XpRows>
           {orderedPoints.map((pt, idx) => (
             <XpRow
@@ -48,7 +59,7 @@ export function ListModeSurface() {
                 icon="flag"
                 tone="good"
                 title={`Jour ${st.dayNumber} · ${st.title}`}
-                sub={`${stM.distanceKm} km · ${st.overnightPlace?.name ?? 'Journée'}`}
+                sub={`${formatStageKm(stM)} · ${st.overnightPlace?.name ?? 'Journée'}`}
                 onClick={() => {
                   setSelectedStageId(st.id);
                   openSubDrawer('stage');

@@ -1,125 +1,39 @@
-import { AnimatePresence, motion } from 'framer-motion';
+'use client';
+
+import { useState } from 'react';
+import { IslandNote } from '@/features/compas/v5/Island';
+import { RoutePill } from './chrome/RoutePill';
+import { SayPanel } from './chrome/SayPanel';
+import { useAutoReplay } from './chrome/useAutoReplay';
+import { useRouteIsland } from './chrome/useRouteIsland';
+import { V5Scope } from './ui/V5Scope';
 import { useRouteWorkspace } from './WorkspaceContext';
 
-/** Pilule télémétrie / notifications éphémères (2 s) en haut d'écran. */
+/**
+ * Au-dessus de la carte, deux choses seulement : la pilule qui ouvre tout (résumé, jours, voyant, état) et
+ * l'îlot du Compas v5, qui dit ce qui vient de se passer, UNE annonce à la fois, avec « Annuler » (3.1 à 3.10).
+ * Les anciennes notifications empilées (statut, impact, modes) passent toutes par l'îlot.
+ */
 export function TopStack() {
-  const {
-    setSheetOpen,
-    drawingMode,
-    setDrawingMode,
-    editingMode,
-    setEditingMode,
-    lastImpactText,
-    setLastImpactText,
-    statusMessage,
-    setStatusMessage,
-    totals,
-  } = useRouteWorkspace();
+  const ws = useRouteWorkspace();
+  const [sayOpen, setSayOpen] = useState(false);
+  const { view, dismiss, hold, release } = useRouteIsland(ws);
+  useAutoReplay(ws);
   return (
-    <div className="rcw-top-stack">
-      <AnimatePresence mode="wait" initial={false}>
-        {statusMessage ? (
-          <motion.div
-            key="top-status"
-            className="rcw-top-toast"
-            role="status"
-            data-testid="status-message"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span>{statusMessage}</span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => setStatusMessage(null)}
-              aria-label="Fermer le message"
-            >
-              ✕
-            </button>
-          </motion.div>
-        ) : lastImpactText ? (
-          <motion.div
-            key="top-impact"
-            className="rcw-top-toast rcw-top-toast--impact"
-            role="status"
-            data-testid="impact-banner"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span>
-              <strong>Impact · </strong>
-              {lastImpactText}
-            </span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => setLastImpactText(null)}
-              aria-label="Fermer l'impact"
-            >
-              ✕
-            </button>
-          </motion.div>
-        ) : drawingMode ? (
-          <motion.div
-            key="top-draw"
-            className="rcw-top-toast rcw-top-toast--mode"
-            role="status"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span>Mode tracé actif · dessinez directement sur la carte</span>
-            <button
-              type="button"
-              className="xp-chip"
-              onClick={() => {
-                setDrawingMode(false);
-                setSheetOpen(true);
-              }}
-            >
-              Terminer
-            </button>
-          </motion.div>
-        ) : editingMode ? (
-          <motion.div
-            key="top-edit"
-            className="rcw-top-toast rcw-top-toast--mode"
-            role="status"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span>Mode édition actif · glissez les repères numérotés</span>
-            <button type="button" className="xp-chip" onClick={() => setEditingMode(false)}>
-              Terminer
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="top-telemetry"
-            className="rcw-top-telemetry-pill"
-            data-testid="top-telemetry-pill"
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span>{totals.distanceKm} km</span>
-            <span className="rcw-top-telemetry-sep">·</span>
-            <span>D+ {totals.ascentM != null ? `${totals.ascentM} m` : '—'}</span>
-            <span className="rcw-top-telemetry-sep">·</span>
-            <span>D− {totals.descentM != null ? `${totals.descentM} m` : '—'}</span>
-            <span className="rcw-top-telemetry-sep">·</span>
-            <span>{totals.durationMin != null ? `${totals.durationMin} min` : '—'}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <>
+      <div className="rcw-top-stack">
+        <RoutePill sayOpen={sayOpen} onToggleSay={() => setSayOpen((v) => !v)} />
+        {sayOpen ? <SayPanel onClose={() => setSayOpen(false)} /> : null}
+      </div>
+      <V5Scope>
+        <IslandNote
+          note={view ? { title: view.title, sub: view.sub ?? undefined, tone: view.tone, actions: view.actions } : null}
+          onDismiss={dismiss}
+          onHold={hold}
+          onRelease={release}
+          testId={view?.testId}
+        />
+      </V5Scope>
+    </>
   );
 }

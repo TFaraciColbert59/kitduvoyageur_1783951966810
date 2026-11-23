@@ -1,14 +1,23 @@
 'use client';
 
 import '@/styles/explorer-v2.css';
+import '@/features/compas/v5/v5.css';
 import './routeCollab.css';
+import './workspace/chrome/chrome.css';
 
 import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
 import { ExplorerSheet } from '@/features/explorer-v2/sheet/ExplorerSheet';
 import type { RouteCollabMapProps } from './RouteCollabMap';
+import { useRouteLayout } from './workspace/chrome/layout';
+import { RouteLauncher } from './workspace/chrome/RouteLauncher';
+import { SheetSummary } from './workspace/chrome/SheetSummary';
+import { StageColumn } from './workspace/chrome/StageColumn';
+import { useRouteLevels } from './workspace/chrome/useRouteLevels';
+import { ViewModeSwitch } from './workspace/chrome/ViewModeSwitch';
 import { ListModeSurface } from './workspace/ListModeSurface';
 import { MapSettingsDrawer, OverlayDetailDrawer, renderSubDrawer } from './workspace/subdrawers';
-import { MAIN_TABS } from './workspace/tabs';
+import { mainTabs } from './workspace/tabs';
 import { TopStack } from './workspace/TopStack';
 import type { RouteCollabWorkspaceProps } from './workspace/types';
 import { useRouteWorkspaceState } from './workspace/useRouteWorkspaceState';
@@ -74,6 +83,11 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
   } = ws;
 
   const activeSubDrawer = renderSubDrawer(ws);
+  const layout = useRouteLayout();
+  useRouteLevels(ws);
+  // En solo (4.8), l'onglet « Équipe » devient « Inviter ».
+  const solo = !workspace.members.some((m) => !m.revokedAt && m.userId !== ws.currentUserId);
+  const tabs = useMemo(() => mainTabs(solo), [solo]);
 
   return (
     <RouteWorkspaceProvider value={ws}>
@@ -81,6 +95,7 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
         className="xp-root rcw-explorer-root"
         data-theme="light"
         data-sheet-open={sheetOpen ? 'true' : 'false'}
+        data-layout={layout}
         data-testid="route-collab-workspace"
         data-head-seq={workspace.headSeq}
       >
@@ -153,7 +168,10 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
           <ListModeSurface />
         )}
 
-        {/* PILULE TÉLÉMÉTRIE / NOTIFICATIONS ÉPHÉMÈRES (2 s, Framer Motion) EN TOP ÉCRAN */}
+        {/* BUREAU : colonne des étapes à gauche de la carte (4.9) */}
+        {layout === 'desktop' ? <StageColumn /> : null}
+
+        {/* PILULE (résumé, jours, voyant, état) + ÎLOT (une annonce à la fois, « Annuler ») EN TOP ÉCRAN */}
         <TopStack />
 
         {/* CARTE & AFFICHAGE EN HAUT À DROITE DE LA CARTE */}
@@ -164,7 +182,7 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
           <ExplorerSheet
             title={activeSubDrawer ? activeSubDrawer.title : ''}
             subtitle={activeSubDrawer ? activeSubDrawer.subtitle : null}
-            tabs={activeSubDrawer ? undefined : MAIN_TABS}
+            tabs={activeSubDrawer ? undefined : tabs}
             tab={tabIndex}
             onTab={(idx) => setTabIndex(idx)}
             detent={detent}
@@ -181,6 +199,9 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
             bottomInset={64}
             labelledBy="rcw-sheet-title"
             tabsBottom={false}
+            threeDetents
+            actions={<ViewModeSwitch />}
+            summary={activeSubDrawer ? undefined : <SheetSummary />}
             mini={
               !activeSubDrawer && tabIndex === 2
                 ? {
@@ -203,22 +224,7 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
             {activeSubDrawer ? activeSubDrawer.body : null}
           </ExplorerSheet>
         ) : (
-          <button
-            type="button"
-            className="xp-sheet-pill-launcher"
-            data-testid="route-drawer-pill"
-            aria-label="Ouvrir le tiroir d’itinéraire"
-            onClick={() => {
-              setSheetOpen(true);
-              setDetent('low');
-            }}
-          >
-            <span className="xp-pill-dots" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
+          <RouteLauncher />
         )}
 
         {/* TIROIR SUPERPOSÉ HIÉRARCHIQUE (Étapes -> Catégories -> Sous-catégories avec +/- précision) */}

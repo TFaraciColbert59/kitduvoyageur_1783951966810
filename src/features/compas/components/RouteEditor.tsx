@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { buildItineraryHref } from '@/features/route-collab/insights/deepLinks';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '@/components/ui/Icon';
 import type { HubRouteMapProps, HubRoutePoint } from '@/features/hub/components/mobile/HubRouteMap';
@@ -727,6 +729,25 @@ export function RouteEditor({ ctl, onBack }: { ctl: CompasCtl; onBack: () => voi
           <Chip icon="route">{t('compas.routeEditor.version', { version: savedVersion })}</Chip>
         )}
       </div>
+
+      {ctl.data.publishedRoute && (
+        <Link
+          className="cp-row"
+          data-testid="compas-editor-open-itinerary"
+          href={buildItineraryHref({ tripId: ctl.data.model.tripId })}
+        >
+          <span className="cp-thumb" aria-hidden="true">
+            <Icon name="map-pin" size={18} />
+          </span>
+          <span className="cp-row__t">
+            <b>{t('compas.routeEditor.openItinerary')}</b>
+            <span>{t('compas.routeEditor.openItineraryPublished', { version: ctl.data.publishedRoute.revisionNo })}</span>
+          </span>
+          <span className="cp-row__end">
+            <Icon name="chevron-right" size={16} aria-hidden="true" />
+          </span>
+        </Link>
+      )}
 
       <p className="cp-note">{t('compas.routeEditor.intro')}</p>
 

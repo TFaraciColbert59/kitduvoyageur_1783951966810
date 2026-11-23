@@ -16,6 +16,7 @@ export function useRouteUndo(ws: RouteWorkspaceApi) {
   const { opTracker, runOperation, setStatusMessage } = ws;
   const { journal, consume } = opTracker;
   const [busy, setBusy] = useState(false);
+  const running = useRef(false);
   const counter = useRef(0);
 
   const newPointId = useCallback(() => {
@@ -32,12 +33,15 @@ export function useRouteUndo(ws: RouteWorkspaceApi) {
   }, [journal, newPointId]);
 
   const undo = useCallback(async (): Promise<boolean> => {
+    // Un second toucher pendant l'annulation ne la rejoue pas (les inverses seraient soumis deux fois).
+    if (running.current) return false;
     const gesture = groupGesture(journal.current);
     const plan = planUndo(gesture, { newPointId });
     if (!plan.ok) {
       setStatusMessage(plan.reason);
       return false;
     }
+    running.current = true;
     setBusy(true);
     try {
       for (const step of plan.steps) {
@@ -51,6 +55,7 @@ export function useRouteUndo(ws: RouteWorkspaceApi) {
       setStatusMessage(`Annulé : ${plan.label}.`);
       return true;
     } finally {
+      running.current = false;
       setBusy(false);
     }
   }, [consume, journal, newPointId, runOperation, setStatusMessage]);
