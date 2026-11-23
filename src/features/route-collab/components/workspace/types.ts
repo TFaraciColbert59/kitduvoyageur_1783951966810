@@ -1,3 +1,5 @@
+import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
+import type { UserPaceProfile } from '../../paceProfile';
 import type { RouteCorridorPoi } from '../../routeAnalysis';
 import type { RouteWorkspaceState } from '../../types';
 
@@ -25,6 +27,10 @@ export interface RouteCollabWorkspaceProps {
   /** Ouvre le tiroir dès le premier rendu (utile pour tests ou accès direct). */
   initialSheetOpen?: boolean;
   onWorkspaceChange?: (next: RouteWorkspaceState) => void;
+  /** Allure apprise des sorties de la personne (10.8), lue côté serveur ; absent : allure standard, dite. */
+  paceProfile?: UserPaceProfile | null;
+  /** Profil de performance complet de la personne, pour la prédiction d'effort (7.1) ; absent : non personnalisée. */
+  performanceProfile?: PerformanceProfile | null;
 }
 
 /** Titre + sous-titre d'un sous-tiroir (le corps est un composant dédié). */

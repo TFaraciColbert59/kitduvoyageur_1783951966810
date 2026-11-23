@@ -45,5 +45,5 @@ export function paceProfileFromRow(row: PaceProfileRow | null | undefined): User
 
 /** Membre d'allure pour `paceOf` / `groupPace` (la vitesse en plat et la montée apprises). */
 export function paceMemberFromProfile(id: string, name: string, profile: UserPaceProfile): PaceMember {
-  return { id, name, speedKmh: profile.flatSpeedKmh, ascentMPerHour: profile.ascentMPerHour };
+  return { id, name, speedKmh: profile.flatSpeedKmh, ascentMPerHour: profile.ascentMPerHour, origin: 'profile', sampleCount: profile.sampleCount };
 }

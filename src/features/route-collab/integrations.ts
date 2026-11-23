@@ -32,14 +32,16 @@ export function toClubRouteRevisionSnapshot(
   requiresParticipantDecision = true,
 ): ClubRouteRevisionSnapshot {
   const distKm = revision.sections.reduce((acc, s) => acc + s.distanceKm, 0);
-  const elevM = revision.sections.reduce((acc, s) => acc + (s.ascentM ?? 0), 0);
+  // D+ inconnu sur un tronçon : le D+ de la version est inconnu (null), jamais une somme qui compte l'inconnu pour 0 (4.5).
+  const elevKnown = revision.sections.length > 0 && revision.sections.every((s) => s.ascentM != null);
+  const elevM = elevKnown ? revision.sections.reduce((acc, s) => acc + (s.ascentM as number), 0) : null;
   return {
     eventId,
     routeId: revision.workspaceId,
     revision: revision.revisionNo,
     checksum,
     distanceM: Math.round(distKm * 1000),
-    elevationGainM: Math.round(elevM),
+    elevationGainM: elevM == null ? null : Math.round(elevM),
     updatedBy: revision.createdBy,
     updatedAt: revision.createdAt,
     requiresParticipantDecision,
@@ -144,17 +146,21 @@ export function buildCarnetComparisonView(
   recordedDistanceKm: number;
   deltaDistanceKm: number | null;
   kitItemsCount: number;
-  kitTotalWeightGrams: number;
+  /** `null` : au moins un objet sans poids connu, le total n'est pas dit (4.5). */
+  kitTotalWeightGrams: number | null;
+  /** Objets du sac sans poids connu. */
+  kitUnweightedCount: number;
   unchangedByNewerRevision: boolean;
 } {
   const rev = workspace.revisions.find((r) => r.id === record.plannedRevisionId);
-  const plannedDistanceKm = rev
+  const plannedDistanceKm = rev && rev.sections.length > 0
     ? Number(rev.sections.reduce((acc, s) => acc + s.distanceKm, 0).toFixed(2))
     : null;
-  const kitTotalWeightGrams = record.kitSnapshot.reduce(
-    (acc, item) => acc + (item.weightGrams ?? 0) * item.quantity,
-    0,
-  );
+  const kitUnweightedCount = record.kitSnapshot.filter((item) => item.weightGrams == null).length;
+  const kitTotalWeightGrams =
+    kitUnweightedCount > 0
+      ? null
+      : record.kitSnapshot.reduce((acc, item) => acc + (item.weightGrams as number) * item.quantity, 0);
   return {
     plannedRevisionNo: record.plannedRevisionNo,
     latestPublishedRevisionNo: workspace.publishedRevisionNo,
@@ -166,6 +172,7 @@ export function buildCarnetComparisonView(
         : null,
     kitItemsCount: record.kitSnapshot.length,
     kitTotalWeightGrams,
+    kitUnweightedCount,
     unchangedByNewerRevision:
       workspace.publishedRevisionNo == null ||
       workspace.publishedRevisionNo >= record.plannedRevisionNo,

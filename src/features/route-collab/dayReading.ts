@@ -144,7 +144,7 @@ function durationOf(sport: RouteWorkspaceState['sport'], kind: StageKind, stats:
     return {
       minutes: est.minutes,
       lowerBound: est.isLowerBound,
-      method: pace.basis === 'slowest_member' ? `${naismithMethod(pace.params)}, allure du plus lent` : `${naismithMethod(pace.params)} (allure du groupe non renseignée)`,
+      method: pace.basis === 'slowest_member' ? pace.method : `allure standard ${naismithMethod(pace.params)} (allure du groupe non renseignée)`,
       basis: 'naismith',
     };
   }
@@ -241,7 +241,12 @@ export function readDays(ws: Pick<RouteWorkspaceState, 'points' | 'sections' | '
 export function describePace(pace: GroupPace, members: readonly PaceMember[]): string {
   if (pace.basis === 'default') return `Allure standard (${pace.params.speedKmh} km/h) : l’allure des membres n’est pas renseignée.`;
   const slowest = members.find((m) => m.id === pace.slowestMemberId);
-  const who = slowest?.id === 'manual' ? 'allure renseignée' : (slowest?.name ?? 'le plus lent');
   const unknown = pace.unknownMemberIds.length;
-  return `Calculé sur ${who} (${pace.params.speedKmh} km/h)${unknown > 0 ? ` ; ${unknown} membre${unknown > 1 ? 's' : ''} sans allure renseignée` : ''}.`;
+  const tail = unknown > 0 ? ` ; ${unknown} membre${unknown > 1 ? 's' : ''} sans allure renseignée` : '';
+  if (pace.fromProfile) {
+    const n = slowest?.sampleCount;
+    return `Calculé d’après tes sorties (${pace.params.speedKmh} km/h${n ? `, ${n} sortie${n > 1 ? 's' : ''}` : ''})${tail}.`;
+  }
+  const who = slowest?.id === 'manual' ? 'allure renseignée' : (slowest?.name ?? 'le plus lent');
+  return `Calculé sur ${who} (${pace.params.speedKmh} km/h)${tail}.`;
 }

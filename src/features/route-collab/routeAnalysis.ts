@@ -60,6 +60,8 @@ export interface LiveWeatherInfo {
 
 export interface TechnicalTerrainStats {
   readonly distanceKm: number;
+  /** Faux sans aucun tronçon : la distance est inconnue, pas 0 km (affichage : `formatStageKm`). */
+  readonly distanceKnown: boolean;
   readonly ascentM: number | null;
   readonly descentM: number | null;
   readonly minAltitudeM: number | null;
@@ -69,7 +71,8 @@ export interface TechnicalTerrainStats {
   readonly estimatedCaloriesKcal: number | null;
   readonly avgSpeedKmh: number | null;
   readonly ibpEstimate: number | null;
-  readonly effortLevel: 'Facile (1/5)' | 'Assez facile (2/5)' | 'Peu difficile (3/5)' | 'Assez difficile (4/5)' | 'Difficile (5/5)';
+  /** `null` : non évalué (D+ ou distance inconnus), jamais « Facile » par défaut (4.5). */
+  readonly effortLevel: 'Facile (1/5)' | 'Assez facile (2/5)' | 'Peu difficile (3/5)' | 'Assez difficile (4/5)' | 'Difficile (5/5)' | null;
   readonly maxClimbSlopePct: number | null;
   readonly maxDescentSlopePct: number | null;
   readonly slopeBuckets: {
@@ -192,10 +195,14 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
   const distanceKm = Number(
     workspace.sections.reduce((acc, s) => acc + s.distanceKm, 0).toFixed(2),
   );
-  const ascentValues = workspace.sections.map((s) => s.ascentM).filter((v): v is number => v != null);
-  const descentValues = workspace.sections.map((s) => s.descentM).filter((v): v is number => v != null);
-  const ascentM = ascentValues.length > 0 ? Math.round(ascentValues.reduce((a, b) => a + b, 0)) : null;
-  const descentM = descentValues.length > 0 ? Math.round(descentValues.reduce((a, b) => a + b, 0)) : null;
+  // Un total n'existe que si tous les tronçons le connaissent : une somme des seuls tronçons connus ferait passer
+  // l'inconnu pour 0 (4.5).
+  const ascentValues = workspace.sections.map((s) => s.ascentM);
+  const descentValues = workspace.sections.map((s) => s.descentM);
+  const sumIfAllKnown = (values: ReadonlyArray<number | null>): number | null =>
+    values.length > 0 && values.every((v): v is number => v != null) ? Math.round(values.reduce<number>((a, b) => a + (b as number), 0)) : null;
+  const ascentM = sumIfAllKnown(ascentValues);
+  const descentM = sumIfAllKnown(descentValues);
 
   // Altitudes et pentes par tronçon
   const allEles: number[] = [];
@@ -230,8 +237,9 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
         else if (absPct < 15) sustDist += segDistM;
         else steepDist += segDistM;
       }
-    } else if (s.distanceKm > 0 && (s.ascentM != null || s.descentM != null)) {
-      const approxSlope = (((s.ascentM ?? 0) + (s.descentM ?? 0)) / (s.distanceKm * 1000)) * 100;
+    } else if (s.distanceKm > 0 && s.ascentM != null && s.descentM != null) {
+      // Les deux dénivelés doivent être connus : un seul, l'autre compté pour 0, sous-estimerait la pente (4.5).
+      const approxSlope = ((s.ascentM + s.descentM) / (s.distanceKm * 1000)) * 100;
       if (maxClimbSlopePct == null || approxSlope > maxClimbSlopePct) {
         maxClimbSlopePct = Math.round(approxSlope);
       }
@@ -255,12 +263,15 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
   // Durée (Naismith si non fournie) & IBP simplifié
   const isCycling = workspace.sport === 'vtt' || workspace.sport === 'gravel' || workspace.sport === 'route';
   const speedBase = isCycling ? 16 : 4.2;
-  const sectionDur = workspace.sections.reduce((acc, s) => acc + (s.durationMin ?? 0), 0);
+  // Une durée de tronçon inconnue n'est pas 0 min : sans toutes les durées, on estime (Naismith) seulement si le D+
+  // est connu ; sinon la durée reste inconnue (4.5).
+  const allDurationsKnown = workspace.sections.length > 0 && workspace.sections.every((s) => s.durationMin != null);
+  const sectionDur = allDurationsKnown ? workspace.sections.reduce((acc, s) => acc + (s.durationMin as number), 0) : 0;
   const estimatedDurationMin =
     sectionDur > 0
       ? Math.round(sectionDur)
-      : distanceKm > 0
-        ? Math.round((distanceKm / speedBase) * 60 + ((ascentM ?? 0) / 600) * 60)
+      : distanceKm > 0 && ascentM != null
+        ? Math.round((distanceKm / speedBase) * 60 + (ascentM / 600) * 60)
         : null;
 
   const avgSpeedKmh =
@@ -269,12 +280,14 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
       : null;
 
   const ibpEstimate =
-    distanceKm > 0
-      ? Math.round(distanceKm * 2.4 + (ascentM ?? 0) * 0.045 + (maxAltitudeM && maxAltitudeM > 1800 ? 8 : 0))
+    distanceKm > 0 && ascentM != null
+      ? Math.round(distanceKm * 2.4 + ascentM * 0.045 + (maxAltitudeM && maxAltitudeM > 1800 ? 8 : 0))
       : null;
 
   const effortLevel: TechnicalTerrainStats['effortLevel'] =
-    ibpEstimate == null || ibpEstimate < 25
+    ibpEstimate == null
+      ? null
+      : ibpEstimate < 25
       ? 'Facile (1/5)'
       : ibpEstimate < 50
         ? 'Assez facile (2/5)'
@@ -285,8 +298,8 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
             : 'Difficile (5/5)';
 
   const estimatedCaloriesKcal =
-    distanceKm > 0
-      ? Math.round(distanceKm * (isCycling ? 32 : 58) + (ascentM ?? 0) * 0.45)
+    distanceKm > 0 && ascentM != null
+      ? Math.round(distanceKm * (isCycling ? 32 : 58) + ascentM * 0.45)
       : null;
 
   // Surfaces
@@ -330,6 +343,7 @@ export function computeTechnicalTerrainStats(workspace: RouteWorkspaceState): Te
 
   return {
     distanceKm,
+    distanceKnown: workspace.sections.length > 0,
     ascentM,
     descentM,
     minAltitudeM,

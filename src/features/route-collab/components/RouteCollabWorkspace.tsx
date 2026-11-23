@@ -22,6 +22,9 @@ import { TopStack } from './workspace/TopStack';
 import type { RouteCollabWorkspaceProps } from './workspace/types';
 import { useRouteWorkspaceState } from './workspace/useRouteWorkspaceState';
 import { RouteWorkspaceProvider } from './workspace/WorkspaceContext';
+import { RoutePaceProvider } from './workspace/stages/usePace';
+import { paceMemberFromProfile } from '../paceProfile';
+import type { PaceMember } from '../insights/pace';
 
 export type { RouteCollabWorkspaceProps, SubDrawerId } from './workspace/types';
 
@@ -86,11 +89,23 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
   const layout = useRouteLayout();
   useRouteLevels(ws);
   // En solo (4.8), l'onglet « Équipe » devient « Inviter ».
-  const solo = !workspace.members.some((m) => !m.revokedAt && m.userId !== ws.currentUserId);
+  const solo = !workspace.members.some((m) => !m.revokedAt && m.userId !== props.currentUserId);
   const tabs = useMemo(() => mainTabs(solo), [solo]);
+
+  // 10.8 : l'allure apprise des sorties de la personne (elle seule : la RLS interdit celle des autres) ; les autres
+  // membres restent « sans allure renseignée ». Sans profil, aucune allure n'est fournie : allure standard, dite.
+  const { paceProfile = null, performanceProfile = null } = props;
+  const paceMembers = useMemo<PaceMember[]>(() => {
+    if (!paceProfile) return [];
+    const others = workspace.members
+      .filter((m) => !m.revokedAt && m.userId !== props.currentUserId)
+      .map<PaceMember>((m) => ({ id: m.userId, name: m.displayName }));
+    return [paceMemberFromProfile(props.currentUserId, props.currentUserName, paceProfile), ...others];
+  }, [paceProfile, workspace.members, props.currentUserId, props.currentUserName]);
 
   return (
     <RouteWorkspaceProvider value={ws}>
+      <RoutePaceProvider members={paceMembers} performance={paceProfile ? performanceProfile : null}>
       <div
         className="xp-root rcw-explorer-root"
         data-theme="light"
@@ -230,6 +245,7 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
         {/* TIROIR SUPERPOSÉ HIÉRARCHIQUE (Étapes -> Catégories -> Sous-catégories avec +/- précision) */}
         {overlayDetail ? <OverlayDetailDrawer /> : null}
       </div>
+      </RoutePaceProvider>
     </RouteWorkspaceProvider>
   );
 }

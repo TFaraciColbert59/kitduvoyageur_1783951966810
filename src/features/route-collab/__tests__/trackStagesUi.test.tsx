@@ -111,6 +111,19 @@ describe('Étapes : jours, arrivée vs coucher, nuits réelles, découpage', () 
     await waitFor(() => expect(within(screen.getByTestId('subdrawer-stage')).getByTestId('night-g1').textContent).toMatch(/OpenStreetMap/));
   });
 
+  it('6.9 : le tiroir du jour reprend l’en-tête du Compas v5 (bandeau, flèches ≥ 44 px, « A → B · Jour N »)', async () => {
+    const panel = await openEtapes();
+    fireEvent.click(within(panel).getByLabelText('Ouvrir Jour 1'));
+    const drawer = await screen.findByTestId('subdrawer-stage');
+    const hero = within(drawer).getByTestId('day-hero');
+    expect(hero.className).toBe('v5-hero');
+    expect((within(hero).getByLabelText('Jour précédent') as HTMLButtonElement).disabled).toBe(true);
+    expect(within(hero).getByLabelText('Jour suivant').className).toMatch(/v5-rbtn v5-lg rts-icon-btn/);
+    expect(within(drawer).getByTestId('day-meta').textContent).toBe('Départ → Refuge · Jour 1');
+    fireEvent.click(within(hero).getByLabelText('Jour suivant'));
+    await waitFor(() => expect(within(screen.getByTestId('subdrawer-stage')).getByTestId('day-meta').textContent).toBe('Refuge → Arrivée · Jour 2'));
+  });
+
   it('proposer un découpage : explication, règle, puis application', async () => {
     const panel = await openEtapes();
     fireEvent.click(within(panel).getByTestId('propose-split'));

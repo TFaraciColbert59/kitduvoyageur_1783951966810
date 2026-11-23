@@ -178,13 +178,15 @@ export function ElevationAreaChart({
 }
 
 export function EffortRadialGauge({ stats }: { stats: TechnicalTerrainStats }) {
+  const ibpKnown = stats.ibpEstimate != null;
   const ibp = stats.ibpEstimate ?? 0;
-  const pct = Math.max(0, Math.min(1, ibp / 120));
+  const pct = ibpKnown ? Math.max(0, Math.min(1, ibp / 120)) : 0;
   const r = 42;
   const halfCirc = Math.PI * r;
   const dashOffset = halfCirc * (1 - pct);
-  const toneColor =
-    ibp < 25
+  const toneColor = !ibpKnown
+    ? 'currentColor'
+    : ibp < 25
       ? '#1d7a47'
       : ibp < 50
         ? '#2d8a5e'
@@ -195,7 +197,7 @@ export function EffortRadialGauge({ stats }: { stats: TechnicalTerrainStats }) {
   return (
     <div className="rcw-visual-card rcw-effort-card">
       <div className="rcw-effort-gauge-wrap">
-        <svg viewBox="0 0 110 64" className="rcw-effort-svg" aria-label={`Indice IBP ${ibp}`}>
+        <svg viewBox="0 0 110 64" className="rcw-effort-svg" aria-label={ibpKnown ? `Indice IBP ${ibp}` : 'Indice IBP non évalué : dénivelé inconnu'}>
           <path
             d="M 13 54 A 42 42 0 0 1 97 54"
             fill="none"
@@ -220,7 +222,7 @@ export function EffortRadialGauge({ stats }: { stats: TechnicalTerrainStats }) {
           </text>
         </svg>
         <span className="rcw-effort-badge" style={{ color: toneColor }}>
-          {stats.effortLevel}
+          {stats.effortLevel ?? 'Non évalué'}
         </span>
       </div>
 

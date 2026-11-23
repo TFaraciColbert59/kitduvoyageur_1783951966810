@@ -7,7 +7,7 @@ import { waterObservationsFrom } from '../../../nights';
 import type { WaterObservation } from '../../../types';
 import { useRouteWorkspace } from '../WorkspaceContext';
 import { useDayReadings } from '../stages/useDayReadings';
-import { useGroupMembers, useGroupPace } from '../stages/usePace';
+import { useGroupMembers, useGroupPace, usePerformanceProfile } from '../stages/usePace';
 import { usePlacesByStage } from '../stages/useStagePlaces';
 import { fetchAnalyseRemote, NO_REMOTE, type AnalyseRemote } from './analyseClient';
 
@@ -21,6 +21,7 @@ export function useAnalyse(options: { load: boolean }): { analysis: Analysis; re
   const { days } = useDayReadings();
   const { manualKmh } = useGroupPace();
   const paceMembers = useGroupMembers();
+  const performanceProfile = usePerformanceProfile();
   const placesByStage = usePlacesByStage(workspace);
   const [remote, setRemote] = useState<AnalyseRemote>(NO_REMOTE);
   const lastKey = useRef<string>('');
@@ -52,7 +53,7 @@ export function useAnalyse(options: { load: boolean }): { analysis: Analysis; re
     const byId = new Map(paceMembers.map((m) => [m.id, m]));
     const out: MemberProfile[] = active.map((m) => {
       const p = byId.get(m.userId);
-      return { id: m.userId, name: m.displayName, flatSpeedKmh: p?.speedKmh ?? null, ascentMPerH: p?.ascentMPerHour ?? null };
+      return { id: m.userId, name: m.displayName, flatSpeedKmh: p?.speedKmh ?? null, ascentMPerH: p?.ascentMPerHour ?? null, paceSource: p?.origin };
     });
     if (manualKmh != null) out.push({ id: 'manual', name: 'Allure renseignée', flatSpeedKmh: manualKmh });
     return out;
@@ -79,12 +80,13 @@ export function useAnalyse(options: { load: boolean }): { analysis: Analysis; re
         members,
         currentUserId,
         now: new Date(),
+        performanceProfile,
         waterByStage: waterByStage.out,
         placesFetchedAtByStage: waterByStage.fetchedAt,
         remote: { weather: remote.weather, fire: remote.fire, official: remote.official },
       }),
     // `now` n'entre pas dans les dépendances : l'âge d'une observation se relit à chaque changement du plan ou des relevés.
-    [workspace, profileModel, days, members, currentUserId, waterByStage, remote.weather, remote.fire, remote.official],
+    [workspace, profileModel, days, members, currentUserId, performanceProfile, waterByStage, remote.weather, remote.fire, remote.official],
   );
 
   const reload = useCallback(() => void run(true), [run]);

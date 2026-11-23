@@ -1,6 +1,8 @@
 import { computeEffortScore, EFFORT_SCORE_VERSION, IEA_REFERENCE_VO2MAX_ML_KG_MIN, IEA_REFERENCE_WEIGHT_KG } from '@/features/adventure-intelligence/domain/effortScore';
 import { buildGroupPlan, type GroupExperienceLevel, type GroupMemberInput, type GroupPlan } from '@/features/adventure-intelligence/domain/groupIntelligence';
+import { MEDIUM_CONFIDENCE_THRESHOLD } from '@/features/adventure-intelligence/domain/confidence';
 import { predictRoute } from '@/features/adventure-intelligence/domain/prediction';
+import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import type { EffortScoreInput } from '@/features/adventure-intelligence/schemas/effort.schema';
 import type { ProfileModel } from '../profileLink';
 import type { CollaborativeStage } from '../types';
@@ -127,6 +129,8 @@ export interface MemberProfile {
   readonly maxCarryKg?: number | null;
   readonly level?: GroupExperienceLevel | null;
   readonly isChild?: boolean;
+  /** `profile` : allure apprise des sorties terminées (10.8), non saisie. */
+  readonly paceSource?: 'profile';
 }
 
 export function hasDeclaredPace(m: MemberProfile): boolean {
@@ -165,6 +169,8 @@ export interface GroupReading {
   readonly separation: GroupPlan['separationRisk'];
   readonly perMember: readonly { id: string; name: string; paceKmh: number; difficulty: number; declared: boolean }[];
   readonly declaredCount: number;
+  /** Membres dont l'allure vient du profil appris des sorties (10.8). */
+  readonly profileCount: number;
   readonly memberCount: number;
 }
 
@@ -185,6 +191,8 @@ export interface EffortAnalysis {
   readonly assumptions: readonly string[];
   readonly method: string;
   readonly version: string;
+  /** Base du temps prédit : profil appris des sorties (nombre de sorties) ou allure standard (raison dite). */
+  readonly timeBasis: { readonly kind: 'profile'; readonly sampleCount: number } | { readonly kind: 'standard'; readonly reason: string };
 }
 
 export interface EffortOptions {
@@ -197,6 +205,20 @@ export interface EffortOptions {
   /** Température du moment (MET Norway) ; `null` : conditions neutres, et dit. */
   readonly tempC: number | null;
   readonly stages: readonly CollaborativeStage[];
+  /** Profil de performance de la personne (10.8) ; absent, « à froid » ou peu fiable : prédiction non personnalisée, et dit. */
+  readonly performanceProfile?: PerformanceProfile | null;
+}
+
+/** Un profil n'est utilisé que s'il est appris (pas « à froid ») et assez fiable : même seuil que la cascade d'allure du moteur. */
+export function usablePerformanceProfile(profile: PerformanceProfile | null | undefined): PerformanceProfile | null {
+  if (!profile || profile.calibrationLevel === 'cold' || profile.sampleCount < 1) return null;
+  return profile.confidence.score >= MEDIUM_CONFIDENCE_THRESHOLD ? profile : null;
+}
+
+function standardReason(profile: PerformanceProfile | null | undefined): string {
+  if (!profile) return 'aucun profil de sorties : allure standard du moteur';
+  if (profile.calibrationLevel === 'cold' || profile.sampleCount < 1) return 'profil de sorties encore « à froid » : allure standard du moteur';
+  return 'profil de sorties trop peu fiable : allure standard du moteur';
 }
 
 const unknown = (reason: string, over: Partial<EffortAnalysis> = {}): EffortAnalysis => ({
@@ -215,6 +237,7 @@ const unknown = (reason: string, over: Partial<EffortAnalysis> = {}): EffortAnal
   assumptions: [],
   method: EFFORT_METHOD,
   version: EFFORT_SCORE_VERSION,
+  timeBasis: { kind: 'standard', reason: 'aucun temps calculé' },
   ...over,
 });
 
@@ -306,6 +329,7 @@ function groupOf(segs: readonly WorkSegment[], members: readonly MemberProfile[]
     separation: plan.separationRisk,
     perMember: members.map((m) => ({ id: m.id, name: m.name, paceKmh: paceOf(m.id), difficulty: diffOf(m.id), declared: hasDeclaredPace(m) })),
     declaredCount: members.filter(hasDeclaredPace).length,
+    profileCount: members.filter((m) => m.paceSource === 'profile').length,
     memberCount: members.length,
   };
 }
@@ -333,12 +357,17 @@ export function buildEffortAnalysis(model: ProfileModel, sections: Parameters<ty
     };
   }
 
+  const usable = usablePerformanceProfile(opts.performanceProfile);
+  const timeBasis: EffortAnalysis['timeBasis'] = usable ? { kind: 'profile', sampleCount: usable.sampleCount } : { kind: 'standard', reason: standardReason(opts.performanceProfile) };
+  if (usable) assumptions.push(`Temps prédit d’après tes sorties (${usable.sampleCount} sortie${usable.sampleCount > 1 ? 's' : ''}) : ton allure, pas celle des autres membres`);
+  else assumptions.push(`Temps prédit non personnalisé : ${standardReason(opts.performanceProfile)}`);
+
   const stageOfDay = new Map(opts.stages.map((s) => [s.dayNumber, s]));
   const dayNumbers = Array.from(new Set(set.segments.map((s) => s.day).filter((d): d is number => d != null))).sort((a, b) => a - b);
   const routeOf = (segs: readonly WorkSegment[]) => ({
     segments: segs.map((s) => ({ segmentId: s.id, distanceM: s.distanceM, gainM: s.gainM, lossM: s.lossM, technicalClass: null })),
     startAt: '2026-01-01T08:00:00.000Z',
-    profile: null,
+    profile: usable,
     confidence: null,
     packWeightKg: opts.packWeightKg,
   });
@@ -385,8 +414,11 @@ export function buildEffortAnalysis(model: ProfileModel, sections: Parameters<ty
       days,
       group,
       assumptions,
-      method: EFFORT_METHOD,
+      method: usable
+        ? `Indice d’effort absolu (effort-score-v1, profil de référence 75 kg, VO2max 48) ; temps : prédiction personnalisée d’après tes sorties (${usable.sampleCount}) ; groupe : allure du membre le plus lent`
+        : EFFORT_METHOD,
       version: EFFORT_SCORE_VERSION,
+      timeBasis,
     };
   } catch {
     return unknown('Le moteur d’effort a refusé ces données : aucun score n’est affiché.', { group, coveragePct, assumptions });

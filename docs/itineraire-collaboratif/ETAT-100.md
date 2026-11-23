@@ -1,6 +1,6 @@
 # /compas/itineraire — état vérifié des 4 prérequis et des 100 améliorations
 
-Écrit le 23/11/2026 à partir du code de la branche `claude/nifty-hopper-w9gui9` (HEAD `fabcc3a9f`), pas des déclarations. Plan source : « LKDV · /compas/itineraire — 100 améliorations utiles » (22/11/2026).
+Écrit le 23/11/2026 à partir du code de la branche `claude/nifty-hopper-w9gui9` (HEAD `fabcc3a9f`), pas des déclarations. Mis à jour le 23/11/2026 (second passage, sans migration) : 4.5, 6.4, 6.9, 10.2 passent à Fait, 10.8 de Non fait à Partiel ; 4.1, 10.9 restent Partiel avec leur reste à faire réécrit. Plan source : « LKDV · /compas/itineraire — 100 améliorations utiles » (22/11/2026).
 
 Règle de classement. **Fait** : code branché dans l'interface ou le serveur, avec au moins un test. **Partiel** : une partie manque, la raison est écrite. **Non fait** : rien n'atteint l'utilisateur, la raison est écrite. Un module pur non branché dans l'écran vaut Partiel, sauf quand plus rien ne l'appelle du tout (Non fait). Les tests SQL de `supabase/tests/database/` n'ont pas été rejoués ici (pas de base) ; le banc Playwright non plus.
 
@@ -11,14 +11,14 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 | 1 Entrée et premier écran | 9 | 1 | 0 |
 | 2 Carte | 7 | 3 | 0 |
 | 3 Pilule et îlot | 10 | 0 | 0 |
-| 4 Tiroir principal | 6 | 4 | 0 |
+| 4 Tiroir principal | 7 | 3 | 0 |
 | 5 Tracer | 9 | 1 | 0 |
-| 6 Étapes et nuits | 8 | 2 | 0 |
+| 6 Étapes et nuits | 10 | 0 | 0 |
 | 7 Analyser | 9 | 1 | 0 |
 | 8 Équipe | 7 | 3 | 0 |
 | 9 Départ, sac et carnet | 8 | 2 | 0 |
-| 10 Interconnexion LKDV | 4 | 4 | 2 |
-| **Total sur 100** | **77** | **21** | **2** |
+| 10 Interconnexion LKDV | 5 | 4 | 1 |
+| **Total sur 100** | **81** | **18** | **1** |
 
 ### Les 4 prérequis
 
@@ -38,7 +38,7 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 5. Mettre la RLS Realtime en place avant d'ouvrir le canal Broadcast (8.8, canal public aujourd'hui).
 6. Appliquer la migration en production, relancer les advisors Supabase, puis fusionner la branche dans `main`.
 7. Traiter le blocage Vercel : le déploiement de production de `main` échoue déjà par manque de mémoire au build (SIGKILL, OOM). C'est une question d'offre Vercel, donc une décision de Tony (CLAUDE.md §2 point 8). Hors périmètre de cette branche.
-8. Après la production : brancher les points Non fait (10.5 clubs, 10.8 profil de performance) et corriger les écarts de la section 4.
+8. Après la production : brancher le point Non fait (10.5 clubs), et corriger les écarts restants de la section 4. Hors page, chantier `adventure-intelligence` : recalculer le profil de performance après chaque sortie (10.8).
 
 ## 3. Les 100 lignes
 
@@ -62,7 +62,7 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 | # | Amélioration | Statut | Preuve | Reste à faire |
 | --- | --- | --- | --- | --- |
 | 2.1 | Une seule carte pour LKDV | Partiel | `RouteCollabMap.tsx` : `WebGLArbiter` (titulaire `route-map`) et style du Compas (`createMapStyle`) ; `routeMapInteractions.test.tsx` | Le composant `LiveMap` du Compas n'est pas repris : la page garde son propre MapLibre. |
-| 2.2 | Toucher = point, appui long = menu | Fait | `mapGesture.ts`, `map/PointRoleMenu.tsx` ; `mapGesture.test.ts`, `routeMapInteractions.test.tsx` | Le test d'appui long a échoué une fois sous charge (délai d'attente), 15/15 seul : le fiabiliser. |
+| 2.2 | Toucher = point, appui long = menu | Fait | `mapGesture.ts`, `map/PointRoleMenu.tsx` ; `mapGesture.test.ts`, `routeMapInteractions.test.tsx` | Test d'appui long rendu déterministe le 23/11 (minuteurs simulés, voir section 5). |
 | 2.3 | Insertion au bon endroit | Fait | `pointInsertion.ts`, `RouteCollabMap.tsx` (`insertionThresholdM`) ; `pointInsertion.test.ts` | |
 | 2.4 | Glisser la ligne, halo du chemin visé | Fait | `routePreview.ts` (Valhalla `snap=1`), `RouteCollabMap.tsx` ; `routePreview.test.ts` | |
 | 2.5 | Une couleur par jour, lentilles | Partiel | `mapGeometry.ts`, `map/MapOverlays.tsx` ; `mapGeometry.test.ts` | La légende est sur la carte, pas dans la pilule de jour. |
@@ -91,11 +91,11 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 
 | # | Amélioration | Statut | Preuve | Reste à faire |
 | --- | --- | --- | --- | --- |
-| 4.1 | Interrupteur Simple / Expert | Partiel | `workspace/expertMode.ts`, `chrome/ViewModeSwitch.tsx` ; `routeCollabChrome.test.tsx` | Le réglage est mémorisé **sur l'appareil** (`localStorage`), pas par compte, contrairement à la ligne du plan. Non annoncé comme partiel. |
+| 4.1 | Interrupteur Simple / Expert | Partiel | `workspace/expertMode.ts`, `chrome/ViewModeSwitch.tsx` ; `routeCollabChrome.test.tsx` | Mémorisé **sur l'appareil** (`localStorage`), pas par compte. Vérifié le 23/11 dans `supabase/migrations/` : `user_profiles` n'a aucune colonne de préférences générale. Les deux colonnes JSON existantes ont un autre sens : `notification_prefs` (notifications) et `sport_profile_prefs` (audience du profil sportif, exposée par la vue `public_profiles`). Y ranger l'interrupteur serait un détournement, et une fuite pour la seconde. Il faut une colonne ou une table dédiée (`user_ui_prefs`, RLS `auth.uid()`) : migration, donc non faite ici. Une fois posée : lecture au chargement serveur de `page.tsx`, écriture par une route `/api/itineraire/view-mode`, `localStorage` gardé en repli. |
 | 4.2 | Primitives du Compas v5 | Partiel | `ui/*` reprend `compas/v5/ui/primitives` et `icons` | Le conteneur reste `ExplorerSheet` (`RouteCollabWorkspace.tsx`), pas `V5Sheet`. |
 | 4.3 | Trois hauteurs nettes | Fait | `RouteCollabWorkspace.tsx` (`detent`) ; `routeCollabChrome.test.tsx` (« aperçu, moitié par défaut, plein ») | |
 | 4.4 | Tuiles chiffrées en tête | Fait | `ui/MetricTiles.tsx`, `chrome/SheetSummary.tsx`, `ui/figures.ts` ; `figures.test.ts` | |
-| 4.5 | Inconnu jamais affiché comme zéro | Partiel | `ui/figures.ts`, `SectionDrawer.tsx` ; `figures.test.ts` | Des endroits convertissent l'inconnu en 0 : `integrations.ts` (`toClubRouteRevisionSnapshot`, D+ inconnu somme 0) et plusieurs formules de `routeAnalysis.ts` (`ascentM ?? 0`). |
+| 4.5 | Inconnu jamais affiché comme zéro | Fait | `ui/figures.ts`, `SectionDrawer.tsx`, `components/workspace/metrics.ts` (`formatStageKm`, `distanceKnown`) ; `routeAnalysis.ts` : D+ et D− totaux seulement si tous les tronçons les connaissent, durée seulement si toutes les durées sont connues (sinon Naismith avec D+ connu, sinon inconnue), IBP, calories et niveau d'effort `null` (« Non évalué » dans `RouteAnalysisVisuals.tsx`), pente approchée seulement avec D+ et D− connus, `distanceKnown` ; `integrations.ts` : `elevationGainM` `null` si un D+ manque, poids du sac `null` avec `kitUnweightedCount`, distance prévue `null` sans tronçon ; `figures.test.ts`, `unknownNotZero.test.ts` | Restent hors périmètre : `minDistanceToTrackM` renvoie 0 pour un tracé vide, et `computeTechnicalTerrainStats` retombe sur un point fixe quand aucun tracé n'existe (lever et coucher du soleil). |
 | 4.6 | Deux niveaux au plus | Partiel | `chrome/levels.ts`, `useRouteLevels.ts` ; `chromeModels.test.ts` | Échap ferme un niveau ; le retour du navigateur n'est pas branché (aucun `popstate`). |
 | 4.7 | Une seule recette de ligne | Fait | `ui/RouteRow.tsx` utilisé dans 14 fichiers ; `routeCollabChrome.test.tsx` | |
 | 4.8 | « Inviter » en solo | Fait | `tabs/index.tsx` (`mainTabs(solo)`), `EquipeTab.tsx` ; `routeCollabChrome.test.tsx` | |
@@ -124,19 +124,19 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 | 6.1 | Découpage proposé et expliqué | Fait | `insights/stageSplit.ts`, `stages/SplitAssistant.tsx` (seuils modifiables) ; `stageSplit.test.ts` | |
 | 6.2 | Déplacer une coupure en glissant | Fait | `profileCuts.ts`, `stages/ProfileCuts.tsx` (glisser sur le profil) ; `trackStagesUi.test.tsx` | Pas de glisser de la coupure sur la carte (le profil suffit à la ligne). |
 | 6.3 | Nuits réelles uniquement | Fait | `nights.ts` (`rankStayOptions`), `stages/NightPicker.tsx` (prix « repère du barème ») ; `dayReading.test.ts`, `placesClient.test.ts` | |
-| 6.4 | Allure du groupe | Partiel | `dayReading.ts`, `insights/pace.ts`, `stages/PaceSetting.tsx` ; `paceProfile.test.ts`, `pace.test.ts` | `RoutePaceProvider` n'est monté nulle part : aucune allure de membre n'arrive depuis `crewPace` ; seule la saisie à la main du plus lent (appareil) ou l'allure standard. |
+| 6.4 | Allure du groupe | Fait | `dayReading.ts`, `insights/pace.ts` (`fromProfile`, `origin`), `stages/PaceSetting.tsx`, `stages/usePace.tsx` ; `app/compas/itineraire/page.tsx` lit `getPaceContextForUser` (`server/paceProfile.ts`), `RouteCollabPageClient` → `RouteCollabWorkspace` monte `RoutePaceProvider` ; méthode dite : « d'après tes sorties » (profil), « allure standard Naismith … (allure du groupe non renseignée) » (profil absent ou à froid) ; `paceWiring.test.tsx`, `paceContextServer.test.ts`, `paceProfile.test.ts`, `pace.test.ts`, `dayReading.test.ts` | Seule l'allure de la personne connectée est lue (RLS : propriétaire seulement) ; les autres membres sont dits « sans allure renseignée », ou saisis à la main (appareil). Le recalcul du profil après chaque sortie n'est pas de cette page : chantier `adventure-intelligence` (`buildUserProfile`). La copie hors ligne (`RouteCollabOfflineClient`) n'a pas de profil : allure standard. |
 | 6.5 | Heure de départ, coucher du soleil | Fait | `stages/DayParts.tsx`, `insights/daylight.ts` ; `daylight.test.ts` | |
 | 6.6 | Eau et ravitaillement par jour | Fait | `insights/water.ts`, `DayParts.tsx` ; `water.test.ts` | |
 | 6.7 | Jour de repos, étape courte | Fait | `stages/DayTools.tsx`, `insert_rest_day` ; `trackStagesUi.test.tsx` | |
 | 6.8 | Dates et fuseau locaux | Fait | `dayReading.ts`, `insights/daylight.ts` ; `dayReading.test.ts` (changement d'heure) | |
-| 6.9 | Même tiroir « Jour » que le Compas v5 | Partiel | `stages/DayCard.tsx`, `DayView.tsx` reprennent `Li`, `MBtn`, `V5Icon` | `compas/v5/drawers/day.tsx` n'est pas repris : même recette de ligne, pas le même tiroir. |
+| 6.9 | Même tiroir « Jour » que le Compas v5 | Fait | `stages/DayView.tsx` reprend la structure de `compas/v5/drawers/day.tsx` avec les primitives de `v5/ui/primitives.tsx` : bandeau `v5-hero` (`Pic`) et flèches `v5-rbtn v5-lg` (≥ 44 px), ligne « A → B · Jour N » (`v5-meta`), trois chiffres `v5-stats3`, « Ce soir » (`Cap`, `Grp`, `Li`, `MBtn`), puis ce que l'itinéraire ajoute (arrivée et coucher, eau, repli) ; `trackStagesUi.test.tsx` (« 6.9 ») | Écarts assumés : pas de photo du lieu (l'itinéraire n'en a pas, le pictogramme tient lieu, rien n'est inventé) ni de ligne météo vers le tiroir Météo (la météo est dans Analyser). Le Compas n'est pas modifié. |
 | 6.10 | Repli prévu | Fait | `insights/bailout.ts`, `DayParts.tsx` ; `bailout.test.ts` | |
 
 ### 7 · Analyser
 
 | # | Amélioration | Statut | Preuve | Reste à faire |
 | --- | --- | --- | --- | --- |
-| 7.1 | Moteur d'effort branché | Fait | `analyse/effort.ts` (`computeEffortScore`, `predictRoute`, `buildGroupPlan`) ; `analysis.test.ts` | Les allures des membres ne sont pas fournies (voir 6.4) : la prédiction de groupe tourne à l'allure standard, dite à l'écran. |
+| 7.1 | Moteur d'effort branché | Fait | `analyse/effort.ts` (`computeEffortScore`, `predictRoute`, `buildGroupPlan`, `usablePerformanceProfile`) ; le profil de performance de la personne (`usePerformanceProfile`) est transmis à `predictRoute` quand il est appris et fiable (hors « à froid », confiance ≥ 0,5) ; `AnalyseBlocks.tsx` dit la base du temps (`effort-time-basis` : « d'après tes sorties (N) » ou « allure standard : raison ») ; `analysis.test.ts`, `paceWiring.test.tsx` | La prédiction personnalisée est celle de la personne connectée ; la prédiction de groupe prend l'allure des membres connue (la sienne) et l'allure standard pour les autres, dite à l'écran. |
 | 7.2 | Difficulté expliquée | Fait | `analyse/difficulty.ts` (`routes/analysis/difficulty`), « Pourquoi ? » ; `analysis.test.ts` | |
 | 7.3 | Profil interactif | Fait | `analyse/segments.ts`, `RouteAnalysisVisuals.tsx`, `ProfileReadoutLine` ; `analyserTab.test.tsx` | |
 | 7.4 | Météo par lieu et créneau | Fait | `/api/itineraire/analyse`, `analyse/passageWeather.ts` ; `analyserTab.test.tsx` | |
@@ -182,23 +182,23 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 | # | Amélioration | Statut | Preuve | Reste à faire |
 | --- | --- | --- | --- | --- |
 | 10.1 | Un seul tracé par voyage | Fait | `compas/server/routeDraftWrite.ts` (écrivain unique), `publishedSync.ts`, `getCompasData.ts` ; `publishedSync.test.ts`, `compasDraft.test.ts` | L'éditeur du Compas reste, la version publiée gagne. |
-| 10.2 | Entrée depuis le Compas | Partiel | `CompasOuFlows.tsx` (`compas-open-itinerary`), `RouteEditor.tsx` | Bouton branché mais aucun test ne l'exerce. Entrée dans l'écran hérité, pas dans un tiroir v5. |
+| 10.2 | Entrée depuis le Compas | Fait | `CompasOuFlows.tsx` (`compas-open-itinerary`, `router.push`), `RouteEditor.tsx` (`compas-editor-open-itinerary`, lien) ; `compas/__tests__/openItinerary.test.tsx` : les deux mènent à `/compas/itineraire?trip=<id>` | L'entrée est dans le tiroir Parcours hérité, pas dans un tiroir v5 dédié. |
 | 10.3 | Le HUB lit la version publiée | Fait | `hub/components/itinerary/PublishedRouteCard.tsx`, `app/hub/[section]/page.tsx`, `hub/cockpit/loadCockpit.ts`, `integrations.ts` ; `cockpit-complete-domain.test.ts`, `integrationsAndFeatures.test.ts` | |
 | 10.4 | Explorer mène ici | Fait | `explorer-v2/server/prepareWithTrack.ts`, `/api/itineraire/from-explorer`, `SheetContent.tsx` ; `prepareWithTrack.test.ts` | |
 | 10.5 | Clubs | Non fait | `server/clubRoute.ts`, `integrations.ts` (`clubRouteFromPublished`) ; `clubsBridge.test.ts` | `clubRoute.ts` n'est appelé par rien. La RPC `publish_club_event_route` n'accepte qu'un `route_id` du catalogue : une RPC dédiée (migration) manque. |
 | 10.6 | Budget | Partiel | `server/budgetSync.ts`, `/api/itineraire/budget-sync` (appelé à la publication) ; `budgetSync.test.ts` | Seules les nuits au barème alimentent `trip_expenses` ; ni transports ni achats. |
 | 10.7 | Météo et Vérifs partagées | Fait | `server/sharedChecks.ts` (mêmes `getCompasWeather`, `getOfficialAlerts`, `assessDanger`), route d'analyse ; `sharedChecksModel.test.ts` | |
-| 10.8 | Page Compte, profil de performance | Non fait | `server/paceProfile.ts`, `paceProfile.ts` ; `paceProfile.test.ts` | `server/paceProfile.ts` n'est importé nulle part et `RoutePaceProvider` n'est jamais monté : le profil n'est ni lu ni recalculé. Aucun effet pour l'utilisateur. |
-| 10.9 | Communauté et carnets | Partiel | `communityShare.ts`, `server/shareToCommunity.ts`, `/api/itineraire/share-community` ; `communityShare.test.ts` | API seule : aucun bouton ne l'appelle ; post seulement (ni story ni carnet). |
+| 10.8 | Page Compte, profil de performance | Partiel | `server/paceProfile.ts` (`getPaceContextForUser`, appelé par `app/compas/itineraire/page.tsx`), `paceProfile.ts`, `RoutePaceProvider` monté dans `RouteCollabWorkspace` ; effet visible dans Étapes (durées, 6.4) et Analyser (temps, 7.1) ; `paceContextServer.test.ts`, `paceWiring.test.tsx`, `paceProfile.test.ts` | Le profil est **lu** et **utilisé** ; il n'est pas **recalculé** par cette page : le recalcul après chaque sortie terminée est le chantier `adventure-intelligence` (`buildUserProfile`, avec consentement), hors périmètre. Aucune lecture de l'allure des autres membres (RLS). |
+| 10.9 | Communauté et carnets | Partiel | `communityShare.ts`, `server/shareToCommunity.ts`, `/api/itineraire/share-community` ; bouton « Publier dans la communauté » (`subdrawers/CommunityPublish.tsx`, dans « Membres, Droits & Partage ») : propriétaire seulement, version publiée seulement, aperçu (titre, chiffres, tracé simplifié, zone de départ masquée sur 500 m), public (abonnés ou public), mot facultatif, confirmation, clé d'idempotence ; `communityShare.test.ts`, `communityPublish.test.tsx` | Post seulement : ni story ni carnet lié depuis l'écran, ni audience « club » (aucun choix de club dans la page). L'envoi réel dépend de la RPC `create_community_post`, non rejouée ici. |
 | 10.10 | System Admin | Partiel | `moderationModel.ts`, `server/adminModeration.ts`, `/api/admin/moderation`, section de `app/admin/page.tsx` ; `moderationModel.test.ts` | Commentaires et liens partagés exigent la migration proposée (`MIGRATION-PROPOSEE-ADMIN.sql`), non appliquée. Les décisions de modération ne sont donc pas appliquées. |
 
 ## 4. Écarts entre les déclarations et le code
 
-- **4.1** : déclaré mémorisé « par compte » dans le plan ; le code mémorise sur l'appareil. Absent de la liste des partiels annoncés.
+- **4.1** : déclaré mémorisé « par compte » dans le plan ; le code mémorise sur l'appareil, faute de colonne de préférences générale (voir la ligne 4.1). Reste Partiel, migration nécessaire.
 - **1.1** : non annoncé comme partiel ; la page s'ouvre sans voyage et garde un brouillon local.
-- **6.4, 7.1, 10.8** : plus grave que « profil jamais recalculé en production » : `server/paceProfile.ts` n'est appelé par aucun fichier et `RoutePaceProvider` n'est monté nulle part. 10.8 passe donc de Partiel (annoncé) à Non fait.
+- **6.4, 7.1, 10.8** : corrigé le 23/11 : `server/paceProfile.ts` est lu par la page et `RoutePaceProvider` est monté. Le recalcul du profil après chaque sortie reste hors de la page (10.8 Partiel).
 - **10.5** : annoncé « migration nécessaire » ; en plus, le pont serveur n'est appelé par aucune route ni écran. Non fait.
-- **5.9** : FIT absent (refusé volontairement). **6.9** : `drawers/day.tsx` non repris. **2.10** : tuiles non empaquetées. **10.9** : aucun bouton. **10.2** : aucun test. **4.5** : les conversions en 0 sont confirmées dans `integrations.ts` et `routeAnalysis.ts`. Aucun de ces points n'était annoncé tel quel.
+- **5.9** : FIT absent (refusé volontairement). **2.10** : tuiles non empaquetées. Aucun de ces deux points n'était annoncé tel quel. Corrigés le 23/11 : **6.9** (structure du tiroir reprise), **10.9** (bouton), **10.2** (test), **4.5** (conversions en 0 supprimées).
 - **9.8** : le service `HikeSessionService.ts` est bien modifié (seul l'écran du cockpit ne l'est pas).
 - **P3** : la branche n'a plus de retard sur `main` ; elle est poussée mais non fusionnée.
 - **P2** : la migration et ses deux fichiers associés sont modifiés et non commités dans l'arbre de travail.
@@ -210,5 +210,12 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 - `npx vitest run src/features/route-collab src/app/api src/features/compas src/features/hub src/features/explorer-v2 src/features/hiking` : **399 fichiers, 6 341 tests ; 396 fichiers et 6 338 tests passent, 3 échecs**.
   - `compas/__tests__/overpassEndpoints.test.ts` : préexistant sur `main`.
   - `explorer-v2/__tests__/n01-n02-wiring.test.tsx` : préexistant sur `main`.
-  - `route-collab/__tests__/routeMapInteractions.test.tsx` (2.2, menu d'appui long) : échec de délai sous charge ; relancé seul, **15/15** passent, deux fois. Instable, à fiabiliser.
+  - `route-collab/__tests__/routeMapInteractions.test.tsx` (2.2, menu d'appui long) : échec de délai sous charge. **Corrigé le 23/11** : l'appui long utilise des minuteurs et une horloge simulés (`vi.useFakeTimers` sur `setTimeout`, `clearTimeout`, `Date`, aucune attente réelle) ; une durée écoulée trop courte (300 ms au lieu de 500) fait échouer le test, donc la vérification reste entière ; 15/15 seul et vert dans la suite complète trois fois de suite.
 - Non rejoués : tests SQL RLS, Playwright (`tests/e2e/route-collab-20-10.spec.ts`), `npm run lint`, `next build`.
+
+### Contrôles du second passage (23/11/2026, sans migration, `supabase/**` non touché)
+
+- `npx tsc --noEmit -p . | grep -c "error TS"` : **19** (les mêmes, préexistantes : `components/carnet`, `components/clubs`, `KitProductSheetV2`, `HubCockpit`) ; aucune dans `route-collab`, `app/compas/itineraire` ni les nouveaux tests.
+- `npx vitest run src/features/route-collab src/app/api src/features/compas src/features/hub src/features/explorer-v2` ×3 : **389 fichiers, 6 203 tests ; 387 fichiers et 6 201 tests passent, 2 échecs identiques à chaque passage, tous deux préexistants** (`compas/__tests__/overpassEndpoints.test.ts`, `explorer-v2/__tests__/n01-n02-wiring.test.tsx`). `routeMapInteractions` vert les 3 fois.
+- Nouveaux tests : `paceWiring.test.tsx`, `paceContextServer.test.ts`, `communityPublish.test.tsx`, `unknownNotZero.test.ts`, `compas/__tests__/openItinerary.test.tsx`, plus un cas « 6.9 » dans `trackStagesUi.test.tsx`.
+- `npx eslint` sur les fichiers modifiés ou ajoutés : 0 erreur. Non rejoués : `next build`, Playwright, `npm run lint` complet.

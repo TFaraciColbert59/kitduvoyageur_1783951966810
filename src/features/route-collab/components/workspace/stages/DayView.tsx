@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { PBtn } from '@/features/compas/v5/ui/primitives';
+import { PBtn, Pic } from '@/features/compas/v5/ui/primitives';
 import { V5Icon } from '@/features/compas/v5/ui/icons';
 import type { CollaborativeStage } from '../../../types';
 import { useRouteViewMode } from '../expertMode';
@@ -44,17 +44,21 @@ export function DayView({ stage }: { stage: CollaborativeStage }) {
   return (
     <V5Scope>
       <div className="rts-block" data-testid="subdrawer-stage">
-        <div className="rts-actions" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <button type="button" className="rts-icon-btn" aria-label="Jour précédent" disabled={idx <= 0} onClick={() => go(idx - 1)}>
-            <V5Icon name="left" size="s" />
-          </button>
-          <p className="v5-meta" style={{ margin: 0, textAlign: 'center' }}>
-            <b>{title}</b> · Jour {reading.dayNumber}
-          </p>
-          <button type="button" className="rts-icon-btn" aria-label="Jour suivant" disabled={idx >= days.length - 1} onClick={() => go(idx + 1)}>
-            <V5Icon name="right" size="s" />
-          </button>
+        {/* Même en-tête que `drawers/day.tsx` du Compas v5 : bandeau (sans photo : l'itinéraire n'en a pas, le pictogramme tient lieu), flèches jour précédent / suivant, puis « A → B · Jour N ». */}
+        <div className="v5-hero" data-testid="day-hero">
+          <Pic photo={null} icon="peak" alt="" />
+          <div className="nav">
+            <button type="button" className="v5-rbtn v5-lg rts-icon-btn" aria-label="Jour précédent" disabled={idx <= 0} onClick={() => go(idx - 1)}>
+              <V5Icon name="left" size="s" />
+            </button>
+            <button type="button" className="v5-rbtn v5-lg rts-icon-btn" aria-label="Jour suivant" disabled={idx >= days.length - 1} onClick={() => go(idx + 1)}>
+              <V5Icon name="right" size="s" />
+            </button>
+          </div>
         </div>
+        <p className="v5-meta" data-testid="day-meta">
+          <b>{title}</b> · Jour {reading.dayNumber}
+        </p>
         <DayDate reading={reading} />
         <DayStats reading={reading} />
         {expert && reading.kind !== 'rest' ? <Note>{group.description}</Note> : null}

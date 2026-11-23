@@ -42,10 +42,16 @@ export interface PaceMember {
   readonly name?: string;
   readonly speedKmh?: number | null;
   readonly ascentMPerHour?: number | null;
+  /** `profile` : allure apprise des sorties terminées (profil de performance, 10.8) ; absent : déclarée ou saisie. */
+  readonly origin?: 'profile';
+  /** Nombre de sorties derrière une allure apprise (pour le dire à l'écran). */
+  readonly sampleCount?: number;
 }
 
 export interface GroupPace {
   readonly params: NaismithParams;
+  /** Vrai quand l'allure retenue vient d'un profil appris des sorties (et non d'une saisie ni du défaut). */
+  readonly fromProfile: boolean;
   readonly slowestMemberId: string | null;
   /** Membres dont l'allure n'est pas renseignée : leur allure n'est pas devinée. */
   readonly unknownMemberIds: readonly string[];
@@ -62,6 +68,7 @@ export function groupPace(members: readonly PaceMember[], defaults: NaismithPara
   if (speeds.length === 0 && ascents.length === 0) {
     return {
       params: defaults,
+      fromProfile: false,
       slowestMemberId: null,
       unknownMemberIds: unknown,
       basis: 'default',
@@ -75,11 +82,17 @@ export function groupPace(members: readonly PaceMember[], defaults: NaismithPara
   const speed = speeds.length ? Math.min(...speeds.map((m) => m.speedKmh as number)) : defaults.speedKmh;
   const climb = ascents.length ? Math.min(...ascents.map((m) => m.ascentMPerHour as number)) : defaults.ascentMPerHour;
   const params = { speedKmh: speed, ascentMPerHour: climb };
+  const slowestId = slowest?.id ?? ascents[0]?.id ?? null;
+  const limiting = members.find((m) => m.id === slowestId);
+  // L'allure vient du profil appris seulement si c'est lui qui fixe la vitesse retenue.
+  const fromProfile = limiting?.origin === 'profile';
+  const standardClimb = fromProfile && ascents.length === 0 ? ' (montée : valeur standard)' : '';
   return {
     params,
-    slowestMemberId: slowest?.id ?? ascents[0]?.id ?? null,
+    fromProfile,
+    slowestMemberId: slowestId,
     unknownMemberIds: unknown,
     basis: 'slowest_member',
-    method: `${naismithMethod(params)}, allure du plus lent`,
+    method: `${naismithMethod(params)}${standardClimb}, allure du plus lent${fromProfile ? ', d’après tes sorties' : ''}`,
   };
 }

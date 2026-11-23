@@ -6,6 +6,7 @@ import { WebGLArbiter } from '@/features/hub/webgl/WebGLArbiter';
 import { RouteCollabWorkspace } from '../components/RouteCollabWorkspace';
 import { setRouteViewMode } from '../components/workspace/expertMode';
 import { baseWorkspace } from '../insights/__tests__/fixtures';
+import { LONG_PRESS_MS } from '../mapGesture';
 
 type Handler = (e: unknown) => void;
 
@@ -113,6 +114,23 @@ async function mountMap() {
   await waitFor(() => expect(lastLast().sources.has('rcw-sections')).toBe(true));
 }
 
+/**
+ * Maintient un appui pendant `ms` sur une horloge simulée (setTimeout, clearTimeout, Date seulement), puis rend la
+ * main aux vrais minuteurs pour que `waitFor` et les promesses de l'espace continuent normalement.
+ */
+function holdPress(press: () => void, ms: number): HTMLElement | null {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+  try {
+    act(() => press());
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+  return screen.queryByTestId('point-role-menu');
+}
+
 const headSeq = () => Number(screen.getByTestId('route-collab-workspace').getAttribute('data-head-seq'));
 
 describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne', () => {
@@ -165,16 +183,17 @@ describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne'
 
   it('2.2 : l’appui long ouvre le menu (Point de passage, Arrêt, Fin d’étape, Repère) et Arrêt pose un arrêt', async () => {
     await mountMap();
-    act(() => lastLast().emit('mousedown', ev(200, 300, 46.5, 7.5)));
-    const menu = await screen.findByTestId('point-role-menu', undefined, { timeout: 1500 });
+    // Appui long déterministe : minuteurs et horloge simulés, aucune attente réelle (le test ne dépend plus de la charge).
+    const menu = holdPress(() => lastLast().emit('mousedown', ev(200, 300, 46.5, 7.5)), LONG_PRESS_MS);
+    expect(menu).toBeTruthy();
     for (const id of ['waypoint', 'stop', 'stage_end', 'landmark']) {
       expect(screen.getByTestId(`point-role-${id}`)).toBeTruthy();
     }
-    expect(menu.getAttribute('role')).toBe('menu');
+    expect(screen.getByTestId('point-role-menu').getAttribute('role')).toBe('menu');
     // Le clic qui suit l'appui long ne pose pas un second point.
     const before = headSeq();
     act(() => lastLast().emit('click', ev(200, 300, 46.5, 7.5)));
-    await new Promise((r) => setTimeout(r, 30));
+    await act(async () => {});
     expect(headSeq()).toBe(before);
     fireEvent.click(screen.getByTestId('point-role-stop'));
     await waitFor(() => expect(headSeq()).toBeGreaterThan(before));
@@ -183,9 +202,11 @@ describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne'
 
   it('2.2 : un doigt qui bouge annule l’appui long', async () => {
     await mountMap();
-    act(() => lastLast().emit('mousedown', ev(200, 300, 46.5, 7.5)));
-    act(() => lastLast().emit('mousemove', ev(260, 340, 46.5, 7.6)));
-    await new Promise((r) => setTimeout(r, 650));
+    // Le doigt bouge avant l'échéance : même durée écoulée qu'au test précédent (plus une marge), aucun menu.
+    holdPress(() => {
+      lastLast().emit('mousedown', ev(200, 300, 46.5, 7.5));
+      lastLast().emit('mousemove', ev(260, 340, 46.5, 7.6));
+    }, LONG_PRESS_MS + 150);
     expect(screen.queryByTestId('point-role-menu')).toBeNull();
   });
 

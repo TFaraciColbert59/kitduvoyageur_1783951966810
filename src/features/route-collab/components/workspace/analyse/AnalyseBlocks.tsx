@@ -76,6 +76,11 @@ export function EffortBlock({ analysis, expert, onFocusKm }: { analysis: Analysi
           </div>
           <Bar pct={e.scorePct} over={e.scorePct >= 85} />
           {e.reason ? <p className="rcw-sub-note">{e.reason}</p> : null}
+          <p className="rcw-sub-note" data-testid="effort-time-basis" data-basis={e.timeBasis.kind}>
+            {e.timeBasis.kind === 'profile'
+              ? `Temps d’après tes sorties (${e.timeBasis.sampleCount} sortie${e.timeBasis.sampleCount > 1 ? 's' : ''}) : ton allure, pas celle du groupe.`
+              : `Temps à l’allure standard : ${e.timeBasis.reason}.`}
+          </p>
         </Sourced>
         <RouteRows testId="effort-days">
           {e.days.map((d) => (
@@ -98,6 +103,7 @@ export function EffortBlock({ analysis, expert, onFocusKm }: { analysis: Analysi
               Groupe de {g.memberCount} · allure retenue {nf1.format(g.paceKmh)} km/h
               {g.limitingName ? ` (${g.limitingName}, le plus lent)` : ''}
               {g.declaredCount === 0 ? ' · allures non renseignées : allure standard du moteur' : g.declaredCount < g.memberCount ? ` · ${g.memberCount - g.declaredCount} allure(s) non renseignée(s)` : ''}
+              {g.profileCount > 0 ? ` · ${g.profileCount} allure${g.profileCount > 1 ? 's' : ''} d’après les sorties` : ''}
               {` · pause toutes les ${g.pauseEveryMin} min`}
             </p>
           </Sourced>

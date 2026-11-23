@@ -3,6 +3,7 @@ import { getAuthenticatedRouteActor } from '@/app/api/routes/[id]/_auth';
 import { getRouteCollabStore } from '@/features/route-collab/store';
 import { parseEntryParams, type TripEntry } from '@/features/route-collab/entry';
 import { loadTripEntry } from '@/features/route-collab/server/loadTripEntry';
+import { getPaceContextForUser } from '@/features/route-collab/server/paceProfile';
 import { RouteCollabPageClient } from '@/features/route-collab/components/RouteCollabPageClient';
 import type { TripLinkState } from '@/features/route-collab/components/workspace/start/RouteEntryContext';
 
@@ -42,6 +43,10 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
     }
   }
 
+  // 10.8 : allure apprise des sorties de la personne (RLS : la sienne seulement) ; sans compte, profil à froid ou
+  // erreur de lecture : `null`, la page garde l'allure standard et le dit.
+  const paceContext = actor ? await getPaceContextForUser(actor.userId) : null;
+
   let serverWorkspace = null;
   let accessDeniedMessage: string | null = null;
 
@@ -75,6 +80,8 @@ export default async function CompasItinerairePage({ searchParams }: { searchPar
       trip={trip}
       tripLink={tripLink}
       deepLink={entryParams.deepLink}
+      paceProfile={paceContext?.pace ?? null}
+      performanceProfile={paceContext?.performance ?? null}
     />
   );
 }

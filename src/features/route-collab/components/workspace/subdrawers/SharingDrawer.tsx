@@ -13,6 +13,7 @@ import { ROLE_LABELS } from '../labels';
 import type { DrawerHeader } from '../types';
 import { Banners } from '../Banners';
 import { useRouteWorkspace, type RouteWorkspaceApi } from '../WorkspaceContext';
+import { CommunityPublish } from './CommunityPublish';
 
 export function sharingDrawerHeader(ws: RouteWorkspaceApi): DrawerHeader {
   return {
@@ -126,6 +127,7 @@ export function SharingDrawer() {
             : `Créer un lien de lecture (${DEFAULT_SHARE_LINK_HOURS} h)`}
         </button>
       ) : null}
+      <CommunityPublish />
     </div>
   );
 }

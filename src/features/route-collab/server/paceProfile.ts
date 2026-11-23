@@ -1,6 +1,8 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { getStoredPerformanceProfile } from '@/features/adventure-intelligence/server/generateAdventure';
+import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import { paceProfileFromRow, type PaceProfileRow, type UserPaceProfile } from '../paceProfile';
 
 /**
@@ -24,6 +26,29 @@ export async function getPaceProfileForUser(userId: string, supabase?: SupabaseC
       .maybeSingle();
     if (error) return null;
     return paceProfileFromRow(data as PaceProfileRow | null);
+  } catch {
+    return null;
+  }
+}
+
+/** Ce que la page reçoit du profil de la personne : l'allure lisible (durées, 6.4) et le profil complet (prédiction, 7.1). */
+export interface RoutePaceContext {
+  readonly pace: UserPaceProfile;
+  readonly performance: PerformanceProfile | null;
+}
+
+/**
+ * Lecture serveur unique pour la page `/compas/itineraire` (10.8). `null` : pas de compte, pas de profil, profil
+ * « à froid », illisible ou erreur : la page garde l'allure standard et le dit. Jamais de profil de tiers (RLS).
+ * Le recalcul du profil après chaque sortie reste le chantier `adventure-intelligence` (hors de cette page).
+ */
+export async function getPaceContextForUser(userId: string, supabase?: SupabaseClient): Promise<RoutePaceContext | null> {
+  try {
+    const client = supabase ?? ((await createClient()) as unknown as SupabaseClient);
+    const pace = await getPaceProfileForUser(userId, client);
+    if (!pace) return null;
+    const performance = await getStoredPerformanceProfile(client, userId);
+    return { pace, performance };
   } catch {
     return null;
   }

@@ -3,6 +3,7 @@
  * (effort, difficulté, profil, météo au passage, eau, alertes, surfaces, lumière, synthèse) et attache à
  * chaque bloc sa source et sa date (`Provenance`). L'écran ne calcule rien : il affiche cette lecture.
  */
+import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import type { DayReading } from '../dayReading';
 import { sunTimes, formatLocalTime } from '../insights/daylight';
 import { surfaceBreakdown, type StageSurfaceBreakdown, type SurfaceBreakdown } from '../insights/surfaces';
@@ -103,6 +104,8 @@ export interface AnalysisInput {
   readonly members: readonly MemberProfile[];
   readonly currentUserId: string;
   readonly now: Date;
+  /** Profil de performance de la personne (10.8), lu côté serveur ; absent : prédiction non personnalisée. */
+  readonly performanceProfile?: PerformanceProfile | null;
   readonly waterByStage: Readonly<Record<string, readonly WaterObservation[]>>;
   /** Heure de relevé du dernier chargement des lieux (OpenStreetMap), par étape. */
   readonly placesFetchedAtByStage?: Readonly<Record<string, string | null>>;
@@ -185,6 +188,7 @@ export function buildAnalysis(input: AnalysisInput): Analysis {
     packUnweightedCount: pack.unweightedCount,
     tempC,
     stages: ws.stages,
+    performanceProfile: input.performanceProfile ?? null,
   });
   const difficulty = readDifficulty(ws, profile);
   const slopes = slopeSegments(profile);

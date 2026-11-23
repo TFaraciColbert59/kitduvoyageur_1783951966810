@@ -10,6 +10,8 @@ import {
 } from './workspace/start/RouteEntryContext';
 import type { ItineraryDeepLink } from '../insights/deepLinks';
 import type { TripEntry } from '../entry';
+import type { UserPaceProfile } from '../paceProfile';
+import type { PerformanceProfile } from '@/features/adventure-intelligence/schemas/performance.schema';
 import { buildWorkspaceFromRouteDraft } from '../compasDraft';
 import { adoptGuestWorkspace, clearGuestWorkspace, readGuestWorkspace, saveGuestWorkspace } from '../guestDraft';
 import { getLastVerifiedPack } from '../offlinePackStore';
@@ -86,6 +88,8 @@ export function RouteCollabPageClient({
   trip = null,
   tripLink = 'none',
   deepLink = NO_DEEP_LINK,
+  paceProfile = null,
+  performanceProfile = null,
 }: {
   userId: string;
   userName: string;
@@ -97,6 +101,9 @@ export function RouteCollabPageClient({
   trip?: TripEntry | null;
   tripLink?: TripLinkState;
   deepLink?: Omit<ItineraryDeepLink, 'tripId'>;
+  /** Allure apprise des sorties de la personne (10.8), lue côté serveur ; `null` : allure standard, dite. */
+  paceProfile?: UserPaceProfile | null;
+  performanceProfile?: PerformanceProfile | null;
 }) {
   const [phase, setPhase] = useState<Phase>(() =>
     serverWorkspace ? { kind: 'ready', workspace: serverWorkspace, serverSynced: true } : { kind: 'checking' },
@@ -262,6 +269,8 @@ export function RouteCollabPageClient({
         serverSynced={phase.serverSynced}
         shareToken={shareToken}
         onWorkspaceChange={phase.serverSynced ? undefined : onWorkspaceChange}
+        paceProfile={paceProfile}
+        performanceProfile={performanceProfile}
       />
     </RouteEntryProvider>
   );
