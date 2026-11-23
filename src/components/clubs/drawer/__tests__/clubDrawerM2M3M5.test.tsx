@@ -222,8 +222,8 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
         onToast={onToast}
       />,
     );
-    expect(screen.getByText('Fiche Sortie & Covoiturage')).toBeTruthy();
-    expect(screen.getByText('Profil Altimétrique & Waypoints')).toBeTruthy();
+    expect(screen.getByText('Fiche Sortie')).toBeTruthy();
+    expect(screen.getByText('Profil altimétrique')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: /Covoiturage/i }));
     expect(screen.getAllByText(/Réserver une place/i).length).toBeGreaterThan(0);
   });
