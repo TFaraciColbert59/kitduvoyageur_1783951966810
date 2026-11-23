@@ -2379,19 +2379,29 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     setHighlightCaptionDraft(newHl.slides[0]?.caption || '');
   }, [activeClub.coverUrl, activeClub.name, canManageClubStories, clubHighlights, clubMembers, persistHighlights]);
 
-  const handleToggleClubVisibility = useCallback(() => {
+  const handleToggleClubVisibility = useCallback(async () => {
+    const nextVisibility = activeClub.visibility === 'public' ? 'prive' : 'public';
+    const nextPrivacy = nextVisibility === 'public' ? 'open' : 'closed';
     setClubsDirectory((prev) =>
-      prev.map((c) =>
-        c.id === activeClub.id
-          ? { ...c, visibility: c.visibility === 'public' ? 'prive' : 'public' }
-          : c,
-      ),
+      prev.map((c) => (c.id === activeClub.id ? { ...c, visibility: nextVisibility } : c)),
     );
+    if (user?.id && isUuid(activeClub.id) && typeof fetch === 'function') {
+      try {
+        await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ privacy: nextPrivacy }),
+        });
+      } catch {
+        // optimistic fallback kept
+      }
+    }
     showIslandToast(
-      activeClub.visibility === 'public' ? 'Club passé en Privé (Sur cooptation)' : 'Club passé en Public (Ouvert)',
+      nextVisibility === 'prive' ? 'Club passé en Fermé (validation requise)' : 'Club passé en Ouvert (public)',
       'Gouvernance du club mise à jour',
     );
-  }, [activeClub.id, activeClub.visibility, showIslandToast]);
+  }, [activeClub.id, activeClub.visibility, showIslandToast, user?.id]);
 
   const handleCreateGroupFromOuting = useCallback(
     async (outing: ClubOutingData) => {

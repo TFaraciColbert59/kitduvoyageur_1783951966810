@@ -69,6 +69,12 @@ const patchSchema = z.discriminatedUnion('action', [
     .strict(),
   z
     .object({
+      action: z.literal('transfer_ownership'),
+      userId: z.string().uuid(),
+    })
+    .strict(),
+  z
+    .object({
       action: z.literal('remove'),
       userId: z.string().uuid(),
       mode: z.enum(['leave', 'remove', 'ban']),
@@ -101,10 +107,22 @@ export async function GET(
       joinRequests = asArray<Row>(data).map(mapJoinRequestRow);
     }
 
+    let auditLogs: Row[] = [];
+    if (isAdmin(bundle)) {
+      const { data: logs } = await supabase
+        .from('club_permission_audit')
+        .select('*')
+        .eq('club_id', id)
+        .order('created_at', { ascending: false })
+        .limit(25);
+      auditLogs = asArray<Row>(logs);
+    }
+
     return json({
       data: {
         members: bundle.members,
         joinRequests,
+        auditLogs,
         viewerMembership: bundle.viewerMembership,
         canManage: isManager(bundle),
       },
@@ -331,6 +349,35 @@ export async function PATCH(
           isCertifiedLeader: action.isCertifiedLeader,
         },
       });
+    }
+
+    if (action.action === 'transfer_ownership') {
+      const isFounder =
+        bundle.club.createdBy === user.id || bundle.viewerMembership?.role === 'founder';
+      if (!isFounder) return errorJson('forbidden', 403);
+      if (action.userId === user.id) return errorJson('validation_error', 400);
+      const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
+      if (!target) return errorJson('not_found', 404);
+
+      const { error: clubErr } = await supabase
+        .from('clubs')
+        .update({ created_by: action.userId })
+        .eq('id', id);
+      if (clubErr) return dbFailure('PATCH transfer_ownership club', clubErr);
+
+      await supabase
+        .from('club_members')
+        .update({ role: 'founder', can_manage_stories: true, can_manage_gear: true })
+        .eq('club_id', id)
+        .eq('user_id', action.userId);
+
+      await supabase
+        .from('club_members')
+        .update({ role: 'admin' })
+        .eq('club_id', id)
+        .eq('user_id', user.id);
+
+      return json({ data: { newFounderId: action.userId } });
     }
 
     if (action.action === 'mute') {
