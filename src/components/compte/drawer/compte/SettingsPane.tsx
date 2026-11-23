@@ -269,6 +269,64 @@ export function SettingsPane() {
             <i aria-hidden="true" />
           </button>
         </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            paddingTop: 10,
+            marginTop: 10,
+            borderTop: '0.5px solid rgba(23,43,36,.08)',
+          }}
+        >
+          <div>
+            <b style={{ display: 'block', fontSize: 12.5, color: 'var(--label)' }}>
+              Position sur la carte des clubs
+            </b>
+            <small style={{ fontSize: 11.5, color: 'var(--label2)' }}>
+              {profile.shareClubLocation
+                ? 'Visible par vos abonnés d’un même club'
+                : 'Position masquée sur les cartes de club'}
+            </small>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={Boolean(profile.shareClubLocation)}
+            aria-label="Partager ma position sur la carte des clubs"
+            className={`lkdv-compte-switch ${profile.shareClubLocation ? 'on' : ''}`}
+            disabled={busy}
+            onClick={() => {
+              const nextVal = !profile.shareClubLocation;
+              if (nextVal && typeof navigator !== 'undefined' && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    void patch(
+                      {
+                        shareClubLocation: true,
+                        lastLat: pos.coords.latitude,
+                        lastLng: pos.coords.longitude,
+                      },
+                      'Localisation club activée',
+                    );
+                  },
+                  () => {
+                    void patch({ shareClubLocation: true }, 'Localisation club activée');
+                  },
+                  { timeout: 3500 },
+                );
+              } else {
+                void patch(
+                  { shareClubLocation: nextVal },
+                  nextVal ? 'Localisation club activée' : 'Localisation club désactivée',
+                );
+              }
+            }}
+          >
+            <i aria-hidden="true" />
+          </button>
+        </div>
       </section>
 
       <section className="lkdv-compte-setting-card" aria-label="Appareils, connecteurs et consentements">

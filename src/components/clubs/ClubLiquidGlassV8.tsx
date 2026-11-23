@@ -772,6 +772,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
       const followedSet = new Set<string>();
       const blockedList: string[] = [];
+      const memberLocationMap = new Map<string, { share: boolean; lat: number | null; lng: number | null }>();
       if (user?.id && userIds.length > 0) {
         try {
           const followChunks: string[][] = [];
@@ -793,6 +794,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           }
           for (const b of blocksRes.data || []) {
             if (b.blocked_id) blockedList.push(b.blocked_id);
+          }
+          const followedIds = Array.from(followedSet);
+          if (followedIds.length > 0) {
+            const { data: locRows } = await supabase
+              .from('user_profiles')
+              .select('id, share_club_location, last_lat, last_lng')
+              .in('id', followedIds.slice(0, 150));
+            for (const lr of locRows || []) {
+              if (lr.id && lr.share_club_location === true) {
+                memberLocationMap.set(lr.id, {
+                  share: true,
+                  lat: typeof lr.last_lat === 'number' ? lr.last_lat : null,
+                  lng: typeof lr.last_lng === 'number' ? lr.last_lng : null,
+                });
+              }
+            }
           }
         } catch {
           // ignore if minimal mock does not implement .in()
@@ -894,6 +911,9 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           distanceKm: evStat?.km ?? 0,
           dplusM: evStat?.dplus ?? 0,
           postsCount: memberPostsCount.get(m.user_id) ?? 0,
+          shareClubLocation: memberLocationMap.get(m.user_id)?.share ?? false,
+          lastLat: memberLocationMap.get(m.user_id)?.lat ?? null,
+          lastLng: memberLocationMap.get(m.user_id)?.lng ?? null,
         };
       });
 
@@ -1919,17 +1939,23 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     }));
 
     const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const diverseCovers = [
+      '/assets/images/mountain-1.jpg',
+      '/assets/images/club-bivouac.jpg',
+      '/assets/images/club-trail.jpg',
+      '/assets/images/journal-refuge.jpg',
+    ];
     const defaultHighlights: ClubStoryHighlight[] = [
       {
         id: 'hl-sorties',
         title: 'Sorties',
-        coverUrl: clubOutings[0]?.coverUrl || coverBase,
+        coverUrl: clubOutings[0]?.coverUrl || diverseCovers[0],
         subtitle: activeClub.nextOutingTitle || 'Reconnaissances & départs du club',
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-sorties-s1',
-            image: clubOutings[0]?.coverUrl || coverBase,
+            image: clubOutings[0]?.coverUrl || diverseCovers[0],
             caption: `${activeClub.name} · ${activeClub.nextOutingTitle || 'Sorties & traces vérifiées'}`,
           },
         ],
@@ -1939,13 +1965,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       {
         id: 'hl-terrain',
         title: activeClub.massif || 'Terrain',
-        coverUrl: coverBase,
+        coverUrl: diverseCovers[1],
         subtitle: `Reconnaissances ${activeClub.massif}`,
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-terrain-s1',
-            image: coverBase,
+            image: diverseCovers[1],
             caption: `${activeClub.massif} · Conditions & traces du club`,
           },
         ],
@@ -1955,13 +1981,13 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       {
         id: 'hl-charte',
         title: 'Esprit Club',
-        coverUrl: coverBase,
+        coverUrl: diverseCovers[2] || coverBase,
         subtitle: activeClub.charter,
         createdAtLabel: 'À la une',
         slides: [
           {
             id: 'hl-charte-s1',
-            image: coverBase,
+            image: diverseCovers[2] || coverBase,
             caption: activeClub.charter || `Bienvenue dans ${activeClub.name}`,
           },
         ],
@@ -1971,6 +1997,59 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     ];
     setClubHighlights(defaultHighlights);
   }, [activeClub.charter, activeClub.coverUrl, activeClub.id, activeClub.massif, activeClub.membersCount, activeClub.name, activeClub.nextOutingTitle, clubMembers, clubOutings]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const baseLat = Number.isFinite(activeClub.lat) ? activeClub.lat : 45.9237;
+    const baseLng = Number.isFinite(activeClub.lng) ? activeClub.lng : 6.8694;
+    const outingsForMap = clubOutings.slice(0, 24).map((o, idx) => {
+      const oLat = Number.isFinite(o.lat) && o.lat !== 0 ? o.lat : baseLat + ((idx % 5) - 2) * 0.04;
+      const oLng = Number.isFinite(o.lng) && o.lng !== 0 ? o.lng : baseLng + (((idx * 3) % 5) - 2) * 0.05;
+      const r = Math.min(0.06, Math.max(0.015, (o.km || 14) / 600));
+      const trackCoords: Array<[number, number]> = [
+        [oLng - r * 0.6, oLat - r * 0.4],
+        [oLng - r * 0.2, oLat + r * 0.5],
+        [oLng + r * 0.4, oLat + r * 0.6],
+        [oLng + r * 0.7, oLat + r * 0.1],
+        [oLng + r * 0.2, oLat - r * 0.5],
+        [oLng - r * 0.6, oLat - r * 0.4],
+      ];
+      return {
+        id: o.id,
+        title: o.title,
+        date: o.date,
+        massif: o.massif,
+        km: o.km,
+        dplus: o.dplus,
+        status: o.status,
+        lat: oLat,
+        lng: oLng,
+        trackCoords,
+      };
+    });
+    const membersForMap = clubMembers
+      .filter((m) => m.followed && m.shareClubLocation)
+      .slice(0, 20)
+      .map((m, idx) => ({
+        id: m.userId || m.id,
+        name: m.name,
+        handle: m.handle,
+        avatarUrl: m.avatarUrl || null,
+        lat: typeof m.lastLat === 'number' ? m.lastLat : baseLat + ((idx % 3) - 1) * 0.025,
+        lng: typeof m.lastLng === 'number' ? m.lastLng : baseLng + (((idx + 1) % 3) - 1) * 0.03,
+      }));
+    const payload = {
+      clubId: activeClub.id,
+      clubName: activeClub.name,
+      center: [baseLng, baseLat] as [number, number],
+      outings: outingsForMap,
+      members: membersForMap,
+    };
+    (window as any).__lkdvClubMapData = payload;
+    if (typeof (window as any).__lkdvSyncClubMap === 'function') {
+      (window as any).__lkdvSyncClubMap(payload);
+    }
+  }, [activeClub.id, activeClub.lat, activeClub.lng, activeClub.name, clubMembers, clubOutings]);
 
   const persistHighlights = useCallback(
     (next: ClubStoryHighlight[]) => {
@@ -2001,7 +2080,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
 
   const handleAddHighlight = useCallback(() => {
     if (!canManageClubStories) return;
-    const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
+    const pool = [
+      '/assets/images/journal-refuge.jpg',
+      '/assets/images/community-hikers.jpg',
+      '/assets/images/mountain-2.jpg',
+      '/assets/images/club-bivouac.jpg',
+      '/assets/images/club-trail.jpg',
+    ];
+    const coverBase = pool[clubHighlights.length % pool.length] || activeClub.coverUrl || '/assets/images/account-bg.webp';
     const newHl: ClubStoryHighlight = {
       id: `hl-${Date.now()}`,
       title: 'Nouvelle',

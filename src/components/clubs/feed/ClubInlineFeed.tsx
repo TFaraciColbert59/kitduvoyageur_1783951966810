@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Check, Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { useAuth } from '@/contexts/AuthContext';
@@ -180,18 +181,15 @@ function ClubCommentsPanel({
 }
 
 function ClubSharePanel({
-  post,
   clubName,
   copied,
   onCopy,
-  onFlyToSpot,
-  onClose,
 }: {
   post: ClubFeedPostItem;
   clubName: string;
   copied: boolean;
   onCopy: () => void;
-  onFlyToSpot: (post: ClubFeedPostItem) => void;
+  onFlyToSpot?: (post: ClubFeedPostItem) => void;
   onClose: () => void;
 }) {
   const [sharedTo, setSharedTo] = useState<string | null>(null);
@@ -200,16 +198,6 @@ function ClubSharePanel({
       <div className="lkdv-share-actions">
         <button type="button" className="lkdv-share-btn" onClick={onCopy}>
           <span>{copied ? 'Lien copié ✓' : 'Copier le lien'}</span>
-        </button>
-        <button
-          type="button"
-          className="lkdv-share-btn"
-          onClick={() => {
-            onFlyToSpot(post);
-            onClose();
-          }}
-        >
-          <span>Centrer la carte 3D</span>
         </button>
       </div>
 
@@ -262,7 +250,9 @@ function ClubPostCard({
   onOpenOutingDetail: (outingId: string) => void;
 }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
+  const [reported, setReported] = useState(false);
   const hasMedia = post.kind !== 'text' && Boolean(post.mediaUrl);
 
   const copyLink = async () => {
@@ -305,18 +295,27 @@ function ClubPostCard({
     onToggleLike: () => onToggleLike(post.id),
     onToggleSave: () => onToggleSave(post.id),
     onCopyLink: copyLink,
+    onRepost: () => {
+      void copyLink();
+    },
+    onReport: () => {
+      if (!reported) setReported(true);
+    },
     author: {
-      onClick: () => onFlyToSpot(post),
+      onClick: () => {
+        const handle = (post.authorHandle || '').replace(/^@/, '').trim();
+        if (!handle) return;
+        const href = `/u/${encodeURIComponent(handle)}`;
+        try {
+          router.push(href);
+        } catch {
+          window.location.assign(href);
+        }
+      },
       meta: metaParts,
       badge: post.authorRole,
       pinned: post.pinned,
     },
-    menuExtras: [
-      { id: 'fly', label: 'Voir en 3D', icon: <SfIcon name="map-pin" />, onSelect: () => onFlyToSpot(post) },
-      ...(post.outingId
-        ? [{ id: 'outing', label: 'Fiche sortie', icon: <SfIcon name="mountain" />, onSelect: () => onOpenOutingDetail(post.outingId!) }]
-        : []),
-    ],
     overlay: (
       <div className="club-post-bottom-left">
         {post.poleName ? (

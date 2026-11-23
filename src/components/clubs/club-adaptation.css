@@ -4,10 +4,17 @@
    Drawers & Sous-Drawers en place (DrawerShell 48px + 30px).
    ========================================================================== */
 
-/* 1. Blason Club 66x66 r=18px (comme couverture Carnet, avec anneau live sage) */
+/* 1. Blason Club 66x66 r=18px (comme couverture Carnet, avec anneau live sage carré arrondi) */
 .lkdv-clubs-v8 .ig-avi-wrap.club-emblem-wrap,
 .lkdv-clubs-v8 .ig-avi-wrap {
   border-radius: 18px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.lkdv-clubs-v8 .ig-avi-wrap::before,
+.lkdv-clubs-v8 .ig-avi-wrap.live::before {
+  border-radius: 18px !important;
+  box-shadow: none !important;
 }
 .lkdv-clubs-v8 .ig-avi-wrap .ig-avi-in,
 .lkdv-clubs-v8 .ig-avi-wrap .ig-avi-in img {
@@ -431,19 +438,29 @@
   font: 450 11px/1.25 var(--sf, -apple-system, system-ui, sans-serif) !important;
   color: #56665d !important;
 }
-.lkdv-clubs-v8 .lkdv-post-panel {
+.lkdv-clubs-v8 .lkdv-feed-panel-surface > .lkdv-post-panel {
   position: absolute !important;
-  inset: 0 !important;
+  top: 58px !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: calc(100% - 58px) !important;
   z-index: 14 !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
   border-radius: 22px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 250, 243, 0.72) 55%, rgba(255, 255, 255, 0.8)) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 250, 243, 0.78) 55%, rgba(255, 255, 255, 0.84)) !important;
   -webkit-backdrop-filter: blur(30px) saturate(1.8) !important;
   backdrop-filter: blur(30px) saturate(1.8) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 12px 32px rgba(23, 43, 36, 0.15) !important;
   color: #172b24 !important;
+}
+.lkdv-clubs-v8 .lkdv-post-panel .lkdv-share-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 2px 0 8px !important;
 }
 .lkdv-clubs-v8 .lkdv-post-panel-close {
   position: absolute !important;
@@ -468,7 +485,7 @@
   transform: scale(0.92) !important;
 }
 .lkdv-clubs-v8 .lkdv-post-panel .lkdv-post-panel-body {
-  padding: 24px 12px 8px !important;
+  padding: 8px 12px 10px !important;
   overflow-y: auto !important;
 }
 .lkdv-clubs-v8 .lkdv-post-panel .lkdv-comment-row {
@@ -1348,6 +1365,69 @@
   color: #17402c;
   font: 700 11.5px/1 var(--font-sans, var(--sf, -apple-system, sans-serif));
   cursor: pointer;
+}
+
+/* Marqueurs carte 3D : sorties réalisées, futures sorties et abonnés localisés */
+.club-map-outing-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.club-map-outing-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #172b24;
+  font: 650 10.5px/1.2 var(--sf, -apple-system, sans-serif);
+  box-shadow: 0 4px 12px rgba(16, 32, 25, 0.2), inset 0 0 0 0.5px rgba(23, 64, 44, 0.18);
+  white-space: nowrap;
+}
+.club-map-outing-pin.is-upcoming .club-map-outing-badge {
+  background: #17402c;
+  color: #ffffff;
+}
+.club-map-outing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2e7d4f;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.club-map-member-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+.club-map-member-avi {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  background: #17402c;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font: 700 11px var(--sf, -apple-system, sans-serif);
+  box-shadow: 0 4px 12px rgba(16, 32, 25, 0.28);
+}
+.club-map-member-avi img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.club-map-member-name {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(23, 43, 36, 0.84);
+  color: #ffffff;
+  font: 600 9.5px/1.1 var(--sf, -apple-system, sans-serif);
+  white-space: nowrap;
 }
 
 

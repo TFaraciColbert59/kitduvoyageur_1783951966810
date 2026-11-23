@@ -82,6 +82,9 @@ export interface ClubMemberData {
   hours?: number;
   postsCount?: number;
   gearCount?: number;
+  shareClubLocation?: boolean;
+  lastLat?: number | null;
+  lastLng?: number | null;
   avatarUrl?: string;
   canManageStories?: boolean;
 }
