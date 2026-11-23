@@ -147,6 +147,8 @@ export function ClubDrawerHost({
   );
   const [internalMode, setInternalMode] = useState<'main' | 'create' | 'settings'>(mode);
   const [settingsSubTab, setSettingsSubTab] = useState(0);
+  const [adminLoanFilter, setAdminLoanFilter] = useState<'all' | 'requested' | 'approved' | 'active'>('all');
+  const [adminChallengeFilter, setAdminChallengeFilter] = useState<'all' | 'active' | 'ended'>('all');
 
   useEffect(() => {
     if (internalMode === 'settings' && !canAccessClubAdmin) {
@@ -875,6 +877,34 @@ export function ClubDrawerHost({
                 </b>
               </div>
             }
+            bottomRightFilter={
+              settingsSubTab === 2 ? (
+                <SortMenuButton
+                  label="Filtrer les prêts"
+                  value={adminLoanFilter}
+                  defaultValue="all"
+                  onChange={(v) => setAdminLoanFilter(v as 'all' | 'requested' | 'approved' | 'active')}
+                  options={[
+                    { value: 'all', label: 'Tous les prêts' },
+                    { value: 'requested', label: 'À valider' },
+                    { value: 'approved', label: 'Validés' },
+                    { value: 'active', label: 'Remis / En cours' },
+                  ]}
+                />
+              ) : settingsSubTab === 3 ? (
+                <SortMenuButton
+                  label="Filtrer les défis"
+                  value={adminChallengeFilter}
+                  defaultValue="all"
+                  onChange={(v) => setAdminChallengeFilter(v as 'all' | 'active' | 'ended')}
+                  options={[
+                    { value: 'all', label: 'Tous les défis' },
+                    { value: 'active', label: 'En cours' },
+                    { value: 'ended', label: 'Terminés' },
+                  ]}
+                />
+              ) : null
+            }
             renderLens={(_lens, index) => (
               <LensTransition transitionKey={`settings:${index}`}>
                 <div className="lkdv-carnet-drawer-pane">
@@ -884,6 +914,8 @@ export function ClubDrawerHost({
                     members={members}
                     vaultGear={vaultGear}
                     currentUserId={currentUserId}
+                    loanFilter={adminLoanFilter}
+                    challengeFilter={adminChallengeFilter}
                     onToggleClubVisibility={onToggleClubVisibility}
                     onTransitionGearLoan={onTransitionGearLoan}
                     onChangeMemberRole={onChangeMemberRole}

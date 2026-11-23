@@ -34,6 +34,8 @@ export interface ClubSettingsDrawerBodyProps {
   members: ClubMemberData[];
   vaultGear?: ClubGearVaultItem[];
   currentUserId?: string | null;
+  loanFilter?: 'all' | 'requested' | 'approved' | 'active';
+  challengeFilter?: 'all' | 'active' | 'ended';
   onToggleClubVisibility: () => void;
   onTransitionGearLoan?: (payload: {
     loanId: string;
@@ -135,6 +137,8 @@ export function ClubSettingsDrawerBody({
   members,
   vaultGear = [],
   currentUserId,
+  loanFilter = 'all',
+  challengeFilter = 'all',
   onToggleClubVisibility,
   onTransitionGearLoan,
   onChangeMemberRole,
@@ -151,10 +155,8 @@ export function ClubSettingsDrawerBody({
   const [confirmTransferId, setConfirmTransferId] = useState<string | null>(null);
   const [loanConditionPick, setLoanConditionPick] = useState<Record<string, 'new' | 'good' | 'worn' | 'repair'>>({});
   const [loanReturnNote, setLoanReturnNote] = useState<Record<string, string>>({});
-  const [loanFilter, setLoanFilter] = useState<'all' | 'requested' | 'approved' | 'active'>('all');
   const [challenges, setChallenges] = useState<AdminChallengeRow[]>([]);
   const [challengesLoaded, setChallengesLoaded] = useState(false);
-  const [challengeFilter, setChallengeFilter] = useState<'all' | 'active' | 'ended'>('all');
   const [challengeFormOpen, setChallengeFormOpen] = useState(false);
   const [challengeTitle, setChallengeTitle] = useState('');
   const [challengeDesc, setChallengeDesc] = useState('');
@@ -503,12 +505,6 @@ export function ClubSettingsDrawerBody({
       return true;
     });
 
-    const requestedCount = actionableLoans.filter((g) => g.loanStatus === 'requested').length;
-    const approvedCount = actionableLoans.filter((g) => g.loanStatus === 'approved').length;
-    const activeCount = actionableLoans.filter(
-      (g) => g.loanStatus === 'checked_out' || g.loanStatus === 'overdue',
-    ).length;
-
     return (
       <div className="club-drawer-pane-content" data-testid="club-settings-loans-pane">
         {!canManageClubGear ? (
@@ -518,80 +514,8 @@ export function ClubSettingsDrawerBody({
             description="Seuls les administrateurs et référents matériel peuvent valider et suivre les prêts."
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Rail de filtres sur une seule ligne (défilement horizontal fluide) */}
-            <div
-              data-hscroll="true"
-              onPointerDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                overflowX: 'auto',
-                scrollbarWidth: 'none',
-                touchAction: 'pan-x',
-                padding: '2px 0',
-              }}
-            >
-              {(
-                [
-                  { id: 'all', label: 'Tous', count: actionableLoans.length },
-                  { id: 'requested', label: 'À valider', count: requestedCount },
-                  { id: 'approved', label: 'Validés', count: approvedCount },
-                  { id: 'active', label: 'Remis', count: activeCount },
-                ] as const
-              ).map((f) => {
-                const isCur = loanFilter === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setLoanFilter(f.id)}
-                    style={{
-                      flex: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      height: 30,
-                      padding: '0 11px',
-                      borderRadius: 999,
-                      border: isCur
-                        ? '0.5px solid rgba(23, 64, 44, 0.22)'
-                        : '0.5px solid rgba(23, 43, 36, 0.08)',
-                      background: isCur
-                        ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.28), rgba(150, 186, 142, 0.14)), rgba(255, 255, 255, 0.85)'
-                        : 'rgba(255, 255, 255, 0.72)',
-                      boxShadow: isCur
-                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.06)'
-                        : 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-                      color: isCur ? '#17402c' : '#4a5c53',
-                      fontSize: 12,
-                      fontWeight: isCur ? 700 : 600,
-                      whiteSpace: 'nowrap',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>{f.label}</span>
-                    <span
-                      style={{
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        fontVariantNumeric: 'tabular-nums',
-                        padding: '1px 6px',
-                        borderRadius: 999,
-                        background: isCur ? 'rgba(23, 64, 44, 0.12)' : 'rgba(23, 43, 36, 0.06)',
-                        color: isCur ? '#17402c' : '#56665d',
-                      }}
-                    >
-                      {f.count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Cartes individuelles modernes (sans encadré englobant) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Cartes individuelles modernes (filtres en bas à droite) */}
             {filteredLoans.length === 0 ? (
               <ClubEmptyCard
                 icon={<Check size={20} />}
@@ -1002,250 +926,340 @@ export function ClubSettingsDrawerBody({
       }
     };
 
+    const fieldStyle: React.CSSProperties = {
+      width: '100%',
+      padding: '10px 12px',
+      borderRadius: 12,
+      border: '1px solid rgba(23, 43, 36, 0.11)',
+      background: 'rgba(23, 43, 36, 0.035)',
+      fontSize: 13,
+      color: '#172b24',
+      outline: 'none',
+      boxSizing: 'border-box',
+    };
+
+    const segmentedTrackStyle: React.CSSProperties = {
+      display: 'grid',
+      gap: 3,
+      padding: 3,
+      borderRadius: 12,
+      background: 'rgba(23, 43, 36, 0.06)',
+    };
+
+    const segBtnStyle = (active: boolean): React.CSSProperties => ({
+      height: 30,
+      borderRadius: 9,
+      border: 0,
+      background: active ? '#ffffff' : 'transparent',
+      boxShadow: active ? '0 1px 4px rgba(23, 43, 36, 0.10)' : 'none',
+      color: active ? '#17402c' : '#56665d',
+      fontSize: 11.5,
+      fontWeight: active ? 700 : 500,
+      cursor: 'pointer',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+      transition: 'background-color 0.15s ease, box-shadow 0.15s ease',
+    });
+
+    const targetPresets: Record<ChallengeMetricId, number[]> = {
+      elevation_gain_m: [2500, 5000, 10000],
+      distance_m: [50, 150, 300],
+      duration_s: [20, 40, 100],
+      activities_count: [5, 12, 25],
+    };
+
+    // Vue dédiée création de défi (propre, aérée, zéro surcharge)
+    if (challengeFormOpen && canEditGovernance) {
+      return (
+        <div className="club-drawer-pane-content" data-testid="club-settings-challenge-creator-pane">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <button
+              type="button"
+              className="lkdv-carnet-btn-soft"
+              style={{ height: 32, padding: '0 12px', fontSize: 12 }}
+              onClick={() => setChallengeFormOpen(false)}
+            >
+              <ChevronLeft size={14} aria-hidden="true" />
+              <span>Retour aux défis</span>
+            </button>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#17402c' }}>Nouveau défi</span>
+          </div>
+
+          <form
+            onSubmit={handleCreateChallenge}
+            style={{
+              padding: 14,
+              borderRadius: 20,
+              background: 'rgba(255, 255, 255, 0.88)',
+              border: '0.5px solid rgba(23, 43, 36, 0.08)',
+              boxShadow: 'inset 0 1px 0 #fff, 0 4px 16px rgba(23, 43, 36, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}
+          >
+            {/* Format */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Format
+              </span>
+              <div style={{ ...segmentedTrackStyle, gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+                <button type="button" style={segBtnStyle(challengeScope === 'club')} onClick={() => setChallengeScope('club')}>
+                  Collectif
+                </button>
+                <button type="button" style={segBtnStyle(challengeScope === 'individual')} onClick={() => setChallengeScope('individual')}>
+                  Individuel
+                </button>
+              </div>
+            </div>
+
+            {/* Identité */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Titre & Règles
+              </span>
+              <input
+                type="text"
+                style={fieldStyle}
+                placeholder="Ex : 10 000 m D+ en Vanoise"
+                value={challengeTitle}
+                onChange={(e) => setChallengeTitle(e.target.value)}
+                maxLength={120}
+                required
+              />
+              <textarea
+                rows={2}
+                style={{ ...fieldStyle, resize: 'vertical', minHeight: 60 }}
+                placeholder="Description, règles ou récompense (optionnel)…"
+                value={challengeDesc}
+                onChange={(e) => setChallengeDesc(e.target.value)}
+                maxLength={500}
+              />
+            </div>
+
+            {/* Métrique & Objectif */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Objectif à atteindre
+              </span>
+              <div style={{ ...segmentedTrackStyle, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+                {(Object.keys(CHALLENGE_METRIC_META) as ChallengeMetricId[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    style={segBtnStyle(challengeMetric === m)}
+                    onClick={() => {
+                      setChallengeMetric(m);
+                      setChallengeTarget(CHALLENGE_METRIC_META[m].defaultTarget);
+                    }}
+                  >
+                    {m === 'elevation_gain_m' ? 'D+' : CHALLENGE_METRIC_META[m].label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="number"
+                  min={1}
+                  style={{ ...fieldStyle, flex: 1, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
+                  value={challengeTarget}
+                  placeholder={metricMeta.placeholder}
+                  onChange={(e) => setChallengeTarget(e.target.value)}
+                  aria-label={`Objectif en ${metricMeta.unit}`}
+                  required
+                />
+                <span className="club-badge-sage" style={{ flex: 'none', padding: '6px 10px', fontSize: 12 }}>
+                  {metricMeta.unit}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {targetPresets[challengeMetric].map((preset) => {
+                  const isSel = Number(challengeTarget) === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setChallengeTarget(String(preset))}
+                      style={{
+                        flex: 1,
+                        height: 28,
+                        borderRadius: 999,
+                        border: isSel ? '1px solid rgba(23, 64, 44, 0.3)' : '1px solid rgba(23, 43, 36, 0.08)',
+                        background: isSel ? 'rgba(150, 186, 142, 0.22)' : 'rgba(23, 43, 36, 0.03)',
+                        color: isSel ? '#17402c' : '#56665d',
+                        fontSize: 11,
+                        fontWeight: isSel ? 700 : 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {preset.toLocaleString('fr-FR')} {metricMeta.unit}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Durée */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Durée
+              </span>
+              <div style={{ ...segmentedTrackStyle, gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                {[
+                  { d: 7, label: '7 jours' },
+                  { d: 30, label: '30 jours' },
+                  { d: 90, label: 'Saison · 90 j' },
+                ].map((opt) => (
+                  <button
+                    key={opt.d}
+                    type="button"
+                    style={segBtnStyle(challengeDurationDays === opt.d)}
+                    onClick={() => setChallengeDurationDays(opt.d)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Discipline (pilules propres, aucun select natif) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Discipline
+              </span>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {CHALLENGE_SPORTS.map((sp) => {
+                  const active = challengeSport === sp;
+                  return (
+                    <button
+                      key={sp}
+                      type="button"
+                      onClick={() => setChallengeSport(sp)}
+                      style={{
+                        height: 28,
+                        padding: '0 10px',
+                        borderRadius: 999,
+                        border: active ? '1px solid rgba(23, 64, 44, 0.28)' : '1px solid rgba(23, 43, 36, 0.09)',
+                        background: active ? 'rgba(150, 186, 142, 0.22)' : 'rgba(255, 255, 255, 0.9)',
+                        color: active ? '#17402c' : '#56665d',
+                        fontSize: 11.5,
+                        fontWeight: active ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {sp}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Badge récompense */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#56665d', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+                Badge récompense
+              </span>
+              <div style={{ ...segmentedTrackStyle, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+                {(['trophy', 'mountain', 'flame', 'compass'] as const).map((ic) => (
+                  <button
+                    key={ic}
+                    type="button"
+                    aria-label={`Icône ${ic}`}
+                    style={segBtnStyle(challengeBadgeIcon === ic)}
+                    onClick={() => setChallengeBadgeIcon(ic)}
+                  >
+                    {renderBadgeIcon(ic, 15)}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                style={fieldStyle}
+                placeholder="Nom du badge (optionnel)"
+                value={challengeBadgeTitle}
+                onChange={(e) => setChallengeBadgeTitle(e.target.value)}
+                maxLength={80}
+              />
+            </div>
+
+            {/* Aperçu en direct */}
+            {challengeTitle.trim() ? (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 14,
+                  background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.20), rgba(150, 186, 142, 0.10))',
+                  border: '0.5px solid rgba(23, 64, 44, 0.18)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 4,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
+                    {renderBadgeIcon(challengeBadgeIcon, 14)}
+                    <span>{challengeTitle.trim()}</span>
+                  </span>
+                  <span className="club-badge-sage">
+                    {formatChallengeTarget(challengeMetric, rawTargetValue)}
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: '#4a5c53' }}>
+                  {challengeScope === 'club' ? 'Collectif' : 'Individuel'} · {challengeSport} · {challengeDurationDays} jours
+                </span>
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="lkdv-carnet-btn-soft"
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+                height: 40,
+                fontSize: 13,
+                fontWeight: 700,
+                background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.30), rgba(150, 186, 142, 0.16))',
+                color: '#17402c',
+              }}
+            >
+              <Sparkles size={15} aria-hidden="true" />
+              <span>Publier le défi</span>
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div className="club-drawer-pane-content" data-testid="club-settings-challenges-pane">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {/* KPI synthèse défis */}
-          <div className="lkdv-carnet-kpi-grid-3">
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Actifs</small>
-              <b>{activeChallenges.length}</b>
+          {/* Barre KPI + bouton Nouveau défi (filtres en bas à droite) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="club-badge-sage">{activeChallenges.length} actifs</span>
+              <span className="club-badge-soft">{totalParticipants} participants</span>
             </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Participants</small>
-              <b>{totalParticipants}</b>
-            </div>
-            <div className="lkdv-carnet-kpi-mini">
-              <small>Total défis</small>
-              <b>{challenges.length}</b>
-            </div>
-          </div>
-
-          {/* Créateur complet de défi */}
-          {canEditGovernance ? (
-            <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Trophy size={16} color="#17402c" aria-hidden="true" />
-                  <b style={{ fontSize: 13.5, color: 'var(--label)' }}>Studio Défis du club</b>
-                </div>
-                <button
-                  type="button"
-                  className="lkdv-carnet-btn-soft"
-                  style={{ fontSize: 11.5, height: 30, padding: '0 11px' }}
-                  onClick={() => setChallengeFormOpen((v) => !v)}
-                >
-                  {challengeFormOpen ? <X size={13} aria-hidden="true" /> : <Plus size={13} aria-hidden="true" />}
-                  <span>{challengeFormOpen ? 'Fermer' : 'Nouveau défi'}</span>
-                </button>
-              </div>
-
-              {challengeFormOpen ? (
-                <form style={{ display: 'flex', flexDirection: 'column', gap: 10 }} onSubmit={handleCreateChallenge}>
-                  {/* Type : Collectif vs Individuel */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Format du défi</span>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {(
-                        [
-                          { id: 'club', label: 'Collectif (club entier)' },
-                          { id: 'individual', label: 'Individuel (par membre)' },
-                        ] as const
-                      ).map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          className={`reseau-btn ${challengeScope === s.id ? 'active' : ''}`}
-                          style={{ flex: 1, fontSize: 11.5, padding: '6px 8px' }}
-                          onClick={() => setChallengeScope(s.id)}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Titre & description */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <input
-                      type="text"
-                      className="club-glass-input"
-                      placeholder="Titre (ex : 10 000 m D+ en Vanoise)"
-                      value={challengeTitle}
-                      onChange={(e) => setChallengeTitle(e.target.value)}
-                      maxLength={120}
-                      required
-                    />
-                    <textarea
-                      className="club-glass-input"
-                      rows={2}
-                      placeholder="Description, règles ou récompense du défi…"
-                      value={challengeDesc}
-                      onChange={(e) => setChallengeDesc(e.target.value)}
-                      maxLength={500}
-                      style={{ resize: 'vertical', minHeight: 54 }}
-                    />
-                  </div>
-
-                  {/* Métrique & Objectif */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Métrique & Objectif</span>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 6 }}>
-                      {(Object.keys(CHALLENGE_METRIC_META) as ChallengeMetricId[]).map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          className={`reseau-btn ${challengeMetric === m ? 'active' : ''}`}
-                          style={{ fontSize: 11.5, padding: '5px 8px' }}
-                          onClick={() => {
-                            setChallengeMetric(m);
-                            setChallengeTarget(CHALLENGE_METRIC_META[m].defaultTarget);
-                          }}
-                        >
-                          {CHALLENGE_METRIC_META[m].label}
-                        </button>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input
-                        type="number"
-                        min={1}
-                        className="club-glass-input"
-                        style={{ flex: 1 }}
-                        value={challengeTarget}
-                        placeholder={metricMeta.placeholder}
-                        onChange={(e) => setChallengeTarget(e.target.value)}
-                        aria-label={`Objectif en ${metricMeta.unit}`}
-                        required
-                      />
-                      <span className="club-badge-sage" style={{ flex: 'none' }}>{metricMeta.unit}</span>
-                    </div>
-                  </div>
-
-                  {/* Discipline & Durée */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Discipline</span>
-                      <select
-                        className="club-glass-input"
-                        style={{ fontSize: 12, padding: '6px 8px' }}
-                        value={challengeSport}
-                        onChange={(e) => setChallengeSport(e.target.value)}
-                        aria-label="Discipline du défi"
-                      >
-                        {CHALLENGE_SPORTS.map((sp) => (
-                          <option key={sp} value={sp}>{sp}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Durée</span>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        {[7, 30, 90].map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            className={`reseau-btn ${challengeDurationDays === d ? 'active' : ''}`}
-                            style={{ flex: 1, fontSize: 11, padding: '6px 4px' }}
-                            onClick={() => setChallengeDurationDays(d)}
-                          >
-                            {d}j
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Badge & icône */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Badge récompense</span>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        className="club-glass-input"
-                        style={{ flex: 1 }}
-                        placeholder="Nom du badge (optionnel)"
-                        value={challengeBadgeTitle}
-                        onChange={(e) => setChallengeBadgeTitle(e.target.value)}
-                        maxLength={80}
-                      />
-                      <div style={{ display: 'flex', gap: 4, flex: 'none' }}>
-                        {(['trophy', 'mountain', 'flame', 'compass'] as const).map((ic) => (
-                          <button
-                            key={ic}
-                            type="button"
-                            aria-label={`Icône ${ic}`}
-                            className={`reseau-btn ${challengeBadgeIcon === ic ? 'active' : ''}`}
-                            style={{ width: 32, height: 32, padding: 0, display: 'grid', placeItems: 'center' }}
-                            onClick={() => setChallengeBadgeIcon(ic)}
-                          >
-                            {renderBadgeIcon(ic, 14)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Aperçu en direct */}
-                  {challengeTitle.trim() ? (
-                    <div
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: 14,
-                        background: 'rgba(150, 186, 142, 0.14)',
-                        border: '0.5px solid rgba(23, 64, 44, 0.16)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 4,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-                          {renderBadgeIcon(challengeBadgeIcon, 13)}
-                          <span>{challengeTitle.trim()}</span>
-                        </span>
-                        <span className="club-badge-sage">
-                          {formatChallengeTarget(challengeMetric, rawTargetValue)}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: 11, color: 'var(--label2)' }}>
-                        {challengeScope === 'club' ? 'Collectif' : 'Individuel'} · {challengeSport} · {challengeDurationDays} jours
-                      </span>
-                    </div>
-                  ) : null}
-
-                  <button
-                    type="submit"
-                    className="lkdv-carnet-btn-soft"
-                    style={{ width: '100%', justifyContent: 'center', height: 36, fontWeight: 700 }}
-                  >
-                    <Sparkles size={14} aria-hidden="true" />
-                    <span>Publier le défi dans le club</span>
-                  </button>
-                </form>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Liste & suivi des défis */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {(
-              [
-                { id: 'all', label: `Tous (${challenges.length})` },
-                { id: 'active', label: `En cours (${activeChallenges.length})` },
-                { id: 'ended', label: `Terminés (${endedChallenges.length})` },
-              ] as const
-            ).map((f) => (
+            {canEditGovernance ? (
               <button
-                key={f.id}
                 type="button"
-                className={`reseau-btn ${challengeFilter === f.id ? 'active' : ''}`}
-                style={{ fontSize: 11.5, padding: '4px 10px' }}
-                onClick={() => setChallengeFilter(f.id)}
+                className="lkdv-carnet-btn-soft"
+                style={{
+                  height: 32,
+                  padding: '0 12px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12))',
+                  color: '#17402c',
+                }}
+                onClick={() => setChallengeFormOpen(true)}
               >
-                {f.label}
+                <Plus size={14} aria-hidden="true" />
+                <span>Nouveau défi</span>
               </button>
-            ))}
+            ) : null}
           </div>
 
           {!challengesLoaded && UUID_RE.test(activeClub.id) ? (
