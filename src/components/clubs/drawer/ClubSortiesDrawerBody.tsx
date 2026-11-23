@@ -39,7 +39,9 @@ import {
   YAxis,
 } from 'recharts';
 import { ClubG02Workspace } from '@/components/clubs/g02';
-import { OutingCard, type OutingCardData } from '@/components/compte/drawer/cards/OutingCard';
+import '@/features/community/v2/explore/explore-v2.css';
+import { EventTicket } from '@/features/community/v2/shared/EventTicket';
+import type { EventCardVM } from '@/features/community/v2/shared/types';
 import {
   AnimatedNumber,
   ClubStaggerCard,
@@ -715,7 +717,7 @@ export function ClubSortiesDrawerBody({
   }
 
   // ============================================================================
-  // D10 — 2.1 OUTINGS-TICKETS ("Aperçu tickets des sorties à venir")
+  // D10 — 2.1 OUTINGS-TICKETS ("Aperçu tickets des sorties à venir — Communauté")
   // ============================================================================
   if (activeSubTab === 1) {
     return (
@@ -727,42 +729,95 @@ export function ClubSortiesDrawerBody({
             description="Les prochains départs du club apparaîtront ici en format ticket."
           />
         ) : (
-          <ul
+          <div
             style={{
-              listStyle: 'none',
-              margin: 0,
-              padding: 0,
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: 10,
+              paddingBottom: 12,
             }}
           >
             {upcomingOutings.map((o) => {
-              const cardData: OutingCardData = {
+              const level: EventCardVM['level'] =
+                (o.dplus || 0) >= 1600
+                  ? 'expert'
+                  : (o.dplus || 0) >= 1100
+                    ? 'difficile'
+                    : (o.dplus || 0) >= 600
+                      ? 'moyen'
+                      : 'facile';
+              const cleanTitle = o.title.replace(/\s*\([^)]*km[^)]*\)\s*$/i, '').trim() || o.title;
+              const organizerName = o.leaderName || activeClub.name;
+              const initials = organizerName
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((p) => p[0]?.toUpperCase() || '')
+                .join('') || 'C';
+              const maxP = Math.max(1, o.maxParticipants || 12);
+              const curP = Math.max(0, o.participantsCount || 0);
+              const eventVM: EventCardVM = {
                 id: o.id,
-                title: o.title,
-                mass: o.massif,
-                date: o.dateLabel || o.date,
-                startedAt: o.startsAtIso || o.date,
-                km: o.km,
-                dplus: o.dplus,
-                proven: true,
-                photos: o.coverUrl ? [o.coverUrl] : [],
-                cover: o.coverUrl ?? null,
-                status: o.status,
-                visibility: 'public',
-                year: null,
-                monthLabel: '',
+                title: cleanTitle,
+                activity: activeClub.category || 'Alpinisme',
+                startsAt: o.startsAtIso || null,
+                endsAt: null,
+                eventDate: o.startsAtIso || o.date || new Date().toISOString(),
+                location: o.massif || activeClub.massif || 'Alpes',
+                meetingPoint: o.carpoolCity || null,
+                level,
+                distanceKm: o.km || null,
+                elevationGainM: o.dplus || null,
+                duration: null,
+                coverImage: o.coverUrl ?? null,
+                coverAlt: cleanTitle,
+                maxParticipants: maxP,
+                currentParticipants: curP,
+                spotsLeft: Math.max(0, maxP - curP),
+                waitlistEnabled: true,
+                myStatus: o.rsvpJoined ? 'registered' : 'none',
+                organizer: {
+                  id: o.leaderHandle || activeClub.id,
+                  name: organizerName,
+                  handle: o.leaderHandle || null,
+                  avatarUrl: null,
+                  initials,
+                },
+                participants: [],
+                participantsTotal: curP,
+                clubId: activeClub.id,
+                clubName: activeClub.name,
+                kitId: null,
+                description: null,
+                safetyNotes: null,
+                safetyChecklist: [],
+                recurrence: null,
+                past: false,
+                routeTrace: null,
+                distanceKmFromMe: null,
+                lat: o.lat ?? null,
+                lng: o.lng ?? null,
               };
               return (
-                <OutingCard
+                <div
                   key={o.id}
-                  outing={cardData}
-                  onToggle={() => onInspectOuting(o)}
-                />
+                  className="lkdv-cv2x-event"
+                  data-level={eventVM.level ?? undefined}
+                >
+                  <EventTicket
+                    event={eventVM}
+                    variant="tile"
+                    showCapacity
+                    onOpen={() => {
+                      setDetailLens('overview');
+                      onInspectOuting(o);
+                    }}
+                    href={`/sorties/${encodeURIComponent(o.id)}`}
+                  />
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     );
@@ -849,48 +904,6 @@ export function ClubSortiesDrawerBody({
           </div>
         )}
       </div>
-
-      {filteredUpcoming.length > 0 ? (
-        <ul
-          style={{
-            listStyle: 'none',
-            margin: '10px 0 0',
-            padding: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          {filteredUpcoming.map((o) => {
-            const cardData: OutingCardData = {
-              id: o.id,
-              title: o.title,
-              mass: o.massif,
-              date: o.dateLabel || o.date,
-              startedAt: o.startsAtIso || o.date,
-              km: o.km,
-              dplus: o.dplus,
-              proven: true,
-              photos: o.coverUrl ? [o.coverUrl] : [],
-              cover: o.coverUrl ?? null,
-              status: o.status,
-              visibility: 'public',
-              year: null,
-              monthLabel: '',
-            };
-            return (
-              <OutingCard
-                key={o.id}
-                outing={cardData}
-                onToggle={() => {
-                  setDetailLens('overview');
-                  onInspectOuting(o);
-                }}
-              />
-            );
-          })}
-        </ul>
-      ) : null}
     </div>
   );
 }

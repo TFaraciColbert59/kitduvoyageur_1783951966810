@@ -28,6 +28,7 @@ import { generatedProductImage } from '@/components/compte/drawer/cards/productI
 import { CollapsibleHeroPreview, useScrollCollapsePreview } from '../photo/CollapsibleHeroPreview';
 import { formatKitItemWeightV2, formatKitWeightV2, type KitUnitsV2 } from './kitContextV2';
 import { kitGoalOfWeightV2, kitGoalV2 } from './kitTemplatesV2';
+import '../create-v2.css';
 
 const CATEGORY_BENCHMARK_G: Record<string, number> = {
   Portage: 1150,
@@ -113,6 +114,8 @@ export interface KitProductSheetV2Props {
   onClose: () => void;
   onAdd: (product: PickerProduct, overrides: ProductAddOverrides, keepOpen: boolean) => void;
   onRemove?: (product: PickerProduct) => void;
+  /** Rend la fiche directement intégrée dans un panneau (ex. 3e volet de KitCard) sans overlay plein écran. */
+  embedded?: boolean;
 }
 
 export function readFavoriteProductIds(): string[] {
@@ -173,6 +176,7 @@ export function KitProductSheetV2({
   onClose,
   onAdd,
   onRemove,
+  embedded = false,
 }: KitProductSheetV2Props) {
   const [zoomed, setZoomed] = useState(false);
   const [favorite, setFavorite] = useState(() => readFavoriteProductIds().includes(product.id));
@@ -594,33 +598,52 @@ export function KitProductSheetV2({
 
   return (
     <div
-      className="lkdv-cv2c-stack-overlay is-level2 is-product-sheet"
-      role="dialog"
-      aria-modal="true"
+      className={`lkdv-cv2c-stack-overlay is-level2 is-product-sheet${embedded ? ' is-embedded' : ''}`}
+      role={embedded ? 'region' : 'dialog'}
+      aria-modal={embedded ? undefined : 'true'}
       aria-label={product.name}
+      style={
+        embedded
+          ? {
+              position: 'relative',
+              inset: 'auto',
+              width: '100%',
+              height: '100%',
+              maxHeight: '100%',
+              borderRadius: 0,
+              boxShadow: 'none',
+              background: 'transparent',
+              WebkitBackdropFilter: 'none',
+              backdropFilter: 'none',
+              zIndex: 1,
+            }
+          : undefined
+      }
     >
-      <div
-        className="lkdv-cv2-grab"
-        aria-hidden="true"
-        onPointerDown={(e) => {
-          swipeStartY.current = e.clientY;
-        }}
-        onPointerUp={(e) => {
-          if (swipeStartY.current != null && e.clientY - swipeStartY.current > 75) {
-            onClose();
-          }
-          swipeStartY.current = null;
-        }}
-      >
-        <span />
-      </div>
+      {!embedded ? (
+        <div
+          className="lkdv-cv2-grab"
+          aria-hidden="true"
+          onPointerDown={(e) => {
+            swipeStartY.current = e.clientY;
+          }}
+          onPointerUp={(e) => {
+            if (swipeStartY.current != null && e.clientY - swipeStartY.current > 75) {
+              onClose();
+            }
+            swipeStartY.current = null;
+          }}
+        >
+          <span />
+        </div>
+      ) : null}
 
       {/* En-tête minimaliste : × à gauche + NOM DU PRODUIT centré */}
-      <div className="lkdv-cv2c-ps-head" style={{ borderBottom: 0 }}>
+      <div className="lkdv-cv2c-ps-head" style={{ borderBottom: 0, ...(embedded ? { paddingTop: 4, paddingBottom: 4 } : {}) }}>
         <button
           type="button"
           className="lkdv-cv2c-stack-close"
-          aria-label="Fermer la fiche produit"
+          aria-label={embedded ? 'Retour à la composition' : 'Fermer la fiche produit'}
           onClick={onClose}
         >
           <X size={16} aria-hidden="true" />
@@ -639,11 +662,40 @@ export function KitProductSheetV2({
         >
           {product.name}
         </span>
-        <span style={{ width: 34, flexShrink: 0 }} aria-hidden="true" />
+        {embedded && (hasPrev || hasNext) ? (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <button
+              type="button"
+              className="lkdv-cv2c-stack-close"
+              style={{ width: 26, height: 26 }}
+              disabled={!hasPrev}
+              aria-label="Produit précédent"
+              onClick={onPrev}
+            >
+              <ChevronRight size={14} style={{ transform: 'rotate(180deg)' }} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="lkdv-cv2c-stack-close"
+              style={{ width: 26, height: 26 }}
+              disabled={!hasNext}
+              aria-label="Produit suivant"
+              onClick={onNext}
+            >
+              <ChevronRight size={14} aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <span style={{ width: 34, flexShrink: 0 }} aria-hidden="true" />
+        )}
       </div>
 
       {/* Corps scrollable jusqu'en bas sous le sélecteur bas droite */}
-      <div className="lkdv-cv2c-ps-scroll" onClick={() => shareOpen && setShareOpen(false)}>
+      <div
+        className="lkdv-cv2c-ps-scroll"
+        style={embedded ? { paddingBottom: 64 } : undefined}
+        onClick={() => shareOpen && setShareOpen(false)}
+      >
         {/* Aperçu produit repliable au scroll (1 seule pastille utile en haut à droite) */}
         <div className="lkdv-cv2c-ps-sticky-hero">
           <CollapsibleHeroPreview

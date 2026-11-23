@@ -987,6 +987,42 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                     key={k.id}
                     kit={entry}
                     viewer="visitor"
+                    renderProductPane={({ product: p, products: list, index: idx, totalWeightG, onPrev, onNext, onBack }) => {
+                      const pickerProduct: PickerProduct = {
+                        key: p.id,
+                        source: 'inventory',
+                        id: p.id,
+                        name: p.name,
+                        brand: p.brand || null,
+                        category: p.category || null,
+                        weightG: p.weightG || null,
+                        image: p.image || null,
+                        wear: null,
+                        conditionLabel: p.condition || 'Équipement club',
+                        description: p.description || `Inclus dans ${k.title}.`,
+                        priceLabel: null,
+                        owner: null,
+                        cartable: null,
+                        ownershipId: null,
+                        productId: null,
+                      };
+                      return (
+                        <KitProductSheetV2
+                          embedded
+                          product={pickerProduct}
+                          initialCategory={p.category || undefined}
+                          currentKitWeightG={totalWeightG || k.totalWeightG}
+                          alreadyInKit
+                          positionLabel={`${idx + 1} / ${list.length}`}
+                          hasPrev={idx > 0}
+                          hasNext={idx < list.length - 1}
+                          onPrev={onPrev}
+                          onNext={onNext}
+                          onAdd={() => onBack()}
+                          onClose={onBack}
+                        />
+                      );
+                    }}
                   />
                 );
               })}

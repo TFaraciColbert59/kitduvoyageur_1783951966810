@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ClubChannel, ClubChannelKind, ClubChannelMessage } from '@/features/clubs';
+import '@/components/messaging/messages-grammar.css';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
 import { ClubEmptyCard } from './ClubSharedUi';
 
@@ -534,6 +535,7 @@ export function ClubSalonsDrawerBody({
   return (
     <div
       data-testid="club-salons-discord"
+      className="lkdv-messages"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -776,18 +778,15 @@ export function ClubSalonsDrawerBody({
         </div>
       ) : (
         <>
-          {/* FLUX DE MESSAGES (STYLE DISCORD — PLEINE LARGEUR, SCROLL PROPRE) */}
+          {/* FLUX DE MESSAGES (DESIGN IDENTIQUE PAGE MESSAGERIE — .mthread / .mrow / .bub) */}
           <div
             ref={scrollRef}
-            style={{
-              flex: '1 1 0',
-              minHeight: 0,
-              overflowY: 'auto',
-              padding: '10px 2px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-            }}
+            className="mthread"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions"
+            aria-label={`Fil du salon ${activeChannel?.name || 'club'}`}
+            style={{ padding: '10px 6px 14px' }}
           >
             {error ? (
               <ClubEmptyCard
@@ -815,31 +814,39 @@ export function ClubSalonsDrawerBody({
                 }
               />
             ) : loading ? (
-              <div style={{ textAlign: 'center', padding: 28, color: '#56665d', fontSize: 12.5 }}>
-                Chargement de #{activeChannel?.name || 'salon'}…
+              <div className="mstate" style={{ margin: 'auto', textAlign: 'center' }}>
+                <span>Chargement de #{activeChannel?.name || 'salon'}…</span>
               </div>
             ) : (
               <>
                 {visibleMessages.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '16px 8px', fontSize: 12.5, color: '#56665d' }}>
-                    {searchQuery
-                      ? 'Aucun message ne correspond à ta recherche.'
-                      : 'Aucun message pour l’instant. Envoie le premier !'}
+                  <div className="mstate" style={{ margin: 'auto', textAlign: 'center' }}>
+                    <b>{searchQuery ? 'Aucun résultat' : 'Le début de la discussion'}</b>
+                    <span>
+                      {searchQuery
+                        ? 'Aucun message ne correspond à ta recherche.'
+                        : 'Écrivez le premier message.'}
+                    </span>
                   </div>
                 ) : (
                   visibleMessages.map((msg, idx) => {
                     const author = resolveAuthor(msg.authorId);
                     const prev = idx > 0 ? visibleMessages[idx - 1] : null;
+                    const next = idx < visibleMessages.length - 1 ? visibleMessages[idx + 1] : null;
                     const dayLabel = formatDayLabel(msg.createdAt);
                     const prevDayLabel = prev ? formatDayLabel(prev.createdAt) : null;
-                    const showDaySep = dayLabel && dayLabel !== prevDayLabel;
+                    const showDaySep = Boolean(dayLabel && dayLabel !== prevDayLabel);
 
                     const prevMs = prev ? Date.parse(prev.createdAt) : 0;
                     const curMs = Date.parse(msg.createdAt);
-                    const isGrouped =
+                    const nextMs = next ? Date.parse(next.createdAt) : 0;
+                    const sameAsPrev =
                       !showDaySep &&
-                      Boolean(prev && prev.authorId === msg.authorId && Math.abs(curMs - prevMs) < 5 * 60_000);
+                      Boolean(prev && prev.authorId === msg.authorId && Math.abs(curMs - prevMs) < 120_000);
+                    const sameAsNext =
+                      Boolean(next && next.authorId === msg.authorId && Math.abs(nextMs - curMs) < 120_000);
 
+                    const mine = author.isMine;
                     const parsed = parseReplyPrefix(msg.body);
                     const isSelected = selectedMsgId === msg.id;
                     const reactions = reactionsByMsg[msg.id] || {};
@@ -847,254 +854,56 @@ export function ClubSalonsDrawerBody({
 
                     return (
                       <React.Fragment key={msg.id}>
-                        {showDaySep ? (
-                          <div
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 8,
-                              margin: '10px 4px 6px',
-                            }}
-                          >
-                            <span style={{ flex: 1, height: 1, background: 'rgba(23, 64, 44, 0.09)' }} />
-                            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#56665d' }}>
-                              {dayLabel}
-                            </span>
-                            <span style={{ flex: 1, height: 1, background: 'rgba(23, 64, 44, 0.09)' }} />
-                          </div>
-                        ) : null}
+                        {showDaySep ? <div className="mday">{dayLabel}</div> : null}
 
-                        <div
-                          onClick={() => setSelectedMsgId((cur) => (cur === msg.id ? null : msg.id))}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: 10,
-                            padding: isGrouped ? '3px 6px' : '6px 6px 4px',
-                            marginTop: isGrouped ? 0 : 4,
-                            borderRadius: 18,
-                            cursor: 'pointer',
-                            transition: 'transform 0.12s ease',
-                          }}
-                        >
-                          {/* Avatar colonne gauche (36px fixe, style Discord) */}
-                          <div style={{ width: 34, flex: 'none', paddingTop: isGrouped ? 0 : 1 }}>
-                            {!isGrouped ? (
-                              author.avatarUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={author.avatarUrl}
-                                  alt=""
-                                  loading="lazy"
-                                  decoding="async"
-                                  style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                              ) : (
-                                <div
-                                  style={{
-                                    width: 34,
-                                    height: 34,
-                                    borderRadius: '50%',
-                                    background: 'rgba(23, 64, 44, 0.13)',
-                                    color: '#17402c',
-                                    fontSize: 13,
-                                    fontWeight: 800,
-                                    display: 'grid',
-                                    placeItems: 'center',
-                                  }}
-                                >
-                                  {author.name.slice(0, 1).toUpperCase()}
-                                </div>
-                              )
-                            ) : (
-                              <span
-                                style={{
-                                  display: 'block',
-                                  fontSize: 9.5,
-                                  color: '#76877e',
-                                  textAlign: 'right',
-                                  opacity: isSelected ? 0.9 : 0,
-                                  paddingTop: 3,
-                                }}
-                              >
-                                {formatMsgTime(msg.createdAt)}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Contenu message colonne droite (bulle Liquid Glass style Messagerie) */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            {!isGrouped ? (
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  flexWrap: 'wrap',
-                                  gap: 6,
-                                  marginBottom: 4,
-                                  paddingLeft: 2,
-                                }}
-                              >
-                                <b style={{ fontSize: 13, fontWeight: 700, color: author.isMine ? '#17402c' : '#172b24' }}>
-                                  {author.name}
-                                </b>
-                                {author.role && author.role !== 'Membre actif' ? (
-                                  <span
-                                    style={{
-                                      ...roleBadgeStyle(author.role),
-                                      fontSize: 9.5,
-                                      fontWeight: 700,
-                                      padding: '1px 6px',
-                                      borderRadius: 999,
-                                    }}
-                                  >
-                                    {author.role}
-                                  </span>
-                                ) : null}
-                                <span style={{ fontSize: 10, fontWeight: 500, color: '#6b7d73', fontVariantNumeric: 'tabular-nums' }}>
-                                  {formatMsgTime(msg.createdAt)}
-                                </span>
-                              </div>
+                        <div className={`mrow${mine ? ' mine' : ''}`}>
+                          <div className={`mstack${mine ? ' mine' : ''}`}>
+                            {!mine && !sameAsPrev ? (
+                              <span className="msender">{author.name}</span>
                             ) : null}
 
-                            <div
-                              style={{
-                                display: 'inline-block',
-                                maxWidth: '100%',
-                                padding: '8px 12px',
-                                borderRadius: 18,
-                                borderBottomLeftRadius: author.isMine ? 18 : 6,
-                                borderBottomRightRadius: author.isMine ? 6 : 18,
-                                background: author.isMine
-                                  ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12)), linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.46))'
-                                  : 'linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.46))',
-                                WebkitBackdropFilter: 'blur(24px) saturate(180%) brightness(1.04)',
-                                backdropFilter: 'blur(24px) saturate(180%) brightness(1.04)',
-                                boxShadow: isSelected
-                                  ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1px rgba(23, 64, 44, 0.26), 0 6px 18px rgba(23, 43, 36, 0.11)'
-                                  : author.isMine
-                                    ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 64, 44, 0.16), 0 4px 14px rgba(23, 43, 36, 0.08)'
-                                    : 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.4), 0 0 0 0.5px rgba(23, 43, 36, 0.12), 0 4px 14px rgba(23, 43, 36, 0.07)',
-                                transition: 'box-shadow 0.15s ease',
-                              }}
+                            <button
+                              type="button"
+                              className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
+                              onClick={() => setSelectedMsgId((cur) => (cur === msg.id ? null : msg.id))}
+                              aria-label={`Message de ${mine ? 'vous' : author.name}, ${formatMsgTime(msg.createdAt)}`}
                             >
                               {parsed.replyTo ? (
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                    fontSize: 11,
-                                    fontWeight: 500,
-                                    color: '#56665d',
-                                    marginBottom: 4,
-                                    paddingLeft: 7,
-                                    borderLeft: '2px solid rgba(23, 64, 44, 0.28)',
-                                  }}
-                                >
-                                  <CornerUpLeft size={11} aria-hidden="true" style={{ flex: 'none' }} />
-                                  <b style={{ flex: 'none', color: '#17402c' }}>{parsed.replyTo}</b>
-                                  <span
-                                    style={{
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {parsed.quote}
-                                  </span>
-                                </div>
+                                <span className="bub-quote">
+                                  <b>{parsed.replyTo}</b> — {parsed.quote}
+                                </span>
                               ) : null}
-
-                              <p
-                                style={{
-                                  margin: 0,
-                                  fontSize: 13,
-                                  lineHeight: 1.38,
-                                  letterSpacing: '-0.13px',
-                                  color: '#172b24',
-                                  whiteSpace: 'pre-wrap',
-                                  wordBreak: 'break-word',
-                                }}
-                              >
-                                {parsed.text}
-                              </p>
-                            </div>
+                              {parsed.text}
+                              <span className="bub-time">
+                                {formatMsgTime(msg.createdAt)}
+                                {msg.id.startsWith('temp-') ? '…' : mine ? <span aria-hidden="true">✓</span> : null}
+                              </span>
+                            </button>
 
                             {reactionEntries.length > 0 ? (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                              <div className="mreacts">
                                 {reactionEntries.map(([emoji, count]) => (
                                   <button
                                     key={emoji}
                                     type="button"
+                                    className="mreact on"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleToggleReaction(msg.id, emoji);
                                     }}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4,
-                                      height: 20,
-                                      padding: '0 7px',
-                                      borderRadius: 999,
-                                      border: '0.5px solid rgba(23, 64, 44, 0.18)',
-                                      background: 'rgba(150, 186, 142, 0.2)',
-                                      fontSize: 10.5,
-                                      fontWeight: 600,
-                                      fontVariantNumeric: 'tabular-nums',
-                                      color: '#17402c',
-                                      cursor: 'pointer',
-                                    }}
                                   >
-                                    <span>{emoji}</span>
-                                    <span>{count}</span>
+                                    {emoji} {count}
                                   </button>
                                 ))}
                               </div>
                             ) : null}
 
-                            {/* Barre d'actions Liquid Glass au tap (style Messagerie) */}
                             {isSelected && !msg.id.startsWith('temp-') ? (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  flexWrap: 'wrap',
-                                  gap: 4,
-                                  marginTop: 6,
-                                  padding: '5px 7px',
-                                  borderRadius: 18,
-                                  border: '0.5px solid rgba(255, 255, 255, 0.88)',
-                                  background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.68))',
-                                  WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-                                  backdropFilter: 'blur(28px) saturate(180%)',
-                                  boxShadow: 'inset 0 1px 0 #fff, 0 8px 24px rgba(23, 43, 36, 0.12), 0 0 0 0.5px rgba(23, 43, 36, 0.10)',
-                                }}
-                              >
-                                {QUICK_REACTIONS.map((emoji) => (
-                                  <button
-                                    key={emoji}
-                                    type="button"
-                                    onClick={() => handleToggleReaction(msg.id, emoji)}
-                                    style={{
-                                      width: 26,
-                                      height: 26,
-                                      borderRadius: 999,
-                                      border: 0,
-                                      background: 'transparent',
-                                      fontSize: 13.5,
-                                      cursor: 'pointer',
-                                    }}
-                                  >
-                                    {emoji}
-                                  </button>
-                                ))}
-                                <span style={{ width: 1, height: 14, background: 'rgba(23, 64, 44, 0.14)', margin: '0 2px' }} />
+                              <div className="mreacts" style={{ padding: '2px 0' }} onClick={(e) => e.stopPropagation()}>
                                 {canPost ? (
                                   <button
                                     type="button"
+                                    className="mreact"
                                     onClick={() => {
                                       setReplyingTo({
                                         author: author.name,
@@ -1103,96 +912,51 @@ export function ClubSalonsDrawerBody({
                                       setSelectedMsgId(null);
                                       inputRef.current?.focus();
                                     }}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4,
-                                      height: 26,
-                                      padding: '0 8px',
-                                      borderRadius: 999,
-                                      border: 0,
-                                      background: 'rgba(23, 64, 44, 0.08)',
-                                      color: '#17402c',
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      cursor: 'pointer',
-                                    }}
                                   >
-                                    <CornerUpLeft size={11} />
-                                    <span>Répondre</span>
+                                    Répondre
                                   </button>
                                 ) : null}
                                 <button
                                   type="button"
+                                  className="mreact"
                                   onClick={() => {
                                     void navigator.clipboard?.writeText(parsed.text).catch(() => {});
                                     setSelectedMsgId(null);
                                     onToast?.({ title: 'Message copié ✓' });
                                   }}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    height: 26,
-                                    padding: '0 8px',
-                                    borderRadius: 999,
-                                    border: 0,
-                                    background: 'transparent',
-                                    color: '#172b24',
-                                    fontSize: 11,
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                  }}
                                 >
-                                  <Copy size={11} />
-                                  <span>Copier</span>
+                                  Copier
                                 </button>
-                                {!author.isMine ? (
+                                {!mine ? (
                                   <button
                                     type="button"
+                                    className="mreact"
                                     onClick={() => void handleReportMessage(msg)}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4,
-                                      height: 26,
-                                      padding: '0 8px',
-                                      borderRadius: 999,
-                                      border: 0,
-                                      background: 'transparent',
-                                      color: '#56665d',
-                                      fontSize: 11,
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                    }}
                                   >
-                                    <Flag size={11} />
-                                    <span>Signaler</span>
+                                    Signaler
                                   </button>
                                 ) : null}
-                                {canManageChannels || author.isMine ? (
+                                {canManageChannels || mine ? (
                                   <button
                                     type="button"
+                                    className="mreact"
+                                    style={{ color: '#b91c1c' }}
                                     onClick={() => void handleDeleteMessage(msg)}
-                                    style={{
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4,
-                                      height: 26,
-                                      padding: '0 8px',
-                                      borderRadius: 999,
-                                      border: 0,
-                                      background: 'rgba(185, 28, 28, 0.08)',
-                                      color: '#b91c1c',
-                                      fontSize: 11,
-                                      fontWeight: 700,
-                                      cursor: 'pointer',
-                                    }}
                                   >
-                                    <Trash2 size={11} />
-                                    <span>Supprimer</span>
+                                    Supprimer
                                   </button>
                                 ) : null}
+                                {QUICK_REACTIONS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    type="button"
+                                    className="mreact"
+                                    onClick={() => handleToggleReaction(msg.id, emoji)}
+                                    aria-label={`Réagir ${emoji}`}
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
                               </div>
                             ) : null}
                           </div>
@@ -1321,97 +1085,44 @@ export function ClubSalonsDrawerBody({
                 </div>
               ) : null}
               {replyingTo ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    padding: '6px 12px',
-                    borderRadius: 14,
-                    border: '0.5px solid rgba(23, 64, 44, 0.16)',
-                    background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.2), rgba(150, 186, 142, 0.1))',
-                    WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-                    backdropFilter: 'blur(20px) saturate(160%)',
-                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.85)',
-                    fontSize: 11.5,
-                    color: '#17402c',
-                  }}
-                >
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Réponse à <b>{replyingTo.author}</b> · {replyingTo.excerpt}
+                <div className="mreply">
+                  <span>
+                    Réponse à <b>{replyingTo.author}</b> — {replyingTo.excerpt}
                   </span>
                   <button
                     type="button"
+                    className="mtool"
+                    style={{ width: 22, height: 22, marginLeft: 'auto' }}
                     aria-label="Annuler la réponse"
                     onClick={() => setReplyingTo(null)}
-                    style={{ background: 'none', border: 0, cursor: 'pointer', color: '#17402c', display: 'grid', placeItems: 'center' }}
                   >
-                    <X size={13} />
+                    <X size={12} aria-hidden="true" />
                   </button>
                 </div>
               ) : null}
 
               {canPost && activeChannel ? (
-                <form
-                  onSubmit={handleSendMessage}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '4px 5px 4px 15px',
-                    minHeight: 40,
-                    borderRadius: 999,
-                    border: '0.5px solid rgba(255, 255, 255, 0.85)',
-                    background: 'rgba(255, 255, 255, 0.65)',
-                    WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-                    backdropFilter: 'blur(28px) saturate(180%)',
-                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px rgba(255, 255, 255, 0.35), 0 2px 10px rgba(23, 43, 36, 0.06)',
-                  }}
-                >
+                <form className="mcomposer" onSubmit={handleSendMessage}>
                   <input
                     ref={inputRef}
                     type="text"
+                    className="mfield"
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     placeholder={`Message dans #${activeChannel.name}…`}
                     aria-label={`Écrire dans ${activeChannel.name}`}
                     maxLength={2000}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      border: 0,
-                      background: 'transparent',
-                      fontSize: 13,
-                      letterSpacing: '-0.13px',
-                      color: '#172b24',
-                      outline: 'none',
-                    }}
                   />
                   <button
                     type="submit"
+                    className={`lg gbtn msend${draft.trim() ? ' on' : ''}`}
                     disabled={sending || !draft.trim()}
                     aria-label="Envoyer le message"
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      border: 0,
-                      background: draft.trim()
-                        ? 'linear-gradient(180deg, #275d3f, #17402c)'
-                        : 'rgba(23, 43, 36, 0.08)',
-                      boxShadow: draft.trim()
-                        ? '0 4px 12px rgba(23, 64, 44, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35)'
-                        : 'none',
-                      color: draft.trim() ? '#ffffff' : '#56665d',
-                      display: 'grid',
-                      placeItems: 'center',
-                      flex: 'none',
-                      cursor: draft.trim() ? 'pointer' : 'default',
-                      transition: 'transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease',
-                    }}
                   >
-                    <Send size={14} aria-hidden="true" />
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M4.4 12h14.2" />
+                      <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
+                    </svg>
                   </button>
                 </form>
               ) : activeChannel?.readOnlyForMembers ? (

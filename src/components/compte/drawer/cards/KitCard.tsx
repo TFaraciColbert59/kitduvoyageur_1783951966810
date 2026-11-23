@@ -67,6 +67,16 @@ export interface KitCardProps {
   contentUnavailable?: boolean;
   /** Callback optionnel pour ouvrir une fiche produit externe (ex: KitProductSheetV2). */
   onSelectProduct?: (product: KitProductView, products: KitProductView[], index: number) => void;
+  /** Rendu personnalisé du 3e volet (ex: KitProductSheetV2 intégré). */
+  renderProductPane?: (ctx: {
+    product: KitProductView;
+    products: KitProductView[];
+    index: number;
+    totalWeightG: number;
+    onPrev: () => void;
+    onNext: () => void;
+    onBack: () => void;
+  }) => React.ReactNode;
 }
 
 type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery' | 'export' | 'calendar';
@@ -263,7 +273,7 @@ function kitPriorityLabel(value: string | null | undefined): string {
   return value!.trim();
 }
 
-export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailable = false, onSelectProduct }: KitCardProps) {
+export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailable = false, onSelectProduct, renderProductPane }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
   const viewerMode = resolveKitViewer(viewer, payload);
@@ -806,6 +816,19 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
           <section className="lkdv-kit-pane" data-view="product" aria-hidden={view !== 2}>
             <div className="lkdv-kit-product">
               {selectedProduct ? (
+                renderProductPane ? (
+                  view === 2 ? (
+                    renderProductPane({
+                      product: selectedProduct,
+                      products,
+                      index: selectedIndex,
+                      totalWeightG: weight,
+                      onPrev: () => goProduct(-1),
+                      onNext: () => goProduct(1),
+                      onBack: () => goTo(1),
+                    })
+                  ) : null
+                ) : (
                 <div className="lkdv-kit-product-scroll">
                   <div className="lkdv-kit-product-hero">
                     <div className="lkdv-kit-product-visual">
@@ -892,6 +915,7 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
                   {notice ? <p className="lkdv-kit-notice" role="status">{notice}</p> : null}
                   {error ? <p className="lkdv-kit-error" role="alert">{error}</p> : null}
                 </div>
+                )
               ) : (
                 <p className="lkdv-kit-empty">Choisis un produit dans la composition.</p>
               )}
