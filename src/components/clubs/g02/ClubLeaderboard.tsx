@@ -91,68 +91,15 @@ export function ClubLeaderboard({
 
   return (
     <section className={styles.screen} aria-label="Classement hebdomadaire du club">
-      <div className={styles.sectionHeader}>
-        <div>
-          <p className={styles.eyebrow}>Classement · S5.11</p>
-          <h2 className={styles.title}>La semaine du club</h2>
-          <p className={styles.subtitle}>
-            Du {formatDayMonth(leaderboard.weekStartIso)} au {formatDayMonth(leaderboard.weekEndIso)}. Les
-            membres qui refusent le classement ne sont jamais comptés.
-          </p>
-        </div>
-        <span className={styles.badge} aria-live="polite">
-          {leaderboard.entries.length} classé{leaderboard.entries.length > 1 ? 's' : ''}
-        </span>
-      </div>
-
-      <div className={styles.card}>
-        <div className={styles.filters}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="g02-lb-metric">
-              Métrique
-            </label>
-            <select
-              id="g02-lb-metric"
-              className={styles.select}
-              value={leaderboard.metric}
-              onChange={(event) => onMetricChange?.(event.target.value as ChallengeMetric)}
-            >
-              {METRICS.map((metric) => (
-                <option key={metric} value={metric}>
-                  {METRIC_LABELS[metric]}
-                </option>
-              ))}
-            </select>
-          </div>
-          {sports.length > 0 ? (
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="g02-lb-sport">
-                Sport
-              </label>
-              <select
-                id="g02-lb-sport"
-                className={styles.select}
-                value={leaderboard.sport ?? ''}
-                onChange={(event) => onSportChange?.(event.target.value || null)}
-              >
-                <option value="">Tous les sports</option>
-                {sports.map((sport) => (
-                  <option key={sport} value={sport}>
-                    {sport}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-        </div>
-        {leaderboard.excludedCount > 0 ? (
+      {leaderboard.excludedCount > 0 ? (
+        <div className={styles.card}>
           <p className={styles.notice}>
             {leaderboard.excludedCount} membre{leaderboard.excludedCount > 1 ? 's' : ''} masqué
             {leaderboard.excludedCount > 1 ? 's' : ''} par leurs préférences de confidentialité ou un
             blocage. Aucun nom n’est révélé.
           </p>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {leaderboard.entries.length === 0 ? (
         <div className={styles.empty}>

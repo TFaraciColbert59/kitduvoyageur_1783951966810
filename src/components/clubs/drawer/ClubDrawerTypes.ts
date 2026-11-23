@@ -77,6 +77,11 @@ export interface ClubMemberData {
   isProAthlete?: boolean;
   verifiedSports?: string[];
   outingsCount?: number;
+  distanceKm?: number;
+  dplusM?: number;
+  hours?: number;
+  postsCount?: number;
+  gearCount?: number;
   avatarUrl?: string;
   canManageStories?: boolean;
 }

@@ -46,6 +46,8 @@ export interface SlotShellProps {
   children?: React.ReactNode;
   /** Sélecteur `.ig-tabs` fourni par l'hôte (SlotSelector). */
   selector?: React.ReactNode;
+  /** Bouton de tri/filtre optionnel ancré en bas à droite à côté des lentilles. */
+  bottomRightFilter?: React.ReactNode;
 }
 
 function SkeletonState() {
@@ -109,6 +111,7 @@ export function SlotShell({
   renderLens,
   children,
   selector,
+  bottomRightFilter,
 }: SlotShellProps) {
   const flowRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -235,7 +238,7 @@ export function SlotShell({
       {lenses.length > 1 ? (
         <div
           ref={flowRef}
-          className="ig-tabs lkdv-lens-tabs"
+          className={`ig-tabs lkdv-lens-tabs${bottomRightFilter ? ' has-sort' : ''}`}
           role="tablist"
           aria-label={`Lentilles de ${title}`}
           aria-orientation="horizontal"
@@ -282,6 +285,21 @@ export function SlotShell({
               </button>
             );
           })}
+        </div>
+      ) : null}
+
+      {bottomRightFilter ? (
+        <div
+          style={{
+            position: 'absolute',
+            right: 10,
+            bottom: 10,
+            zIndex: 15,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {bottomRightFilter}
         </div>
       ) : null}
     </div>

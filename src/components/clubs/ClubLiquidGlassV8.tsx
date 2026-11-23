@@ -827,6 +827,24 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         });
       }
 
+      const memberPostsCount = new Map<string, number>();
+      for (const t of topicRows) {
+        if (t.author_id) {
+          memberPostsCount.set(t.author_id, (memberPostsCount.get(t.author_id) ?? 0) + 1);
+        }
+      }
+      const memberEventStats = new Map<string, { count: number; km: number; dplus: number }>();
+      for (const ev of eventRows) {
+        const uid = ev.organizer_id || ev.created_by;
+        if (!uid) continue;
+        const prev = memberEventStats.get(uid) ?? { count: 0, km: 0, dplus: 0 };
+        memberEventStats.set(uid, {
+          count: prev.count + 1,
+          km: prev.km + (Number(ev.distance_km) || 0),
+          dplus: prev.dplus + (Number(ev.elevation_gain_m) || 0),
+        });
+      }
+
       const memberRoleByUserId = new Map<string, string>();
       const mappedMembers: ClubMemberData[] = memberSourceRows.map((m: any) => {
         const p = profilesMap[m.user_id];
@@ -848,6 +866,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                   ? 'Nouveau'
                   : 'Membre actif';
         memberRoleByUserId.set(m.user_id, mappedRole);
+        const evStat = memberEventStats.get(m.user_id);
 
         return {
           id: m.user_id,
@@ -871,6 +890,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           mutedUntil: m.muted_until ?? null,
           isProAthlete: Boolean(m.is_pro_athlete),
           verifiedSports: Array.isArray(m.verified_sports) ? m.verified_sports : undefined,
+          outingsCount: evStat?.count ?? 0,
+          distanceKm: evStat?.km ?? 0,
+          dplusM: evStat?.dplus ?? 0,
+          postsCount: memberPostsCount.get(m.user_id) ?? 0,
         };
       });
 

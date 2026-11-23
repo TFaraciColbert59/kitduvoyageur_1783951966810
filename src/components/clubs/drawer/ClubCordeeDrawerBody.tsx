@@ -284,14 +284,20 @@ function InspectedMemberPane({
   const textPosts = useMemo(() => memberPosts.filter((p) => !p.mediaUrl), [memberPosts]);
 
   const totalKm = useMemo(
-    () => memberOutings.reduce((sum, o) => sum + (Number(o.km) || 0), 0),
-    [memberOutings],
+    () =>
+      member.distanceKm && member.distanceKm > 0
+        ? member.distanceKm
+        : memberOutings.reduce((sum, o) => sum + (Number(o.km) || 0), 0),
+    [member.distanceKm, memberOutings],
   );
   const totalDplus = useMemo(
-    () => memberOutings.reduce((sum, o) => sum + (Number(o.dplus) || 0), 0),
-    [memberOutings],
+    () =>
+      member.dplusM && member.dplusM > 0
+        ? member.dplusM
+        : memberOutings.reduce((sum, o) => sum + (Number(o.dplus) || 0), 0),
+    [member.dplusM, memberOutings],
   );
-  const outingsCount = member.outingsCount ?? memberOutings.length;
+  const outingsCount = Math.max(member.outingsCount ?? 0, memberOutings.length);
   const hasAnySharedContent = memberPosts.length > 0 || memberGear.length > 0;
 
   return (
@@ -304,45 +310,17 @@ function InspectedMemberPane({
           <div className="lkdv-carnet-kpi-grid-3">
             <div className="lkdv-carnet-kpi-mini">
               <small>Distance</small>
-              <b>{totalKm > 0 ? `${Math.round(totalKm)} km` : '—'}</b>
+              <b>{totalKm > 0 ? `${Math.round(totalKm)} km` : '0 km'}</b>
             </div>
             <div className="lkdv-carnet-kpi-mini">
               <small>Dénivelé +</small>
-              <b>{totalDplus > 0 ? `+${Math.round(totalDplus)} m` : '—'}</b>
+              <b>{totalDplus > 0 ? `+${Math.round(totalDplus)} m` : '0 m'}</b>
             </div>
             <div className="lkdv-carnet-kpi-mini">
               <small>Sorties</small>
               <b>{outingsCount}</b>
             </div>
           </div>
-          {canManageStoryPermissions && onToggleStoryPermission && (member.userId || member.id) ? (
-            <div className="club-glass-card" style={{ padding: '10px 12px' }}>
-              <Switch
-                checked={storyPermLocal}
-                disabled={storyPermBusy}
-                onCheckedChange={async (checked) => {
-                  setStoryPermLocal(checked);
-                  setStoryPermBusy(true);
-                  try {
-                    const ok = await onToggleStoryPermission(member.userId || member.id, checked);
-                    if (ok === false) {
-                      setStoryPermLocal(!checked);
-                      onToast({ title: 'Autorisation refusée' });
-                    } else {
-                      onToast({
-                        title: checked ? 'Habilité aux stories à la une ✓' : 'Habilitation stories retirée',
-                        subtitle: member.name,
-                      });
-                    }
-                  } finally {
-                    setStoryPermBusy(false);
-                  }
-                }}
-                label="Habilité aux stories à la une"
-                aria-label={`Autoriser ${member.name} à créer des stories à la une`}
-              />
-            </div>
-          ) : null}
           {photoPosts.length > 0 ? (
             <>
               <span className="lkdv-carnet-kit-eyebrow">

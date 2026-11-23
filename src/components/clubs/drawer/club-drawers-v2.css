@@ -29,6 +29,18 @@
   --btn-radius: 999px;
   --btn-font-size: 12.5px;
   --btn-font-weight: 600;
+  --lg-bar-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)), rgba(23, 29, 26, 0.76);
+  --lg-bar-blur: blur(28px) saturate(180%);
+  --lg-bar-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 1px rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.24), 0 0 0 4px rgba(251, 250, 246, 0.42);
+  --lg-ink: rgba(255, 255, 255, 0.85);
+  --lg-on: #d8f3de;
+  --lg-thumb-bg: rgba(255, 255, 255, 0.22);
+  --lg-thumb-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 1px 4px rgba(0, 0, 0, 0.16);
+  --cv2-menu-bg: rgba(255, 255, 255, 0.96);
+  --cv2-menu-blur: 24px;
+  --cv2-menu-shadow: 0 14px 36px rgba(16, 32, 25, 0.18);
+  --cv2-menu-border: rgba(23, 64, 44, 0.14);
+  --cv2-soft-line: rgba(23, 64, 44, 0.14);
   position: relative;
   display: flex;
   flex-direction: column;

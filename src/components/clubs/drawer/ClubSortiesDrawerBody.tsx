@@ -42,8 +42,7 @@ import type { ClubOutingData, ClubSortiesDrawerBodyProps } from './ClubDrawerTyp
 
 type OutingFilterId = 'all' | 'weekend' | 'carpool' | 'joined' | 'available';
 type OutingDetailLensId = 'overview' | 'carpool' | 'gear' | 'participants';
-type WeatherWindowId = 'morning' | 'afternoon' | 'weekend';
-type GpxFilterId = 'all' | 'high_dplus' | 'long_km';
+export type WeatherWindowId = 'morning' | 'afternoon' | 'weekend';
 
 interface CarpoolVehicle {
   id: string;
@@ -102,9 +101,10 @@ export function ClubSortiesDrawerBody({
   onFlyToCoords,
   onSwitchTab,
   onToast,
-  currentUserId,
-  initialSection = 'events',
-}: ClubSortiesDrawerBodyProps) {
+  weatherWindow: controlledWeatherWindow,
+}: ClubSortiesDrawerBodyProps & {
+  weatherWindow?: WeatherWindowId;
+}) {
   // D09 — Upcoming outings filter & search state
   const [outingFilter, setOutingFilter] = useState<OutingFilterId>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,8 +119,8 @@ export function ClubSortiesDrawerBody({
   const [newCarSeats, setNewCarSeats] = useState('3');
   const [showAddCarForm, setShowAddCarForm] = useState(false);
 
-  // D10 — Weather & terrain reports state
-  const [weatherWindow, setWeatherWindow] = useState<WeatherWindowId>('morning');
+  // D10 — Weather & terrain reports state (controlled from bottom-right SortMenuButton)
+  const weatherWindow = controlledWeatherWindow ?? 'morning';
   const [reportDraft, setReportDraft] = useState('');
   const [reportCategory, setReportCategory] = useState<TerrainReport['category']>('sentier');
   const [terrainReports, setTerrainReports] = useState<TerrainReport[]>([
@@ -142,29 +142,10 @@ export function ClubSortiesDrawerBody({
     },
   ]);
 
-  // D11 — GPX Archives filter state
-  const [gpxFilter, setGpxFilter] = useState<GpxFilterId>('all');
-  const [gpxSearch, setGpxSearch] = useState('');
-
   const upcomingOutings = useMemo(
     () => outings.filter((o) => o.status !== 'completed' && o.status !== 'cancelled'),
     [outings],
   );
-
-  const completedOutings = useMemo(() => {
-    const completed = outings.filter((o) => o.status === 'completed');
-    if (completed.length > 0) return completed;
-    // Provide synthetic archive entries derived from club outings when none are marked completed yet
-    return outings.slice(0, 3).map((o, idx) => ({
-      ...o,
-      id: `${o.id}-archive-${idx}`,
-      status: 'completed' as const,
-      date: idx === 0 ? 'Dim. dernier · Trace vérifiée' : 'Mois dernier · Archive GPX',
-      km: o.km || 16 + idx * 4,
-      dplus: o.dplus || 920 + idx * 240,
-      maxAlt: o.maxAlt || 2150 + idx * 180,
-    }));
-  }, [outings]);
 
   const filteredUpcoming = useMemo(() => {
     const q = normalizeText(searchQuery.trim());
@@ -184,16 +165,6 @@ export function ClubSortiesDrawerBody({
       return haystack.includes(q);
     });
   }, [upcomingOutings, outingFilter, searchQuery]);
-
-  const filteredArchives = useMemo(() => {
-    const q = normalizeText(gpxSearch.trim());
-    return completedOutings.filter((o) => {
-      if (gpxFilter === 'high_dplus' && (o.dplus || 0) < 1000) return false;
-      if (gpxFilter === 'long_km' && (o.km || 0) < 15) return false;
-      if (!q) return true;
-      return normalizeText(`${o.title} ${o.massif} ${o.leaderName}`).includes(q);
-    });
-  }, [completedOutings, gpxFilter, gpxSearch]);
 
   const upcomingKpis = useMemo(() => {
     const totalSeats = upcomingOutings.reduce((acc, o) => acc + Math.max(0, o.carpoolSeatsLeft || 0), 0);
@@ -763,30 +734,12 @@ export function ClubSortiesDrawerBody({
 
     return (
       <div className="club-drawer-pane-content" data-testid="club-weather-pane">
-        {/* Créneau météo */}
-        <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Créneau météo massif" style={{ marginBottom: 8 }}>
-          {(
-            [
-              { id: 'morning', label: 'Matin' },
-              { id: 'afternoon', label: 'Après-midi' },
-              { id: 'weekend', label: 'Week-end' },
-            ] as const
-          ).map((w) => {
-            const activeW = weatherWindow === w.id;
-            return (
-              <button
-                key={w.id}
-                type="button"
-                role="tab"
-                aria-selected={activeW}
-                className={`club-filter-pill ${activeW ? 'is-active' : ''}`}
-                onClick={() => setWeatherWindow(w.id)}
-              >
-                {activeW ? <span className="club-filter-pill-bg" /> : null}
-                <span className="club-filter-pill-label">{w.label}</span>
-              </button>
-            );
-          })}
+        {/* Créneau météo affiché en compact (filtre en bas à droite) */}
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#56665d', marginBottom: 6 }}>
+          Créneau :{' '}
+          <b style={{ color: '#172b24' }}>
+            {weatherWindow === 'morning' ? 'Matin' : weatherWindow === 'afternoon' ? 'Après-midi' : 'Week-end'}
+          </b>
         </div>
 
         {/* Altitude Thermal Etagement Card */}
@@ -946,154 +899,6 @@ export function ClubSortiesDrawerBody({
   }
 
   // ============================================================================
-  // D11 — 2.2 OUTINGS-GPX ("Archives, collections & traces GPX")
-  // ============================================================================
-  if (activeSubTab === 2) {
-    return (
-      <div className="club-drawer-pane-content" data-testid="club-outings-gpx-pane">
-        {/* Search & Filter strip */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, opacity: 0.55 }} aria-hidden="true" />
-            <input
-              type="text"
-              className="club-glass-input"
-              style={{ paddingLeft: 30, paddingRight: gpxSearch ? 28 : 10, width: '100%' }}
-              placeholder="Filtrer les traces GPX par sommet, massif, guide…"
-              aria-label="Rechercher une trace GPX"
-              value={gpxSearch}
-              onChange={(e) => setGpxSearch(e.target.value)}
-            />
-            {gpxSearch ? (
-              <button
-                type="button"
-                onClick={() => setGpxSearch('')}
-                aria-label="Effacer la recherche GPX"
-                style={{ position: 'absolute', right: 8, background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <X size={14} />
-              </button>
-            ) : null}
-          </div>
-          <ClubFilterPopoverButton<GpxFilterId>
-            value={gpxFilter}
-            defaultValue="all"
-            ariaLabel="Filtrer les traces GPX"
-            onChange={setGpxFilter}
-            options={[
-              { id: 'all', label: 'Toutes les traces', count: completedOutings.length },
-              {
-                id: 'high_dplus',
-                label: 'D+ ≥ 1 000 m',
-                count: completedOutings.filter((o) => (o.dplus || 0) >= 1000).length,
-              },
-              {
-                id: 'long_km',
-                label: 'Distance ≥ 15 km',
-                count: completedOutings.filter((o) => (o.km || 0) >= 15).length,
-              },
-            ]}
-          />
-        </div>
-
-        <div className="reseau-list">
-          {filteredArchives.length === 0 ? (
-            <ClubEmptyCard
-              icon={<Route size={22} />}
-              title="Aucune archive GPX ne correspond à ce filtre."
-              description="Réinitialisez le filtre pour afficher toutes les traces certifiées du club."
-            />
-          ) : (
-            <>
-              <div data-hscroll="true">
-                <CarnetHorizontalTimeline
-                  ariaLabel="Frise des archives GPX"
-                  groups={[
-                    {
-                      day: 1,
-                      groupLabel: 'Archives',
-                      events: filteredArchives.map((o) => ({
-                        id: o.id,
-                        day: 1,
-                        kind: 'perf',
-                        badge: 'Archive GPX',
-                        timeLabel: o.date || 'Archive',
-                        title: o.title,
-                        subtitle: [
-                          o.massif,
-                          o.km ? `${o.km} km` : null,
-                          o.dplus ? `+${o.dplus} m` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · '),
-                        onClick: () => onInspectOuting(o),
-                      })),
-                    },
-                  ]}
-                />
-              </div>
-
-              <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                {filteredArchives.map((o) => (
-                  <ClubStaggerCard
-                    key={o.id}
-                    className="li nt club-glass-card"
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
-                  >
-                    <div
-                      style={{ cursor: 'pointer', flex: 1 }}
-                      onClick={() => onInspectOuting(o)}
-                    >
-                      <div className="ttl">
-                        <b>{o.title}</b>
-                      </div>
-                      <div className="s2">
-                        📍 {o.massif} · {o.km} km · +{o.dplus} m D+ · Alt max {o.maxAlt} m
-                      </div>
-                      <div className="s2">
-                        Trace certifiée par <b>{o.leaderName}</b>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        type="button"
-                        className="reseau-btn active club-icon-pill"
-                        onClick={() => onFlyToCoords(o.lat, o.lng, o.title)}
-                        aria-label={`Centrer la carte sur ${o.title}`}
-                        title="Voir sur la carte 3D"
-                      >
-                        <MapPin size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="reseau-btn primary club-icon-pill"
-                        onClick={() => {
-                          onDownloadGpx(o);
-                          onToast?.({
-                            title: 'Trace GPX téléchargée',
-                            subtitle: `${o.title} (${o.km} km)`,
-                          });
-                        }}
-                        aria-label={`Télécharger GPX ${o.title}`}
-                        title="Télécharger le GPX"
-                      >
-                        <Download size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </ClubStaggerCard>
-                ))}
-              </ClubStaggerList>
-            </>
-          )}
-        </div>
-        {active ? (
-          <ClubG02Workspace clubId={activeClub.id} initialSection="collections" lockedSection />
-        ) : null}
-      </div>
-    );
-  }
-
-  // ============================================================================
   // D09 — 2.0 OUTINGS-UPCOMING ("Prochains départs & covoiturage" — Sorties Carnet)
   // ============================================================================
   return (
@@ -1160,33 +965,35 @@ export function ClubSortiesDrawerBody({
                 {
                   day: 1,
                   groupLabel: 'À venir',
-                  events: filteredUpcoming.map((o) => ({
-                    id: o.id,
-                    day: 1,
-                    kind: 'perf',
-                    badge:
-                      o.status === 'live'
-                        ? 'En direct 🔴'
-                        : o.rsvpJoined
-                          ? 'Inscrit ✓'
-                          : o.carpoolSeatsLeft > 0
-                            ? `Sortie · ${o.carpoolSeatsLeft} pl. covoit`
-                            : 'Sortie',
-                    timeLabel: o.date || 'À venir',
-                    title: o.title,
-                    subtitle: [
-                      o.massif,
-                      o.km ? `${o.km} km` : null,
-                      o.dplus ? `+${o.dplus} m` : null,
-                      o.carpoolCity ? `🚐 ${o.carpoolCity}` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · '),
-                    onClick: () => {
-                      setDetailLens('overview');
-                      onInspectOuting(o);
-                    },
-                  })),
+                  events: filteredUpcoming.map((o) => {
+                    const cleanTitle = o.title.replace(/\s*\([^)]*km[^)]*\)\s*$/i, '').trim();
+                    return {
+                      id: o.id,
+                      day: 1,
+                      kind: 'perf',
+                      badge:
+                        o.status === 'live'
+                          ? 'En direct 🔴'
+                          : o.rsvpJoined
+                            ? 'Inscrit ✓'
+                            : o.carpoolSeatsLeft > 0
+                              ? `Sortie · ${o.carpoolSeatsLeft} pl. covoit`
+                              : 'Sortie',
+                      timeLabel: o.date || 'À venir',
+                      title: cleanTitle || o.title,
+                      subtitle: [
+                        o.massif,
+                        o.km ? `${o.km} km` : null,
+                        o.dplus ? `+${o.dplus} m` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                      onClick: () => {
+                        setDetailLens('overview');
+                        onInspectOuting(o);
+                      },
+                    };
+                  }),
                 },
               ]}
             />

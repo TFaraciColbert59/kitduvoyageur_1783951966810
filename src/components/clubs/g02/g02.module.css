@@ -216,9 +216,9 @@
 }
 
 .primary {
-  border-color: var(--lkv-forest-900);
-  background: var(--lkv-forest-900);
-  color: var(--lkv-on-primary);
+  border-color: #17402c !important;
+  background: #17402c !important;
+  color: #ffffff !important;
   box-shadow: none;
 }
 

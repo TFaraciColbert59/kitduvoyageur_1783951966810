@@ -2,6 +2,14 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+    },
+  }),
+}));
 import { ClubSortiesDrawerBody } from '../ClubSortiesDrawerBody';
 import { ClubCoffreDrawerBody } from '../ClubCoffreDrawerBody';
 import { ClubCreateDrawerBody } from '../ClubCreateDrawerBody';
@@ -245,7 +253,7 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
     expect(screen.queryByText(/Tente MSR Hubba 2P/i)).toBeNull();
     expect(screen.getByText(/Réchaud Titane PocketRocket/i)).toBeTruthy();
 
-    // SubTab 1: Kits
+    // SubTab 1: Kits (KitCard canonique + Cloner)
     rerender(
       <ClubCoffreDrawerBody
         activeSubTab={1}
@@ -259,10 +267,13 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
         onToast={onToast}
       />,
     );
-    fireEvent.click(screen.getByLabelText('Voir le détail du kit'));
-    expect(screen.getByText('Composition détaillée du kit')).toBeTruthy();
+    expect(screen.getByText('Kit Bivouac 3 Saisons')).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Composition du kit' }));
+    fireEvent.click(screen.getByRole('button', { name: /Cloner ce kit/i }));
+    expect(onCloneStandardKit).toHaveBeenCalledWith('kit-1');
+    expect(onToast).toHaveBeenCalled();
 
-    // SubTab 2: Weight balancer
+    // SubTab 2: Challenges & Leaderboard
     rerender(
       <ClubCoffreDrawerBody
         activeSubTab={2}
@@ -276,8 +287,7 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
         onToast={onToast}
       />,
     );
-    fireEvent.click(screen.getByText('Équilibrer automatiquement'));
-    expect(onToast).toHaveBeenCalled();
+    expect(screen.getByTestId('club-vault-challenges-pane')).toBeTruthy();
   });
 
   it('D23–D27 & D38–D43: renders Create forms with live preview and Runtime Overlays without Tribu', () => {

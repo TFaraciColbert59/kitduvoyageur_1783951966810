@@ -5,10 +5,7 @@ import NumberFlow from '@number-flow/react';
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -42,6 +39,8 @@ import {
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
+import { KitCard } from '@/components/compte/drawer/cards/KitCard';
+import { mapClubStandardKitToKitEntry } from './clubKitAdapter';
 import { ClubEmptyCard, ClubFilterPopoverButton, normalizeSearchText } from './ClubSharedUi';
 import type {
   ClubChallengeItem,
@@ -72,6 +71,8 @@ export interface ClubStatsHubDrawerBodyProps {
   standardKits: ClubStandardKit[];
   challenges: ClubChallengeItem[];
   currentUserId?: string | null;
+  windowKey?: ClubStatsWindow;
+  onWindowChange?: (next: ClubStatsWindow) => void;
   onToggleJoinClub: (clubId: string) => Promise<boolean> | void;
   onInspectMember: (member: ClubMemberData) => void;
   onInspectOuting: (outing: ClubOutingData) => void;
@@ -412,7 +413,9 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     onToast,
   } = props;
 
-  const [windowKey, setWindowKey] = useState<ClubStatsWindow>('all');
+  const [localWindowKey, setLocalWindowKey] = useState<ClubStatsWindow>('all');
+  const windowKey = props.windowKey ?? localWindowKey;
+  const setWindowKey = props.onWindowChange ?? setLocalWindowKey;
   const [chartMetric, setChartMetric] = useState<ChartMetricId>('distanceKm');
   const [memberSearch, setMemberSearch] = useState('');
   const [memberSort, setMemberSort] = useState<MemberSortMetric>('distance');
@@ -560,27 +563,20 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     }
   };
 
-  // Shared top window selector + hierarchy pill
+  // Shared compact header (period filter is anchored bottom-right next to lenses)
+  const activeWindowLabel = WINDOW_OPTIONS.find((w) => w.id === windowKey)?.label ?? 'Tout';
   const renderTopControls = () => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-      <div className="club-filter-rail" role="tablist" aria-label="Période d’analyse des statistiques" style={{ flex: 1, minWidth: 0 }}>
-        {WINDOW_OPTIONS.map((w) => {
-          const isCur = windowKey === w.id;
-          return (
-            <button
-              key={w.id}
-              type="button"
-              role="tab"
-              aria-selected={isCur}
-              className={`club-filter-pill ${isCur ? 'is-active' : ''}`}
-              onClick={() => setWindowKey(w.id)}
-            >
-              {isCur ? <span className="club-filter-pill-bg" /> : null}
-              <span className="club-filter-pill-label">{w.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#56665d',
+          letterSpacing: '0.02em',
+        }}
+      >
+        Période : <b style={{ color: '#172b24' }}>{activeWindowLabel}</b>
+      </span>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
         <span
           style={{
@@ -859,67 +855,79 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
           </div>
         </div>
 
-        {/* Catégories du coffre (Recharts horizontal bar chart) */}
-        {kv.categories.length > 0 ? (
-          <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Package size={15} color="#17402c" aria-hidden="true" />
-                <b style={{ fontSize: 13, color: '#172b24' }}>Répartition du coffre matériel</b>
+        {/* Catégories du coffre — barre segmentée + lignes lisibles */}
+        {kv.categories.length > 0 ? (() => {
+          const totalItems = Math.max(1, kv.categories.reduce((acc, c) => acc + c.count, 0));
+          const maxCount = Math.max(1, ...kv.categories.map((c) => c.count));
+          return (
+            <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Package size={15} color="#17402c" aria-hidden="true" />
+                  <b style={{ fontSize: 13, color: '#172b24' }}>Répartition du coffre matériel</b>
+                </div>
+                <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>{kv.vaultItemsCount} pièces</span>
               </div>
-              <span style={{ fontSize: 11, color: '#56665d' }}>{kv.vaultItemsCount} pièces</span>
-            </div>
-            {hasRechartsEnv ? (
-              <div style={{ width: '100%', height: 156 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={kv.categories}
-                    layout="vertical"
-                    margin={{ top: 2, right: 14, left: 4, bottom: 2 }}
-                  >
-                    <XAxis type="number" hide />
-                    <YAxis
-                      type="category"
-                      dataKey="category"
-                      width={86}
-                      tick={{ fontSize: 11, fill: '#172b24' }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(23, 64, 44, 0.06)' }}
-                      contentStyle={{
-                        borderRadius: 12,
-                        border: '1px solid rgba(23, 64, 44, 0.14)',
-                        background: 'rgba(255, 255, 255, 0.96)',
-                        fontSize: 11.5,
-                      }}
-                      formatter={(val: number | string) => [`${val} pièces`, 'Coffre']}
-                    />
-                    <Bar dataKey="count" radius={[0, 8, 8, 0]} barSize={14}>
-                      {kv.categories.map((entry, idx) => (
-                        <Cell key={entry.category} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {kv.categories.map((cat) => (
-                  <div key={cat.category} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                    <span>{cat.category}</span>
-                    <b>{cat.count} pièces ({cat.totalWeightKg} kg)</b>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : null}
 
-        {/* Kits officiels proposés par le club */}
-        <div className="club-glass-card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Barre segmentée proportionnelle */}
+              <div
+                style={{
+                  display: 'flex',
+                  height: 10,
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  gap: 2,
+                  background: 'rgba(23, 64, 44, 0.06)',
+                }}
+                aria-hidden="true"
+              >
+                {kv.categories.map((cat, idx) => {
+                  const segPct = Math.max(4, Math.round((cat.count / totalItems) * 100));
+                  return (
+                    <div
+                      key={cat.category}
+                      style={{
+                        width: `${segPct}%`,
+                        background: CHART_COLORS[idx % CHART_COLORS.length],
+                        borderRadius: 999,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {kv.categories.map((cat, idx) => {
+                  const pct = Math.round((cat.count / totalItems) * 100);
+                  const barPct = Math.max(8, Math.round((cat.count / maxCount) * 100));
+                  const color = CHART_COLORS[idx % CHART_COLORS.length];
+                  return (
+                    <div key={cat.category} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, gap: 8 }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: 'none' }} />
+                          <b style={{ color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {cat.category}
+                          </b>
+                        </div>
+                        <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flex: 'none' }}>
+                          <b style={{ color: '#17402c' }}>{cat.count}</b> ({pct}%) · {cat.totalWeightKg} kg
+                        </span>
+                      </div>
+                      <div className="club-progress-track" style={{ height: 5 }}>
+                        <div className="club-progress-fill" style={{ width: `${barPct}%`, background: color }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })() : null}
+
+        {/* Kits officiels proposés par le club (KitCard canonique Profil/Carnet) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Backpack size={15} color="#17402c" aria-hidden="true" />
               <b style={{ fontSize: 13, color: '#172b24' }}>Kits proposés par le club</b>
@@ -939,7 +947,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                 gap: 3,
               }}
             >
-              <span>Cloner / voir</span>
+              <span>Voir dans le coffre</span>
               <ArrowUpRight size={13} aria-hidden="true" />
             </button>
           </div>
@@ -950,42 +958,23 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
               description="Les kits officiels du club apparaîtront ici dès leur création."
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {kv.officialKits.map((k) => {
-                const kg = (k.totalWeightG / 1000).toFixed(2).replace('.', ',');
-                const isUl = k.totalWeightG > 0 && k.totalWeightG <= 4500;
+                const matchedLocalKit = props.standardKits.find((sk) => sk.id === k.id || sk.title === k.title);
+                const entry = mapClubStandardKitToKitEntry({
+                  id: k.id,
+                  title: k.title,
+                  season: k.season,
+                  totalWeightG: k.totalWeightG,
+                  itemsCount: k.itemsCount,
+                  items: matchedLocalKit?.items ?? [],
+                });
                 return (
-                  <button
+                  <KitCard
                     key={k.id}
-                    type="button"
-                    onClick={() => onSwitchTabAndLens(3, 1)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 10,
-                      padding: '8px 10px',
-                      borderRadius: 14,
-                      border: 0,
-                      background: 'rgba(255, 255, 255, 0.72)',
-                      boxShadow: 'inset 0 0 0 0.5px rgba(23, 64, 44, 0.1)',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {k.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#56665d' }}>
-                        {k.season} · {k.itemsCount} pièces
-                      </div>
-                    </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flex: 'none' }}>
-                      {isUl ? <span className="club-badge-sage" style={{ fontSize: 9.5 }}>UL</span> : null}
-                      <b style={{ fontSize: 12, color: '#17402c', fontVariantNumeric: 'tabular-nums' }}>{kg} kg</b>
-                    </div>
-                  </button>
+                    kit={entry}
+                    viewer="visitor"
+                  />
                 );
               })}
             </div>

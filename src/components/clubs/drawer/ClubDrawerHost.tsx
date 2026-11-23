@@ -19,8 +19,6 @@ import {
   MessageSquarePlus,
   Package,
   PlusCircle,
-  Route,
-  Scale,
   ShieldCheck,
   TrendingUp,
   Trophy,
@@ -31,6 +29,8 @@ import {
   type DrawerTab,
 } from '@/components/compte/drawer/shell/DrawerShell';
 import { SlotShell } from '@/components/compte/drawer/SlotShell';
+import { KIT_CARD_CSS } from '@/components/compte/drawer/cards/KitCard';
+import { SortMenuButton } from '@/components/ui/drawer/SortMenuButton';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
 import { useDragDismiss } from '@/hooks/gestures/useDragDismiss';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
@@ -40,9 +40,10 @@ import { ClubMotionRoot, LensTransition } from './ClubDrawerMotion';
 import { useClubDialog } from './useClubDialog';
 import { ClubIsland, type ClubIslandToast } from './ClubIsland';
 import { ClubStatsHubDrawerBody } from './ClubStatsHubDrawerBody';
+import type { ClubStatsWindow } from './clubStatsTypes';
 import { ClubCordeeDrawerBody } from './ClubCordeeDrawerBody';
-import { ClubSortiesDrawerBody } from './ClubSortiesDrawerBody';
-import { ClubCoffreDrawerBody } from './ClubCoffreDrawerBody';
+import { ClubSortiesDrawerBody, type WeatherWindowId } from './ClubSortiesDrawerBody';
+import { ClubCoffreDrawerBody, type KitSeasonFilter } from './ClubCoffreDrawerBody';
 import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
@@ -146,6 +147,9 @@ export function ClubDrawerHost({
   const [chatDraftPrefill, setChatDraftPrefill] = useState('');
   const [createPrefillMassif, setCreatePrefillMassif] = useState<string | undefined>(undefined);
   const [localToast, setLocalToast] = useState<ClubIslandToast | null>(null);
+  const [statsWindow, setStatsWindow] = useState<ClubStatsWindow>('all');
+  const [weatherWindow, setWeatherWindow] = useState<WeatherWindowId>('morning');
+  const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
 
   const emitToast = useCallback(
     (payload: ClubToastPayload) => {
@@ -401,12 +405,10 @@ export function ClubDrawerHost({
       2: [
         { id: 'outings-upcoming', label: 'Prochains départs et covoiturage', icon: <Calendar size={15} aria-hidden="true" /> },
         { id: 'outings-weather', label: 'Météo et conditions massif', icon: <CloudSun size={15} aria-hidden="true" /> },
-        { id: 'outings-gpx', label: 'Archives, collections & traces GPX', icon: <Route size={15} aria-hidden="true" /> },
       ],
       3: [
         { id: 'vault-items', label: 'Équipements prêtables du coffre', icon: <Package size={15} aria-hidden="true" /> },
         { id: 'vault-kits', label: 'Kits types du club', icon: <Backpack size={15} aria-hidden="true" /> },
-        { id: 'vault-weight', label: 'Répartition poids de cordée', icon: <Scale size={15} aria-hidden="true" /> },
         { id: 'vault-challenges', label: 'Défis & classements', icon: <Trophy size={15} aria-hidden="true" /> },
       ],
       4: [
@@ -439,6 +441,56 @@ export function ClubDrawerHost({
   const activeSecondaryItems = secondaryByTab[tab] ?? [];
   const activeLensIndex = tab === 1 && inspectedMember ? memberLensIndex : currentSub;
   const activeLensId = activeSecondaryItems[activeLensIndex]?.id ?? 'stats-perf';
+
+  const bottomRightFilterNode = useMemo(() => {
+    if (tab === 0) {
+      return (
+        <SortMenuButton
+          label="Filtrer la période"
+          value={statsWindow}
+          defaultValue="all"
+          onChange={(val) => setStatsWindow(val as ClubStatsWindow)}
+          options={[
+            { value: '7d', label: '7 derniers jours' },
+            { value: '30d', label: '30 derniers jours' },
+            { value: 'season', label: 'Saison en cours' },
+            { value: 'all', label: 'Depuis toujours' },
+          ]}
+        />
+      );
+    }
+    if (tab === 2 && activeLensIndex === 1 && !inspectedOuting) {
+      return (
+        <SortMenuButton
+          label="Filtrer le créneau météo"
+          value={weatherWindow}
+          defaultValue="morning"
+          onChange={(val) => setWeatherWindow(val as WeatherWindowId)}
+          options={[
+            { value: 'morning', label: 'Matin' },
+            { value: 'afternoon', label: 'Après-midi' },
+            { value: 'weekend', label: 'Week-end' },
+          ]}
+        />
+      );
+    }
+    if (tab === 3 && activeLensIndex === 1) {
+      return (
+        <SortMenuButton
+          label="Filtrer les kits par saison"
+          value={kitSeason}
+          defaultValue="all"
+          onChange={(val) => setKitSeason(val as KitSeasonFilter)}
+          options={[
+            { value: 'all', label: 'Toutes saisons' },
+            { value: 'summer', label: 'Été · 3 saisons' },
+            { value: 'winter', label: 'Hiver · Alpi' },
+          ]}
+        />
+      );
+    }
+    return null;
+  }, [activeLensIndex, inspectedOuting, kitSeason, statsWindow, tab, weatherWindow]);
 
   useEffect(() => {
     onTabChange?.(tab, activeLensId);
@@ -662,6 +714,7 @@ export function ClubDrawerHost({
         data-outdoor={isOutdoor ? 'true' : undefined}
         data-reduce-motion={reduceMotion ? 'true' : undefined}
       >
+        <style dangerouslySetInnerHTML={{ __html: KIT_CARD_CSS }} />
         {onClose ? (
           <button
             type="button"
@@ -731,11 +784,18 @@ export function ClubDrawerHost({
                   if (normN && (nn === normN || hh === normN)) return true;
                   return false;
                 };
-                const mPostsCount = posts.filter((p) => isMemberMatch(p.authorHandle, p.authorName)).length;
-                const mOutingsCount =
-                  inspectedMember.outingsCount ??
-                  outings.filter((o) => isMemberMatch(o.leaderHandle, o.leaderName)).length;
-                const mGearCount = vaultGear.filter((g) => isMemberMatch(g.ownerHandle, g.ownerName)).length;
+                const mPostsCount = Math.max(
+                  inspectedMember.postsCount ?? 0,
+                  posts.filter((p) => isMemberMatch(p.authorHandle, p.authorName)).length,
+                );
+                const mOutingsCount = Math.max(
+                  inspectedMember.outingsCount ?? 0,
+                  outings.filter((o) => isMemberMatch(o.leaderHandle, o.leaderName)).length,
+                );
+                const mGearCount = Math.max(
+                  inspectedMember.gearCount ?? 0,
+                  vaultGear.filter((g) => isMemberMatch(g.ownerHandle, g.ownerName)).length,
+                );
                 const handleLabel = inspectedMember.handle
                   ? `@${inspectedMember.handle.replace(/^@/, '')}`
                   : '';
@@ -832,6 +892,7 @@ export function ClubDrawerHost({
               })() : null}
             </div>
           }
+          bottomRightFilter={bottomRightFilterNode}
           renderLens={(lens, index, active) => (
             <div className="lkdv-carnet-drawer-pane">
               {tab === 0 ? (
@@ -846,6 +907,8 @@ export function ClubDrawerHost({
                   standardKits={standardKits}
                   challenges={challenges}
                   currentUserId={currentUserId}
+                  windowKey={statsWindow}
+                  onWindowChange={setStatsWindow}
                   onToggleJoinClub={onToggleJoinClub}
                   onInspectMember={(m) => pushMember(m, index)}
                   onInspectOuting={(o) => pushOuting(o, index)}
@@ -910,6 +973,7 @@ export function ClubDrawerHost({
                   onOpenRuntimeOverlay={onOpenRuntimeOverlay}
                   currentUserId={currentUserId}
                   initialSection={g02Section ?? 'events'}
+                  weatherWindow={weatherWindow}
                 />
               ) : null}
 
@@ -921,6 +985,7 @@ export function ClubDrawerHost({
                   standardKits={standardKits}
                   members={members}
                   outings={outings}
+                  kitSeason={kitSeason}
                   onToggleReserveGear={onToggleReserveGear}
                   onCloneStandardKit={onCloneStandardKit}
                   onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}

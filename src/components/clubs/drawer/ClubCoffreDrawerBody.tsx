@@ -7,25 +7,20 @@ import { generatedProductImage } from '@/components/compte/drawer/cards/productI
 import type { PickerProduct } from '@/features/community/create/kit/types';
 import {
   Check,
-  ChevronDown,
-  ChevronUp,
   Copy,
   Eye,
   Layers,
   Package,
-  Plus,
-  RefreshCw,
-  Scale,
   Search,
-  Sparkles,
   X,
 } from 'lucide-react';
+import { KitCard } from '@/components/compte/drawer/cards/KitCard';
 import {
-  AnimatedNumber,
   ClubStaggerCard,
   ClubStaggerList,
 } from './ClubDrawerMotion';
 import { ClubEmptyCard, ClubFilterPopoverButton } from './ClubSharedUi';
+import { mapClubStandardKitToKitEntry } from './clubKitAdapter';
 import type { ClubCoffreDrawerBodyProps } from './ClubDrawerTypes';
 import { ClubG02Workspace } from '../g02';
 
@@ -35,14 +30,7 @@ const KitProductSheetV2 = dynamic(
 );
 
 type VaultFilterId = 'all' | 'available' | 'mine' | 'light';
-type KitSeasonFilter = 'all' | 'summer' | 'winter';
-
-interface CollectiveLoadItem {
-  key: string;
-  name: string;
-  weightG: number;
-  category: string;
-}
+export type KitSeasonFilter = 'all' | 'summer' | 'winter';
 
 function resolveGearProductImage(name: string, category: string, imageUrl?: string): string {
   if (imageUrl) return imageUrl;
@@ -84,46 +72,20 @@ export function ClubCoffreDrawerBody({
   vaultGear,
   standardKits,
   members,
+  kitSeason: controlledKitSeason,
   onToggleReserveGear,
   onCloneStandardKit,
-  onSwitchToCreate,
   onToast,
-}: ClubCoffreDrawerBodyProps) {
+}: ClubCoffreDrawerBodyProps & {
+  kitSeason?: KitSeasonFilter;
+}) {
   // D16 — Vault items search & filter state
   const [vaultSearch, setVaultSearch] = useState('');
   const [vaultFilter, setVaultFilter] = useState<VaultFilterId>('all');
   const [visibleVaultCount, setVisibleVaultCount] = useState(35);
   const [selectedGearIndex, setSelectedGearIndex] = useState<number | null>(null);
 
-  // D17 — Standard kits filter & expanded card state
-  const [kitSeason, setKitSeason] = useState<KitSeasonFilter>('all');
-  const [expandedKitIds, setExpandedKitIds] = useState<Record<string, boolean>>({});
-
-  // D18 — Collective weight splitter state
-  const carrierList = useMemo(() => {
-    const fromMembers = members.slice(0, 4).map((m) => `${m.name} (@${m.handle})`);
-    return fromMembers.length >= 2
-      ? fromMembers
-      : ['Tony (@tony_frc)', 'Léa (@lea.fontaine)', 'Marc (@marc_alpi)', 'Clara (@clara.bivouac)'];
-  }, [members]);
-
-  const [collectiveItems, setCollectiveItems] = useState<CollectiveLoadItem[]>([
-    { key: 'tente', name: 'Abri / Tente 3P', weightG: 1720, category: 'Bivouac' },
-    { key: 'rechaud', name: 'Réchaud + Popote Titane', weightG: 310, category: 'Cuisine' },
-    { key: 'corde', name: 'Corde Rando 30 m', weightG: 890, category: 'Sécurité' },
-    { key: 'secours', name: 'Pharmacie & Bivouac Urgence', weightG: 420, category: 'Secours' },
-  ]);
-
-  const [cordeeCarrier, setCordeeCarrier] = useState<Record<string, string>>({
-    tente: 'Tony (@tony_frc)',
-    rechaud: 'Léa (@lea.fontaine)',
-    corde: 'Marc (@marc_alpi)',
-    secours: 'Clara (@clara.bivouac)',
-  });
-
-  const [newColName, setNewColName] = useState('');
-  const [newColWeight, setNewColWeight] = useState('450');
-  const [showAddCollective, setShowAddCollective] = useState(false);
+  const kitSeason = controlledKitSeason ?? 'all';
 
   const filteredVault = useMemo(() => {
     const q = normalizeText(vaultSearch.trim());
@@ -146,35 +108,11 @@ export function ClubCoffreDrawerBody({
   }, [standardKits, kitSeason]);
 
   // ============================================================================
-  // D17 — 3.1 VAULT-KITS ("Kits types du club")
+  // D17 — 3.1 VAULT-KITS ("Kits types du club") — KitCard canonique Profil/Carnet
   // ============================================================================
   if (activeSubTab === 1) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-vault-kits-pane">
-        <div className="club-filter-rail" data-hscroll="true" role="tablist" aria-label="Filtrer les kits par saison" style={{ marginBottom: 8 }}>
-          {(
-            [
-              { id: 'all', label: 'Toutes saisons' },
-              { id: 'summer', label: 'Été · 3 saisons' },
-              { id: 'winter', label: 'Hiver · Alpi' },
-            ] as const
-          ).map((opt) => {
-            const activeSeason = kitSeason === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                role="tab"
-                aria-selected={activeSeason}
-                className={`club-filter-pill ${activeSeason ? 'is-active' : ''}`}
-                onClick={() => setKitSeason(opt.id)}
-              >
-                {activeSeason ? <span className="club-filter-pill-bg" /> : null}
-                <span className="club-filter-pill-label">{opt.label}</span>
-              </button>
-            );
-          })}
-        </div>
         {filteredKits.length === 0 ? (
           <ClubEmptyCard
             icon={<Layers size={22} />}
@@ -182,84 +120,33 @@ export function ClubCoffreDrawerBody({
             description="Les kits types préparés par les encadrants apparaîtront ici."
           />
         ) : (
-          <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filteredKits.map((k) => {
-              const isExpanded = Boolean(expandedKitIds[k.id]);
               const kgLabel = (k.totalWeightG / 1000).toFixed(1);
-              const perItemWeight = Math.round(k.totalWeightG / Math.max(1, k.items.length));
-
+              const entry = mapClubStandardKitToKitEntry(k);
               return (
                 <ClubStaggerCard
                   key={k.id}
-                  className="li nt club-outing-row club-glass-card"
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                    <div>
-                      <div className="ttl">
-                        <b>{k.title}</b> · <span className="club-badge-sage">{kgLabel} kg</span>
-                      </div>
-                      <div className="s2">
-                        {k.season} · {k.items.length} pièces · {k.items.join(' · ')}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button
-                        type="button"
-                        className="reseau-btn active club-icon-pill"
-                        onClick={() =>
-                          setExpandedKitIds((prev) => ({
-                            ...prev,
-                            [k.id]: !prev[k.id],
-                          }))
-                        }
-                        aria-label={isExpanded ? 'Masquer le détail du kit' : 'Voir le détail du kit'}
-                        title={isExpanded ? 'Masquer le détail' : 'Détail des pièces'}
-                      >
-                        {isExpanded ? <ChevronUp size={15} aria-hidden="true" /> : <ChevronDown size={15} aria-hidden="true" />}
-                      </button>
-                      <button
-                        type="button"
-                        className={`reseau-btn ${k.cloned ? 'active' : 'primary'} club-icon-pill`}
-                        onClick={() => {
-                          onCloneStandardKit(k.id);
-                          onToast?.({
-                            title: k.cloned ? 'Kit mis à jour dans votre Carnet' : 'Kit cloné dans votre Carnet ✓',
-                            subtitle: `${k.title} (${kgLabel} kg)`,
-                          });
-                        }}
-                        aria-label={k.cloned ? 'Cloné' : 'Cloner'}
-                        title={k.cloned ? 'Cloné' : 'Cloner'}
-                      >
-                        {k.cloned ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {isExpanded ? (
-                    <div
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: 14,
-                        background: 'rgba(23,64,44,0.04)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 6,
+                  <KitCard kit={entry} viewer="visitor" />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 4px' }}>
+                    <button
+                      type="button"
+                      className={k.cloned ? 'lkdv-carnet-btn-soft' : 'lkdv-carnet-btn-primary'}
+                      style={{ height: 30, fontSize: 11.5, padding: '0 12px' }}
+                      onClick={() => {
+                        onCloneStandardKit(k.id);
+                        onToast?.({
+                          title: k.cloned ? 'Kit mis à jour dans votre Carnet' : 'Kit cloné dans votre Carnet ✓',
+                          subtitle: `${k.title} (${kgLabel} kg)`,
+                        });
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
-                        <b>Composition détaillée du kit</b>
-                        <span>Poids moyen ~{perItemWeight} g / pièce</span>
-                      </div>
-                      <div className="club-skill-tags">
-                        {k.items.map((item, idx) => (
-                          <span key={idx} className="club-skill-tag">
-                            ✓ {item} (~{perItemWeight} g)
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                      {k.cloned ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+                      <span>{k.cloned ? 'Cloné dans mon Carnet' : 'Cloner ce kit'}</span>
+                    </button>
+                  </div>
                 </ClubStaggerCard>
               );
             })}
@@ -270,169 +157,9 @@ export function ClubCoffreDrawerBody({
   }
 
   // ============================================================================
-  // D18 — 3.2 VAULT-WEIGHT ("Répartition poids de cordée")
+  // D18b — 3.2 VAULT-CHALLENGES ("Défis & classements")
   // ============================================================================
   if (activeSubTab === 2) {
-    const totalWeightG = collectiveItems.reduce((acc, it) => acc + it.weightG, 0);
-    const totalKgLabel = (totalWeightG / 1000).toFixed(2).replace('.', ',');
-
-    const loadByCarrier: Record<string, number> = {};
-    carrierList.forEach((c) => {
-      loadByCarrier[c] = 0;
-    });
-    collectiveItems.forEach((it) => {
-      const assigned = cordeeCarrier[it.key] || carrierList[0];
-      loadByCarrier[assigned] = (loadByCarrier[assigned] ?? 0) + it.weightG;
-    });
-
-    const autoBalanceCordee = () => {
-      const sorted = [...collectiveItems].sort((a, b) => b.weightG - a.weightG);
-      const buckets = carrierList.map((name) => ({ name, load: 0 }));
-      const nextAssignment: Record<string, string> = {};
-      sorted.forEach((item) => {
-        buckets.sort((a, b) => a.load - b.load);
-        nextAssignment[item.key] = buckets[0].name;
-        buckets[0].load += item.weightG;
-      });
-      setCordeeCarrier(nextAssignment);
-      onToast?.({
-        title: 'Charge collective équilibrée ✓',
-        subtitle: `${totalKgLabel} kg répartis sur ${carrierList.length} membres`,
-      });
-    };
-
-    return (
-      <div className="club-drawer-pane-content" data-testid="club-vault-weight-pane">
-        {/* Actions bar: Auto-balance + Add collective item */}
-        <div className="club-form-pills" style={{ marginBottom: 8 }}>
-          <button
-            type="button"
-            className="reseau-btn primary"
-            onClick={autoBalanceCordee}
-          >
-            <Scale size={14} aria-hidden="true" />
-            <span>Équilibrer automatiquement</span>
-          </button>
-          <button
-            type="button"
-            className="reseau-btn active"
-            onClick={() => setShowAddCollective((v) => !v)}
-          >
-            <Plus size={14} aria-hidden="true" />
-            <span>{showAddCollective ? 'Fermer' : 'Ajouter une pièce'}</span>
-          </button>
-        </div>
-
-        {showAddCollective ? (
-          <form
-            className="li nt club-glass-card"
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 8, marginBottom: 8 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newColName.trim()) return;
-              const weightG = Math.max(50, Number(newColWeight) || 400);
-              const key = `col-${Date.now()}`;
-              setCollectiveItems((prev) => [
-                ...prev,
-                { key, name: newColName.trim(), weightG, category: 'Collectif' },
-              ]);
-              setCordeeCarrier((prev) => ({
-                ...prev,
-                [key]: carrierList[collectiveItems.length % carrierList.length],
-              }));
-              setNewColName('');
-              setShowAddCollective(false);
-              onToast?.({
-                title: 'Pièce collective ajoutée',
-                subtitle: `${newColName.trim()} (${weightG} g)`,
-              });
-            }}
-          >
-            <div className="club-form-grid-2">
-              <input
-                type="text"
-                className="club-glass-input"
-                placeholder="Nom de la pièce (ex : Filtre eau)"
-                aria-label="Nom de la pièce collective"
-                value={newColName}
-                onChange={(e) => setNewColName(e.target.value)}
-              />
-              <input
-                type="number"
-                className="club-glass-input"
-                placeholder="Poids (g)"
-                aria-label="Poids en grammes"
-                value={newColWeight}
-                onChange={(e) => setNewColWeight(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="reseau-btn primary">
-              Ajouter à la charge de cordée
-            </button>
-          </form>
-        ) : null}
-
-        {/* Per-carrier load summary card */}
-        <div
-          className="li nt club-glass-card"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6, marginBottom: 8 }}
-        >
-          <b style={{ fontSize: 12.5, color: '#172b24' }}>Charge portée par membre</b>
-          {Object.entries(loadByCarrier).map(([carrierName, grams]) => {
-            const pct = Math.min(100, Math.round((grams / Math.max(1, totalWeightG)) * 100));
-            return (
-              <div key={carrierName} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <div className="s2" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{carrierName}</span>
-                  <b>{grams} g ({pct}%)</b>
-                </div>
-                <div className="club-progress-track">
-                  <div className="club-progress-fill" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {collectiveItems.map((item) => {
-          const assigned = cordeeCarrier[item.key] || carrierList[0];
-          return (
-            <div key={item.key} className="li nt club-glass-card">
-              <div>
-                <div className="ttl">
-                  <span>
-                    {item.name} ({item.weightG.toLocaleString('fr-FR')} g)
-                  </span>
-                </div>
-                <div className="s2">
-                  Porté par : <b>{assigned}</b>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="reseau-btn active club-icon-pill"
-                onClick={() => {
-                  const cur = cordeeCarrier[item.key] || carrierList[0];
-                  const idx = carrierList.indexOf(cur);
-                  const next = carrierList[(idx + 1) % carrierList.length];
-                  setCordeeCarrier((prev) => ({ ...prev, [item.key]: next }));
-                }}
-                aria-label="Changer"
-                title="Changer de porteur"
-              >
-                <RefreshCw size={16} aria-hidden="true" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  // ============================================================================
-  // D18b — 3.3 VAULT-CHALLENGES ("Défis & classements")
-  // ============================================================================
-  if (activeSubTab === 3) {
     return (
       <div className="club-drawer-pane-content" data-testid="club-vault-challenges-pane">
         <ClubG02Workspace clubId={activeClub.id} initialSection="challenges" lockedSection />

@@ -1145,7 +1145,7 @@
   justify-content: space-between;
   width: 100%;
   min-width: 0;
-  padding: 14px 16px;
+  padding: 16px 18px !important;
   gap: 8px;
   border-radius: 20px;
   box-sizing: border-box;
@@ -1222,8 +1222,8 @@
   justify-content: space-between;
   gap: 8px;
   min-width: 0;
-  padding: 0 2px;
-  margin-top: 6px;
+  padding: 4px 2px 2px !important;
+  margin-top: 8px !important;
 }
 
 .lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2-meta {
@@ -1318,12 +1318,22 @@
 
 .lkdv-club-carnet-drawer .lkdv-carnet-hcard-body,
 .lkdv-club-carnet-drawer .lkdv-carnet-hcard-text,
-.lkdv-club-carnet-drawer .lkdv-carnet-hcard-text b,
 .lkdv-club-carnet-drawer .lkdv-carnet-hcard-text p {
   min-width: 0;
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.lkdv-club-carnet-drawer .lkdv-carnet-hcard-text b {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 11.5px !important;
+  line-height: 1.25;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .lkdv-club-carnet-drawer .lkdv-club-member-hero-card .lkdv-cv2x-member-cta {
