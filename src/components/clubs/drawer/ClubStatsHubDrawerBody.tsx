@@ -436,6 +436,8 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const [visibleMembersCount, setVisibleMembersCount] = useState(20);
   const [savingStoryPermId, setSavingStoryPermId] = useState<string | null>(null);
   const kitsPaneRef = useRef<HTMLDivElement | null>(null);
+  const kitsScrollRef = useRef<HTMLDivElement | null>(null);
+  const kitsTouchYRef = useRef<number | null>(null);
   const [kitsCompact, setKitsCompact] = useState(false);
   const eventsScrollRef = useRef<HTMLDivElement | null>(null);
   const eventsTouchYRef = useRef<number | null>(null);
@@ -971,6 +973,27 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   // ============================================================================
   if (activeSubTab === 2) {
     const kv = stats.kitsAndVault;
+    const forwardKitsHeaderWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+      const scroller = kitsScrollRef.current;
+      if (!scroller) return;
+      scroller.scrollTop += e.deltaY;
+      const top = scroller.scrollTop;
+      setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+    };
+    const forwardKitsHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+      kitsTouchYRef.current = e.touches[0]?.clientY ?? null;
+    };
+    const forwardKitsHeaderTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+      const scroller = kitsScrollRef.current;
+      const lastY = kitsTouchYRef.current;
+      const nextY = e.touches[0]?.clientY;
+      if (!scroller || lastY == null || nextY == null) return;
+      const deltaY = lastY - nextY;
+      kitsTouchYRef.current = nextY;
+      scroller.scrollTop += deltaY;
+      const top = scroller.scrollTop;
+      setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+    };
     return (
       <div
         ref={kitsPaneRef}
@@ -986,21 +1009,28 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
           gap: 10,
         }}
       >
-        <div style={{ flex: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div
+          style={{ flex: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}
+          onWheel={forwardKitsHeaderWheel}
+          onTouchStart={forwardKitsHeaderTouchStart}
+          onTouchMove={forwardKitsHeaderTouchMove}
+        >
           {renderTopControls()}
 
-          {/* Catégories du coffre — fixe en haut, se réduit au scroll du contenu dessous */}
+          {/* Catégories du coffre — fixe en haut, barre segmentée + détail disparaissent au scroll */}
           {kv.categories.length > 0 ? (() => {
             const totalItems = Math.max(1, kv.categories.reduce((acc, c) => acc + c.count, 0));
             const maxCount = Math.max(1, ...kv.categories.map((c) => c.count));
             return (
               <div
                 className="club-glass-card"
+                onClick={() => kitsCompact && setKitsCompact(false)}
                 style={{
                   padding: kitsCompact ? '8px 12px' : 12,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: kitsCompact ? 6 : 10,
+                  gap: kitsCompact ? 0 : 10,
+                  cursor: kitsCompact ? 'pointer' : 'default',
                   transition: 'padding 0.18s ease, gap 0.18s ease',
                 }}
               >
@@ -1012,60 +1042,61 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                   <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>{kv.vaultItemsCount} pièces</span>
                 </div>
 
-                {/* Barre segmentée proportionnelle */}
-                <div
-                  style={{
-                    display: 'flex',
-                    height: kitsCompact ? 6 : 10,
-                    borderRadius: 999,
-                    overflow: 'hidden',
-                    gap: 2,
-                    background: 'rgba(23, 64, 44, 0.06)',
-                    transition: 'height 0.18s ease',
-                  }}
-                  aria-hidden="true"
-                >
-                  {kv.categories.map((cat, idx) => {
-                    const segPct = Math.max(4, Math.round((cat.count / totalItems) * 100));
-                    return (
-                      <div
-                        key={cat.category}
-                        style={{
-                          width: `${segPct}%`,
-                          background: CHART_COLORS[idx % CHART_COLORS.length],
-                          borderRadius: 999,
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-
                 {!kitsCompact ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    {kv.categories.map((cat, idx) => {
-                      const pct = Math.round((cat.count / totalItems) * 100);
-                      const barPct = Math.max(8, Math.round((cat.count / maxCount) * 100));
-                      const color = CHART_COLORS[idx % CHART_COLORS.length];
-                      return (
-                        <div key={cat.category} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, gap: 8 }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: 'none' }} />
-                              <b style={{ color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {cat.category}
-                              </b>
+                  <>
+                    {/* Barre segmentée proportionnelle */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        height: 10,
+                        borderRadius: 999,
+                        overflow: 'hidden',
+                        gap: 2,
+                        background: 'rgba(23, 64, 44, 0.06)',
+                      }}
+                      aria-hidden="true"
+                    >
+                      {kv.categories.map((cat, idx) => {
+                        const segPct = Math.max(4, Math.round((cat.count / totalItems) * 100));
+                        return (
+                          <div
+                            key={cat.category}
+                            style={{
+                              width: `${segPct}%`,
+                              background: CHART_COLORS[idx % CHART_COLORS.length],
+                              borderRadius: 999,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      {kv.categories.map((cat, idx) => {
+                        const pct = Math.round((cat.count / totalItems) * 100);
+                        const barPct = Math.max(8, Math.round((cat.count / maxCount) * 100));
+                        const color = CHART_COLORS[idx % CHART_COLORS.length];
+                        return (
+                          <div key={cat.category} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11.5, gap: 8 }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flex: 'none' }} />
+                                <b style={{ color: '#172b24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {cat.category}
+                                </b>
+                              </div>
+                              <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flex: 'none' }}>
+                                <b style={{ color: '#17402c' }}>{cat.count}</b> ({pct}%) · {cat.totalWeightKg} kg
+                              </span>
                             </div>
-                            <span style={{ color: '#56665d', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flex: 'none' }}>
-                              <b style={{ color: '#17402c' }}>{cat.count}</b> ({pct}%) · {cat.totalWeightKg} kg
-                            </span>
+                            <div className="club-progress-track" style={{ height: 5 }}>
+                              <div className="club-progress-fill" style={{ width: `${barPct}%`, background: color }} />
+                            </div>
                           </div>
-                          <div className="club-progress-track" style={{ height: 5 }}>
-                            <div className="club-progress-fill" style={{ width: `${barPct}%`, background: color }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 ) : null}
               </div>
             );
@@ -1074,7 +1105,11 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
 
         {/* Zone scrollable indépendante sous l'en-tête fixe */}
         <div
-          onScroll={(e) => setKitsCompact(e.currentTarget.scrollTop > 18)}
+          ref={kitsScrollRef}
+          onScroll={(e) => {
+            const top = e.currentTarget.scrollTop;
+            setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+          }}
           style={{
             flex: '1 1 0',
             minHeight: 0,
