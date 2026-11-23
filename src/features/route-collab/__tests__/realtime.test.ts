@@ -64,7 +64,7 @@ describe('8.8 Broadcast : canal, présence, version', () => {
     const statuses: RealtimeStatus[] = [];
     openRouteRealtime(f.client, 'ws-1', { onPresence: () => {}, onVersion: () => {}, onStatus: (s) => statuses.push(s) });
     expect(routeChannelName('ws-1')).toBe('route:ws-1');
-    expect(f.opened).toEqual([{ name: 'route:ws-1', opts: { config: { broadcast: { self: false } } } }]);
+    expect(f.opened).toEqual([{ name: 'route:ws-1', opts: { config: { private: true, broadcast: { self: false } } } }]);
     // jamais postgres_changes : tous les abonnements sont de type broadcast
     expect(f.types).toEqual(['broadcast', 'broadcast']);
     expect([...f.handlers.keys()].sort()).toEqual([ROUTE_PRESENCE_EVENT, ROUTE_VERSION_EVENT].sort());

@@ -14,8 +14,10 @@
 BEGIN;
 SET LOCAL search_path = public;
 -- Replay local : lecture par défaut Supabase (la sécurité repose sur RLS + RPC ; aucune écriture directe accordée).
+-- (route_workspaces n'y figure PAS : son SELECT est accordé colonne par colonne par la migration, sans
+-- share_token_hash ; un GRANT de table ici le masquerait.)
 GRANT SELECT ON
-  public.route_workspaces, public.route_workspace_members, public.route_operations,
+  public.route_workspace_members, public.route_operations,
   public.route_revisions, public.departure_packs TO authenticated;
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 -- Supabase : le schéma `extensions` (pgcrypto) est utilisable par les rôles API.
@@ -33,10 +35,43 @@ CREATE FUNCTION public.rc_snap(p_id uuid, p_rev bigint) RETURNS jsonb LANGUAGE s
     'stages', COALESCE(w.state_snapshot -> 'stages', '[]'::jsonb),
     'kitSnapshot', COALESCE(w.state_snapshot -> 'kitItems', '[]'::jsonb))
   FROM public.route_workspaces w WHERE w.id = p_id $$;
+-- Empreinte du jeton de partage (colonne illisible pour les clients : lecture réservée à ce helper).
+CREATE FUNCTION public.rc_hash(p_id uuid) RETURNS text LANGUAGE sql SECURITY DEFINER AS
+  $$ SELECT share_token_hash FROM public.route_workspaces WHERE id = p_id $$;
+-- Distance haversine de référence (oracle de test, indépendant de la migration).
+CREATE FUNCTION public.rc_hav(p_lat1 float8, p_lon1 float8, p_lat2 float8, p_lon2 float8) RETURNS float8 LANGUAGE sql IMMUTABLE AS
+  $$ SELECT 2 * 6371000 * asin(least(1, sqrt(power(sin(radians(p_lat2 - p_lat1) / 2), 2)
+       + cos(radians(p_lat1)) * cos(radians(p_lat2)) * power(sin(radians(p_lon2 - p_lon1) / 2), 2)))) $$;
+-- Instantané synthétique : p_np points (le premier 'start', le dernier 'finish', boucle), p_np - 1 tronçons de
+-- p_nc coordonnées chacun, p_ns étapes, p_del points supprimés en plus. Départ en (45.8992, 6.1294).
+CREATE FUNCTION public.rc_big(p_np int, p_nc int, p_ns int, p_del int DEFAULT 0) RETURNS jsonb LANGUAGE sql AS $$
+  SELECT jsonb_build_object('title', 'Gros', 'sport', 'marche', 'shapeMode', 'loop',
+    'points', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', 'p' || i, 'kind',
+                 CASE WHEN i = 0 THEN 'start' WHEN i = p_np - 1 THEN 'finish' ELSE 'via' END,
+                 'orderKey', lpad(i::text, 6, '0'), 'lat', 45.8992 + i * 0.0004, 'lon', 6.1294 + sin(i / 50.0) * 0.01,
+                 'name', 'n' || i, 'note', 'note secrete', 'eleM', 1000, 'entityVersion', 1) ORDER BY i), '[]'::jsonb)
+               FROM generate_series(0, p_np - 1) i)
+      || (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', 'd' || i, 'kind', 'via', 'orderKey', 'z' || i,
+                 'lat', 46.5, 'lon', 6.5, 'deletedAt', '2026-01-01T00:00:00Z', 'entityVersion', 1)), '[]'::jsonb)
+          FROM generate_series(1, p_del) i),
+    'sections', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', 's' || i, 'fromPointId', 'p' || i, 'toPointId', 'p' || (i + 1),
+                 'mode', 'routed', 'distanceKm', 0.1,
+                 'geometry', jsonb_build_object('type', 'LineString', 'coordinates',
+                   (SELECT jsonb_agg(jsonb_build_array(round((6.1294 + sin((i + k / p_nc::float) / 50.0) * 0.01)::numeric, 6),
+                                                       round((45.8992 + (i + k / p_nc::float) * 0.0004)::numeric, 6)))
+                    FROM generate_series(0, p_nc - 1) k)),
+                 'elevationSamples', (SELECT jsonb_agg(1000) FROM generate_series(0, p_nc - 1) k),
+                 'provenance', '{"provider":"secret-provider"}'::jsonb, 'entityVersion', 1) ORDER BY i), '[]'::jsonb)
+               FROM generate_series(0, p_np - 2) i),
+    'stages', (SELECT COALESCE(jsonb_agg(jsonb_build_object('id', 'st' || i, 'orderKey', 'k' || lpad(i::text, 3, '0'),
+                 'dayNumber', i + 1, 'title', 'J' || i, 'startPointId', 'p' || i, 'endPointId', 'p' || (i + 1),
+                 'notes', 'note secrete') ORDER BY i), '[]'::jsonb) FROM generate_series(0, p_ns - 1) i),
+    'members', '[]'::jsonb)
+$$;
 CREATE TABLE public.rc_out (k text PRIMARY KEY, v jsonb);
 GRANT ALL ON public.rc_out TO PUBLIC;
 
-SELECT plan(134);
+SELECT plan(191);
 
 -- ----------------------------------------------------------------------------
 -- Fixtures (superuser) : A propriétaire du voyage T1 et créateur, B co-organisateur, C éditeur, D lecteur
@@ -729,7 +764,7 @@ SELECT ok(
   '97. 4 : le jeton (>= 32 caractères) est généré par la base et renvoyé une fois'
 );
 SELECT is(
-  (SELECT share_token_hash FROM public.route_workspaces WHERE id = 'e2000000-0000-4000-8000-0000000000a1'),
+  public.rc_hash('e2000000-0000-4000-8000-0000000000a1'),
   (SELECT encode(extensions.digest(v ->> 'token', 'sha256'), 'hex') FROM public.rc_out WHERE k = 'link1'),
   '98. 4 : seul le SHA-256 du jeton est stocké'
 );
@@ -765,7 +800,7 @@ SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000a';
 SELECT is(
   (SELECT public.get_shared_route_workspace_tx('e2000000-0000-4000-8000-0000000000a1',
-     (SELECT share_token_hash FROM public.route_workspaces WHERE id = 'e2000000-0000-4000-8000-0000000000a1')) ->> 'status'),
+     public.rc_hash('e2000000-0000-4000-8000-0000000000a1')) ->> 'status'),
   'not_found',
   '104. 4 : le hash stocké n''ouvre pas l''accès (il ne tient pas lieu de jeton)'
 );
@@ -855,7 +890,7 @@ SELECT is(
 SELECT is(
   (SELECT count(*)::int
    FROM jsonb_array_elements((SELECT v -> 'snapshot' -> 'points' FROM public.rc_out WHERE k = 'shared4')) p
-   WHERE public.route_haversine_m(45.8992, 6.1294, (p ->> 'lat')::float8, (p ->> 'lon')::float8) <= 500),
+   WHERE public.rc_hav(45.8992, 6.1294, (p ->> 'lat')::float8, (p ->> 'lon')::float8) <= 500),
   0,
   '110. 1 : aucun point dans le rayon de la zone de départ'
 );
@@ -864,7 +899,7 @@ SELECT is(
   (SELECT count(*)::int
    FROM jsonb_array_elements((SELECT v -> 'snapshot' -> 'sections' FROM public.rc_out WHERE k = 'shared4')) s,
         jsonb_array_elements(s -> 'geometry' -> 'coordinates') c
-   WHERE public.route_haversine_m(45.8992, 6.1294, (c ->> 1)::float8, (c ->> 0)::float8) <= 500),
+   WHERE public.rc_hav(45.8992, 6.1294, (c ->> 1)::float8, (c ->> 0)::float8) <= 500),
   0,
   '111. 1 : aucune coordonnée de géométrie dans le rayon'
 );
@@ -928,7 +963,7 @@ SELECT is(
    FROM jsonb_array_elements(public.route_sanitize_snapshot_for_share(
           'e2000000-0000-4000-8000-0000000000a4',
           (SELECT state_snapshot FROM public.route_workspaces WHERE id = 'e2000000-0000-4000-8000-0000000000a4'), 0, 10) -> 'points') p
-   WHERE public.route_haversine_m(45.8992, 6.1294, (p ->> 'lat')::float8, (p ->> 'lon')::float8) <= 200),
+   WHERE public.rc_hav(45.8992, 6.1294, (p ->> 'lat')::float8, (p ->> 'lon')::float8) <= 200),
   0,
   '120. 1 : rayon minimal 200 m même si un rayon plus petit est demandé'
 );
@@ -1071,6 +1106,311 @@ SELECT is(
   true,
   '134. un co_organizer lit le journal des opérations'
 );
+
+
+-- ============================================================================
+-- Troisième passe : B1 (masquage borné), N2 (membre retiré du voyage), route_jf, archivé, plafonds,
+-- stage_scope_ids (8.3), temps réel privé (8.8), colonnes de sorties, share_token_hash.
+-- ============================================================================
+RESET ROLE;
+
+-- route_jf : jamais d'exception sur un nombre hors bornes.
+SELECT ok(public.route_jf('1e400'::jsonb) IS NULL AND public.route_jf('-1e400'::jsonb) IS NULL,
+  '135. route_jf : 1e400 et -1e400 (dépassement) => NULL, sans exception');
+SELECT is(public.route_jf('1e-400'::jsonb), 0::float8, '136. route_jf : 1e-400 (sous-dépassement) => 0, sans exception');
+SELECT ok(public.route_jf('45.5'::jsonb) = 45.5 AND public.route_jf('"45.5"'::jsonb) IS NULL AND public.route_jf('null'::jsonb) IS NULL
+          AND public.route_jf('1e299'::jsonb) IS NOT NULL AND public.route_jf('1e300'::jsonb) IS NULL,
+  '137. route_jf : nombre ordinaire conservé, chaîne / null => NULL, borne 1e300');
+SELECT lives_ok(
+  $$SELECT public.route_sanitize_snapshot_for_share('e2000000-0000-4000-8000-0000000000a1', '{"points":[{"id":"a","kind":"start","orderKey":"a","lat":1e400,"lon":6.0},
+      {"id":"b","kind":"via","orderKey":"b","lat":45.0,"lon":1e400},{"id":"c","kind":"finish","orderKey":"c","lat":46.0,"lon":7.0}],
+      "sections":[{"id":"s","fromPointId":"c","toPointId":"c","geometry":{"coordinates":[[1e400,45.0],[6.0,1e-400],[7.0,46.0],"x",[7.1]]}}]}'::jsonb, 0, 500)$$,
+  '138. masquage : coordonnées 1e400 / 1e-400 / types inattendus ne lèvent aucune exception');
+SELECT is(
+  (SELECT jsonb_array_length(public.route_sanitize_snapshot_for_share('e2000000-0000-4000-8000-0000000000a1',
+     '{"points":[{"id":"c","kind":"via","orderKey":"c","lat":46.0,"lon":7.0}],
+        "sections":[{"id":"s","fromPointId":"c","toPointId":"c","geometry":{"coordinates":[[1e400,45.0],[6.0,1e-400],[7.0,46.0],"x",[7.1]]}}]}'::jsonb, 0, 500)
+     -> 'sections' -> 0 -> 'geometry' -> 'coordinates')),
+  1,
+  '139. masquage : seule la coordonnée numérique valide hors zone est gardée (1e400, texte, couple incomplet, point du départ retirés)');
+
+-- Plafonds d'écriture (fonction interne, superuser).
+SELECT ok(public.route_snapshot_within_caps(public.rc_big(2000, 1, 60, 500) -> 'points', public.rc_big(2000, 1, 60) -> 'sections', public.rc_big(2000, 1, 60) -> 'stages'),
+  '140. plafonds : 2 000 points actifs (+ 500 supprimés non comptés), 1 999 tronçons, 60 étapes => accepté');
+SELECT ok(NOT public.route_snapshot_within_caps(public.rc_big(2001, 1, 0) -> 'points', '[]', '[]'), '141. plafonds : 2 001 points actifs => refusé');
+SELECT ok(NOT public.route_snapshot_within_caps('[]', public.rc_big(2002, 1, 0) -> 'sections', '[]'), '142. plafonds : 2 001 tronçons => refusé');
+SELECT ok(NOT public.route_snapshot_within_caps('[]', public.rc_big(2, 80001, 0) -> 'sections', '[]')
+          AND public.route_snapshot_within_caps('[]', public.rc_big(2, 80000, 0) -> 'sections', '[]'),
+  '143. plafonds : 80 001 coordonnées refusé, 80 000 accepté');
+SELECT ok(NOT public.route_snapshot_within_caps('[]', '[]', public.rc_big(2, 1, 61) -> 'stages') AND public.route_snapshot_within_caps(NULL, NULL, NULL)
+          AND public.route_snapshot_within_caps('{}', '"x"', '5'),
+  '144. plafonds : 61 étapes refusé ; NULL / non-tableau comptent pour vide');
+
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000a';
+SELECT throws_ok(
+  $$SELECT public.create_route_workspace_tx(NULL, 'Trop de points', 'marche', public.rc_big(2001, 1, 0))$$,
+  '22023', 'snapshot_too_large', '145. create_route_workspace_tx : 2 001 points actifs => snapshot_too_large');
+SELECT throws_ok(
+  $$SELECT public.create_route_workspace_tx(NULL, 'Trop de coordonnées', 'marche', public.rc_big(2, 80001, 0))$$,
+  '22023', 'snapshot_too_large', '146. create_route_workspace_tx : 80 001 coordonnées => snapshot_too_large');
+SELECT is(
+  (SELECT public.apply_route_operation_tx('e2000000-0000-4000-8000-0000000000a1', 'op-too-large', 1, 'move_point', '{"type":"move_point"}'::jsonb, 'h', '{}'::jsonb,
+     jsonb_build_object('points', public.rc_big(2001, 1, 0) -> 'points'), public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'reason'),
+  'snapshot_too_large',
+  '147. apply_route_operation_tx : plus de 2 000 points actifs => snapshot_too_large');
+SELECT is(
+  (SELECT public.apply_route_operation_tx('e2000000-0000-4000-8000-0000000000a1', 'op-too-large-st', 1, 'move_point', '{"type":"move_point"}'::jsonb, 'h', '{}'::jsonb,
+     jsonb_build_object('stages', public.rc_big(2, 1, 61) -> 'stages'), public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'reason'),
+  'snapshot_too_large',
+  '148. apply_route_operation_tx : 61 étapes => snapshot_too_large');
+SELECT is(
+  (SELECT public.publish_route_revision_tx('e2000000-0000-4000-8000-0000000000a1', 0, 'v', jsonb_build_object('points', public.rc_big(2001, 1, 0) -> 'points'), 'chk',
+     '{}'::jsonb, '{}'::jsonb, public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'reason'),
+  'snapshot_too_large',
+  '149. publish_route_revision_tx : instantané publié au-delà des plafonds => snapshot_too_large');
+SELECT is(
+  (SELECT public.apply_route_operation_tx('e2000000-0000-4000-8000-0000000000a1', 'op-ev-big', 1, 'move_point', '{"type":"move_point"}'::jsonb, 'h',
+     (SELECT jsonb_object_agg('e' || i, i) FROM generate_series(1, 20000) i), '{"points":[]}'::jsonb, public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'reason'),
+  'payload_too_large',
+  '150. apply_route_operation_tx : p_entity_versions de plus de 100 Ko => payload_too_large');
+
+-- create_route_workspace_tx : tripId jamais recopié du snapshot fourni.
+INSERT INTO public.rc_out
+SELECT 'ws_notrip', to_jsonb(public.create_route_workspace_tx(NULL, 'Sans voyage', 'marche', '{"tripId":"trip-evil","points":[]}'::jsonb)::text);
+SELECT is(
+  (SELECT state_snapshot -> 'tripId' FROM public.route_workspaces WHERE id = (SELECT (v #>> '{}')::uuid FROM public.rc_out WHERE k = 'ws_notrip')),
+  'null'::jsonb,
+  '151. create_route_workspace_tx : sans p_trip_id, le tripId du snapshot fourni n''est pas recopié');
+
+-- B1 : masquage d'un instantané AU PLAFOND (2 000 points actifs + 300 supprimés, 1 999 tronçons, 79 960
+-- coordonnées, 60 étapes) lu par anon : durée mesurée, résultat exact.
+INSERT INTO public.rc_out SELECT 'big_src', public.rc_big(2000, 40, 60, 300);
+INSERT INTO public.rc_out
+SELECT 'big_id', to_jsonb(public.create_route_workspace_tx(NULL, 'Plafond', 'marche', public.rc_big(2000, 40, 60, 300), 'e2000000-0000-4000-8000-0000000000c1'::uuid)::text);
+INSERT INTO public.rc_out SELECT 'big_link', public.manage_route_share_link_tx('e2000000-0000-4000-8000-0000000000c1', 'create', NULL, 500);
+SET LOCAL ROLE anon;
+DO $do$
+DECLARE
+  t0 timestamptz;
+  r JSONB;
+BEGIN
+  t0 := clock_timestamp();
+  r := public.get_shared_route_workspace_tx('e2000000-0000-4000-8000-0000000000c1', (SELECT v ->> 'token' FROM public.rc_out WHERE k = 'big_link'));
+  INSERT INTO public.rc_out VALUES ('big_ms', to_jsonb(extract(epoch FROM clock_timestamp() - t0) * 1000));
+  INSERT INTO public.rc_out VALUES ('big_res', r);
+END;
+$do$;
+RESET ROLE;
+SELECT diag('B1 : masquage anon au plafond = ' || round((SELECT (v #>> '{}')::numeric FROM public.rc_out WHERE k = 'big_ms')) || ' ms');
+SELECT ok((SELECT (v #>> '{}')::numeric FROM public.rc_out WHERE k = 'big_ms') < 500,
+  '152. B1 : masquage d''un instantané au plafond (2 000 points, 1 999 tronçons, ~80 000 coordonnées) en moins de 500 ms');
+SELECT is((SELECT v ->> 'status' FROM public.rc_out WHERE k = 'big_res'), 'ok', '153. B1 : lecture anon au plafond => ok');
+-- Sources pré-extraites (une seule fois : extraire dans une jointure rejouerait la lecture d'un jsonb de plusieurs Mo).
+CREATE TEMP TABLE rc_last AS
+  SELECT (v -> 'points' -> 1999 ->> 'lat')::float8 AS la, (v -> 'points' -> 1999 ->> 'lon')::float8 AS lo
+  FROM public.rc_out WHERE k = 'big_src';
+CREATE TEMP TABLE rc_src_p AS
+  SELECT (p ->> 'lat')::float8 AS lat, (p ->> 'lon')::float8 AS lon
+  FROM public.rc_out src, jsonb_array_elements(src.v -> 'points') p
+  WHERE src.k = 'big_src' AND COALESCE(p ->> 'deletedAt', '') = '';
+SELECT is(
+  (SELECT jsonb_array_length(v -> 'snapshot' -> 'points') FROM public.rc_out WHERE k = 'big_res'),
+  (SELECT (count(*) + 2)::int FROM rc_src_p p, rc_last f
+   WHERE public.rc_hav(45.8992, 6.1294, p.lat, p.lon) > 500 AND public.rc_hav(f.la, f.lo, p.lat, p.lon) > 500),
+  '154. B1 : points conservés = points hors des deux zones (départ et arrivée de la boucle) + départ/arrivée masqués');
+SELECT is(
+  (SELECT count(*)::int
+   FROM jsonb_array_elements((SELECT v -> 'snapshot' -> 'sections' FROM public.rc_out WHERE k = 'big_res')) s,
+        jsonb_array_elements(s -> 'geometry' -> 'coordinates') c
+   WHERE public.rc_hav(45.8992, 6.1294, (c ->> 1)::float8, (c ->> 0)::float8) <= 500),
+  0,
+  '155. B1 : aucune coordonnée de géométrie dans le rayon, au plafond');
+CREATE TEMP TABLE rc_kept AS
+  SELECT p ->> 'id' AS id FROM public.rc_out o, jsonb_array_elements(o.v -> 'snapshot' -> 'points') p WHERE o.k = 'big_res';
+CREATE TEMP TABLE rc_src_c AS
+  SELECT s ->> 'fromPointId' AS f, s ->> 'toPointId' AS t, (c ->> 0)::float8 AS lon, (c ->> 1)::float8 AS lat
+  FROM public.rc_out src, jsonb_array_elements(src.v -> 'sections') s, jsonb_array_elements(s -> 'geometry' -> 'coordinates') c
+  WHERE src.k = 'big_src';
+ANALYZE rc_kept;
+ANALYZE rc_src_c;
+SELECT is(
+  (SELECT sum(jsonb_array_length(s -> 'geometry' -> 'coordinates'))::int
+   FROM jsonb_array_elements((SELECT v -> 'snapshot' -> 'sections' FROM public.rc_out WHERE k = 'big_res')) s),
+  (SELECT count(*)::int
+   FROM rc_src_c c, rc_last f
+   WHERE c.f IN (SELECT id FROM rc_kept) AND c.t IN (SELECT id FROM rc_kept)
+     AND public.rc_hav(45.8992, 6.1294, c.lat, c.lon) > 500
+     AND public.rc_hav(f.la, f.lo, c.lat, c.lon) > 500),
+  '156. B1 : coordonnées conservées = celles des tronçons entre points conservés hors des deux zones');
+SELECT is(
+  (SELECT count(*)::int FROM unnest(ARRAY['note secrete', 'secret-provider']) AS needle
+   WHERE position(needle IN (SELECT (v -> 'snapshot')::text FROM public.rc_out WHERE k = 'big_res')) > 0),
+  0,
+  '157. B1 : aucune donnée privée (notes, provenance) dans le snapshot masqué au plafond');
+SELECT is(
+  (SELECT jsonb_array_length(v -> 'snapshot' -> 'stages') FROM public.rc_out WHERE k = 'big_res'),
+  60,
+  '158. B1 : les 60 étapes sont rendues (identifiants de points non conservés mis à null)');
+
+-- N2 + 8.3 : stage_scope_ids. J (collaborateur éditeur du voyage T1) devient contributeur avec deux étapes confiées.
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000a';
+SELECT is(
+  (SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', 'contributor', false, false, 'Jo', ARRAY['st-1', 'st-2']) ->> 'status'),
+  'ok',
+  '159. 8.3 : set_route_member_tx écrit une étape confiée (p_stage_scope_ids)');
+SELECT is(
+  (SELECT stage_scope_ids FROM public.route_workspace_members WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1' AND user_id = 'e2000000-0000-4000-8000-000000000014'),
+  ARRAY['st-1', 'st-2'],
+  '160. 8.3 : la colonne stage_scope_ids est écrite');
+SELECT is(
+  (SELECT m -> 'stageScopeIds' FROM public.route_workspaces w, jsonb_array_elements(w.state_snapshot -> 'members') m
+   WHERE w.id = 'e2000000-0000-4000-8000-0000000000a1' AND m ->> 'userId' = 'e2000000-0000-4000-8000-000000000014'),
+  '["st-1", "st-2"]'::jsonb,
+  '161. 8.3 : stageScopeIds est écrit dans state_snapshot -> members');
+SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', 'contributor', false, false, NULL, NULL);
+SELECT is(
+  (SELECT stage_scope_ids FROM public.route_workspace_members WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1' AND user_id = 'e2000000-0000-4000-8000-000000000014'),
+  ARRAY['st-1', 'st-2'],
+  '162. 8.3 : p_stage_scope_ids NULL = inchangé');
+SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY['st-3']);
+SELECT is(
+  (SELECT stage_scope_ids FROM public.route_workspace_members WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1' AND user_id = 'e2000000-0000-4000-8000-000000000014'),
+  ARRAY['st-3'],
+  '163. 8.3 : une nouvelle liste remplace l''ancienne, rôle inchangé');
+SELECT is(
+  (SELECT (public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY['st 1']) ->> 'reason')
+          || (public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY['ok', NULL]) ->> 'reason')
+          || (public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY[repeat('a', 81)]) ->> 'reason')
+          || (public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, (SELECT array_agg('s' || i) FROM generate_series(1, 61) i)) ->> 'reason')),
+  'invalid_stage_scopeinvalid_stage_scopeinvalid_stage_scopeinvalid_stage_scope',
+  '164. 8.3 : identifiant hors [A-Za-z0-9_-], NULL, > 80 caractères ou > 60 éléments => invalid_stage_scope');
+SELECT is(
+  (SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, (SELECT array_agg('s' || i) FROM generate_series(1, 60) i)) ->> 'status'),
+  'ok',
+  '165. 8.3 : 60 identifiants acceptés');
+SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY[]::text[]);
+SELECT is(
+  (SELECT stage_scope_ids FROM public.route_workspace_members WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1' AND user_id = 'e2000000-0000-4000-8000-000000000014'),
+  ARRAY[]::text[],
+  '166. 8.3 : tableau vide = plus d''étape confiée');
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000c';
+SELECT is(
+  (SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014', NULL, NULL, NULL, NULL, ARRAY['st-9']) ->> 'reason'),
+  'member_management_requires_owner_or_co_organizer',
+  '167. 8.3 : un éditeur ne peut pas confier d''étape (mêmes règles que le reste de la fonction)');
+
+-- N2 : J, contributeur de l'espace, est retiré de trip_collaborators => plus aucun accès.
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-000000000014';
+SELECT is(
+  (SELECT public.write_route_workspace_part_tx('e2000000-0000-4000-8000-0000000000a1', 'comments', '[]'::jsonb, public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'status'),
+  'ok',
+  '168. N2 : tant qu''il est collaborateur du voyage, le contributeur écrit');
+RESET ROLE;
+DELETE FROM public.trip_collaborators WHERE trip_id = 'e2000000-0000-4000-8000-0000000000b2' AND user_id = 'e2000000-0000-4000-8000-000000000014';
+SELECT ok(
+  (SELECT revoked_at IS NULL FROM public.route_workspace_members WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1' AND user_id = 'e2000000-0000-4000-8000-000000000014')
+  AND public.route_workspace_effective_role('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014') IS NULL,
+  '169. N2 : la ligne de membre est intacte mais le rôle effectif est NULL (retiré du voyage)');
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-000000000014';
+SELECT is((SELECT count(*)::int FROM public.route_workspaces WHERE id = 'e2000000-0000-4000-8000-0000000000a1'), 0, '170. N2 : l''ancien collaborateur ne lit plus l''espace (RLS)');
+SELECT is((SELECT count(*)::int FROM public.route_operations WHERE workspace_id = 'e2000000-0000-4000-8000-0000000000a1'), 0, '171. N2 : ni le journal des opérations');
+SELECT is((SELECT count(*)::int FROM public.readable_route_workspace_ids() r WHERE r = 'e2000000-0000-4000-8000-0000000000a1'), 0, '172. N2 : readable_route_workspace_ids() l''exclut');
+SELECT is((SELECT public.can_read_route_workspace('e2000000-0000-4000-8000-0000000000a1')), false, '173. N2 : can_read_route_workspace faux');
+SELECT is(
+  (SELECT public.write_route_workspace_part_tx('e2000000-0000-4000-8000-0000000000a1', 'comments', '[]'::jsonb, public.rc_ver('e2000000-0000-4000-8000-0000000000a1')) ->> 'reason'),
+  'insufficient_permissions_or_revoked',
+  '174. N2 : les RPC d''écriture le refusent');
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-000000000011';
+SELECT is((SELECT count(*)::int FROM public.route_workspaces WHERE id = 'e2000000-0000-4000-8000-0000000000a1'), 1, '175. N2 : les autres membres, encore collaborateurs, gardent l''accès');
+RESET ROLE;
+INSERT INTO public.trip_collaborators (trip_id, user_id, role) VALUES ('e2000000-0000-4000-8000-0000000000b2', 'e2000000-0000-4000-8000-000000000014', 'viewer');
+SELECT is(public.route_workspace_effective_role('e2000000-0000-4000-8000-0000000000a1', 'e2000000-0000-4000-8000-000000000014'), 'contributor',
+  '176. N2 : redevenu collaborateur du voyage, son rôle de membre (toujours enregistré) s''applique de nouveau');
+
+-- Espace archivé (a2) : membres et lien de partage.
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000a';
+SELECT is(
+  (SELECT public.set_route_member_tx('e2000000-0000-4000-8000-0000000000a2', 'e2000000-0000-4000-8000-00000000000b', 'editor', false, false, NULL) ->> 'reason'),
+  'workspace_archived',
+  '177. archivé : set_route_member_tx refuse');
+SELECT is(
+  (SELECT public.manage_route_share_link_tx('e2000000-0000-4000-8000-0000000000a2', 'create', NULL, 500) ->> 'reason'),
+  'workspace_archived',
+  '178. archivé : manage_route_share_link_tx refuse la création d''un lien');
+SELECT is(
+  (SELECT public.manage_route_share_link_tx('e2000000-0000-4000-8000-0000000000a2', 'revoke', NULL, 500) ->> 'status'),
+  'ok',
+  '179. archivé : la révocation d''un lien reste permise (geste protecteur)');
+
+-- share_token_hash : illisible pour les clients (privilège de colonne), lisible pour les autres colonnes.
+SELECT throws_ok($$SELECT share_token_hash FROM public.route_workspaces LIMIT 1$$, '42501', NULL,
+  '180. share_token_hash : lecture directe refusée à authenticated (permission denied)');
+SELECT throws_ok($$SELECT * FROM public.route_workspaces LIMIT 1$$, '42501', NULL,
+  '181. route_workspaces : `select *` refusé (la colonne sensible n''est pas accordée ; le store liste ses colonnes)');
+SELECT ok(
+  has_column_privilege('authenticated', 'public.route_workspaces', 'state_snapshot', 'SELECT')
+  AND has_column_privilege('authenticated', 'public.route_workspaces', 'state_version', 'SELECT')
+  AND NOT has_column_privilege('authenticated', 'public.route_workspaces', 'share_token_hash', 'SELECT')
+  AND NOT has_column_privilege('anon', 'public.route_workspaces', 'share_token_hash', 'SELECT')
+  AND NOT has_table_privilege('authenticated', 'public.route_workspaces', 'SELECT'),
+  '182. privilèges : colonnes de lecture accordées une à une, jamais share_token_hash, aucun SELECT de table');
+
+-- Index des clés étrangères ajoutées.
+RESET ROLE;
+SELECT ok(
+  (SELECT count(*) = 3 FROM pg_indexes
+   WHERE indexname IN ('idx_hike_sessions_route_workspace', 'idx_hike_sessions_route_revision', 'idx_carnets_planned_revision')),
+  '183. index sur hike_sessions(route_workspace_id), hike_sessions(route_revision_id), carnets(planned_revision_id)');
+
+-- Temps réel privé (8.8) : topic « route:<uuid> ».
+SELECT ok(
+  public.route_topic_workspace_id('route:' || 'e2000000-0000-4000-8000-0000000000a1') = 'e2000000-0000-4000-8000-0000000000a1'::uuid
+  AND public.route_topic_workspace_id('route:not-a-uuid') IS NULL
+  AND public.route_topic_workspace_id('chat:' || 'e2000000-0000-4000-8000-0000000000a1') IS NULL
+  AND public.route_topic_workspace_id('route:' || 'e2000000-0000-4000-8000-0000000000a1' || 'x') IS NULL
+  AND public.route_topic_workspace_id(NULL) IS NULL,
+  '184. 8.8 : route_topic_workspace_id lit « route:<uuid> » et rend NULL (jamais d''exception) pour tout autre topic');
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000a';
+SELECT is(public.can_read_route_workspace(public.route_topic_workspace_id('route:' || 'e2000000-0000-4000-8000-0000000000a1')), true, '185. 8.8 : le propriétaire peut lire le canal de son espace');
+SELECT is(public.can_read_route_workspace(public.route_topic_workspace_id('route:garbage')), false, '186. 8.8 : un topic mal formé est refusé sans exception');
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000e';
+SELECT is(public.can_read_route_workspace(public.route_topic_workspace_id('route:' || 'e2000000-0000-4000-8000-0000000000a1')), false, '187. 8.8 : une personne étrangère à l''espace est refusée');
+SET LOCAL "request.jwt.claim.sub" = 'e2000000-0000-4000-8000-00000000000d';
+SELECT is(public.can_read_route_workspace(public.route_topic_workspace_id('route:' || 'e2000000-0000-4000-8000-0000000000a1')), false, '188. 8.8 : un external_viewer est refusé (il n''a que la vue assainie)');
+RESET ROLE;
+SELECT CASE WHEN to_regclass('realtime.messages') IS NULL OR to_regprocedure('realtime.topic()') IS NULL
+  THEN pass('189. 8.8 : schéma realtime absent, policies non applicables (migration applicable partout)')
+  ELSE ok(
+    (SELECT count(*) = 2 FROM pg_policies
+     WHERE schemaname = 'realtime' AND tablename = 'messages'
+       AND ((policyname = 'route_realtime_read' AND cmd = 'SELECT') OR (policyname = 'route_realtime_write' AND cmd = 'INSERT'))
+       AND roles = '{authenticated}'
+       AND coalesce(qual, with_check) LIKE '%route_topic_workspace_id%' AND coalesce(qual, with_check) LIKE '%can_read_route_workspace%'),
+    '189. 8.8 : policies realtime.messages SELECT et INSERT (authenticated, topic route:<uuid> + can_read_route_workspace)') END;
+
+-- Sorties : colonnes de liaison et vue participant (si elles existent dans cette base).
+SELECT CASE WHEN to_regclass('public.hike_sessions_participant') IS NULL
+  THEN pass('190. vue hike_sessions_participant absente de cette base : rien à vérifier')
+  ELSE ok(
+    (SELECT array_agg(a.attname ORDER BY a.attnum) FILTER (WHERE a.attnum > (SELECT max(attnum) - 3 FROM pg_attribute
+                WHERE attrelid = 'public.hike_sessions_participant'::regclass AND attnum > 0 AND NOT attisdropped))
+     = ARRAY['route_workspace_id', 'route_revision_id', 'kit_snapshot']::name[]
+     FROM pg_attribute a WHERE a.attrelid = 'public.hike_sessions_participant'::regclass AND a.attnum > 0 AND NOT a.attisdropped)
+    AND NOT (SELECT coalesce(reloptions, '{}') @> ARRAY['security_invoker=true'] FROM pg_class WHERE oid = 'public.hike_sessions_participant'::regclass)
+    AND has_table_privilege('authenticated', 'public.hike_sessions_participant', 'SELECT')
+    AND NOT has_table_privilege('anon', 'public.hike_sessions_participant', 'SELECT'),
+    '190. vue hike_sessions_participant : route_workspace_id, route_revision_id, kit_snapshot ajoutées EN FIN de liste, droits inchangés') END;
+SELECT ok(
+  has_column_privilege('authenticated', 'public.hike_sessions', 'route_workspace_id', 'SELECT')
+  AND has_column_privilege('authenticated', 'public.hike_sessions', 'route_revision_id', 'SELECT')
+  AND has_column_privilege('authenticated', 'public.hike_sessions', 'kit_snapshot', 'SELECT')
+  AND NOT has_column_privilege('anon', 'public.hike_sessions', 'kit_snapshot', 'SELECT'),
+  '191. hike_sessions : colonnes de liaison lisibles par authenticated (colonne par colonne si les droits le sont), jamais par anon');
 
 SELECT * FROM finish();
 ROLLBACK;

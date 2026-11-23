@@ -13,6 +13,7 @@ type Handler = (e: unknown) => void;
 /** Fausse carte MapLibre : enregistre les gestionnaires, les sources et les réglages ; rien n'est dessiné. */
 class FakeMap {
   static last: FakeMap | null = null;
+  static zoom = 14;
   handlers = new Map<string, Handler[]>();
   layerHandlers = new Map<string, Handler[]>();
   sources = new Map<string, unknown[]>();
@@ -56,7 +57,7 @@ class FakeMap {
     return this.rendered;
   }
   getZoom() {
-    return 14;
+    return FakeMap.zoom;
   }
   getCanvas() {
     return document.createElement('canvas');
@@ -136,6 +137,7 @@ const headSeq = () => Number(screen.getByTestId('route-collab-workspace').getAtt
 describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne', () => {
   beforeEach(() => {
     FakeMap.last = null;
+    FakeMap.zoom = 14;
     WebGLArbiter.resetInstance();
     window.localStorage.clear();
     (window as unknown as { WebGLRenderingContext: unknown }).WebGLRenderingContext = function () {};
@@ -170,6 +172,28 @@ describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne'
     const before = headSeq();
     act(() => lastLast().emit('click', ev(200, 300, 46.5, 7.5)));
     await waitFor(() => expect(headSeq()).toBeGreaterThan(before));
+  });
+
+  it('2.2 : sous le zoom 9, le toucher zoome sur le lieu au lieu de poser un point, et le dit', async () => {
+    await mountMap();
+    FakeMap.zoom = 5;
+    const before = headSeq();
+    act(() => lastLast().emit('click', ev(200, 300, 46.5, 7.5)));
+    await waitFor(() => expect(lastLast().eases.length).toBeGreaterThan(0));
+    const opts = lastLast().eases.at(-1) as [{ center: [number, number]; zoom: number }];
+    expect(opts[0].zoom).toBe(12);
+    expect(opts[0].center).toEqual([7.5, 46.5]);
+    expect(headSeq()).toBe(before);
+    expect((await screen.findByTestId('status-message')).textContent).toMatch(/trop large/i);
+  });
+
+  it('1.x : une carte sans voyage ni tracé s’ouvre à zoom de randonnée sur un repère neutre, jamais sur l’Europe', async () => {
+    render(<RouteCollabWorkspace initialWorkspace={baseWorkspace({ id: 'w-empty', tripId: 't', sport: 'marche', members: [{ userId: 'u1', displayName: 'Alice', role: 'owner' }], points: [], sections: [], stages: [] })} currentUserId="u1" currentUserName="Alice" />);
+    await screen.findByTestId('route-collab-map');
+    await waitFor(() => expect(FakeMap.last).not.toBeNull());
+    expect(lastLast().opts.zoom).toBe(12);
+    await screen.findByTestId('place-yourself');
+    expect(screen.getByTestId('address-input')).toBeTruthy();
   });
 
   it('2.2 : un toucher sur un point ne pose rien (il le sélectionne)', async () => {
@@ -240,7 +264,7 @@ describe('carte de l’itinéraire : arbitre WebGL, gestes, calques, hors ligne'
 
   it('2.7 : calques selon le sport ; sans donnée relevée le calque le dit', async () => {
     await mountMap();
-    fireEvent.click(screen.getByTestId('map-layers-trigger'));
+    fireEvent.click(screen.getByTestId('map-settings-trigger'));
     const panel = await screen.findByTestId('map-layers-panel');
     expect(panel.textContent).toContain('Eau');
     expect(panel.textContent).toContain('Abris');

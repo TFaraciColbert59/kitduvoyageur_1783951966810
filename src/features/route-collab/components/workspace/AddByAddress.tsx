@@ -68,7 +68,7 @@ export function AddByAddress() {
           className="rcw-address-input"
           type="text"
           maxLength={200}
-          placeholder="Commune, lieu-dit, adresse…"
+          placeholder="Lieu ou adresse…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {

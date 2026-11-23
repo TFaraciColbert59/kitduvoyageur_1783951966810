@@ -25,8 +25,8 @@ export function EntryChips() {
         </span>
       ) : null}
       {!attached && !shareToken ? (
-        <Link href="/compas" className="rcw-chip rcw-chip--action" data-testid="attach-trip-banner">
-          Rattacher à un voyage
+        <Link href="/compas" className="rcw-chip rcw-chip--action" data-testid="attach-trip-banner" aria-label="Rattacher à un voyage">
+          Rattacher<span className="rcw-chip-more"> à un voyage</span>
         </Link>
       ) : null}
       {!entry.authenticated && !shareToken ? (
@@ -34,8 +34,9 @@ export function EntryChips() {
           href={loginHrefForRoute(entry.trip?.tripId ?? null)}
           className="rcw-chip rcw-chip--action"
           data-testid="login-to-save"
+          aria-label="Se connecter pour enregistrer"
         >
-          Se connecter pour enregistrer
+          Se connecter<span className="rcw-chip-more"> pour enregistrer</span>
         </Link>
       ) : null}
       {entry.saveNote && entry.authenticated ? (

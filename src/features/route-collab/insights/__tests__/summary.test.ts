@@ -17,7 +17,7 @@ describe('formatPillSummary', () => {
     expect(formatPillSummary(ws)).toBe('2 j · 20 km · D+ ?');
   });
   it('rien de calculé : points d’interrogation', () => {
-    expect(formatPillSummary(baseWorkspace({ sections: [], stages: [] }))).toBe('? j · ? km · D+ ?');
+    expect(formatPillSummary(baseWorkspace({ sections: [], stages: [] }))).toBe('? km · D+ ?');
   });
 });
 

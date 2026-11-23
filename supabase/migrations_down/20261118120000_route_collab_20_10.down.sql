@@ -41,6 +41,61 @@ BEGIN
 END;
 $$;
 
+-- 0. Temps réel privé : policies realtime.messages (avant les fonctions can_read_route_workspace /
+--    route_topic_workspace_id qu'elles référencent). Sans schéma realtime, rien à faire.
+DO $$
+BEGIN
+  IF to_regclass('realtime.messages') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS route_realtime_read ON realtime.messages';
+    EXECUTE 'DROP POLICY IF EXISTS route_realtime_write ON realtime.messages';
+  END IF;
+END;
+$$;
+
+-- 0 bis. Vue hike_sessions_participant : retour à la définition d'avant la migration. Une vue ne perd pas de
+--    colonne par CREATE OR REPLACE : on la recrée avec les colonnes qu'elle avait AVANT (celles de la vue en
+--    place moins les trois colonnes ajoutées, qui sont en fin de liste), mêmes filtres, mêmes options, même
+--    commentaire, mêmes droits (SELECT pour authenticated seulement), puis seulement on supprime les colonnes.
+DO $$
+DECLARE
+  v_cols TEXT;
+  v_comment TEXT;
+BEGIN
+  IF to_regclass('public.hike_sessions_participant') IS NOT NULL
+     AND EXISTS (SELECT 1 FROM pg_attribute a
+                 WHERE a.attrelid = 'public.hike_sessions_participant'::regclass
+                   AND a.attname = 'route_workspace_id' AND NOT a.attisdropped) THEN
+    SELECT string_agg(format('hs.%I', a.attname), ', ' ORDER BY a.attnum) INTO v_cols
+    FROM pg_attribute a
+    WHERE a.attrelid = 'public.hike_sessions_participant'::regclass
+      AND a.attnum > 0 AND NOT a.attisdropped
+      AND a.attname NOT IN ('route_workspace_id', 'route_revision_id', 'kit_snapshot');
+    v_comment := obj_description('public.hike_sessions_participant'::regclass, 'pg_class');
+
+    DROP VIEW public.hike_sessions_participant;
+    EXECUTE format($v$
+      CREATE VIEW public.hike_sessions_participant
+      WITH (security_invoker = false) AS
+      SELECT %s
+      FROM public.hike_sessions hs
+      WHERE hs.user_id = (SELECT auth.uid())
+         OR (hs.carnet_id IS NOT NULL AND public.is_carnet_participant(hs.carnet_id))
+         OR EXISTS (
+           SELECT 1
+           FROM public.hike_session_participants p
+           WHERE p.session_id = hs.id
+             AND p.user_id = (SELECT auth.uid())
+         )
+    $v$, v_cols);
+    IF v_comment IS NOT NULL THEN
+      EXECUTE format('COMMENT ON VIEW public.hike_sessions_participant IS %L', v_comment);
+    END IF;
+    REVOKE ALL ON public.hike_sessions_participant FROM PUBLIC, anon, authenticated;
+    GRANT SELECT ON public.hike_sessions_participant TO authenticated;
+  END IF;
+END;
+$$;
+
 -- 1. Policies (avant les fonctions qu'elles référencent).
 DROP POLICY IF EXISTS participant_pack_states_own_read ON public.participant_pack_states;
 DROP POLICY IF EXISTS participant_pack_states_own_or_owner ON public.participant_pack_states;
@@ -62,6 +117,8 @@ DROP FUNCTION IF EXISTS public.get_route_external_view_tx(UUID);
 DROP FUNCTION IF EXISTS public.manage_route_share_link_tx(UUID, TEXT, TIMESTAMPTZ, INTEGER);
 -- Ancienne signature (jeton fourni par l'appelant), au cas où une version antérieure aurait été appliquée.
 DROP FUNCTION IF EXISTS public.manage_route_share_link_tx(UUID, TEXT, TEXT, TIMESTAMPTZ, INTEGER);
+DROP FUNCTION IF EXISTS public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT, TEXT[]);
+-- Ancienne signature (6 arguments), au cas où une version antérieure aurait été appliquée.
 DROP FUNCTION IF EXISTS public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT);
 DROP FUNCTION IF EXISTS public.write_route_workspace_part_tx(UUID, TEXT, JSONB, BIGINT);
 DROP FUNCTION IF EXISTS public.publish_route_revision_tx(UUID, BIGINT, TEXT, JSONB, TEXT, JSONB, JSONB, BIGINT);
@@ -69,10 +126,13 @@ DROP FUNCTION IF EXISTS public.apply_route_operation_tx(UUID, TEXT, BIGINT, TEXT
 DROP FUNCTION IF EXISTS public.create_route_workspace_tx(UUID, TEXT, TEXT, JSONB, UUID);
 DROP FUNCTION IF EXISTS public.route_sanitize_snapshot_for_share(UUID, JSONB, BIGINT, NUMERIC);
 DROP FUNCTION IF EXISTS public.route_sorted_by_id(JSONB, BOOLEAN);
+DROP FUNCTION IF EXISTS public.route_snapshot_within_caps(JSONB, JSONB, JSONB);
+DROP FUNCTION IF EXISTS public.route_topic_workspace_id(TEXT);
 DROP FUNCTION IF EXISTS public.route_merge_snapshot_keys(JSONB, JSONB, TEXT[]);
 DROP FUNCTION IF EXISTS public.can_read_route_workspace(UUID);
 DROP FUNCTION IF EXISTS public.readable_route_workspace_ids();
 DROP FUNCTION IF EXISTS public.route_workspace_effective_role(UUID, UUID);
+-- Anciennes fonctions de la première version (haversine plpgsql appelée par coordonnée), si elles existent.
 DROP FUNCTION IF EXISTS public.route_point_in_zone(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION[], DOUBLE PRECISION[], DOUBLE PRECISION);
 DROP FUNCTION IF EXISTS public.route_haversine_m(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION);
 DROP FUNCTION IF EXISTS public.route_part_ok(JSONB, TEXT, TEXT);
@@ -80,7 +140,11 @@ DROP FUNCTION IF EXISTS public.route_jnum(JSONB, TEXT);
 DROP FUNCTION IF EXISTS public.route_jtext(JSONB, TEXT, INTEGER);
 DROP FUNCTION IF EXISTS public.route_jf(JSONB);
 
--- 3. Colonnes additives nullable (avant les tables route_revisions / route_workspaces qu'elles référencent).
+-- 3. Index des colonnes additives, puis colonnes additives nullable (avant les tables route_revisions / route_workspaces qu'elles référencent).
+DROP INDEX IF EXISTS public.idx_hike_sessions_route_workspace;
+DROP INDEX IF EXISTS public.idx_hike_sessions_route_revision;
+DROP INDEX IF EXISTS public.idx_carnets_planned_revision;
+
 ALTER TABLE public.carnets
   DROP COLUMN IF EXISTS departure_kit_snapshot,
   DROP COLUMN IF EXISTS planned_revision_no,

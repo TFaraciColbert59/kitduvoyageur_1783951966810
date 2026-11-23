@@ -139,7 +139,10 @@ export interface RealtimeChannelLike {
 }
 
 export interface RealtimeClientLike {
-  channel(name: string, opts?: { config?: { broadcast?: { self?: boolean; ack?: boolean } } }): RealtimeChannelLike;
+  channel(
+    name: string,
+    opts?: { config?: { private?: boolean; broadcast?: { self?: boolean; ack?: boolean } } },
+  ): RealtimeChannelLike;
   removeChannel(channel: RealtimeChannelLike): Promise<unknown> | unknown;
 }
 
@@ -178,7 +181,8 @@ export function openRouteRealtime(
   };
   handlers.onStatus('connecting');
 
-  const channel = client.channel(routeChannelName(workspaceId), { config: { broadcast: { self: false } } });
+  // Canal privé : la RLS sur realtime.messages (migration route_collab) n'ouvre `route:<id>` qu'aux lecteurs de l'espace.
+  const channel = client.channel(routeChannelName(workspaceId), { config: { private: true, broadcast: { self: false } } });
   const openTimer = timers.setTimeout(() => {
     if (status === 'connecting') setStatus('fallback');
   }, REALTIME_OPEN_TIMEOUT_MS);

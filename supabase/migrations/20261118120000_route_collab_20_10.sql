@@ -11,6 +11,11 @@
 --   * rôles d'écriture des parties du snapshot, p_expected_version obligatoire, tailles bornées ;
 --   * rôle du créateur adossé au voyage ; membres limités aux collaborateurs du voyage ;
 --   * external_viewer : jamais de lecture directe des tables, uniquement la vue assainie.
+--
+-- Troisième passe : masquage ensembliste borné (B1) et plafonds d'écriture ; un membre retiré du voyage perd son
+-- accès (N2) ; route_jf sans exception ; espace archivé en lecture seule (membres, création de lien) ;
+-- p_entity_versions borné ; share_token_hash illisible des clients ; index des clés étrangères ; étape confiée
+-- (p_stage_scope_ids) ; temps réel privé route:<uuid> ; colonnes de liaison de hike_sessions et vue participant.
 
 -- ----------------------------------------------------------------------------
 -- 0. Prérequis : pgcrypto dans le schéma `extensions` (disposition Supabase).
@@ -248,6 +253,15 @@ ALTER TABLE public.carnets
   ADD COLUMN IF NOT EXISTS planned_revision_no BIGINT,
   ADD COLUMN IF NOT EXISTS departure_kit_snapshot JSONB;
 
+-- Index des clés étrangères ajoutées (ON DELETE SET NULL parcourrait sinon toute la table) ; partiels : la
+-- quasi-totalité des lignes existantes a ces colonnes à NULL.
+CREATE INDEX IF NOT EXISTS idx_hike_sessions_route_workspace ON public.hike_sessions(route_workspace_id)
+  WHERE route_workspace_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_hike_sessions_route_revision ON public.hike_sessions(route_revision_id)
+  WHERE route_revision_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_carnets_planned_revision ON public.carnets(planned_revision_id)
+  WHERE planned_revision_id IS NOT NULL;
+
 -- ============================================================================
 -- Modèle d'écriture (décision d'architecture)
 --   * L'état complet (RouteWorkspaceState) vit dans route_workspaces.state_snapshot (JSONB) ;
@@ -329,39 +343,37 @@ AS $$
   SELECT NOT (p_obj ? p_key) OR jsonb_typeof(p_obj -> p_key) = p_type;
 $$;
 
--- Distance haversine en mètres (sphère de 6 371 km) : aucune dépendance PostGIS.
-CREATE OR REPLACE FUNCTION public.route_haversine_m(
-  p_lat1 DOUBLE PRECISION, p_lon1 DOUBLE PRECISION, p_lat2 DOUBLE PRECISION, p_lon2 DOUBLE PRECISION
-)
-RETURNS DOUBLE PRECISION
-LANGUAGE sql
-IMMUTABLE
-SET search_path = public
-AS $$
-  SELECT 2 * 6371000 * asin(least(1, sqrt(
-    power(sin(radians(p_lat2 - p_lat1) / 2), 2)
-    + cos(radians(p_lat1)) * cos(radians(p_lat2)) * power(sin(radians(p_lon2 - p_lon1) / 2), 2)
-  )));
-$$;
-
--- Vrai si (lat, lon) est dans le rayon d'au moins un des centres privés.
-CREATE OR REPLACE FUNCTION public.route_point_in_zone(
-  p_lat DOUBLE PRECISION,
-  p_lon DOUBLE PRECISION,
-  p_center_lats DOUBLE PRECISION[],
-  p_center_lons DOUBLE PRECISION[],
-  p_radius_m DOUBLE PRECISION
-)
+-- Plafonds de taille d'un instantané, appliqués à l'ÉCRITURE (création, opération, publication) pour que
+-- le masquage de lecture (anon compris) reste borné : <= 2 000 points actifs, <= 2 000 tronçons,
+-- <= 80 000 coordonnées au total (somme des geometry.coordinates), <= 60 étapes. Linéaire ; les parcours
+-- coûteux ne s'exécutent qu'après les plafonds de nombre (CASE : l'ordre des AND n'est pas garanti).
+-- Un argument NULL ou non tableau compte pour vide.
+-- Pourquoi 80 000 coordonnées et non 200 000 : le masquage de lecture a été mesuré à ~0,8 s pour 200 000
+-- coordonnées (2 000 points + 2 000 tronçons), ~0,45 s pour 100 000 (marge trop faible) et ~0,35 s pour 80 000 ; l'import du client est borné à
+-- 20 000 points par tracé (startBuilders.MAX_IMPORT_POINTS), soit 5 fois de marge.
+CREATE OR REPLACE FUNCTION public.route_snapshot_within_caps(p_points JSONB, p_sections JSONB, p_stages JSONB)
 RETURNS BOOLEAN
 LANGUAGE sql
 IMMUTABLE
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM generate_subscripts(p_center_lats, 1) AS i
-    WHERE public.route_haversine_m(p_center_lats[i], p_center_lons[i], p_lat, p_lon) <= p_radius_m
-  );
+  SELECT CASE
+    WHEN l.n_stages > 60 OR l.n_sections > 2000 THEN false
+    WHEN (SELECT count(*) FROM jsonb_array_elements(l.points) AS e
+          WHERE jsonb_typeof(e) = 'object' AND COALESCE(e ->> 'deletedAt', '') = '') > 2000 THEN false
+    ELSE COALESCE((
+      SELECT sum(CASE WHEN jsonb_typeof(e #> '{geometry,coordinates}') = 'array'
+                      THEN jsonb_array_length(e #> '{geometry,coordinates}') ELSE 0 END)
+      FROM jsonb_array_elements(l.sections) AS e
+      WHERE jsonb_typeof(e) = 'object'
+    ), 0) <= 80000
+  END
+  FROM (
+    SELECT CASE WHEN jsonb_typeof(p_points) = 'array' THEN p_points ELSE '[]'::jsonb END AS points,
+           CASE WHEN jsonb_typeof(p_sections) = 'array' THEN p_sections ELSE '[]'::jsonb END AS sections,
+           CASE WHEN jsonb_typeof(p_stages) = 'array' THEN jsonb_array_length(p_stages) ELSE 0 END AS n_stages,
+           CASE WHEN jsonb_typeof(p_sections) = 'array' THEN jsonb_array_length(p_sections) ELSE 0 END AS n_sections
+  ) AS l;
 $$;
 
 -- Tableau JSON trié par id (comparaison de contenu indépendante de l'ordre) ; p_skip_deleted retire
@@ -400,7 +412,8 @@ $$;
 -- ----------------------------------------------------------------------------
 -- 3. Rôle effectif (usage interne des RPC et des policies, non appelable par les clients)
 --   Retourne : owner | rôle de route_workspace_members (non révoqué) | trip_editor / trip_viewer
---   (collaborateur du voyage sans ligne de membre) | NULL (aucun droit ou révoqué).
+--   (collaborateur du voyage sans ligne de membre) | NULL (aucun droit, révoqué, ou membre d'un espace lié
+--   à un voyage dont il n'est plus collaborateur).
 --   Espace lié à un voyage : le propriétaire du voyage (trips.user_id ou trip_collaborators.role =
 --   'owner') est owner ; le créateur n'est owner que s'il est encore propriétaire ou éditeur du voyage,
 --   sinon il n'a plus aucun droit. Espace sans voyage : le créateur est owner.
@@ -457,6 +470,12 @@ BEGIN
     IF v_member.revoked_at IS NOT NULL THEN
       RETURN NULL;
     END IF;
+    -- Espace lié à un voyage : un rôle de membre n'est valable que tant que la personne est encore
+    -- collaboratrice du voyage (le propriétaire et le créateur ont été traités plus haut). Retirée de
+    -- trip_collaborators, elle perd tout accès, sans attendre une révocation explicite.
+    IF v_ws.trip_id IS NOT NULL AND v_trip_role IS NULL THEN
+      RETURN NULL;
+    END IF;
     RETURN v_member.role;
   END IF;
 
@@ -487,8 +506,13 @@ AS $$
   WHERE rw.id IN (
     SELECT w.id FROM public.route_workspaces w WHERE w.created_by = (SELECT auth.uid())
     UNION
+    -- Membre d'un espace sans voyage, ou d'un espace lié qui l'a encore pour collaborateur (N2).
     SELECT m.workspace_id FROM public.route_workspace_members m
+    JOIN public.route_workspaces w ON w.id = m.workspace_id
     WHERE m.user_id = (SELECT auth.uid()) AND m.revoked_at IS NULL
+      AND (w.trip_id IS NULL
+           OR EXISTS (SELECT 1 FROM public.trip_collaborators tc
+                      WHERE tc.trip_id = w.trip_id AND tc.user_id = (SELECT auth.uid())))
     UNION
     SELECT w.id FROM public.route_workspaces w
     JOIN public.trip_collaborators tc ON tc.trip_id = w.trip_id
@@ -516,6 +540,18 @@ AS $$
   );
 $$;
 
+-- Identifiant d'espace porté par un topic Realtime « route:<uuid> » ; NULL pour tout autre topic ou un uuid
+-- mal formé (jamais d'exception : un topic hostile est simplement refusé par les policies realtime.messages).
+CREATE OR REPLACE FUNCTION public.route_topic_workspace_id(p_topic TEXT)
+RETURNS UUID
+LANGUAGE sql
+IMMUTABLE
+SET search_path = public
+AS $$
+  SELECT CASE WHEN p_topic ~ '^route:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+              THEN substring(p_topic from 7)::uuid END;
+$$;
+
 -- ----------------------------------------------------------------------------
 -- 4. Assainissement RGPD d'un snapshot pour un lecteur externe (lien de partage ou external_viewer)
 --   Aligné sur src/features/route-collab/shareSanitize.ts (défense en profondeur côté Next).
@@ -524,8 +560,15 @@ $$;
 --   * zone de départ privée (et d'arrivée si boucle) : points du rayon retirés, départ/arrivée
 --     déplacés au premier/dernier point du tracé hors du rayon, coordonnées de géométrie du rayon
 --     retirées ; sans aucune coordonnée hors du rayon, départ/arrivée ne sont pas montrés ;
---   * rayon minimal 200 m ; haversine plpgsql (pas de PostGIS requis).
--- ----------------------------------------------------------------------------
+--   * rayon minimal 200 m ; haversine inlinée (SQL pur, aucune dépendance PostGIS).
+--   COÛT : requête ENSEMBLISTE unique (jsonb_array_elements + jsonb_agg, semi-jointures sur les identifiants
+--   conservés), linéaire en nombre de points + coordonnées. Aucune concaténation JSONB en boucle et aucune
+--   fonction avec SET search_path appelée par coordonnée (c'était quadratique : 26 s au plafond, 23 s pour 5 000 points
+--   + 5 000 tronçons). Elle est atteignable par anon (get_shared_route_workspace_tx) : les plafonds d'écriture
+--   (route_snapshot_within_caps) bornent l'entrée ; mesuré ~0,35 s au plafond (2 000 points, 1 999 tronçons,
+--   79 960 coordonnées ; test SQL, cas B1). SET enable_nestloop = off et jit = off : sans statistiques sur les CTE
+--   le planificateur choisissait des boucles imbriquées quadratiques, et JIT ajoutait ~1,7 s de compilation.
+--   Une coordonnée hors bornes (lat ±90, lon ±180) ou non numérique est retirée, jamais source d'erreur.
 CREATE OR REPLACE FUNCTION public.route_sanitize_snapshot_for_share(
   p_workspace_id UUID,
   p_snapshot JSONB,
@@ -533,263 +576,326 @@ CREATE OR REPLACE FUNCTION public.route_sanitize_snapshot_for_share(
   p_radius_m NUMERIC
 )
 RETURNS JSONB
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SET search_path = public
+-- Les CTE n'ont pas de statistiques : sans cela le planificateur les croit à 1 ligne et choisit des
+-- boucles imbriquées quadratiques. Jointures par hachage / fusion à la place.
+SET enable_nestloop = off
+-- JIT : la compilation d'une requête de ce type coûte ~1,7 s, plus que l'exécution (mesuré).
+SET jit = off
 AS $$
-DECLARE
-  v_radius DOUBLE PRECISION := GREATEST(COALESCE(p_radius_m, 500), 200)::double precision;
-  v_src JSONB := COALESCE(p_snapshot, '{}'::jsonb);
-  v_raw_points JSONB := CASE WHEN jsonb_typeof(v_src -> 'points') = 'array' THEN v_src -> 'points' ELSE '[]'::jsonb END;
-  v_raw_sections JSONB := CASE WHEN jsonb_typeof(v_src -> 'sections') = 'array' THEN v_src -> 'sections' ELSE '[]'::jsonb END;
-  v_raw_stages JSONB := CASE WHEN jsonb_typeof(v_src -> 'stages') = 'array' THEN v_src -> 'stages' ELSE '[]'::jsonb END;
-  v_raw_members JSONB := CASE WHEN jsonb_typeof(v_src -> 'members') = 'array' THEN v_src -> 'members' ELSE '[]'::jsonb END;
-  v_origin JSONB := CASE WHEN jsonb_typeof(v_src -> 'sourceOrigin') = 'object' THEN v_src -> 'sourceOrigin' ELSE '{}'::jsonb END;
-  v_options JSONB := CASE WHEN jsonb_typeof(v_src -> 'routingOptions') = 'object' THEN v_src -> 'routingOptions' ELSE '{}'::jsonb END;
-  v_pts JSONB[];
-  v_n INTEGER;
-  v_start INTEGER;
-  v_clat DOUBLE PRECISION[] := '{}';
-  v_clon DOUBLE PRECISION[] := '{}';
-  v_first_lon DOUBLE PRECISION;
-  v_first_lat DOUBLE PRECISION;
-  v_last_lon DOUBLE PRECISION;
-  v_last_lat DOUBLE PRECISION;
-  v_out_points JSONB := '[]'::jsonb;
-  v_out_sections JSONB := '[]'::jsonb;
-  v_out_stages JSONB;
-  v_out_members JSONB;
-  v_kept_ids TEXT[] := '{}';
-  e JSONB;
-  s JSONB;
-  i INTEGER;
-  v_lat DOUBLE PRECISION;
-  v_lon DOUBLE PRECISION;
-  v_kind TEXT;
-  v_use_last BOOLEAN;
-  v_anchor_lat DOUBLE PRECISION;
-  v_anchor_lon DOUBLE PRECISION;
-  v_coords JSONB;
-  v_total INTEGER;
-  v_kept INTEGER;
-  v_kept_coords JSONB;
-BEGIN
-  -- Points actifs, valides, triés par orderKey puis id (collation C = comparaison de chaînes du moteur).
-  SELECT COALESCE(array_agg(t.e ORDER BY (t.e ->> 'orderKey') COLLATE "C", (t.e ->> 'id') COLLATE "C"), '{}')
-  INTO v_pts
-  FROM jsonb_array_elements(v_raw_points) AS t(e)
-  WHERE jsonb_typeof(t.e) = 'object'
-    AND jsonb_typeof(t.e -> 'id') = 'string'
-    AND COALESCE(t.e ->> 'deletedAt', '') = ''
-    AND public.route_jf(t.e -> 'lat') BETWEEN -90 AND 90
-    AND public.route_jf(t.e -> 'lon') BETWEEN -180 AND 180;
-
-  v_n := COALESCE(array_length(v_pts, 1), 0);
-
-  IF v_n > 0 THEN
-    v_start := 1;
-    FOR i IN 1..v_n LOOP
-      IF v_pts[i] ->> 'kind' = 'start' THEN
-        v_start := i;
-        EXIT;
-      END IF;
-    END LOOP;
-    v_clat := v_clat || public.route_jf(v_pts[v_start] -> 'lat');
-    v_clon := v_clon || public.route_jf(v_pts[v_start] -> 'lon');
-    -- Boucle : l'arrivée est aussi un lieu privé.
-    IF v_src ->> 'shapeMode' = 'loop' AND v_n >= 2 THEN
-      v_clat := v_clat || public.route_jf(v_pts[v_n] -> 'lat');
-      v_clon := v_clon || public.route_jf(v_pts[v_n] -> 'lon');
-    END IF;
-  END IF;
-
-  -- Premier et dernier point du tracé hors de la zone privée (tronçons pris par point de départ).
-  WITH pts AS (
-    SELECT t.e ->> 'id' AS pid, t.ord
-    FROM unnest(v_pts) WITH ORDINALITY AS t(e, ord)
-  ), secs AS (
-    SELECT DISTINCT ON (t.e ->> 'fromPointId') t.e AS sec, t.e ->> 'fromPointId' AS fid
-    FROM jsonb_array_elements(v_raw_sections) WITH ORDINALITY AS t(e, o)
+WITH
+raw AS (
+  SELECT
+    x.s,
+    LEAST(GREATEST(COALESCE(p_radius_m, 500), 200), 20000000)::double precision AS radius,
+    CASE WHEN jsonb_typeof(x.s -> 'points') = 'array' THEN x.s -> 'points' ELSE '[]'::jsonb END AS points,
+    CASE WHEN jsonb_typeof(x.s -> 'sections') = 'array' THEN x.s -> 'sections' ELSE '[]'::jsonb END AS sections,
+    CASE WHEN jsonb_typeof(x.s -> 'stages') = 'array' THEN x.s -> 'stages' ELSE '[]'::jsonb END AS stages,
+    CASE WHEN jsonb_typeof(x.s -> 'members') = 'array' THEN x.s -> 'members' ELSE '[]'::jsonb END AS members,
+    CASE WHEN jsonb_typeof(x.s -> 'sourceOrigin') = 'object' THEN x.s -> 'sourceOrigin' ELSE '{}'::jsonb END AS origin,
+    CASE WHEN jsonb_typeof(x.s -> 'routingOptions') = 'object' THEN x.s -> 'routingOptions' ELSE '{}'::jsonb END AS options
+  -- `|| '{}'` : copie en mémoire, le jsonb (plusieurs Mo) n'est ainsi décompressé qu'une fois et non à chaque accès.
+  FROM (SELECT COALESCE(p_snapshot, '{}'::jsonb) || '{}'::jsonb AS s OFFSET 0) AS x
+),
+-- Points actifs, valides, triés par orderKey puis id (collation C = comparaison de chaînes du moteur).
+pts AS MATERIALIZED (
+  SELECT row_number() OVER (ORDER BY (q.e ->> 'orderKey') COLLATE "C", (q.e ->> 'id') COLLATE "C") AS ord,
+         q.e, q.e ->> 'id' AS pid, q.e ->> 'kind' AS kind, q.lat, q.lon
+  FROM (
+    SELECT t.e,
+           CASE WHEN jsonb_typeof(t.e -> 'lat') = 'number' THEN
+             CASE WHEN abs((t.e -> 'lat')::numeric) <= 90 THEN round((t.e -> 'lat')::numeric, 9)::double precision END
+           END AS lat,
+           CASE WHEN jsonb_typeof(t.e -> 'lon') = 'number' THEN
+             CASE WHEN abs((t.e -> 'lon')::numeric) <= 180 THEN round((t.e -> 'lon')::numeric, 9)::double precision END
+           END AS lon
+    FROM raw, jsonb_array_elements(raw.points) AS t(e)
     WHERE jsonb_typeof(t.e) = 'object'
-    ORDER BY (t.e ->> 'fromPointId'), t.o DESC
-  ), coords AS (
-    SELECT pts.ord AS pord, c.o AS cord,
-           public.route_jf(c.v -> 0) AS lon, public.route_jf(c.v -> 1) AS lat
-    FROM pts
-    JOIN secs ON secs.fid = pts.pid
+      AND jsonb_typeof(t.e -> 'id') = 'string'
+      AND COALESCE(t.e ->> 'deletedAt', '') = ''
+  ) AS q
+  WHERE q.lat IS NOT NULL AND q.lon IS NOT NULL
+),
+-- Centres privés : le départ (premier point de kind 'start', sinon le premier) ; en boucle, aussi l'arrivée.
+ctr AS MATERIALIZED (
+  SELECT raw.radius, n.n,
+         f.lat::numeric - (degrees(raw.radius / 6371000.0) * 1.001 + 0.000001)::numeric AS lo1,
+         f.lat::numeric + (degrees(raw.radius / 6371000.0) * 1.001 + 0.000001)::numeric AS hi1,
+         f.lat AS lat1, f.lon AS lon1,
+         CASE WHEN raw.s ->> 'shapeMode' = 'loop' AND n.n >= 2
+              THEN l.lat::numeric - (degrees(raw.radius / 6371000.0) * 1.001 + 0.000001)::numeric END AS lo2,
+         CASE WHEN raw.s ->> 'shapeMode' = 'loop' AND n.n >= 2
+              THEN l.lat::numeric + (degrees(raw.radius / 6371000.0) * 1.001 + 0.000001)::numeric END AS hi2,
+         CASE WHEN raw.s ->> 'shapeMode' = 'loop' AND n.n >= 2 THEN l.lat END AS lat2,
+         CASE WHEN raw.s ->> 'shapeMode' = 'loop' AND n.n >= 2 THEN l.lon END AS lon2
+  FROM raw
+  CROSS JOIN (SELECT count(*) AS n FROM pts) AS n
+  LEFT JOIN pts f ON f.ord = COALESCE((SELECT min(p.ord) FROM pts p WHERE p.kind = 'start'), 1)
+  LEFT JOIN pts l ON l.ord = n.n
+),
+-- Dans la zone privée = à moins de `radius` mètres d'un centre (haversine, sphère de 6 371 km).
+pz AS MATERIALIZED (
+  SELECT p.*,
+    COALESCE(
+      (c.lat1 IS NOT NULL AND 2 * 6371000 * asin(least(1, sqrt(
+         power(sin(radians(p.lat - c.lat1) / 2), 2)
+         + cos(radians(c.lat1)) * cos(radians(p.lat)) * power(sin(radians(p.lon - c.lon1) / 2), 2)))) <= c.radius)
+      OR
+      (c.lat2 IS NOT NULL AND 2 * 6371000 * asin(least(1, sqrt(
+         power(sin(radians(p.lat - c.lat2) / 2), 2)
+         + cos(radians(c.lat2)) * cos(radians(p.lat)) * power(sin(radians(p.lon - c.lon2) / 2), 2)))) <= c.radius),
+      false) AS inz
+  FROM pts p CROSS JOIN ctr c
+),
+sec_raw AS MATERIALIZED (
+  SELECT t.o, t.e, t.e ->> 'fromPointId' AS fid, t.e ->> 'toPointId' AS tid
+  FROM raw, jsonb_array_elements(raw.sections) WITH ORDINALITY AS t(e, o)
+  WHERE jsonb_typeof(t.e) = 'object'
+),
+-- Toutes les coordonnées des tronçons, une seule fois : ok = couple [lon, lat] numérique, dans les bornes
+-- et hors de la zone privée. Chemin chaud (jusqu'à 200 000 coordonnées), donc :
+--   * comparaisons en numeric (aucun aller-retour texte, aucun cast pouvant déborder : 1e400 reste un numeric) ;
+--   * double precision et trigonométrie seulement pour une coordonnée proche d'un centre privé
+--     (|Δlat| <= rayon : sinon la distance est forcément supérieure, exact ; bornes lo/hi précalculées) ;
+--   * OFFSET 0 : aucune expression n'est dupliquée par le planificateur.
+-- Les gardes sont des CASE (l'ordre d'évaluation des AND n'est pas garanti).
+coords AS MATERIALIZED (
+  SELECT g.sord, g.cord, g.jlon, g.jlat, g.two,
+    CASE WHEN g.nlon IS NULL OR g.nlat IS NULL THEN false
+         WHEN g.nlon NOT BETWEEN -180 AND 180 OR g.nlat NOT BETWEEN -90 AND 90 THEN false
+         ELSE NOT CASE WHEN c.lat1 IS NULL THEN false
+                       WHEN g.nlat NOT BETWEEN c.lo1 AND c.hi1 THEN false
+                       ELSE 2 * 6371000 * asin(least(1, sqrt(
+                              power(sin(radians(g.nlat::double precision - c.lat1) / 2), 2)
+                              + cos(radians(c.lat1)) * cos(radians(g.nlat::double precision))
+                                * power(sin(radians(g.nlon::double precision - c.lon1) / 2), 2)))) <= c.radius
+                  END
+              AND NOT CASE WHEN c.lat2 IS NULL THEN false
+                           WHEN g.nlat NOT BETWEEN c.lo2 AND c.hi2 THEN false
+                           ELSE 2 * 6371000 * asin(least(1, sqrt(
+                                  power(sin(radians(g.nlat::double precision - c.lat2) / 2), 2)
+                                  + cos(radians(c.lat2)) * cos(radians(g.nlat::double precision))
+                                    * power(sin(radians(g.nlon::double precision - c.lon2) / 2), 2)))) <= c.radius
+                      END
+    END AS ok
+  FROM (
+    SELECT s.o AS sord, c.ord AS cord, c.v -> 0 AS jlon, c.v -> 1 AS jlat,
+           CASE WHEN jsonb_typeof(c.v -> 0) = 'number' THEN (c.v -> 0)::numeric END AS nlon,
+           CASE WHEN jsonb_typeof(c.v -> 1) = 'number' THEN (c.v -> 1)::numeric END AS nlat,
+           CASE WHEN jsonb_typeof(c.v) = 'array' THEN jsonb_array_length(c.v) = 2 ELSE false END AS two
+    FROM sec_raw s
     CROSS JOIN LATERAL jsonb_array_elements(
-      CASE WHEN jsonb_typeof(secs.sec -> 'geometry' -> 'coordinates') = 'array'
-           THEN secs.sec -> 'geometry' -> 'coordinates' ELSE '[]'::jsonb END
-    ) WITH ORDINALITY AS c(v, o)
-    WHERE jsonb_typeof(c.v) = 'array'
-  ), outs AS (
-    SELECT * FROM coords
-    WHERE lon IS NOT NULL AND lat IS NOT NULL
-      AND NOT public.route_point_in_zone(lat, lon, v_clat, v_clon, v_radius)
-  )
-  SELECT (SELECT o.lon FROM outs o ORDER BY o.pord, o.cord LIMIT 1),
-         (SELECT o.lat FROM outs o ORDER BY o.pord, o.cord LIMIT 1),
-         (SELECT o.lon FROM outs o ORDER BY o.pord DESC, o.cord DESC LIMIT 1),
-         (SELECT o.lat FROM outs o ORDER BY o.pord DESC, o.cord DESC LIMIT 1)
-  INTO v_first_lon, v_first_lat, v_last_lon, v_last_lat;
-
-  -- Points : hors zone => conservés (note retirée) ; dans la zone => seuls départ/arrivée subsistent,
-  -- déplacés hors du rayon ; sans coordonnée hors du rayon, ils ne sont pas montrés.
-  IF v_n > 0 THEN
-    FOR i IN 1..v_n LOOP
-      e := v_pts[i];
-      v_lat := public.route_jf(e -> 'lat');
-      v_lon := public.route_jf(e -> 'lon');
-      v_kind := e ->> 'kind';
-
-      IF NOT public.route_point_in_zone(v_lat, v_lon, v_clat, v_clon, v_radius) THEN
-        v_out_points := v_out_points || jsonb_build_array(jsonb_build_object(
-          'id', public.route_jtext(e, 'id', 80),
-          'workspaceId', to_jsonb(p_workspace_id::text),
-          'kind', public.route_jtext(e, 'kind', 24),
-          'orderKey', public.route_jtext(e, 'orderKey', 40),
-          'lat', e -> 'lat',
-          'lon', e -> 'lon',
-          'eleM', public.route_jnum(e, 'eleM'),
-          'name', public.route_jtext(e, 'name', 200),
-          'semanticKind', public.route_jtext(e, 'semanticKind', 40),
-          'note', 'null'::jsonb,
-          'entityVersion', public.route_jnum(e, 'entityVersion')
-        ));
-        v_kept_ids := v_kept_ids || (e ->> 'id');
-      ELSIF v_kind IN ('start', 'finish') OR i = 1 OR i = v_n THEN
-        v_use_last := v_kind = 'finish' OR (i = v_n AND i <> 1);
-        v_anchor_lat := CASE WHEN v_use_last THEN v_last_lat ELSE v_first_lat END;
-        v_anchor_lon := CASE WHEN v_use_last THEN v_last_lon ELSE v_first_lon END;
-        IF v_anchor_lat IS NOT NULL AND v_anchor_lon IS NOT NULL THEN
-          v_out_points := v_out_points || jsonb_build_array(jsonb_build_object(
-            'id', public.route_jtext(e, 'id', 80),
-            'workspaceId', to_jsonb(p_workspace_id::text),
-            'kind', public.route_jtext(e, 'kind', 24),
-            'orderKey', public.route_jtext(e, 'orderKey', 40),
-            'lat', to_jsonb(v_anchor_lat),
-            'lon', to_jsonb(v_anchor_lon),
-            'eleM', 'null'::jsonb,
-            'name', to_jsonb(CASE WHEN v_kind = 'start' OR (i = 1 AND v_kind <> 'finish')
-                                  THEN 'Départ (zone privée masquée)'
-                                  ELSE 'Arrivée (zone privée masquée)' END),
-            'note', 'null'::jsonb,
-            'entityVersion', public.route_jnum(e, 'entityVersion'),
-            'masked', 'true'::jsonb
-          ));
-          v_kept_ids := v_kept_ids || (e ->> 'id');
-        END IF;
-      END IF;
-    END LOOP;
-  END IF;
-
-  -- Tronçons entre deux points conservés ; coordonnées de la zone privée retirées.
-  FOR s IN
-    SELECT t.e FROM jsonb_array_elements(v_raw_sections) AS t(e) WHERE jsonb_typeof(t.e) = 'object'
-  LOOP
-    CONTINUE WHEN NOT ((s ->> 'fromPointId') = ANY (v_kept_ids) AND (s ->> 'toPointId') = ANY (v_kept_ids));
-
-    v_coords := CASE WHEN jsonb_typeof(s -> 'geometry' -> 'coordinates') = 'array'
-                     THEN s -> 'geometry' -> 'coordinates' ELSE '[]'::jsonb END;
-
-    SELECT count(*), count(*) FILTER (WHERE c.ok),
-           COALESCE(jsonb_agg(jsonb_build_array(c.v -> 0, c.v -> 1) ORDER BY c.o) FILTER (WHERE c.ok), '[]'::jsonb)
-    INTO v_total, v_kept, v_kept_coords
-    FROM (
-      SELECT t.v, t.o,
-             CASE WHEN jsonb_typeof(t.v) = 'array'
-                       AND public.route_jf(t.v -> 0) IS NOT NULL AND public.route_jf(t.v -> 1) IS NOT NULL
-                  THEN NOT public.route_point_in_zone(public.route_jf(t.v -> 1), public.route_jf(t.v -> 0), v_clat, v_clon, v_radius)
-                  ELSE false END AS ok
-      FROM jsonb_array_elements(v_coords) WITH ORDINALITY AS t(v, o)
-    ) AS c;
-
-    v_out_sections := v_out_sections || jsonb_build_array(jsonb_build_object(
-      'id', public.route_jtext(s, 'id', 80),
-      'workspaceId', to_jsonb(p_workspace_id::text),
-      'fromPointId', s -> 'fromPointId',
-      'toPointId', s -> 'toPointId',
-      'mode', public.route_jtext(s, 'mode', 24),
-      'geometry', jsonb_build_object('type', 'LineString', 'coordinates', v_kept_coords),
-      'distanceKm', public.route_jnum(s, 'distanceKm'),
-      'durationMin', public.route_jnum(s, 'durationMin'),
-      'ascentM', public.route_jnum(s, 'ascentM'),
-      'descentM', public.route_jnum(s, 'descentM'),
-      'surfaceSegments', CASE WHEN jsonb_typeof(s -> 'surfaceSegments') = 'array'
-                              THEN s -> 'surfaceSegments' ELSE '[]'::jsonb END,
-      'warnings', '[]'::jsonb,
-      'entityVersion', public.route_jnum(s, 'entityVersion')
-    ) || CASE
-           -- Les altitudes ne sont gardées que si aucune coordonnée n'a été retirée (sinon désalignées).
-           WHEN v_total = v_kept AND jsonb_typeof(s -> 'elevationSamples') = 'array'
-           THEN jsonb_build_object('elevationSamples', s -> 'elevationSamples')
-           ELSE '{}'::jsonb
-         END);
-  END LOOP;
-
+      CASE WHEN jsonb_typeof(s.e #> '{geometry,coordinates}') = 'array'
+           THEN s.e #> '{geometry,coordinates}' ELSE '[]'::jsonb END
+    ) WITH ORDINALITY AS c(v, ord)
+    OFFSET 0
+  ) AS g
+  CROSS JOIN ctr c
+),
+-- Statistiques par tronçon (un passage) : nombre de coordonnées, conservées, couples [lon, lat], première/dernière conservée.
+cstat AS (
+  SELECT c.sord, count(*) AS total, count(*) FILTER (WHERE c.ok) AS kept, count(*) FILTER (WHERE c.two) AS pairs,
+         min(c.cord) FILTER (WHERE c.ok) AS cmin, max(c.cord) FILTER (WHERE c.ok) AS cmax
+  FROM coords c
+  GROUP BY c.sord
+),
+-- Premier et dernier point du tracé hors de la zone privée (tronçons pris par point de départ : le dernier
+-- tronçon du tableau dont fromPointId est l'identifiant du point). Par tronçon, cstat donne déjà la première
+-- et la dernière coordonnée hors zone : il ne reste qu'à choisir parmi <= 1 tronçon par point.
+last_sec AS (
+  SELECT DISTINCT ON (s.fid) s.o, s.fid FROM sec_raw s ORDER BY s.fid, s.o DESC
+),
+sec_pts AS (
+  SELECT ls.o AS sord, p.ord AS pord, z.cmin, z.cmax
+  FROM pts p
+  JOIN last_sec ls ON ls.fid = p.pid
+  JOIN cstat z ON z.sord = ls.o
+  WHERE z.cmin IS NOT NULL
+),
+first_k AS (SELECT t.sord, t.cmin AS cord FROM sec_pts t ORDER BY t.pord, t.cmin LIMIT 1),
+last_k AS (SELECT t.sord, t.cmax AS cord FROM sec_pts t ORDER BY t.pord DESC, t.cmax DESC LIMIT 1),
+-- Une seule ligne (jamais rejouée par point) : premier et dernier point hors zone.
+anc AS MATERIALIZED (
+  SELECT f.v -> 0 AS fjlon, f.v -> 1 AS fjlat, l.v -> 0 AS ljlon, l.v -> 1 AS ljlat
+  FROM (
+    SELECT (SELECT jsonb_build_array(c.jlon, c.jlat) FROM coords c JOIN first_k fk ON c.sord = fk.sord AND c.cord = fk.cord) AS fv,
+           (SELECT jsonb_build_array(c.jlon, c.jlat) FROM coords c JOIN last_k lk ON c.sord = lk.sord AND c.cord = lk.cord) AS lv
+  ) AS q
+  CROSS JOIN LATERAL (SELECT q.fv AS v) AS f
+  CROSS JOIN LATERAL (SELECT q.lv AS v) AS l
+),
+-- Points : hors zone => conservés (note retirée) ; dans la zone => seuls départ/arrivée subsistent,
+-- déplacés hors du rayon ; sans coordonnée hors du rayon, ils ne sont pas montrés.
+outp AS MATERIALIZED (
+  SELECT a.ord, a.pid,
+    CASE WHEN NOT a.inz THEN
+      jsonb_build_object(
+        'id', CASE WHEN jsonb_typeof(a.e -> 'id') = 'string' THEN to_jsonb(left(a.e ->> 'id', 80)) ELSE 'null'::jsonb END,
+        'workspaceId', to_jsonb(p_workspace_id::text),
+        'kind', CASE WHEN jsonb_typeof(a.e -> 'kind') = 'string' THEN to_jsonb(left(a.e ->> 'kind', 24)) ELSE 'null'::jsonb END,
+        'orderKey', CASE WHEN jsonb_typeof(a.e -> 'orderKey') = 'string' THEN to_jsonb(left(a.e ->> 'orderKey', 40)) ELSE 'null'::jsonb END,
+        'lat', a.e -> 'lat',
+        'lon', a.e -> 'lon',
+        'eleM', CASE WHEN jsonb_typeof(a.e -> 'eleM') = 'number' THEN a.e -> 'eleM' ELSE 'null'::jsonb END,
+        'name', CASE WHEN jsonb_typeof(a.e -> 'name') = 'string' THEN to_jsonb(left(a.e ->> 'name', 200)) ELSE 'null'::jsonb END,
+        'semanticKind', CASE WHEN jsonb_typeof(a.e -> 'semanticKind') = 'string' THEN to_jsonb(left(a.e ->> 'semanticKind', 40)) ELSE 'null'::jsonb END,
+        'note', 'null'::jsonb,
+        'entityVersion', CASE WHEN jsonb_typeof(a.e -> 'entityVersion') = 'number' THEN a.e -> 'entityVersion' ELSE 'null'::jsonb END)
+    ELSE
+      jsonb_build_object(
+        'id', CASE WHEN jsonb_typeof(a.e -> 'id') = 'string' THEN to_jsonb(left(a.e ->> 'id', 80)) ELSE 'null'::jsonb END,
+        'workspaceId', to_jsonb(p_workspace_id::text),
+        'kind', CASE WHEN jsonb_typeof(a.e -> 'kind') = 'string' THEN to_jsonb(left(a.e ->> 'kind', 24)) ELSE 'null'::jsonb END,
+        'orderKey', CASE WHEN jsonb_typeof(a.e -> 'orderKey') = 'string' THEN to_jsonb(left(a.e ->> 'orderKey', 40)) ELSE 'null'::jsonb END,
+        'lat', a.anc_jlat,
+        'lon', a.anc_jlon,
+        'eleM', 'null'::jsonb,
+        'name', to_jsonb(CASE WHEN a.kind = 'start' OR (a.ord = 1 AND COALESCE(a.kind, '') <> 'finish')
+                              THEN 'Départ (zone privée masquée)'
+                              ELSE 'Arrivée (zone privée masquée)' END),
+        'note', 'null'::jsonb,
+        'entityVersion', CASE WHEN jsonb_typeof(a.e -> 'entityVersion') = 'number' THEN a.e -> 'entityVersion' ELSE 'null'::jsonb END,
+        'masked', 'true'::jsonb)
+    END AS obj
+  FROM (
+    SELECT p.*, c.n,
+           CASE WHEN COALESCE(p.kind = 'finish', false) OR (p.ord = c.n AND p.ord <> 1) THEN an.ljlat ELSE an.fjlat END AS anc_jlat,
+           CASE WHEN COALESCE(p.kind = 'finish', false) OR (p.ord = c.n AND p.ord <> 1) THEN an.ljlon ELSE an.fjlon END AS anc_jlon
+    FROM pz p
+    CROSS JOIN ctr c
+    CROSS JOIN anc an
+  ) AS a
+  WHERE NOT a.inz
+     OR (COALESCE(a.kind IN ('start', 'finish'), false) OR a.ord = 1 OR a.ord = a.n)
+        AND a.anc_jlat IS NOT NULL AND a.anc_jlon IS NOT NULL
+),
+kept AS MATERIALIZED (SELECT DISTINCT pid FROM outp),
+-- Tronçons entre deux points conservés ; coordonnées de la zone privée retirées.
+sec_out AS (
+  SELECT s.o, s.e
+  FROM sec_raw s
+  WHERE s.fid IN (SELECT pid FROM kept) AND s.tid IN (SELECT pid FROM kept)
+),
+-- Statistiques par tronçon (un passage), puis reconstruction des seules coordonnées des tronçons qui en
+-- perdent une ou qui ne sont pas de simples couples [lon, lat] ; les autres gardent leur tableau d'origine.
+cagg AS (
+  SELECT c.sord, jsonb_agg(jsonb_build_array(c.jlon, c.jlat) ORDER BY c.cord) AS kept_coords
+  FROM coords c
+  WHERE c.ok AND c.sord IN (SELECT t.sord FROM cstat t WHERE t.kept <> t.total OR t.pairs <> t.total)
+  GROUP BY c.sord
+),
+secj AS (
+  SELECT w.o,
+    -- Les altitudes ne sont gardées que si aucune coordonnée n'a été retirée (sinon désalignées).
+    -- Deux variantes d'un même jsonb_build_object (pas de `||` : il recopierait toute la géométrie).
+    CASE WHEN w.all_kept AND jsonb_typeof(w.e -> 'elevationSamples') = 'array'
+         THEN jsonb_build_object(
+        'id', CASE WHEN jsonb_typeof(w.e -> 'id') = 'string' THEN to_jsonb(left(w.e ->> 'id', 80)) ELSE 'null'::jsonb END,
+        'workspaceId', to_jsonb(p_workspace_id::text),
+        'fromPointId', w.e -> 'fromPointId',
+        'toPointId', w.e -> 'toPointId',
+        'mode', CASE WHEN jsonb_typeof(w.e -> 'mode') = 'string' THEN to_jsonb(left(w.e ->> 'mode', 24)) ELSE 'null'::jsonb END,
+        'geometry', jsonb_build_object('type', 'LineString', 'coordinates', w.coords_out),
+        'distanceKm', CASE WHEN jsonb_typeof(w.e -> 'distanceKm') = 'number' THEN w.e -> 'distanceKm' ELSE 'null'::jsonb END,
+        'durationMin', CASE WHEN jsonb_typeof(w.e -> 'durationMin') = 'number' THEN w.e -> 'durationMin' ELSE 'null'::jsonb END,
+        'ascentM', CASE WHEN jsonb_typeof(w.e -> 'ascentM') = 'number' THEN w.e -> 'ascentM' ELSE 'null'::jsonb END,
+        'descentM', CASE WHEN jsonb_typeof(w.e -> 'descentM') = 'number' THEN w.e -> 'descentM' ELSE 'null'::jsonb END,
+        'surfaceSegments', CASE WHEN jsonb_typeof(w.e -> 'surfaceSegments') = 'array' THEN w.e -> 'surfaceSegments' ELSE '[]'::jsonb END,
+        'warnings', '[]'::jsonb,
+        'entityVersion', CASE WHEN jsonb_typeof(w.e -> 'entityVersion') = 'number' THEN w.e -> 'entityVersion' ELSE 'null'::jsonb END,
+        'elevationSamples', w.e -> 'elevationSamples')
+         ELSE jsonb_build_object(
+        'id', CASE WHEN jsonb_typeof(w.e -> 'id') = 'string' THEN to_jsonb(left(w.e ->> 'id', 80)) ELSE 'null'::jsonb END,
+        'workspaceId', to_jsonb(p_workspace_id::text),
+        'fromPointId', w.e -> 'fromPointId',
+        'toPointId', w.e -> 'toPointId',
+        'mode', CASE WHEN jsonb_typeof(w.e -> 'mode') = 'string' THEN to_jsonb(left(w.e ->> 'mode', 24)) ELSE 'null'::jsonb END,
+        'geometry', jsonb_build_object('type', 'LineString', 'coordinates', w.coords_out),
+        'distanceKm', CASE WHEN jsonb_typeof(w.e -> 'distanceKm') = 'number' THEN w.e -> 'distanceKm' ELSE 'null'::jsonb END,
+        'durationMin', CASE WHEN jsonb_typeof(w.e -> 'durationMin') = 'number' THEN w.e -> 'durationMin' ELSE 'null'::jsonb END,
+        'ascentM', CASE WHEN jsonb_typeof(w.e -> 'ascentM') = 'number' THEN w.e -> 'ascentM' ELSE 'null'::jsonb END,
+        'descentM', CASE WHEN jsonb_typeof(w.e -> 'descentM') = 'number' THEN w.e -> 'descentM' ELSE 'null'::jsonb END,
+        'surfaceSegments', CASE WHEN jsonb_typeof(w.e -> 'surfaceSegments') = 'array' THEN w.e -> 'surfaceSegments' ELSE '[]'::jsonb END,
+        'warnings', '[]'::jsonb,
+        'entityVersion', CASE WHEN jsonb_typeof(w.e -> 'entityVersion') = 'number' THEN w.e -> 'entityVersion' ELSE 'null'::jsonb END)
+    END AS obj
+  FROM (
+    SELECT s.o, s.e,
+           COALESCE(z.total, 0) = COALESCE(z.kept, 0) AS all_kept,
+           -- Tronçon intact (rien retiré, que des couples [lon, lat]) : tableau d'origine, sinon reconstruit.
+           CASE WHEN COALESCE(z.kept, 0) = COALESCE(z.total, 0) AND COALESCE(z.pairs, 0) = COALESCE(z.total, 0)
+                THEN CASE WHEN jsonb_typeof(s.e #> '{geometry,coordinates}') = 'array'
+                          THEN s.e #> '{geometry,coordinates}' ELSE '[]'::jsonb END
+                ELSE COALESCE(a.kept_coords, '[]'::jsonb) END AS coords_out
+    FROM sec_out s
+    LEFT JOIN cstat z ON z.sord = s.o
+    LEFT JOIN cagg a ON a.sord = s.o
+    OFFSET 0
+  ) AS w
+)
+SELECT jsonb_build_object(
+  'id', to_jsonb(p_workspace_id::text),
+  'title', CASE WHEN jsonb_typeof(raw.s -> 'title') = 'string' THEN to_jsonb(left(raw.s ->> 'title', 160)) ELSE 'null'::jsonb END,
+  'status', CASE WHEN jsonb_typeof(raw.s -> 'status') = 'string' THEN to_jsonb(left(raw.s ->> 'status', 16)) ELSE 'null'::jsonb END,
+  'sport', CASE WHEN jsonb_typeof(raw.s -> 'sport') = 'string' THEN to_jsonb(left(raw.s ->> 'sport', 40)) ELSE 'null'::jsonb END,
+  'shapeMode', CASE WHEN jsonb_typeof(raw.s -> 'shapeMode') = 'string' THEN to_jsonb(left(raw.s ->> 'shapeMode', 16)) ELSE 'null'::jsonb END,
+  'routingOptions', jsonb_strip_nulls(jsonb_build_object(
+    'ebike', CASE WHEN jsonb_typeof(raw.options -> 'ebike') = 'boolean' THEN raw.options -> 'ebike' END,
+    'avoidSteps', CASE WHEN jsonb_typeof(raw.options -> 'avoidSteps') = 'boolean' THEN raw.options -> 'avoidSteps' END,
+    'avoidFerries', CASE WHEN jsonb_typeof(raw.options -> 'avoidFerries') = 'boolean' THEN raw.options -> 'avoidFerries' END,
+    'surfacePref', CASE WHEN jsonb_typeof(raw.options -> 'surfacePref') = 'string'
+                        THEN to_jsonb(left(raw.options ->> 'surfacePref', 24)) END
+  )),
+  'headSeq', to_jsonb(COALESCE(p_head_seq, 0)),
+  'reviewedSeq', CASE WHEN jsonb_typeof(raw.s -> 'reviewedSeq') = 'number' THEN raw.s -> 'reviewedSeq' ELSE 'null'::jsonb END,
+  'publishedRevisionNo', CASE WHEN jsonb_typeof(raw.s -> 'publishedRevisionNo') = 'number' THEN raw.s -> 'publishedRevisionNo' ELSE 'null'::jsonb END,
+  'sourceOrigin', jsonb_build_object(
+    'kind', CASE WHEN jsonb_typeof(raw.origin -> 'kind') = 'string' THEN to_jsonb(left(raw.origin ->> 'kind', 24)) ELSE 'null'::jsonb END,
+    'sourceTitle', CASE WHEN jsonb_typeof(raw.origin -> 'sourceTitle') = 'string' THEN to_jsonb(left(raw.origin ->> 'sourceTitle', 160)) ELSE 'null'::jsonb END,
+    'importedAt', CASE WHEN jsonb_typeof(raw.origin -> 'importedAt') = 'string' THEN to_jsonb(left(raw.origin ->> 'importedAt', 40)) ELSE 'null'::jsonb END,
+    'attribution', CASE WHEN jsonb_typeof(raw.origin -> 'attribution') = 'string' THEN to_jsonb(left(raw.origin ->> 'attribution', 300)) ELSE 'null'::jsonb END
+  ),
+  'shareLink', 'null'::jsonb,
+  'points', COALESCE((SELECT jsonb_agg(o.obj ORDER BY o.ord) FROM outp o), '[]'::jsonb),
+  'sections', COALESCE((SELECT jsonb_agg(j.obj ORDER BY j.o) FROM secj j), '[]'::jsonb),
   -- Étapes réduites : identité, jour, titre, date, distance éventuelle, ids de points conservés.
-  SELECT COALESCE(jsonb_agg(jsonb_build_object(
-           'id', public.route_jtext(t.e, 'id', 80),
-           'workspaceId', to_jsonb(p_workspace_id::text),
-           'orderKey', public.route_jtext(t.e, 'orderKey', 40),
-           'dayNumber', public.route_jnum(t.e, 'dayNumber'),
-           'kind', public.route_jtext(t.e, 'kind', 16),
-           'title', public.route_jtext(t.e, 'title', 160),
-           'dateIso', public.route_jtext(t.e, 'dateIso', 32),
-           'distanceKm', public.route_jnum(t.e, 'distanceKm'),
-           'startPointId', CASE WHEN (t.e ->> 'startPointId') = ANY (v_kept_ids) THEN t.e -> 'startPointId' ELSE 'null'::jsonb END,
-           'endPointId', CASE WHEN (t.e ->> 'endPointId') = ANY (v_kept_ids) THEN t.e -> 'endPointId' ELSE 'null'::jsonb END
-         ) ORDER BY t.ord), '[]'::jsonb)
-  INTO v_out_stages
-  FROM jsonb_array_elements(v_raw_stages) WITH ORDINALITY AS t(e, ord)
-  WHERE jsonb_typeof(t.e) = 'object';
-
+  'stages', COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+             'id', CASE WHEN jsonb_typeof(t.e -> 'id') = 'string' THEN to_jsonb(left(t.e ->> 'id', 80)) ELSE 'null'::jsonb END,
+             'workspaceId', to_jsonb(p_workspace_id::text),
+             'orderKey', CASE WHEN jsonb_typeof(t.e -> 'orderKey') = 'string' THEN to_jsonb(left(t.e ->> 'orderKey', 40)) ELSE 'null'::jsonb END,
+             'dayNumber', CASE WHEN jsonb_typeof(t.e -> 'dayNumber') = 'number' THEN t.e -> 'dayNumber' ELSE 'null'::jsonb END,
+             'kind', CASE WHEN jsonb_typeof(t.e -> 'kind') = 'string' THEN to_jsonb(left(t.e ->> 'kind', 16)) ELSE 'null'::jsonb END,
+             'title', CASE WHEN jsonb_typeof(t.e -> 'title') = 'string' THEN to_jsonb(left(t.e ->> 'title', 160)) ELSE 'null'::jsonb END,
+             'dateIso', CASE WHEN jsonb_typeof(t.e -> 'dateIso') = 'string' THEN to_jsonb(left(t.e ->> 'dateIso', 32)) ELSE 'null'::jsonb END,
+             'distanceKm', CASE WHEN jsonb_typeof(t.e -> 'distanceKm') = 'number' THEN t.e -> 'distanceKm' ELSE 'null'::jsonb END,
+             'startPointId', CASE WHEN (t.e ->> 'startPointId') IN (SELECT pid FROM kept) THEN t.e -> 'startPointId' ELSE 'null'::jsonb END,
+             'endPointId', CASE WHEN (t.e ->> 'endPointId') IN (SELECT pid FROM kept) THEN t.e -> 'endPointId' ELSE 'null'::jsonb END
+           ) ORDER BY t.ord)
+    FROM jsonb_array_elements(raw.stages) WITH ORDINALITY AS t(e, ord)
+    WHERE jsonb_typeof(t.e) = 'object'
+  ), '[]'::jsonb),
+  'variants', '[]'::jsonb,
+  'proposals', '[]'::jsonb,
+  'comments', '[]'::jsonb,
+  'kitItems', '[]'::jsonb,
   -- Membres : nom affiché et rôle uniquement (jamais d'identifiant), non révoqués.
-  SELECT COALESCE(jsonb_agg(jsonb_build_object(
-           'displayName', public.route_jtext(t.e, 'displayName', 120),
-           'role', public.route_jtext(t.e, 'role', 24)
-         ) ORDER BY t.ord), '[]'::jsonb)
-  INTO v_out_members
-  FROM jsonb_array_elements(v_raw_members) WITH ORDINALITY AS t(e, ord)
-  WHERE jsonb_typeof(t.e) = 'object' AND COALESCE(t.e ->> 'revokedAt', '') = '';
-
-  RETURN jsonb_build_object(
-    'id', to_jsonb(p_workspace_id::text),
-    'title', public.route_jtext(v_src, 'title', 160),
-    'status', public.route_jtext(v_src, 'status', 16),
-    'sport', public.route_jtext(v_src, 'sport', 40),
-    'shapeMode', public.route_jtext(v_src, 'shapeMode', 16),
-    'routingOptions', jsonb_strip_nulls(jsonb_build_object(
-      'ebike', CASE WHEN jsonb_typeof(v_options -> 'ebike') = 'boolean' THEN v_options -> 'ebike' END,
-      'avoidSteps', CASE WHEN jsonb_typeof(v_options -> 'avoidSteps') = 'boolean' THEN v_options -> 'avoidSteps' END,
-      'avoidFerries', CASE WHEN jsonb_typeof(v_options -> 'avoidFerries') = 'boolean' THEN v_options -> 'avoidFerries' END,
-      'surfacePref', CASE WHEN jsonb_typeof(v_options -> 'surfacePref') = 'string'
-                          THEN to_jsonb(left(v_options ->> 'surfacePref', 24)) END
-    )),
-    'headSeq', to_jsonb(COALESCE(p_head_seq, 0)),
-    'reviewedSeq', public.route_jnum(v_src, 'reviewedSeq'),
-    'publishedRevisionNo', public.route_jnum(v_src, 'publishedRevisionNo'),
-    'sourceOrigin', jsonb_build_object(
-      'kind', public.route_jtext(v_origin, 'kind', 24),
-      'sourceTitle', public.route_jtext(v_origin, 'sourceTitle', 160),
-      'importedAt', public.route_jtext(v_origin, 'importedAt', 40),
-      'attribution', public.route_jtext(v_origin, 'attribution', 300)
-    ),
-    'shareLink', 'null'::jsonb,
-    'points', v_out_points,
-    'sections', v_out_sections,
-    'stages', v_out_stages,
-    'variants', '[]'::jsonb,
-    'proposals', '[]'::jsonb,
-    'comments', '[]'::jsonb,
-    'kitItems', '[]'::jsonb,
-    'members', v_out_members,
-    'revisions', '[]'::jsonb,
-    'packs', '[]'::jsonb,
-    'participantPacks', '[]'::jsonb,
-    'updatedAt', public.route_jtext(v_src, 'updatedAt', 40)
-  );
-END;
+  'members', COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+             'displayName', CASE WHEN jsonb_typeof(t.e -> 'displayName') = 'string' THEN to_jsonb(left(t.e ->> 'displayName', 120)) ELSE 'null'::jsonb END,
+             'role', CASE WHEN jsonb_typeof(t.e -> 'role') = 'string' THEN to_jsonb(left(t.e ->> 'role', 24)) ELSE 'null'::jsonb END
+           ) ORDER BY t.ord)
+    FROM jsonb_array_elements(raw.members) WITH ORDINALITY AS t(e, ord)
+    WHERE jsonb_typeof(t.e) = 'object' AND COALESCE(t.e ->> 'revokedAt', '') = ''
+  ), '[]'::jsonb),
+  'revisions', '[]'::jsonb,
+  'packs', '[]'::jsonb,
+  'participantPacks', '[]'::jsonb,
+  'updatedAt', CASE WHEN jsonb_typeof(raw.s -> 'updatedAt') = 'string' THEN to_jsonb(left(raw.s ->> 'updatedAt', 40)) ELSE 'null'::jsonb END
+)
+FROM raw;
 $$;
 
 -- ----------------------------------------------------------------------------
@@ -841,6 +947,11 @@ BEGIN
           AND public.route_part_ok(p_snapshot, 'sourceOrigin', 'object')) THEN
     RAISE EXCEPTION 'invalid_snapshot_shape' USING ERRCODE = '22023';
   END IF;
+  -- Plafonds d'écriture (2 000 points actifs, 2 000 tronçons, 80 000 coordonnées, 60 étapes) : ils bornent
+  -- le coût du masquage de lecture, atteignable par anon.
+  IF NOT public.route_snapshot_within_caps(p_snapshot -> 'points', p_snapshot -> 'sections', p_snapshot -> 'stages') THEN
+    RAISE EXCEPTION 'snapshot_too_large' USING ERRCODE = '22023';
+  END IF;
   IF p_trip_id IS NOT NULL AND NOT public.can_edit_trip(p_trip_id) THEN
     RAISE EXCEPTION 'trip_edit_required' USING ERRCODE = '42501';
   END IF;
@@ -853,9 +964,11 @@ BEGIN
   END IF;
   v_name := COALESCE(NULLIF(btrim(left(v_name, 120)), ''), 'Voyageur ' || left(v_uid::text, 6));
 
-  v_snapshot := p_snapshot || jsonb_build_object(
+  -- tripId : uniquement le voyage dont le droit d'édition a été vérifié (p_trip_id) ; la valeur du snapshot
+  -- fourni n'est jamais recopiée (un espace sans voyage ne porte pas d'identifiant de voyage inventé).
+  v_snapshot := (p_snapshot - 'tripId') || jsonb_build_object(
     'id', v_id,
-    'tripId', COALESCE(p_trip_id::text, p_snapshot ->> 'tripId'),
+    'tripId', p_trip_id::text,
     'title', btrim(p_title),
     'sport', p_sport,
     'status', 'draft',
@@ -895,7 +1008,9 @@ $$;
 --   p_payload_hash    : conservé pour compatibilité d'appel, IGNORÉ : le hash est calculé ici (SHA-256).
 --   p_next_snapshot   : seules les clés propres aux opérations sont fusionnées dans le snapshot stocké ;
 --                       les types des clés fusionnées sont contrôlés, taille <= 5 Mo (payload <= 200 Ko,
---                       2 Mo pour import_track).
+--                       2 Mo pour import_track), plafonds du tracé (refus 'snapshot_too_large') :
+--                       <= 2 000 points actifs, 2 000 tronçons, 80 000 coordonnées au total, 60 étapes.
+--   p_entity_versions : <= 100 Ko (sinon 'payload_too_large').
 -- Rôles autorisés : owner / co_organizer / editor, ou collaborateur éditeur du voyage sans ligne de membre.
 -- Un espace archivé est en lecture seule.
 CREATE OR REPLACE FUNCTION public.apply_route_operation_tx(
@@ -955,6 +1070,14 @@ BEGIN
   END IF;
   IF p_next_snapshot ? 'sport' AND char_length(p_next_snapshot ->> 'sport') > 40 THEN
     RETURN jsonb_build_object('status', 'denied', 'reason', 'invalid_snapshot_shape');
+  END IF;
+  -- Versions d'entités attendues : petite table id -> version, bornée (journal des opérations).
+  IF p_entity_versions IS NOT NULL AND length(p_entity_versions::text) > 100000 THEN
+    RETURN jsonb_build_object('status', 'denied', 'reason', 'payload_too_large');
+  END IF;
+  -- Plafonds d'écriture (voir route_snapshot_within_caps) sur les parties du tracé fournies.
+  IF NOT public.route_snapshot_within_caps(p_next_snapshot -> 'points', p_next_snapshot -> 'sections', p_next_snapshot -> 'stages') THEN
+    RETURN jsonb_build_object('status', 'denied', 'reason', 'snapshot_too_large');
   END IF;
 
   -- Verrou court sur la tête de route : ordonne écritures concurrentes et révocations.
@@ -1084,6 +1207,9 @@ BEGIN
           AND public.route_part_ok(p_snapshot, 'stages', 'array')
           AND public.route_part_ok(p_snapshot, 'kitSnapshot', 'array')) THEN
     RETURN jsonb_build_object('status', 'blocked', 'reason', 'invalid_snapshot_shape');
+  END IF;
+  IF NOT public.route_snapshot_within_caps(p_snapshot -> 'points', p_snapshot -> 'sections', p_snapshot -> 'stages') THEN
+    RETURN jsonb_build_object('status', 'blocked', 'reason', 'snapshot_too_large');
   END IF;
 
   SELECT * INTO v_ws
@@ -1274,13 +1400,20 @@ $$;
 --   * delegated_publish est forcé à false si le rôle n'est pas co_organizer ou en cas de révocation.
 -- Met à jour la table ET state_snapshot -> 'members'. p_role NULL = rôle inchangé ('participant' pour un
 -- nouveau membre) ; p_delegated_publish NULL = inchangé ; p_revoke = true révoque, false/NULL rétablit.
+-- p_stage_scope_ids (« une étape confiée », 8.3) : NULL = inchangé ('{}' pour un nouveau membre) ; sinon la
+-- liste des étapes confiées (<= 60 identifiants de <= 80 caractères [A-Za-z0-9_-]), écrite dans
+-- route_workspace_members.stage_scope_ids ET dans le membre du snapshot (stageScopeIds). '{}' = aucune restriction.
+-- Un espace archivé est en lecture seule (aucune modification de membre).
+-- Ancienne signature (6 arguments) retirée : une surcharge avec valeurs par défaut rendrait l'appel ambigu.
+DROP FUNCTION IF EXISTS public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT);
 CREATE OR REPLACE FUNCTION public.set_route_member_tx(
   p_workspace_id UUID,
   p_user_id UUID,
   p_role TEXT,
   p_revoke BOOLEAN,
   p_delegated_publish BOOLEAN,
-  p_display_name TEXT DEFAULT NULL
+  p_display_name TEXT DEFAULT NULL,
+  p_stage_scope_ids TEXT[] DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -1300,6 +1433,8 @@ DECLARE
   v_revoke BOOLEAN := COALESCE(p_revoke, false);
   v_now_iso TEXT := to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"');
   v_name TEXT := NULLIF(btrim(left(p_display_name, 120)), '');
+  v_scope TEXT[];
+  v_scope_json JSONB;
   v_entry JSONB;
   v_members JSONB;
 BEGIN
@@ -1311,6 +1446,13 @@ BEGIN
   END IF;
   IF p_role IS NOT NULL AND p_role NOT IN ('owner', 'co_organizer', 'editor', 'contributor', 'participant', 'external_viewer') THEN
     RETURN jsonb_build_object('status', 'denied', 'reason', 'invalid_role');
+  END IF;
+  IF p_stage_scope_ids IS NOT NULL AND (
+       array_ndims(p_stage_scope_ids) > 1
+       OR cardinality(p_stage_scope_ids) > 60
+       OR EXISTS (SELECT 1 FROM unnest(p_stage_scope_ids) AS e
+                  WHERE e IS NULL OR char_length(e) > 80 OR e !~ '^[A-Za-z0-9_-]+$')) THEN
+    RETURN jsonb_build_object('status', 'denied', 'reason', 'invalid_stage_scope');
   END IF;
 
   SELECT * INTO v_ws
@@ -1325,6 +1467,9 @@ BEGIN
   v_actor_role := public.route_workspace_effective_role(p_workspace_id, v_uid);
   IF v_actor_role IS NULL OR v_actor_role NOT IN ('owner', 'co_organizer') THEN
     RETURN jsonb_build_object('status', 'denied', 'reason', 'member_management_requires_owner_or_co_organizer');
+  END IF;
+  IF v_ws.status = 'archived' THEN
+    RETURN jsonb_build_object('status', 'denied', 'reason', 'workspace_archived');
   END IF;
 
   SELECT * INTO v_target
@@ -1383,12 +1528,17 @@ BEGIN
     ELSE COALESCE(p_delegated_publish, CASE WHEN v_target_found THEN v_target.delegated_publish ELSE false END)
   END;
 
-  INSERT INTO public.route_workspace_members (workspace_id, user_id, role, delegated_publish, revoked_at)
-  VALUES (p_workspace_id, p_user_id, v_new_role, v_new_delegated, CASE WHEN v_revoke THEN now() ELSE NULL END)
+  -- Étapes confiées : NULL = inchangé (liste existante, sinon vide).
+  v_scope := COALESCE(p_stage_scope_ids, CASE WHEN v_target_found THEN v_target.stage_scope_ids ELSE '{}'::text[] END);
+  v_scope_json := to_jsonb(v_scope);
+
+  INSERT INTO public.route_workspace_members (workspace_id, user_id, role, delegated_publish, revoked_at, stage_scope_ids)
+  VALUES (p_workspace_id, p_user_id, v_new_role, v_new_delegated, CASE WHEN v_revoke THEN now() ELSE NULL END, v_scope)
   ON CONFLICT (workspace_id, user_id) DO UPDATE
     SET role = EXCLUDED.role,
         delegated_publish = EXCLUDED.delegated_publish,
         revoked_at = EXCLUDED.revoked_at,
+        stage_scope_ids = EXCLUDED.stage_scope_ids,
         updated_at = now();
 
   v_members := CASE WHEN jsonb_typeof(v_ws.state_snapshot -> 'members') = 'array'
@@ -1401,6 +1551,7 @@ BEGIN
                          'displayName', COALESCE(v_name, t.e ->> 'displayName', 'Voyageur ' || left(p_user_id::text, 6)),
                          'role', v_new_role,
                          'delegatedPublish', v_new_delegated,
+                         'stageScopeIds', v_scope_json,
                          'revokedAt', CASE WHEN v_revoke THEN to_jsonb(v_now_iso) ELSE 'null'::jsonb END)
                   ELSE t.e END
              ORDER BY t.ord), '[]'::jsonb)
@@ -1412,6 +1563,7 @@ BEGIN
       'displayName', COALESCE(v_name, 'Voyageur ' || left(p_user_id::text, 6)),
       'role', v_new_role,
       'delegatedPublish', v_new_delegated,
+      'stageScopeIds', v_scope_json,
       'revokedAt', CASE WHEN v_revoke THEN to_jsonb(v_now_iso) ELSE 'null'::jsonb END
     );
     v_members := v_members || jsonb_build_array(v_entry);
@@ -1432,7 +1584,7 @@ $$;
 --              SHA-256 (share_token_hash) et le renvoie UNE SEULE FOIS dans la clé `token` ; il n'apparaît
 --              jamais dans le snapshot (shareLink : expiresAt, revokedAt, hidePrivateStartRadiusM, …).
 --              Remplacer un lien invalide l'ancien jeton. Rayon de la zone privée : 200 à 5000 m.
---   'revoke' : marque le lien révoqué.
+--   'revoke' : marque le lien révoqué (permis même sur un espace archivé, qui refuse en revanche 'create').
 -- Met à jour les colonnes share_* ET snapshot.shareLink.
 CREATE OR REPLACE FUNCTION public.manage_route_share_link_tx(
   p_workspace_id UUID,
@@ -1472,6 +1624,11 @@ BEGIN
   v_role := public.route_workspace_effective_role(p_workspace_id, v_uid);
   IF v_role IS NULL OR v_role NOT IN ('owner', 'co_organizer') THEN
     RETURN jsonb_build_object('status', 'denied', 'reason', 'share_management_requires_owner_or_co_organizer');
+  END IF;
+  -- Espace archivé en lecture seule : plus de nouveau lien. La RÉVOCATION reste permise (geste protecteur :
+  -- sans elle, un lien déjà publié resterait ouvert à anon jusqu'à son expiration).
+  IF p_action = 'create' AND v_ws.status = 'archived' THEN
+    RETURN jsonb_build_object('status', 'denied', 'reason', 'workspace_archived');
   END IF;
 
   IF p_action = 'create' THEN
@@ -1682,6 +1839,12 @@ CREATE POLICY participant_pack_states_own_read ON public.participant_pack_states
   USING (user_id = (SELECT auth.uid()));
 
 -- Privilèges de table : les privilèges par défaut de Supabase donnent ALL à anon et authenticated.
+-- share_token_hash (empreinte du jeton de partage) ne doit être lisible par AUCUN client : un REVOKE de
+-- colonne seul est sans effet tant que le privilège SELECT de table subsiste. On retire donc le SELECT de
+-- table à `authenticated` et on le rend colonne par colonne, SANS share_token_hash (lu uniquement par les
+-- fonctions SECURITY DEFINER). Conséquence documentée : `select('*')` sur route_workspaces échoue pour un
+-- client (permission denied) ; le store liste ses colonnes. Toute colonne ajoutée plus tard devra être
+-- accordée explicitement (refus par défaut).
 -- Aucune écriture directe (la RLS la bloquerait déjà faute de policy) et rien pour anon.
 REVOKE ALL ON TABLE
   public.route_workspaces, public.route_workspace_members, public.route_points, public.route_sections,
@@ -1693,6 +1856,13 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE
   public.route_stages, public.route_operations, public.route_revisions, public.route_proposals,
   public.route_comments, public.departure_packs, public.participant_pack_states
   FROM authenticated;
+
+REVOKE SELECT ON TABLE public.route_workspaces FROM authenticated;
+GRANT SELECT (
+  id, trip_id, created_by, title, status, sport, routing_options, head_seq, reviewed_seq,
+  published_revision_id, published_revision_no, source_origin, share_expires_at, share_revoked_at,
+  state_snapshot, state_version, created_at, updated_at
+) ON public.route_workspaces TO authenticated;
 
 -- ----------------------------------------------------------------------------
 -- 8. Droits d'exécution : jamais PUBLIC ni anon (sauf lecture par lien de partage), authenticated seulement.
@@ -1710,8 +1880,9 @@ REVOKE ALL ON FUNCTION public.route_jf(JSONB) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.route_jtext(JSONB, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.route_jnum(JSONB, TEXT) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.route_part_ok(JSONB, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.route_haversine_m(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.route_point_in_zone(DOUBLE PRECISION, DOUBLE PRECISION, DOUBLE PRECISION[], DOUBLE PRECISION[], DOUBLE PRECISION) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.route_snapshot_within_caps(JSONB, JSONB, JSONB) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.route_topic_workspace_id(TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.route_topic_workspace_id(TEXT) TO authenticated;
 REVOKE ALL ON FUNCTION public.route_sorted_by_id(JSONB, BOOLEAN) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.route_sanitize_snapshot_for_share(UUID, JSONB, BIGINT, NUMERIC) FROM PUBLIC, anon, authenticated;
 
@@ -1727,8 +1898,8 @@ GRANT EXECUTE ON FUNCTION public.publish_route_revision_tx(UUID, BIGINT, TEXT, J
 REVOKE ALL ON FUNCTION public.write_route_workspace_part_tx(UUID, TEXT, JSONB, BIGINT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.write_route_workspace_part_tx(UUID, TEXT, JSONB, BIGINT) TO authenticated;
 
-REVOKE ALL ON FUNCTION public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT) TO authenticated;
+REVOKE ALL ON FUNCTION public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT, TEXT[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_route_member_tx(UUID, UUID, TEXT, BOOLEAN, BOOLEAN, TEXT, TEXT[]) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.manage_route_share_link_tx(UUID, TEXT, TIMESTAMPTZ, INTEGER) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.manage_route_share_link_tx(UUID, TEXT, TIMESTAMPTZ, INTEGER) TO authenticated;
@@ -1739,3 +1910,89 @@ GRANT EXECUTE ON FUNCTION public.get_route_external_view_tx(UUID) TO authenticat
 -- Lecture publique par lien de partage : seule RPC ouverte à anon (jeton secret, voir commentaire de la fonction).
 REVOKE ALL ON FUNCTION public.get_shared_route_workspace_tx(UUID, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_shared_route_workspace_tx(UUID, TEXT) TO anon, authenticated;
+
+-- ----------------------------------------------------------------------------
+-- 9. Temps réel privé (Supabase Realtime Authorization) : canaux privés « route:<uuid> »
+--   Un canal privé (client : `supabase.channel('route:<uuid>', { config: { private: true } })`) n'est ouvert
+--   que si les policies de realtime.messages l'autorisent. Lecture (SELECT : réception des diffusions et de
+--   la présence) et écriture (INSERT : envoi, présence) exigent le topic `route:<uuid>` ET le droit de lecture
+--   complète de l'espace (can_read_route_workspace : un external_viewer, un membre retiré du voyage ou une
+--   personne étrangère sont refusés). Un topic mal formé donne NULL (route_topic_workspace_id), donc un refus
+--   sans exception. Bloc gardé : sans schéma `realtime` (Postgres local nu), la migration reste applicable.
+-- ----------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF to_regclass('realtime.messages') IS NOT NULL AND to_regprocedure('realtime.topic()') IS NOT NULL THEN
+    EXECUTE 'DROP POLICY IF EXISTS route_realtime_read ON realtime.messages';
+    EXECUTE $p$
+      CREATE POLICY route_realtime_read ON realtime.messages
+        FOR SELECT TO authenticated
+        USING (
+          (SELECT realtime.topic()) LIKE 'route:%'
+          AND realtime.messages.extension IN ('broadcast', 'presence')
+          AND public.can_read_route_workspace(public.route_topic_workspace_id((SELECT realtime.topic())))
+        )
+    $p$;
+    EXECUTE 'DROP POLICY IF EXISTS route_realtime_write ON realtime.messages';
+    EXECUTE $p$
+      CREATE POLICY route_realtime_write ON realtime.messages
+        FOR INSERT TO authenticated
+        WITH CHECK (
+          (SELECT realtime.topic()) LIKE 'route:%'
+          AND realtime.messages.extension IN ('broadcast', 'presence')
+          AND public.can_read_route_workspace(public.route_topic_workspace_id((SELECT realtime.topic())))
+        )
+    $p$;
+  END IF;
+END;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 10. Sorties (hike_sessions) : colonnes de liaison lisibles par les clients, vue participant
+--   Les clients lisent hike_sessions colonne par colonne (privilèges accordés à `authenticated` sans les points
+--   GPS bruts) et la ligne complète via la vue hike_sessions_participant (SECURITY DEFINER, filtre
+--   propriétaire / carnet / présence). Les trois colonnes ajoutées plus haut sont donc :
+--     (1) accordées colonne par colonne SI les privilèges le sont déjà ainsi (sinon le SELECT de table les couvre) ;
+--     (2) ajoutées EN FIN de la vue participant, dont la définition existante est reprise À L'IDENTIQUE (mêmes
+--         colonnes dans le même ordre, mêmes filtres, security_invoker = false) : la liste de colonnes est lue sur
+--         la vue en place, jamais réécrite à la main (une vue `select hs.*` fige ses colonnes à sa création).
+--   Risque : une sortie d'un carnet public expose route_workspace_id, route_revision_id et kit_snapshot aux
+--   personnes connectées (lecture colonne, lignes déjà ouvertes par la policy « carnet public »).
+-- ----------------------------------------------------------------------------
+DO $$
+DECLARE
+  v_cols TEXT;
+BEGIN
+  IF to_regclass('public.hike_sessions') IS NOT NULL
+     AND NOT has_table_privilege('authenticated', 'public.hike_sessions', 'SELECT')
+     AND has_any_column_privilege('authenticated', 'public.hike_sessions', 'SELECT') THEN
+    GRANT SELECT (route_workspace_id, route_revision_id, kit_snapshot) ON public.hike_sessions TO authenticated;
+  END IF;
+
+  IF to_regclass('public.hike_sessions_participant') IS NOT NULL
+     AND to_regclass('public.hike_session_participants') IS NOT NULL
+     AND to_regprocedure('public.is_carnet_participant(uuid)') IS NOT NULL
+     AND NOT EXISTS (SELECT 1 FROM pg_attribute a
+                     WHERE a.attrelid = 'public.hike_sessions_participant'::regclass
+                       AND a.attname = 'route_workspace_id' AND NOT a.attisdropped) THEN
+    SELECT string_agg(format('hs.%I', a.attname), ', ' ORDER BY a.attnum) INTO v_cols
+    FROM pg_attribute a
+    WHERE a.attrelid = 'public.hike_sessions_participant'::regclass AND a.attnum > 0 AND NOT a.attisdropped;
+
+    EXECUTE format($v$
+      CREATE OR REPLACE VIEW public.hike_sessions_participant
+      WITH (security_invoker = false) AS
+      SELECT %s, hs.route_workspace_id, hs.route_revision_id, hs.kit_snapshot
+      FROM public.hike_sessions hs
+      WHERE hs.user_id = (SELECT auth.uid())
+         OR (hs.carnet_id IS NOT NULL AND public.is_carnet_participant(hs.carnet_id))
+         OR EXISTS (
+           SELECT 1
+           FROM public.hike_session_participants p
+           WHERE p.session_id = hs.id
+             AND p.user_id = (SELECT auth.uid())
+         )
+    $v$, v_cols);
+  END IF;
+END;
+$$;

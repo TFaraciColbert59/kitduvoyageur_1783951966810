@@ -19,6 +19,12 @@
   padding-bottom: calc(36px + var(--cookie-banner-h, 0px));
 }
 
+/* Téléphone : la barre d'onglets flottante recouvre le pied du tiroir ; on réserve sa hauteur (espaceur de pied) pour
+   que la dernière ligne se lise et se touche au-dessus d'elle. */
+.rcw-explorer-root[data-layout='mobile'] .xp-sheet-scroll {
+  padding-bottom: calc(62px + 12px + 12px + 24px + env(safe-area-inset-bottom, 0px) + var(--cookie-banner-h, 0px));
+}
+
 /* ── Pilule télémétrie épurée + bandeaux d'impact/statut TOUT EN HAUT DE L'ÉCRAN ── */
 .rcw-top-stack {
   position: fixed;

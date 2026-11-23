@@ -3,9 +3,9 @@ import { formatDecimalFr, formatInt, legsStats, orderedLegs, trackVertices, type
 
 /* ---------- 3.1 Pastille ---------- */
 
-/** « 3 j · 42 km · 2 180 m ». Une donnée absente s'écrit « ? », jamais 0. */
+/** « 3 j · 42 km · 2 180 m ». Une donnée absente s'écrit « ? », jamais 0 ; sans étape, le nombre de jours est omis (pas de « ? j »). */
 export function formatPillSummary(state: Pick<RouteWorkspaceState, 'points' | 'sections' | 'stages'>): string {
-  const days = state.stages.length > 0 ? `${state.stages.length} j` : '? j';
+  const days = state.stages.length > 0 ? `${state.stages.length} j` : null;
   const stats = legsStats(orderedLegs(state));
   const hasGeometry = state.sections.length > 0;
   const km = hasGeometry ? `${formatInt(stats.distanceKm)} km` : '? km';
@@ -15,7 +15,7 @@ export function formatPillSummary(state: Pick<RouteWorkspaceState, 'points' | 's
     ascent = ascent === null || s.ascentM == null ? null : ascent + s.ascentM;
   }
   const dplus = ascent === null ? 'D+ ?' : `${formatInt(ascent)} m`;
-  return `${days} · ${km} · ${dplus}`;
+  return [days, km, dplus].filter((p): p is string => p !== null).join(' · ');
 }
 
 /* ---------- Constats de qualité du tracé ---------- */

@@ -58,6 +58,7 @@ import { planLineDrag, planPointInsertion, type PointRole } from '../../pointIns
 import { useOpTracker } from './chrome/useOpTracker';
 import { ROLE_LABELS } from './labels';
 import { routingQueryParams } from '../../routingProfiles';
+import { describeRoutingFailure, type RoutingIssue } from '../../mapStart';
 import { useRouteEntry } from './start/RouteEntryContext';
 import { isRealTripId } from '../../startPersist';
 import { handoffFromRevision, writeHandoff } from '../../depart/activityHandoff';
@@ -192,6 +193,8 @@ export function useRouteWorkspaceState({
   );
   const [lastImpactText, setLastImpactText] = useState<string | null>(null);
   const [routingBusy, setRoutingBusy] = useState<boolean>(false);
+  // Dernier échec réel du routeur (texte + code brut) : la carte le dit tant que des tronçons restent non calculés.
+  const [routingIssue, setRoutingIssue] = useState<(RoutingIssue & { sectionId: string }) | null>(null);
   const [activeConflict, setActiveConflict] = useState<{
     conflict: DomainConflict;
     pendingOp: RouteOperationInput;
@@ -785,9 +788,19 @@ export function useRouteWorkspaceState({
         ).toString()}`
       );
       if (!res.ok) {
-        setStatusMessage('Routeur indisponible : tronçon conservé en ligne droite (mode manuel).');
+        // L'erreur réelle du routeur (code HTTP, raison), dite telle quelle ; le tronçon reste une ligne droite non vérifiée.
+        let reason: string | null = null;
+        try {
+          reason = ((await res.json()) as { reason?: string }).reason ?? null;
+        } catch {
+          /* corps non JSON (limite de débit, passerelle) : seul le code HTTP est connu */
+        }
+        const issue = describeRoutingFailure({ status: res.status, reason });
+        setRoutingIssue({ ...issue, sectionId: sec.id });
+        setStatusMessage(issue.text);
         return;
       }
+      setRoutingIssue(null);
       const data = (await res.json()) as {
         status?: string;
         provider?: string;
@@ -805,7 +818,9 @@ export function useRouteWorkspaceState({
           ? leg.geometry.coordinates
           : null;
       if (data.status !== 'ok' || !rawCoords || rawCoords.length < 2) {
-        setStatusMessage('Aucun chemin routé trouvé — passez en mode manuel si hors réseau.');
+        const issue = describeRoutingFailure({ status: res.status, reason: data.status ?? 'réponse sans tracé' });
+        setRoutingIssue({ ...issue, sectionId: sec.id });
+        setStatusMessage(issue.text);
         return;
       }
 
@@ -882,9 +897,9 @@ export function useRouteWorkspaceState({
           : `Section recalculée via ${data.provider ?? 'routeur'} (${(leg?.distanceKm ?? sec.distanceKm).toFixed(2)} km, ${rawCoords.length} pts${ascentM != null ? `, D+ ${ascentM} m` : ''}).`
       );
     } catch {
-      setStatusMessage(
-        'Échec du routage réseau : la trace précédente est conservée (mode manuel disponible).'
-      );
+      const issue = describeRoutingFailure({ network: true });
+      setRoutingIssue({ ...issue, sectionId: sec.id });
+      setStatusMessage(issue.text);
     } finally {
       setRoutingBusy(false);
     }
@@ -2346,6 +2361,7 @@ export function useRouteWorkspaceState({
     lastImpactText,
     setLastImpactText,
     routingBusy,
+    routingIssue,
     activeConflict,
     setActiveConflict,
     statusMessage,

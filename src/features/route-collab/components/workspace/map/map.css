@@ -23,11 +23,22 @@
   max-width: calc(50% - 20px);
 }
 
-/* Sous le bouton « Carte et affichage » (haut droite, 40 px). */
+/* Commandes de la carte, en haut à droite : « Carte et affichage » (un seul bouton de calques), puis la position. */
 .rcw-map-right {
-  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
   right: 12px;
   align-items: flex-end;
+}
+/* Le menu ouvert passe au-dessus de la pilule et de l'îlot, jamais dessous. */
+.rcw-map-right:has(.rcw-map-popover) {
+  z-index: 24;
+}
+.rcw-map-popover--menu {
+  max-height: calc(100dvh - 148px - var(--rcw-sheet-h, 0px));
+  min-height: 160px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  max-width: calc(100vw - 24px);
 }
 
 /* Au-dessus du tiroir : sa hauteur réelle est posée par la carte (--rcw-sheet-h). */
@@ -75,6 +86,27 @@
 .rcw-chip--on_track {
   color: var(--lkv-forest-800);
 }
+.rcw-chip--note {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border-radius: var(--lkv-radius-lg);
+  padding: 8px 14px;
+  line-height: 1.3;
+}
+.rcw-chip-more {
+  margin-left: 0.28em;
+}
+.rcw-chip--note {
+  max-width: min(100%, 520px);
+}
+/* Tiroir fermé : les indications du bas se posent au-dessus du lanceur centré, jamais dessous. */
+.rcw-explorer-root[data-sheet-open='false'] .rcw-map-bottom {
+  bottom: calc(22px + 44px + 8px + env(safe-area-inset-bottom, 0px));
+}
+.rcw-chip--note > span {
+  font-weight: var(--lkv-weight-regular);
+}
 .rcw-chip--poi {
   border-radius: var(--lkv-radius-lg);
   flex-wrap: wrap;
@@ -86,6 +118,40 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
+}
+
+/* Carte vide sans position connue : on dit quoi faire, le champ d'adresse est là. */
+.rcw-map-start {
+  position: absolute;
+  z-index: 13;
+  top: calc(env(safe-area-inset-top, 0px) + 168px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(366px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.rcw-map-start > * {
+  pointer-events: auto;
+}
+.rcw-map-start-msg {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--lkv-radius-lg);
+  background: var(--xp-bar);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow: var(--xp-bar-shadow);
+  font-size: var(--lkv-text-footnote);
+  font-weight: var(--lkv-weight-semibold);
+  color: var(--xp-txt);
+  line-height: 1.35;
+}
+.rcw-map-start-msg > span {
+  font-weight: var(--lkv-weight-regular);
+  color: var(--xp-mut);
 }
 
 .rcw-legend {
@@ -160,14 +226,7 @@
 }
 
 .rcw-layers {
-  width: 248px;
-  max-width: calc(100vw - 24px);
-  padding: 10px 12px;
-  border-radius: var(--lkv-radius-popover);
-  background: var(--xp-sheet-bg);
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  backdrop-filter: blur(22px) saturate(1.7);
-  box-shadow: var(--xp-bar-shadow);
+  /* Dans le menu unique « Carte et affichage » : pas de seconde boîte. */
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -340,4 +399,37 @@
   background: var(--lkv-field-bg);
   font: inherit;
   color: var(--xp-txt);
+}
+
+/* Téléphone, tiroir fermé : les indications du bas se posent au-dessus du lanceur et de la barre d'onglets flottante. */
+.rcw-explorer-root[data-layout='mobile'][data-sheet-open='false'] .rcw-map-bottom {
+  bottom: calc(62px + 12px + 12px + 56px + 8px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Téléphone : les pastilles d'entrée tiennent sur UNE ligne sous la pilule (jamais dessus), à faire glisser. */
+@media (max-width: 639px) {
+  .rcw-map-left {
+    top: calc(env(safe-area-inset-top, 0px) + 92px);
+    max-width: calc(100% - 24px - 52px);
+  }
+  .rcw-entry-stack {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+  .rcw-entry-stack::-webkit-scrollbar {
+    display: none;
+  }
+  .rcw-entry-stack > * {
+    flex: none;
+    white-space: nowrap;
+  }
+  /* Libellés courts sur téléphone : le sens complet reste dans l'aria-label. */
+  .rcw-chip-more {
+    display: none;
+  }
 }

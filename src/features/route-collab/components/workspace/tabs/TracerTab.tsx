@@ -66,26 +66,28 @@ export function TracerTab() {
           className="rcw-import-card"
           onClick={() => void handleLoadHistory()}
           aria-expanded={historyOpen}
+          title="Sorties, carnets et randonnées enregistrés"
         >
           <span className="xp-row-ico" data-tone="good" aria-hidden="true">
             <Download size={15} />
           </span>
           <span className="rcw-import-card-text">
-            <strong>Sorties, Carnets & Randos</strong>
-            <span>Historique & enregistrés</span>
+            <strong>Mes sorties</strong>
+            <span>Carnets, randos</span>
           </span>
         </button>
         <button
           type="button"
           className="rcw-import-card"
           onClick={() => fileInputRef.current?.click()}
+          title="Importer un fichier GPX, KML, TCX ou GeoJSON"
         >
           <span className="xp-row-ico" data-tone="water" aria-hidden="true">
             <Upload size={15} />
           </span>
           <span className="rcw-import-card-text">
             <strong>Importer un fichier</strong>
-            <span>GPX, KML, TCX ou GeoJSON</span>
+            <span>GPX, KML, TCX</span>
           </span>
         </button>
       </div>

@@ -23,6 +23,7 @@ import { layersForSport, type SportLayerId } from '../mapLayers';
 import { LONG_PRESS_MS, TAP_TOLERANCE_PX, insertionThresholdM, pressDown, pressElapsed, pressMove, type PressState } from '../mapGesture';
 import { boundsOf, focusOffsetPx, framePadding, framingTarget } from '../mapFraming';
 import { fetchPreviewPath } from '../routePreview';
+import { HIKING_ZOOM, addPointGate, isUnverifiedSection, readLastKnown, startView, writeLastKnown, type StartKind } from '../mapStart';
 import { activePointsOf } from '../pointOrder';
 import type {
   CollaborativeRoutePoint,
@@ -51,9 +52,6 @@ const HOLDER = 'route-map' as const;
 
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const;
 
-/** Vue neutre quand ni tracé ni voyage ne disent où regarder : l'Europe de l'Ouest, pas un lieu supposé. */
-const NEUTRAL_CENTER: [number, number] = [4.5, 46.5];
-const NEUTRAL_ZOOM = 4;
 
 const SLOPE_LABEL: Record<string, string> = {
   flat: 'Moins de 5 %',
@@ -156,6 +154,7 @@ export function RouteCollabMap({
   const [lens, setLens] = useState<MapLens>('days');
   const [menu, setMenu] = useState<{ x: number; y: number; lat: number; lon: number } | null>(null);
   const [dragInfo, setDragInfo] = useState<string | null>(null);
+  const [startKind, setStartKind] = useState<StartKind | null>(null);
   const [legendFocus, setLegendFocus] = useState<{ stageId: string; nonce: number } | null>(null);
   const sport = ws?.workspace.sport ?? 'marche';
   const sportLayers = useMemo(() => layersForSport(sport), [sport]);
@@ -266,7 +265,15 @@ export function RouteCollabMap({
       L.onMapClickAddPoint?.(latR, lonR);
       return;
     }
+    // Sous le zoom minimal, le toucher zoome au lieu de poser un point : deux points y seraient à des dizaines de km.
+    const gate = addPointGate(map?.getZoom());
+    if (!gate.ok && map) {
+      map.easeTo({ center: [lonR, latR], zoom: gate.zoomTo, duration: animationDuration(400, prefersReducedMotion()) });
+      L.ws.setStatusMessage(gate.message);
+      return;
+    }
     const thresholdM = insertionThresholdM(latR, map?.getZoom() ?? 12);
+    writeLastKnown(typeof window !== 'undefined' ? window.localStorage : null, { lon: lonR, lat: latR });
     void L.ws.placePoint({ role, lat: latR, lon: lonR, thresholdM });
   }, []);
 
@@ -320,8 +327,14 @@ export function RouteCollabMap({
         const L = latest.current;
         const first = L.points[0];
         const anchor = entry.trip?.anchor ?? null;
-        const center: [number, number] = first ? [first.lon, first.lat] : anchor ? [anchor.lon, anchor.lat] : NEUTRAL_CENTER;
-        const zoom = first || anchor ? 12 : NEUTRAL_ZOOM;
+        // Cadrage de départ : tracé, ancre du voyage, dernière position connue, sinon repère neutre à zoom de randonnée.
+        const start = startView({
+          first,
+          anchor,
+          lastKnown: readLastKnown(typeof window !== 'undefined' ? window.localStorage : null),
+        });
+        const { center, zoom } = start;
+        setStartKind(start.kind);
 
         // Style de carte du Compas : mêmes fonds (Relief, Clair, Satellite) que la carte vivante, en Mercator.
         instance = new maplibre.Map({
@@ -332,6 +345,27 @@ export function RouteCollabMap({
           attributionControl: false,
         });
         const map = instance;
+
+        // Position déjà autorisée : la carte s'y place. La permission n'est JAMAIS demandée au chargement.
+        if (start.kind === 'neutral' && typeof navigator !== 'undefined' && navigator.geolocation && navigator.permissions?.query) {
+          navigator.permissions
+            .query({ name: 'geolocation' as PermissionName })
+            .then((st) => {
+              if (cancelled || st.state !== 'granted') return;
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  if (cancelled || latest.current.points.length > 0) return;
+                  const here = { lon: pos.coords.longitude, lat: pos.coords.latitude };
+                  writeLastKnown(window.localStorage, here);
+                  map.jumpTo({ center: [here.lon, here.lat], zoom: HIKING_ZOOM });
+                  setStartKind('located');
+                },
+                () => undefined,
+                { timeout: 8000, maximumAge: 600000 },
+              );
+            })
+            .catch(() => undefined);
+        }
 
         map.on('error', () => {
           /* Erreurs de tuiles hors ligne silencieuses si WebGL tourne */
@@ -448,14 +482,15 @@ export function RouteCollabMap({
             paint: {
               'line-color': ['case', ['==', ['get', 'selected'], true], c.warn, c.surface],
               'line-width': ['case', ['==', ['get', 'selected'], true], 11, 8],
-              'line-opacity': 0.85,
+              // Une ligne droite non vérifiée n'a pas de cadre plein : elle ne doit pas ressembler à un chemin tracé.
+              'line-opacity': ['case', ['==', ['get', 'unverified'], true], 0, 0.85],
             },
           });
           map.addLayer({
             id: 'rcw-sections-day',
             type: 'line',
             source: 'rcw-sections',
-            filter: ['!=', ['get', 'mode'], 'manual'],
+            filter: ['all', ['!=', ['get', 'mode'], 'manual'], ['!=', ['get', 'unverified'], true]],
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': ['get', 'color'], 'line-width': 4.5 },
           });
@@ -463,7 +498,8 @@ export function RouteCollabMap({
             id: 'rcw-sections-manual',
             type: 'line',
             source: 'rcw-sections',
-            filter: ['==', ['get', 'mode'], 'manual'],
+            // Tracé à la main ou ligne droite pas (encore) calculée par le routeur : pointillé « non vérifié ».
+            filter: ['any', ['==', ['get', 'mode'], 'manual'], ['==', ['get', 'unverified'], true]],
             paint: { 'line-color': c.warn, 'line-width': 4, 'line-dasharray': [2, 2] },
           });
           map.addSource('rcw-lens', { type: 'geojson', data: EMPTY_FC as never });
@@ -828,6 +864,7 @@ export function RouteCollabMap({
         properties: {
           id: s.id,
           mode: s.mode,
+          unverified: isUnverifiedSection(s),
           selected: s.id === selectedSectionId,
           color: colorOf(s.id),
           day: dayMap.get(s.id) ?? null,
@@ -1096,6 +1133,7 @@ export function RouteCollabMap({
           onToggleLayer={toggleLayer}
           live={live}
           dragInfo={dragInfo}
+          startKind={startKind}
         />
       ) : null}
       {menu ? (

@@ -189,8 +189,8 @@ export function RouteCollabWorkspace(props: RouteCollabWorkspaceProps) {
         {/* PILULE (résumé, jours, voyant, état) + ÎLOT (une annonce à la fois, « Annuler ») EN TOP ÉCRAN */}
         <TopStack />
 
-        {/* CARTE & AFFICHAGE EN HAUT À DROITE DE LA CARTE */}
-        <MapSettingsDrawer />
+        {/* CARTE & AFFICHAGE : un seul bouton. Carte affichée, il vit dans ses commandes ; sinon ici. */}
+        {listMode || !webglAvailable ? <MapSettingsDrawer /> : null}
 
         {/* ÉLÉMENT 2 : TIROIR EXPLORER (ou pilule 3 petits points en bas lorsque fermé) */}
         {sheetOpen ? (

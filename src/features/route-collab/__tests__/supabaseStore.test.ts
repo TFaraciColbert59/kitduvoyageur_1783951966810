@@ -695,7 +695,7 @@ describe('supabaseStore — parties, membres, partage', () => {
     });
   });
 
-  it('membres : une étape confiée (stageScopeIds) est refusée franchement tant que la base ne sait pas l’écrire', async () => {
+  it('membres : une étape confiée (stageScopeIds) est transmise à set_route_member_tx (8.3)', async () => {
     const fake = makeFake({
       workspaceRow: () => makeWorkspace(),
       rpc: { set_route_member_tx: () => ({ status: 'ok' }) },
@@ -706,9 +706,17 @@ describe('supabaseStore — parties, membres, partage', () => {
       targetUserId: EDITOR,
       stageScopeIds: ['st1'],
     });
-    expect(res).toMatchObject({ ok: false, status: 501 });
-    // rien n'est annoncé comme enregistré : aucun appel d'écriture
-    expect(fake.rpcCalls).toEqual([]);
+    expect(res.ok).toBe(true);
+    expect(fake.rpcCalls[0]).toMatchObject({ name: 'set_route_member_tx', args: { p_stage_scope_ids: ['st1'] } });
+  });
+
+  it('membres : sans stageScopeIds, la portée reste inchangée (p_stage_scope_ids null)', async () => {
+    const fake = makeFake({
+      workspaceRow: () => makeWorkspace(),
+      rpc: { set_route_member_tx: () => ({ status: 'ok' }) },
+    });
+    await fake.store.updateMemberRoleOrRevoke({ workspaceId: WS_ID, actorId: OWNER, targetUserId: EDITOR, role: 'editor' });
+    expect(fake.rpcCalls[0].args.p_stage_scope_ids).toBeNull();
   });
 
   it('membres : refus de la base (co_organizer ne révoque pas un owner) mappé en 403', async () => {

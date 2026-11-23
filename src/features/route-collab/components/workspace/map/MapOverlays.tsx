@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Layers, LocateFixed } from 'lucide-react';
 import { deviationFromTrack, type LonLat } from '../../../mapGeometry';
 import { describeLive } from '../../../liveTrack';
@@ -11,7 +11,11 @@ import {
   poisForLayer,
   type SportLayerId,
 } from '../../../mapLayers';
+import { countUnverified, type StartKind } from '../../../mapStart';
 import { useRouteViewMode } from '../expertMode';
+import { XpEyebrow } from '@/features/explorer-v2/sheet/blocks';
+import { MapSettingsBody } from '../subdrawers/MapSettingsDrawer';
+import { AddByAddress } from '../AddByAddress';
 import { useRouteWorkspace } from '../WorkspaceContext';
 import { EntryChips } from './EntryChips';
 import { ProfileReadoutLine } from './ProfileReadoutLine';
@@ -52,6 +56,7 @@ export function MapOverlays({
   onToggleLayer,
   live,
   dragInfo,
+  startKind = null,
 }: {
   lens: MapLens;
   onLens: (l: MapLens) => void;
@@ -62,6 +67,8 @@ export function MapOverlays({
   onToggleLayer: (id: SportLayerId) => void;
   live: { state: LiveState; fix: (LiveFix & { heading: number | null }) | null; start: () => void; stop: () => void };
   dragInfo: string | null;
+  /** D'où vient le cadrage de départ ; `neutral` = rien ne dit où la personne se trouve. */
+  startKind?: StartKind | null;
 }) {
   const {
     workspace,
@@ -77,13 +84,20 @@ export function MapOverlays({
     profileModel,
     flattenedCoords,
     selectedStageId,
+    mapMenuOpen: layersOpen,
+    setMapMenuOpen,
+    orderedPoints,
+    routingIssue,
+    routingBusy,
+    canEditGeo,
   } = useRouteWorkspace();
   const { expert } = useRouteViewMode();
-  const [layersOpen, setLayersOpen] = useState(false);
 
   const layers = useMemo(() => layersForSport(workspace.sport), [workspace.sport]);
   const focusedPoi = focusedPoiId ? (knowledgePois.find((p) => p.id === focusedPoiId) ?? null) : null;
   const hasTrack = workspace.sections.length > 0;
+  const unverified = countUnverified(workspace.sections);
+  const needsPlacing = orderedPoints.length === 0 && canEditGeo && startKind === 'neutral';
 
   const liveStatus = useMemo(() => {
     if (live.state !== 'on' || !live.fix) return null;
@@ -93,7 +107,7 @@ export function MapOverlays({
 
   const openLayers = () => {
     const next = !layersOpen;
-    setLayersOpen(next);
+    setMapMenuOpen(next);
     // Premier ouverture : on relève les points réels (eau, abris, ateliers) s'ils ne l'ont pas encore été.
     if (next && !knowledgeLoadedAt && !knowledgeLoading && hasTrack) void refreshKnowledgeBank();
   };
@@ -153,9 +167,9 @@ export function MapOverlays({
         <button
           type="button"
           className="xp-icon-btn"
-          aria-label="Calques de la carte"
+          aria-label="Carte et affichage"
           aria-expanded={layersOpen}
-          data-testid="map-layers-trigger"
+          data-testid="map-settings-trigger"
           onClick={openLayers}
         >
           <Layers size={18} aria-hidden="true" />
@@ -171,6 +185,9 @@ export function MapOverlays({
           <LocateFixed size={18} aria-hidden="true" />
         </button>
         {layersOpen ? (
+          <div className="rcw-map-popover rcw-map-popover--menu" data-testid="map-settings-popover" role="dialog" aria-label="Carte et affichage">
+            <MapSettingsBody />
+            <XpEyebrow>Calques du sport</XpEyebrow>
           <div className="rcw-layers" role="group" aria-label="Calques selon le sport" data-testid="map-layers-panel">
             {layers.map((layer) => {
               const count = poisForLayer(knowledgePois, layer).length;
@@ -208,10 +225,36 @@ export function MapOverlays({
               );
             })}
           </div>
+          </div>
         ) : null}
       </div>
 
+      {needsPlacing ? (
+        <div className="rcw-map-start" data-testid="place-yourself">
+          <p className="rcw-map-start-msg" role="status">
+            Place-toi : recherche un lieu ou utilise ta position
+          </p>
+          <AddByAddress />
+        </div>
+      ) : null}
+
       <div className="rcw-map-bottom">
+        {unverified > 0 ? (
+          <div className="rcw-chip rcw-chip--warn rcw-chip--note" role="status" data-testid="unverified-sections">
+            <strong>
+              {unverified > 1 ? `${unverified} tronçons non calculés` : 'Tronçon non calculé'}
+              {routingBusy ? ' · calcul en cours…' : ''}
+            </strong>
+            {routingIssue && !routingBusy ? (
+              <>
+                <span>{routingIssue.text.replace(/^Tronçon non calculé : /, '').replace(/^./, (c) => c.toUpperCase())}</span>
+                <span data-testid="routing-issue-detail">Réponse du routeur : {routingIssue.detail}</span>
+              </>
+            ) : (
+              <span>Pointillé = ligne droite, non vérifiée sur les chemins.</span>
+            )}
+          </div>
+        ) : null}
         {dragInfo ? (
           <div className="rcw-chip rcw-chip--info" role="status" data-testid="drag-info">
             {dragInfo}
