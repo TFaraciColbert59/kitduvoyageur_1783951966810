@@ -1430,4 +1430,14 @@
   white-space: nowrap;
 }
 
+/* Compactage du carrousel Sorties dans la carte Club (évite de masquer le haut) */
+.lkdv-clubs-v8 .voyage-card {
+  height: 158px !important;
+  min-height: 158px !important;
+}
+.lkdv-clubs-v8 .voyage-cover {
+  height: 158px !important;
+  min-height: 158px !important;
+}
+
 

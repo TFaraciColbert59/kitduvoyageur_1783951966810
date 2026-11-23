@@ -2650,7 +2650,14 @@ renderIgTabContent = function (D) {
     return '<div class="ig-voyages-tab" role="region" aria-label="Sorties faites et voyages réalisés">' +
       '<div class="voyages-carousel">' +
         list.map((o, idx) => {
-          const photo = o.coverImage || '/assets/images/no_image.png';
+          const fallbackCovers = [
+            '/assets/images/mountain-1.jpg',
+            '/assets/images/club-trail.jpg',
+            '/assets/images/club-bivouac.jpg',
+            '/assets/images/mountain-2.jpg',
+            '/assets/images/journal-refuge.jpg',
+          ];
+          const photo = o.coverImage || fallbackCovers[idx % fallbackCovers.length];
           const compNames = Array.isArray(o.comp) ? o.comp.slice(0, 3).join(', ') : '';
           const label = o.title + ', ' + o.km + ' km, +' + o.dplus + ' m, ' + o.mass;
           return '<button type="button" class="voyage-card" data-a="openOutingDrawer" data-v="' + o.id + '" aria-label="' + label + '">' +
