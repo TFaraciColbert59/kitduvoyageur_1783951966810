@@ -211,15 +211,15 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    #000 18px,
-    #000 calc(100% - 22px),
+    #000 8px,
+    #000 calc(100% - 6px),
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0,
-    #000 18px,
-    #000 calc(100% - 22px),
+    #000 8px,
+    #000 calc(100% - 6px),
     transparent 100%
   );
 }
