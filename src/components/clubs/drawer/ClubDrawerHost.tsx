@@ -122,6 +122,8 @@ export function ClubDrawerHost({
   onDownloadGpx,
   onFlyToCoords,
   onToggleReserveGear,
+  onRequestGearLoan,
+  onTransitionGearLoan,
   onCloneStandardKit,
   onSendChatMessage,
   onToggleClubVisibility,
@@ -1226,6 +1228,8 @@ export function ClubDrawerHost({
                   vaultFilter={vaultFilter}
                   vaultScope={vaultScope}
                   onToggleReserveGear={onToggleReserveGear}
+                  onRequestGearLoan={onRequestGearLoan}
+                  onTransitionGearLoan={onTransitionGearLoan}
                   onCloneStandardKit={onCloneStandardKit}
                   onSwitchTab={(nextT, nextSub = 0) => handleSwitchTabAndLens(nextT, nextSub)}
                   onSwitchToCreate={(cTab) => {

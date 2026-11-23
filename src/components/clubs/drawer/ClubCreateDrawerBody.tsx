@@ -54,6 +54,16 @@ export function ClubCreateDrawerBody({
   const [gearBrand, setGearBrand] = useState('Petzl / MSR');
   const [gearWeight, setGearWeight] = useState('420');
   const [gearCat, setGearCat] = useState('Bivouac & Sécurité');
+  const [gearScope, setGearScope] = useState<'member' | 'club'>('member');
+  const [gearQty, setGearQty] = useState('1');
+  const [gearDepositEur, setGearDepositEur] = useState('0');
+  const [gearIsEpi, setGearIsEpi] = useState(false);
+  const [gearEpiExpiresAt, setGearEpiExpiresAt] = useState('');
+  const canManageClubInventory = Boolean(
+    activeClub.viewerCanManageGear ||
+      activeClub.viewerRole === 'founder' ||
+      activeClub.viewerRole === 'admin',
+  );
 
   const [newClubName, setNewClubName] = useState('');
   const [newClubMassif, setNewClubMassif] = useState(prefillMassif || 'Mont-Blanc');
@@ -194,6 +204,11 @@ export function ClubCreateDrawerBody({
             brand: gearBrand.trim() || 'LKDV',
             weightG: wNum,
             category: gearCat.trim() || 'Matériel',
+            ownershipScope: canManageClubInventory ? gearScope : ('member' as const),
+            quantityTotal: Math.max(1, Number(gearQty) || 1),
+            depositCents: Math.max(0, Math.round((Number(gearDepositEur) || 0) * 100)),
+            isEpi: gearIsEpi,
+            epiExpiresAt: gearIsEpi && gearEpiExpiresAt ? gearEpiExpiresAt : undefined,
           };
           onCreateVaultGear(payload);
           onToast?.({
@@ -254,6 +269,72 @@ export function ClubCreateDrawerBody({
           <span>Catégorie</span>
           <input type="text" className="club-glass-input" value={gearCat} onChange={(e) => setGearCat(e.target.value)} />
         </label>
+
+        {canManageClubInventory ? (
+          <div className="club-form-pills" aria-label="Propriétaire de l’équipement">
+            <button
+              type="button"
+              className={`reseau-btn ${gearScope === 'club' ? 'active' : ''}`}
+              style={{ fontSize: 11.5, padding: '4px 10px' }}
+              onClick={() => setGearScope('club')}
+            >
+              Parc du club
+            </button>
+            <button
+              type="button"
+              className={`reseau-btn ${gearScope === 'member' ? 'active' : ''}`}
+              style={{ fontSize: 11.5, padding: '4px 10px' }}
+              onClick={() => setGearScope('member')}
+            >
+              Entraide membre
+            </button>
+          </div>
+        ) : null}
+
+        <div className="club-form-grid-2">
+          <label className="club-field-label">
+            <span>Quantité</span>
+            <input
+              type="number"
+              min={1}
+              max={200}
+              className="club-glass-input"
+              value={gearQty}
+              onChange={(e) => setGearQty(e.target.value)}
+            />
+          </label>
+          <label className="club-field-label">
+            <span>Caution indicative (€)</span>
+            <input
+              type="number"
+              min={0}
+              className="club-glass-input"
+              value={gearDepositEur}
+              onChange={(e) => setGearDepositEur(e.target.value)}
+            />
+          </label>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={gearIsEpi}
+              onChange={(e) => setGearIsEpi(e.target.checked)}
+            />
+            <span>Article EPI (suivi contrôle / expiration)</span>
+          </label>
+          {gearIsEpi ? (
+            <input
+              type="date"
+              aria-label="Date d’expiration EPI"
+              className="club-glass-input"
+              style={{ width: 'auto', fontSize: 11.5 }}
+              value={gearEpiExpiresAt}
+              onChange={(e) => setGearEpiExpiresAt(e.target.value)}
+            />
+          ) : null}
+        </div>
         <button
           type="submit"
           className="reseau-btn primary club-submit-pill club-icon-pill"

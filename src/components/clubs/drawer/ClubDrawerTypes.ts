@@ -312,6 +312,22 @@ export interface ClubDrawerHostProps {
   onDownloadGpx: (outing: ClubOutingData) => void;
   onFlyToCoords: (lat: number, lng: number, label: string) => void;
   onToggleReserveGear: (gearId: string) => void;
+  onRequestGearLoan?: (payload: {
+    gearItemId: string;
+    quantity: number;
+    eventId?: string | null;
+    neededFrom?: string | null;
+    neededUntil?: string | null;
+    note?: string | null;
+  }) => Promise<boolean> | void;
+  onTransitionGearLoan?: (payload: {
+    loanId: string;
+    gearItemId: string;
+    status: 'approved' | 'checked_out' | 'returned' | 'issue' | 'declined' | 'cancelled';
+    checkoutCondition?: 'new' | 'good' | 'worn' | 'repair';
+    returnCondition?: 'new' | 'good' | 'worn' | 'repair';
+    conditionNote?: string;
+  }) => Promise<boolean> | void;
   onCloneStandardKit: (kitId: string) => void;
   onSendChatMessage: (text: string) => void;
   onToggleClubVisibility: () => void;
@@ -471,6 +487,22 @@ export interface ClubCoffreDrawerBodyProps {
   members: ClubMemberData[];
   outings: ClubOutingData[];
   onToggleReserveGear: (gearId: string) => void;
+  onRequestGearLoan?: (payload: {
+    gearItemId: string;
+    quantity: number;
+    eventId?: string | null;
+    neededFrom?: string | null;
+    neededUntil?: string | null;
+    note?: string | null;
+  }) => Promise<boolean> | void;
+  onTransitionGearLoan?: (payload: {
+    loanId: string;
+    gearItemId: string;
+    status: 'approved' | 'checked_out' | 'returned' | 'issue' | 'declined' | 'cancelled';
+    checkoutCondition?: 'new' | 'good' | 'worn' | 'repair';
+    returnCondition?: 'new' | 'good' | 'worn' | 'repair';
+    conditionNote?: string;
+  }) => Promise<boolean> | void;
   onCloneStandardKit: (kitId: string) => void;
   onSwitchTab?: (tab: number, subTab?: number) => void;
   onSwitchToCreate?: (createTab: number) => void;

@@ -600,6 +600,20 @@ export function ClubSortiesDrawerBody({
                   </div>
                 </div>
 
+                {vaultGear.filter((vg) => vg.eventId === inspectedOuting.id).length > 0 ? (
+                  <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <b style={{ fontSize: 12 }}>Matériel réservé pour cette sortie</b>
+                    {vaultGear
+                      .filter((vg) => vg.eventId === inspectedOuting.id)
+                      .map((vg) => (
+                        <div key={vg.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                          <span>{vg.name}</span>
+                          <span className="club-badge-sage">{vg.loanStatus || 'Réservé'}</span>
+                        </div>
+                      ))}
+                  </div>
+                ) : null}
+
                 {requiredGearList.map((gearName) => {
                   const key = `${inspectedOuting.id}:${gearName}`;
                   const checked = Boolean(checkedGearMap[key]);
@@ -631,10 +645,10 @@ export function ClubSortiesDrawerBody({
                             className="reseau-btn active"
                             style={{ fontSize: 11, padding: '4px 8px' }}
                             onClick={() => onSwitchTab(3, 0)}
-                            title="Chercher dans le coffre d'entraide"
+                            title="Emprunter au coffre du club"
                           >
                             <Package size={13} aria-hidden="true" />
-                            <span>Coffre</span>
+                            <span>Emprunter au club</span>
                           </button>
                         ) : null}
                         <button

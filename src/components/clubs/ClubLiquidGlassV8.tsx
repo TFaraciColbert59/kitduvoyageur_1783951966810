@@ -1574,6 +1574,110 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     [activeClub.id, showIslandToast, user?.id, vaultGear],
   );
 
+  const handleRequestGearLoan = useCallback(
+    async (payload: {
+      gearItemId: string;
+      quantity: number;
+      eventId?: string | null;
+      neededFrom?: string | null;
+      neededUntil?: string | null;
+      note?: string | null;
+    }): Promise<boolean> => {
+      setVaultGear((prev) =>
+        prev.map((g) =>
+          g.id === payload.gearItemId
+            ? {
+                ...g,
+                reservedByMe: true,
+                loanStatus: 'requested',
+                eventId: payload.eventId ?? null,
+                neededFrom: payload.neededFrom ?? null,
+                neededUntil: payload.neededUntil ?? null,
+              }
+            : g,
+        ),
+      );
+      if (user?.id && isUuid(activeClub.id) && isUuid(payload.gearItemId) && typeof fetch === 'function') {
+        try {
+          const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'request_loan', ...payload }),
+          });
+          if (!res.ok) return false;
+          const json = (await res.json().catch(() => null)) as { loan?: { id?: string } } | null;
+          if (json?.loan?.id) {
+            setVaultGear((prev) =>
+              prev.map((g) => (g.id === payload.gearItemId ? { ...g, loanId: json.loan!.id } : g)),
+            );
+          }
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
+    [activeClub.id, user?.id],
+  );
+
+  const handleTransitionGearLoan = useCallback(
+    async (payload: {
+      loanId: string;
+      gearItemId: string;
+      status: 'approved' | 'checked_out' | 'returned' | 'issue' | 'declined' | 'cancelled';
+      checkoutCondition?: 'new' | 'good' | 'worn' | 'repair';
+      returnCondition?: 'new' | 'good' | 'worn' | 'repair';
+      conditionNote?: string;
+    }): Promise<boolean> => {
+      setVaultGear((prev) =>
+        prev.map((g) => {
+          if (g.id !== payload.gearItemId && g.loanId !== payload.loanId) return g;
+          const release = payload.status === 'returned' || payload.status === 'declined' || payload.status === 'cancelled';
+          const reserve = payload.status === 'approved';
+          const curAvail = g.quantityAvailable ?? (g.available ? 1 : 0);
+          const total = g.quantityTotal ?? 1;
+          const nextAvail = reserve
+            ? Math.max(0, curAvail - 1)
+            : release
+              ? Math.min(total, curAvail + 1)
+              : curAvail;
+          return {
+            ...g,
+            loanStatus: payload.status,
+            reservedByMe: release ? false : g.reservedByMe,
+            quantityAvailable: nextAvail,
+            available: nextAvail > 0,
+            conditionStatus: payload.returnCondition ?? g.conditionStatus,
+          };
+        }),
+      );
+      if (user?.id && isUuid(activeClub.id) && isUuid(payload.loanId) && typeof fetch === 'function') {
+        try {
+          const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/gear`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'update_loan',
+              loanId: payload.loanId,
+              status: payload.status,
+              checkoutCondition: payload.checkoutCondition,
+              returnCondition: payload.returnCondition,
+              conditionNote: payload.conditionNote,
+            }),
+          });
+          return res.ok;
+        } catch {
+          return false;
+        }
+      }
+      return true;
+    },
+    [activeClub.id, user?.id],
+  );
+
   const handleCloneKit = useCallback(
     (kitId: string) => {
       setStandardKits((prev) =>
@@ -2408,6 +2512,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               flyMapToCoords([lng, lat], label);
             }}
             onToggleReserveGear={handleBorrowGear}
+            onRequestGearLoan={handleRequestGearLoan}
+            onTransitionGearLoan={handleTransitionGearLoan}
             onCloneStandardKit={handleCloneKit}
             onSendChatMessage={handleSendChatMessage}
             onToggleClubVisibility={handleToggleClubVisibility}
