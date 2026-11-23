@@ -29,13 +29,6 @@
   --btn-radius: 999px;
   --btn-font-size: 12.5px;
   --btn-font-weight: 600;
-  --lg-bar-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)), rgba(23, 29, 26, 0.76);
-  --lg-bar-blur: blur(28px) saturate(180%);
-  --lg-bar-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 1px rgba(255, 255, 255, 0.06), 0 10px 30px rgba(0, 0, 0, 0.24), 0 0 0 4px rgba(251, 250, 246, 0.42);
-  --lg-ink: rgba(255, 255, 255, 0.85);
-  --lg-on: #d8f3de;
-  --lg-thumb-bg: rgba(255, 255, 255, 0.22);
-  --lg-thumb-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 1px 4px rgba(0, 0, 0, 0.16);
   --cv2-menu-bg: rgba(255, 255, 255, 0.96);
   --cv2-menu-blur: 24px;
   --cv2-menu-shadow: 0 14px 36px rgba(16, 32, 25, 0.18);
@@ -126,16 +119,11 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   min-height: 56px !important;
   padding: 4px !important;
   border-radius: 9999px !important;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 46%, rgba(0, 0, 0, 0.12)),
-    rgba(23, 29, 26, 0.76) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
-  backdrop-filter: blur(28px) saturate(180%) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.18) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.06),
-    0 10px 30px rgba(0, 0, 0, 0.22) !important;
+  background: var(--lg-bar-bg, linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.78))) !important;
+  -webkit-backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%)) !important;
+  backdrop-filter: var(--lg-bar-blur, blur(28px) saturate(180%)) !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.1) !important;
+  box-shadow: var(--lg-bar-shadow, inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 8px 24px rgba(16, 32, 25, 0.1)) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule .sel-lens,
@@ -145,20 +133,22 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   left: 4px !important;
   width: calc((100% - 8px) / var(--n, 5)) !important;
   border-radius: 9999px !important;
+  background: var(--lg-thumb-bg, rgba(255, 255, 255, 0.96)) !important;
+  box-shadow: var(--lg-thumb-shadow, 0 2px 8px rgba(16, 32, 25, 0.1), inset 0 1px 0 #fff) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button,
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button {
   position: relative;
   height: 48px !important;
-  color: rgba(255, 255, 255, 0.64) !important;
+  color: var(--lg-ink, #56665d) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"],
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button.active,
 .lkdv-club-carnet-drawer .lkdv-slot-shell > .lkdv-slot-topnav .lkdv-slot-selector.lkdv-capsule button[aria-selected="true"] {
-  color: #d8f3de !important;
+  color: var(--lg-on, #17402c) !important;
 }
 
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .lkdv-slot-selector .badge-count,
