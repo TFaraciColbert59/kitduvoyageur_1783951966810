@@ -2593,6 +2593,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onCreateNewClub={handleCreateNewClub}
             onToast={handleToast}
             onOpenRuntimeOverlay={handleOpenRuntimeOverlay}
+            onTabChange={(nextTab) => {
+              if (nextTab === 4) {
+                const phoneEl = document.getElementById('phone');
+                if (phoneEl && !phoneEl.classList.contains('map-collapsed')) {
+                  triggerAct('toggleMapCollapsed');
+                }
+              }
+            }}
             onClose={() => triggerAct('closeSheet')}
           />,
           drawerMount.root,

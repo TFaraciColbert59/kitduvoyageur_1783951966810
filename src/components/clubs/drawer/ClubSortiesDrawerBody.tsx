@@ -39,6 +39,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ClubG02Workspace } from '@/components/clubs/g02';
+import '@/styles/communaute-v2.css';
 import '@/features/community/v2/explore/explore-v2.css';
 import { EventTicket } from '@/features/community/v2/shared/EventTicket';
 import type { EventCardVM } from '@/features/community/v2/shared/types';

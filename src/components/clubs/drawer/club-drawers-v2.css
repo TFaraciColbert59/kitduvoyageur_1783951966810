@@ -275,6 +275,38 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   transition: padding 0.2s ease, min-height 0.2s ease !important;
 }
 
+/* Vraie forme de ticket (encoches semi-circulaires + perforation pointillée) dans Sorties 2.1 */
+[data-testid="club-outings-tickets-pane"] .lkdv-cv2-ticket {
+  position: relative !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(23, 43, 36, 0.08), inset 0 0 0 0.5px rgba(23, 43, 36, 0.09) !important;
+  overflow: visible !important;
+  -webkit-mask-image:
+    radial-gradient(circle 8px at 74px 0, transparent 7.5px, #000 8px),
+    radial-gradient(circle 8px at 74px 100%, transparent 7.5px, #000 8px);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    radial-gradient(circle 8px at 74px 0, transparent 7.5px, #000 8px),
+    radial-gradient(circle 8px at 74px 100%, transparent 7.5px, #000 8px);
+  mask-composite: intersect;
+}
+
+[data-testid="club-outings-tickets-pane"] .lkdv-cv2-ticket-stub {
+  position: relative !important;
+  border-top-left-radius: 18px !important;
+  border-bottom-left-radius: 18px !important;
+  border-right: 1.5px dashed rgba(255, 255, 255, 0.45) !important;
+  min-width: 74px !important;
+  width: 74px !important;
+}
+
+[data-testid="club-outings-tickets-pane"] .lkdv-cv2-ticket-side {
+  border-top-right-radius: 16px !important;
+  border-bottom-right-radius: 16px !important;
+  overflow: hidden !important;
+}
+
 .lkdv-clubs-v8 .lkdv-club-carnet-drawer .club-drawer-pane-content,
 .lkdv-club-carnet-drawer .club-drawer-pane-content {
   display: flex;
