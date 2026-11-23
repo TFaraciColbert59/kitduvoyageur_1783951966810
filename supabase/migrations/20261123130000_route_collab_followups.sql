@@ -194,7 +194,7 @@ REVOKE ALL ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid
 GRANT EXECUTE ON FUNCTION public.publish_club_event_route_from_workspace(uuid, uuid) TO authenticated;
 
 -- ----------------------------------------------------------------------------
--- 3. 10.10 Modération des itinéraires (remplace MIGRATION-PROPOSEE-ADMIN.sql)
+-- 3. 10.10 Modération des itinéraires (fonction proposée en amont, durcie ici)
 -- ----------------------------------------------------------------------------
 -- Les commentaires vivent dans route_workspaces.state_snapshot -> 'comments' (la table route_comments n'est pas
 -- alimentée) : un modérateur n'est pas membre de l'espace (RLS), la lecture passe par cette fonction. Elle ne renvoie
