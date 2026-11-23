@@ -829,7 +829,7 @@ export function ClubDrawerHost({
       { id: 'settings-loans', label: 'Prêts & Matériel', icon: <Package size={16} aria-hidden="true" /> },
       { id: 'settings-challenges', label: 'Défis du club', icon: <Trophy size={16} aria-hidden="true" /> },
       { id: 'settings-team', label: 'Équipe, Rôles & Pôles', icon: <Users size={16} aria-hidden="true" /> },
-      { id: 'settings-mod', label: 'Modération & Sécurité', icon: <Shield size={16} aria-hidden="true" /> },
+      { id: 'settings-mod', label: 'Paramétrage & Sécurité', icon: <Shield size={16} aria-hidden="true" /> },
     ];
     const activeSettingsTab = settingsTabs[settingsSubTab] ?? settingsTabs[0];
 

@@ -164,6 +164,16 @@ export function ClubSettingsDrawerBody({
   const [challengeDurationDays, setChallengeDurationDays] = useState<number>(30);
   const [challengeBadgeTitle, setChallengeBadgeTitle] = useState('');
   const [challengeBadgeIcon, setChallengeBadgeIcon] = useState<'trophy' | 'mountain' | 'flame' | 'compass'>('trophy');
+  const [cfgName, setCfgName] = useState(activeClub.name || '');
+  const [cfgZone, setCfgZone] = useState(activeClub.massif || '');
+  const [cfgDesc, setCfgDesc] = useState(activeClub.bio || '');
+  const [cfgPrivacy, setCfgPrivacy] = useState<'open' | 'closed' | 'secret'>(
+    activeClub.visibility === 'secret' ? 'secret' : activeClub.visibility === 'prive' ? 'closed' : 'open',
+  );
+  const [cfgRules, setCfgRules] = useState('');
+  const [cfgJoinQ1, setCfgJoinQ1] = useState('');
+  const [cfgJoinQ2, setCfgJoinQ2] = useState('');
+  const [cfgSaving, setCfgSaving] = useState(false);
 
   const canManageClubGear = Boolean(
     activeClub.viewerCanManageGear ||
@@ -1390,18 +1400,177 @@ export function ClubSettingsDrawerBody({
     );
   }
 
-  // 3 — Modération & Sécurité
+  // 5 — Paramétrage & Sécurité du club
+  const handleSaveClubSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canEditGovernance) return;
+    setCfgSaving(true);
+    const joinQuestions = [cfgJoinQ1.trim(), cfgJoinQ2.trim()].filter(Boolean);
+    try {
+      if (UUID_RE.test(activeClub.id)) {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: cfgName.trim() || activeClub.name,
+            zoneLabel: cfgZone.trim() || null,
+            description: cfgDesc.trim(),
+            privacy: cfgPrivacy,
+            rules: cfgRules.trim() || null,
+            joinQuestions,
+          }),
+        });
+        if (!res.ok) {
+          onToast?.({ title: 'Enregistrement refusé', subtitle: `Erreur ${res.status}` });
+          return;
+        }
+      }
+      onToast?.({ title: 'Paramètres du club enregistrés ✓', subtitle: cfgName.trim() || activeClub.name });
+    } catch {
+      onToast?.({ title: 'Erreur réseau', subtitle: 'Impossible de sauvegarder les paramètres' });
+    } finally {
+      setCfgSaving(false);
+    }
+  };
+
   return (
     <div className="club-drawer-pane-content" data-testid="club-settings-moderation-pane">
-      <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Lock size={16} color="#17402c" aria-hidden="true" />
-          <b style={{ fontSize: 13.5, color: 'var(--label)' }}>Règles de sécurité & hiérarchie</b>
+      {/* Paramétrage complet du club */}
+      <form
+        onSubmit={handleSaveClubSettings}
+        className="club-glass-card"
+        style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Compass size={16} color="#17402c" aria-hidden="true" />
+            <b style={{ fontSize: 13.5, color: 'var(--label)' }}>Paramétrage du club</b>
+          </div>
+          <span className="club-badge-sage">
+            {cfgPrivacy === 'open' ? 'Ouvert' : cfgPrivacy === 'closed' ? 'Sur validation' : 'Secret'}
+          </span>
         </div>
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--label2)', lineHeight: 1.45 }}>
-          Le rôle <b>Fondateur</b> est protégé contre toute rétrogradation. Seul le fondateur peut nommer ou rétrograder des administrateurs, et les modérateurs ne peuvent pas modifier les grades.
-        </p>
-      </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
+            Nom du club
+            <input
+              type="text"
+              className="club-glass-input"
+              style={{ width: '100%', marginTop: 3 }}
+              value={cfgName}
+              onChange={(e) => setCfgName(e.target.value)}
+              disabled={!canEditGovernance}
+              minLength={2}
+              maxLength={80}
+              required
+            />
+          </label>
+
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
+            Massif / Territoire
+            <input
+              type="text"
+              className="club-glass-input"
+              style={{ width: '100%', marginTop: 3 }}
+              placeholder="Ex : Chamonix · Mont-Blanc"
+              value={cfgZone}
+              onChange={(e) => setCfgZone(e.target.value)}
+              disabled={!canEditGovernance}
+              maxLength={120}
+            />
+          </label>
+
+          <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
+            Présentation du club
+            <textarea
+              className="club-glass-input"
+              rows={2}
+              style={{ width: '100%', marginTop: 3, resize: 'vertical', minHeight: 54 }}
+              placeholder="Esprit de la cordée, disciplines, niveau habituel…"
+              value={cfgDesc}
+              onChange={(e) => setCfgDesc(e.target.value)}
+              disabled={!canEditGovernance}
+              maxLength={1000}
+            />
+          </label>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Politique d’accès & visibilité</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(
+              [
+                { id: 'open', label: 'Ouvert' },
+                { id: 'closed', label: 'Validation' },
+                { id: 'secret', label: 'Secret' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                disabled={!canEditGovernance}
+                className={`reseau-btn ${cfgPrivacy === opt.id ? 'active' : ''}`}
+                style={{ flex: 1, fontSize: 11.5, padding: '6px 8px' }}
+                onClick={() => setCfgPrivacy(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
+          Charte & règlement intérieur
+          <textarea
+            className="club-glass-input"
+            rows={2}
+            style={{ width: '100%', marginTop: 3, resize: 'vertical', minHeight: 52 }}
+            placeholder="Ex : Respect de la sécurité, matériel DVA obligatoire en hiver…"
+            value={cfgRules}
+            onChange={(e) => setCfgRules(e.target.value)}
+            disabled={!canEditGovernance}
+            maxLength={1000}
+          />
+        </label>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>
+            Questions d’adhésion (optionnel)
+          </span>
+          <input
+            type="text"
+            className="club-glass-input"
+            placeholder="Question 1 (ex : Quelle est ton expérience en alpinisme ?)"
+            value={cfgJoinQ1}
+            onChange={(e) => setCfgJoinQ1(e.target.value)}
+            disabled={!canEditGovernance}
+            maxLength={160}
+          />
+          <input
+            type="text"
+            className="club-glass-input"
+            placeholder="Question 2 (ex : Es-tu autonome sur glacier ?)"
+            value={cfgJoinQ2}
+            onChange={(e) => setCfgJoinQ2(e.target.value)}
+            disabled={!canEditGovernance}
+            maxLength={160}
+          />
+        </div>
+
+        {canEditGovernance ? (
+          <button
+            type="submit"
+            className="lkdv-carnet-btn-soft"
+            disabled={cfgSaving}
+            style={{ width: '100%', justifyContent: 'center', height: 36, fontWeight: 700 }}
+          >
+            <Check size={14} aria-hidden="true" />
+            <span>{cfgSaving ? 'Enregistrement…' : 'Enregistrer les paramètres'}</span>
+          </button>
+        ) : null}
+      </form>
 
       <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

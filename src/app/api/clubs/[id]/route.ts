@@ -99,7 +99,12 @@ export async function PATCH(
 
     const bundle = await loadClubBundle(supabase, id, user.id);
     if (!bundle) return errorJson('not_found', 404);
-    if (!bundle.viewerMembership || !isActiveMember(bundle.viewerMembership) || bundle.viewerMembership.role !== 'admin') {
+    const viewerRole = bundle.viewerMembership?.role;
+    if (
+      !bundle.viewerMembership ||
+      !isActiveMember(bundle.viewerMembership) ||
+      (viewerRole !== 'founder' && viewerRole !== 'admin')
+    ) {
       return errorJson('forbidden', 403);
     }
 
