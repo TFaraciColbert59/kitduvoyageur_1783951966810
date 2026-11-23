@@ -849,6 +849,48 @@ export function ClubSortiesDrawerBody({
           </div>
         )}
       </div>
+
+      {filteredUpcoming.length > 0 ? (
+        <ul
+          style={{
+            listStyle: 'none',
+            margin: '10px 0 0',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {filteredUpcoming.map((o) => {
+            const cardData: OutingCardData = {
+              id: o.id,
+              title: o.title,
+              mass: o.massif,
+              date: o.dateLabel || o.date,
+              startedAt: o.startsAtIso || o.date,
+              km: o.km,
+              dplus: o.dplus,
+              proven: true,
+              photos: o.coverUrl ? [o.coverUrl] : [],
+              cover: o.coverUrl ?? null,
+              status: o.status,
+              visibility: 'public',
+              year: null,
+              monthLabel: '',
+            };
+            return (
+              <OutingCard
+                key={o.id}
+                outing={cardData}
+                onToggle={() => {
+                  setDetailLens('overview');
+                  onInspectOuting(o);
+                }}
+              />
+            );
+          })}
+        </ul>
+      ) : null}
     </div>
   );
 }
