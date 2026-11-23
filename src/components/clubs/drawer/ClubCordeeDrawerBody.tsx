@@ -188,9 +188,12 @@ function InspectedMemberPane({
   outings,
   posts,
   vaultGear,
+  canManageStoryPermissions,
+  onToggleStoryPermission,
   onInspectMember,
   onBorrowGear,
   onSwitchTabAndLens,
+  onToast,
   onClose,
 }: {
   lensId: 'm-stats' | 'm-outings' | 'm-gear' | 'm-media';
@@ -199,13 +202,22 @@ function InspectedMemberPane({
   outings: ClubOutingData[];
   posts: ClubFeedPostItem[];
   vaultGear: ClubGearVaultItem[];
+  canManageStoryPermissions?: boolean;
+  onToggleStoryPermission?: ClubCordeeDrawerBodyProps['onToggleMemberStoryPermission'];
   onInspectMember: (member: ClubMemberData | null) => void;
   onBorrowGear?: ClubCordeeDrawerBodyProps['onBorrowGear'];
   onSwitchTabAndLens: ClubCordeeDrawerBodyProps['onSwitchTabAndLens'];
+  onToast: ClubCordeeDrawerBodyProps['onToast'];
   onClose: () => void;
 }) {
   const backBtnRef = useRef<HTMLButtonElement | null>(null);
   const [publicCarnets, setPublicCarnets] = useState<PublicCarnetSummary[]>([]);
+  const [storyPermBusy, setStoryPermBusy] = useState(false);
+  const [storyPermLocal, setStoryPermLocal] = useState<boolean>(Boolean(member.canManageStories));
+
+  useEffect(() => {
+    setStoryPermLocal(Boolean(member.canManageStories));
+  }, [member.canManageStories, member.id]);
 
   useEffect(() => {
     if (!active) return;
@@ -303,6 +315,34 @@ function InspectedMemberPane({
               <b>{outingsCount}</b>
             </div>
           </div>
+          {canManageStoryPermissions && onToggleStoryPermission && (member.userId || member.id) ? (
+            <div className="club-glass-card" style={{ padding: '10px 12px' }}>
+              <Switch
+                checked={storyPermLocal}
+                disabled={storyPermBusy}
+                onCheckedChange={async (checked) => {
+                  setStoryPermLocal(checked);
+                  setStoryPermBusy(true);
+                  try {
+                    const ok = await onToggleStoryPermission(member.userId || member.id, checked);
+                    if (ok === false) {
+                      setStoryPermLocal(!checked);
+                      onToast({ title: 'Autorisation refusée' });
+                    } else {
+                      onToast({
+                        title: checked ? 'Habilité aux stories à la une ✓' : 'Habilitation stories retirée',
+                        subtitle: member.name,
+                      });
+                    }
+                  } finally {
+                    setStoryPermBusy(false);
+                  }
+                }}
+                label="Habilité aux stories à la une"
+                aria-label={`Autoriser ${member.name} à créer des stories à la une`}
+              />
+            </div>
+          ) : null}
           {photoPosts.length > 0 ? (
             <>
               <span className="lkdv-carnet-kit-eyebrow">
@@ -739,6 +779,12 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
         ? props.lensId
         : 'm-stats';
 
+    const viewerIsClubAdmin = Boolean(
+      props.currentUserId &&
+        (props.activeClub.createdBy === props.currentUserId ||
+          props.activeClub.viewerRole === 'admin'),
+    );
+
     return (
       <InspectedMemberPane
         lensId={memberLens}
@@ -747,9 +793,12 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
         outings={props.outings}
         posts={props.posts}
         vaultGear={props.vaultGear}
+        canManageStoryPermissions={viewerIsClubAdmin}
+        onToggleStoryPermission={props.onToggleMemberStoryPermission}
         onInspectMember={(m) => props.onInspectMember(m)}
         onBorrowGear={props.onBorrowGear}
         onSwitchTabAndLens={props.onSwitchTabAndLens}
+        onToast={props.onToast}
         onClose={props.onClose}
       />
     );

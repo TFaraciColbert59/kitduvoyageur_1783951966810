@@ -2801,7 +2801,7 @@ renderTop = function () {
     : null;
   $('phone').classList.toggle('hasnext', ns != null);
   $('top').innerHTML = `<div class="ig-top">
-    <button class="lg ig-handle rp" id="rpvis" data-a="openClubDrawer" data-v="0:0" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
+    <button class="lg ig-handle rp" id="rpvis" data-a="openClubSwitcher" aria-haspopup="dialog" aria-label="Changer de club · ${esc(P.name || 'Club')}">
       <span class="club-top-pill-name">${esc(me ? (P.name || P.handle) : club.n)}</span>
       <span class="club-top-pill-chev" aria-hidden="true">▾</span>
     </button>
@@ -4191,10 +4191,17 @@ var EXA = {
     }
     openStory('hl1');
   },
-  openClubSearch: () => { openSheet('club_drawer', 0, 'card', { drawerTab: 0, drawerSubTab: 2 }); haptic(8); },
+  openClubSwitcher: () => {
+    notifyHostAction('openClubSwitcher');
+    haptic(8);
+  },
+  openClubSearch: () => {
+    notifyHostAction('openClubSearch');
+    haptic(8);
+  },
   openClubDrawer: v => {
     const parts = String(v || '0:0').split(':');
-    const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 5);
+    const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 4);
     const dSub = clamp(parseInt(parts[1], 10) || 0, 0, 3);
     openSheet('club_drawer', dTab, 'card', { drawerTab: dTab, drawerSubTab: dSub });
     haptic(8);

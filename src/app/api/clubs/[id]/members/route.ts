@@ -22,7 +22,7 @@ import {
   readJson,
   respondClubResult,
 } from '../../_lib/http';
-import { canReadClub, isManager, loadClubBundle } from '../../_lib/db';
+import { canReadClub, isAdmin, isManager, loadClubBundle } from '../../_lib/db';
 import { asArray, mapJoinRequestRow, type Row } from '../../_lib/mappers';
 
 export const runtime = 'nodejs';
@@ -44,6 +44,13 @@ const patchSchema = z.discriminatedUnion('action', [
       action: z.literal('mute'),
       userId: z.string().uuid(),
       mutedUntil: z.string().datetime().nullable(),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('story_permission'),
+      userId: z.string().uuid(),
+      canManageStories: z.boolean(),
     })
     .strict(),
   z
@@ -243,11 +250,35 @@ export async function PATCH(
       if (!result.ok) return respondClubResult(result);
       const { error } = await supabase
         .from('club_members')
-        .update({ role: action.role })
+        .update({
+          role: action.role,
+          ...(action.role === 'admin' || action.role === 'moderator'
+            ? { can_manage_stories: true }
+            : {}),
+        })
         .eq('club_id', id)
         .eq('user_id', action.userId);
       if (error) return dbFailure('PATCH role', error);
       return json({ data: result.data });
+    }
+
+    if (action.action === 'story_permission') {
+      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
+      if (!canGrant) return errorJson('forbidden', 403);
+      const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
+      if (!target) return errorJson('not_found', 404);
+      const { error } = await supabase
+        .from('club_members')
+        .update({ can_manage_stories: action.canManageStories })
+        .eq('club_id', id)
+        .eq('user_id', action.userId);
+      if (error) return dbFailure('PATCH story_permission', error);
+      return json({
+        data: {
+          userId: action.userId,
+          canManageStories: action.canManageStories,
+        },
+      });
     }
 
     if (action.action === 'mute') {

@@ -36,6 +36,7 @@ export interface ClubItemData {
   lng: number;
   coverUrl?: string;
   viewerRole?: ClubRole | null;
+  viewerCanManageStories?: boolean;
   membershipStatus?: MembershipStatus | null;
   pendingRequestsCount?: number;
   isVerified?: boolean;
@@ -77,6 +78,7 @@ export interface ClubMemberData {
   verifiedSports?: string[];
   outingsCount?: number;
   avatarUrl?: string;
+  canManageStories?: boolean;
 }
 
 export type ClubOutingStatus = 'upcoming' | 'live' | 'completed' | 'cancelled';
@@ -193,7 +195,9 @@ export type ClubRuntimeOverlayKind =
   | 'story'
   | 'post_modal'
   | 'quick_circle'
-  | 'create_group';
+  | 'create_group'
+  | 'club_switcher'
+  | 'club_search';
 
 export interface ClubRuntimeOverlayState {
   kind: ClubRuntimeOverlayKind;
@@ -271,6 +275,10 @@ export interface ClubDrawerHostProps {
     member: ClubMemberData,
     nextRole: 'admin' | 'moderator' | 'member',
   ) => Promise<void> | void;
+  onToggleMemberStoryPermission?: (
+    userId: string,
+    canManageStories: boolean,
+  ) => Promise<boolean> | void;
   onCreateBinomeGroup?: (member: ClubMemberData, outingId?: string) => Promise<void> | void;
   onToggleRsvpOuting: (outingId: string) => void;
   onCreateGroupFromOuting: (outing: ClubOutingData) => void;
@@ -383,6 +391,10 @@ export interface ClubCordeeDrawerBodyProps {
     member: ClubMemberData,
     nextRole: 'admin' | 'moderator' | 'member',
   ) => Promise<void> | void;
+  onToggleMemberStoryPermission?: (
+    userId: string,
+    canManageStories: boolean,
+  ) => Promise<boolean> | void;
   onCreateBinomeGroup?: (member: ClubMemberData, outingId?: string) => Promise<void> | void;
   onBorrowGear?: (gearId: string) => void;
   onSwitchTabAndLens: ClubDrawerNavHandler;
@@ -461,6 +473,7 @@ export interface ClubRuntimeOverlaysProps {
   members: ClubMemberData[];
   outings: ClubOutingData[];
   vaultGear: ClubGearVaultItem[];
+  standardKits?: ClubStandardKit[];
   challenges: ClubChallengeItem[];
   posts: ClubFeedPostItem[];
   currentUserId?: string | null;
@@ -469,6 +482,7 @@ export interface ClubRuntimeOverlaysProps {
   onToggleRsvpOuting: (outingId: string) => void;
   onCreateGroupFromOuting: (outing: ClubOutingData) => void;
   onOpenClubDrawer: (tab: number, subTab?: number, extras?: Partial<ClubDrawerIntent>) => void;
+  onOpenCreateClub?: () => void;
   onFlyToCoords: (lat: number, lng: number, label: string) => void;
   onToast: (toast: ClubToastPayload) => void;
 }

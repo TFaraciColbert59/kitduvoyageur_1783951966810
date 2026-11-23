@@ -170,13 +170,13 @@ const DEFAULT_FALLBACK_CLUB: ClubItemData = {
 };
 
 const TIROIR_TAB_MAP: Record<string, number> = {
-  explorer: 0,
+  stats: 0,
+  statistiques: 0,
+  performance: 0,
   cordee: 1,
   sorties: 2,
   coffre: 3,
   salons: 4,
-  stats: 5,
-  statistiques: 5,
 };
 
 export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlassV8Props) {
@@ -452,6 +452,16 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           return;
         }
 
+        if (action === 'openClubSwitcher') {
+          setRuntimeOverlay({ kind: 'club_switcher' });
+          return;
+        }
+
+        if (action === 'openClubSearch') {
+          setRuntimeOverlay({ kind: 'club_search' });
+          return;
+        }
+
         if (action === 'openUserProfile' && typeof val === 'string') {
           const cleanHandle = val.replace(/^@/, '').trim();
           if (cleanHandle) {
@@ -546,7 +556,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         } else if (initialTab === 'salons') {
           act('openClubDrawer', '4:0');
         } else if (initialTab === 'stats' || initialTab === 'statistiques') {
-          act('openClubDrawer', '5:0');
+          act('openClubDrawer', '0:0');
         } else if (initialTab === 'parametres') {
           act('openClubDrawer', '0:0');
         }
@@ -672,7 +682,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const [membersRes, topicsRes, eventsRes, allClubsRes] = await Promise.all([
         supabase
           .from('club_members')
-          .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in')
+          .select('id, club_id, user_id, role, status, joined_at, muted_until, leaderboard_opt_in, can_manage_stories')
           .eq('club_id', clubRow.id)
           .limit(600),
         supabase
@@ -701,16 +711,20 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const allClubRows: any[] = allClubsRes.data || [];
 
       const myClubRoles = new Map<string, string>();
+      const myClubStoryPerms = new Map<string, boolean>();
       if (user?.id) {
         try {
           const { data: myRows } = await supabase
             .from('club_members')
-            .select('club_id, role, status')
+            .select('club_id, role, status, can_manage_stories')
             .eq('user_id', user.id)
             .limit(50);
           for (const mr of myRows || []) {
             if (!mr.status || mr.status === 'active') {
               myClubRoles.set(mr.club_id, mr.role || 'member');
+              if (typeof mr.can_manage_stories === 'boolean') {
+                myClubStoryPerms.set(mr.club_id, mr.can_manage_stories);
+              }
             }
           }
         } catch {
@@ -848,6 +862,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           skills: [p?.location || clubRow.primary_sport || clubRow.category || 'Outdoor'],
           followed: followedSet.has(m.user_id),
           availableWeekend: Boolean(m.available_weekend ?? true),
+          canManageStories:
+            typeof m.can_manage_stories === 'boolean'
+              ? m.can_manage_stories
+              : m.user_id === clubRow.created_by || m.role === 'admin' || m.role === 'moderator',
           isNew7d,
           joinedAt: m.joined_at || undefined,
           mutedUntil: m.muted_until ?? null,
@@ -1172,6 +1190,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           joined: joinedFlag,
           role: resolvedRoleLabel,
           viewerRole: (rawRole as ClubRole) || null,
+          viewerCanManageStories:
+            row.id === clubRow.id
+              ? Boolean(
+                  user?.id &&
+                    (row.created_by === user.id ||
+                      (typeof currentMemberRow?.can_manage_stories === 'boolean'
+                        ? currentMemberRow.can_manage_stories
+                        : currentMemberRow?.role === 'admin' || currentMemberRow?.role === 'moderator')),
+                )
+              : Boolean(
+                  user?.id &&
+                    (row.created_by === user.id ||
+                      (myClubStoryPerms.has(row.id)
+                        ? myClubStoryPerms.get(row.id)
+                        : rawRole === 'admin' || rawRole === 'moderator')),
+                ),
           visibility,
           bio: row.description || 'Club communautaire Le Kit du Voyageur.',
           charter: row.rules || 'Respect strict de la montagne, de la sécurité et zéro trace.',
@@ -1784,20 +1818,54 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     );
     showIslandToast('Pôles de spécialité activés ✓', `${recommended.length} pôles configurés pour ${activeClub.name}`);
   }, [activeClub.category, activeClub.id, activeClub.name, showIslandToast]);
-  const canManageClubStories =
-    activeClub.viewerRole === 'admin' ||
-    activeClub.viewerRole === 'moderator' ||
-    Boolean(user?.id && activeClub.createdBy && user.id === activeClub.createdBy) ||
-    /fondateur|admin|modérateur|encadrant|guide/i.test(activeClub.role || '') ||
-    clubMembers.some(
-      (m) =>
-        Boolean(user?.id && (m.userId === user.id || m.id === user.id)) &&
-        (m.rawRole === 'admin' ||
-          m.rawRole === 'moderator' ||
-          m.role === 'Fondateur' ||
-          m.role === 'Guide & Sécurité' ||
-          m.role === 'Encadrant'),
-    );
+  const handleToggleMemberStoryPermission = useCallback(
+    async (targetUserId: string, canManageStories: boolean): Promise<boolean> => {
+      if (!user?.id || !isUuid(activeClub.id) || typeof fetch !== 'function') return false;
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/members`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'story_permission',
+            userId: targetUserId,
+            canManageStories,
+          }),
+        });
+        if (!res.ok) return false;
+        setClubMembers((prev) =>
+          prev.map((m) =>
+            m.userId === targetUserId || m.id === targetUserId
+              ? { ...m, canManageStories }
+              : m,
+          ),
+        );
+        if (targetUserId === user.id) {
+          setClubsDirectory((prev) =>
+            prev.map((c) =>
+              c.id === activeClub.id ? { ...c, viewerCanManageStories: canManageStories } : c,
+            ),
+          );
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [activeClub.id, user?.id],
+  );
+
+  // Strict DB-backed authorization for Stories à la une creation/editing
+  const canManageClubStories = Boolean(
+    user?.id &&
+      (activeClub.createdBy === user.id ||
+        activeClub.viewerCanManageStories === true ||
+        clubMembers.some(
+          (m) =>
+            (m.userId === user.id || m.id === user.id) &&
+            Boolean(m.canManageStories),
+        )),
+  );
 
   // Hydrate or derive Stories à la une for the active club
   useEffect(() => {
@@ -2060,6 +2128,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onToggleFollowMember={handleToggleFollowMember}
             onProposeBinome={handleProposeBinome}
             onUpdateMyAvailability={handleUpdateMyAvailability}
+            onToggleMemberStoryPermission={handleToggleMemberStoryPermission}
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {
@@ -2411,6 +2480,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         members={clubMembers}
         outings={clubOutings}
         vaultGear={vaultGear}
+        standardKits={standardKits}
         challenges={challenges}
         posts={clubPosts}
         currentUserId={user?.id ?? null}
@@ -2421,6 +2491,11 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         onOpenClubDrawer={(t, s = 0, extras) => {
           pendingDrawerIntentRef.current = { tab: t, subTab: s, ...extras };
           triggerAct('openClubDrawer', `${t}:${Math.min(3, s)}`);
+        }}
+        onOpenCreateClub={() => {
+          setCommunityCreateKind('club');
+          setCommunityCreatePrefill(null);
+          setCommunityCreateOpen(true);
         }}
         onFlyToCoords={(lat, lng, label) => flyMapToCoords([lng, lat], label)}
         onToast={handleToast}

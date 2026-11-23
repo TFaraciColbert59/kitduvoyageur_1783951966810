@@ -63,6 +63,8 @@ export interface ClubMember {
   /** Statut Pro sportif vérifié (S5.10). */
   isProAthlete?: boolean;
   verifiedSports?: readonly string[];
+  /** Droit granulaire de création / gestion des stories à la une du club. */
+  canManageStories?: boolean;
 }
 
 export interface ClubJoinRequest {
