@@ -406,6 +406,15 @@
   bottom: calc(62px + 12px + 12px + 56px + 8px + env(safe-area-inset-bottom, 0px));
 }
 
+/* Téléphone, tiroir ouvert : le tiroir est posé 64 px au-dessus du pied (barre d'onglets du site) ; les indications se
+   posent au-dessus de lui, pas dessous. En hauteur « plein » il ne reste aucune carte visible : elles s'effacent. */
+.rcw-explorer-root[data-layout='mobile'][data-sheet-open='true'] .rcw-map-bottom {
+  bottom: calc(var(--rcw-sheet-h, 0px) + 64px + 12px);
+}
+.rcw-explorer-root[data-layout='mobile']:has(.v5-sheet[data-dock][data-detent='full']) .rcw-map-bottom {
+  display: none;
+}
+
 /* Téléphone : les pastilles d'entrée tiennent sur UNE ligne sous la pilule (jamais dessus), à faire glisser. */
 @media (max-width: 639px) {
   .rcw-map-left {

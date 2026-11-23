@@ -294,8 +294,19 @@
 }
 .rcw-explorer-root .rcw-sheet-body {
   display: block;
-  padding: 2px 0 88px;
+  /* Gouttière de 16 px : `.v5-sbody` (12 px) est surchargé ici, le contenu ne doit pas toucher le bord. */
+  padding: 2px 16px 88px;
   animation: xpIn 0.16s ease both;
+}
+
+/* Hauteur « plein » sur téléphone : le tiroir monte jusque sous la pilule. Les pastilles d'entrée (sous la pilule)
+   s'effacent, et si l'îlot annonce quelque chose, le tiroir s'arrête sous lui au lieu de passer dessous. */
+.rcw-explorer-root[data-layout='mobile']:has(.v5-sheet[data-dock][data-detent='full']) .rcw-entry-stack {
+  display: none;
+}
+.rcw-explorer-root[data-layout='mobile']:has(.v5-island[data-s='note']) .v5-sheet[data-dock][data-detent='full'] {
+  /* 64 px de barre d'onglets du site ; 150 px d'îlot (top) + 76 px de hauteur + 8 px de respiration. */
+  max-height: calc(100dvh - 64px - max(234px, calc(env(safe-area-inset-top, 0px) + 224px)));
 }
 .rcw-explorer-root .v5-sheet[data-dock] .v5-sx {
   width: 44px;

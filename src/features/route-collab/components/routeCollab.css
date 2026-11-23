@@ -11,6 +11,14 @@
   --rc-idle: var(--lkv-ink-300);
 }
 
+/* « Publier v1 » : la classe `dark` de `PBtn` (ton sombre) est aussi le sélecteur du thème sombre de tokens.css
+   (`.dark { --lkv-on-primary: #08150F }`), qui posait de l'encre sombre sur l'aplat forest #17402C (~1,8:1).
+   Le Compas itinéraire est en thème clair forcé : texte blanc sur forest, ~11:1 (AA). */
+.rcw-explorer-root .v5-pbtn.dark,
+.rcw-explorer-root .v5-pbtn.done {
+  color: var(--lkv-text-inverted);
+}
+
 .rcw-explorer-root .xp-sheet-pill-launcher {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 22px + var(--cookie-banner-h, 0px));
 }

@@ -8,17 +8,19 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 
 | Catégorie | Fait | Partiel | Non fait |
 | --- | --- | --- | --- |
-| 1 Entrée et premier écran | 9 | 1 | 0 |
-| 2 Carte | 7 | 3 | 0 |
+| 1 Entrée et premier écran | 10 | 0 | 0 |
+| 2 Carte | 10 | 0 | 0 |
 | 3 Pilule et îlot | 10 | 0 | 0 |
-| 4 Tiroir principal | 8 | 2 | 0 |
-| 5 Tracer | 9 | 1 | 0 |
+| 4 Tiroir principal | 10 | 0 | 0 |
+| 5 Tracer | 10 | 0 | 0 |
 | 6 Étapes et nuits | 10 | 0 | 0 |
 | 7 Analyser | 10 | 0 | 0 |
-| 8 Équipe | 7 | 3 | 0 |
-| 9 Départ, sac et carnet | 8 | 2 | 0 |
+| 8 Équipe | 10 | 0 | 0 |
+| 9 Départ, sac et carnet | 10 | 0 | 0 |
 | 10 Interconnexion LKDV | 9 | 1 | 0 |
-| **Total sur 100** | **87** | **13** | **0** |
+| **Total sur 100** | **99** | **1** | **0** |
+
+Recompté le 23/11/2026 sur les 100 lignes de la section 3 (comptage par script sur la colonne Statut). Réserves comptées Fait : 4.1 et 10.10 (« Fait, migration à appliquer » : `20261123130000_route_collab_followups.sql` n'est pas appliquée en production). Seul Partiel : 10.5 (Clubs), qui attend les migrations clubs `20261119*`, absentes en production. Le tableau précédent (87 / 13 / 0) n'avait pas suivi les passages du 23/11.
 
 ### Les 4 prérequis
 
@@ -29,16 +31,16 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 | P3 Portage sur main | **Fait pour le code, pas fusionné** | La branche est posée sur le sommet de `main` (merge-base = `1b115a9d7`, 11 commits d'avance, 0 de retard) et poussée (`origin` = HEAD). Elle n'est pas dans `main`. Aucun conflit restant à ce jour. |
 | P4 Rattachement | **Fait, avec trois trous** | `?trip=` lu sous RLS (`loadTripEntry.ts`) ; tracé du Compas repris (`compasDraft.ts`) ; écrivain unique `routeDraftWrite.ts` (`writeTripRouteDraft`) et synchronisation `publishedSync.ts` ; bouton d'entrée dans `ParcoursFlow` (`CompasOuFlows.tsx`) et `RouteEditor.tsx` ; le HUB lit la version publiée (`PublishedRouteCard`, `loadCockpit.ts`) ; Explorer mène à la page (`/api/itineraire/from-explorer`). Trous : sans `?trip=` la page reste un brouillon local non rattaché (1.1) ; clubs non branchés (10.5) ; l'éditeur de tracé du Compas existe toujours à côté. |
 
-## 2. Ce qui reste avant la production (dans l'ordre)
+## 2. Ce qui reste avant la production et après (dans l'ordre)
 
-1. Terminer la 3ᵉ passe de la migration, commiter les 3 fichiers (migration, retour arrière, test RLS).
-2. Rejouer la migration sur une copie, puis le test RLS SQL, puis son retour arrière. Rien n'a été exécuté contre une base dans cette vérification.
-3. Écrire un test du store Supabase contre une vraie base (aujourd'hui : client simulé seulement).
-4. Ajouter `p_stage_scope_ids` à `set_route_member_tx` (8.3 renvoie 501 en mode Supabase tant que ce n'est pas fait).
-5. Mettre la RLS Realtime en place avant d'ouvrir le canal Broadcast (8.8, canal public aujourd'hui).
-6. Appliquer la migration en production, relancer les advisors Supabase, puis fusionner la branche dans `main`.
-7. Traiter le blocage Vercel : le déploiement de production de `main` échoue déjà par manque de mémoire au build (SIGKILL, OOM). C'est une question d'offre Vercel, donc une décision de Tony (CLAUDE.md §2 point 8). Hors périmètre de cette branche.
-8. Après la production : brancher le point Non fait (10.5 clubs), et corriger les écarts restants de la section 4. Hors page, chantier `adventure-intelligence` : recalculer le profil de performance après chaque sortie (10.8).
+1. Rejouer la migration `20261123130000_route_collab_followups.sql` sur une copie, puis le test RLS SQL et son retour arrière, puis l'appliquer en production (4.1 et 10.10 en dépendent) et relancer les advisors Supabase. Rien n'a été exécuté contre une base dans cette vérification.
+2. Écrire un test du store Supabase contre une vraie base (aujourd'hui : client simulé seulement).
+3. Ajouter `p_stage_scope_ids` à `set_route_member_tx` (8.3 renvoie 501 en mode Supabase tant que ce n'est pas fait).
+4. Mettre la RLS Realtime en place avant d'ouvrir le canal Broadcast (8.8, canal public aujourd'hui).
+5. Fusionner la branche dans `main` après production de la migration.
+6. Traiter le blocage Vercel : le déploiement de production de `main` échoue déjà par manque de mémoire au build (SIGKILL, OOM). C'est une question d'offre Vercel, donc une décision de Tony (CLAUDE.md §2 point 8). Hors périmètre de cette branche.
+7. Le seul Partiel, 10.5 (Clubs) : appliquer les migrations clubs `20261119*` en production, puis rejouer le pont serveur. Hors page, chantier `adventure-intelligence` : recalculer le profil de performance après chaque sortie (10.8).
+8. Non rejoués : `next build`, Playwright, `npm run lint` complet.
 
 ## 3. Les 100 lignes
 
@@ -194,10 +196,10 @@ Règle de classement. **Fait** : code branché dans l'interface ou le serveur, a
 
 ## 4. Écarts entre les déclarations et le code
 
-- **4.1** : déclaré mémorisé « par compte » dans le plan ; le code mémorise sur l'appareil, faute de colonne de préférences générale (voir la ligne 4.1). Reste Partiel, migration nécessaire.
+- **4.1** : déclaré mémorisé « par compte » dans le plan ; le code mémorise sur l'appareil, faute de colonne de préférences générale (voir la ligne 4.1). Passé à Fait le 23/11 (préférence par compte, migration `20261123130000` à appliquer).
 - **1.1** : non annoncé comme partiel ; la page s'ouvre sans voyage et garde un brouillon local.
 - **6.4, 7.1, 10.8** : corrigé le 23/11 : `server/paceProfile.ts` est lu par la page et `RoutePaceProvider` est monté. Le recalcul du profil après chaque sortie reste hors de la page (10.8 Partiel).
-- **10.5** : annoncé « migration nécessaire » ; en plus, le pont serveur n'est appelé par aucune route ni écran. Non fait.
+- **10.5** : annoncé « migration nécessaire » ; le pont serveur est désormais branché (code et migration écrits) mais en production il attend les migrations clubs `20261119*`. Partiel.
 - **5.9** : FIT absent (refusé volontairement). **2.10** : tuiles non empaquetées. Aucun de ces deux points n'était annoncé tel quel. Corrigés le 23/11 : **6.9** (structure du tiroir reprise), **10.9** (bouton), **10.2** (test), **4.5** (conversions en 0 supprimées).
 - **9.8** : le service `HikeSessionService.ts` est bien modifié (seul l'écran du cockpit ne l'est pas).
 - **P3** : la branche n'a plus de retard sur `main` ; elle est poussée mais non fusionnée.
