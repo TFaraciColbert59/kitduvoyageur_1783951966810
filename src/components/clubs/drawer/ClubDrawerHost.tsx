@@ -36,6 +36,10 @@ import { SlotShell } from '@/components/compte/drawer/SlotShell';
 import { KIT_CARD_CSS } from '@/components/compte/drawer/cards/KitCard';
 import { SortMenuButton } from '@/components/ui/drawer/SortMenuButton';
 import { CapsuleTabs } from '@/components/ui/CapsuleTabs';
+import {
+  CollapsibleHeroPreview,
+  useScrollCollapsePreview,
+} from '@/features/community/v2/create/photo/CollapsibleHeroPreview';
 import { useDragDismiss } from '@/hooks/gestures/useDragDismiss';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import '@/styles/carnet-v2.css';
@@ -168,26 +172,34 @@ export function ClubDrawerHost({
   const [stack, setStack] = useState<ClubStackEntry[]>([]);
   const [inspectedMember, setInspectedMember] = useState<ClubMemberData | null>(null);
   const [memberLensIndex, setMemberLensIndex] = useState(0);
-  const [memberHeaderCompact, setMemberHeaderCompact] = useState(false);
+  const [memberHeaderCompact, setMemberHeaderCompact] = useScrollCollapsePreview(
+    tab === 1 && Boolean(inspectedMember),
+  );
+  const memberHeroTouchYRef = useRef<number | null>(null);
 
   useEffect(() => {
     setMemberHeaderCompact(false);
-  }, [inspectedMember?.id, memberLensIndex]);
+  }, [inspectedMember?.id, memberLensIndex, setMemberHeaderCompact]);
 
+  // Permet aussi de replier l'aperçu même sur un contenu court ou en scrollant directement dessus
   useEffect(() => {
     if (tab !== 1 || !inspectedMember) return;
     const root = paneRootRef.current;
     if (!root) return;
-    const handleScrollCapture = (e: Event) => {
-      const target = e.target as HTMLElement | null;
-      if (!target || typeof target.scrollTop !== 'number') return;
-      if (target.classList.contains('lkdv-lens-pane') || target.closest('.lkdv-lens-pane')) {
-        setMemberHeaderCompact(target.scrollTop > 18);
+    const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 4) return;
+      if (e.deltaY > 10) {
+        setMemberHeaderCompact(true);
+      } else if (e.deltaY < -10) {
+        const activePane = root.querySelector('.lkdv-lens-pane:not([hidden])') as HTMLElement | null;
+        if (!activePane || activePane.scrollTop <= 4) {
+          setMemberHeaderCompact(false);
+        }
       }
     };
-    root.addEventListener('scroll', handleScrollCapture, true);
-    return () => root.removeEventListener('scroll', handleScrollCapture, true);
-  }, [tab, inspectedMember]);
+    root.addEventListener('wheel', handleWheel, { passive: true });
+    return () => root.removeEventListener('wheel', handleWheel);
+  }, [tab, inspectedMember, setMemberHeaderCompact]);
   const [inspectedOuting, setInspectedOuting] = useState<ClubOutingData | null>(null);
   const [g02Section, setG02Section] = useState<ClubG02Section | undefined>(initialSection);
   const [chatDraftPrefill, setChatDraftPrefill] = useState('');
@@ -1095,146 +1107,115 @@ export function ClubDrawerHost({
                           ? 'newcomer'
                           : 'member';
 
-                if (memberHeaderCompact) {
-                  return (
-                    <div
-                      className="lkdv-club-member-hero-card is-compact"
-                      data-role-tone={roleBadgeTone}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 8,
-                        padding: '6px 10px',
-                        borderRadius: 22,
-                        background: 'rgba(255, 255, 255, 0.86)',
-                        border: '0.5px solid rgba(23, 43, 36, 0.10)',
-                        boxShadow: 'inset 0 1px 0 #fff, 0 2px 10px rgba(23, 43, 36, 0.06)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
-                        {inspectedMember.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={inspectedMember.avatarUrl}
-                            alt=""
-                            style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', flex: 'none' }}
-                          />
-                        ) : (
-                          <span
-                            style={{
-                              width: 30,
-                              height: 30,
-                              borderRadius: '50%',
-                              background: 'rgba(23, 64, 44, 0.12)',
-                              color: '#17402c',
-                              fontSize: 12,
-                              fontWeight: 700,
-                              display: 'grid',
-                              placeItems: 'center',
-                              flex: 'none',
-                            }}
-                          >
-                            {mName.slice(0, 1).toUpperCase()}
-                          </span>
-                        )}
-                        <div style={{ minWidth: 0 }}>
-                          <b style={{ fontSize: 12.5, color: '#172b24', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {mName}
-                          </b>
-                          <span style={{ fontSize: 10.5, color: '#56665d' }}>
-                            {inspectedMember.role || 'Membre'}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="lkdv-cv2x-member-cta"
-                        onClick={() => pushMember(null)}
-                      >
-                        <ChevronLeft size={13} />
-                        <span>Cordée</span>
-                      </button>
-                    </div>
-                  );
-                }
+                const handleHeroTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+                  memberHeroTouchYRef.current = e.touches[0]?.clientY ?? null;
+                };
+                const handleHeroTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+                  const startY = memberHeroTouchYRef.current;
+                  const curY = e.touches[0]?.clientY;
+                  if (startY == null || curY == null) return;
+                  const dy = startY - curY;
+                  if (dy > 16) {
+                    setMemberHeaderCompact(true);
+                    memberHeroTouchYRef.current = curY;
+                  } else if (dy < -16) {
+                    setMemberHeaderCompact(false);
+                    memberHeroTouchYRef.current = curY;
+                  }
+                };
 
                 return (
                   <div
-                    className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile lkdv-club-member-hero-card${
-                      inspectedMember.avatarUrl ? ' has-cover-bg' : ''
-                    }`}
-                    style={{ borderRadius: 22, overflow: 'hidden' }}
-                    data-role-tone={roleBadgeTone}
+                    style={{ width: '100%' }}
+                    onTouchStart={handleHeroTouchStart}
+                    onTouchMove={handleHeroTouchMove}
                   >
-                    {inspectedMember.avatarUrl ? (
-                      <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={inspectedMember.avatarUrl}
-                          alt=""
-                          className="lkdv-cv2x-carnet-bg-img"
-                        />
-                        <span className="lkdv-cv2x-carnet-bg-scrim" />
-                      </span>
-                    ) : null}
-                    <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
-                      <span className="lkdv-ig-header">
-                        <span className="lkdv-ig-avi-wrap">
-                          <span className="lkdv-ig-avi">
-                            {inspectedMember.avatarUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={inspectedMember.avatarUrl}
-                                alt=""
-                                className="lkdv-cv2x-cover-img"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <span className="lkdv-cv2c-ig-avi-initials">
-                                {mName.slice(0, 1).toUpperCase()}
-                              </span>
-                            )}
-                          </span>
-                        </span>
-                        <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
-                          <span className="lkdv-ig-stat">
-                            <b>{mPostsCount}</b>
-                            <span>publications</span>
-                          </span>
-                          <span className="lkdv-ig-stat">
-                            <b>{mOutingsCount}</b>
-                            <span>sorties</span>
-                          </span>
-                          <span className="lkdv-ig-stat">
-                            <b>{mGearCount}</b>
-                            <span>matos</span>
-                          </span>
-                        </span>
-                      </span>
-                      <span className="lkdv-ig-bio">
-                        <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{mName}</span>
-                        {subtitleText ? (
-                          <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{subtitleText}</span>
-                        ) : null}
-                      </span>
-                    </span>
-                    <span className="lkdv-cv2x-tile-foot">
-                      <span
-                        className="lkdv-club-hero-role-pill"
+                    <CollapsibleHeroPreview
+                      collapsed={memberHeaderCompact}
+                      onExpand={() => setMemberHeaderCompact(false)}
+                      title={mName}
+                      subtitle={inspectedMember.role || 'Membre'}
+                      avatarUrl={inspectedMember.avatarUrl}
+                      fallbackText={mName}
+                      testId="club-member-hero-preview"
+                    >
+                      <div
+                        className={`lkdv-carnet-card lkdv-cv2c-carnet-ig-editor lkdv-cv2x-carnet-ig-tile lkdv-cv2x-member-ig-tile lkdv-club-member-hero-card${
+                          inspectedMember.avatarUrl ? ' has-cover-bg' : ''
+                        }`}
+                        style={{ borderRadius: 22, overflow: 'hidden' }}
                         data-role-tone={roleBadgeTone}
                       >
-                        {inspectedMember.role || 'Membre'}
-                      </span>
-                      <button
-                        type="button"
-                        className="lkdv-cv2x-member-cta"
-                        onClick={() => pushMember(null)}
-                      >
-                        <ChevronLeft size={13} />
-                        <span>Cordée</span>
-                      </button>
-                    </span>
+                        {inspectedMember.avatarUrl ? (
+                          <span className="lkdv-cv2x-carnet-bg" aria-hidden="true">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={inspectedMember.avatarUrl}
+                              alt=""
+                              className="lkdv-cv2x-carnet-bg-img"
+                            />
+                            <span className="lkdv-cv2x-carnet-bg-scrim" />
+                          </span>
+                        ) : null}
+                        <span className="lkdv-carnet-card-scroll lkdv-cv2x-tile-link">
+                          <span className="lkdv-ig-header">
+                            <span className="lkdv-ig-avi-wrap">
+                              <span className="lkdv-ig-avi">
+                                {inspectedMember.avatarUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={inspectedMember.avatarUrl}
+                                    alt=""
+                                    className="lkdv-cv2x-cover-img"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  />
+                                ) : (
+                                  <span className="lkdv-cv2c-ig-avi-initials">
+                                    {mName.slice(0, 1).toUpperCase()}
+                                  </span>
+                                )}
+                              </span>
+                            </span>
+                            <span className="lkdv-ig-stats" role="group" aria-label="Statistiques du profil">
+                              <span className="lkdv-ig-stat">
+                                <b>{mPostsCount}</b>
+                                <span>publications</span>
+                              </span>
+                              <span className="lkdv-ig-stat">
+                                <b>{mOutingsCount}</b>
+                                <span>sorties</span>
+                              </span>
+                              <span className="lkdv-ig-stat">
+                                <b>{mGearCount}</b>
+                                <span>matos</span>
+                              </span>
+                            </span>
+                          </span>
+                          <span className="lkdv-ig-bio">
+                            <span className="lkdv-ig-name lkdv-cv2x-carnet-title">{mName}</span>
+                            {subtitleText ? (
+                              <span className="lkdv-ig-handle-sub lkdv-cv2-meta">{subtitleText}</span>
+                            ) : null}
+                          </span>
+                        </span>
+                        <span className="lkdv-cv2x-tile-foot">
+                          <span
+                            className="lkdv-club-hero-role-pill"
+                            data-role-tone={roleBadgeTone}
+                          >
+                            {inspectedMember.role || 'Membre'}
+                          </span>
+                          <button
+                            type="button"
+                            className="lkdv-cv2x-member-cta"
+                            onClick={() => pushMember(null)}
+                          >
+                            <ChevronLeft size={13} />
+                            <span>Cordée</span>
+                          </button>
+                        </span>
+                      </div>
+                    </CollapsibleHeroPreview>
                   </div>
                 );
               })() : null}

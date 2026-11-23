@@ -1308,3 +1308,87 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
     background: #172b24 !important;
   }
 }
+
+/* Aperçu rétractable au scroll (parité drawers création /communaute) */
+.lkdv-club-carnet-drawer .lkdv-cv2c-post-hero-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-cv2c-post-hero-preview.is-collapsed {
+  border-radius: 999px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 35px;
+  z-index: 4;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-expanded-slot {
+  position: relative;
+  width: 100%;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 35px;
+  max-height: 35px;
+  padding: 0 12px 0 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  color: #172b24;
+  cursor: pointer;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-av {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #17402c;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-txt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-txt b {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-club-carnet-drawer .lkdv-post-collapsed-txt small {
+  font-size: 0.7rem;
+  color: #56665d;
+  flex-shrink: 0;
+}
