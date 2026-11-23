@@ -65,6 +65,8 @@ export interface KitCardProps {
    * pas devenir « 0 » ou « Aucun produit ».
    */
   contentUnavailable?: boolean;
+  /** Callback optionnel pour ouvrir une fiche produit externe (ex: KitProductSheetV2). */
+  onSelectProduct?: (product: KitProductView, products: KitProductView[], index: number) => void;
 }
 
 type ActionKind = 'fork' | 'share' | 'sheet' | 'royalties' | 'history' | 'discovery' | 'export' | 'calendar';
@@ -261,7 +263,7 @@ function kitPriorityLabel(value: string | null | undefined): string {
   return value!.trim();
 }
 
-export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailable = false }: KitCardProps) {
+export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailable = false, onSelectProduct }: KitCardProps) {
   const name = kitName(kit);
   const kitId = kitIdOf(kit);
   const viewerMode = resolveKitViewer(viewer, payload);
@@ -448,6 +450,11 @@ export function KitCard({ kit, viewer, payload, expandedHeight, contentUnavailab
   };
 
   const selectProduct = (product: KitProductView) => {
+    if (onSelectProduct) {
+      const idx = products.findIndex((p) => p.id === product.id);
+      onSelectProduct(product, products, idx >= 0 ? idx : 0);
+      return;
+    }
     setSelectedId(product.id);
     haptic(12);
     setView(2);

@@ -581,54 +581,22 @@ export function ClubSalonsDrawerBody({
             <span>Retour au salon</span>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => setView('channels')}
-            aria-label="Choisir un salon du club"
+          <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              maxWidth: 'calc(100% - 88px)',
-              height: 34,
-              padding: '0 12px',
-              borderRadius: 999,
-              border: 0,
-              background: 'rgba(23, 64, 44, 0.09)',
-              color: '#17402c',
               fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
+              fontSize: 13.5,
+              color: '#172b24',
               minWidth: 0,
             }}
           >
-            {activeChannel ? channelIcon(activeChannel.kind, 14) : <Hash size={14} aria-hidden="true" />}
-            <span
-              style={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+            {activeChannel ? channelIcon(activeChannel.kind, 15) : <Hash size={15} aria-hidden="true" />}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {activeChannel?.name || 'Salons'}
             </span>
-            {channels.length > 1 ? (
-              <span
-                style={{
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  padding: '1px 6px',
-                  borderRadius: 999,
-                  background: '#17402c',
-                  color: '#ffffff',
-                  flex: 'none',
-                }}
-              >
-                {channels.length}
-              </span>
-            ) : null}
-            <ChevronDown size={14} aria-hidden="true" style={{ flex: 'none', opacity: 0.7 }} />
-          </button>
+          </span>
         )}
 
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
@@ -849,40 +817,6 @@ export function ClubSalonsDrawerBody({
               </div>
             ) : (
               <>
-                {/* En-tête de bienvenue Discord du salon */}
-                {!searchQuery && activeChannel ? (
-                  <div
-                    style={{
-                      padding: '8px 6px 14px',
-                      marginBottom: 8,
-                      borderBottom: '1px solid rgba(23, 64, 44, 0.08)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 14,
-                        background: 'rgba(23, 64, 44, 0.1)',
-                        color: '#17402c',
-                        display: 'grid',
-                        placeItems: 'center',
-                        marginBottom: 8,
-                      }}
-                    >
-                      {channelIcon(activeChannel.kind, 22)}
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 16, color: '#172b24' }}>
-                      Bienvenue dans #{activeChannel.name}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#56665d', marginTop: 2 }}>
-                      {activeChannel.readOnlyForMembers
-                        ? `Salon officiel d’annonces de ${activeClub.name}.`
-                        : `Début de la discussion du salon #${activeChannel.name}.`}
-                    </div>
-                  </div>
-                ) : null}
-
                 {visibleMessages.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '16px 8px', fontSize: 12.5, color: '#56665d' }}>
                     {searchQuery
@@ -1240,7 +1174,7 @@ export function ClubSalonsDrawerBody({
           </div>
 
           {/* =====================================================================
-              3. COMPOSITEUR FIXE EN BAS (FLEX SIBLING — ZÉRO CHEVAUCHEMENT POSSIBLE)
+              3. SÉLECTEUR DE SALONS EN BAS À DROITE (DÉFILEMENT HORIZONTAL) + COMPOSITEUR
              ===================================================================== */}
           {!error ? (
             <div
@@ -1254,6 +1188,80 @@ export function ClubSalonsDrawerBody({
                 gap: 6,
               }}
             >
+              {channels.length > 0 ? (
+                <div
+                  data-hscroll="true"
+                  role="tablist"
+                  aria-label="Salons du club"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    gap: 6,
+                    overflowX: 'auto',
+                    scrollbarWidth: 'none',
+                    padding: '2px 0',
+                  }}
+                >
+                  {channels.map((ch) => {
+                    const isCur = ch.id === (activeChannel?.id ?? null);
+                    return (
+                      <button
+                        key={ch.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={isCur}
+                        onClick={() => {
+                          setActiveChannelId(ch.id);
+                          setSelectedMsgId(null);
+                          setSearchQuery('');
+                          setSearchOpen(false);
+                        }}
+                        style={{
+                          flex: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          height: 28,
+                          padding: '0 10px',
+                          borderRadius: 999,
+                          border: isCur ? '0.5px solid rgba(255,255,255,0.22)' : '0.5px solid rgba(23, 64, 44, 0.14)',
+                          background: isCur ? '#17402c' : 'rgba(255, 255, 255, 0.86)',
+                          color: isCur ? '#ffffff' : '#172b24',
+                          fontSize: 11.5,
+                          fontWeight: isCur ? 700 : 600,
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {channelIcon(ch.kind, 12)}
+                        <span>{ch.name}</span>
+                      </button>
+                    );
+                  })}
+                  {canManageChannels ? (
+                    <button
+                      type="button"
+                      aria-label="Gérer les salons"
+                      onClick={() => setView('channels')}
+                      style={{
+                        flex: 'none',
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        border: '0.5px solid rgba(23, 64, 44, 0.14)',
+                        background: 'rgba(255, 255, 255, 0.86)',
+                        color: '#17402c',
+                        display: 'grid',
+                        placeItems: 'center',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Plus size={13} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
               {replyingTo ? (
                 <div
                   style={{

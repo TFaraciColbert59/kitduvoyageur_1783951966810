@@ -1,7 +1,19 @@
 'use client';
 
 import type { KitEntry, KitProductView } from '@/components/compte/drawer/cards/KitCard';
-import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
+
+function resolveRealProductImage(name: string, category: string): string {
+  const hay = `${name} ${category}`.toLowerCase();
+  if (/tente|bivouac|abri|tarp|bâche/.test(hay)) return '/assets/images/product-tent.jpg';
+  if (/duvet|couchage|matelas|oreiller/.test(hay)) return '/assets/images/product-sleeping.jpg';
+  if (/réchaud|rechaud|popote|cuisine|jetboil/.test(hay)) return '/assets/images/gear-stove.jpg';
+  if (/frontale|lampe|éclairage|eclairage|solaire|batterie|gps|inreach/.test(hay)) return '/assets/images/product-headlamp.jpg';
+  if (/crampon|chaussure|piolet|bâton|baton|corde|baudrier|dva|casque/.test(hay)) return '/assets/images/gear-boots.jpg';
+  if (/veste|doudoune|gore-tex|textile|gant|bonnet/.test(hay)) return '/assets/images/product-jacket.jpg';
+  if (/gourde|hydrat|filtre|thermos/.test(hay)) return '/assets/images/product-bottle.jpg';
+  if (/secours|pharmacie|couverture/.test(hay)) return '/assets/images/adventure-bivouac.jpg';
+  return '/assets/images/product-backpack.jpg';
+}
 import type { ClubStandardKitData } from './ClubDrawerTypes';
 
 function inferCategoryFromLabel(label: string): string {
@@ -42,7 +54,7 @@ export function mapClubStandardKitToKitEntry(kit: {
       category,
       quantity: 1,
       weightG: perItemWeight,
-      image: generatedProductImage(itemName, 96),
+      image: resolveRealProductImage(itemName, category),
       description: kit.season ? `Inclus dans ${kit.title} (${kit.season}).` : `Inclus dans ${kit.title}.`,
     };
   });

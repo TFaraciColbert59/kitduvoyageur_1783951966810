@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import NumberFlow from '@number-flow/react';
 import {
   Area,
@@ -39,8 +41,14 @@ import {
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
-import { KitCard } from '@/components/compte/drawer/cards/KitCard';
+import { KitCard, type KitProductView } from '@/components/compte/drawer/cards/KitCard';
+import type { PickerProduct } from '@/features/community/create/kit/types';
 import { mapClubStandardKitToKitEntry } from './clubKitAdapter';
+
+const KitProductSheetV2 = dynamic(
+  () => import('@/features/community/v2/create/kit/KitProductSheetV2').then((m) => m.KitProductSheetV2),
+  { ssr: false },
+);
 import { ClubEmptyCard, ClubFilterPopoverButton, normalizeSearchText } from './ClubSharedUi';
 import type {
   ClubChallengeItem,
@@ -423,6 +431,12 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [visibleMembersCount, setVisibleMembersCount] = useState(20);
   const [savingStoryPermId, setSavingStoryPermId] = useState<string | null>(null);
+  const [selectedKitProductState, setSelectedKitProductState] = useState<{
+    kitTitle: string;
+    totalWeightG: number;
+    products: KitProductView[];
+    index: number;
+  } | null>(null);
 
   const cacheKey = `${activeClub.id}:${windowKey}`;
   const [remoteStats, setRemoteStats] = useState<ClubStatsPayload | null>(
@@ -974,6 +988,14 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
                     key={k.id}
                     kit={entry}
                     viewer="visitor"
+                    onSelectProduct={(_prod, prods, idx) =>
+                      setSelectedKitProductState({
+                        kitTitle: k.title,
+                        totalWeightG: k.totalWeightG,
+                        products: prods,
+                        index: idx,
+                      })
+                    }
                   />
                 );
               })}
@@ -1015,6 +1037,58 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
             ))}
           </div>
         ) : null}
+
+        {selectedKitProductState &&
+        selectedKitProductState.products[selectedKitProductState.index] &&
+        typeof document !== 'undefined'
+          ? createPortal(
+              (() => {
+                const p = selectedKitProductState.products[selectedKitProductState.index];
+                const product: PickerProduct = {
+                  key: p.id,
+                  source: 'sac',
+                  id: p.id,
+                  name: p.name,
+                  brand: p.brand || null,
+                  category: p.category || null,
+                  weightG: p.weightG || null,
+                  image: p.image || null,
+                  wear: null,
+                  conditionLabel: p.condition || 'Équipement club',
+                  description: p.description || `Inclus dans ${selectedKitProductState.kitTitle}.`,
+                  priceLabel: null,
+                  owner: null,
+                  cartable: null,
+                  ownershipId: null,
+                  productId: null,
+                };
+                return (
+                  <KitProductSheetV2
+                    product={product}
+                    initialCategory={p.category || undefined}
+                    currentKitWeightG={selectedKitProductState.totalWeightG}
+                    alreadyInKit
+                    positionLabel={`${selectedKitProductState.index + 1} / ${selectedKitProductState.products.length}`}
+                    hasPrev={selectedKitProductState.index > 0}
+                    hasNext={selectedKitProductState.index < selectedKitProductState.products.length - 1}
+                    onPrev={() =>
+                      setSelectedKitProductState((s) =>
+                        s && s.index > 0 ? { ...s, index: s.index - 1 } : s,
+                      )
+                    }
+                    onNext={() =>
+                      setSelectedKitProductState((s) =>
+                        s && s.index < s.products.length - 1 ? { ...s, index: s.index + 1 } : s,
+                      )
+                    }
+                    onToggleInKit={() => setSelectedKitProductState(null)}
+                    onClose={() => setSelectedKitProductState(null)}
+                  />
+                );
+              })(),
+              document.body,
+            )
+          : null}
       </div>
     );
   }
