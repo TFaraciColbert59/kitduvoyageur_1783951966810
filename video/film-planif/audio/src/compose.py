@@ -99,8 +99,8 @@ k=0
 while t<b(24)-0.01:
     vel=0.10+0.30*min(1,(t-b(9))/(b(24)-b(9)))**1.4
     add(felt(n_[ost[k%4]],1.2,vel),t,pan=(-0.25 if k%2 else 0.25)); t+=E; k+=1
-for d,m in enumerate(g('D4 F4 G4 A4 Bb4')):  # cinq jours qui s'allument
-    add(felt(m+12,2.0,0.3),b(7)+0.75+d*0.42,pan=-0.4+0.2*d)
+for d,(m,tj) in enumerate(zip(g('D4 F4 G4 A4 Bb4'),[6.417,6.757,7.116,7.483,7.615])):  # cinq jours, calés sur l'instant où chaque jour s'allume
+    add(felt(m+12,2.0,0.3),tj,pan=-0.4+0.2*d)
 # 8,0 – 16,0 : la grandeur monte. Sol m | Mi b | Si b | Fa  (2 s chacun), orgue + cordes, chœur à 12 s
 prog=[('G2','G3 Bb3 D4','G1'),('Eb2','G3 Bb3 Eb4','Eb2'),('Bb1','F3 Bb3 D4','Bb1'),('F2','F3 A3 C4','F2')]
 for c,(bass,up,low) in enumerate(prog):

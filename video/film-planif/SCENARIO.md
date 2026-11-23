@@ -18,14 +18,14 @@ Le film montre ce que le planificateur prépare. Il complète ce que le Compas n
 | 4 | 2,667 – 3,333 | `04-pont-suspendu` | « rien » |
 | 5 | 3,333 – 4,667 | `05-torres-embrasees` | « oublier. » |
 | 6 | 4,667 – 8,000 | **Respiration, puis le plan.** La Terre vue de l'espace (NASA), plongée vers la Patagonie, vrai satellite et vrai tracé du W. Le tracé se dessine en laiton, puis se coupe en cinq jours qui s'allument sur les temps | police technique : `\ 5 jours · 72 km \`, puis `\ Jour 1 \` … `\ Jour 5 \` |
-| 7 | 8,000 – 9,000 | `06-refuge-heure-bleue` | `\ 4 nuits · refuges réservés \` |
-| 8 | 9,000 – 10,000 | `07-fenetre-meteo` | `\ Fenêtre météo · mardi, 6 h \` |
-| 9 | 10,000 – 11,000 | `08-eau-glaciaire` | `\ Eau · 3 sources par étape \` |
-| 10 | 11,000 – 12,000 | `09-hublot-andes` | `\ Chili · entrée sans visa \` |
-| 11 | 12,000 – 13,000 | `10-sac-rien-de-trop` | `\ Sac · 9,4 kg · rien de trop \` |
-| 12 | 13,000 – 14,000 | `11-trois-amis-vent` | `\ À trois · 1 398 € chacun \` |
-| 13 | 14,000 – 15,000 | `12-tente-voie-lactee` | `\ Hors ligne · tout tient dans la poche \` |
-| 14 | 15,000 – 16,000 | `13-proches-suivent` | `\ Les proches · suivent en direct \` |
+| 7 | 8,000 – 9,000 | `06-refuge-heure-bleue` | `\ 4 nuits réservées \` |
+| 8 | 9,000 – 10,000 | `07-fenetre-meteo` | `\ Météo · mardi, 6 h \` |
+| 9 | 10,000 – 11,000 | `08-eau-glaciaire` | `\ Eau · 3 sources \` |
+| 10 | 11,000 – 12,000 | `09-hublot-andes` | `\ Chili · sans visa \` |
+| 11 | 12,000 – 13,000 | `10-sac-rien-de-trop` | `\ Sac · 9,4 kg \` |
+| 12 | 13,000 – 14,000 | `11-trois-amis-vent` | `\ 1 398 € chacun \` |
+| 13 | 14,000 – 15,000 | `12-tente-voie-lactee` | `\ Hors ligne \` |
+| 14 | 15,000 – 16,000 | `13-proches-suivent` | `\ Proches · en direct \` |
 | 15 | 16,000 – 18,000 | Papier pierre `#FAF8F5`, texte vert forêt `#17402C` | « Tout est prévu. » puis, en dessous, « *Il ne reste qu'à partir.* » |
 | 16 | 18,000 – 20,000 | Papier pierre | L'aiguille du badge LKDV tourne et se fixe, puis « LE KIT DU VOYAGEUR » s'écrit lettre par lettre. Cette fin est la même pour toute la série |
 

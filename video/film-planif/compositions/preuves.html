@@ -1,0 +1,59 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
+    #root .e-shot { position:absolute; inset:0; overflow:hidden; }
+    #root .e-cam { position:absolute; inset:0; transform-origin:50% 50%; }
+    #root .e-cam img { position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }
+    #root .e-lab { position:absolute; left:40px; right:40px; top:938px; text-align:center; font-family:"JetBrains Mono",monospace; font-weight:400; font-size:36px; line-height:44px; letter-spacing:0.01em; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.75), 0 0 3px rgba(6,18,12,0.5); }
+  </style>
+  <div id="root" data-composition-id="preuves" data-width="1080" data-height="1920">
+    <div id="e1" class="clip e-shot" data-start="0" data-duration="1" data-track-index="1">
+      <div id="e1-cam" class="e-cam"><img src="assets/prep/06.jpg" alt="Refuge à l'heure bleue sous les Cuernos"></div>
+      <div id="e1-l" class="e-lab" data-var-text="preuve1">\ 4 nuits réservées \</div>
+    </div>
+    <div id="e2" class="clip e-shot" data-start="1" data-duration="1" data-track-index="2">
+      <div id="e2-cam" class="e-cam"><img src="assets/prep/07.jpg" alt="Orage qui se déchire sur le lac Pehoé"></div>
+      <div id="e2-l" class="e-lab" data-var-text="preuve2">\ Météo · mardi, 6 h \</div>
+    </div>
+    <div id="e3" class="clip e-shot" data-start="2" data-duration="1" data-track-index="1">
+      <div id="e3-cam" class="e-cam"><img src="assets/prep/08.jpg" alt="Main qui remplit une gourde dans un torrent glaciaire"></div>
+      <div id="e3-l" class="e-lab" data-var-text="preuve3">\ Eau · 3 sources \</div>
+    </div>
+    <div id="e4" class="clip e-shot" data-start="3" data-duration="1" data-track-index="2">
+      <div id="e4-cam" class="e-cam"><img src="assets/prep/09.jpg" alt="Hublot au-dessus du champ de glace de Patagonie"></div>
+      <div id="e4-l" class="e-lab" data-var-text="preuve4">\ Chili · sans visa \</div>
+    </div>
+    <div id="e5" class="clip e-shot" data-start="4" data-duration="1" data-track-index="1">
+      <div id="e5-cam" class="e-cam"><img src="assets/prep/10.jpg" alt="Matériel rangé au bord d'une falaise au-dessus du lac Grey"></div>
+      <div id="e5-l" class="e-lab" data-var-text="preuve5">\ Sac · 9,4 kg \</div>
+    </div>
+    <div id="e6" class="clip e-shot" data-start="5" data-duration="1" data-track-index="2">
+      <div id="e6-cam" class="e-cam"><img src="assets/prep/11.jpg" alt="Trois amis dans le vent au-dessus du lac Nordenskjöld"></div>
+      <div id="e6-l" class="e-lab" data-var-text="preuve6">\ 1 398 € chacun \</div>
+    </div>
+    <div id="e7" class="clip e-shot" data-start="6" data-duration="1" data-track-index="1">
+      <div id="e7-cam" class="e-cam"><img src="assets/prep/12.jpg" alt="Tente éclairée sous la Voie lactée australe"></div>
+      <div id="e7-l" class="e-lab" data-var-text="preuve7">\ Hors ligne \</div>
+    </div>
+    <div id="e8" class="clip e-shot" data-start="7" data-duration="1" data-track-index="2">
+      <div id="e8-cam" class="e-cam"><img src="assets/prep/13.jpg" alt="Randonneuse face aux Torres au lever du soleil"></div>
+      <div id="e8-l" class="e-lab" data-var-text="preuve8">\ Proches · en direct \</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Huit preuves d'une seconde (1,5 temps à 90 BPM) : une image immense, une ligne de ce que le planificateur a prévu.
+      tl.fromTo("#e1-cam", { scale: 1.02 }, { scale: 1.065, duration: 1, ease: "none" }, 0);
+      tl.fromTo("#e2-cam", { x: 22, scale: 1.06 }, { x: -22, scale: 1.07, duration: 1, ease: "none" }, 1);
+      tl.fromTo("#e3-cam", { scale: 1.065 }, { scale: 1.02, duration: 1, ease: "none" }, 2);
+      tl.fromTo("#e4-cam", { scale: 1.02, y: 14 }, { scale: 1.06, y: -14, duration: 1, ease: "none" }, 3);
+      tl.fromTo("#e5-cam", { scale: 1.03 }, { scale: 1.075, duration: 1, ease: "none" }, 4);
+      tl.fromTo("#e6-cam", { x: -24, scale: 1.06 }, { x: 24, scale: 1.065, duration: 1, ease: "none" }, 5);
+      tl.fromTo("#e7-cam", { scale: 1.07 }, { scale: 1.03, duration: 1, ease: "none" }, 6);
+      tl.fromTo("#e8-cam", { scale: 1.02 }, { scale: 1.07, duration: 1, ease: "none" }, 7);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["preuves"] = tl;
+    })();
+  </script>
+</template>

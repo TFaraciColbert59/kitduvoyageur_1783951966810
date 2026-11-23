@@ -22,7 +22,7 @@ Courbe de sonie (momentanée) : environ −18 LUFS au début, −23 à la respir
 | Temps (s) | Musique | Image |
 |---|---|---|
 | 0,000 | grave et nappe dès l'image 0, puis une note de piano par mot (temps 0, 2, 3, 4, 5) | « Partir loin. Sans rien oublier. » |
-| 4,667 – 8,000 | respiration : notes de verre aiguës, l'orgue s'ouvre, cinq notes de piano pour les cinq jours, les croches commencent à 6 s | la Terre, puis le tracé |
+| 4,667 – 8,000 | respiration : notes de verre aiguës, l'orgue s'ouvre, cinq notes de piano calées sur l'instant où chaque jour s'allume (6,417 · 6,757 · 7,116 · 7,483 · 7,615 s), les croches commencent à 6 s | la Terre, puis le tracé |
 | 8,000 – 16,000 | crescendo : orgue et cordes sur Sol m → Mi bémol → Si bémol → Fa (2 s chacun), chœur à 12 s, croches du piano de plus en plus présentes | les 8 preuves |
 | 16,000 | arrivée sur Si bémol majeur, plein orgue, cordes et chœur | « Tout est prévu. » |
 | 18,000 | tout retombe sur un sol grave de l'orgue et une note aiguë de piano, extinction jusqu'à 20,000 | le logo |
