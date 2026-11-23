@@ -211,113 +211,40 @@ export async function POST(
 
     if (parsed.data.action === 'request_loan') {
       const { gearItemId, quantity, eventId, neededFrom, neededUntil, note } = parsed.data;
-      const { data: gearItem, error: gearErr } = await supabase
-        .from('club_gear_items')
-        .select('id, available, quantity_available')
-        .eq('id', gearItemId)
-        .eq('club_id', id)
-        .single();
-      if (gearErr || !gearItem) return errorJson('not_found', 404);
-      const availQty = typeof gearItem.quantity_available === 'number' ? gearItem.quantity_available : 1;
-      if (!gearItem.available || availQty < quantity) {
-        return errorJson('insufficient_stock', 409);
+      const { data: loan, error } = await supabase.rpc('club_gear_request_loan', {
+        p_club_id: id,
+        p_gear_item_id: gearItemId,
+        p_quantity: quantity,
+        p_event_id: eventId ?? null,
+        p_needed_from: neededFrom || null,
+        p_needed_until: neededUntil || null,
+        p_note: note ?? null,
+      });
+      if (error) {
+        if (error.message?.includes('insufficient_stock')) return errorJson('insufficient_stock', 409);
+        if (error.message?.includes('not_found')) return errorJson('not_found', 404);
+        if (error.message?.includes('forbidden')) return errorJson('forbidden', 403);
+        return dbFailure('RPC club_gear_request_loan', error);
       }
-
-      const { data: loan, error } = await supabase
-        .from('club_gear_loans')
-        .insert({
-          gear_item_id: gearItemId,
-          club_id: id,
-          borrower_id: user.id,
-          status: 'requested',
-          quantity,
-          event_id: eventId ?? null,
-          needed_from: neededFrom || null,
-          needed_until: neededUntil || null,
-          note: note ?? null,
-        })
-        .select('*')
-        .single();
-      if (error) return dbFailure('POST club_gear_loans', error);
       return json({ loan }, 201);
     }
 
-    // update_loan: 4-step workflow & stock adjustment
     const { loanId, status, checkoutCondition, returnCondition, conditionNote } = parsed.data;
-    const { data: existingLoan, error: loadLoanErr } = await supabase
-      .from('club_gear_loans')
-      .select('id, gear_item_id, borrower_id, status, quantity')
-      .eq('id', loanId)
-      .eq('club_id', id)
-      .single();
-    if (loadLoanErr || !existingLoan) return errorJson('not_found', 404);
-
-    const { data: gearItem } = await supabase
-      .from('club_gear_items')
-      .select('id, owner_id, ownership_scope, quantity_total, quantity_available')
-      .eq('id', existingLoan.gear_item_id)
-      .eq('club_id', id)
-      .single();
-
-    const isBorrower = existingLoan.borrower_id === user.id;
-    const isOwner = gearItem?.ownership_scope !== 'club' && gearItem?.owner_id === user.id;
-    const isGearManager = await canManageClubGear(supabase, id, user.id);
-
-    if (status === 'cancelled') {
-      if (!isBorrower && !isGearManager && !isOwner) return errorJson('forbidden', 403);
-    } else if (gearItem?.ownership_scope === 'club') {
-      if (!isGearManager) return errorJson('forbidden', 403);
-    } else if (!isOwner && !isGearManager) {
-      return errorJson('forbidden', 403);
+    const { data: loan, error } = await supabase.rpc('club_gear_transition_loan', {
+      p_club_id: id,
+      p_loan_id: loanId,
+      p_next_status: status,
+      p_checkout_condition: checkoutCondition ?? null,
+      p_return_condition: returnCondition ?? null,
+      p_condition_note: conditionNote ?? null,
+    });
+    if (error) {
+      if (error.message?.includes('insufficient_stock')) return errorJson('insufficient_stock', 409);
+      if (error.message?.includes('invalid_transition')) return errorJson('invalid_transition', 400);
+      if (error.message?.includes('not_found')) return errorJson('not_found', 404);
+      if (error.message?.includes('forbidden')) return errorJson('forbidden', 403);
+      return dbFailure('RPC club_gear_transition_loan', error);
     }
-
-    const patch: Record<string, unknown> = {
-      status,
-      handled_by: user.id,
-    };
-    if (checkoutCondition) patch.checkout_condition = checkoutCondition;
-    if (returnCondition) patch.return_condition = returnCondition;
-    if (conditionNote !== undefined) patch.condition_note = conditionNote ?? null;
-    if (status === 'checked_out') patch.checked_out_at = new Date().toISOString();
-    if (status === 'returned') patch.returned_at = new Date().toISOString();
-
-    const { data: loan, error } = await supabase
-      .from('club_gear_loans')
-      .update(patch)
-      .eq('id', loanId)
-      .eq('club_id', id)
-      .select('*')
-      .single();
-    if (error) return dbFailure('UPDATE club_gear_loans', error);
-
-    // Adjust stock when transitioning to checked_out or back to returned
-    if (gearItem) {
-      const loanQty = typeof existingLoan.quantity === 'number' ? existingLoan.quantity : 1;
-      const totalQty = typeof gearItem.quantity_total === 'number' ? gearItem.quantity_total : 1;
-      const curAvail = typeof gearItem.quantity_available === 'number' ? gearItem.quantity_available : 1;
-      let nextAvail = curAvail;
-
-      if (status === 'checked_out' && existingLoan.status !== 'checked_out') {
-        nextAvail = Math.max(0, curAvail - loanQty);
-      } else if (status === 'returned' && existingLoan.status === 'checked_out') {
-        nextAvail = Math.min(totalQty, curAvail + loanQty);
-      }
-
-      const itemPatch: Record<string, unknown> = {
-        quantity_available: nextAvail,
-        available: nextAvail > 0,
-      };
-      if (status === 'returned' && returnCondition) {
-        itemPatch.condition_status = returnCondition;
-      }
-
-      await supabase
-        .from('club_gear_items')
-        .update(itemPatch)
-        .eq('id', gearItem.id)
-        .eq('club_id', id);
-    }
-
     return json({ loan });
   } catch (err) {
     return dbFailure('POST gear', err);
