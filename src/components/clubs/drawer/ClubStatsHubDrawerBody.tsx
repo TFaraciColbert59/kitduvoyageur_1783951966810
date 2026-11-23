@@ -835,39 +835,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       <div className="club-drawer-pane-content" data-testid="club-stats-kits-pane">
         {renderTopControls()}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-          <div
-            className="club-glass-card"
-            style={{ gridColumn: '1 / -1', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}
-          >
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Kits créés par le club</span>
-            <b style={{ fontSize: 18, color: '#172b24' }}>
-              <StatsAnimatedNumber value={kv.standardKitsCount} />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>
-              {kv.ultralightKitsCount} ultraléger{kv.ultralightKitsCount > 1 ? 's' : ''} (≤ 4,5 kg)
-            </span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Coffre mutualisé</span>
-            <b style={{ fontSize: 18, color: '#172b24' }}>
-              <StatsAnimatedNumber value={kv.vaultItemsCount} />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>Pièces prêtables</span>
-          </div>
-
-          <div className="club-glass-card" style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 11, color: '#56665d', fontWeight: 600 }}>Prêts & rotation</span>
-            <b style={{ fontSize: 18, color: '#172b24' }}>
-              <StatsAnimatedNumber value={kv.activeLoansCount + kv.returnedLoansCount} />
-            </b>
-            <span style={{ fontSize: 10.5, color: '#56665d' }}>
-              {kv.activeLoansCount} en cours · {kv.loanRotationPct}% rotation
-            </span>
-          </div>
-        </div>
-
         {/* Catégories du coffre — barre segmentée + lignes lisibles */}
         {kv.categories.length > 0 ? (() => {
           const totalItems = Math.max(1, kv.categories.reduce((acc, c) => acc + c.count, 0));
