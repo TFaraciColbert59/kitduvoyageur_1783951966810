@@ -1,12 +1,14 @@
 import { isActiveMember, isBlockedBetween } from './privacy';
-import type {
-  ClubChannel,
-  ClubChannelKind,
-  ClubChannelMessage,
-  ClubContentReport,
-  ClubMember,
-  ClubResult,
-  ViewerPrivacyContext,
+import {
+  CLUB_ROLE_RANK,
+  type ClubChannel,
+  type ClubChannelKind,
+  type ClubChannelMessage,
+  type ClubContentReport,
+  type ClubMember,
+  type ClubResult,
+  type ClubRole,
+  type ViewerPrivacyContext,
 } from './types';
 
 function isMemberMuted(member: ClubMember, nowIso: string): boolean {
@@ -14,28 +16,48 @@ function isMemberMuted(member: ClubMember, nowIso: string): boolean {
   return Date.parse(member.mutedUntil) > Date.parse(nowIso);
 }
 
+export function canViewClubChannel(
+  channel: Pick<ClubChannel, 'minRole' | 'archivedAt'>,
+  member: ClubMember | undefined | null,
+  options?: { includeArchived?: boolean },
+): boolean {
+  if (!member || !isActiveMember(member)) return false;
+  if (channel.archivedAt && !options?.includeArchived) return false;
+  const requiredRole: ClubRole = channel.minRole ?? 'member';
+  return CLUB_ROLE_RANK[member.role] >= CLUB_ROLE_RANK[requiredRole];
+}
+
 /**
- * S5.07 — Création d'un salon de club (admin ou modérateur uniquement).
+ * S5.07 — Création d'un salon de club (fondateur, admin ou modérateur uniquement).
  */
 export function createClubChannel(params: {
   id: string;
   clubId: string;
   name: string;
   kind: ClubChannelKind;
+  description?: string | null;
+  minRole?: ClubRole;
   readOnlyForMembers?: boolean;
   notificationsEnabledByDefault?: boolean;
+  position?: number;
   actorMember: ClubMember | undefined;
   nowIso: string;
+  allowByCapability?: boolean;
 }): ClubResult<ClubChannel> {
-  const { actorMember } = params;
+  const { actorMember, allowByCapability = false } = params;
   if (!actorMember || !isActiveMember(actorMember) || actorMember.clubId !== params.clubId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif du club.' };
   }
-  if (actorMember.role !== 'admin' && actorMember.role !== 'moderator') {
+  if (
+    !allowByCapability &&
+    actorMember.role !== 'founder' &&
+    actorMember.role !== 'admin' &&
+    actorMember.role !== 'moderator'
+  ) {
     return {
       ok: false,
       error: 'FORBIDDEN',
-      message: 'Seuls les administrateurs et modérateurs peuvent créer un salon.',
+      message: 'Seuls les fondateurs, administrateurs et modérateurs peuvent créer un salon.',
     };
   }
   const name = params.name.trim();
@@ -50,8 +72,12 @@ export function createClubChannel(params: {
       clubId: params.clubId,
       name,
       kind: params.kind,
+      description: params.description?.trim() || null,
+      minRole: params.minRole ?? 'member',
       readOnlyForMembers: params.readOnlyForMembers ?? params.kind === 'announcements',
       notificationsEnabledByDefault: params.notificationsEnabledByDefault ?? true,
+      position: params.position ?? 0,
+      archivedAt: null,
       createdBy: actorMember.userId,
       createdAt: params.nowIso,
     },
@@ -59,7 +85,7 @@ export function createClubChannel(params: {
 }
 
 /**
- * S5.07 — Publication d'un message dans un salon de club avec contrôle des permissions et du mute.
+ * S5.07 — Publication d'un message dans un salon de club avec contrôle des permissions, du minRole et du mute.
  */
 export function postChannelMessage(params: {
   id: string;
@@ -67,23 +93,37 @@ export function postChannelMessage(params: {
   actorMember: ClubMember | undefined;
   body: string;
   nowIso: string;
+  canPostOverride?: boolean;
+  canPostAnnouncementsOverride?: boolean;
 }): ClubResult<ClubChannelMessage> {
-  const { channel, actorMember, nowIso } = params;
+  const { channel, actorMember, nowIso, canPostOverride, canPostAnnouncementsOverride } = params;
   if (!actorMember || !isActiveMember(actorMember) || actorMember.clubId !== channel.clubId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Réservé aux membres actifs du club.' };
+  }
+  if (!canViewClubChannel(channel, actorMember)) {
+    return { ok: false, error: 'FORBIDDEN', message: 'Accès à ce salon restreint par rôle ou archivé.' };
   }
   if (isMemberMuted(actorMember, nowIso)) {
     return { ok: false, error: 'FORBIDDEN', message: 'Membre temporairement mis en sourdine.' };
   }
-  if (
-    channel.readOnlyForMembers &&
-    actorMember.role !== 'admin' &&
-    actorMember.role !== 'moderator'
-  ) {
+  const hasAnnouncementPermission =
+    canPostAnnouncementsOverride !== undefined
+      ? canPostAnnouncementsOverride
+      : actorMember.role === 'founder' ||
+        actorMember.role === 'admin' ||
+        actorMember.role === 'moderator';
+  if (channel.readOnlyForMembers && !hasAnnouncementPermission) {
     return {
       ok: false,
       error: 'FORBIDDEN',
       message: 'Ce salon est en lecture seule pour les membres.',
+    };
+  }
+  if (!channel.readOnlyForMembers && canPostOverride === false && !hasAnnouncementPermission) {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Publication désactivée pour ce membre.',
     };
   }
   const body = params.body.trim();
@@ -127,6 +167,9 @@ export function listChannelMessagesForViewer(params: {
   if (!isActiveMember(viewerMember)) {
     return { ok: false, error: 'FORBIDDEN', message: 'Accès au salon réservé aux membres actifs.' };
   }
+  if (!canViewClubChannel(params.channel, viewerMember, { includeArchived: true })) {
+    return { ok: false, error: 'FORBIDDEN', message: 'Salon réservé à un grade supérieur.' };
+  }
 
   const visible = params.messages.filter((msg) => {
     if (msg.channelId !== params.channel.id || msg.clubId !== params.channel.clubId) {
@@ -159,7 +202,10 @@ export function moderateChannelMessage(params: {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif du club.' };
   }
 
-  const isModerator = actorMember.role === 'admin' || actorMember.role === 'moderator';
+  const isModerator =
+    actorMember.role === 'founder' ||
+    actorMember.role === 'admin' ||
+    actorMember.role === 'moderator';
   const isAuthor = actorMember.userId === message.authorId;
 
   if (action === 'hide') {
@@ -214,14 +260,14 @@ export function muteClubMember(params: {
   if (!targetMember || !isActiveMember(targetMember) || targetMember.clubId !== params.clubId) {
     return { ok: false, error: 'NOT_FOUND', message: 'Membre cible introuvable.' };
   }
-  if (actorMember.role === 'member') {
+  if (actorMember.role === 'member' || actorMember.role === 'volunteer') {
     return { ok: false, error: 'FORBIDDEN', message: 'Permissions insuffisantes.' };
   }
-  if (actorMember.role === 'moderator' && targetMember.role !== 'member') {
+  if (CLUB_ROLE_RANK[actorMember.role] <= CLUB_ROLE_RANK[targetMember.role]) {
     return {
       ok: false,
       error: 'FORBIDDEN',
-      message: 'Un modérateur ne peut muter qu’un membre standard.',
+      message: 'Impossible de mettre en sourdine un membre de rang égal ou supérieur.',
     };
   }
 

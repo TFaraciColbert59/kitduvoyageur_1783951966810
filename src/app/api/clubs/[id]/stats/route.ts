@@ -66,10 +66,11 @@ function resolvePrevWindowRange(
   return { start: start - span, end: start };
 }
 
-function roleLabelOf(role: 'founder' | 'admin' | 'moderator' | 'member', isFounder: boolean): string {
+function roleLabelOf(role: 'founder' | 'admin' | 'moderator' | 'volunteer' | 'member', isFounder: boolean): string {
   if (isFounder || role === 'founder') return 'Fondateur';
   if (role === 'admin') return 'Admin';
   if (role === 'moderator') return 'Modérateur';
+  if (role === 'volunteer') return 'Bénévole';
   return 'Membre';
 }
 

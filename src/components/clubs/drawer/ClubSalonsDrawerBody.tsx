@@ -156,13 +156,6 @@ export function ClubSalonsDrawerBody({
   const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
   const [reactionsByMsg, setReactionsByMsg] = useState<Record<string, Record<string, number>>>({});
 
-  // Create channel state (in Discord channel list view)
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newChannelName, setNewChannelName] = useState('');
-  const [newChannelKind, setNewChannelKind] = useState<ClubChannelKind>('custom');
-  const [newChannelReadOnly, setNewChannelReadOnly] = useState(false);
-  const [creatingChannel, setCreatingChannel] = useState(false);
-
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -205,11 +198,22 @@ export function ClubSalonsDrawerBody({
     [currentUserId, memberByUserId],
   );
 
-  const canManageChannels = useMemo(() => {
-    if (activeClub.role === 'Admin' || activeClub.role === 'Modérateur') return true;
+  const canModerateMessages = useMemo(() => {
+    if (activeClub.viewerCapabilities) {
+      return activeClub.viewerCapabilities.includes('salons.moderate_messages');
+    }
+    if (
+      activeClub.viewerRole === 'founder' ||
+      activeClub.viewerRole === 'admin' ||
+      activeClub.viewerRole === 'moderator' ||
+      activeClub.role === 'Admin' ||
+      activeClub.role === 'Modérateur'
+    ) {
+      return true;
+    }
     const r = currentMember?.rawRole;
-    return r === 'admin' || r === 'moderator';
-  }, [activeClub.role, currentMember]);
+    return r === 'founder' || r === 'admin' || r === 'moderator';
+  }, [activeClub.role, activeClub.viewerCapabilities, activeClub.viewerRole, currentMember]);
 
   const loadChannel = useCallback(
     async (channelId?: string | null, force = false) => {
@@ -369,8 +373,6 @@ export function ClubSalonsDrawerBody({
       } else if (searchOpen) {
         setSearchOpen(false);
         setSearchQuery('');
-      } else if (showCreateForm) {
-        setShowCreateForm(false);
       } else if (view === 'channels') {
         setView('chat');
       } else if (replyingTo) {
@@ -379,7 +381,7 @@ export function ClubSalonsDrawerBody({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [active, replyingTo, searchOpen, selectedMsgId, showCreateForm, view]);
+  }, [active, replyingTo, searchOpen, selectedMsgId, view]);
 
   const activeChannel = useMemo(
     () => channels.find((c) => c.id === activeChannelId) ?? channels[0] ?? null,
@@ -469,49 +471,6 @@ export function ClubSalonsDrawerBody({
       });
     } finally {
       setSending(false);
-    }
-  };
-
-  const handleCreateChannel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = newChannelName.trim();
-    if (name.length < 2 || creatingChannel) return;
-    setCreatingChannel(true);
-    try {
-      const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/salons`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create_channel',
-          name,
-          kind: newChannelKind,
-          readOnlyForMembers: newChannelReadOnly,
-        }),
-      });
-      const payload = (await res.json().catch(() => null)) as {
-        data?: ClubChannel;
-        message?: string;
-        error?: string;
-      } | null;
-      if (!res.ok || !payload?.data) {
-        throw new Error(payload?.message || payload?.error || 'Création impossible.');
-      }
-      setNewChannelName('');
-      setNewChannelReadOnly(false);
-      setShowCreateForm(false);
-      setChannels((prev) => [...prev, payload.data!]);
-      setActiveChannelId(payload.data.id);
-      salonsCache.clear();
-      setView('chat');
-      onToast?.({ title: 'Salon créé ✓', subtitle: `#${payload.data.name}` });
-    } catch (err) {
-      onToast?.({
-        title: 'Erreur',
-        subtitle: err instanceof Error ? err.message : 'Création refusée.',
-      });
-    } finally {
-      setCreatingChannel(false);
     }
   };
 
@@ -700,15 +659,6 @@ export function ClubSalonsDrawerBody({
             >
               <Search size={14} aria-hidden="true" />
             </button>
-          ) : canManageChannels ? (
-            <button
-              type="button"
-              className={`reseau-btn ${showCreateForm ? 'primary' : ''} club-icon-pill`}
-              aria-label="Créer un salon"
-              onClick={() => setShowCreateForm((v) => !v)}
-            >
-              <Plus size={15} aria-hidden="true" />
-            </button>
           ) : null}
         </div>
       </div>
@@ -754,64 +704,6 @@ export function ClubSalonsDrawerBody({
             gap: 14,
           }}
         >
-          {showCreateForm && canManageChannels ? (
-            <form
-              onSubmit={handleCreateChannel}
-              className="club-glass-card"
-              style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-            >
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#17402c' }}>
-                Nouveau salon textuel
-              </div>
-              <input
-                type="text"
-                className="club-glass-input"
-                placeholder="Ex : alpinisme, covoit-lyon, bivouac…"
-                value={newChannelName}
-                onChange={(e) => setNewChannelName(e.target.value)}
-                minLength={2}
-                maxLength={60}
-                required
-              />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {(['general', 'announcements', 'events', 'custom'] as ClubChannelKind[]).map((k) => {
-                  const isActiveKind = newChannelKind === k;
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      className={`club-filter-pill ${isActiveKind ? 'is-active' : ''}`}
-                      onClick={() => setNewChannelKind(k)}
-                    >
-                      {isActiveKind ? <span className="club-filter-pill-bg" /> : null}
-                      <span className="club-filter-pill-label">
-                        {channelIcon(k, 12)}
-                        <span>{channelKindLabel(k)}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--label2)' }}>
-                <input
-                  type="checkbox"
-                  checked={newChannelReadOnly}
-                  onChange={(e) => setNewChannelReadOnly(e.target.checked)}
-                />
-                <span>Salon d’annonces (lecture seule pour les membres)</span>
-              </label>
-              <button
-                type="submit"
-                disabled={creatingChannel || newChannelName.trim().length < 2}
-                className="lkdv-carnet-btn-primary"
-                style={{ height: 34, borderRadius: 999, justifyContent: 'center' }}
-              >
-                <Plus size={14} aria-hidden="true" />
-                <span>{creatingChannel ? 'Création…' : 'Créer le salon'}</span>
-              </button>
-            </form>
-          ) : null}
-
           {infoChannels.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em', color: '#56665d', paddingLeft: 4 }}>
@@ -835,18 +727,6 @@ export function ClubSalonsDrawerBody({
               />
             )}
           </div>
-
-          {canManageChannels && !showCreateForm ? (
-            <button
-              type="button"
-              className="lkdv-carnet-btn-soft"
-              style={{ width: '100%', justifyContent: 'center', height: 36 }}
-              onClick={() => setShowCreateForm(true)}
-            >
-              <Plus size={14} aria-hidden="true" />
-              <span>Créer un salon</span>
-            </button>
-          ) : null}
         </div>
       ) : (
         <>
@@ -1008,7 +888,7 @@ export function ClubSalonsDrawerBody({
                                     Signaler
                                   </button>
                                 ) : null}
-                                {canManageChannels || mine ? (
+                                {canModerateMessages || mine ? (
                                   <button
                                     type="button"
                                     className="mreact"
@@ -1130,30 +1010,6 @@ export function ClubSalonsDrawerBody({
                       </button>
                     );
                   })}
-                  {canManageChannels ? (
-                    <button
-                      type="button"
-                      aria-label="Gérer les salons"
-                      onClick={() => setView('channels')}
-                      style={{
-                        flex: 'none',
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        border: '0.5px solid rgba(255, 255, 255, 0.85)',
-                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42))',
-                        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                        backdropFilter: 'blur(24px) saturate(180%)',
-                        boxShadow: 'inset 0 1px 0 #fff, 0 2px 8px rgba(23, 43, 36, 0.08)',
-                        color: '#17402c',
-                        display: 'grid',
-                        placeItems: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <Plus size={13} aria-hidden="true" />
-                    </button>
-                  ) : null}
                 </div>
               ) : null}
               {replyingTo ? (

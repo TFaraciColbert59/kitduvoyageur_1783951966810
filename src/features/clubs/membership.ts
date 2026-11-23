@@ -1,23 +1,66 @@
 import { isActiveMember, isBlockedBetween, normalizeClubPrivacy } from './privacy';
-import type {
-  Club,
-  ClubAnnouncement,
-  ClubJoinRequest,
-  ClubMember,
-  ClubPrivacy,
-  ClubResult,
-  ClubRole,
-  ClubVisibilityAlias,
-  VerificationBadgeView,
-  ViewerPrivacyContext,
+import {
+  CLUB_ROLE_RANK,
+  type Club,
+  type ClubAnnouncement,
+  type ClubCapability,
+  type ClubJoinRequest,
+  type ClubMember,
+  type ClubPrivacy,
+  type ClubResult,
+  type ClubRole,
+  type ClubVisibilityAlias,
+  type VerificationBadgeView,
+  type ViewerPrivacyContext,
 } from './types';
 
-const ROLE_RANK: Record<ClubRole, number> = {
-  member: 1,
-  moderator: 2,
-  admin: 3,
-  founder: 4,
-};
+const ROLE_RANK: Record<ClubRole, number> = CLUB_ROLE_RANK;
+
+/**
+ * Règle canonique de hiérarchie stricte :
+ * - Un acteur de rang R ne peut agir que sur une cible de rang < R.
+ * - S'il assigne un nouveau rôle, ce nouveau rôle doit aussi être de rang < R (sauf transfert de propriété réservé à RPC).
+ */
+export function canManageTargetRole(
+  actorRole: ClubRole | null | undefined,
+  targetRole: ClubRole | null | undefined,
+  newRole?: ClubRole,
+): boolean {
+  if (!actorRole || !targetRole) return false;
+  if (targetRole === 'founder') return false;
+  const actorRank = CLUB_ROLE_RANK[actorRole];
+  const targetRank = CLUB_ROLE_RANK[targetRole];
+  if (actorRank <= targetRank) return false;
+  if (newRole) {
+    if (newRole === 'founder') return false;
+    if (actorRank <= CLUB_ROLE_RANK[newRole]) return false;
+  }
+  return true;
+}
+
+/**
+ * Règle canonique anti-escalade sur la délégation de capacité :
+ * - Le Fondateur peut toujours activer/désactiver n'importe quelle capacité sur les rôles/membres inférieurs.
+ * - Un non-Fondateur doit détenir `permissions.delegate` ET la capacité concernée, et agir sur un rang < au sien.
+ */
+export function canDelegateCapability(params: {
+  actorRole: ClubRole | null | undefined;
+  actorCapabilities: ReadonlySet<ClubCapability> | readonly ClubCapability[];
+  targetRole: ClubRole | null | undefined;
+  capability: ClubCapability;
+}): boolean {
+  const { actorRole, actorCapabilities, targetRole, capability } = params;
+  if (!actorRole || !targetRole) return false;
+  if (targetRole === 'founder') return false;
+  if (capability === 'club.delete' || capability === 'club.transfer_ownership') {
+    return false;
+  }
+  if (actorRole === 'founder') return true;
+  if (CLUB_ROLE_RANK[actorRole] <= CLUB_ROLE_RANK[targetRole]) return false;
+  const capSet =
+    actorCapabilities instanceof Set ? actorCapabilities : new Set(actorCapabilities);
+  return capSet.has('permissions.delegate') && capSet.has(capability);
+}
 
 export interface CreateClubInput {
   id: string;
@@ -173,8 +216,9 @@ export function reviewJoinRequest(params: {
   actorMember: ClubMember | undefined;
   approve: boolean;
   nowIso: string;
+  allowByCapability?: boolean;
 }): ClubResult<{ updatedRequest: ClubJoinRequest; newMember?: ClubMember }> {
-  const { request, actorMember, approve, nowIso } = params;
+  const { request, actorMember, approve, nowIso, allowByCapability = false } = params;
 
   if (!isActiveMember(actorMember) || !actorMember) {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif.' };
@@ -182,11 +226,16 @@ export function reviewJoinRequest(params: {
   if (actorMember.clubId !== request.clubId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur hors du club cible.' };
   }
-  if (actorMember.role !== 'admin' && actorMember.role !== 'moderator') {
+  if (
+    !allowByCapability &&
+    actorMember.role !== 'founder' &&
+    actorMember.role !== 'admin' &&
+    actorMember.role !== 'moderator'
+  ) {
     return {
       ok: false,
       error: 'FORBIDDEN',
-      message: 'Seul un administrateur ou modérateur peut traiter les demandes.',
+      message: 'Seul un fondateur, administrateur ou modérateur peut traiter les demandes.',
     };
   }
   if (request.status !== 'pending') {
@@ -350,7 +399,7 @@ export function removeOrBanClubMember(params: {
     }
     const actorRank = ROLE_RANK[actor.role];
     const targetRank = ROLE_RANK[target.role];
-    if (actor.role === 'member' || actorRank <= targetRank) {
+    if (actor.role === 'member' || actor.role === 'volunteer' || actorRank <= targetRank) {
       return {
         ok: false,
         error: 'FORBIDDEN',
@@ -359,9 +408,17 @@ export function removeOrBanClubMember(params: {
     }
   }
 
+  if (target.role === 'founder') {
+    return {
+      ok: false,
+      error: 'FORBIDDEN',
+      message: 'Le fondateur ne peut pas quitter ou être retiré sans transférer la propriété.',
+    };
+  }
+
   if (target.role === 'admin') {
     const activeAdminsCount = memberships.filter(
-      (m) => m.clubId === clubId && m.status === 'active' && m.role === 'admin',
+      (m) => m.clubId === clubId && m.status === 'active' && (m.role === 'admin' || m.role === 'founder'),
     ).length;
     if (activeAdminsCount <= 1) {
       return {
@@ -398,11 +455,15 @@ export function createClubAnnouncement(params: {
   if (!isActiveMember(actorMember) || !actorMember || actorMember.clubId !== params.clubId) {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif du club.' };
   }
-  if (actorMember.role !== 'admin' && actorMember.role !== 'moderator') {
+  if (
+    actorMember.role !== 'founder' &&
+    actorMember.role !== 'admin' &&
+    actorMember.role !== 'moderator'
+  ) {
     return {
       ok: false,
       error: 'FORBIDDEN',
-      message: 'Seuls les administrateurs et modérateurs peuvent publier une annonce.',
+      message: 'Seuls les fondateurs, administrateurs et modérateurs peuvent publier une annonce.',
     };
   }
   if (!params.title.trim() || !params.body.trim()) {

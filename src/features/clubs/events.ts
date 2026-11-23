@@ -178,6 +178,7 @@ export function updateEventOrganization(params: {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif du club.' };
   }
   const canManage =
+    actorMember.role === 'founder' ||
     actorMember.role === 'admin' ||
     actorMember.role === 'moderator' ||
     actorMember.userId === event.createdBy;
@@ -320,8 +321,10 @@ export function computeEventAttendanceStats(params: {
     return { ok: false, error: 'FORBIDDEN', message: 'Acteur non membre actif du club.' };
   }
   const isOrganizer =
+    actorMember.role === 'founder' ||
     actorMember.role === 'admin' ||
     actorMember.role === 'moderator' ||
+    actorMember.role === 'volunteer' ||
     actorMember.userId === event.createdBy;
   if (!isOrganizer) {
     return {

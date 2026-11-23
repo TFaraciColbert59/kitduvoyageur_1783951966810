@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import {
+  canManageTargetRole,
   changeMemberRole,
   muteClubMember,
   removeOrBanClubMember,
@@ -22,7 +23,14 @@ import {
   readJson,
   respondClubResult,
 } from '../../_lib/http';
-import { canReadClub, isAdmin, isManager, loadClubBundle } from '../../_lib/db';
+import {
+  canReadClub,
+  getEffectiveViewerRole,
+  hasClubCapability,
+  isAdmin,
+  isManager,
+  loadClubBundle,
+} from '../../_lib/db';
 import { asArray, mapJoinRequestRow, type Row } from '../../_lib/mappers';
 
 export const runtime = 'nodejs';
@@ -38,7 +46,7 @@ const joinSchema = z
 
 const patchSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('review'), requestId: z.string().uuid(), approve: z.boolean() }).strict(),
-  z.object({ action: z.literal('role'), userId: z.string().uuid(), role: z.enum(['admin', 'moderator', 'member']) }).strict(),
+  z.object({ action: z.literal('role'), userId: z.string().uuid(), role: z.enum(['admin', 'moderator', 'volunteer', 'member']) }).strict(),
   z
     .object({
       action: z.literal('mute'),
@@ -225,7 +233,14 @@ export async function PATCH(
     const action = parsed.data;
 
     if (action.action === 'review') {
-      if (!isManager(bundle)) return errorJson('forbidden', 403);
+      const canReview = await hasClubCapability(
+        supabase,
+        id,
+        user.id,
+        'members.review_requests',
+        bundle,
+      );
+      if (!canReview) return errorJson('forbidden', 403);
       const { data, error } = await supabase
         .from('club_join_requests')
         .select('*')
@@ -240,6 +255,7 @@ export async function PATCH(
         actorMember: actor ?? undefined,
         approve: action.approve,
         nowIso,
+        allowByCapability: true,
       });
       if (!review.ok) return respondClubResult(review);
 
@@ -272,6 +288,8 @@ export async function PATCH(
     }
 
     if (action.action === 'role') {
+      const canManageRoles = await hasClubCapability(supabase, id, user.id, 'members.manage_roles', bundle);
+      if (!canManageRoles) return errorJson('forbidden', 403);
       const result = changeMemberRole({
         clubId: id,
         actorUserId: user.id,
@@ -284,9 +302,8 @@ export async function PATCH(
         .from('club_members')
         .update({
           role: action.role,
-          ...(action.role === 'admin' || action.role === 'moderator'
-            ? { can_manage_stories: true }
-            : { can_manage_stories: false, can_manage_gear: false }),
+          can_manage_stories: action.role === 'admin' || action.role === 'moderator',
+          can_manage_gear: action.role === 'admin' || action.role === 'volunteer',
         })
         .eq('club_id', id)
         .eq('user_id', action.userId);
@@ -295,16 +312,44 @@ export async function PATCH(
     }
 
     if (action.action === 'story_permission') {
-      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
-      if (!canGrant) return errorJson('forbidden', 403);
+      const actorRole = getEffectiveViewerRole(bundle);
+      const canDelegate =
+        actorRole === 'founder' ||
+        ((await hasClubCapability(supabase, id, user.id, 'permissions.delegate', bundle)) &&
+          (await hasClubCapability(supabase, id, user.id, 'stories.publish_club', bundle)));
+      if (!canDelegate) return errorJson('forbidden', 403);
       const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
       if (!target) return errorJson('not_found', 404);
+      const targetRole: ClubRole =
+        bundle.club.createdBy === target.userId ? 'founder' : target.role;
+      if (action.userId === user.id || !canManageTargetRole(actorRole, targetRole)) {
+        return errorJson('forbidden', 403);
+      }
       const { error } = await supabase
         .from('club_members')
         .update({ can_manage_stories: action.canManageStories })
         .eq('club_id', id)
         .eq('user_id', action.userId);
       if (error) return dbFailure('PATCH story_permission', error);
+      await supabase.from('club_member_capability_overrides').upsert(
+        [
+          {
+            club_id: id,
+            user_id: action.userId,
+            capability: 'stories.publish_club',
+            allowed: action.canManageStories,
+            granted_by: user.id,
+          },
+          {
+            club_id: id,
+            user_id: action.userId,
+            capability: 'stories.manage_highlights',
+            allowed: action.canManageStories,
+            granted_by: user.id,
+          },
+        ],
+        { onConflict: 'club_id,user_id,capability' },
+      );
       return json({
         data: {
           userId: action.userId,
@@ -314,16 +359,44 @@ export async function PATCH(
     }
 
     if (action.action === 'gear_permission') {
-      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
-      if (!canGrant) return errorJson('forbidden', 403);
+      const actorRole = getEffectiveViewerRole(bundle);
+      const canDelegate =
+        actorRole === 'founder' ||
+        ((await hasClubCapability(supabase, id, user.id, 'permissions.delegate', bundle)) &&
+          (await hasClubCapability(supabase, id, user.id, 'gear.manage_club_inventory', bundle)));
+      if (!canDelegate) return errorJson('forbidden', 403);
       const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
       if (!target) return errorJson('not_found', 404);
+      const targetRole: ClubRole =
+        bundle.club.createdBy === target.userId ? 'founder' : target.role;
+      if (action.userId === user.id || !canManageTargetRole(actorRole, targetRole)) {
+        return errorJson('forbidden', 403);
+      }
       const { error } = await supabase
         .from('club_members')
         .update({ can_manage_gear: action.canManageGear })
         .eq('club_id', id)
         .eq('user_id', action.userId);
       if (error) return dbFailure('PATCH gear_permission', error);
+      await supabase.from('club_member_capability_overrides').upsert(
+        [
+          {
+            club_id: id,
+            user_id: action.userId,
+            capability: 'gear.manage_club_inventory',
+            allowed: action.canManageGear,
+            granted_by: user.id,
+          },
+          {
+            club_id: id,
+            user_id: action.userId,
+            capability: 'gear.approve_club_loans',
+            allowed: action.canManageGear,
+            granted_by: user.id,
+          },
+        ],
+        { onConflict: 'club_id,user_id,capability' },
+      );
       return json({
         data: {
           userId: action.userId,
@@ -333,10 +406,16 @@ export async function PATCH(
     }
 
     if (action.action === 'leader_badge') {
-      const canGrant = isAdmin(bundle) || bundle.club.createdBy === user.id;
-      if (!canGrant) return errorJson('forbidden', 403);
+      const actorRole = getEffectiveViewerRole(bundle);
+      const canManageRoles = await hasClubCapability(supabase, id, user.id, 'members.manage_roles', bundle);
+      if (!canManageRoles) return errorJson('forbidden', 403);
       const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
       if (!target) return errorJson('not_found', 404);
+      const targetRole: ClubRole =
+        bundle.club.createdBy === target.userId ? 'founder' : target.role;
+      if (actorRole !== 'founder' && !canManageTargetRole(actorRole, targetRole)) {
+        return errorJson('forbidden', 403);
+      }
       const { error } = await supabase
         .from('club_members')
         .update({ is_certified_leader: action.isCertifiedLeader })
@@ -359,23 +438,11 @@ export async function PATCH(
       const target = bundle.members.find((member) => member.userId === action.userId && member.status === 'active');
       if (!target) return errorJson('not_found', 404);
 
-      const { error: clubErr } = await supabase
-        .from('clubs')
-        .update({ created_by: action.userId })
-        .eq('id', id);
-      if (clubErr) return dbFailure('PATCH transfer_ownership club', clubErr);
-
-      await supabase
-        .from('club_members')
-        .update({ role: 'founder', can_manage_stories: true, can_manage_gear: true })
-        .eq('club_id', id)
-        .eq('user_id', action.userId);
-
-      await supabase
-        .from('club_members')
-        .update({ role: 'admin' })
-        .eq('club_id', id)
-        .eq('user_id', user.id);
+      const { error: rpcError } = await supabase.rpc('club_transfer_ownership', {
+        p_club_id: id,
+        p_new_founder_id: action.userId,
+      });
+      if (rpcError) return dbFailure('PATCH transfer_ownership rpc', rpcError);
 
       return json({ data: { newFounderId: action.userId } });
     }

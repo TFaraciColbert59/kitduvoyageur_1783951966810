@@ -69,11 +69,15 @@ export function createClubChallenge(params: {
     const actor = (params.memberships ?? []).find(
       (m) => m.clubId === params.clubId && m.userId === params.actorUserId,
     );
-    if (!actor || !isActiveMember(actor) || (actor.role !== 'admin' && actor.role !== 'moderator')) {
+    if (
+      !actor ||
+      !isActiveMember(actor) ||
+      (actor.role !== 'founder' && actor.role !== 'admin' && actor.role !== 'moderator')
+    ) {
       return {
         ok: false,
         error: 'FORBIDDEN',
-        message: 'Seuls les admins/modérateurs du club peuvent créer un défi de club.',
+        message: 'Seuls les fondateurs/admins/modérateurs du club peuvent créer un défi de club.',
       };
     }
   }

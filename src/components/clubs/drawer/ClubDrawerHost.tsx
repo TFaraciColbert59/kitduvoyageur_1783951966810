@@ -54,7 +54,8 @@ import { ClubSortiesDrawerBody, type OutingFilterId, type WeatherWindowId } from
 import { ClubCoffreDrawerBody, type KitSeasonFilter, type VaultFilterId, type VaultScopeId } from './ClubCoffreDrawerBody';
 import { ClubSalonsDrawerBody } from './ClubSalonsDrawerBody';
 import { ClubCreateDrawerBody } from './ClubCreateDrawerBody';
-import { ClubSettingsDrawerBody } from './ClubSettingsDrawerBody';
+import { ClubAdminDrawerShell } from './admin/ClubAdminDrawerShell';
+import { useClubCapabilities } from './admin/useClubCapabilities';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type {
   ClubDrawerHostProps,
@@ -76,11 +77,19 @@ type ClubStackEntry =
   | { type: 'outing'; outing: ClubOutingData; returnTab: number; returnSubTab: number };
 
 function memberHasClubRole(member: Pick<ClubMemberData, 'role' | 'rawRole'>): boolean {
-  if (member.rawRole === 'admin' || member.rawRole === 'moderator') return true;
+  if (
+    member.rawRole === 'founder' ||
+    member.rawRole === 'admin' ||
+    member.rawRole === 'moderator' ||
+    member.rawRole === 'volunteer'
+  ) {
+    return true;
+  }
   return (
     member.role === 'Fondateur' ||
     member.role === 'Guide & Sécurité' ||
-    member.role === 'Encadrant'
+    member.role === 'Encadrant' ||
+    member.role === 'Bénévole'
   );
 }
 
@@ -141,18 +150,9 @@ export function ClubDrawerHost({
   onClose,
 }: ClubDrawerHostProps) {
   const { haptic } = useHapticFeedback();
-  const canAccessClubAdmin = Boolean(
-    (currentUserId && activeClub.createdBy === currentUserId) ||
-      activeClub.viewerRole === 'founder' ||
-      activeClub.viewerRole === 'admin' ||
-      activeClub.viewerRole === 'moderator' ||
-      activeClub.viewerCanManageGear ||
-      activeClub.viewerCanManageStories,
-  );
+  const clubCaps = useClubCapabilities(activeClub, currentUserId);
+  const canAccessClubAdmin = clubCaps.canAccessAdmin;
   const [internalMode, setInternalMode] = useState<'main' | 'create' | 'settings'>(mode);
-  const [settingsSubTab, setSettingsSubTab] = useState(0);
-  const [adminLoanFilter, setAdminLoanFilter] = useState<'all' | 'requested' | 'approved' | 'active'>('all');
-  const [adminChallengeFilter, setAdminChallengeFilter] = useState<'all' | 'active' | 'ended'>('all');
 
   useEffect(() => {
     if (internalMode === 'settings' && !canAccessClubAdmin) {
@@ -172,26 +172,28 @@ export function ClubDrawerHost({
   const [stack, setStack] = useState<ClubStackEntry[]>([]);
   const [inspectedMember, setInspectedMember] = useState<ClubMemberData | null>(null);
   const [memberLensIndex, setMemberLensIndex] = useState(0);
+  const isMemberTimelineLens = tab === 1 && Boolean(inspectedMember) && memberLensIndex === 1;
   const [memberHeaderCompact, setMemberHeaderCompact] = useScrollCollapsePreview(
-    tab === 1 && Boolean(inspectedMember),
+    tab === 1 && Boolean(inspectedMember) && !isMemberTimelineLens,
   );
   const memberHeroTouchYRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setMemberHeaderCompact(false);
+    setMemberHeaderCompact(memberLensIndex === 1);
   }, [inspectedMember?.id, memberLensIndex, setMemberHeaderCompact]);
 
   // Permet aussi de replier l'aperçu même sur un contenu court ou en scrollant directement dessus
   useEffect(() => {
-    if (tab !== 1 || !inspectedMember) return;
+    if (tab !== 1 || !inspectedMember || isMemberTimelineLens) return;
     const root = paneRootRef.current;
     if (!root) return;
     const handleWheel = (e: WheelEvent) => {
+      if (isMemberTimelineLens) return;
       if (Math.abs(e.deltaY) < 4) return;
       if (e.deltaY > 10) {
         setMemberHeaderCompact(true);
       } else if (e.deltaY < -10) {
-        const activePane = root.querySelector('.lkdv-lens-pane:not([hidden])') as HTMLElement | null;
+        const activePane = root.querySelector('.lkdv-lens-pane[data-testid="slot-content"]') as HTMLElement | null;
         if (!activePane || activePane.scrollTop <= 4) {
           setMemberHeaderCompact(false);
         }
@@ -199,7 +201,7 @@ export function ClubDrawerHost({
     };
     root.addEventListener('wheel', handleWheel, { passive: true });
     return () => root.removeEventListener('wheel', handleWheel);
-  }, [tab, inspectedMember, setMemberHeaderCompact]);
+  }, [tab, inspectedMember, isMemberTimelineLens, setMemberHeaderCompact]);
   const [inspectedOuting, setInspectedOuting] = useState<ClubOutingData | null>(null);
   const [g02Section, setG02Section] = useState<ClubG02Section | undefined>(initialSection);
   const [chatDraftPrefill, setChatDraftPrefill] = useState('');
@@ -856,16 +858,6 @@ export function ClubDrawerHost({
   }
 
   if (internalMode === 'settings' && canAccessClubAdmin) {
-    const settingsTabs = [
-      { id: 'settings-general', label: 'Général & Visibilité', icon: <Eye size={16} aria-hidden="true" /> },
-      { id: 'settings-access', label: 'Accès & Adhésions', icon: <UserCheck size={16} aria-hidden="true" /> },
-      { id: 'settings-loans', label: 'Prêts & Matériel', icon: <Package size={16} aria-hidden="true" /> },
-      { id: 'settings-challenges', label: 'Défis du club', icon: <Trophy size={16} aria-hidden="true" /> },
-      { id: 'settings-team', label: 'Équipe, Rôles & Pôles', icon: <Users size={16} aria-hidden="true" /> },
-      { id: 'settings-mod', label: 'Paramétrage & Sécurité', icon: <Shield size={16} aria-hidden="true" /> },
-    ];
-    const activeSettingsTab = settingsTabs[settingsSubTab] ?? settingsTabs[0];
-
     return (
       <ClubMotionRoot>
         <motion.div
@@ -881,83 +873,32 @@ export function ClubDrawerHost({
           data-outdoor={isOutdoor ? 'true' : undefined}
           data-reduce-motion={reduceMotion ? 'true' : undefined}
         >
-          <SlotShell
-            slot={activeSettingsTab.id}
-            viewer="owner"
-            title="Administration du club"
-            lenses={settingsTabs}
-            activeLensIndex={settingsSubTab}
-            onLensChange={(idx) => {
-              haptic('selection');
-              setSettingsSubTab(idx);
-            }}
-            selector={
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '4px 2px' }}>
-                <button
-                  type="button"
-                  className="lkdv-carnet-btn-soft"
-                  style={{ height: 36, padding: '0 10px', flex: 'none' }}
-                  onClick={() => setInternalMode('main')}
-                  aria-label="Retour au club"
-                >
-                  <ChevronLeft size={16} aria-hidden="true" />
-                  <span>Retour</span>
-                </button>
-                <b style={{ fontSize: 14, color: 'var(--label)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {activeSettingsTab.label}
-                </b>
-              </div>
-            }
-            bottomRightFilter={
-              settingsSubTab === 2 ? (
-                <SortMenuButton
-                  label="Filtrer les prêts"
-                  value={adminLoanFilter}
-                  defaultValue="all"
-                  onChange={(v) => setAdminLoanFilter(v as 'all' | 'requested' | 'approved' | 'active')}
-                  options={[
-                    { value: 'all', label: 'Tous les prêts' },
-                    { value: 'requested', label: 'À valider' },
-                    { value: 'approved', label: 'Validés' },
-                    { value: 'active', label: 'Remis / En cours' },
-                  ]}
-                />
-              ) : settingsSubTab === 3 ? (
-                <SortMenuButton
-                  label="Filtrer les défis"
-                  value={adminChallengeFilter}
-                  defaultValue="all"
-                  onChange={(v) => setAdminChallengeFilter(v as 'all' | 'active' | 'ended')}
-                  options={[
-                    { value: 'all', label: 'Tous les défis' },
-                    { value: 'active', label: 'En cours' },
-                    { value: 'ended', label: 'Terminés' },
-                  ]}
-                />
-              ) : null
-            }
-            renderLens={(_lens, index) => (
-              <LensTransition transitionKey={`settings:${index}`}>
-                <div className="lkdv-carnet-drawer-pane">
-                  <ClubSettingsDrawerBody
-                    activeSubTab={index}
-                    activeClub={activeClub}
-                    members={members}
-                    vaultGear={vaultGear}
-                    currentUserId={currentUserId}
-                    loanFilter={adminLoanFilter}
-                    challengeFilter={adminChallengeFilter}
-                    onToggleClubVisibility={onToggleClubVisibility}
-                    onTransitionGearLoan={onTransitionGearLoan}
-                    onChangeMemberRole={onChangeMemberRole}
-                    onToggleMemberStoryPermission={onToggleMemberStoryPermission}
-                    onToggleMemberGearPermission={onToggleMemberGearPermission}
-                    onToggleMemberLeaderBadge={onToggleMemberLeaderBadge}
-                    onToast={emitToast}
-                  />
-                </div>
-              </LensTransition>
-            )}
+          {onClose ? (
+            <button
+              type="button"
+              className="lkdv-mgrab"
+              {...handleProps}
+              onClick={() => {
+                if (!isDragging) onClose();
+              }}
+              aria-label="Fermer le tiroir"
+            >
+              <span />
+            </button>
+          ) : null}
+          <ClubAdminDrawerShell
+            activeClub={activeClub}
+            members={members}
+            outings={outings}
+            vaultGear={vaultGear}
+            challenges={challenges}
+            currentUserId={currentUserId}
+            onBack={() => setInternalMode('main')}
+            onToggleClubVisibility={onToggleClubVisibility}
+            onTransitionGearLoan={onTransitionGearLoan}
+            onChangeMemberRole={onChangeMemberRole}
+            onToggleMemberLeaderBadge={onToggleMemberLeaderBadge}
+            onToast={emitToast}
           />
           <ClubIsland toast={localToast} onDismiss={() => setLocalToast(null)} />
         </motion.div>
@@ -1058,7 +999,6 @@ export function ClubDrawerHost({
                     style={{ height: 38, width: 38, padding: 0, flex: 'none', justifyContent: 'center' }}
                     onClick={() => {
                       haptic('selection');
-                      setSettingsSubTab(0);
                       setInternalMode('settings');
                     }}
                     aria-label="Administration du club"
@@ -1108,9 +1048,11 @@ export function ClubDrawerHost({
                           : 'member';
 
                 const handleHeroTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+                  if (isMemberTimelineLens) return;
                   memberHeroTouchYRef.current = e.touches[0]?.clientY ?? null;
                 };
                 const handleHeroTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+                  if (isMemberTimelineLens) return;
                   const startY = memberHeroTouchYRef.current;
                   const curY = e.touches[0]?.clientY;
                   if (startY == null || curY == null) return;
@@ -1131,8 +1073,10 @@ export function ClubDrawerHost({
                     onTouchMove={handleHeroTouchMove}
                   >
                     <CollapsibleHeroPreview
-                      collapsed={memberHeaderCompact}
-                      onExpand={() => setMemberHeaderCompact(false)}
+                      collapsed={isMemberTimelineLens ? true : memberHeaderCompact}
+                      onExpand={() => {
+                        if (!isMemberTimelineLens) setMemberHeaderCompact(false);
+                      }}
                       title={mName}
                       subtitle={inspectedMember.role || 'Membre'}
                       avatarUrl={inspectedMember.avatarUrl}

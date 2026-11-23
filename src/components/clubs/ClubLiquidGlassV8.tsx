@@ -1006,6 +1006,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       });
 
       let resolvedSalonsCount: number | undefined;
+      let resolvedViewerCapabilities: import('@/features/clubs/types').ClubCapability[] | undefined;
       // Hydrate secondary club endpoints safely (strictly UUID + fetch guarded)
       if (isUuid(clubRow.id) && typeof fetch === 'function') {
         const requests: Array<Promise<Response | null>> = [
@@ -1015,9 +1016,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           user?.id && isJoined
             ? fetch(`/api/clubs/${clubRow.id}/salons`).catch(() => null)
             : Promise.resolve(null),
+          user?.id && isJoined
+            ? fetch(`/api/clubs/${clubRow.id}/permissions`).catch(() => null)
+            : Promise.resolve(null),
         ];
 
-        const [gearRes, challRes, eventsApiRes, salonsRes] = await Promise.all(requests);
+        const [gearRes, challRes, eventsApiRes, salonsRes, permsRes] = await Promise.all(requests);
+        if (permsRes?.ok) {
+          try {
+            const pj = await permsRes.json();
+            if (Array.isArray(pj?.data?.viewerCapabilities)) {
+              resolvedViewerCapabilities = pj.data.viewerCapabilities;
+            }
+          } catch {
+            // ignore
+          }
+        }
 
         if (gearRes?.ok) {
           try {
@@ -1233,6 +1247,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           joined: joinedFlag,
           role: resolvedRoleLabel,
           viewerRole: (rawRole as ClubRole) || null,
+          viewerCapabilities: row.id === clubRow.id ? resolvedViewerCapabilities : undefined,
           viewerCanManageStories:
             row.id === clubRow.id
               ? Boolean(
@@ -2186,7 +2201,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleChangeMemberRole = useCallback(
-    async (targetUserId: string, nextRole: 'founder' | 'admin' | 'moderator' | 'member'): Promise<boolean> => {
+    async (targetUserId: string, nextRole: ClubRole): Promise<boolean> => {
       if (nextRole === 'founder') return false;
       let previousSnapshot: ClubMemberData | null = null;
       setClubMembers((prev) =>
@@ -2196,7 +2211,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           return {
             ...m,
             rawRole: nextRole,
-            role: nextRole === 'admin' ? 'Guide & Sécurité' : nextRole === 'moderator' ? 'Encadrant' : 'Membre actif',
+            role:
+              nextRole === 'admin'
+                ? 'Guide & Sécurité'
+                : nextRole === 'moderator'
+                  ? 'Encadrant'
+                  : nextRole === 'volunteer'
+                    ? 'Bénévole'
+                    : 'Membre actif',
             ...(nextRole === 'member' ? { canManageStories: false, canManageGear: false } : {}),
           };
         }),

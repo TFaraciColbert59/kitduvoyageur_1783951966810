@@ -1,4 +1,4 @@
-import type { ClubRole, MembershipStatus } from '@/features/clubs/types';
+import type { ClubCapability, ClubRole, MembershipStatus } from '@/features/clubs/types';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
 
@@ -36,6 +36,7 @@ export interface ClubItemData {
   lng: number;
   coverUrl?: string;
   viewerRole?: ClubRole | null;
+  viewerCapabilities?: ClubCapability[];
   viewerCanManageStories?: boolean;
   viewerCanManageGear?: boolean;
   membershipStatus?: MembershipStatus | null;
@@ -53,6 +54,7 @@ export type ClubMemberRoleLabel =
   | 'Fondateur'
   | 'Guide & Sécurité'
   | 'Encadrant'
+  | 'Bénévole'
   | 'Membre actif'
   | 'Nouveau';
 

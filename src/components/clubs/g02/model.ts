@@ -37,6 +37,7 @@ export const ROLE_LABELS: Record<ClubRole, string> = {
   founder: 'Fondateur',
   admin: 'Administrateur',
   moderator: 'Modérateur',
+  volunteer: 'Bénévole',
   member: 'Membre',
 };
 
@@ -325,7 +326,13 @@ export function initials(name: string): string {
 }
 
 export function sortMembersForDisplay(members: readonly ClubMember[]): ClubMember[] {
-  const rank: Record<ClubRole, number> = { founder: 0, admin: 1, moderator: 2, member: 3 };
+  const rank: Record<ClubRole, number> = {
+    founder: 0,
+    admin: 1,
+    moderator: 2,
+    volunteer: 3,
+    member: 4,
+  };
   return [...members]
     .filter((member) => member.status === 'active' || member.status === 'pending')
     .sort((a, b) => {

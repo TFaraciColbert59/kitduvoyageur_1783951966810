@@ -695,8 +695,9 @@ export function ClubCordeeDrawerBody(props: ClubCordeeDrawerBodyProps) {
     Fondateur: 0,
     'Guide & Sécurité': 1,
     Encadrant: 2,
-    Nouveau: 3,
-    'Membre actif': 4,
+    Bénévole: 3,
+    Nouveau: 4,
+    'Membre actif': 5,
   };
   const sortedMembers = [...unblockedMembers].sort(
     (a, b) => (roleRank[a.role] ?? 9) - (roleRank[b.role] ?? 9) || a.name.localeCompare(b.name, 'fr'),

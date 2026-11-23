@@ -56,7 +56,7 @@ export function iso(value: unknown, fallback = new Date(0).toISOString()): strin
   return Number.isFinite(time) ? new Date(time).toISOString() : fallback;
 }
 
-const ROLES: readonly ClubRole[] = ['founder', 'admin', 'moderator', 'member'];
+const ROLES: readonly ClubRole[] = ['founder', 'admin', 'moderator', 'volunteer', 'member'];
 const MEMBERSHIP_STATUSES: readonly MembershipStatus[] = ['active', 'pending', 'removed', 'banned'];
 
 export function mapClubRole(value: unknown): ClubRole {
@@ -205,8 +205,12 @@ export function mapChannelRow(row: Row): ClubChannel {
     clubId: String(row.club_id ?? ''),
     name: asString(row.name) ?? 'Salon',
     kind: safeKind,
+    description: asString(row.description),
+    minRole: mapClubRole(row.min_role ?? 'member'),
     readOnlyForMembers: asBoolean(row.read_only_for_members, safeKind === 'announcements'),
     notificationsEnabledByDefault: asBoolean(row.notifications_enabled_by_default, true),
+    position: asNumber(row.position) ?? 0,
+    archivedAt: asString(row.archived_at) ? iso(row.archived_at) : null,
     createdBy: asString(row.created_by) ?? '',
     createdAt: iso(row.created_at),
   };
@@ -344,5 +348,89 @@ export function mapJoinRequestRow(row: Row): import('@/features/clubs').ClubJoin
     createdAt: iso(row.created_at),
     reviewedBy: asString(row.reviewed_by),
     reviewedAt: asString(row.reviewed_at) ? iso(row.reviewed_at) : null,
+  };
+}
+
+export function mapBudgetEntryRow(row: Row): import('@/features/clubs').ClubBudgetEntry {
+  const kind = asString(row.kind) === 'income' ? 'income' : 'expense';
+  const rawStatus = asString(row.status);
+  const status =
+    rawStatus === 'approved' || rawStatus === 'paid' || rawStatus === 'rejected'
+      ? rawStatus
+      : 'proposed';
+  return {
+    id: String(row.id ?? ''),
+    clubId: String(row.club_id ?? ''),
+    eventId: asString(row.event_id),
+    kind,
+    category: asString(row.category) ?? 'Autre',
+    label: asString(row.label) ?? '',
+    amountCents: Math.max(0, Math.round(asNumber(row.amount_cents) ?? 0)),
+    status,
+    notes: asString(row.notes),
+    receiptUrl: asString(row.receipt_url),
+    createdBy: asString(row.created_by),
+    approvedBy: asString(row.approved_by),
+    approvedAt: asString(row.approved_at) ? iso(row.approved_at) : null,
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at ?? row.created_at),
+  };
+}
+
+export function mapVolunteerAssignmentRow(
+  row: Row,
+): import('@/features/clubs').ClubVolunteerAssignment {
+  const rawStatus = asString(row.status);
+  const status =
+    rawStatus === 'confirmed' || rawStatus === 'checked_in' || rawStatus === 'declined'
+      ? rawStatus
+      : 'assigned';
+  return {
+    id: String(row.id ?? ''),
+    shiftId: String(row.shift_id ?? ''),
+    clubId: String(row.club_id ?? ''),
+    userId: String(row.user_id ?? ''),
+    status,
+    checkedInAt: asString(row.checked_in_at) ? iso(row.checked_in_at) : null,
+    assignedBy: asString(row.assigned_by),
+    notes: asString(row.notes),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function mapVolunteerShiftRow(row: Row): import('@/features/clubs').ClubVolunteerShift {
+  return {
+    id: String(row.id ?? ''),
+    clubId: String(row.club_id ?? ''),
+    eventId: String(row.event_id ?? ''),
+    title: asString(row.title) ?? 'Poste',
+    zoneLabel: asString(row.zone_label),
+    startsAt: asString(row.starts_at) ? iso(row.starts_at) : null,
+    endsAt: asString(row.ends_at) ? iso(row.ends_at) : null,
+    capacity: Math.max(1, Math.round(asNumber(row.capacity) ?? 4)),
+    instructions: asString(row.instructions),
+    createdBy: asString(row.created_by),
+    createdAt: iso(row.created_at),
+  };
+}
+
+export function mapAuditEntryRow(row: Row): import('@/features/clubs').ClubAuditEntry {
+  const targetRoleRaw = asString(row.target_role);
+  return {
+    id: String(row.id ?? ''),
+    clubId: String(row.club_id ?? ''),
+    actorId: asString(row.actor_id),
+    targetUserId: asString(row.target_user_id),
+    targetRole: targetRoleRaw ? mapClubRole(targetRoleRaw) : null,
+    action: asString(row.action) ?? 'unknown',
+    oldValue:
+      row.old_value && typeof row.old_value === 'object'
+        ? (row.old_value as Record<string, unknown>)
+        : null,
+    newValue:
+      row.new_value && typeof row.new_value === 'object'
+        ? (row.new_value as Record<string, unknown>)
+        : null,
+    createdAt: iso(row.created_at),
   };
 }

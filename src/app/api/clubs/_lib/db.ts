@@ -2,11 +2,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   canViewClub,
+  CLUB_CAPABILITIES,
   isActiveMember,
+  resolveClubCapabilities,
   type Club,
+  type ClubCapability,
   type ClubChannel,
   type ClubEvent,
   type ClubMember,
+  type ClubRole,
   type EventAttendanceRecord,
   type EventRegistration,
   type ViewerPrivacyContext,
@@ -151,6 +155,76 @@ export function isAdmin(bundle: ClubBundle): boolean {
   );
 }
 
+export function getEffectiveViewerRole(bundle: ClubBundle): ClubRole | null {
+  const m = bundle.viewerMembership;
+  if (!m || !isActiveMember(m)) return null;
+  if (bundle.club.createdBy === m.userId) return 'founder';
+  return m.role;
+}
+
+const VALID_CAP_SET = new Set<string>(CLUB_CAPABILITIES);
+
+export async function loadViewerCapabilities(
+  supabase: SupabaseClient,
+  clubId: string,
+  bundle: ClubBundle,
+): Promise<ClubCapability[]> {
+  const role = getEffectiveViewerRole(bundle);
+  if (!role) return [];
+  if (role === 'founder') return [...CLUB_CAPABILITIES];
+
+  if (typeof supabase.rpc === 'function') {
+    try {
+      const { data, error } = await supabase.rpc('club_get_viewer_capabilities', {
+        p_club_id: clubId,
+      });
+      if (!error && Array.isArray(data)) {
+        return data.filter(
+          (entry): entry is ClubCapability =>
+            typeof entry === 'string' && VALID_CAP_SET.has(entry),
+        );
+      }
+    } catch {
+      // Fallback to local resolution when RPC is not yet deployed or mocked
+    }
+  }
+
+  return resolveClubCapabilities({ role });
+}
+
+export async function hasClubCapability(
+  supabase: SupabaseClient,
+  clubId: string,
+  userId: string | null,
+  capability: ClubCapability,
+  bundle?: ClubBundle | null,
+): Promise<boolean> {
+  if (!userId) return false;
+  if (bundle) {
+    const role = getEffectiveViewerRole(bundle);
+    if (role === 'founder') return true;
+  }
+
+  if (typeof supabase.rpc === 'function') {
+    try {
+      const { data, error } = await supabase.rpc('club_has_capability', {
+        p_club_id: clubId,
+        p_user_id: userId,
+        p_capability: capability,
+      });
+      if (!error && typeof data === 'boolean') {
+        return data;
+      }
+    } catch {
+      // Fallback below
+    }
+  }
+
+  if (!bundle) return false;
+  const role = getEffectiveViewerRole(bundle);
+  return resolveClubCapabilities({ role }).includes(capability);
+}
+
 export async function loadEvent(
   supabase: SupabaseClient,
   eventId: string,
@@ -227,7 +301,9 @@ export async function loadChannels(
     .select('*')
     .eq('club_id', clubId)
     .order('created_at', { ascending: true })
-    .limit(50);
+    .limit(100);
   if (error) throw error;
-  return asArray<Row>(data).map(mapChannelRow);
+  return asArray<Row>(data)
+    .map(mapChannelRow)
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || Date.parse(a.createdAt) - Date.parse(b.createdAt));
 }

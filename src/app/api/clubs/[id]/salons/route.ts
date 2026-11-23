@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import {
+  canViewClubChannel,
   createClubChannel,
   isActiveMember,
   listChannelMessagesForViewer,
@@ -12,6 +13,7 @@ import {
   reportChannelMessage,
   type ClubChannel,
   type ClubChannelMessage,
+  type ClubRole,
 } from '@/features/clubs';
 import {
   csrfFailure,
@@ -24,11 +26,19 @@ import {
   readJson,
   respondClubResult,
 } from '../../_lib/http';
-import { canReadClub, loadChannels, loadClubBundle } from '../../_lib/db';
+import {
+  canReadClub,
+  getEffectiveViewerRole,
+  hasClubCapability,
+  loadChannels,
+  loadClubBundle,
+} from '../../_lib/db';
 import { asArray, mapChannelRow, mapMessageRow, type Row } from '../../_lib/mappers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const roleEnum = z.enum(['founder', 'admin', 'moderator', 'volunteer', 'member']);
 
 const postSchema = z.discriminatedUnion('action', [
   z
@@ -36,8 +46,11 @@ const postSchema = z.discriminatedUnion('action', [
       action: z.literal('create_channel'),
       name: z.string().trim().min(2).max(60),
       kind: z.enum(['general', 'announcements', 'events', 'custom']),
+      description: z.string().trim().max(240).nullish(),
+      minRole: roleEnum.optional(),
       readOnlyForMembers: z.boolean().optional(),
       notificationsEnabledByDefault: z.boolean().optional(),
+      position: z.number().int().min(0).max(500).optional(),
     })
     .strict(),
   z
@@ -71,6 +84,25 @@ const postSchema = z.discriminatedUnion('action', [
     .strict(),
 ]);
 
+const patchChannelSchema = z
+  .object({
+    channelId: z.string().uuid(),
+    name: z.string().trim().min(2).max(60).optional(),
+    description: z.string().trim().max(240).nullish(),
+    kind: z.enum(['general', 'announcements', 'events', 'custom']).optional(),
+    readOnlyForMembers: z.boolean().optional(),
+    minRole: roleEnum.optional(),
+    position: z.number().int().min(0).max(500).optional(),
+    archived: z.boolean().optional(),
+  })
+  .strict();
+
+const deleteChannelSchema = z
+  .object({
+    channelId: z.string().uuid(),
+  })
+  .strict();
+
 async function loadChannel(
   supabase: Awaited<ReturnType<typeof createClient>>,
   clubId: string,
@@ -101,7 +133,7 @@ async function loadMessage(
   return data ? mapMessageRow(data as Row) : null;
 }
 
-/** GET — salons du club et messages visibles du salon demandé (S5.07). */
+/** GET — salons du club (filtrés par min_role) et messages visibles du salon demandé (S5.07). */
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
@@ -119,7 +151,18 @@ export async function GET(
       return errorJson('forbidden', 403);
     }
 
-    const channels = await loadChannels(supabase, id);
+    const viewerRole = getEffectiveViewerRole(bundle) ?? bundle.viewerMembership.role;
+    const effectiveMember = { ...bundle.viewerMembership, role: viewerRole };
+    const wantArchived = request.nextUrl.searchParams.get('includeArchived') === '1';
+    const canSeeArchived =
+      wantArchived &&
+      ((await hasClubCapability(supabase, id, user.id, 'salons.edit_settings', bundle)) ||
+        (await hasClubCapability(supabase, id, user.id, 'salons.archive_or_delete', bundle)));
+
+    const allChannels = await loadChannels(supabase, id);
+    const channels = allChannels.filter((ch) =>
+      canViewClubChannel(ch, effectiveMember, { includeArchived: canSeeArchived }),
+    );
     const requested = request.nextUrl.searchParams.get('channelId');
     const active = requested
       ? channels.find((channel) => channel.id === requested) ?? null
@@ -141,9 +184,16 @@ export async function GET(
       channel: active,
       messages: asArray<Row>(data).map(mapMessageRow),
       viewerContext: bundle.viewerContext,
-      memberships: bundle.members,
+      memberships: bundle.members.map((m) =>
+        m.userId === user.id ? effectiveMember : m,
+      ),
     });
     if (!filtered.ok) return respondClubResult(filtered);
+
+    const [canPostRegular, canPostAnnouncements] = await Promise.all([
+      hasClubCapability(supabase, id, user.id, 'salons.post', bundle),
+      hasClubCapability(supabase, id, user.id, 'salons.post_announcements', bundle),
+    ]);
 
     return json({
       data: {
@@ -151,9 +201,8 @@ export async function GET(
         activeChannelId: active.id,
         messages: filtered.data,
         canPost:
-          !active.readOnlyForMembers ||
-          bundle.viewerMembership.role === 'admin' ||
-          bundle.viewerMembership.role === 'moderator',
+          !active.archivedAt &&
+          ((!active.readOnlyForMembers && canPostRegular) || canPostAnnouncements),
       },
     });
   } catch (error) {
@@ -180,20 +229,29 @@ export async function POST(
 
     const bundle = await loadClubBundle(supabase, id, user.id);
     if (!bundle || !canReadClub(bundle)) return errorJson('not_found', 404);
-    const actor = bundle.viewerMembership;
+    const effectiveRole = getEffectiveViewerRole(bundle);
+    const actor = bundle.viewerMembership
+      ? { ...bundle.viewerMembership, role: effectiveRole ?? bundle.viewerMembership.role }
+      : null;
     const nowIso = new Date().toISOString();
     const action = parsed.data;
 
     if (action.action === 'create_channel') {
+      const canCreate = await hasClubCapability(supabase, id, user.id, 'salons.create', bundle);
+      if (!canCreate) return errorJson('forbidden', 403);
       const created = createClubChannel({
         id: crypto.randomUUID(),
         clubId: id,
         name: action.name,
         kind: action.kind,
+        description: action.description ?? null,
+        minRole: (action.minRole as ClubRole | undefined) ?? 'member',
         readOnlyForMembers: action.readOnlyForMembers,
         notificationsEnabledByDefault: action.notificationsEnabledByDefault,
+        position: action.position ?? 0,
         actorMember: actor ?? undefined,
         nowIso,
+        allowByCapability: true,
       });
       if (!created.ok) return respondClubResult(created);
       const { error } = await supabase.from('club_channels').insert({
@@ -201,8 +259,11 @@ export async function POST(
         club_id: id,
         name: created.data.name,
         kind: created.data.kind,
+        description: created.data.description ?? null,
+        min_role: created.data.minRole ?? 'member',
         read_only_for_members: created.data.readOnlyForMembers,
         notifications_enabled_by_default: created.data.notificationsEnabledByDefault,
+        position: created.data.position ?? 0,
         created_by: user.id,
       });
       if (error) return dbFailure('POST create channel', error);
@@ -212,12 +273,18 @@ export async function POST(
     if (action.action === 'post_message') {
       const channel = await loadChannel(supabase, id, action.channelId);
       if (!channel) return errorJson('not_found', 404);
+      const [canPostRegular, canPostAnnouncements] = await Promise.all([
+        hasClubCapability(supabase, id, user.id, 'salons.post', bundle),
+        hasClubCapability(supabase, id, user.id, 'salons.post_announcements', bundle),
+      ]);
       const posted = postChannelMessage({
         id: crypto.randomUUID(),
         channel,
         actorMember: actor ?? undefined,
         body: action.body,
         nowIso,
+        canPostOverride: canPostRegular,
+        canPostAnnouncementsOverride: canPostAnnouncements,
       });
       if (!posted.ok) return respondClubResult(posted);
       const { error } = await supabase.from('club_channel_messages').insert({
@@ -299,5 +366,102 @@ export async function POST(
     return json({ data: muted.data });
   } catch (error) {
     return dbFailure('POST /api/clubs/[id]/salons', error);
+  }
+}
+
+/** PATCH — modifier les paramètres, l'ordre, le minRole ou l'archivage d'un salon. */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!hasValidOrigin(request)) return csrfFailure();
+  const { id } = await context.params;
+  if (!isUuid(id)) return errorJson('not_found', 404);
+
+  try {
+    const supabase = await createClient();
+    const user = await optionalUser(supabase);
+    if (!user) return errorJson('unauthenticated', 401);
+
+    const parsed = patchChannelSchema.safeParse(await readJson(request));
+    if (!parsed.success) return errorJson('invalid_body', 400, parsed.error.flatten());
+
+    const bundle = await loadClubBundle(supabase, id, user.id);
+    if (!bundle) return errorJson('not_found', 404);
+
+    const { channelId, archived, ...settings } = parsed.data;
+    const hasSettingsChanges = Object.keys(settings).length > 0;
+
+    if (hasSettingsChanges) {
+      const canEdit = await hasClubCapability(supabase, id, user.id, 'salons.edit_settings', bundle);
+      if (!canEdit) return errorJson('forbidden', 403);
+    }
+    if (archived !== undefined) {
+      const canArchive = await hasClubCapability(supabase, id, user.id, 'salons.archive_or_delete', bundle);
+      if (!canArchive) return errorJson('forbidden', 403);
+    }
+
+    const patch: Row = {};
+    if (settings.name !== undefined) patch.name = settings.name;
+    if (settings.description !== undefined) patch.description = settings.description ?? null;
+    if (settings.kind !== undefined) patch.kind = settings.kind;
+    if (settings.readOnlyForMembers !== undefined) patch.read_only_for_members = settings.readOnlyForMembers;
+    if (settings.minRole !== undefined) patch.min_role = settings.minRole;
+    if (settings.position !== undefined) patch.position = settings.position;
+    if (archived !== undefined) patch.archived_at = archived ? new Date().toISOString() : null;
+
+    if (Object.keys(patch).length === 0) return errorJson('invalid_body', 400);
+
+    const { data, error } = await supabase
+      .from('club_channels')
+      .update(patch)
+      .eq('id', channelId)
+      .eq('club_id', id)
+      .select('*')
+      .maybeSingle();
+    if (error) return dbFailure('PATCH /api/clubs/[id]/salons', error);
+    if (!data) return errorJson('not_found', 404);
+
+    return json({ data: mapChannelRow(data as Row) });
+  } catch (error) {
+    return dbFailure('PATCH /api/clubs/[id]/salons', error);
+  }
+}
+
+/** DELETE — suppression définitive d'un salon (salons.archive_or_delete). */
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!hasValidOrigin(request)) return csrfFailure();
+  const { id } = await context.params;
+  if (!isUuid(id)) return errorJson('not_found', 404);
+
+  try {
+    const supabase = await createClient();
+    const user = await optionalUser(supabase);
+    if (!user) return errorJson('unauthenticated', 401);
+
+    const queryChannelId = request.nextUrl.searchParams.get('channelId');
+    const body = queryChannelId ? { channelId: queryChannelId } : await readJson(request);
+    const parsed = deleteChannelSchema.safeParse(body);
+    if (!parsed.success) return errorJson('invalid_body', 400, parsed.error.flatten());
+
+    const bundle = await loadClubBundle(supabase, id, user.id);
+    if (!bundle) return errorJson('not_found', 404);
+
+    const canDelete = await hasClubCapability(supabase, id, user.id, 'salons.archive_or_delete', bundle);
+    if (!canDelete) return errorJson('forbidden', 403);
+
+    const { error } = await supabase
+      .from('club_channels')
+      .delete()
+      .eq('id', parsed.data.channelId)
+      .eq('club_id', id);
+    if (error) return dbFailure('DELETE /api/clubs/[id]/salons', error);
+
+    return json({ data: { deletedChannelId: parsed.data.channelId } });
+  } catch (error) {
+    return dbFailure('DELETE /api/clubs/[id]/salons', error);
   }
 }

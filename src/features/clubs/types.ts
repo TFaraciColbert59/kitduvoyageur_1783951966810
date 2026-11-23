@@ -45,7 +45,287 @@ export interface ViewerPrivacyContext {
 // Rôles, adhésion & vérification (S5.10)
 // ---------------------------------------------------------------------------
 
-export type ClubRole = 'founder' | 'admin' | 'moderator' | 'member';
+export type ClubRole = 'founder' | 'admin' | 'moderator' | 'volunteer' | 'member';
+
+export const CLUB_ROLE_RANK: Record<ClubRole, number> = {
+  member: 1,
+  volunteer: 2,
+  moderator: 3,
+  admin: 4,
+  founder: 5,
+};
+
+export const CLUB_ROLE_LABELS: Record<ClubRole, string> = {
+  founder: 'Fondateur',
+  admin: 'Administrateur',
+  moderator: 'Modérateur',
+  volunteer: 'Bénévole',
+  member: 'Membre',
+};
+
+export const CLUB_CAPABILITIES = [
+  'club.edit_settings',
+  'club.manage_billing_settings',
+  'club.transfer_ownership',
+  'club.delete',
+  'members.manage_roles',
+  'permissions.delegate',
+  'members.view_audit_log',
+  'members.review_requests',
+  'members.manage_invites',
+  'salons.moderate_messages',
+  'moderation.resolve_reports',
+  'members.mute',
+  'members.ban_or_kick',
+  'highlights.moderate',
+  'salons.create',
+  'salons.edit_settings',
+  'salons.archive_or_delete',
+  'salons.post_announcements',
+  'salons.post',
+  'events.create_official',
+  'events.edit_or_cancel_any',
+  'events.manage_routes',
+  'collections.curate_routes',
+  'events.manage_registrations',
+  'volunteers.manage_shifts',
+  'challenges.manage',
+  'gear.manage_club_inventory',
+  'gear.manage_standard_kits',
+  'gear.approve_club_loans',
+  'budget.view',
+  'budget.propose_expense',
+  'budget.approve_and_manage',
+  'stories.publish_club',
+  'stories.manage_highlights',
+  'feed.post',
+] as const;
+
+export type ClubCapability = (typeof CLUB_CAPABILITIES)[number];
+
+export type ClubCapabilityDomain =
+  | 'governance'
+  | 'sovereignty'
+  | 'team'
+  | 'membership'
+  | 'moderation'
+  | 'salons'
+  | 'events'
+  | 'volunteers'
+  | 'challenges'
+  | 'gear'
+  | 'budget'
+  | 'communication';
+
+export interface ClubCapabilityMeta {
+  key: ClubCapability;
+  domain: ClubCapabilityDomain;
+  domainLabel: string;
+  label: string;
+  founderOnly?: boolean;
+  /** True si cette capacité ouvre au moins un écran/action de l'espace Admin. */
+  isAdminCapability: boolean;
+}
+
+export const CLUB_CAPABILITY_CATALOG: readonly ClubCapabilityMeta[] = [
+  // Gouvernance
+  { key: 'club.edit_settings', domain: 'governance', domainLabel: 'Gouvernance', label: 'Modifier identité, bio, visibilité & charte', isAdminCapability: true },
+  { key: 'club.manage_billing_settings', domain: 'governance', domainLabel: 'Gouvernance', label: 'Paramètres financiers & mentions club', isAdminCapability: true },
+  // Souveraineté
+  { key: 'club.transfer_ownership', domain: 'sovereignty', domainLabel: 'Souveraineté', label: 'Transférer le statut Fondateur', founderOnly: true, isAdminCapability: true },
+  { key: 'club.delete', domain: 'sovereignty', domainLabel: 'Souveraineté', label: 'Supprimer définitivement le club', founderOnly: true, isAdminCapability: true },
+  // Équipe & Droits
+  { key: 'members.manage_roles', domain: 'team', domainLabel: 'Équipe & Droits', label: 'Changer le grade des rangs inférieurs', isAdminCapability: true },
+  { key: 'permissions.delegate', domain: 'team', domainLabel: 'Équipe & Droits', label: 'Activer/désactiver les droits des rangs inférieurs', isAdminCapability: true },
+  { key: 'members.view_audit_log', domain: 'team', domainLabel: 'Équipe & Droits', label: 'Consulter le journal d’audit sécurité', isAdminCapability: true },
+  // Adhésions
+  { key: 'members.review_requests', domain: 'membership', domainLabel: 'Adhésions', label: 'Accepter / refuser les demandes d’adhésion', isAdminCapability: true },
+  { key: 'members.manage_invites', domain: 'membership', domainLabel: 'Adhésions', label: 'Créer / révoquer les liens & QR d’invitation', isAdminCapability: true },
+  // Modération
+  { key: 'salons.moderate_messages', domain: 'moderation', domainLabel: 'Modération', label: 'Masquer / supprimer un message dans un salon', isAdminCapability: true },
+  { key: 'moderation.resolve_reports', domain: 'moderation', domainLabel: 'Modération', label: 'Traiter la file des signalements', isAdminCapability: true },
+  { key: 'members.mute', domain: 'moderation', domainLabel: 'Modération', label: 'Mettre en sourdine un membre (rangs inférieurs)', isAdminCapability: true },
+  { key: 'members.ban_or_kick', domain: 'moderation', domainLabel: 'Modération', label: 'Expulser / bannir un membre (rangs inférieurs)', isAdminCapability: true },
+  { key: 'highlights.moderate', domain: 'moderation', domainLabel: 'Modération', label: 'Modérer les publications du fil club', isAdminCapability: true },
+  // Salons
+  { key: 'salons.create', domain: 'salons', domainLabel: 'Salons', label: 'Créer un salon (public ou restreint par rôle)', isAdminCapability: true },
+  { key: 'salons.edit_settings', domain: 'salons', domainLabel: 'Salons', label: 'Renommer, ordonner, régler lecture seule / rôle min', isAdminCapability: true },
+  { key: 'salons.archive_or_delete', domain: 'salons', domainLabel: 'Salons', label: 'Archiver ou supprimer un salon', isAdminCapability: true },
+  { key: 'salons.post_announcements', domain: 'salons', domainLabel: 'Salons', label: 'Publier dans les salons en lecture seule / annonces', isAdminCapability: true },
+  { key: 'salons.post', domain: 'salons', domainLabel: 'Salons', label: 'Écrire dans les salons ouverts', isAdminCapability: false },
+  // Sorties & Events
+  { key: 'events.create_official', domain: 'events', domainLabel: 'Sorties & Events', label: 'Créer une sortie officielle ou un grand événement', isAdminCapability: true },
+  { key: 'events.edit_or_cancel_any', domain: 'events', domainLabel: 'Sorties & Events', label: 'Modifier ou annuler toute sortie du club', isAdminCapability: true },
+  { key: 'events.manage_routes', domain: 'events', domainLabel: 'Sorties & Events', label: 'Associer / éditer les traces GPX & parcours', isAdminCapability: true },
+  { key: 'collections.curate_routes', domain: 'events', domainLabel: 'Sorties & Events', label: 'Organiser les collections d’itinéraires du club', isAdminCapability: true },
+  // Orga Grands Events
+  { key: 'events.manage_registrations', domain: 'volunteers', domainLabel: 'Orga Grands Events', label: 'Gérer inscrits, liste d’attente, sas & check-in jour J', isAdminCapability: true },
+  { key: 'volunteers.manage_shifts', domain: 'volunteers', domainLabel: 'Orga Grands Events', label: 'Créer postes/créneaux bénévoles & affecter l’équipe', isAdminCapability: true },
+  // Défis
+  { key: 'challenges.manage', domain: 'challenges', domainLabel: 'Défis', label: 'Créer, éditer et clôturer les défis du club', isAdminCapability: true },
+  // Matériel & Prêts
+  { key: 'gear.manage_club_inventory', domain: 'gear', domainLabel: 'Matériel & Prêts', label: 'Ajouter / éditer le stock matériel & alertes EPI', isAdminCapability: true },
+  { key: 'gear.manage_standard_kits', domain: 'gear', domainLabel: 'Matériel & Prêts', label: 'Créer / modifier les kits types officiels du club', isAdminCapability: true },
+  { key: 'gear.approve_club_loans', domain: 'gear', domainLabel: 'Matériel & Prêts', label: 'Valider, remettre et réceptionner les prêts matériel', isAdminCapability: true },
+  // Budget
+  { key: 'budget.view', domain: 'budget', domainLabel: 'Budget', label: 'Consulter les budgets (global & par événement)', isAdminCapability: true },
+  { key: 'budget.propose_expense', domain: 'budget', domainLabel: 'Budget', label: 'Saisir une dépense / devis / recette à valider', isAdminCapability: true },
+  { key: 'budget.approve_and_manage', domain: 'budget', domainLabel: 'Budget', label: 'Valider, marquer payé, rejeter & exporter CSV', isAdminCapability: true },
+  // Communication
+  { key: 'stories.publish_club', domain: 'communication', domainLabel: 'Communication', label: 'Publier une story au nom du club', isAdminCapability: true },
+  { key: 'stories.manage_highlights', domain: 'communication', domainLabel: 'Communication', label: 'Gérer les stories à la une & le fil club', isAdminCapability: true },
+] as const;
+
+const ADMIN_CAPABILITY_SET = new Set<ClubCapability>(
+  CLUB_CAPABILITY_CATALOG.filter((c) => c.isAdminCapability).map((c) => c.key),
+);
+
+export function isAdminCapability(cap: ClubCapability): boolean {
+  return ADMIN_CAPABILITY_SET.has(cap);
+}
+
+export const CLUB_DEFAULT_ROLE_CAPABILITIES: Record<ClubRole, readonly ClubCapability[]> = {
+  founder: CLUB_CAPABILITIES,
+  admin: CLUB_CAPABILITIES.filter(
+    (c) => c !== 'club.delete' && c !== 'club.transfer_ownership',
+  ),
+  moderator: [
+    'members.review_requests',
+    'members.manage_invites',
+    'salons.moderate_messages',
+    'moderation.resolve_reports',
+    'members.mute',
+    'members.ban_or_kick',
+    'highlights.moderate',
+    'salons.post_announcements',
+    'salons.post',
+    'stories.publish_club',
+    'stories.manage_highlights',
+    'feed.post',
+  ],
+  volunteer: [
+    'salons.post',
+    'feed.post',
+    'events.manage_registrations',
+    'volunteers.manage_shifts',
+    'gear.manage_club_inventory',
+    'gear.manage_standard_kits',
+    'gear.approve_club_loans',
+    'budget.view',
+    'budget.propose_expense',
+  ],
+  member: ['salons.post', 'feed.post'],
+};
+
+export interface ClubRoleCapabilityPolicy {
+  clubId: string;
+  role: Exclude<ClubRole, 'founder'>;
+  capability: ClubCapability;
+  allowed: boolean;
+  updatedBy?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface ClubMemberCapabilityOverride {
+  clubId: string;
+  userId: string;
+  capability: ClubCapability;
+  allowed: boolean;
+  grantedBy?: string | null;
+  updatedAt?: string | null;
+}
+
+/**
+ * Résolution pure 3 niveaux identique à public.club_has_capability() en SQL :
+ * founder => toujours true ; sinon override > club_role_policy > global_default.
+ */
+export function resolveClubCapabilities(params: {
+  role: ClubRole | null | undefined;
+  rolePolicies?: readonly Pick<ClubRoleCapabilityPolicy, 'role' | 'capability' | 'allowed'>[];
+  memberOverrides?: readonly Pick<ClubMemberCapabilityOverride, 'capability' | 'allowed'>[];
+}): ClubCapability[] {
+  const { role, rolePolicies = [], memberOverrides = [] } = params;
+  if (!role) return [];
+  if (role === 'founder') return [...CLUB_CAPABILITIES];
+
+  const defaults = new Set<ClubCapability>(CLUB_DEFAULT_ROLE_CAPABILITIES[role] ?? []);
+  const policyMap = new Map<ClubCapability, boolean>();
+  for (const p of rolePolicies) {
+    if (p.role === role) policyMap.set(p.capability, p.allowed);
+  }
+  const overrideMap = new Map<ClubCapability, boolean>();
+  for (const o of memberOverrides) {
+    overrideMap.set(o.capability, o.allowed);
+  }
+
+  return CLUB_CAPABILITIES.filter((cap) => {
+    if (overrideMap.has(cap)) return Boolean(overrideMap.get(cap));
+    if (policyMap.has(cap)) return Boolean(policyMap.get(cap));
+    return defaults.has(cap);
+  });
+}
+
+export interface ClubAuditEntry {
+  id: string;
+  clubId: string;
+  actorId: string | null;
+  targetUserId: string | null;
+  targetRole?: ClubRole | null;
+  action: string;
+  oldValue?: Record<string, unknown> | null;
+  newValue?: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export type ClubVolunteerAssignmentStatus = 'assigned' | 'confirmed' | 'checked_in' | 'declined';
+
+export interface ClubVolunteerShift {
+  id: string;
+  clubId: string;
+  eventId: string;
+  title: string;
+  zoneLabel: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  capacity: number;
+  instructions: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  assignments?: readonly ClubVolunteerAssignment[];
+}
+
+export interface ClubVolunteerAssignment {
+  id: string;
+  shiftId: string;
+  clubId: string;
+  userId: string;
+  status: ClubVolunteerAssignmentStatus;
+  checkedInAt: string | null;
+  assignedBy: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export type ClubBudgetKind = 'income' | 'expense';
+export type ClubBudgetStatus = 'proposed' | 'approved' | 'paid' | 'rejected';
+
+export interface ClubBudgetEntry {
+  id: string;
+  clubId: string;
+  eventId: string | null;
+  kind: ClubBudgetKind;
+  category: string;
+  label: string;
+  amountCents: number;
+  status: ClubBudgetStatus;
+  notes: string | null;
+  receiptUrl: string | null;
+  createdBy: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export type MembershipStatus = 'active' | 'pending' | 'removed' | 'banned';
 
@@ -138,9 +418,14 @@ export interface ClubChannel {
   clubId: string;
   name: string;
   kind: ClubChannelKind;
-  /** Si true, seuls admin/moderator peuvent poster. */
+  description?: string | null;
+  /** Rôle minimum requis pour voir et accéder au salon (défaut: 'member'). */
+  minRole?: ClubRole;
+  /** Si true, seuls les détenteurs de salons.post_announcements peuvent poster. */
   readOnlyForMembers: boolean;
   notificationsEnabledByDefault: boolean;
+  position?: number;
+  archivedAt?: string | null;
   createdBy: string;
   createdAt: string;
 }

@@ -3,9 +3,11 @@ import { z } from 'zod';
 
 import { createClient } from '@/lib/supabase/server';
 import {
+  canViewClubChannel,
   canViewClubEvent,
   evaluateClubVerificationBadge,
   isActiveMember,
+  isAdminCapability,
   normalizeClubPrivacy,
   type Club,
 } from '@/features/clubs';
@@ -19,7 +21,15 @@ import {
   optionalUser,
   readJson,
 } from '../_lib/http';
-import { loadChannels, loadClubBundle, loadEvents, canReadClub } from '../_lib/db';
+import {
+  canReadClub,
+  getEffectiveViewerRole,
+  hasClubCapability,
+  loadChannels,
+  loadClubBundle,
+  loadEvents,
+  loadViewerCapabilities,
+} from '../_lib/db';
 import { mapClubRow, type Row } from '../_lib/mappers';
 
 export const runtime = 'nodejs';
@@ -33,6 +43,12 @@ const patchClubSchema = z
     zoneLabel: z.string().trim().max(120).nullish(),
     rules: z.string().trim().max(1000).nullish(),
     joinQuestions: z.array(z.string().trim().min(1).max(160)).max(3).optional(),
+  })
+  .strict();
+
+const deleteClubSchema = z
+  .object({
+    confirmSlug: z.string().trim().min(1).max(120),
   })
   .strict();
 
@@ -54,7 +70,15 @@ export async function GET(
       canViewClubEvent(event, bundle.club, bundle.viewerContext, bundle.members),
     );
     const isMember = Boolean(bundle.viewerMembership && isActiveMember(bundle.viewerMembership));
-    const channels = isMember ? await loadChannels(supabase, id) : [];
+    const rawChannels = isMember ? await loadChannels(supabase, id) : [];
+    const viewerRole = getEffectiveViewerRole(bundle);
+    const effectiveMembership = bundle.viewerMembership
+      ? { ...bundle.viewerMembership, role: viewerRole ?? bundle.viewerMembership.role }
+      : null;
+    const channels = rawChannels.filter((ch) => canViewClubChannel(ch, effectiveMembership));
+    const viewerCapabilities = isMember
+      ? await loadViewerCapabilities(supabase, id, bundle)
+      : [];
     const verificationBadge = evaluateClubVerificationBadge({
       club: bundle.club,
       sportContext: bundle.club.primarySport,
@@ -65,15 +89,13 @@ export async function GET(
       data: {
         club: bundle.club,
         viewerMembership: bundle.viewerMembership,
+        viewerRole,
+        viewerCapabilities,
         members: isMember ? bundle.members : [],
         events: visibleEvents,
         channels,
         verificationBadge,
-        canManage: Boolean(
-          bundle.viewerMembership &&
-            isActiveMember(bundle.viewerMembership) &&
-            (bundle.viewerMembership.role === 'admin' || bundle.viewerMembership.role === 'moderator'),
-        ),
+        canManage: viewerCapabilities.some(isAdminCapability),
       },
     });
   } catch (error) {
@@ -99,14 +121,9 @@ export async function PATCH(
 
     const bundle = await loadClubBundle(supabase, id, user.id);
     if (!bundle) return errorJson('not_found', 404);
-    const viewerRole = bundle.viewerMembership?.role;
-    if (
-      !bundle.viewerMembership ||
-      !isActiveMember(bundle.viewerMembership) ||
-      (viewerRole !== 'founder' && viewerRole !== 'admin')
-    ) {
-      return errorJson('forbidden', 403);
-    }
+
+    const canEdit = await hasClubCapability(supabase, id, user.id, 'club.edit_settings', bundle);
+    if (!canEdit) return errorJson('forbidden', 403);
 
     const patch: Row = {};
     if (parsed.data.name !== undefined) patch.name = parsed.data.name;
@@ -130,5 +147,43 @@ export async function PATCH(
     return json({ data: club });
   } catch (error) {
     return dbFailure('PATCH /api/clubs/[id]', error);
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  if (!hasValidOrigin(request)) return csrfFailure();
+  const { id } = await context.params;
+  if (!isUuid(id)) return errorJson('not_found', 404);
+
+  try {
+    const supabase = await createClient();
+    const user = await optionalUser(supabase);
+    if (!user) return errorJson('unauthenticated', 401);
+
+    const parsed = deleteClubSchema.safeParse(await readJson(request));
+    if (!parsed.success) return errorJson('invalid_body', 400, parsed.error.flatten());
+
+    const bundle = await loadClubBundle(supabase, id, user.id);
+    if (!bundle) return errorJson('not_found', 404);
+
+    const canDelete = await hasClubCapability(supabase, id, user.id, 'club.delete', bundle);
+    if (!canDelete) return errorJson('forbidden', 403);
+
+    const needle = parsed.data.confirmSlug.trim().toLowerCase();
+    const slugMatch = bundle.club.slug.trim().toLowerCase() === needle;
+    const nameMatch = bundle.club.name.trim().toLowerCase() === needle;
+    if (!slugMatch && !nameMatch) {
+      return errorJson('confirmation_mismatch', 400);
+    }
+
+    const { error } = await supabase.from('clubs').delete().eq('id', id);
+    if (error) return dbFailure('DELETE /api/clubs/[id]', error);
+
+    return json({ data: { deletedClubId: id } });
+  } catch (error) {
+    return dbFailure('DELETE /api/clubs/[id]', error);
   }
 }

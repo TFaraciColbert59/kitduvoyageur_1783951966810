@@ -118,6 +118,10 @@ export function ClubCoffreDrawerBody({
   const [loanUntil, setLoanUntil] = useState('');
   const [loanEventId, setLoanEventId] = useState('');
   const [loanNote, setLoanNote] = useState('');
+  const loanDraftGear = useMemo(
+    () => (loanDraftGearId ? vaultGear.find((g) => g.id === loanDraftGearId) ?? null : null),
+    [loanDraftGearId, vaultGear],
+  );
   const [loanConditionPick, setLoanConditionPick] = useState<Record<string, 'new' | 'good' | 'worn' | 'repair'>>({});
   const [loanReturnNote, setLoanReturnNote] = useState<Record<string, string>>({});
   const [selectedKitProductState, setSelectedKitProductState] = useState<{
@@ -299,11 +303,6 @@ export function ClubCoffreDrawerBody({
   ).toFixed(1);
   const visibleVault = filteredVault.slice(0, visibleVaultCount);
   const remainingVaultCount = Math.max(0, filteredVault.length - visibleVault.length);
-
-  const loanDraftGear = useMemo(
-    () => (loanDraftGearId ? vaultGear.find((g) => g.id === loanDraftGearId) ?? null : null),
-    [loanDraftGearId, vaultGear],
-  );
 
   if (loanDraftGear) {
     const maxQty = Math.max(1, loanDraftGear.quantityAvailable ?? 1);
