@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
+import { generatedProductImage } from '@/components/compte/drawer/cards/productImage';
 import { ClubEmptyCard, normalizeSearchText } from './ClubSharedUi';
 import type { ClubGearVaultItem, ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
 import type { ClubJoinRequest, ClubRole } from '@/features/clubs/types';
@@ -518,119 +519,265 @@ export function ClubSettingsDrawerBody({
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Filtres rapides */}
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {/* Rail de filtres sur une seule ligne (défilement horizontal fluide) */}
+            <div
+              data-hscroll="true"
+              onPointerDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                touchAction: 'pan-x',
+                padding: '2px 0',
+              }}
+            >
               {(
                 [
-                  { id: 'all', label: `Tous (${actionableLoans.length})` },
-                  { id: 'requested', label: `À valider (${requestedCount})` },
-                  { id: 'approved', label: `Validés (${approvedCount})` },
-                  { id: 'active', label: `Remis (${activeCount})` },
+                  { id: 'all', label: 'Tous', count: actionableLoans.length },
+                  { id: 'requested', label: 'À valider', count: requestedCount },
+                  { id: 'approved', label: 'Validés', count: approvedCount },
+                  { id: 'active', label: 'Remis', count: activeCount },
                 ] as const
-              ).map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  className={`reseau-btn ${loanFilter === f.id ? 'active' : ''}`}
-                  style={{ fontSize: 11.5, padding: '4px 10px' }}
-                  onClick={() => setLoanFilter(f.id)}
-                >
-                  {f.label}
-                </button>
-              ))}
+              ).map((f) => {
+                const isCur = loanFilter === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setLoanFilter(f.id)}
+                    style={{
+                      flex: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      height: 30,
+                      padding: '0 11px',
+                      borderRadius: 999,
+                      border: isCur
+                        ? '0.5px solid rgba(23, 64, 44, 0.22)'
+                        : '0.5px solid rgba(23, 43, 36, 0.08)',
+                      background: isCur
+                        ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.28), rgba(150, 186, 142, 0.14)), rgba(255, 255, 255, 0.85)'
+                        : 'rgba(255, 255, 255, 0.72)',
+                      boxShadow: isCur
+                        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.06)'
+                        : 'inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+                      color: isCur ? '#17402c' : '#4a5c53',
+                      fontSize: 12,
+                      fontWeight: isCur ? 700 : 600,
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span>{f.label}</span>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        fontVariantNumeric: 'tabular-nums',
+                        padding: '1px 6px',
+                        borderRadius: 999,
+                        background: isCur ? 'rgba(23, 64, 44, 0.12)' : 'rgba(23, 43, 36, 0.06)',
+                        color: isCur ? '#17402c' : '#56665d',
+                      }}
+                    >
+                      {f.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="club-glass-card" style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Package size={16} color="#17402c" aria-hidden="true" />
-                  <b style={{ fontSize: 13.5, color: 'var(--label)' }}>À valider & Suivi des prêts</b>
-                </div>
-                <span className="club-badge-sage">{filteredLoans.length}</span>
-              </div>
-
-              {filteredLoans.length === 0 ? (
-                <ClubEmptyCard
-                  icon={<Check size={20} />}
-                  title="Aucun prêt dans cette file"
-                  description="Les demandes de prêt et retours matériel apparaîtront ici."
-                />
-              ) : (
-                filteredLoans.map((g) => {
+            {/* Cartes individuelles modernes (sans encadré englobant) */}
+            {filteredLoans.length === 0 ? (
+              <ClubEmptyCard
+                icon={<Check size={20} />}
+                title="Aucun prêt dans cette file"
+                description="Les demandes de prêt et retours matériel apparaîtront ici."
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {filteredLoans.map((g) => {
                   const isOverdue =
                     g.loanStatus === 'overdue' ||
                     (g.loanStatus === 'checked_out' && g.neededUntil && Date.parse(g.neededUntil) < Date.now());
                   const statusLabel = isOverdue
                     ? 'En retard'
                     : g.loanStatus === 'requested'
-                      ? 'Demandé'
+                      ? 'À valider'
                       : g.loanStatus === 'approved'
                         ? 'Validé'
                         : 'Remis';
+                  const statusTone = isOverdue
+                    ? { bg: 'rgba(185, 28, 28, 0.10)', color: '#b91c1c' }
+                    : g.loanStatus === 'requested'
+                      ? { bg: 'rgba(217, 119, 6, 0.12)', color: '#b45309' }
+                      : g.loanStatus === 'approved'
+                        ? { bg: 'rgba(23, 64, 44, 0.09)', color: '#17402c' }
+                        : { bg: 'rgba(21, 128, 61, 0.12)', color: '#15803d' };
                   const condVal = loanConditionPick[g.loanId!] ?? 'good';
                   return (
                     <div
                       key={g.loanId}
-                      style={{ paddingTop: 8, borderTop: '1px solid rgba(23, 64, 44, 0.08)', display: 'flex', flexDirection: 'column', gap: 6 }}
+                      style={{
+                        padding: '11px 12px',
+                        borderRadius: 18,
+                        background: 'rgba(255, 255, 255, 0.82)',
+                        border: '0.5px solid rgba(23, 43, 36, 0.08)',
+                        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 10px rgba(23, 43, 36, 0.04)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                      }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <div style={{ minWidth: 0 }}>
-                          <b style={{ fontSize: 12.5, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</b>
-                          <span style={{ fontSize: 11, color: 'var(--label2)' }}>
-                            {g.borrowerName || 'Membre'}{g.neededUntil ? ` · retour ${g.neededUntil}` : ''}
+                      {/* En-tête produit + emprunteur + statut */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={g.imageUrl || generatedProductImage(g.name, 80)}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 11,
+                            objectFit: 'cover',
+                            flex: 'none',
+                            background: 'rgba(23, 64, 44, 0.05)',
+                          }}
+                        />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <b
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 700,
+                              color: '#172b24',
+                              display: 'block',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {g.name}
+                          </b>
+                          <span style={{ fontSize: 11.5, color: '#56665d' }}>
+                            {g.borrowerName || 'Membre'}
+                            {g.neededUntil ? ` · retour ${g.neededUntil}` : ''}
                           </span>
                         </div>
                         <span
-                          className="club-badge-soft"
-                          style={isOverdue ? { color: '#b91c1c', background: 'rgba(185, 28, 28, 0.10)' } : undefined}
+                          style={{
+                            flex: 'none',
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: 999,
+                            background: statusTone.bg,
+                            color: statusTone.color,
+                          }}
                         >
                           {statusLabel}
                         </span>
                       </div>
 
+                      {/* Actions selon l'étape */}
                       {g.loanStatus === 'requested' ? (
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             type="button"
                             className="lkdv-carnet-btn-soft"
-                            style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                            style={{
+                              flex: 1,
+                              height: 32,
+                              justifyContent: 'center',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12))',
+                              color: '#17402c',
+                            }}
                             onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'approved' })}
                           >
-                            Valider
+                            <Check size={13} aria-hidden="true" />
+                            <span>Valider</span>
                           </button>
                           <button
                             type="button"
                             className="lkdv-carnet-btn-soft"
-                            style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                            style={{ flex: 1, height: 32, justifyContent: 'center', fontSize: 12, color: '#b91c1c' }}
                             onClick={() => onTransitionGearLoan?.({ loanId: g.loanId!, gearItemId: g.id, status: 'declined' })}
                           >
-                            Refuser
+                            <X size={13} aria-hidden="true" />
+                            <span>Refuser</span>
                           </button>
                         </div>
                       ) : null}
 
                       {g.loanStatus === 'approved' ? (
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <select
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div
+                            role="group"
                             aria-label={`État au départ pour ${g.name}`}
-                            className="club-glass-input"
-                            style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                            value={condVal}
-                            onChange={(e) =>
-                              setLoanConditionPick((prev) => ({
-                                ...prev,
-                                [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
-                              }))
-                            }
+                            style={{
+                              flex: 1,
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                              gap: 2,
+                              padding: 2,
+                              borderRadius: 999,
+                              background: 'rgba(23, 43, 36, 0.05)',
+                            }}
                           >
-                            <option value="new">État départ : Neuf</option>
-                            <option value="good">État départ : Bon</option>
-                            <option value="worn">État départ : Usé</option>
-                          </select>
+                            {(
+                              [
+                                { id: 'new', label: 'Neuf' },
+                                { id: 'good', label: 'Bon' },
+                                { id: 'worn', label: 'Usé' },
+                              ] as const
+                            ).map((opt) => {
+                              const active = condVal === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setLoanConditionPick((prev) => ({
+                                      ...prev,
+                                      [g.loanId!]: opt.id,
+                                    }))
+                                  }
+                                  style={{
+                                    height: 28,
+                                    borderRadius: 999,
+                                    border: 0,
+                                    background: active ? '#ffffff' : 'transparent',
+                                    boxShadow: active ? '0 1px 4px rgba(23, 43, 36, 0.10)' : 'none',
+                                    color: active ? '#17402c' : '#56665d',
+                                    fontSize: 11,
+                                    fontWeight: active ? 700 : 500,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                           <button
                             type="button"
                             className="lkdv-carnet-btn-soft"
-                            style={{ fontSize: 11.5 }}
+                            style={{
+                              flex: 'none',
+                              height: 32,
+                              padding: '0 12px',
+                              fontSize: 11.5,
+                              fontWeight: 700,
+                              background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12))',
+                              color: '#17402c',
+                            }}
                             onClick={() =>
                               onTransitionGearLoan?.({
                                 loanId: g.loanId!,
@@ -640,47 +787,85 @@ export function ClubSettingsDrawerBody({
                               })
                             }
                           >
-                            Remis
+                            <Check size={13} aria-hidden="true" />
+                            <span>Remis</span>
                           </button>
                         </div>
                       ) : null}
 
                       {g.loanStatus === 'checked_out' || g.loanStatus === 'overdue' ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <select
-                              aria-label={`État au retour pour ${g.name}`}
-                              className="club-glass-input"
-                              style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                              value={condVal}
-                              onChange={(e) =>
-                                setLoanConditionPick((prev) => ({
-                                  ...prev,
-                                  [g.loanId!]: e.target.value as 'new' | 'good' | 'worn' | 'repair',
-                                }))
-                              }
-                            >
-                              <option value="new">Retour : Neuf</option>
-                              <option value="good">Retour : Bon</option>
-                              <option value="worn">Retour : Usé</option>
-                              <option value="repair">Retour : À réparer</option>
-                            </select>
-                            <input
-                              type="text"
-                              className="club-glass-input"
-                              style={{ flex: 1, fontSize: 11.5, padding: '4px 8px' }}
-                              placeholder="Note retour…"
-                              value={loanReturnNote[g.loanId!] ?? ''}
-                              onChange={(e) =>
-                                setLoanReturnNote((prev) => ({ ...prev, [g.loanId!]: e.target.value }))
-                              }
-                            />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div
+                            role="group"
+                            aria-label={`État au retour pour ${g.name}`}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                              gap: 2,
+                              padding: 2,
+                              borderRadius: 999,
+                              background: 'rgba(23, 43, 36, 0.05)',
+                            }}
+                          >
+                            {(
+                              [
+                                { id: 'new', label: 'Neuf' },
+                                { id: 'good', label: 'Bon' },
+                                { id: 'worn', label: 'Usé' },
+                                { id: 'repair', label: 'Réparer' },
+                              ] as const
+                            ).map((opt) => {
+                              const active = condVal === opt.id;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setLoanConditionPick((prev) => ({
+                                      ...prev,
+                                      [g.loanId!]: opt.id,
+                                    }))
+                                  }
+                                  style={{
+                                    height: 26,
+                                    borderRadius: 999,
+                                    border: 0,
+                                    background: active ? '#ffffff' : 'transparent',
+                                    boxShadow: active ? '0 1px 4px rgba(23, 43, 36, 0.10)' : 'none',
+                                    color: active ? (opt.id === 'repair' ? '#b91c1c' : '#17402c') : '#56665d',
+                                    fontSize: 10.5,
+                                    fontWeight: active ? 700 : 500,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
                           </div>
+                          <input
+                            type="text"
+                            className="club-glass-input"
+                            style={{ fontSize: 11.5, padding: '6px 10px' }}
+                            placeholder="Note au retour (optionnel)…"
+                            value={loanReturnNote[g.loanId!] ?? ''}
+                            onChange={(e) =>
+                              setLoanReturnNote((prev) => ({ ...prev, [g.loanId!]: e.target.value }))
+                            }
+                          />
                           <div style={{ display: 'flex', gap: 6 }}>
                             <button
                               type="button"
                               className="lkdv-carnet-btn-soft"
-                              style={{ flex: 1, justifyContent: 'center', fontSize: 11.5 }}
+                              style={{
+                                flex: 1,
+                                height: 32,
+                                justifyContent: 'center',
+                                fontSize: 11.5,
+                                fontWeight: 700,
+                                background: 'linear-gradient(180deg, rgba(150, 186, 142, 0.24), rgba(150, 186, 142, 0.12))',
+                                color: '#17402c',
+                              }}
                               onClick={() =>
                                 onTransitionGearLoan?.({
                                   loanId: g.loanId!,
@@ -691,12 +876,13 @@ export function ClubSettingsDrawerBody({
                                 })
                               }
                             >
-                              Rendu
+                              <Check size={13} aria-hidden="true" />
+                              <span>Rendu</span>
                             </button>
                             <button
                               type="button"
                               className="lkdv-carnet-btn-soft"
-                              style={{ fontSize: 11.5, color: '#b91c1c' }}
+                              style={{ height: 32, padding: '0 12px', fontSize: 11.5, color: '#b91c1c' }}
                               onClick={() =>
                                 onTransitionGearLoan?.({
                                   loanId: g.loanId!,
@@ -714,9 +900,9 @@ export function ClubSettingsDrawerBody({
                       ) : null}
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
