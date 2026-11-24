@@ -16,20 +16,20 @@ P = [(12, 1.5, 'Chili · sans-visa', 'in'), (7, 1.5, 'Bus · Puerto-Natales · 7
      (18, 0.5, 'Mirador-Británico · km-34', 'down'), (17, 0.5, 'Guanacos · km-61', 'in'),
      (15, 0.5, 'Carte · hors-ligne', 'out'), (16, 1.25, 'Maman · en-direct', 'in'),
      (19, 2.0, 'Torres · aube · 4h50', 'rise')]
-LABTOP = {10: 520, 14: 560, 16: 270, 17: 270}  # légende déplacée quand le centre de l'image est trop clair
+# recadrage vertical de chaque plan dans la zone haute (au-dessus de la Terre), en px
+OFF = {12: -400, 7: -360, 8: -560, 9: -560, 10: -440, 11: -260, 13: -300, 14: -420, 18: -150, 17: -200, 15: -760, 16: -300, 19: -280}
 ALT = {12: 'Passeport sur la tablette, les Andes par le hublot', 7: 'Maya endormie contre la vitre du bus',
        8: 'Tom sur le pont du catamaran', 9: 'Fenêtre éclairée du refuge, chaussures qui sèchent',
        10: "Gourde sous un filet d'eau glaciaire", 11: 'Nuage lenticulaire vu depuis la tente', 13: 'Le contenu du sac, vu du dessus',
        14: 'Trois tasses qui trinquent', 18: 'Un condor sous la falaise', 17: "Portrait d'un guanaco",
        15: 'Tente éclairée sous la Voie lactée', 16: 'Hélène sourit en suivant sa fille', 19: 'Les trois amis face aux Torres à l’aube'}
 T0 = 2 * B  # le W dure 2 temps
-clips, js = [], []
+clips, js, vids = [], [], []
 t = T0
 for k, (n, beats, lab, mv) in enumerate(P, 1):
     d = beats * B; s = round(t, 3); dd = round(d, 3)
-    lt = f' style="top:{LABTOP[n]}px"' if n in LABTOP else ''
-    clips.append(f'''    <video id="e{k}-v" class="clip e-v" src="assets/shots/{n:02d}.mp4" muted playsinline data-start="{s}" data-duration="{dd}" data-track-index="{1 + k % 2}" aria-label="{ALT[n]}"></video>
-    <div id="e{k}-l" class="clip e-lab" data-start="{s}" data-duration="{dd}" data-track-index="4" data-layout-allow-safe-zone{lt}>\\ {lab} \\</div>''')
+    vids.append(f'''      <video id="e{k}-v" class="clip e-v" style="top:{OFF[n]}px" src="assets/shots/{n:02d}.mp4" muted playsinline data-start="{s}" data-duration="{dd}" data-track-index="{1 + k % 2}" aria-label="{ALT[n]}"></video>''')
+    clips.append(f'''    <div id="e{k}-l" class="clip e-lab" data-start="{s}" data-duration="{dd}" data-track-index="4" data-layout-allow-safe-zone>\\ {lab} \\</div>''')
     m = {'in': ('{ scale: 1.03 }', '{ scale: 1.09'), 'out': ('{ scale: 1.1 }', '{ scale: 1.04'),
          'drift': ('{ x: -30, scale: 1.06 }', '{ x: 26, scale: 1.07'), 'up': ('{ y: 40, scale: 1.06 }', '{ y: -30, scale: 1.06'),
          'down': ('{ y: -40, scale: 1.07 }', '{ y: 40, scale: 1.09'), 'rot': ('{ rotation: -1.2, scale: 1.06 }', '{ rotation: 1.2, scale: 1.09'),
@@ -39,21 +39,22 @@ TOTAL = round(t, 3)
 stop_svg = ''.join(f'<circle class="w-st" cx="{x}" cy="{y}" r="11"/>' for x, y in stops)
 html = f'''<template>
   <style>
-    #root {{ position:absolute; inset:0; overflow:hidden; background:#06120C; }}
+    #root {{ position:absolute; inset:0; overflow:hidden; background:transparent; }}
+    #e-scene {{ position:absolute; left:0; top:0; width:1080px; height:1190px; overflow:hidden; -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 860px, transparent 1130px); mask-image:linear-gradient(to bottom, #000 0, #000 860px, transparent 1130px); }}
     #root .e-shot {{ position:absolute; inset:0; overflow:hidden; background:#06120C; }}
     #root .e-cam {{ position:absolute; inset:0; }}
-    #root .e-v {{ position:absolute; left:0; top:0; width:1080px; height:1920px; }}
-    #e-veil {{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 66% 8% at 50% 50.1%, rgba(6,18,12,0.32), rgba(6,18,12,0) 100%); }}
-    #root .e-lab {{ position:absolute; z-index:2; left:0; right:0; margin:0 auto; width:fit-content; top:938px; text-align:center; font-family:"JetBrains Mono",monospace; font-weight:400; font-size:34px; line-height:44px; letter-spacing:0.01em; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8), 0 0 3px rgba(6,18,12,0.5); }}
-    #w-cam {{ position:absolute; inset:0; transform-origin:540px 960px; }}
+    #root .e-v {{ position:absolute; left:0; width:1080px; height:1920px; }}
+    #root .e-lab {{ position:absolute; z-index:2; left:0; right:0; margin:0 auto; width:fit-content; top:1086px; text-align:center; font-family:"JetBrains Mono",monospace; font-weight:400; font-size:34px; line-height:44px; letter-spacing:0.01em; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8), 0 0 3px rgba(6,18,12,0.5); }}
+    #w-cam {{ position:absolute; left:0; top:-480px; width:1080px; height:1920px; transform-origin:540px 960px; }}
     #w-img {{ position:absolute; left:0; top:0; width:1080px; height:1920px; }}
     #w-ov {{ position:absolute; left:0; top:0; overflow:visible; }}
     #w-halo polyline {{ fill:none; stroke:rgba(233,197,149,0.55); stroke-width:16; stroke-linecap:round; stroke-linejoin:round; }}
     #w-lines polyline {{ fill:none; stroke:#F3D7A8; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1 1; stroke-dashoffset:1; }}
     #root .w-st {{ fill:#FAF8F5; stroke:#D0A070; stroke-width:5; opacity:0; }}
-    #w-lab {{ position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:420px; text-align:center; font-family:"JetBrains Mono",monospace; font-size:34px; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8); opacity:0; }}
+    #w-lab {{ position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1086px; text-align:center; font-family:"JetBrains Mono",monospace; font-size:34px; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8); opacity:0; }}
   </style>
   <div id="root" data-composition-id="preuves" data-width="1080" data-height="1920">
+    <div id="e-scene">
     <div id="w" class="clip e-shot" data-start="0" data-duration="{round(T0, 3)}" data-track-index="1">
       <div id="w-cam"><img id="w-img" src="assets/map/w.png" alt="Le W de Torres del Paine vu du satellite">
         <svg id="w-ov" width="1080" height="1920" viewBox="0 0 1080 1920">
@@ -63,10 +64,11 @@ html = f'''<template>
           <g id="w-stops">{stop_svg}</g>
         </svg>
       </div>
-      <div id="w-lab">\\ Le-W · 5-jours · 72-km \\</div>
     </div>
+{chr(10).join(vids)}
+    </div>
+    <div id="w-lab" class="clip" data-start="0" data-duration="{round(T0, 3)}" data-track-index="4" data-layout-allow-safe-zone>\\ Le-W · 5-jours · 72-km \\</div>
 {chr(10).join(clips)}
-    <div id="e-veil" class="clip" data-start="{round(T0, 3)}" data-duration="{round(TOTAL - T0, 3)}" data-track-index="3"></div>
   </div>
   <script>
     (function () {{

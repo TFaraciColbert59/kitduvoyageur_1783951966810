@@ -1,19 +1,17 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#FAF8F5; }
-    #o-paper { position:absolute; inset:0; width:1080px; height:1920px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; }
     #root .f-line { position:absolute; left:0; right:0; text-align:center; font-size:76px; line-height:92px; color:#17402C; white-space:nowrap; }
     #root .f-line span { display:inline-block; opacity:0; margin:0 0.13em; }
     #o-l1 { top:836px; font-family:"EB Garamond",serif; font-weight:400; }
     #o-l2 { top:940px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; font-weight:400; }
-    #o-logo { position:absolute; inset:0; opacity:0; }
+    #o-logo { position:absolute; left:0; top:-300px; width:1080px; height:1920px; opacity:0; }
     #o-ring { position:absolute; left:280px; top:600px; width:520px; height:520px; }
     #o-nd { position:absolute; left:0; top:0; overflow:visible; }
-    #o-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1196px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#17402C; white-space:pre; padding-left:0.26em; }
+    #o-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1390px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#FAF8F5; white-space:pre; padding-left:0.26em; }
     #o-word span { opacity:0; }
     </style>
   <div id="root" data-composition-id="ouverture" data-width="1080" data-height="1920">
-    <img id="o-paper" src="assets/img/papier.jpg" alt="">
     <div id="o-logo">
       <img id="o-ring" src="assets/img/badge-anneau.png" alt="Badge LKDV">
       <svg id="o-nd" width="1080" height="1920" viewBox="0 0 1080 1920">

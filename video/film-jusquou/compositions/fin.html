@@ -1,19 +1,17 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#FAF8F5; }
-    #f-paper { position:absolute; inset:0; width:1080px; height:1920px; }
-    #root .f-line { position:absolute; left:0; right:0; text-align:center; font-size:76px; line-height:92px; color:#17402C; white-space:nowrap; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; }
+    #root .f-line { position:absolute; left:0; right:0; text-align:center; font-size:76px; line-height:92px; color:#FAF8F5; white-space:nowrap; text-shadow:0 0 22px rgba(250,248,245,0.22); }
     #root .f-line span { display:inline-block; opacity:0; margin:0 0.13em; }
-    #f-l1 { top:836px; font-family:"EB Garamond",serif; font-weight:400; }
-    #f-l2 { top:940px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; font-weight:400; }
-    #f-logo { position:absolute; inset:0; opacity:0; }
+    #f-l1 { top:960px; font-family:"EB Garamond",serif; font-weight:400; }
+    #f-l2 { top:1050px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; font-weight:400; }
+    #f-logo { position:absolute; left:0; top:-300px; width:1080px; height:1920px; opacity:0; }
     #f-ring { position:absolute; left:280px; top:600px; width:520px; height:520px; }
     #f-nd { position:absolute; left:0; top:0; overflow:visible; }
-    #f-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1196px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#17402C; white-space:pre; padding-left:0.26em; }
+    #f-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1390px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#FAF8F5; white-space:pre; padding-left:0.26em; }
     #f-word span { opacity:0; }
   </style>
   <div id="root" data-composition-id="fin" data-width="1080" data-height="1920">
-    <img id="f-paper" src="assets/img/papier.jpg" alt="">
     <div id="f-l1" class="f-line"><span>Le</span><span>voyage</span><span>commence</span></div>
     <div id="f-l2" class="f-line"><span>bien</span><span>avant</span><span>le</span><span>départ.</span></div>
     <div id="f-logo">

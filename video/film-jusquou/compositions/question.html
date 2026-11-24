@@ -1,27 +1,31 @@
 <template>
   <style>
-    #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
-    #root .q-v { position:absolute; left:0; top:0; width:1080px; height:1920px; }
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; }
+    #q-scene { position:absolute; left:0; top:0; width:1080px; height:1190px; overflow:hidden;
+               -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 860px, transparent 1130px); mask-image:linear-gradient(to bottom, #000 0, #000 860px, transparent 1130px); }
+    #root .q-v { position:absolute; left:0; width:1080px; height:1920px; }
     #root .q-w { position:absolute; font-family:"EB Garamond",serif; font-weight:400; color:#FAF8F5; white-space:nowrap; line-height:1;
                  text-shadow:0 0 22px rgba(250,248,245,0.28), 0 2px 34px rgba(6,18,12,0.6), 0 0 2px rgba(6,18,12,0.4); }
     #root .q-w span { display:inline-block; }
-    #q1-w { left:96px; top:470px; font-size:86px; }
-    #q2-w { left:600px; top:860px; font-size:80px; }
-    #q3-w { left:0; right:0; top:690px; text-align:center; font-size:72px; }
-    #q4-w { left:0; right:0; top:860px; text-align:center; font-size:104px; letter-spacing:0; }
-    #q5-w { left:0; right:0; top:430px; text-align:center; font-size:76px; }
-    #q6-w { left:0; right:0; top:700px; text-align:center; font-size:88px; transform-origin:50% 50%; text-shadow:0 0 26px rgba(6,18,12,0.7), 0 0 60px rgba(6,18,12,0.45), 0 2px 4px rgba(6,18,12,0.6); }
-    #q6-dim { position:absolute; inset:0; background:#06120C; opacity:0; }
-    #q6-big { position:absolute; left:0; right:0; top:860px; text-align:center; font-size:196px; opacity:0; transform-origin:50% 50%;
+    #q1-w { left:0; right:0; top:1030px; text-align:center; font-size:86px; }
+    #q2-w { left:0; right:0; top:1030px; text-align:center; font-size:80px; }
+    #q3-w { left:0; right:0; top:1030px; text-align:center; font-size:76px; }
+    #q4-w { left:0; right:0; top:1030px; text-align:center; font-size:96px; }
+    #q5-w { left:0; right:0; top:1030px; text-align:center; font-size:78px; }
+    #q6-w { left:0; right:0; top:1030px; text-align:center; font-size:86px; transform-origin:50% 50%; }
+    #q6-dim { position:absolute; left:0; top:0; width:1080px; height:1190px; background:#000; opacity:0; }
+    #q6-big { position:absolute; left:0; right:0; top:905px; text-align:center; font-size:196px; opacity:0; transform-origin:50% 50%;
               text-shadow:0 0 40px rgba(250,248,245,0.45), 0 0 90px rgba(208,160,112,0.25), 0 4px 40px rgba(6,18,12,0.7); }
   </style>
   <div id="root" data-composition-id="question" data-width="1080" data-height="1920">
-    <video id="q1-v" class="clip q-v" src="assets/shots/01.mp4" muted playsinline data-start="0" data-duration="1.333" data-track-index="1" aria-label="Léa minuscule face aux parois de la vallée du Francés"></video>
-    <video id="q2-v" class="clip q-v" src="assets/shots/02.mp4" muted playsinline data-start="1.333" data-duration="1.334" data-track-index="2" aria-label="Profil de Léa dans le vent"></video>
-    <video id="q3-v" class="clip q-v" src="assets/shots/03.mp4" muted playsinline data-start="2.667" data-duration="0.666" data-track-index="1" aria-label="Boussole en laiton dans un gant de laine"></video>
-    <video id="q4-v" class="clip q-v" src="assets/shots/04.mp4" muted playsinline data-start="3.333" data-duration="1.334" data-track-index="2" aria-label="Sentier vide dans le brouillard"></video>
-    <video id="q5-v" class="clip q-v" src="assets/shots/05.mp4" muted playsinline data-start="4.667" data-duration="0.666" data-track-index="1" aria-label="Carte dépliée à la lueur d'une frontale"></video>
-    <video id="q6-v" class="clip q-v" src="assets/shots/06.mp4" muted playsinline data-start="5.333" data-duration="3.334" data-track-index="2" aria-label="Léa, Tom et Maya rient dans le vent"></video>
+    <div id="q-scene">
+      <video id="q1-v" class="clip q-v" style="top:-760px" src="assets/shots/01.mp4" muted playsinline data-start="0" data-duration="1.333" data-track-index="1" aria-label="Léa minuscule face aux parois de la vallée du Francés"></video>
+      <video id="q2-v" class="clip q-v" style="top:-100px" src="assets/shots/02.mp4" muted playsinline data-start="1.333" data-duration="1.334" data-track-index="2" aria-label="Profil de Léa dans le vent"></video>
+      <video id="q3-v" class="clip q-v" style="top:-800px" src="assets/shots/03.mp4" muted playsinline data-start="2.667" data-duration="0.666" data-track-index="1" aria-label="Boussole en laiton dans un gant de laine"></video>
+      <video id="q4-v" class="clip q-v" style="top:-700px" src="assets/shots/04.mp4" muted playsinline data-start="3.333" data-duration="1.334" data-track-index="2" aria-label="Sentier vide dans le brouillard"></video>
+      <video id="q5-v" class="clip q-v" style="top:-560px" src="assets/shots/05.mp4" muted playsinline data-start="4.667" data-duration="0.666" data-track-index="1" aria-label="Carte dépliée à la lueur d'une frontale"></video>
+      <video id="q6-v" class="clip q-v" style="top:-560px" src="assets/shots/06.mp4" muted playsinline data-start="5.333" data-duration="3.334" data-track-index="2" aria-label="Léa, Tom et Maya rient dans le vent"></video>
+    </div>
     <div id="q1-w" class="clip q-w" data-start="0" data-duration="1.333" data-track-index="4">Jusqu’où</div>
     <div id="q2-w" class="clip q-w" data-start="1.333" data-duration="1.334" data-track-index="4">irais-tu</div>
     <div id="q3-w" class="clip q-w" data-start="2.667" data-duration="0.666" data-track-index="4">si</div>
@@ -39,9 +43,7 @@
       tl.fromTo("#q1-w", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.2, ease: "sine.out" }, 0.05);
       // 2 — « irais-tu » : le visage, une poussée lente vers l'œil.
       tl.fromTo("#q2-w", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.333);
-      tl.fromTo("#q1-w", { x: 0 }, { x: 10, duration: 1.2, ease: "none" }, 0.1);
-      tl.to("#q2-w", { x: -10, duration: 1.334, ease: "none" }, 1.333);
-      // 3 — « si » : on fonce sur l'aiguille qui tremble.
+            // 3 — « si » : on fonce sur l'aiguille qui tremble.
       // 4 — « rien » : le mot se dilue dans le brouillard (les lettres s'écartent, il pâlit).
       gsap.utils.toArray("#q4-w span").forEach((el, i) => tl.fromTo(el, { x: 0 }, { x: (i - 1.5) * 30, duration: 1.3, ease: "sine.inOut" }, 3.333));
       tl.fromTo("#q4-w", { opacity: 1 }, { opacity: 0.55, duration: 1.3, ease: "sine.inOut" }, 3.333);

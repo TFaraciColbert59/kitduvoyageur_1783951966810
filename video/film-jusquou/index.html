@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1920" />
-    <title>LKDV — Jusqu'où (épisode 1, 30 s, 9:16)</title>
+    <title>LKDV — Jusqu'où (épisode 1, 30 s, 9:16, la Terre en continu)</title>
     <script src="assets/lib/gsap.min.js"></script>
     <link rel="stylesheet" href="assets/fonts.css" />
     <style>
       * { margin:0; padding:0; box-sizing:border-box; }
-      html, body { width:1080px; height:1920px; overflow:hidden; background:#06120C; }
-      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+      html, body { width:1080px; height:1920px; overflow:hidden; background:#000; }
+      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#000; }
       /* Pellicule : grain (bruit fractal), vignettage, éclairs chauds aux coupes fortes. */
       #grain { position:absolute; left:-540px; top:-960px; width:2160px; height:3840px; z-index:40; pointer-events:none; mix-blend-mode:overlay; opacity:0.16;
                background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 300 300' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
                background-size:300px 300px; }
       #vig { position:absolute; inset:0; z-index:41; pointer-events:none; background:radial-gradient(ellipse 78% 62% at 50% 48%, rgba(6,18,12,0) 55%, rgba(6,18,12,0.5) 100%); opacity:0; }
       #flash { position:absolute; inset:0; z-index:42; pointer-events:none; background:radial-gradient(ellipse 90% 70% at 40% 45%, rgba(255,244,222,1), rgba(240,196,140,0.85) 60%, rgba(208,160,112,0.6) 100%); opacity:0; mix-blend-mode:screen; }
-      #leak { position:absolute; left:-1400px; top:-200px; width:3600px; height:2320px; z-index:43; pointer-events:none; mix-blend-mode:screen; opacity:0;
+      #leak { position:absolute; left:-1400px; top:-500px; width:3600px; height:1700px; z-index:43; pointer-events:none; mix-blend-mode:screen; opacity:0;
               background:radial-gradient(ellipse 20% 50% at 40% 45%, rgba(255,214,170,0.75), rgba(255,140,80,0.25) 45%, rgba(0,0,0,0) 70%); }
     </style>
   </head>
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1080" data-height="1920">
+      <video id="terre-v" class="clip" src="assets/earth/earth.mp4" muted playsinline data-start="0" data-duration="30" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;z-index:1" aria-label="La Terre, du premier photogramme au logo : Paris, puis la Patagonie et le W"></video>
       <div id="ouverture" class="clip" data-composition-id="ouverture" data-composition-src="compositions/ouverture.html" data-start="0" data-duration="2" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:10"></div>
       <div id="question" class="clip" data-composition-id="question" data-composition-src="compositions/question.html" data-start="2" data-duration="8.667" data-track-index="2" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:11"></div>
-      <div id="terre" class="clip" data-composition-id="terre" data-composition-src="compositions/terre.html" data-start="10.667" data-duration="2.666" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:12"></div>
       <div id="preuves" class="clip" data-composition-id="preuves" data-composition-src="compositions/preuves.html" data-start="13.333" data-duration="11" data-track-index="2" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:13"></div>
       <div id="fin" class="clip" data-composition-id="fin" data-composition-src="compositions/fin.html" data-start="24.333" data-duration="5.667" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:14"></div>
       <div id="grain"></div>
@@ -42,9 +42,9 @@
         const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
         for (let t = 0; t < 30; t += 2 * F) tl.set("#grain", { x: Math.round(rnd() * 300 - 150), y: Math.round(rnd() * 300 - 150) }, t);
         // Moins de grain sur le papier, plus sur les images.
-        tl.set("#grain", { opacity: 0.09 }, 0); tl.set("#grain", { opacity: 0.17 }, 2); tl.set("#grain", { opacity: 0.09 }, 24.333);
+        tl.set("#grain", { opacity: 0.13 }, 0);
         // Vignettage sur les images seulement.
-        tl.set("#vig", { opacity: 1 }, 2); tl.set("#vig", { opacity: 0 }, 24.333);
+        tl.set("#vig", { opacity: 0.8 }, 0);
         // Éclair chaud à la coupe Terre → W (13,333 s), plus petit à la coupe vers le passeport.
         gsap.set("#flash", { opacity: 0 });
         tl.to("#flash", { opacity: 0.85, duration: 2 * F, ease: "none" }, 13.333 - 2 * F);
