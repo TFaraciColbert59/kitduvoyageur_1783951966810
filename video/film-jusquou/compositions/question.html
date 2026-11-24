@@ -12,8 +12,7 @@
     #q3-w { left:0; right:0; top:690px; text-align:center; font-size:72px; }
     #q4-w { left:0; right:0; top:860px; text-align:center; font-size:104px; letter-spacing:0; }
     #q5-w { left:0; right:0; top:430px; text-align:center; font-size:76px; }
-    #q6-w { left:0; right:0; top:420px; text-align:center; font-size:88px; transform-origin:50% 50%; text-shadow:0 0 26px rgba(6,18,12,0.7), 0 0 60px rgba(6,18,12,0.45), 0 2px 4px rgba(6,18,12,0.6); }
-    #q6-veil { position:absolute; left:0; top:300px; width:1080px; height:340px; background:radial-gradient(ellipse 48% 44% at 50% 50%, rgba(6,18,12,0.72), rgba(6,18,12,0) 100%); }
+    #q6-w { left:0; right:0; top:700px; text-align:center; font-size:88px; transform-origin:50% 50%; text-shadow:0 0 26px rgba(6,18,12,0.7), 0 0 60px rgba(6,18,12,0.45), 0 2px 4px rgba(6,18,12,0.6); }
     #q6-dim { position:absolute; inset:0; background:#06120C; opacity:0; }
     #q6-big { position:absolute; left:0; right:0; top:860px; text-align:center; font-size:196px; opacity:0; transform-origin:50% 50%;
               text-shadow:0 0 40px rgba(250,248,245,0.45), 0 0 90px rgba(208,160,112,0.25), 0 4px 40px rgba(6,18,12,0.7); }
@@ -41,7 +40,6 @@
     </div>
     <div id="q6" class="clip q-shot" data-start="5.333" data-duration="3.334" data-track-index="2">
       <div id="q6-cam" class="q-cam"><div id="q6-hand" class="q-hand"><img src="assets/prep/06.jpg" alt="Léa, Tom et Maya rient dans le vent"></div></div>
-      <div id="q6-veil"></div>
       <div id="q6-dim"></div>
       <div id="q6-w" class="q-w">manquait&nbsp;?</div>
       <div id="q6-big" class="q-w"><span>m</span><span>a</span><span>n</span><span>q</span><span>u</span><span>a</span><span>i</span><span>t</span><span>&nbsp;</span><span>?</span></div>
@@ -83,7 +81,7 @@
       // 6 — « manquait ? » : d'abord sur les trois amis qui rient, puis l'image s'assombrit et le mot devient immense.
       tl.fromTo("#q6-cam", { scale: 1.03 }, { scale: 1.1, duration: 3.334, ease: "sine.inOut" }, 5.333);
       hand("#q6-hand", 5.333, 3.334, 6, 10.7);
-      tl.to(["#q6-w", "#q6-veil"], { opacity: 0, duration: 4 * F }, 6.95);
+      tl.to("#q6-w", { opacity: 0, duration: 4 * F }, 6.95);
       tl.to("#q6-dim", { opacity: 0.62, duration: 0.5, ease: "sine.inOut" }, 6.85);
       tl.to("#q6-cam", { filter: "blur(10px)", duration: 0.6, ease: "sine.inOut" }, 6.85);
       tl.fromTo("#q6-big", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 7.0);
