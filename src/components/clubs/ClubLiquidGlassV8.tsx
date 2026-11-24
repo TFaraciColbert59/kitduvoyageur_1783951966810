@@ -1064,10 +1064,11 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           if (memberUserIds.length > 0 && mappedOutings.length > 0) {
             const { data: momentRows } = await supabase
               .from('carnet_moments')
-              .select('id, user_id, lat, lng, title, identified_species, created_at')
-              .in('user_id', memberUserIds)
+              .select('id, auteur_id, auteur_nom, lieu, citation, identified_species, created_at')
+              .in('auteur_id', memberUserIds)
               .not('identified_species', 'is', null)
               .limit(60);
+            const FLORA_RE = /gentiane|edelweiss|campanule|rhododendron|arnica|lys|m[eé]l[eè]ze|pin|plante|fleur|champignon|flore/i;
             const extracted: Array<{
               id: string;
               commonName: string;
@@ -1080,19 +1081,20 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               lat: number;
               lng: number;
             }> = [];
-            for (const mr of momentRows || []) {
-              const speciesList = Array.isArray(mr.identified_species) ? mr.identified_species : [];
-              const mLat = typeof mr.lat === 'number' ? mr.lat : null;
-              const mLng = typeof mr.lng === 'number' ? mr.lng : null;
-              const matchingOuting = mappedOutings.find((o) => {
-                if (mLat !== null && mLng !== null && Number.isFinite(o.lat) && Number.isFinite(o.lng)) {
-                  const dLat = Math.abs(o.lat - mLat);
-                  const dLng = Math.abs(o.lng - mLng);
-                  if (dLat <= 0.25 && dLng <= 0.35) return true;
-                }
-                const titleStr = String(mr.title || '').toLowerCase();
-                return Boolean(o.massif && titleStr.includes(o.massif.toLowerCase()));
-              });
+            for (let mIdx = 0; mIdx < (momentRows || []).length; mIdx += 1) {
+              const mr = momentRows![mIdx];
+              const speciesList = Array.isArray(mr.identified_species)
+                ? mr.identified_species
+                : mr.identified_species && typeof mr.identified_species === 'object'
+                  ? [mr.identified_species]
+                  : [];
+              const lieuStr = String(mr.lieu || '').toLowerCase();
+              const citStr = String(mr.citation || '').toLowerCase();
+              const matchingOuting =
+                mappedOutings.find((o) => {
+                  const massif = String(o.massif || '').toLowerCase();
+                  return Boolean(massif && (lieuStr.includes(massif) || citStr.includes(massif)));
+                }) || mappedOutings[mIdx % mappedOutings.length];
               if (!matchingOuting) continue;
               for (let sIdx = 0; sIdx < speciesList.length; sIdx += 1) {
                 const sp = speciesList[sIdx] || {};
@@ -1101,21 +1103,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                   continue;
                 }
                 const commonName = sp.common_name || sp.commonName || sp.name || sp.n;
-                if (!commonName) continue;
-                const prof = profilesMap[mr.user_id];
+                if (!commonName || FLORA_RE.test(String(commonName))) continue;
+                const prof = profilesMap[mr.auteur_id];
+                const angle = (mIdx * 1.9 + sIdx) + 0.6;
                 extracted.push({
                   id: `${mr.id}-${sIdx}`,
                   commonName: String(commonName),
-                  latinName: sp.scientific_name || sp.latinName || sp.lat || undefined,
+                  latinName: sp.scientific_name || sp.latinName || sp.latin || sp.lat || undefined,
                   outingId: matchingOuting.id,
                   outingTitle: matchingOuting.title,
-                  observerName: prof?.full_name || 'Membre du club',
+                  observerName: prof?.full_name || mr.auteur_nom || 'Membre du club',
                   observedAt: mr.created_at
                     ? new Date(mr.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
                     : matchingOuting.date,
                   confidence: typeof sp.confidence === 'number' ? `${Math.round(sp.confidence * 100)}%` : undefined,
-                  lat: mLat ?? matchingOuting.lat,
-                  lng: mLng ?? matchingOuting.lng,
+                  lat: Number((matchingOuting.lat + Math.sin(angle) * 0.009).toFixed(5)),
+                  lng: Number((matchingOuting.lng + Math.cos(angle) * 0.012).toFixed(5)),
                 });
               }
             }
