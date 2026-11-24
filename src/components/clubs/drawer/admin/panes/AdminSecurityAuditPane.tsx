@@ -5,6 +5,7 @@ import { AlertTriangle, Crown, History, Trash2 } from 'lucide-react';
 import type { ClubAuditEntry } from '@/features/clubs/types';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -198,19 +199,16 @@ export function AdminSecurityAuditPane({
           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--label2)' }}>
             Désigne un nouveau Fondateur de manière atomique. Vous passerez automatiquement Administrateur.
           </p>
-          <select
-            className="club-glass-input"
+          <AdminGlassSelect
+            ariaLabel="Choisir le successeur fondateur"
             value={transferTargetId}
-            onChange={(e) => setTransferTargetId(e.target.value)}
-            aria-label="Choisir le successeur fondateur"
-          >
-            <option value="">Sélectionner un membre actif…</option>
-            {eligibleSuccessors.map((m) => (
-              <option key={m.userId || m.id} value={m.userId || m.id}>
-                {m.name} ({m.role})
-              </option>
-            ))}
-          </select>
+            onChange={setTransferTargetId}
+            placeholder="Sélectionner un membre actif…"
+            options={eligibleSuccessors.map((m) => ({
+              value: m.userId || m.id,
+              label: `${m.name} (${m.role})`,
+            }))}
+          />
           <button
             type="button"
             disabled={!transferTargetId || transferring}

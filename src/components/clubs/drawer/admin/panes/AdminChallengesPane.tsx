@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Trophy } from 'lucide-react';
 import type { ClubChallengeItem, ClubItemData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -111,16 +112,16 @@ export function AdminChallengesPane({
               onChange={(e) => setTarget(e.target.value)}
               aria-label="Objectif du défi"
             />
-            <select
-              className="club-glass-input"
+            <AdminGlassSelect
+              ariaLabel="Unité du défi"
               value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              aria-label="Unité du défi"
-            >
-              <option value="km">km</option>
-              <option value="m D+">m D+</option>
-              <option value="sorties">sorties</option>
-            </select>
+              onChange={setUnit}
+              options={[
+                { value: 'km', label: 'km' },
+                { value: 'm D+', label: 'm D+' },
+                { value: 'sorties', label: 'sorties' },
+              ]}
+            />
           </div>
           <button
             type="submit"

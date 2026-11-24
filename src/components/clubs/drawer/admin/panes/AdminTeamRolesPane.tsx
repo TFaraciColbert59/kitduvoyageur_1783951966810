@@ -14,6 +14,7 @@ import {
 } from '@/features/clubs/types';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { CAPABILITY_DOMAIN_GROUPS } from '../adminConfig';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -245,21 +246,16 @@ export function AdminTeamRolesPane({
 
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flex: 'none' }}>
                   {canManageRoles && canEditThisMember ? (
-                    <select
-                      className="club-glass-input"
-                      style={{ height: 30, width: 'auto' }}
+                    <AdminGlassSelect
+                      compact
+                      ariaLabel={`Grade de ${member.name}`}
                       value={role}
-                      onChange={(e) => void handleRoleChange(uid, role, e.target.value as ClubRole)}
-                      aria-label={`Grade de ${member.name}`}
-                    >
-                      {ASSIGNABLE_ROLES.filter((r) => caps.canManageRole(role, r) || r === role).map(
-                        (r) => (
-                          <option key={r} value={r}>
-                            {CLUB_ROLE_LABELS[r]}
-                          </option>
-                        ),
+                      onChange={(v) => void handleRoleChange(uid, role, v as ClubRole)}
+                      options={ASSIGNABLE_ROLES.filter((r) => caps.canManageRole(role, r) || r === role).map(
+                        (r) => ({ value: r, label: CLUB_ROLE_LABELS[r] }),
                       )}
-                    </select>
+                      style={{ width: 'auto', minWidth: 112 }}
+                    />
                   ) : (
                     <span className="club-badge-sage" style={{ fontSize: 10.5 }}>
                       {CLUB_ROLE_LABELS[role]}

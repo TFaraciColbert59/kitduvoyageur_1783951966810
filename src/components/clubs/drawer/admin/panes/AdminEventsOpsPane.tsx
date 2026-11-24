@@ -10,6 +10,7 @@ import type {
   ClubToastPayload,
 } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -236,18 +237,15 @@ export function AdminEventsOpsPane({
           </span>
         ) : (
           <>
-            <select
-              className="club-glass-input"
+            <AdminGlassSelect
+              ariaLabel="Sélectionner un événement"
               value={selectedEvent?.id ?? ''}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              aria-label="Sélectionner un événement"
-            >
-              {outings.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.title} · {o.date} ({o.participantsCount}/{o.maxParticipants})
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedEventId}
+              options={outings.map((o) => ({
+                value: o.id,
+                label: `${o.title} · ${o.date} (${o.participantsCount}/${o.maxParticipants})`,
+              }))}
+            />
             {selectedEvent ? (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11.5, color: 'var(--label2)' }}>
                 <span className="club-badge-sage">
@@ -418,22 +416,20 @@ export function AdminEventsOpsPane({
 
                 {canManageShifts ? (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <select
-                      className="club-glass-input"
-                      style={{ flex: 1, height: 30, fontSize: 11.5 }}
+                    <AdminGlassSelect
+                      compact
+                      ariaLabel={`Affecter un bénévole au poste ${shift.title}`}
                       value={assignMemberByShift[shift.id] ?? ''}
-                      onChange={(e) =>
-                        setAssignMemberByShift((prev) => ({ ...prev, [shift.id]: e.target.value }))
+                      onChange={(v) =>
+                        setAssignMemberByShift((prev) => ({ ...prev, [shift.id]: v }))
                       }
-                      aria-label={`Affecter un bénévole au poste ${shift.title}`}
-                    >
-                      <option value="">Affecter un membre / bénévole…</option>
-                      {members.map((m) => (
-                        <option key={m.userId || m.id} value={m.userId || m.id}>
-                          {m.name} ({m.role})
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Affecter un membre / bénévole…"
+                      options={members.map((m) => ({
+                        value: m.userId || m.id,
+                        label: `${m.name} (${m.role})`,
+                      }))}
+                      style={{ flex: 1 }}
+                    />
                     <button
                       type="button"
                       disabled={!assignMemberByShift[shift.id]}

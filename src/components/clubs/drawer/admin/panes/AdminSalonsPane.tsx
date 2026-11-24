@@ -22,6 +22,7 @@ import {
 } from '@/features/clubs/types';
 import type { ClubItemData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -214,29 +215,26 @@ export function AdminSalonsPane({ activeClub, caps, onToast }: AdminSalonsPanePr
             maxLength={240}
           />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <select
-              className="club-glass-input"
+            <AdminGlassSelect
+              ariaLabel="Type de salon"
               value={kind}
-              onChange={(e) => setKind(e.target.value as ClubChannelKind)}
-              aria-label="Type de salon"
-            >
-              <option value="custom">Thématique</option>
-              <option value="general">Général</option>
-              <option value="announcements">Annonces</option>
-              <option value="events">Sorties</option>
-            </select>
-            <select
-              className="club-glass-input"
+              onChange={(v) => setKind(v as ClubChannelKind)}
+              options={[
+                { value: 'custom', label: 'Thématique' },
+                { value: 'general', label: 'Général' },
+                { value: 'announcements', label: 'Annonces' },
+                { value: 'events', label: 'Sorties' },
+              ]}
+            />
+            <AdminGlassSelect
+              ariaLabel="Rôle minimum requis"
               value={minRole}
-              onChange={(e) => setMinRole(e.target.value as ClubRole)}
-              aria-label="Rôle minimum requis"
-            >
-              {MIN_ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  Accès : {CLUB_ROLE_LABELS[r]}+
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setMinRole(v as ClubRole)}
+              options={MIN_ROLE_OPTIONS.map((r) => ({
+                value: r,
+                label: `Accès : ${CLUB_ROLE_LABELS[r]}+`,
+              }))}
+            />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <span style={{ fontSize: 12, color: 'var(--label2)' }}>Lecture seule pour les membres</span>
@@ -313,19 +311,17 @@ export function AdminSalonsPane({ activeClub, caps, onToast }: AdminSalonsPanePr
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                   {canEdit ? (
                     <>
-                      <select
-                        className="club-glass-input"
-                        style={{ height: 28, fontSize: 11, padding: '0 8px', width: 'auto' }}
+                      <AdminGlassSelect
+                        compact
+                        ariaLabel={`Rôle minimum pour ${ch.name}`}
                         value={ch.minRole ?? 'member'}
-                        onChange={(e) => void patchChannel(ch.id, { minRole: e.target.value as ClubRole })}
-                        aria-label={`Rôle minimum pour ${ch.name}`}
-                      >
-                        {MIN_ROLE_OPTIONS.map((r) => (
-                          <option key={r} value={r}>
-                            {CLUB_ROLE_LABELS[r]}+
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(v) => void patchChannel(ch.id, { minRole: v as ClubRole })}
+                        options={MIN_ROLE_OPTIONS.map((r) => ({
+                          value: r,
+                          label: `${CLUB_ROLE_LABELS[r]}+`,
+                        }))}
+                        style={{ width: 'auto', minWidth: 112 }}
+                      />
                       <button
                         type="button"
                         className="lkdv-carnet-btn-soft"

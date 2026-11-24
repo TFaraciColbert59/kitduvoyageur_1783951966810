@@ -5,6 +5,7 @@ import { Check, CheckCircle2, Download, Plus, Wallet, X } from 'lucide-react';
 import type { ClubBudgetEntry, ClubBudgetKind, ClubBudgetStatus } from '@/features/clubs/types';
 import type { ClubItemData, ClubOutingData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminGlassSelect } from '../AdminGlassSelect';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -237,15 +238,15 @@ export function AdminBudgetPane({
             {canApprove ? 'Ajouter une écriture' : 'Proposer une dépense / recette'}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <select
-              className="club-glass-input"
+            <AdminGlassSelect
+              ariaLabel="Type de mouvement"
               value={kind}
-              onChange={(e) => setKind(e.target.value as ClubBudgetKind)}
-              aria-label="Type de mouvement"
-            >
-              <option value="expense">Dépense</option>
-              <option value="income">Recette</option>
-            </select>
+              onChange={(v) => setKind(v as ClubBudgetKind)}
+              options={[
+                { value: 'expense', label: 'Dépense' },
+                { value: 'income', label: 'Recette' },
+              ]}
+            />
             <input
               type="text"
               className="club-glass-input"

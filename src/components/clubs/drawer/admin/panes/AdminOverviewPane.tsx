@@ -119,16 +119,42 @@ export function AdminOverviewPane({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <b style={{ fontSize: 15, color: 'var(--label)' }}>{activeClub.name}</b>
-          <span className="club-badge-sage">
-            {caps.effectiveRole ? CLUB_ROLE_LABELS[caps.effectiveRole] : 'Staff'}
+      <div
+        className="club-glass-card"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 10,
+          padding: '14px 16px',
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <span
+            style={{
+              fontSize: 10.5,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: '#56665d',
+              display: 'block',
+            }}
+          >
+            {activeClub.name}
           </span>
+          <b
+            style={{
+              fontSize: 22,
+              lineHeight: 1.15,
+              letterSpacing: '-0.02em',
+              color: '#17402c',
+              display: 'block',
+              marginTop: 2,
+            }}
+          >
+            {caps.effectiveRole ? CLUB_ROLE_LABELS[caps.effectiveRole] : 'Staff'}
+          </b>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--label2)' }}>
-          {caps.capabilities.length} capacités actives dans cet espace d’administration.
-        </span>
       </div>
 
       <div
