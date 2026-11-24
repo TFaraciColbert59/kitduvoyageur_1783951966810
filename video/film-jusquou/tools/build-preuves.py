@@ -16,6 +16,7 @@ P = [(12, 1.5, 'Chili · sans-visa', 'in'), (7, 1.5, 'Bus · Puerto-Natales · 7
      (18, 0.5, 'Mirador-Británico · km-34', 'down'), (17, 0.5, 'Guanacos · km-61', 'in'),
      (15, 0.5, 'Carte · hors-ligne', 'out'), (16, 1.25, 'Maman · en-direct', 'in'),
      (19, 2.0, 'Torres · aube · 4h50', 'rise')]
+LABTOP = {14: 560}  # légende déplacée quand le centre de l'image est trop clair
 ALT = {12: 'Passeport sur la tablette, les Andes par le hublot', 7: 'Maya endormie contre la vitre du bus',
        8: 'Tom sur le pont du catamaran', 9: 'Fenêtre éclairée du refuge, chaussures qui sèchent',
        10: "Gourde sous un filet d'eau glaciaire", 11: 'Nuage lenticulaire vu depuis la tente', 13: 'Le contenu du sac, vu du dessus',
@@ -26,9 +27,10 @@ clips, js = [], []
 t = T0
 for k, (n, beats, lab, mv) in enumerate(P, 1):
     d = beats * B; s = round(t, 3); dd = round(d, 3)
+    lt = f' style="top:{LABTOP[n]}px"' if n in LABTOP else ''
     clips.append(f'''    <div id="e{k}" class="clip e-shot" data-start="{s}" data-duration="{dd}" data-track-index="{1 + k % 2}">
       <div id="e{k}-cam" class="e-cam"><div id="e{k}-hand" class="e-hand"><img src="assets/prep/{n:02d}.jpg" alt="{ALT[n]}"></div></div>
-      <div id="e{k}-l" class="e-lab" data-layout-allow-safe-zone>\\ {lab} \\</div>
+      <div id="e{k}-l" class="e-lab" data-layout-allow-safe-zone{lt}>\\ {lab} \\</div>
     </div>''')
     m = {'in': ('{ scale: 1.03 }', '{ scale: 1.09'), 'out': ('{ scale: 1.1 }', '{ scale: 1.04'),
          'drift': ('{ x: -30, scale: 1.06 }', '{ x: 26, scale: 1.07'), 'up': ('{ y: 40, scale: 1.06 }', '{ y: -30, scale: 1.06'),
