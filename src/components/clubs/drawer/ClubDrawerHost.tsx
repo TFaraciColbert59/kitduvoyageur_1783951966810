@@ -203,6 +203,19 @@ export function ClubDrawerHost({
     return () => root.removeEventListener('wheel', handleWheel);
   }, [tab, inspectedMember, isMemberTimelineLens, setMemberHeaderCompact]);
   const [inspectedOuting, setInspectedOuting] = useState<ClubOutingData | null>(null);
+
+  const isTimelineDrawer =
+    internalMode === 'main' &&
+    ((tab === 2 && (subTabs[2] ?? 0) === 0 && !inspectedOuting) ||
+      (tab === 1 && Boolean(inspectedMember) && memberLensIndex === 1));
+
+  useEffect(() => {
+    if (!isTimelineDrawer || typeof document === 'undefined') return;
+    const phoneEl = document.getElementById('phone');
+    if (phoneEl?.classList.contains('map-collapsed')) {
+      document.getElementById('club-map-pill')?.click();
+    }
+  }, [isTimelineDrawer]);
   const [g02Section, setG02Section] = useState<ClubG02Section | undefined>(initialSection);
   const [chatDraftPrefill, setChatDraftPrefill] = useState('');
   const [createPrefillMassif, setCreatePrefillMassif] = useState<string | undefined>(undefined);
@@ -920,6 +933,11 @@ export function ClubDrawerHost({
         {...dragProps}
         style={{ y }}
         onKeyDown={handleRootKeyDown}
+        onWheelCapture={(e) => {
+          if (isTimelineDrawer && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            e.stopPropagation();
+          }
+        }}
         className="lkdv-carnet-drawer lkdv-club-carnet-drawer"
         role="dialog"
         aria-modal="true"
@@ -927,6 +945,7 @@ export function ClubDrawerHost({
         tabIndex={-1}
         data-club-tab={tab}
         data-club-lens={activeLensId}
+        data-timeline-locked={isTimelineDrawer ? 'true' : undefined}
         data-outdoor={isOutdoor ? 'true' : undefined}
         data-reduce-motion={reduceMotion ? 'true' : undefined}
       >

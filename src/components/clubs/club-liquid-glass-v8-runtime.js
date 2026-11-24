@@ -1969,6 +1969,9 @@ let act = function(a, v) {
       }
       break;
     case "toggleMapCollapsed": {
+      if (!S.mapCollapsed && document.querySelector('[data-timeline-locked="true"]')) {
+        break;
+      }
       S.mapCollapsed = !S.mapCollapsed;
       if (!S.mapCollapsed) {
         G.mapManualOpenAt = Date.now();
@@ -4424,7 +4427,7 @@ phone.addEventListener('scroll', e => {
   if (curTop > 12 && curTop > prevTop + 2) {
     if (!S.tabMin) { S.tabMin = true; }
     const scrolledFurtherDown = G.mapOpenScrollTop == null || (curTop - G.mapOpenScrollTop) > 12;
-    if (!S.mapCollapsed && !S.big && scrolledFurtherDown) {
+    if (!S.mapCollapsed && !S.big && scrolledFurtherDown && !document.querySelector('[data-timeline-locked="true"]')) {
       S.mapCollapsed = true;
       G.mapCollapsedAt = now;
       G.mapOpenScrollTop = null;
@@ -4462,7 +4465,7 @@ phone.addEventListener('wheel', e => {
   if (e.deltaY > 10) {
     G.lastDownGestureAt = now;
     G.lastUpGestureAt = 0;
-    if (!S.mapCollapsed && !S.big && now - (G.mapManualOpenAt || 0) > 620 && now - (G.mapCollapsedAt || 0) > 620) {
+    if (!S.mapCollapsed && !S.big && !document.querySelector('[data-timeline-locked="true"]') && now - (G.mapManualOpenAt || 0) > 620 && now - (G.mapCollapsedAt || 0) > 620) {
       S.mapCollapsed = true;
       G.mapCollapsedAt = now;
       G.mapOpenScrollTop = null;

@@ -1422,3 +1422,12 @@ select.club-glass-input {
 select.club-glass-input::picker-icon {
   display: none !important;
 }
+
+/* Verrouillage strict des drawers Timeline : non agrandissables et non scrollables verticalement */
+.lkdv-club-carnet-drawer[data-timeline-locked="true"] .lkdv-lens-pane,
+.lkdv-club-carnet-drawer[data-timeline-locked="true"] .lkdv-slot-content,
+.lkdv-club-carnet-drawer[data-timeline-locked="true"] .club-drawer-pane-content {
+  overflow-y: hidden !important;
+  overscroll-behavior-y: none !important;
+  touch-action: pan-x !important;
+}
