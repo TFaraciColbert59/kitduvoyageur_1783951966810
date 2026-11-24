@@ -2,9 +2,9 @@
   <style>
     #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
     #root .e-shot { position:absolute; inset:0; overflow:hidden; background:#06120C; }
-    #root .e-cam, #root .e-hand { position:absolute; inset:0; transform-origin:50% 50%; }
-    #root .e-hand img { position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }
-    #root .e-shot::after { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 66% 8% at 50% 50.1%, rgba(6,18,12,0.32), rgba(6,18,12,0) 100%); }
+    #root .e-cam { position:absolute; inset:0; }
+    #root .e-v { position:absolute; left:0; top:0; width:1080px; height:1920px; }
+    #e-veil { position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 66% 8% at 50% 50.1%, rgba(6,18,12,0.32), rgba(6,18,12,0) 100%); }
     #root .e-lab { position:absolute; z-index:2; left:0; right:0; margin:0 auto; width:fit-content; top:938px; text-align:center; font-family:"JetBrains Mono",monospace; font-weight:400; font-size:34px; line-height:44px; letter-spacing:0.01em; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8), 0 0 3px rgba(6,18,12,0.5); }
     #w-cam { position:absolute; inset:0; transform-origin:540px 960px; }
     #w-img { position:absolute; left:0; top:0; width:1080px; height:1920px; }
@@ -26,71 +26,38 @@
       </div>
       <div id="w-lab">\ Le-W · 5-jours · 72-km \</div>
     </div>
-    <div id="e1" class="clip e-shot" data-start="1.333" data-duration="1.0" data-track-index="2">
-      <div id="e1-cam" class="e-cam"><div id="e1-hand" class="e-hand"><img src="assets/prep/12.jpg" alt="Passeport sur la tablette, les Andes par le hublot"></div></div>
-      <div id="e1-l" class="e-lab" data-layout-allow-safe-zone>\ Chili · sans-visa \</div>
-    </div>
-    <div id="e2" class="clip e-shot" data-start="2.333" data-duration="1.0" data-track-index="1">
-      <div id="e2-cam" class="e-cam"><div id="e2-hand" class="e-hand"><img src="assets/prep/07.jpg" alt="Maya endormie contre la vitre du bus"></div></div>
-      <div id="e2-l" class="e-lab" data-layout-allow-safe-zone>\ Bus · Puerto-Natales · 7h30 \</div>
-    </div>
-    <div id="e3" class="clip e-shot" data-start="3.333" data-duration="1.0" data-track-index="2">
-      <div id="e3-cam" class="e-cam"><div id="e3-hand" class="e-hand"><img src="assets/prep/08.jpg" alt="Tom sur le pont du catamaran"></div></div>
-      <div id="e3-l" class="e-lab" data-layout-allow-safe-zone>\ Catamaran · Pehoé · 9h \</div>
-    </div>
-    <div id="e4" class="clip e-shot" data-start="4.333" data-duration="1.0" data-track-index="1">
-      <div id="e4-cam" class="e-cam"><div id="e4-hand" class="e-hand"><img src="assets/prep/09.jpg" alt="Fenêtre éclairée du refuge, chaussures qui sèchent"></div></div>
-      <div id="e4-l" class="e-lab" data-layout-allow-safe-zone>\ Refugio-Grey · nuit-1 \</div>
-    </div>
-    <div id="e5" class="clip e-shot" data-start="5.333" data-duration="0.667" data-track-index="2">
-      <div id="e5-cam" class="e-cam"><div id="e5-hand" class="e-hand"><img src="assets/prep/10.jpg" alt="Gourde sous un filet d'eau glaciaire"></div></div>
-      <div id="e5-l" class="e-lab" data-layout-allow-safe-zone style="top:520px">\ Source · km-23 \</div>
-    </div>
-    <div id="e6" class="clip e-shot" data-start="6.0" data-duration="0.667" data-track-index="1">
-      <div id="e6-cam" class="e-cam"><div id="e6-hand" class="e-hand"><img src="assets/prep/11.jpg" alt="Nuage lenticulaire vu depuis la tente"></div></div>
-      <div id="e6-l" class="e-lab" data-layout-allow-safe-zone>\ Météo · mardi-6h · vent-40 \</div>
-    </div>
-    <div id="e7" class="clip e-shot" data-start="6.667" data-duration="0.667" data-track-index="2">
-      <div id="e7-cam" class="e-cam"><div id="e7-hand" class="e-hand"><img src="assets/prep/13.jpg" alt="Le contenu du sac, vu du dessus"></div></div>
-      <div id="e7-l" class="e-lab" data-layout-allow-safe-zone>\ Sac · 9,4-kg \</div>
-    </div>
-    <div id="e8" class="clip e-shot" data-start="7.333" data-duration="0.5" data-track-index="1">
-      <div id="e8-cam" class="e-cam"><div id="e8-hand" class="e-hand"><img src="assets/prep/14.jpg" alt="Trois tasses qui trinquent"></div></div>
-      <div id="e8-l" class="e-lab" data-layout-allow-safe-zone style="top:560px">\ 1-398-€ · chacun \</div>
-    </div>
-    <div id="e9" class="clip e-shot" data-start="7.833" data-duration="0.333" data-track-index="2">
-      <div id="e9-cam" class="e-cam"><div id="e9-hand" class="e-hand"><img src="assets/prep/18.jpg" alt="Un condor sous la falaise"></div></div>
-      <div id="e9-l" class="e-lab" data-layout-allow-safe-zone>\ Mirador-Británico · km-34 \</div>
-    </div>
-    <div id="e10" class="clip e-shot" data-start="8.167" data-duration="0.333" data-track-index="1">
-      <div id="e10-cam" class="e-cam"><div id="e10-hand" class="e-hand"><img src="assets/prep/17.jpg" alt="Portrait d'un guanaco"></div></div>
-      <div id="e10-l" class="e-lab" data-layout-allow-safe-zone style="top:270px">\ Guanacos · km-61 \</div>
-    </div>
-    <div id="e11" class="clip e-shot" data-start="8.5" data-duration="0.333" data-track-index="2">
-      <div id="e11-cam" class="e-cam"><div id="e11-hand" class="e-hand"><img src="assets/prep/15.jpg" alt="Tente éclairée sous la Voie lactée"></div></div>
-      <div id="e11-l" class="e-lab" data-layout-allow-safe-zone>\ Carte · hors-ligne \</div>
-    </div>
-    <div id="e12" class="clip e-shot" data-start="8.833" data-duration="0.833" data-track-index="1">
-      <div id="e12-cam" class="e-cam"><div id="e12-hand" class="e-hand"><img src="assets/prep/16.jpg" alt="Hélène sourit en suivant sa fille"></div></div>
-      <div id="e12-l" class="e-lab" data-layout-allow-safe-zone style="top:270px">\ Maman · en-direct \</div>
-    </div>
-    <div id="e13" class="clip e-shot" data-start="9.667" data-duration="1.333" data-track-index="2">
-      <div id="e13-cam" class="e-cam"><div id="e13-hand" class="e-hand"><img src="assets/prep/19.jpg" alt="Les trois amis face aux Torres à l’aube"></div></div>
-      <div id="e13-l" class="e-lab" data-layout-allow-safe-zone>\ Torres · aube · 4h50 \</div>
-    </div>
+    <video id="e1-v" class="clip e-v" src="assets/shots/12.mp4" muted playsinline data-start="1.333" data-duration="1.0" data-track-index="2" aria-label="Passeport sur la tablette, les Andes par le hublot"></video>
+    <div id="e1-l" class="clip e-lab" data-start="1.333" data-duration="1.0" data-track-index="4" data-layout-allow-safe-zone>\ Chili · sans-visa \</div>
+    <video id="e2-v" class="clip e-v" src="assets/shots/07.mp4" muted playsinline data-start="2.333" data-duration="1.0" data-track-index="1" aria-label="Maya endormie contre la vitre du bus"></video>
+    <div id="e2-l" class="clip e-lab" data-start="2.333" data-duration="1.0" data-track-index="4" data-layout-allow-safe-zone>\ Bus · Puerto-Natales · 7h30 \</div>
+    <video id="e3-v" class="clip e-v" src="assets/shots/08.mp4" muted playsinline data-start="3.333" data-duration="1.0" data-track-index="2" aria-label="Tom sur le pont du catamaran"></video>
+    <div id="e3-l" class="clip e-lab" data-start="3.333" data-duration="1.0" data-track-index="4" data-layout-allow-safe-zone>\ Catamaran · Pehoé · 9h \</div>
+    <video id="e4-v" class="clip e-v" src="assets/shots/09.mp4" muted playsinline data-start="4.333" data-duration="1.0" data-track-index="1" aria-label="Fenêtre éclairée du refuge, chaussures qui sèchent"></video>
+    <div id="e4-l" class="clip e-lab" data-start="4.333" data-duration="1.0" data-track-index="4" data-layout-allow-safe-zone>\ Refugio-Grey · nuit-1 \</div>
+    <video id="e5-v" class="clip e-v" src="assets/shots/10.mp4" muted playsinline data-start="5.333" data-duration="0.667" data-track-index="2" aria-label="Gourde sous un filet d'eau glaciaire"></video>
+    <div id="e5-l" class="clip e-lab" data-start="5.333" data-duration="0.667" data-track-index="4" data-layout-allow-safe-zone style="top:520px">\ Source · km-23 \</div>
+    <video id="e6-v" class="clip e-v" src="assets/shots/11.mp4" muted playsinline data-start="6.0" data-duration="0.667" data-track-index="1" aria-label="Nuage lenticulaire vu depuis la tente"></video>
+    <div id="e6-l" class="clip e-lab" data-start="6.0" data-duration="0.667" data-track-index="4" data-layout-allow-safe-zone>\ Météo · mardi-6h · vent-40 \</div>
+    <video id="e7-v" class="clip e-v" src="assets/shots/13.mp4" muted playsinline data-start="6.667" data-duration="0.667" data-track-index="2" aria-label="Le contenu du sac, vu du dessus"></video>
+    <div id="e7-l" class="clip e-lab" data-start="6.667" data-duration="0.667" data-track-index="4" data-layout-allow-safe-zone>\ Sac · 9,4-kg \</div>
+    <video id="e8-v" class="clip e-v" src="assets/shots/14.mp4" muted playsinline data-start="7.333" data-duration="0.5" data-track-index="1" aria-label="Trois tasses qui trinquent"></video>
+    <div id="e8-l" class="clip e-lab" data-start="7.333" data-duration="0.5" data-track-index="4" data-layout-allow-safe-zone style="top:560px">\ 1-398-€ · chacun \</div>
+    <video id="e9-v" class="clip e-v" src="assets/shots/18.mp4" muted playsinline data-start="7.833" data-duration="0.333" data-track-index="2" aria-label="Un condor sous la falaise"></video>
+    <div id="e9-l" class="clip e-lab" data-start="7.833" data-duration="0.333" data-track-index="4" data-layout-allow-safe-zone>\ Mirador-Británico · km-34 \</div>
+    <video id="e10-v" class="clip e-v" src="assets/shots/17.mp4" muted playsinline data-start="8.167" data-duration="0.333" data-track-index="1" aria-label="Portrait d'un guanaco"></video>
+    <div id="e10-l" class="clip e-lab" data-start="8.167" data-duration="0.333" data-track-index="4" data-layout-allow-safe-zone style="top:270px">\ Guanacos · km-61 \</div>
+    <video id="e11-v" class="clip e-v" src="assets/shots/15.mp4" muted playsinline data-start="8.5" data-duration="0.333" data-track-index="2" aria-label="Tente éclairée sous la Voie lactée"></video>
+    <div id="e11-l" class="clip e-lab" data-start="8.5" data-duration="0.333" data-track-index="4" data-layout-allow-safe-zone>\ Carte · hors-ligne \</div>
+    <video id="e12-v" class="clip e-v" src="assets/shots/16.mp4" muted playsinline data-start="8.833" data-duration="0.833" data-track-index="1" aria-label="Hélène sourit en suivant sa fille"></video>
+    <div id="e12-l" class="clip e-lab" data-start="8.833" data-duration="0.833" data-track-index="4" data-layout-allow-safe-zone style="top:270px">\ Maman · en-direct \</div>
+    <video id="e13-v" class="clip e-v" src="assets/shots/19.mp4" muted playsinline data-start="9.667" data-duration="1.333" data-track-index="2" aria-label="Les trois amis face aux Torres à l’aube"></video>
+    <div id="e13-l" class="clip e-lab" data-start="9.667" data-duration="1.333" data-track-index="4" data-layout-allow-safe-zone>\ Torres · aube · 4h50 \</div>
+    <div id="e-veil" class="clip" data-start="1.333" data-duration="9.667" data-track-index="3"></div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
       const F = 1 / 30;
-      function hand(sel, t0, dur, amp, seed) {
-        for (let t = 0; t < dur - 1e-6; t += 2 * F) {
-          const u = t + seed;
-          tl.set(sel, { x: amp * (0.6 * Math.sin(u * 1.7) + 0.4 * Math.sin(u * 3.3)),
-                        y: amp * (0.6 * Math.sin(u * 1.3 + 1) + 0.4 * Math.sin(u * 2.9)),
-                        rotation: amp * 0.018 * Math.sin(u * 1.1) }, t0 + t);
-        }
-      }
       // Le W : coupe nette depuis la Terre, le tracé laiton se dessine en 0,8 s, les cinq étapes s'allument.
       tl.fromTo("#w-cam", { scale: 1.12 }, { scale: 1.0, duration: 1.333, ease: "power2.out" }, 0);
       const segs = gsap.utils.toArray("#w-lines .w-seg");
@@ -99,33 +66,8 @@
       tl.fromTo("#w-halo", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.5);
       gsap.utils.toArray("#w-stops .w-st").forEach((c, i) => tl.to(c, { opacity: 1, duration: 2 * F }, 0.12 + [0, 0.2, 0.4, 0.62, 0.8][i]));
       tl.set("#w-lab", { opacity: 1 }, 0.1);
-      // Les preuves : poussées et glissements alternés, caméra à l'épaule, légende posée sans effet.
-      tl.fromTo("#e1-cam", { scale: 1.03 }, { scale: 1.09, duration: 1.0, ease: "none" }, 1.333);
-      hand("#e1-hand", 1.333, 1.0, 4, 1.9);
-      tl.fromTo("#e2-cam", { x: -30, scale: 1.06 }, { x: 26, scale: 1.07, duration: 1.0, ease: "none" }, 2.333);
-      hand("#e2-hand", 2.333, 1.0, 4, 3.8);
-      tl.fromTo("#e3-cam", { scale: 1.03 }, { scale: 1.09, duration: 1.0, ease: "none" }, 3.333);
-      hand("#e3-hand", 3.333, 1.0, 4, 5.7);
-      tl.fromTo("#e4-cam", { scale: 1.1 }, { scale: 1.04, duration: 1.0, ease: "none" }, 4.333);
-      hand("#e4-hand", 4.333, 1.0, 4, 7.6);
-      tl.fromTo("#e5-cam", { scale: 1.03 }, { scale: 1.09, duration: 0.667, ease: "none" }, 5.333);
-      hand("#e5-hand", 5.333, 0.667, 6, 9.5);
-      tl.fromTo("#e6-cam", { y: 40, scale: 1.06 }, { y: -30, scale: 1.06, duration: 0.667, ease: "none" }, 6.0);
-      hand("#e6-hand", 6.0, 0.667, 6, 11.4);
-      tl.fromTo("#e7-cam", { rotation: -1.2, scale: 1.06 }, { rotation: 1.2, scale: 1.09, duration: 0.667, ease: "none" }, 6.667);
-      hand("#e7-hand", 6.667, 0.667, 6, 13.3);
-      tl.fromTo("#e8-cam", { scale: 1.03 }, { scale: 1.09, duration: 0.5, ease: "none" }, 7.333);
-      hand("#e8-hand", 7.333, 0.5, 6, 15.2);
-      tl.fromTo("#e9-cam", { y: -40, scale: 1.07 }, { y: 40, scale: 1.09, duration: 0.333, ease: "none" }, 7.833);
-      hand("#e9-hand", 7.833, 0.333, 6, 17.1);
-      tl.fromTo("#e10-cam", { scale: 1.03 }, { scale: 1.09, duration: 0.333, ease: "none" }, 8.167);
-      hand("#e10-hand", 8.167, 0.333, 6, 19.0);
-      tl.fromTo("#e11-cam", { scale: 1.1 }, { scale: 1.04, duration: 0.333, ease: "none" }, 8.5);
-      hand("#e11-hand", 8.5, 0.333, 6, 20.9);
-      tl.fromTo("#e12-cam", { scale: 1.03 }, { scale: 1.09, duration: 0.833, ease: "none" }, 8.833);
-      hand("#e12-hand", 8.833, 0.833, 6, 22.8);
-      tl.fromTo("#e13-cam", { y: 30, scale: 1.02 }, { y: -20, scale: 1.08, duration: 1.333, ease: "none" }, 9.667);
-      hand("#e13-hand", 9.667, 1.333, 4, 24.7);
+      // Les preuves : plans animés (vidéos), légende posée sans effet.
+
       window.__timelines = window.__timelines || {};
       window.__timelines["preuves"] = tl;
     })();

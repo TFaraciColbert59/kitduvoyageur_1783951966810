@@ -1,9 +1,7 @@
 <template>
   <style>
     #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
-    #root .q-shot { position:absolute; inset:0; overflow:hidden; background:#06120C; }
-    #root .q-cam, #root .q-hand { position:absolute; inset:0; transform-origin:50% 50%; }
-    #root .q-hand img { position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }
+    #root .q-v { position:absolute; left:0; top:0; width:1080px; height:1920px; }
     #root .q-w { position:absolute; font-family:"EB Garamond",serif; font-weight:400; color:#FAF8F5; white-space:nowrap; line-height:1;
                  text-shadow:0 0 22px rgba(250,248,245,0.28), 0 2px 34px rgba(6,18,12,0.6), 0 0 2px rgba(6,18,12,0.4); }
     #root .q-w span { display:inline-block; }
@@ -18,72 +16,42 @@
               text-shadow:0 0 40px rgba(250,248,245,0.45), 0 0 90px rgba(208,160,112,0.25), 0 4px 40px rgba(6,18,12,0.7); }
   </style>
   <div id="root" data-composition-id="question" data-width="1080" data-height="1920">
-    <div id="q1" class="clip q-shot" data-start="0" data-duration="1.333" data-track-index="1">
-      <div id="q1-cam" class="q-cam"><div id="q1-hand" class="q-hand"><img src="assets/prep/01.jpg" alt="Léa minuscule face aux parois de la vallée du Francés"></div></div>
-      <div id="q1-w" class="q-w">Jusqu’où</div>
-    </div>
-    <div id="q2" class="clip q-shot" data-start="1.333" data-duration="1.334" data-track-index="2">
-      <div id="q2-cam" class="q-cam"><div id="q2-hand" class="q-hand"><img src="assets/prep/02.jpg" alt="Profil de Léa dans le vent"></div></div>
-      <div id="q2-w" class="q-w">irais-tu</div>
-    </div>
-    <div id="q3" class="clip q-shot" data-start="2.667" data-duration="0.666" data-track-index="1">
-      <div id="q3-cam" class="q-cam"><div id="q3-hand" class="q-hand"><img src="assets/prep/03.jpg" alt="Boussole en laiton dans un gant de laine"></div></div>
-      <div id="q3-w" class="q-w">si</div>
-    </div>
-    <div id="q4" class="clip q-shot" data-start="3.333" data-duration="1.334" data-track-index="2">
-      <div id="q4-cam" class="q-cam"><div id="q4-hand" class="q-hand"><img src="assets/prep/04.jpg" alt="Sentier vide dans le brouillard"></div></div>
-      <div id="q4-w" class="q-w"><span>r</span><span>i</span><span>e</span><span>n</span></div>
-    </div>
-    <div id="q5" class="clip q-shot" data-start="4.667" data-duration="0.666" data-track-index="1">
-      <div id="q5-cam" class="q-cam"><div id="q5-hand" class="q-hand"><img src="assets/prep/05.jpg" alt="Carte dépliée à la lueur d'une frontale"></div></div>
-      <div id="q5-w" class="q-w">ne</div>
-    </div>
-    <div id="q6" class="clip q-shot" data-start="5.333" data-duration="3.334" data-track-index="2">
-      <div id="q6-cam" class="q-cam"><div id="q6-hand" class="q-hand"><img src="assets/prep/06.jpg" alt="Léa, Tom et Maya rient dans le vent"></div></div>
-      <div id="q6-dim"></div>
-      <div id="q6-w" class="q-w">manquait&nbsp;?</div>
-      <div id="q6-big" class="q-w"><span>m</span><span>a</span><span>n</span><span>q</span><span>u</span><span>a</span><span>i</span><span>t</span><span>&nbsp;</span><span>?</span></div>
-    </div>
+    <video id="q1-v" class="clip q-v" src="assets/shots/01.mp4" muted playsinline data-start="0" data-duration="1.333" data-track-index="1" aria-label="Léa minuscule face aux parois de la vallée du Francés"></video>
+    <video id="q2-v" class="clip q-v" src="assets/shots/02.mp4" muted playsinline data-start="1.333" data-duration="1.334" data-track-index="2" aria-label="Profil de Léa dans le vent"></video>
+    <video id="q3-v" class="clip q-v" src="assets/shots/03.mp4" muted playsinline data-start="2.667" data-duration="0.666" data-track-index="1" aria-label="Boussole en laiton dans un gant de laine"></video>
+    <video id="q4-v" class="clip q-v" src="assets/shots/04.mp4" muted playsinline data-start="3.333" data-duration="1.334" data-track-index="2" aria-label="Sentier vide dans le brouillard"></video>
+    <video id="q5-v" class="clip q-v" src="assets/shots/05.mp4" muted playsinline data-start="4.667" data-duration="0.666" data-track-index="1" aria-label="Carte dépliée à la lueur d'une frontale"></video>
+    <video id="q6-v" class="clip q-v" src="assets/shots/06.mp4" muted playsinline data-start="5.333" data-duration="3.334" data-track-index="2" aria-label="Léa, Tom et Maya rient dans le vent"></video>
+    <div id="q1-w" class="clip q-w" data-start="0" data-duration="1.333" data-track-index="4">Jusqu’où</div>
+    <div id="q2-w" class="clip q-w" data-start="1.333" data-duration="1.334" data-track-index="4">irais-tu</div>
+    <div id="q3-w" class="clip q-w" data-start="2.667" data-duration="0.666" data-track-index="4">si</div>
+    <div id="q4-w" class="clip q-w" data-start="3.333" data-duration="1.334" data-track-index="4"><span>r</span><span>i</span><span>e</span><span>n</span></div>
+    <div id="q5-w" class="clip q-w" data-start="4.667" data-duration="0.666" data-track-index="4">ne</div>
+    <div id="q6-dim" class="clip" data-start="5.333" data-duration="3.334" data-track-index="3"></div>
+    <div id="q6-w" class="clip q-w" data-start="5.333" data-duration="3.334" data-track-index="4">manquait&nbsp;?</div>
+    <div id="q6-big" class="clip q-w" data-start="5.333" data-duration="3.334" data-track-index="5"><span>m</span><span>a</span><span>n</span><span>q</span><span>u</span><span>a</span><span>i</span><span>t</span><span>&nbsp;</span><span>?</span></div>
   </div>
   <script>
     (function () {
       const tl = gsap.timeline({ paused: true });
       const F = 1 / 30;
-      // Caméra à l'épaule : petites oscillations déterministes (somme de sinus), une valeur toutes les 2 images.
-      function hand(sel, t0, dur, amp, seed) {
-        for (let t = 0; t < dur - 1e-6; t += 2 * F) {
-          const u = t + seed;
-          tl.set(sel, { x: amp * (0.6 * Math.sin(u * 1.7) + 0.4 * Math.sin(u * 3.3)),
-                        y: amp * (0.6 * Math.sin(u * 1.3 + 1) + 0.4 * Math.sin(u * 2.9)),
-                        rotation: amp * 0.018 * Math.sin(u * 1.1) }, t0 + t);
-        }
-      }
       // 1 — « Jusqu'où » : panoramique lent vers le haut, l'immensité se révèle. Le mot apparaît en fondu court.
-      tl.fromTo("#q1-cam", { y: 70, scale: 1.07 }, { y: -40, scale: 1.035, duration: 1.333, ease: "sine.out" }, 0);
-      hand("#q1-hand", 0, 1.333, 5, 0.3);
       tl.fromTo("#q1-w", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.2, ease: "sine.out" }, 0.05);
       // 2 — « irais-tu » : le visage, une poussée lente vers l'œil.
-      tl.fromTo("#q2-cam", { scale: 1.02, x: 0 }, { scale: 1.08, x: 22, duration: 1.334, ease: "none" }, 1.333);
-      hand("#q2-hand", 1.333, 1.334, 4, 2.1);
       tl.fromTo("#q2-w", { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.333);
+      tl.fromTo("#q1-w", { x: 0 }, { x: 10, duration: 1.2, ease: "none" }, 0.1);
       tl.to("#q2-w", { x: -10, duration: 1.334, ease: "none" }, 1.333);
       // 3 — « si » : on fonce sur l'aiguille qui tremble.
-      tl.fromTo("#q3-cam", { scale: 1.04 }, { scale: 1.16, duration: 0.666, ease: "power1.in" }, 2.667);
-      hand("#q3-hand", 2.667, 0.666, 7, 4.4);
       // 4 — « rien » : le mot se dilue dans le brouillard (les lettres s'écartent, il pâlit).
-      tl.fromTo("#q4-cam", { scale: 1.03 }, { scale: 1.06, duration: 1.334, ease: "none" }, 3.333);
-      hand("#q4-hand", 3.333, 1.334, 3, 6.2);
       gsap.utils.toArray("#q4-w span").forEach((el, i) => tl.fromTo(el, { x: 0 }, { x: (i - 1.5) * 30, duration: 1.3, ease: "sine.inOut" }, 3.333));
       tl.fromTo("#q4-w", { opacity: 1 }, { opacity: 0.55, duration: 1.3, ease: "sine.inOut" }, 3.333);
+      tl.fromTo("#q3-w", { scale: 0.96 }, { scale: 1.04, duration: 0.666, ease: "none" }, 2.667);
       // 5 — « ne » : un éclair, la carte sous la frontale.
-      tl.fromTo("#q5-cam", { scale: 1.05, y: 10 }, { scale: 1.1, y: -10, duration: 0.666, ease: "none" }, 4.667);
-      hand("#q5-hand", 4.667, 0.666, 6, 8.5);
+      tl.fromTo("#q5-w", { y: 6 }, { y: -6, duration: 0.666, ease: "none" }, 4.667);
       // 6 — « manquait ? » : d'abord sur les trois amis qui rient, puis l'image s'assombrit et le mot devient immense.
-      tl.fromTo("#q6-cam", { scale: 1.03 }, { scale: 1.1, duration: 3.334, ease: "sine.inOut" }, 5.333);
-      hand("#q6-hand", 5.333, 3.334, 6, 10.7);
       tl.to("#q6-w", { opacity: 0, duration: 4 * F }, 6.95);
       tl.to("#q6-dim", { opacity: 0.62, duration: 0.5, ease: "sine.inOut" }, 6.85);
-      tl.to("#q6-cam", { filter: "blur(10px)", duration: 0.6, ease: "sine.inOut" }, 6.85);
+      tl.to("#q6-v", { filter: "blur(10px)", duration: 0.6, ease: "sine.inOut" }, 6.85);
       tl.fromTo("#q6-big", { opacity: 0, scale: 0.86 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 7.0);
       tl.to("#q6-big", { scale: 1.05, duration: 1.22, ease: "none" }, 7.45);
       // le « ? » se détache doucement, comme les lettres éparses de la référence

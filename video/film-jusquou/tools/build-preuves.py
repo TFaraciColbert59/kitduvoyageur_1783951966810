@@ -28,16 +28,12 @@ t = T0
 for k, (n, beats, lab, mv) in enumerate(P, 1):
     d = beats * B; s = round(t, 3); dd = round(d, 3)
     lt = f' style="top:{LABTOP[n]}px"' if n in LABTOP else ''
-    clips.append(f'''    <div id="e{k}" class="clip e-shot" data-start="{s}" data-duration="{dd}" data-track-index="{1 + k % 2}">
-      <div id="e{k}-cam" class="e-cam"><div id="e{k}-hand" class="e-hand"><img src="assets/prep/{n:02d}.jpg" alt="{ALT[n]}"></div></div>
-      <div id="e{k}-l" class="e-lab" data-layout-allow-safe-zone{lt}>\\ {lab} \\</div>
-    </div>''')
+    clips.append(f'''    <video id="e{k}-v" class="clip e-v" src="assets/shots/{n:02d}.mp4" muted playsinline data-start="{s}" data-duration="{dd}" data-track-index="{1 + k % 2}" aria-label="{ALT[n]}"></video>
+    <div id="e{k}-l" class="clip e-lab" data-start="{s}" data-duration="{dd}" data-track-index="4" data-layout-allow-safe-zone{lt}>\\ {lab} \\</div>''')
     m = {'in': ('{ scale: 1.03 }', '{ scale: 1.09'), 'out': ('{ scale: 1.1 }', '{ scale: 1.04'),
          'drift': ('{ x: -30, scale: 1.06 }', '{ x: 26, scale: 1.07'), 'up': ('{ y: 40, scale: 1.06 }', '{ y: -30, scale: 1.06'),
          'down': ('{ y: -40, scale: 1.07 }', '{ y: 40, scale: 1.09'), 'rot': ('{ rotation: -1.2, scale: 1.06 }', '{ rotation: 1.2, scale: 1.09'),
          'rise': ('{ y: 30, scale: 1.02 }', '{ y: -20, scale: 1.08')}[mv]
-    js.append(f'      tl.fromTo("#e{k}-cam", {m[0]}, {m[1]}, duration: {dd}, ease: "none" }}, {s});')
-    js.append(f'      hand("#e{k}-hand", {s}, {dd}, {6 if beats < 1.5 else 4}, {k * 1.9:.1f});')
     t += d
 TOTAL = round(t, 3)
 stop_svg = ''.join(f'<circle class="w-st" cx="{x}" cy="{y}" r="11"/>' for x, y in stops)
@@ -45,9 +41,9 @@ html = f'''<template>
   <style>
     #root {{ position:absolute; inset:0; overflow:hidden; background:#06120C; }}
     #root .e-shot {{ position:absolute; inset:0; overflow:hidden; background:#06120C; }}
-    #root .e-cam, #root .e-hand {{ position:absolute; inset:0; transform-origin:50% 50%; }}
-    #root .e-hand img {{ position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }}
-    #root .e-shot::after {{ content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 66% 8% at 50% 50.1%, rgba(6,18,12,0.32), rgba(6,18,12,0) 100%); }}
+    #root .e-cam {{ position:absolute; inset:0; }}
+    #root .e-v {{ position:absolute; left:0; top:0; width:1080px; height:1920px; }}
+    #e-veil {{ position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 66% 8% at 50% 50.1%, rgba(6,18,12,0.32), rgba(6,18,12,0) 100%); }}
     #root .e-lab {{ position:absolute; z-index:2; left:0; right:0; margin:0 auto; width:fit-content; top:938px; text-align:center; font-family:"JetBrains Mono",monospace; font-weight:400; font-size:34px; line-height:44px; letter-spacing:0.01em; color:#FAF8F5; white-space:pre; text-shadow:0 2px 22px rgba(6,18,12,0.8), 0 0 3px rgba(6,18,12,0.5); }}
     #w-cam {{ position:absolute; inset:0; transform-origin:540px 960px; }}
     #w-img {{ position:absolute; left:0; top:0; width:1080px; height:1920px; }}
@@ -70,19 +66,12 @@ html = f'''<template>
       <div id="w-lab">\\ Le-W · 5-jours · 72-km \\</div>
     </div>
 {chr(10).join(clips)}
+    <div id="e-veil" class="clip" data-start="{round(T0, 3)}" data-duration="{round(TOTAL - T0, 3)}" data-track-index="3"></div>
   </div>
   <script>
     (function () {{
       const tl = gsap.timeline({{ paused: true }});
       const F = 1 / 30;
-      function hand(sel, t0, dur, amp, seed) {{
-        for (let t = 0; t < dur - 1e-6; t += 2 * F) {{
-          const u = t + seed;
-          tl.set(sel, {{ x: amp * (0.6 * Math.sin(u * 1.7) + 0.4 * Math.sin(u * 3.3)),
-                        y: amp * (0.6 * Math.sin(u * 1.3 + 1) + 0.4 * Math.sin(u * 2.9)),
-                        rotation: amp * 0.018 * Math.sin(u * 1.1) }}, t0 + t);
-        }}
-      }}
       // Le W : coupe nette depuis la Terre, le tracé laiton se dessine en 0,8 s, les cinq étapes s'allument.
       tl.fromTo("#w-cam", {{ scale: 1.12 }}, {{ scale: 1.0, duration: {round(T0, 3)}, ease: "power2.out" }}, 0);
       const segs = gsap.utils.toArray("#w-lines .w-seg");
@@ -91,7 +80,7 @@ html = f'''<template>
       tl.fromTo("#w-halo", {{ opacity: 0 }}, {{ opacity: 1, duration: 0.5 }}, 0.5);
       gsap.utils.toArray("#w-stops .w-st").forEach((c, i) => tl.to(c, {{ opacity: 1, duration: 2 * F }}, 0.12 + [0, 0.2, 0.4, 0.62, 0.8][i]));
       tl.set("#w-lab", {{ opacity: 1 }}, 0.1);
-      // Les preuves : poussées et glissements alternés, caméra à l'épaule, légende posée sans effet.
+      // Les preuves : plans animés (vidéos), légende posée sans effet.
 {chr(10).join(js)}
       window.__timelines = window.__timelines || {{}};
       window.__timelines["preuves"] = tl;
