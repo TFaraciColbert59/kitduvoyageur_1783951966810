@@ -103,6 +103,9 @@ function CordeeMemberList({
     return map;
   }, [vaultGear]);
 
+  const visibleMembers = useMemo(() => members.slice(0, visibleCount), [members, visibleCount]);
+  const remainingCount = Math.max(0, members.length - visibleMembers.length);
+
   if (members.length === 0) {
     return (
       <div className="lkdv-carnet-empty-card">
@@ -112,9 +115,6 @@ function CordeeMemberList({
       </div>
     );
   }
-
-  const visibleMembers = useMemo(() => members.slice(0, visibleCount), [members, visibleCount]);
-  const remainingCount = Math.max(0, members.length - visibleMembers.length);
 
   return (
     <StaggerList className="lkdv-carnet-cards-col">

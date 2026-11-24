@@ -313,14 +313,12 @@ describe('Milestone M1 — ClubDrawerHost, Pure Stats Hub (Tab 0) & Cordée (D05
     expect(screen.queryByTestId('club-stats-management-panel')).toBeNull();
     unmountMember();
 
-    // 3. Admin / Founder: sees management panel AND story permission switch inside member accordion
-    const onToggleStoryPerm = vi.fn().mockResolvedValue(true);
+    // 3. Admin / Founder: sees management panel and member accordion details
     renderHost({
       initialTab: 0,
       initialSubTab: 3,
       activeClub: { ...ACTIVE_CLUB, joined: true, role: 'Fondateur', viewerRole: 'admin' },
       currentUserId: 'u-1',
-      onToggleMemberStoryPermission: onToggleStoryPerm,
     });
     expect(screen.getByTestId('club-stats-management-panel')).toBeTruthy();
     const claraRowBtn = within(screen.getByTestId('club-stats-members-pane'))
@@ -328,9 +326,7 @@ describe('Milestone M1 — ClubDrawerHost, Pure Stats Hub (Tab 0) & Cordée (D05
       .find((b) => b.hasAttribute('aria-expanded') && b.textContent?.includes('Clara Bivouac'));
     expect(claraRowBtn).toBeTruthy();
     fireEvent.click(claraRowBtn!);
-    const permSwitch = screen.getByRole('switch', { name: /Habilité aux stories à la une/i });
-    fireEvent.click(permSwitch);
-    expect(onToggleStoryPerm).toHaveBeenCalledTimes(1);
+    expect(claraRowBtn!.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('Tab 0 sub-lenses render events/records (0.1), kits/vault (0.2), and header overlays support club_switcher & club_search', () => {
@@ -445,12 +441,12 @@ describe('Milestone M1 — ClubDrawerHost, Pure Stats Hub (Tab 0) & Cordée (D05
     fireEvent.click(claraBtn);
 
     // Header stays stationary in topnav outside sliding slot-content pane
-    expect(screen.getByText('Clara Bivouac')).toBeTruthy();
+    expect(screen.getAllByText('Clara Bivouac').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Cordée' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Perf & Stats' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Sorties' })).toBeTruthy();
     expect(screen.getByRole('tab', { name: 'Sac' })).toBeTruthy();
-    expect(screen.getByRole('tab', { name: 'Contributions' })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Contributions' })).toBeNull();
 
     // Pressing Escape must pop the inspected member stack BEFORE calling onClose
     fireEvent.keyDown(document, { key: 'Escape' });

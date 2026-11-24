@@ -182,7 +182,7 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
     expect(screen.getByTestId('club-outings-upcoming-pane')).toBeTruthy();
     expect(screen.getByText('Sortie en joëlette — Calanques')).toBeTruthy();
 
-    // Weather subTab (D10)
+    // Tickets subTab (2.1 — EventTicket parity)
     rerender(
       <ClubSortiesDrawerBody
         activeSubTab={1}
@@ -199,11 +199,8 @@ describe('Milestones M2, M3 & M5 — Sorties, Coffre, Tribu, Create & Runtime Ov
         onToast={onToast}
       />,
     );
-    expect(screen.getByTestId('club-weather-pane')).toBeTruthy();
-    const reportInput = screen.getByLabelText('Signaler une condition terrain');
-    fireEvent.change(reportInput, { target: { value: 'Source fraîche au col' } });
-    fireEvent.submit(reportInput.closest('form')!);
-    expect(screen.getByText('Source fraîche au col')).toBeTruthy();
+    expect(screen.getByTestId('club-outings-tickets-pane')).toBeTruthy();
+    expect(screen.getByText('Sortie en joëlette — Calanques')).toBeTruthy();
 
     // Inspected Outing multi-lens Fiche Sortie (D13)
     rerender(
