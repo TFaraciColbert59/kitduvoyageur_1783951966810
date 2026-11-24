@@ -132,7 +132,22 @@ export async function GET(
     }
 
     const { data, error } = await query;
-    if (error) return dbFailure('GET /api/clubs/[id]/budget', error);
+    if (error) {
+      const code = (error as { code?: string }).code ?? '';
+      const msg = (error as { message?: string }).message ?? '';
+      if (code === '42P01' || code === 'PGRST205' || msg.includes('club_budget_entries')) {
+        return json({
+          data: {
+            entries: [],
+            summary: buildBudgetSummary([]),
+            canApprove,
+            canPropose: true,
+            migrationPending: true,
+          },
+        });
+      }
+      return dbFailure('GET /api/clubs/[id]/budget', error);
+    }
 
     const entries = asArray<Row>(data).map(mapBudgetEntryRow);
 

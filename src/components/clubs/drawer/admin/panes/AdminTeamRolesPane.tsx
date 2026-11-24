@@ -247,7 +247,7 @@ export function AdminTeamRolesPane({
                   {canManageRoles && canEditThisMember ? (
                     <select
                       className="club-glass-input"
-                      style={{ height: 28, fontSize: 11, padding: '0 8px', width: 'auto' }}
+                      style={{ height: 30, width: 'auto' }}
                       value={role}
                       onChange={(e) => void handleRoleChange(uid, role, e.target.value as ClubRole)}
                       aria-label={`Grade de ${member.name}`}

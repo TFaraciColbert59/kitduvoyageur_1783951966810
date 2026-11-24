@@ -248,13 +248,27 @@ function InspectedMemberPane({
         const supabase = createClient();
         const { data } = await supabase
           .from('carnets')
-          .select('id, slug, title, massif, distance_km')
-          .eq('user_id', uid)
+          .select('id, title, destination, distance_km')
+          .eq('author_id', uid)
           .eq('visibility', 'public')
           .limit(3);
         if (!cancelled && Array.isArray(data)) {
-          publicCarnetsCache.set(uid, data as PublicCarnetSummary[]);
-          setPublicCarnets(data as PublicCarnetSummary[]);
+          const mapped: PublicCarnetSummary[] = (
+            data as Array<{
+              id: string;
+              title: string;
+              destination?: string | null;
+              distance_km?: number | null;
+            }>
+          ).map((row) => ({
+            id: row.id,
+            slug: row.id,
+            title: row.title,
+            massif: row.destination ?? null,
+            distance_km: row.distance_km ?? null,
+          }));
+          publicCarnetsCache.set(uid, mapped);
+          setPublicCarnets(mapped);
         }
       } catch {
         // ignore in offline/test env

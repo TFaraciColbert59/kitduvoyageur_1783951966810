@@ -110,7 +110,14 @@ export async function GET(
     }
 
     const { data: shiftRows, error: shiftErr } = await shiftQuery;
-    if (shiftErr) return dbFailure('GET /api/clubs/[id]/volunteers shifts', shiftErr);
+    if (shiftErr) {
+      const code = (shiftErr as { code?: string }).code ?? '';
+      const msg = (shiftErr as { message?: string }).message ?? '';
+      if (code === '42P01' || code === 'PGRST205' || msg.includes('club_event_volunteer_shifts')) {
+        return json({ data: { canManage, shifts: [], migrationPending: true } });
+      }
+      return dbFailure('GET /api/clubs/[id]/volunteers shifts', shiftErr);
+    }
 
     const shifts = asArray<Row>(shiftRows).map(mapVolunteerShiftRow);
     const shiftIds = shifts.map((s) => s.id);

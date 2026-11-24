@@ -1392,3 +1392,33 @@ body.lkdv-dialog-open .lkdv-floating-tabbar {
   color: #56665d;
   flex-shrink: 0;
 }
+
+/* Fix double chevron & alignement vertical sur les <select> dans le drawer Admin & Club */
+#sheet .lkdv-club-carnet-drawer select.club-glass-input,
+.lkdv-club-carnet-drawer select.club-glass-input,
+select.club-glass-input {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  min-height: 0 !important;
+  height: 34px;
+  line-height: 1.2 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2317402c' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 9px center !important;
+  background-size: 12px 12px !important;
+  padding: 0 28px 0 10px !important;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle !important;
+  cursor: pointer;
+}
+
+#sheet .lkdv-club-carnet-drawer select.club-glass-input::picker-icon,
+.lkdv-club-carnet-drawer select.club-glass-input::picker-icon,
+select.club-glass-input::picker-icon {
+  display: none !important;
+}
