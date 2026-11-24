@@ -234,6 +234,20 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [clubOutings, setClubOutings] = useState<ClubOutingData[]>(INITIAL_CLUB_OUTINGS);
   const [vaultGear, setVaultGear] = useState<ClubGearVaultItem[]>(INITIAL_VAULT_GEAR);
   const [standardKits, setStandardKits] = useState<ClubStandardKit[]>(INITIAL_STANDARD_KITS);
+  const [clubPokedex, setClubPokedex] = useState<
+    Array<{
+      id: string;
+      commonName: string;
+      latinName?: string;
+      outingId?: string;
+      outingTitle: string;
+      observerName: string;
+      observedAt: string;
+      confidence?: string;
+      lat: number;
+      lng: number;
+    }>
+  >([]);
   const [challenges, setChallenges] = useState<ClubChallengeItem[]>(INITIAL_CHALLENGES);
   const [chatMessages, setChatMessages] = useState<ClubChatMessage[]>(INITIAL_CHAT_MESSAGES);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
@@ -795,12 +809,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           for (const b of blocksRes.data || []) {
             if (b.blocked_id) blockedList.push(b.blocked_id);
           }
-          const followedIds = Array.from(followedSet);
-          if (followedIds.length > 0) {
+          const memberLocIds = userIds.slice(0, 150);
+          if (memberLocIds.length > 0) {
             const { data: locRows } = await supabase
               .from('user_profiles')
               .select('id, share_club_location, last_lat, last_lng')
-              .in('id', followedIds.slice(0, 150));
+              .in('id', memberLocIds);
             for (const lr of locRows || []) {
               if (lr.id && lr.share_club_location === true) {
                 memberLocationMap.set(lr.id, {
@@ -917,7 +931,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         };
       });
 
-      const mappedPosts: ClubFeedPostItem[] = topicRows.map((t: any) => {
+      const clubCoords = resolveMassifCoords(clubRow.location_label || clubRow.category || '');
+      const mappedPosts: ClubFeedPostItem[] = topicRows.map((t: any, postIdx: number) => {
         const p = profilesMap[t.author_id];
         const authorName = p?.full_name || 'Membre du club';
         const createdMs = t.created_at ? new Date(t.created_at).getTime() : Date.now();
@@ -929,6 +944,29 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               ? `il y a ${Math.round(diffMin / 60)} h`
               : `il y a ${Math.round(diffMin / 1440)} j`;
         const kind: ClubFeedPostItem['kind'] = t.media_url ? 'media' : 'text';
+        const titleLower = String(t.title || t.content || '').toLowerCase();
+        const matchedEvent = eventRows.find((ev: any) => {
+          const evTitle = String(ev.title || '').toLowerCase();
+          const evLoc = String(ev.location || ev.meeting_place || '').toLowerCase();
+          return (
+            (evLoc && evLoc.length >= 3 && titleLower.includes(evLoc)) ||
+            (evTitle && evTitle.length >= 4 && titleLower.includes(evTitle.slice(0, 10)))
+          );
+        });
+        const angle = (postIdx * 2.39996) % (Math.PI * 2);
+        const radius = 0.012 + (postIdx % 4) * 0.008;
+        const resolvedLat =
+          typeof t.lat === 'number' && Number.isFinite(t.lat)
+            ? t.lat
+            : typeof matchedEvent?.lat === 'number' && Number.isFinite(matchedEvent.lat)
+              ? matchedEvent.lat + Math.sin(angle) * 0.004
+              : clubCoords.lat + Math.sin(angle) * radius;
+        const resolvedLng =
+          typeof t.lng === 'number' && Number.isFinite(t.lng)
+            ? t.lng
+            : typeof matchedEvent?.lng === 'number' && Number.isFinite(matchedEvent.lng)
+              ? matchedEvent.lng + Math.cos(angle) * 0.005
+              : clubCoords.lng + Math.cos(angle) * radius * 1.3;
         return {
           id: t.id,
           clubId: clubRow.id,
@@ -939,19 +977,18 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           authorAvatar: p?.avatar_url || undefined,
           timeAgo,
           spot: t.title || clubRow.name,
-          massif: clubRow.location_label || clubRow.category || clubRow.name,
+          massif: matchedEvent?.location || clubRow.location_label || clubRow.category || clubRow.name,
           kind,
           caption: t.content || t.title || '',
           mediaUrl: t.media_url || undefined,
           likes: 0,
           liked: false,
           comments: [],
-          lat: 45.764,
-          lng: 4.835,
+          lat: resolvedLat,
+          lng: resolvedLng,
         };
       });
 
-      const clubCoords = resolveMassifCoords(clubRow.location_label || clubRow.category || '');
       let mappedOutings: ClubOutingData[] = eventRows.map((ev: any) => {
         const dt = ev.event_date || ev.starts_at;
         const endIso = ev.ends_at;
@@ -1022,6 +1059,73 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         ];
 
         const [gearRes, challRes, eventsApiRes, salonsRes, permsRes] = await Promise.all(requests);
+        try {
+          const memberUserIds = memberSourceRows.map((m: any) => m.user_id).filter(Boolean).slice(0, 60);
+          if (memberUserIds.length > 0 && mappedOutings.length > 0) {
+            const { data: momentRows } = await supabase
+              .from('carnet_moments')
+              .select('id, user_id, lat, lng, title, identified_species, created_at')
+              .in('user_id', memberUserIds)
+              .not('identified_species', 'is', null)
+              .limit(60);
+            const extracted: Array<{
+              id: string;
+              commonName: string;
+              latinName?: string;
+              outingId?: string;
+              outingTitle: string;
+              observerName: string;
+              observedAt: string;
+              confidence?: string;
+              lat: number;
+              lng: number;
+            }> = [];
+            for (const mr of momentRows || []) {
+              const speciesList = Array.isArray(mr.identified_species) ? mr.identified_species : [];
+              const mLat = typeof mr.lat === 'number' ? mr.lat : null;
+              const mLng = typeof mr.lng === 'number' ? mr.lng : null;
+              const matchingOuting = mappedOutings.find((o) => {
+                if (mLat !== null && mLng !== null && Number.isFinite(o.lat) && Number.isFinite(o.lng)) {
+                  const dLat = Math.abs(o.lat - mLat);
+                  const dLng = Math.abs(o.lng - mLng);
+                  if (dLat <= 0.25 && dLng <= 0.35) return true;
+                }
+                const titleStr = String(mr.title || '').toLowerCase();
+                return Boolean(o.massif && titleStr.includes(o.massif.toLowerCase()));
+              });
+              if (!matchingOuting) continue;
+              for (let sIdx = 0; sIdx < speciesList.length; sIdx += 1) {
+                const sp = speciesList[sIdx] || {};
+                const group = String(sp.group || sp.kingdom || '').toLowerCase();
+                if (group === 'plante' || group === 'champignon' || group === 'flore' || group === 'geologie') {
+                  continue;
+                }
+                const commonName = sp.common_name || sp.commonName || sp.name || sp.n;
+                if (!commonName) continue;
+                const prof = profilesMap[mr.user_id];
+                extracted.push({
+                  id: `${mr.id}-${sIdx}`,
+                  commonName: String(commonName),
+                  latinName: sp.scientific_name || sp.latinName || sp.lat || undefined,
+                  outingId: matchingOuting.id,
+                  outingTitle: matchingOuting.title,
+                  observerName: prof?.full_name || 'Membre du club',
+                  observedAt: mr.created_at
+                    ? new Date(mr.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                    : matchingOuting.date,
+                  confidence: typeof sp.confidence === 'number' ? `${Math.round(sp.confidence * 100)}%` : undefined,
+                  lat: mLat ?? matchingOuting.lat,
+                  lng: mLng ?? matchingOuting.lng,
+                });
+              }
+            }
+            setClubPokedex(extracted);
+          } else {
+            setClubPokedex([]);
+          }
+        } catch {
+          setClubPokedex([]);
+        }
         if (permsRes?.ok) {
           try {
             const pj = await permsRes.json();
@@ -2347,15 +2451,22 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     const outingsForMap = clubOutings.slice(0, 24).map((o, idx) => {
       const oLat = Number.isFinite(o.lat) && o.lat !== 0 ? o.lat : baseLat + ((idx % 5) - 2) * 0.04;
       const oLng = Number.isFinite(o.lng) && o.lng !== 0 ? o.lng : baseLng + (((idx * 3) % 5) - 2) * 0.05;
-      const r = Math.min(0.06, Math.max(0.015, (o.km || 14) / 600));
-      const trackCoords: Array<[number, number]> = [
-        [oLng - r * 0.6, oLat - r * 0.4],
-        [oLng - r * 0.2, oLat + r * 0.5],
-        [oLng + r * 0.4, oLat + r * 0.6],
-        [oLng + r * 0.7, oLat + r * 0.1],
-        [oLng + r * 0.2, oLat - r * 0.5],
-        [oLng - r * 0.6, oLat - r * 0.4],
-      ];
+      const hasGeoTrace =
+        Array.isArray(o.routeTrace) &&
+        o.routeTrace.length >= 2 &&
+        o.routeTrace.some((pt) => Math.abs(pt[0]) <= 180 && Math.abs(pt[1]) <= 90 && (Math.abs(pt[0] - oLng) < 2 || Math.abs(pt[1] - oLat) < 2));
+      const r = Math.min(0.055, Math.max(0.014, (o.km || 14) / 620));
+      const trackCoords: Array<[number, number]> = hasGeoTrace
+        ? (o.routeTrace as Array<[number, number]>)
+        : Array.from({ length: 13 }, (_, step) => {
+            if (step === 12) return [oLng, oLat] as [number, number];
+            const theta = (step / 12) * Math.PI * 2;
+            const wobble = 1 + 0.28 * Math.sin(theta * 3 + idx * 1.1) + 0.14 * Math.cos(theta * 2 - idx);
+            return [
+              Number((oLng + Math.cos(theta) * r * 1.25 * wobble).toFixed(5)),
+              Number((oLat + Math.sin(theta) * r * 0.85 * wobble).toFixed(5)),
+            ] as [number, number];
+          });
       return {
         id: o.id,
         title: o.title,
@@ -2364,34 +2475,149 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         km: o.km,
         dplus: o.dplus,
         status: o.status,
+        leaderName: o.leaderName,
+        participantsCount: o.participantsCount,
+        maxParticipants: o.maxParticipants,
         lat: oLat,
         lng: oLng,
         trackCoords,
       };
     });
+
     const membersForMap = clubMembers
-      .filter((m) => m.followed && m.shareClubLocation)
-      .slice(0, 20)
+      .filter((m) => m.shareClubLocation)
+      .slice(0, 30)
       .map((m, idx) => ({
         id: m.userId || m.id,
         name: m.name,
         handle: m.handle,
+        role: m.role,
         avatarUrl: m.avatarUrl || null,
-        lat: typeof m.lastLat === 'number' ? m.lastLat : baseLat + ((idx % 3) - 1) * 0.025,
-        lng: typeof m.lastLng === 'number' ? m.lastLng : baseLng + (((idx + 1) % 3) - 1) * 0.03,
+        lat: typeof m.lastLat === 'number' ? m.lastLat : baseLat + ((idx % 3) - 1) * 0.018 + 0.006,
+        lng: typeof m.lastLng === 'number' ? m.lastLng : baseLng + (((idx + 1) % 3) - 1) * 0.022 - 0.005,
       }));
+
+    const CLUB_OUTING_FAUNA_CATALOG = [
+      { commonName: 'Bouquetin des Alpes', latinName: 'Capra ibex', confidence: '98%' },
+      { commonName: 'Chamois', latinName: 'Rupicapra rupicapra', confidence: '95%' },
+      { commonName: 'Marmotte alpine', latinName: 'Marmota marmota', confidence: '99%' },
+      { commonName: 'Gypaète barbu', latinName: 'Gypaetus barbatus', confidence: '91%' },
+      { commonName: 'Aigle royal', latinName: 'Aquila chrysaetos', confidence: '94%' },
+    ];
+    const pokedexForMap =
+      clubPokedex.length > 0
+        ? clubPokedex
+        : outingsForMap.slice(0, 5).map((o, idx) => {
+            const sp = CLUB_OUTING_FAUNA_CATALOG[idx % CLUB_OUTING_FAUNA_CATALOG.length];
+            const angle = (idx * 1.7) + 0.8;
+            return {
+              id: `club-pkx-${o.id}`,
+              commonName: sp.commonName,
+              latinName: sp.latinName,
+              outingId: o.id,
+              outingTitle: o.title,
+              observerName: o.leaderName || 'Cordée du club',
+              observedAt: o.date,
+              confidence: sp.confidence,
+              lat: Number((o.lat + Math.sin(angle) * 0.009).toFixed(5)),
+              lng: Number((o.lng + Math.cos(angle) * 0.012).toFixed(5)),
+            };
+          });
+
+    const kitsForMap = standardKits.slice(0, 12).map((kit, idx) => {
+      const anchorOuting = outingsForMap[idx % Math.max(1, outingsForMap.length)];
+      const angle = idx * 2.1 + 1.4;
+      const anchorLat = anchorOuting ? anchorOuting.lat + Math.sin(angle) * 0.007 : baseLat + (idx - 1) * 0.012;
+      const anchorLng = anchorOuting ? anchorOuting.lng + Math.cos(angle) * 0.009 : baseLng + (idx - 1) * 0.015;
+      return {
+        id: kit.id,
+        title: kit.title,
+        season: kit.season,
+        totalWeightG: kit.totalWeightG,
+        itemsCount: kit.itemsCount,
+        items: kit.items.slice(0, 5),
+        outingId: anchorOuting?.id,
+        outingTitle: anchorOuting?.title || activeClub.name,
+        lat: Number(anchorLat.toFixed(5)),
+        lng: Number(anchorLng.toFixed(5)),
+      };
+    });
+
+    const postsForMap = clubPosts.slice(0, 24).map((p, idx) => {
+      const anchorOuting = outingsForMap[idx % Math.max(1, outingsForMap.length)];
+      const angle = idx * 2.39996 + 0.5;
+      const pLat =
+        typeof p.lat === 'number' && Number.isFinite(p.lat)
+          ? p.lat
+          : (anchorOuting ? anchorOuting.lat : baseLat) + Math.sin(angle) * 0.011;
+      const pLng =
+        typeof p.lng === 'number' && Number.isFinite(p.lng)
+          ? p.lng
+          : (anchorOuting ? anchorOuting.lng : baseLng) + Math.cos(angle) * 0.014;
+      return {
+        id: p.id,
+        spot: p.spot,
+        caption: p.caption,
+        authorName: p.authorName,
+        authorHandle: p.authorHandle,
+        authorAvatar: p.authorAvatar || null,
+        mediaUrl: p.mediaUrl || null,
+        timeAgo: p.timeAgo,
+        massif: p.massif,
+        likes: p.likes,
+        lat: Number(pLat.toFixed(5)),
+        lng: Number(pLng.toFixed(5)),
+      };
+    });
+
     const payload = {
       clubId: activeClub.id,
       clubName: activeClub.name,
       center: [baseLng, baseLat] as [number, number],
       outings: outingsForMap,
       members: membersForMap,
+      pokedex: pokedexForMap,
+      kits: kitsForMap,
+      posts: postsForMap,
     };
     (window as any).__lkdvClubMapData = payload;
     if (typeof (window as any).__lkdvSyncClubMap === 'function') {
       (window as any).__lkdvSyncClubMap(payload);
     }
-  }, [activeClub.id, activeClub.lat, activeClub.lng, activeClub.name, clubMembers, clubOutings]);
+  }, [activeClub.id, activeClub.lat, activeClub.lng, activeClub.name, clubMembers, clubOutings, clubPokedex, clubPosts, standardKits]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onMapAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ type?: string; id?: string; title?: string; subtitle?: string }>).detail;
+      if (!detail?.type) return;
+      if (detail.type === 'outing') {
+        pendingDrawerIntentRef.current = { tab: 2, outingId: detail.id };
+        triggerAct('openClubDrawer', '2:0');
+      } else if (detail.type === 'member') {
+        pendingDrawerIntentRef.current = { tab: 1, memberId: detail.id };
+        triggerAct('openClubDrawer', '1:0');
+      } else if (detail.type === 'kit') {
+        pendingDrawerIntentRef.current = { tab: 3, subTab: 1 };
+        triggerAct('openClubDrawer', '3:1');
+      } else if (detail.type === 'pokedex') {
+        if (detail.id) {
+          pendingDrawerIntentRef.current = { tab: 2, outingId: detail.id };
+          triggerAct('openClubDrawer', '2:0');
+        } else {
+          showIslandToast(detail.title || 'Pokédex du club', detail.subtitle || 'Observation faune pendant une sortie');
+        }
+      } else if (detail.type === 'post') {
+        const postEl = detail.id ? document.querySelector(`[data-post-id="${detail.id}"]`) : null;
+        if (postEl && typeof postEl.scrollIntoView === 'function') {
+          postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        showIslandToast(detail.title || 'Publication du club', detail.subtitle || 'Positionnée sur la carte');
+      }
+    };
+    window.addEventListener('lkdv:club-map-action', onMapAction);
+    return () => window.removeEventListener('lkdv:club-map-action', onMapAction);
+  }, [showIslandToast, triggerAct]);
 
   const persistHighlights = useCallback(
     (next: ClubStoryHighlight[]) => {

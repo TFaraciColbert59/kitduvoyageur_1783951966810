@@ -1512,4 +1512,228 @@
   min-height: 158px !important;
 }
 
+/* Carte Club interactive : 5 calques simultanés (Tracés, Membres, Pokédex, Kits, Posts) */
+.club-map-member-avi {
+  position: relative;
+  overflow: visible;
+}
+.club-map-member-avi img {
+  border-radius: 50%;
+}
+.club-map-member-live-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.28);
+}
+
+.club-map-pokedex-pin,
+.club-map-kit-pin,
+.club-map-post-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.club-map-pokedex-badge,
+.club-map-kit-badge,
+.club-map-post-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font: 700 10px/1.15 var(--sf, -apple-system, sans-serif);
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px rgba(16, 32, 25, 0.2);
+}
+
+.club-map-pokedex-badge {
+  background: rgba(251, 241, 220, 0.94);
+  color: #7c2d12;
+  border: 1px solid rgba(180, 83, 9, 0.28);
+}
+.club-map-pokedex-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d97706;
+  border: 1.5px solid #ffffff;
+}
+
+.club-map-kit-badge {
+  background: rgba(236, 253, 245, 0.94);
+  color: #17402c;
+  border: 1px solid rgba(23, 64, 44, 0.24);
+}
+.club-map-kit-badge b {
+  font-weight: 800;
+  opacity: 0.78;
+}
+.club-map-kit-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0f766e;
+  border: 1.5px solid #ffffff;
+}
+
+.club-map-post-badge {
+  background: rgba(255, 255, 255, 0.94);
+  color: #172b24;
+  border: 1px solid rgba(23, 43, 36, 0.16);
+}
+.club-map-post-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.club-map-post-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 1.5px solid #ffffff;
+}
+
+.club-map-layers-bar {
+  position: absolute;
+  left: 10px;
+  right: 52px;
+  bottom: 72px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+  pointer-events: auto;
+}
+.club-map-layers-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.club-map-layer-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #56665d;
+  font: 600 10.5px/1 var(--sf, -apple-system, sans-serif);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.club-map-layer-chip.is-on {
+  background: rgba(255, 255, 255, 0.92);
+  color: #172b24;
+  border-color: rgba(23, 64, 44, 0.22);
+  box-shadow: 0 3px 10px rgba(16, 32, 25, 0.14);
+}
+.club-map-layer-chip b {
+  font-weight: 700;
+  font-size: 10px;
+  opacity: 0.72;
+}
+.club-map-layer-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+.club-map-layer-chip.is-on.is-outings .club-map-layer-dot { background: #17402c; }
+.club-map-layer-chip.is-on.is-members .club-map-layer-dot { background: #22c55e; }
+.club-map-layer-chip.is-on.is-pokedex .club-map-layer-dot { background: #d97706; }
+.club-map-layer-chip.is-on.is-kits .club-map-layer-dot { background: #0f766e; }
+.club-map-layer-chip.is-on.is-posts .club-map-layer-dot { background: #2563eb; }
+
+.club-map-callout-card {
+  position: absolute;
+  left: 12px;
+  right: 54px;
+  bottom: 104px;
+  z-index: 7;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(251, 250, 246, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid rgba(23, 64, 44, 0.18);
+  box-shadow: 0 10px 28px rgba(16, 32, 25, 0.22);
+  color: #172b24;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: auto;
+}
+.club-map-callout-card[hidden] {
+  display: none !important;
+}
+.club-map-callout-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.club-map-callout-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font: 700 10px/1 var(--sf, -apple-system, sans-serif);
+  background: #d3ebd9;
+  color: #17402c;
+}
+.club-map-callout-pill.is-pokedex { background: #fbf1dc; color: #92400e; }
+.club-map-callout-pill.is-kits, .club-map-callout-pill.is-kit { background: #ccfbf1; color: #0f766e; }
+.club-map-callout-pill.is-post { background: #dbeafe; color: #1d4ed8; }
+.club-map-callout-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(23, 43, 36, 0.08);
+  color: #172b24;
+  font: 700 13px/1 var(--sf, -apple-system, sans-serif);
+  cursor: pointer;
+}
+.club-map-callout-title {
+  font: 700 13px/1.25 var(--sf, -apple-system, sans-serif);
+  color: #172b24;
+}
+.club-map-callout-sub {
+  font: 500 11.5px/1.3 var(--sf, -apple-system, sans-serif);
+  color: #56665d;
+}
+.club-map-callout-btn {
+  margin-top: 4px;
+  align-self: flex-start;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(23, 64, 44, 0.22);
+  background: #17402c;
+  color: #ffffff;
+  font: 700 11px/1 var(--sf, -apple-system, sans-serif);
+  cursor: pointer;
+}
+
 

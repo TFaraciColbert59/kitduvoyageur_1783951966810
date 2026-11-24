@@ -5256,6 +5256,7 @@ function setup3DMap() {
         { name: 'Valais', coords: [7.75, 46.02], stats: '1 sortie · 22 km · D+ 1 850 m' },
       ];
 
+      X.demoMapMarkers = [];
       massifsData.forEach(m => {
         const el = document.createElement('div');
         el.className = 'massif-marker-3d';
@@ -5274,7 +5275,7 @@ function setup3DMap() {
             island(m.name, m.stats, false);
           }
         });
-        new maplibregl.Marker({ element: el }).setLngLat(m.coords).addTo(map);
+        X.demoMapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat(m.coords).addTo(map));
       });
 
       // 3. Summit & refuge POI markers with Apple HIG Liquid Glass styling (zero icons)
@@ -5302,7 +5303,7 @@ function setup3DMap() {
             island(poi.name, `Altitude ${poi.ele} · Empreinte vérifiée`, false);
           }
         });
-        new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map);
+        X.demoMapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat(poi.coords).addTo(map));
       });
 
       // 4. Expedition Photos geolocated pins (pure text badge with photo-marker-3d)
@@ -5337,30 +5338,136 @@ function setup3DMap() {
             }
           }
         });
-        new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map);
+        X.demoMapMarkers.push(new maplibregl.Marker({ element: pEl }).setLngLat(photo.coords).addTo(map));
       });
 
-      // 5. Dynamic Club Outings (completed + upcoming routes & markers) & Followed Members
+      // 5. Dynamic Club Map (5 simultaneous interactive layers: outings, members, pokedex, kits, posts)
+      X.clubLayers = X.clubLayers || { outings: true, members: true, pokedex: true, kits: true, posts: true };
+      const showClubCallout = (cfg) => {
+        const mapHost = $('map');
+        if (!mapHost) return;
+        let card = document.getElementById('club-map-callout');
+        if (!card) {
+          card = document.createElement('div');
+          card.id = 'club-map-callout';
+          card.className = 'club-map-callout-card';
+          mapHost.appendChild(card);
+        }
+        if (!cfg) {
+          card.hidden = true;
+          return;
+        }
+        card.innerHTML = `
+          <div class="club-map-callout-top">
+            <span class="club-map-callout-pill is-${esc(cfg.type)}">${esc(cfg.badge)}</span>
+            <button type="button" class="club-map-callout-close" aria-label="Fermer">×</button>
+          </div>
+          <div class="club-map-callout-title">${esc(cfg.title)}</div>
+          <div class="club-map-callout-sub">${esc(cfg.subtitle)}</div>
+          ${cfg.actionLabel ? `<button type="button" class="club-map-callout-btn">${esc(cfg.actionLabel)}</button>` : ''}
+        `;
+        card.hidden = false;
+        const closeBtn = card.querySelector('.club-map-callout-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            card.hidden = true;
+          });
+        }
+        const actBtn = card.querySelector('.club-map-callout-btn');
+        if (actBtn) {
+          actBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            window.dispatchEvent(
+              new CustomEvent('lkdv:club-map-action', {
+                detail: { type: cfg.type, id: cfg.id, title: cfg.title, subtitle: cfg.subtitle },
+              }),
+            );
+          });
+        }
+      };
+
+      const renderClubLayersBar = (clubData) => {
+        const mapHost = $('map');
+        if (!mapHost) return;
+        let bar = document.getElementById('club-map-layers');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.id = 'club-map-layers';
+          bar.className = 'club-map-layers-bar';
+          bar.setAttribute('role', 'group');
+          bar.setAttribute('aria-label', 'Calques de la carte du club');
+          mapHost.appendChild(bar);
+        }
+        const defs = [
+          { key: 'outings', label: 'Tracés', count: (clubData.outings || []).length },
+          { key: 'members', label: 'Membres', count: (clubData.members || []).length },
+          { key: 'pokedex', label: 'Pokédex', count: (clubData.pokedex || []).length },
+          { key: 'kits', label: 'Kits', count: (clubData.kits || []).length },
+          { key: 'posts', label: 'Posts', count: (clubData.posts || []).length },
+        ];
+        bar.innerHTML = defs
+          .map(
+            (d) =>
+              `<button type="button" class="club-map-layer-chip is-${d.key} ${X.clubLayers[d.key] ? 'is-on' : ''}" data-layer="${d.key}" aria-pressed="${!!X.clubLayers[d.key]}"><span class="club-map-layer-dot"></span><span>${d.label}</span><b>${d.count}</b></button>`,
+          )
+          .join('');
+        bar.querySelectorAll('.club-map-layer-chip').forEach((btn) => {
+          btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const key = btn.getAttribute('data-layer');
+            if (!key) return;
+            X.clubLayers[key] = !X.clubLayers[key];
+            haptic(6);
+            if (X.lastClubMapData) syncClubMap(X.lastClubMapData);
+          });
+        });
+      };
+
       const syncClubMap = (clubData) => {
         if (!clubData || !map) return;
+        X.lastClubMapData = clubData;
         try {
+          if (Array.isArray(X.demoMapMarkers)) {
+            X.demoMapMarkers.forEach((mk) => { try { mk.remove(); } catch (_) {} });
+            X.demoMapMarkers = [];
+          }
           if (Array.isArray(X.clubMapMarkers)) {
             X.clubMapMarkers.forEach((mk) => { try { mk.remove(); } catch (_) {} });
           }
           X.clubMapMarkers = [];
+          renderClubLayersBar(clubData);
 
-          const features = (clubData.outings || [])
-            .filter((o) => Array.isArray(o.trackCoords) && o.trackCoords.length >= 2)
-            .map((o) => ({
-              type: 'Feature',
-              properties: { id: o.id, title: o.title, status: o.status || 'upcoming' },
-              geometry: { type: 'LineString', coordinates: o.trackCoords },
-            }));
+          const showOutings = !!X.clubLayers.outings;
+          const features = showOutings
+            ? (clubData.outings || [])
+                .filter((o) => Array.isArray(o.trackCoords) && o.trackCoords.length >= 2)
+                .map((o) => ({
+                  type: 'Feature',
+                  properties: {
+                    id: o.id,
+                    title: o.title,
+                    massif: o.massif || 'Sortie',
+                    km: o.km || 0,
+                    dplus: o.dplus || 0,
+                    status: o.status || 'upcoming',
+                    lat: o.lat,
+                    lng: o.lng,
+                  },
+                  geometry: { type: 'LineString', coordinates: o.trackCoords },
+                }))
+            : [];
 
           const fc = { type: 'FeatureCollection', features };
           const existingSrc = map.getSource('club-outings-routes');
           if (existingSrc && typeof existingSrc.setData === 'function') {
             existingSrc.setData(fc);
+            if (map.getLayer('club-outings-routes-completed')) {
+              map.setLayoutProperty('club-outings-routes-completed', 'visibility', showOutings ? 'visible' : 'none');
+            }
+            if (map.getLayer('club-outings-routes-upcoming')) {
+              map.setLayoutProperty('club-outings-routes-upcoming', 'visibility', showOutings ? 'visible' : 'none');
+            }
           } else {
             map.addSource('club-outings-routes', { type: 'geojson', data: fc });
             map.addLayer({
@@ -5368,61 +5475,164 @@ function setup3DMap() {
               type: 'line',
               source: 'club-outings-routes',
               filter: ['==', ['get', 'status'], 'completed'],
-              layout: { 'line-cap': 'round', 'line-join': 'round' },
-              paint: { 'line-color': '#17402c', 'line-width': 3.5, 'line-opacity': 0.85 },
+              layout: { 'line-cap': 'round', 'line-join': 'round', visibility: showOutings ? 'visible' : 'none' },
+              paint: { 'line-color': '#17402c', 'line-width': 3.8, 'line-opacity': 0.88 },
             });
             map.addLayer({
               id: 'club-outings-routes-upcoming',
               type: 'line',
               source: 'club-outings-routes',
               filter: ['!=', ['get', 'status'], 'completed'],
-              layout: { 'line-cap': 'round', 'line-join': 'round' },
-              paint: { 'line-color': '#2e7d4f', 'line-width': 4, 'line-dasharray': [2, 1.4], 'line-opacity': 0.95 },
+              layout: { 'line-cap': 'round', 'line-join': 'round', visibility: showOutings ? 'visible' : 'none' },
+              paint: { 'line-color': '#2e7d4f', 'line-width': 4.2, 'line-dasharray': [2, 1.4], 'line-opacity': 0.96 },
+            });
+            ['club-outings-routes-completed', 'club-outings-routes-upcoming'].forEach((layerId) => {
+              map.on('click', layerId, (ev) => {
+                const feat = ev.features && ev.features[0];
+                if (!feat || !feat.properties) return;
+                const p = feat.properties;
+                showClubCallout({
+                  type: 'outing',
+                  id: p.id,
+                  badge: p.status === 'completed' ? 'Tracé effectué' : 'Sortie prévue',
+                  title: p.title || 'Sortie club',
+                  subtitle: `${p.massif || 'Massif'} · ${p.km || 0} km · +${p.dplus || 0} m`,
+                  actionLabel: 'Voir la sortie',
+                });
+              });
             });
           }
 
-          (clubData.outings || []).forEach((o) => {
-            if (typeof o.lng !== 'number' || typeof o.lat !== 'number') return;
-            const isUpcoming = o.status !== 'completed' && o.status !== 'cancelled';
-            const el = document.createElement('div');
-            el.className = `club-map-outing-pin ${isUpcoming ? 'is-upcoming' : 'is-completed'}`;
-            const shortTitle = String(o.title || 'Sortie').replace(/\s*\([^)]*\)\s*$/, '').slice(0, 26);
-            el.innerHTML = `<div class="club-map-outing-badge">${isUpcoming ? '▶ ' : '✓ '}${esc(shortTitle)}</div><div class="club-map-outing-dot"></div>`;
-            el.addEventListener('click', (e) => {
-              e.stopPropagation();
-              map.flyTo({ center: [o.lng, o.lat], zoom: 12.6, pitch: 58, bearing: -25, duration: 1400, essential: true });
-              if (typeof island === 'function') {
-                island(o.title, `${o.massif || 'Sortie'} · ${o.km || 0} km · +${o.dplus || 0} m`, false);
-              }
+          if (showOutings) {
+            (clubData.outings || []).forEach((o) => {
+              if (typeof o.lng !== 'number' || typeof o.lat !== 'number') return;
+              const isUpcoming = o.status !== 'completed' && o.status !== 'cancelled';
+              const el = document.createElement('div');
+              el.className = `club-map-outing-pin ${isUpcoming ? 'is-upcoming' : 'is-completed'}`;
+              const shortTitle = String(o.title || 'Sortie').replace(/\s*\([^)]*\)\s*$/, '').slice(0, 24);
+              el.innerHTML = `<div class="club-map-outing-badge">${isUpcoming ? '▶ ' : '✓ '}${esc(shortTitle)}</div><div class="club-map-outing-dot"></div>`;
+              el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                map.flyTo({ center: [o.lng, o.lat], zoom: 12.6, pitch: 58, bearing: -25, duration: 1200, essential: true });
+                showClubCallout({
+                  type: 'outing',
+                  id: o.id,
+                  badge: isUpcoming ? 'Sortie à venir' : 'Sortie effectuée',
+                  title: o.title,
+                  subtitle: `${o.massif || 'Sortie'} · ${o.km || 0} km · +${o.dplus || 0} m · ${o.participantsCount || 0}/${o.maxParticipants || 12} inscrits`,
+                  actionLabel: 'Ouvrir la sortie',
+                });
+              });
+              const mk = new maplibregl.Marker({ element: el }).setLngLat([o.lng, o.lat]).addTo(map);
+              X.clubMapMarkers.push(mk);
             });
-            const mk = new maplibregl.Marker({ element: el }).setLngLat([o.lng, o.lat]).addTo(map);
-            X.clubMapMarkers.push(mk);
-          });
+          }
 
-          (clubData.members || []).forEach((m) => {
-            if (typeof m.lng !== 'number' || typeof m.lat !== 'number') return;
-            const el = document.createElement('div');
-            el.className = 'club-map-member-pin';
-            const initial = String(m.name || 'M').charAt(0).toUpperCase();
-            const avatarInner = m.avatarUrl
-              ? `<img src="${esc(m.avatarUrl)}" alt="" />`
-              : `<span>${esc(initial)}</span>`;
-            el.innerHTML = `<div class="club-map-member-avi">${avatarInner}</div><div class="club-map-member-name">${esc(m.name)}</div>`;
-            el.addEventListener('click', (e) => {
-              e.stopPropagation();
-              map.flyTo({ center: [m.lng, m.lat], zoom: 13.2, pitch: 55, duration: 1200, essential: true });
-              if (typeof island === 'function') {
-                island(m.name, `@${m.handle} · Position partagée`, false);
-              }
+          if (X.clubLayers.members) {
+            (clubData.members || []).forEach((m) => {
+              if (typeof m.lng !== 'number' || typeof m.lat !== 'number') return;
+              const el = document.createElement('div');
+              el.className = 'club-map-member-pin';
+              const initial = String(m.name || 'M').charAt(0).toUpperCase();
+              const avatarInner = m.avatarUrl
+                ? `<img src="${esc(m.avatarUrl)}" alt="" />`
+                : `<span>${esc(initial)}</span>`;
+              el.innerHTML = `<div class="club-map-member-avi">${avatarInner}<span class="club-map-member-live-dot"></span></div><div class="club-map-member-name">${esc(m.name)}</div>`;
+              el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                map.flyTo({ center: [m.lng, m.lat], zoom: 13.2, pitch: 55, duration: 1100, essential: true });
+                showClubCallout({
+                  type: 'member',
+                  id: m.id,
+                  badge: 'Localisation activée',
+                  title: m.name,
+                  subtitle: `@${m.handle}${m.role ? ` · ${m.role}` : ''}`,
+                  actionLabel: 'Voir le profil',
+                });
+              });
+              const mk = new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(map);
+              X.clubMapMarkers.push(mk);
             });
-            const mk = new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(map);
-            X.clubMapMarkers.push(mk);
-          });
+          }
 
-          if (Array.isArray(clubData.center) && clubData.center.length === 2) {
+          if (X.clubLayers.pokedex) {
+            (clubData.pokedex || []).forEach((sp) => {
+              if (typeof sp.lng !== 'number' || typeof sp.lat !== 'number') return;
+              const el = document.createElement('div');
+              el.className = 'club-map-pokedex-pin';
+              el.innerHTML = `<div class="club-map-pokedex-badge"><span class="club-map-pin-ico">🐾</span><span>${esc(sp.commonName)}</span></div><div class="club-map-pokedex-dot"></div>`;
+              el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                map.flyTo({ center: [sp.lng, sp.lat], zoom: 13.4, pitch: 58, duration: 1100, essential: true });
+                showClubCallout({
+                  type: 'pokedex',
+                  id: sp.outingId || '',
+                  badge: 'Pokédex · Sortie club',
+                  title: sp.commonName,
+                  subtitle: `${sp.latinName ? sp.latinName + ' · ' : ''}Vu lors de « ${sp.outingTitle} » (${sp.observedAt})${sp.confidence ? ' · ' + sp.confidence : ''}`,
+                  actionLabel: sp.outingId ? 'Voir la sortie' : undefined,
+                });
+              });
+              const mk = new maplibregl.Marker({ element: el }).setLngLat([sp.lng, sp.lat]).addTo(map);
+              X.clubMapMarkers.push(mk);
+            });
+          }
+
+          if (X.clubLayers.kits) {
+            (clubData.kits || []).forEach((kit) => {
+              if (typeof kit.lng !== 'number' || typeof kit.lat !== 'number') return;
+              const el = document.createElement('div');
+              el.className = 'club-map-kit-pin';
+              const weightLabel = kit.totalWeightG ? `${(kit.totalWeightG / 1000).toFixed(1)} kg` : `${kit.itemsCount || 0} pcs`;
+              el.innerHTML = `<div class="club-map-kit-badge"><span class="club-map-pin-ico">🎒</span><span>${esc(String(kit.title || 'Kit').slice(0, 20))}</span><b>${esc(weightLabel)}</b></div><div class="club-map-kit-dot"></div>`;
+              el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                map.flyTo({ center: [kit.lng, kit.lat], zoom: 13.0, pitch: 56, duration: 1100, essential: true });
+                showClubCallout({
+                  type: 'kit',
+                  id: kit.id,
+                  badge: 'Kit utilisé en sortie',
+                  title: kit.title,
+                  subtitle: `${kit.season} · ${kit.itemsCount} équipements · ${weightLabel} · ${kit.outingTitle}`,
+                  actionLabel: 'Ouvrir les kits du club',
+                });
+              });
+              const mk = new maplibregl.Marker({ element: el }).setLngLat([kit.lng, kit.lat]).addTo(map);
+              X.clubMapMarkers.push(mk);
+            });
+          }
+
+          if (X.clubLayers.posts) {
+            (clubData.posts || []).forEach((p) => {
+              if (typeof p.lng !== 'number' || typeof p.lat !== 'number') return;
+              const el = document.createElement('div');
+              el.className = 'club-map-post-pin';
+              const thumb = p.mediaUrl
+                ? `<img class="club-map-post-thumb" src="${esc(p.mediaUrl)}" alt="" />`
+                : `<span class="club-map-pin-ico">💬</span>`;
+              el.innerHTML = `<div class="club-map-post-badge">${thumb}<span>${esc(String(p.spot || p.authorName || 'Post').slice(0, 20))}</span></div><div class="club-map-post-dot"></div>`;
+              el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                map.flyTo({ center: [p.lng, p.lat], zoom: 13.2, pitch: 56, duration: 1100, essential: true });
+                showClubCallout({
+                  type: 'post',
+                  id: p.id,
+                  badge: `Post · ${p.timeAgo || 'Récent'}`,
+                  title: p.spot || p.authorName,
+                  subtitle: `${p.authorName} — ${String(p.caption || '').slice(0, 90)}`,
+                  actionLabel: 'Voir le post',
+                });
+              });
+              const mk = new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map);
+              X.clubMapMarkers.push(mk);
+            });
+          }
+
+          if (!X.clubMapInitialFitted && Array.isArray(clubData.center) && clubData.center.length === 2) {
+            X.clubMapInitialFitted = true;
             const firstOuting = (clubData.outings || [])[0];
             const targetCenter = firstOuting ? [firstOuting.lng, firstOuting.lat] : clubData.center;
-            map.flyTo({ center: targetCenter, zoom: 9.2, pitch: 50, bearing: -20, duration: 1400, essential: true });
+            map.flyTo({ center: targetCenter, zoom: 9.8, pitch: 50, bearing: -20, duration: 1400, essential: true });
           }
         } catch (_) {}
       };
