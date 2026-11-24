@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Award, ChevronDown, ChevronRight, Lock, RotateCcw, Search, Users } from 'lucide-react';
+import { Award, ChevronDown, ChevronRight, Lock, RotateCcw, Search, Users, X } from 'lucide-react';
 import { Switch } from '@/components/ui/Switch';
 import {
   CLUB_DEFAULT_ROLE_CAPABILITIES,
@@ -15,6 +15,7 @@ import {
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { CAPABILITY_DOMAIN_GROUPS } from '../adminConfig';
 import { AdminGlassSelect } from '../AdminGlassSelect';
+import { AdminAccordionCard, AdminStatusPill } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -209,14 +210,37 @@ export function AdminTeamRolesPane({
         <input
           type="text"
           className="club-glass-input"
-          style={{ width: '100%', paddingLeft: 30 }}
+          style={{ width: '100%', paddingLeft: 30, paddingRight: query ? 30 : 12 }}
           placeholder="Rechercher un membre ou un grade…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            aria-label="Effacer la recherche"
+            style={{
+              position: 'absolute',
+              right: 6,
+              width: 22,
+              height: 22,
+              borderRadius: 999,
+              border: 0,
+              background: 'rgba(23, 43, 36, 0.08)',
+              color: 'var(--label2)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <X size={12} aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {filteredMembers.map(({ member, uid, role }) => {
           const isSelf = Boolean(currentUserId && uid === currentUserId);
           const isExpanded = expandedMemberId === uid;
@@ -228,23 +252,27 @@ export function AdminTeamRolesPane({
             <div
               key={uid}
               className="club-glass-card"
-              style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '9px 10px' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <b style={{ fontSize: 13 }}>{member.name}</b>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <b style={{ fontSize: 12.5, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {member.name}
+                    </b>
                     {isSelf ? (
                       <span style={{ fontSize: 10, color: 'var(--label2)' }}>(Vous)</span>
                     ) : null}
+                    {memberOverridesCount > 0 ? (
+                      <AdminStatusPill tone="sage">+{memberOverridesCount}</AdminStatusPill>
+                    ) : null}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--label2)' }}>
+                  <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>
                     {CLUB_ROLE_LABELS[role]}
-                    {memberOverridesCount > 0 ? ` · ${memberOverridesCount} surcharge(s)` : ''}
                   </div>
                 </div>
 
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flex: 'none' }}>
                   {canManageRoles && canEditThisMember ? (
                     <AdminGlassSelect
                       compact
@@ -254,19 +282,23 @@ export function AdminTeamRolesPane({
                       options={ASSIGNABLE_ROLES.filter((r) => caps.canManageRole(role, r) || r === role).map(
                         (r) => ({ value: r, label: CLUB_ROLE_LABELS[r] }),
                       )}
-                      style={{ width: 'auto', minWidth: 112 }}
+                      style={{ width: 'auto', minWidth: 106 }}
                     />
                   ) : (
-                    <span className="club-badge-sage" style={{ fontSize: 10.5 }}>
-                      {CLUB_ROLE_LABELS[role]}
-                    </span>
+                    <AdminStatusPill tone="neutral">{CLUB_ROLE_LABELS[role]}</AdminStatusPill>
                   )}
 
                   {canDelegate && canEditThisMember ? (
                     <button
                       type="button"
                       className="lkdv-carnet-btn-soft"
-                      style={{ height: 28, padding: '0 8px', fontSize: 11 }}
+                      style={{
+                        height: 28,
+                        padding: '0 8px',
+                        fontSize: 11,
+                        background: isExpanded ? 'var(--club-soft-bg, #d3ebd9)' : undefined,
+                        color: isExpanded ? 'var(--tint, #17402c)' : undefined,
+                      }}
                       onClick={() => setExpandedMemberId(isExpanded ? null : uid)}
                       aria-expanded={isExpanded}
                       aria-label={`Personnaliser les droits de ${member.name}`}
@@ -283,15 +315,15 @@ export function AdminTeamRolesPane({
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 10,
+                    gap: 8,
                     paddingTop: 8,
                     borderTop: '1px solid rgba(23, 64, 44, 0.08)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600 }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600 }}>
                       <Award size={13} color="#17402c" aria-hidden="true" />
-                      <span>Encadrant / Guide certifié</span>
+                      <span>Encadrant certifié</span>
                     </span>
                     <Switch
                       checked={isCertified}
@@ -315,50 +347,64 @@ export function AdminTeamRolesPane({
                     </button>
                   ) : null}
 
-                  {CAPABILITY_DOMAIN_GROUPS.filter((g) => g.domain !== 'sovereignty').map((group) => (
-                    <div key={group.domain} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                      <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.05em', color: '#56665d' }}>
-                        {group.domainLabel.toUpperCase()}
-                      </div>
-                      {group.items.map((item) => {
-                        const { allowed, isOverridden } = resolveEffectiveForMember(uid, role, item.key);
-                        const canToggle = caps.canDelegate(item.key, role);
-                        return (
-                          <div
-                            key={item.key}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 8,
-                              padding: '5px 8px',
-                              borderRadius: 9,
-                              background: 'rgba(255, 255, 255, 0.55)',
-                              opacity: canToggle ? 1 : 0.6,
-                            }}
-                          >
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label)' }}>
-                                {item.label}
+                  {CAPABILITY_DOMAIN_GROUPS.filter((g) => g.domain !== 'sovereignty').map((group) => {
+                    const activeCount = group.items.filter(
+                      (item) => resolveEffectiveForMember(uid, role, item.key).allowed,
+                    ).length;
+                    return (
+                      <AdminAccordionCard
+                        key={group.domain}
+                        title={group.domainLabel}
+                        badge={
+                          <AdminStatusPill tone={activeCount > 0 ? 'sage' : 'neutral'}>
+                            {activeCount}/{group.items.length}
+                          </AdminStatusPill>
+                        }
+                        compact
+                        defaultOpen={false}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {group.items.map((item) => {
+                            const { allowed, isOverridden } = resolveEffectiveForMember(uid, role, item.key);
+                            const canToggle = caps.canDelegate(item.key, role);
+                            return (
+                              <div
+                                key={item.key}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 8,
+                                  padding: '5px 8px',
+                                  borderRadius: 9,
+                                  background: 'rgba(255, 255, 255, 0.58)',
+                                  opacity: canToggle ? 1 : 0.6,
+                                }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label)' }}>
+                                    {item.label}
+                                  </span>
+                                  {isOverridden ? (
+                                    <AdminStatusPill tone="sage">surchargé</AdminStatusPill>
+                                  ) : null}
+                                </div>
+                                {canToggle ? (
+                                  <Switch
+                                    checked={allowed}
+                                    onCheckedChange={(val) => void handleToggleOverride(uid, role, item.key, val)}
+                                    aria-label={`${item.label} pour ${member.name}`}
+                                  />
+                                ) : (
+                                  <Lock size={13} aria-label="Verrouillé" style={{ opacity: 0.6 }} />
+                                )}
                               </div>
-                              <div style={{ fontSize: 10, color: isOverridden ? '#17402c' : 'var(--label2)' }}>
-                                {isOverridden ? 'surchargé' : 'hérité'}
-                              </div>
-                            </div>
-                            {canToggle ? (
-                              <Switch
-                                checked={allowed}
-                                onCheckedChange={(val) => void handleToggleOverride(uid, role, item.key, val)}
-                                aria-label={`${item.label} pour ${member.name}`}
-                              />
-                            ) : (
-                              <Lock size={13} aria-label="Verrouillé" style={{ opacity: 0.6 }} />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                            );
+                          })}
+                        </div>
+                      </AdminAccordionCard>
+                    );
+                  })}
                 </div>
               ) : null}
             </div>

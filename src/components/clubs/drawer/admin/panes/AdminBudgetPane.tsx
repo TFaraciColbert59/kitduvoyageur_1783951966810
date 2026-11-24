@@ -2,10 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, CheckCircle2, Download, Plus, Wallet, X } from 'lucide-react';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import type { ClubBudgetEntry, ClubBudgetKind, ClubBudgetStatus } from '@/features/clubs/types';
+import { AnimatedNumber } from '../../ClubDrawerMotion';
 import type { ClubItemData, ClubOutingData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
-import { AdminGlassSelect } from '../AdminGlassSelect';
+import { AdminCollapsibleCreate, AdminStatusPill, type AdminTone } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -18,11 +20,11 @@ export interface AdminBudgetPaneProps {
   onToast?: (toast: ClubToastPayload) => void;
 }
 
-const STATUS_LABELS: Record<ClubBudgetStatus, string> = {
-  proposed: 'Proposé',
-  approved: 'Validé',
-  paid: 'Payé',
-  rejected: 'Rejeté',
+const STATUS_META: Record<ClubBudgetStatus, { label: string; tone: AdminTone }> = {
+  proposed: { label: 'Proposé', tone: 'warn' },
+  approved: { label: 'Validé', tone: 'sage' },
+  paid: { label: 'Payé', tone: 'neutral' },
+  rejected: { label: 'Rejeté', tone: 'danger' },
 };
 
 function formatEur(cents: number): string {
@@ -41,6 +43,7 @@ export function AdminBudgetPane({
 }: AdminBudgetPaneProps) {
   const [entries, setEntries] = useState<ClubBudgetEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const [kind, setKind] = useState<ClubBudgetKind>('expense');
   const [category, setCategory] = useState('Logistique');
@@ -96,11 +99,15 @@ export function AdminBudgetPane({
       if (e.kind === 'income') incomeCents += e.amountCents;
       else expenseCents += e.amountCents;
     }
+    const total = incomeCents + expenseCents;
+    const incomeRatio = total > 0 ? Math.round((incomeCents / total) * 100) : 50;
     return {
       incomeCents,
       expenseCents,
       balanceCents: incomeCents - expenseCents,
       pendingCount,
+      incomeRatio,
+      hasFlow: total > 0,
     };
   }, [filteredEntries]);
 
@@ -154,6 +161,7 @@ export function AdminBudgetPane({
       }
       setLabel('');
       setAmountEur('');
+      setCreateOpen(false);
       onToast?.({
         title: canApprove ? 'Ligne budgétaire ajoutée ✓' : 'Proposition envoyée au bureau ✓',
       });
@@ -179,7 +187,7 @@ export function AdminBudgetPane({
       }
     }
     setEntries((prev) => prev.map((e) => (e.id === entryId ? { ...e, status } : e)));
-    onToast?.({ title: `Statut : ${STATUS_LABELS[status]}` });
+    onToast?.({ title: `Statut : ${STATUS_META[status].label}` });
   };
 
   const handleExportCsv = () => {
@@ -192,61 +200,127 @@ export function AdminBudgetPane({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            <Wallet size={14} aria-hidden="true" />
-            <span>Synthèse budgétaire</span>
-          </span>
-          {canApprove ? (
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              className="lkdv-carnet-btn-soft"
-              style={{ height: 28, padding: '0 10px', fontSize: 11, color: '#17402c' }}
-            >
-              <Download size={12} aria-hidden="true" />
-              <span>Export CSV</span>
-            </button>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: 'var(--label2)' }}>
+              <Wallet size={13} aria-hidden="true" />
+              <span>Solde</span>
+            </span>
+            <b style={{ fontSize: 20, fontWeight: 800, color: summary.balanceCents < 0 ? '#991b1b' : 'var(--tint, #17402c)', letterSpacing: '-0.02em' }}>
+              <AnimatedNumber value={summary.balanceCents / 100} suffix=" €" maximumFractionDigits={2} />
+            </b>
+          </div>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {summary.pendingCount > 0 ? (
+              <AdminStatusPill tone="warn">{summary.pendingCount} en attente</AdminStatusPill>
+            ) : null}
+            {canApprove ? (
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                className="lkdv-carnet-btn-soft"
+                style={{ height: 26, padding: '0 8px', fontSize: 11, color: 'var(--tint, #17402c)' }}
+                aria-label="Exporter le budget en CSV"
+              >
+                <Download size={11} aria-hidden="true" />
+                <span>CSV</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Visual Recettes vs Dépenses ratio bar */}
+        <div
+          aria-label="Ratio recettes et dépenses"
+          style={{
+            height: 7,
+            width: '100%',
+            borderRadius: 999,
+            overflow: 'hidden',
+            display: 'flex',
+            background: 'rgba(23, 43, 36, 0.08)',
+          }}
+        >
+          {summary.hasFlow ? (
+            <>
+              <div
+                style={{
+                  width: `${summary.incomeRatio}%`,
+                  background: '#17402c',
+                  transition: 'width 0.35s ease',
+                }}
+              />
+              <div
+                style={{
+                  width: `${100 - summary.incomeRatio}%`,
+                  background: '#c25145',
+                  transition: 'width 0.35s ease',
+                }}
+              />
+            </>
           ) : null}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>Recettes</div>
-            <b style={{ fontSize: 13.5, color: '#17402c' }}>+{formatEur(summary.incomeCents)}</b>
-          </div>
-          <div>
-            <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>Dépenses</div>
-            <b style={{ fontSize: 13.5, color: '#b91c1c' }}>-{formatEur(summary.expenseCents)}</b>
-          </div>
-          <div>
-            <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>Solde</div>
-            <b style={{ fontSize: 13.5, color: 'var(--label)' }}>{formatEur(summary.balanceCents)}</b>
-          </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5 }}>
+          <span style={{ color: 'var(--tint, #17402c)', fontWeight: 700 }}>
+            +{formatEur(summary.incomeCents)} <span style={{ fontWeight: 500, color: 'var(--label2)' }}>recettes</span>
+          </span>
+          <span style={{ color: '#991b1b', fontWeight: 700 }}>
+            -{formatEur(summary.expenseCents)} <span style={{ fontWeight: 500, color: 'var(--label2)' }}>dépenses</span>
+          </span>
         </div>
-        {summary.pendingCount > 0 ? (
-          <div style={{ fontSize: 11, color: 'var(--label2)' }}>
-            {summary.pendingCount} proposition(s) en attente de validation bureau.
-          </div>
-        ) : null}
       </div>
 
       {canPropose ? (
-        <form onSubmit={handleSubmit} className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            {canApprove ? 'Ajouter une écriture' : 'Proposer une dépense / recette'}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <AdminGlassSelect
+        <AdminCollapsibleCreate
+          label={canApprove ? 'Écriture' : 'Proposer'}
+          open={createOpen}
+          onToggle={setCreateOpen}
+          rightSlot={
+            <AdminStatusPill tone="neutral">
+              {filteredEntries.length} lignes
+              {eventFilter !== 'all' && eventFilter !== 'global'
+                ? ` · ${outings.find((o) => o.id === eventFilter)?.title ?? 'Événement'}`
+                : ''}
+            </AdminStatusPill>
+          }
+        >
+          <form onSubmit={handleSubmit} className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
+            <SegmentedControl
+              size="sm"
+              showLabels
               ariaLabel="Type de mouvement"
               value={kind}
               onChange={(v) => setKind(v as ClubBudgetKind)}
-              options={[
-                { value: 'expense', label: 'Dépense' },
-                { value: 'income', label: 'Recette' },
+              items={[
+                { id: 'expense', label: 'Dépense' },
+                { id: 'income', label: 'Recette' },
               ]}
             />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: 8 }}>
+              <input
+                type="text"
+                className="club-glass-input"
+                placeholder="Libellé (ex : Barrières départ)"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                minLength={2}
+                maxLength={160}
+                required
+              />
+              <input
+                type="text"
+                inputMode="decimal"
+                className="club-glass-input"
+                placeholder="Montant €"
+                value={amountEur}
+                onChange={(e) => setAmountEur(e.target.value)}
+                required
+              />
+            </div>
             <input
               type="text"
               className="club-glass-input"
@@ -255,134 +329,128 @@ export function AdminBudgetPane({
               onChange={(e) => setCategory(e.target.value)}
               maxLength={80}
             />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 8 }}>
-            <input
-              type="text"
-              className="club-glass-input"
-              placeholder="Libellé (ex : Barrières départ marathon)"
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              minLength={2}
-              maxLength={160}
-              required
-            />
-            <input
-              type="text"
-              inputMode="decimal"
-              className="club-glass-input"
-              placeholder="Montant €"
-              value={amountEur}
-              onChange={(e) => setAmountEur(e.target.value)}
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting || !label.trim() || !amountEur.trim()}
-            className="lkdv-carnet-btn-soft"
-            style={{
-              justifyContent: 'center',
-              height: 36,
-              background: 'rgba(23, 64, 44, 0.12)',
-              color: '#17402c',
-              fontWeight: 700,
-            }}
-          >
-            <Plus size={14} aria-hidden="true" />
-            <span>{submitting ? 'Envoi…' : canApprove ? 'Enregistrer' : 'Soumettre à validation'}</span>
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={submitting || !label.trim() || !amountEur.trim()}
+              className="lkdv-carnet-btn-soft"
+              style={{
+                justifyContent: 'center',
+                height: 34,
+                background: 'var(--club-soft-bg, #d3ebd9)',
+                color: 'var(--tint, #17402c)',
+                fontWeight: 700,
+              }}
+            >
+              <Plus size={14} aria-hidden="true" />
+              <span>{submitting ? 'Envoi…' : canApprove ? 'Enregistrer' : 'Soumettre'}</span>
+            </button>
+          </form>
+        </AdminCollapsibleCreate>
       ) : null}
 
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <b style={{ fontSize: 12.5, color: '#17402c' }}>
-          Écritures ({filteredEntries.length})
-          {eventFilter !== 'all' && eventFilter !== 'global'
-            ? ` · ${outings.find((o) => o.id === eventFilter)?.title ?? 'Événement'}`
-            : ''}
-        </b>
-
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px' }}>
         {loading ? (
           <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement…</span>
         ) : filteredEntries.length === 0 ? (
           <ClubEmptyCard
-            icon={<Wallet size={18} />}
+            icon={<Wallet size={17} />}
             title="Aucune ligne budgétaire"
-            description="Saisissez vos recettes, devis ou dépenses terrain pour suivre le solde en temps réel."
+            description="Saisissez vos recettes ou dépenses pour suivre le solde."
           />
         ) : (
-          filteredEntries.map((entry) => (
-            <div
-              key={entry.id}
-              style={{
-                padding: 10,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.6)',
-                border: '0.5px solid rgba(23, 43, 36, 0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ minWidth: 0 }}>
-                  <b style={{ fontSize: 13 }}>{entry.label}</b>
-                  <div style={{ fontSize: 11, color: 'var(--label2)' }}>
-                    {entry.category} · {STATUS_LABELS[entry.status]}
+          filteredEntries.map((entry) => {
+            const st = STATUS_META[entry.status];
+            return (
+              <div
+                key={entry.id}
+                style={{
+                  padding: '7px 9px',
+                  borderRadius: 12,
+                  background: 'rgba(255, 255, 255, 0.62)',
+                  border: '0.5px solid rgba(23, 43, 36, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <b style={{ fontSize: 12.5, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {entry.label}
+                    </b>
+                    <AdminStatusPill tone={st.tone}>{st.label}</AdminStatusPill>
                   </div>
+                  <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>{entry.category}</div>
                 </div>
-                <b
-                  style={{
-                    fontSize: 13,
-                    color: entry.kind === 'income' ? '#17402c' : '#b91c1c',
-                    flex: 'none',
-                  }}
-                >
-                  {entry.kind === 'income' ? '+' : '-'}
-                  {formatEur(entry.amountCents)}
-                </b>
-              </div>
 
-              {canApprove && (entry.status === 'proposed' || entry.status === 'approved') ? (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {entry.status === 'proposed' ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flex: 'none' }}>
+                  <b
+                    style={{
+                      fontSize: 12.5,
+                      color: entry.kind === 'income' ? 'var(--tint, #17402c)' : '#991b1b',
+                    }}
+                  >
+                    {entry.kind === 'income' ? '+' : '-'}
+                    {formatEur(entry.amountCents)}
+                  </b>
+
+                  {canApprove && entry.status === 'proposed' ? (
                     <>
                       <button
                         type="button"
                         className="lkdv-carnet-btn-soft"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11, color: '#17402c', background: 'rgba(23, 64, 44, 0.1)' }}
+                        aria-label={`Valider ${entry.label}`}
+                        title="Valider"
+                        style={{
+                          height: 24,
+                          width: 24,
+                          padding: 0,
+                          justifyContent: 'center',
+                          color: 'var(--tint, #17402c)',
+                          background: 'var(--club-soft-bg, #d3ebd9)',
+                        }}
                         onClick={() => void handleStatusChange(entry.id, 'approved')}
                       >
                         <Check size={11} aria-hidden="true" />
-                        <span>Valider</span>
                       </button>
                       <button
                         type="button"
                         className="lkdv-carnet-btn-soft"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11, color: '#b91c1c' }}
+                        aria-label={`Rejeter ${entry.label}`}
+                        title="Rejeter"
+                        style={{
+                          height: 24,
+                          width: 24,
+                          padding: 0,
+                          justifyContent: 'center',
+                          color: '#991b1b',
+                          background: 'var(--club-danger-bg, #f5ddd9)',
+                        }}
                         onClick={() => void handleStatusChange(entry.id, 'rejected')}
                       >
                         <X size={11} aria-hidden="true" />
-                        <span>Rejeter</span>
                       </button>
                     </>
                   ) : null}
-                  {entry.status === 'approved' ? (
+
+                  {canApprove && entry.status === 'approved' ? (
                     <button
                       type="button"
                       className="lkdv-carnet-btn-soft"
-                      style={{ height: 26, padding: '0 8px', fontSize: 11, color: '#17402c' }}
+                      aria-label={`Marquer payé ${entry.label}`}
+                      title="Marquer payé"
+                      style={{ height: 24, padding: '0 7px', fontSize: 10.5, color: 'var(--tint, #17402c)' }}
                       onClick={() => void handleStatusChange(entry.id, 'paid')}
                     >
                       <CheckCircle2 size={11} aria-hidden="true" />
-                      <span>Marquer payé</span>
+                      <span>Payé</span>
                     </button>
                   ) : null}
                 </div>
-              ) : null}
-            </div>
-          ))
+              </div>
+            );
+          })
         )}
       </div>
     </div>

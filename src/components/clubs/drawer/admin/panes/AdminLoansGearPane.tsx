@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { AlertTriangle, Check, Package, RotateCcw, X } from 'lucide-react';
 import type { ClubGearVaultItem, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminAccordionCard, AdminStatusPill, type AdminTone } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 export interface AdminLoansGearPaneProps {
@@ -21,15 +22,15 @@ export interface AdminLoansGearPaneProps {
   onToast?: (toast: ClubToastPayload) => void;
 }
 
-const LOAN_STATUS_LABEL: Record<string, string> = {
-  requested: 'À valider',
-  approved: 'Validé',
-  checked_out: 'Remis',
-  returned: 'Retourné',
-  overdue: 'En retard',
-  issue: 'Incident',
-  declined: 'Refusé',
-  cancelled: 'Annulé',
+const LOAN_STATUS_META: Record<string, { label: string; tone: AdminTone }> = {
+  requested: { label: 'À valider', tone: 'warn' },
+  approved: { label: 'Validé', tone: 'sage' },
+  checked_out: { label: 'Remis', tone: 'sage' },
+  returned: { label: 'Retourné', tone: 'neutral' },
+  overdue: { label: 'En retard', tone: 'danger' },
+  issue: { label: 'Incident', tone: 'danger' },
+  declined: { label: 'Refusé', tone: 'neutral' },
+  cancelled: { label: 'Annulé', tone: 'neutral' },
 };
 
 export function AdminLoansGearPane({
@@ -45,15 +46,28 @@ export function AdminLoansGearPane({
     [vaultGear],
   );
 
+  const allWithLoan = useMemo(
+    () => vaultGear.filter((g) => Boolean(g.loanStatus)),
+    [vaultGear],
+  );
+
+  const requestedCount = useMemo(
+    () => allWithLoan.filter((g) => g.loanStatus === 'requested').length,
+    [allWithLoan],
+  );
+  const activeCount = useMemo(
+    () => allWithLoan.filter((g) => g.loanStatus === 'checked_out' || g.loanStatus === 'overdue').length,
+    [allWithLoan],
+  );
+
   const loans = useMemo(() => {
-    const withLoan = vaultGear.filter((g) => Boolean(g.loanStatus));
-    if (loanFilter === 'requested') return withLoan.filter((g) => g.loanStatus === 'requested');
-    if (loanFilter === 'approved') return withLoan.filter((g) => g.loanStatus === 'approved');
+    if (loanFilter === 'requested') return allWithLoan.filter((g) => g.loanStatus === 'requested');
+    if (loanFilter === 'approved') return allWithLoan.filter((g) => g.loanStatus === 'approved');
     if (loanFilter === 'active') {
-      return withLoan.filter((g) => g.loanStatus === 'checked_out' || g.loanStatus === 'overdue');
+      return allWithLoan.filter((g) => g.loanStatus === 'checked_out' || g.loanStatus === 'overdue');
     }
-    return withLoan;
-  }, [loanFilter, vaultGear]);
+    return allWithLoan;
+  }, [allWithLoan, loanFilter]);
 
   const epiAlerts = useMemo(() => {
     const soon = Date.now() + 30 * 86400_000;
@@ -72,124 +86,163 @@ export function AdminLoansGearPane({
       gearItemId: item.id,
       status,
     });
-    onToast?.({ title: `Prêt : ${LOAN_STATUS_LABEL[status] ?? status}`, subtitle: item.name });
+    onToast?.({ title: `Prêt : ${LOAN_STATUS_META[status]?.label ?? status}`, subtitle: item.name });
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        className="club-glass-card"
+        style={{
+          padding: '8px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 6,
+          flexWrap: 'wrap',
+        }}
+      >
+        <AdminStatusPill tone={requestedCount > 0 ? 'warn' : 'neutral'}>
+          À valider · {requestedCount}
+        </AdminStatusPill>
+        <AdminStatusPill tone="sage">
+          En cours · {activeCount}
+        </AdminStatusPill>
+        <AdminStatusPill tone={epiAlerts.length > 0 ? 'danger' : 'neutral'}>
+          Alertes EPI · {epiAlerts.length}
+        </AdminStatusPill>
+      </div>
+
       {epiAlerts.length > 0 ? (
-        <div
-          className="club-glass-card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            border: '0.5px solid rgba(180, 83, 9, 0.3)',
-          }}
+        <AdminAccordionCard
+          title={`Alertes EPI (${epiAlerts.length})`}
+          icon={<AlertTriangle size={14} aria-hidden="true" />}
+          tone="warn"
+          defaultOpen={false}
+          compact
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#b45309' }}>
-            <AlertTriangle size={14} aria-hidden="true" />
-            <span>Alertes EPI ({epiAlerts.length})</span>
-          </div>
           {epiAlerts.map((item) => (
             <div key={item.id} style={{ fontSize: 11.5, color: 'var(--label2)' }}>
-              {item.name} — contrôle / expiration le {item.epiExpiresAt}
+              <b>{item.name}</b> — échéance {item.epiExpiresAt}
             </div>
           ))}
-        </div>
+        </AdminAccordionCard>
       ) : null}
 
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
             <Package size={14} aria-hidden="true" />
-            <span>Suivi des prêts matériel</span>
+            <span>Prêts matériel</span>
           </span>
-          <span className="club-badge-sage">{loans.length}</span>
+          <AdminStatusPill tone="neutral">{loans.length}</AdminStatusPill>
         </div>
 
         {loans.length === 0 ? (
           <ClubEmptyCard
-            icon={<Package size={18} />}
+            icon={<Package size={17} />}
             title="Aucun prêt dans ce filtre"
-            description={`${clubGear.length} équipements disponibles dans le parc matériel du club.`}
+            description={`${clubGear.length} équipements dans le parc club.`}
           />
         ) : (
-          loans.map((item) => (
-            <div
-              key={`${item.id}-${item.loanId ?? ''}`}
-              style={{
-                padding: 10,
-                borderRadius: 12,
-                background: 'rgba(255, 255, 255, 0.6)',
-                border: '0.5px solid rgba(23, 43, 36, 0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div>
-                  <b style={{ fontSize: 13 }}>{item.name}</b>
-                  <div style={{ fontSize: 11, color: 'var(--label2)' }}>
-                    {item.borrowerName ? `Emprunteur : ${item.borrowerName}` : item.brand}
+          loans.map((item) => {
+            const st = LOAN_STATUS_META[item.loanStatus ?? ''] ?? {
+              label: item.loanStatus ?? '—',
+              tone: 'neutral' as AdminTone,
+            };
+            return (
+              <div
+                key={`${item.id}-${item.loanId ?? ''}`}
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 12,
+                  background: 'rgba(255, 255, 255, 0.62)',
+                  border: '0.5px solid rgba(23, 43, 36, 0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <b style={{ fontSize: 12.5, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.name}
+                    </b>
+                    <AdminStatusPill tone={st.tone}>{st.label}</AdminStatusPill>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--label2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.borrowerName ?? item.brand}
                   </div>
                 </div>
-                <span className="club-badge-sage" style={{ fontSize: 10.5 }}>
-                  {LOAN_STATUS_LABEL[item.loanStatus ?? ''] ?? item.loanStatus}
-                </span>
-              </div>
 
-              {canApproveLoans && item.loanId ? (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {item.loanStatus === 'requested' ? (
-                    <>
+                {canApproveLoans && item.loanId ? (
+                  <div style={{ display: 'inline-flex', gap: 4, flex: 'none' }}>
+                    {item.loanStatus === 'requested' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="lkdv-carnet-btn-soft"
+                          aria-label={`Valider prêt ${item.name}`}
+                          title="Valider"
+                          style={{
+                            height: 28,
+                            width: 28,
+                            padding: 0,
+                            justifyContent: 'center',
+                            color: 'var(--tint, #17402c)',
+                            background: 'var(--club-soft-bg, #d3ebd9)',
+                          }}
+                          onClick={() => void transition(item, 'approved')}
+                        >
+                          <Check size={13} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          className="lkdv-carnet-btn-soft"
+                          aria-label={`Refuser prêt ${item.name}`}
+                          title="Refuser"
+                          style={{
+                            height: 28,
+                            width: 28,
+                            padding: 0,
+                            justifyContent: 'center',
+                            color: '#991b1b',
+                            background: 'var(--club-danger-bg, #f5ddd9)',
+                          }}
+                          onClick={() => void transition(item, 'declined')}
+                        >
+                          <X size={13} aria-hidden="true" />
+                        </button>
+                      </>
+                    ) : null}
+                    {item.loanStatus === 'approved' ? (
                       <button
                         type="button"
                         className="lkdv-carnet-btn-soft"
-                        style={{ height: 28, padding: '0 10px', fontSize: 11, color: '#17402c', background: 'rgba(23, 64, 44, 0.1)' }}
-                        onClick={() => void transition(item, 'approved')}
+                        style={{ height: 28, padding: '0 9px', fontSize: 11, color: 'var(--tint, #17402c)', background: 'var(--club-soft-bg, #d3ebd9)' }}
+                        onClick={() => void transition(item, 'checked_out')}
                       >
-                        <Check size={12} aria-hidden="true" />
-                        <span>Valider</span>
+                        <Check size={11} aria-hidden="true" />
+                        <span>Remis</span>
                       </button>
+                    ) : null}
+                    {item.loanStatus === 'checked_out' || item.loanStatus === 'overdue' ? (
                       <button
                         type="button"
                         className="lkdv-carnet-btn-soft"
-                        style={{ height: 28, padding: '0 10px', fontSize: 11, color: '#b91c1c' }}
-                        onClick={() => void transition(item, 'declined')}
+                        style={{ height: 28, padding: '0 9px', fontSize: 11, color: 'var(--tint, #17402c)' }}
+                        onClick={() => void transition(item, 'returned')}
                       >
-                        <X size={12} aria-hidden="true" />
-                        <span>Refuser</span>
+                        <RotateCcw size={11} aria-hidden="true" />
+                        <span>Retour</span>
                       </button>
-                    </>
-                  ) : null}
-                  {item.loanStatus === 'approved' ? (
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ height: 28, padding: '0 10px', fontSize: 11, color: '#17402c' }}
-                      onClick={() => void transition(item, 'checked_out')}
-                    >
-                      <Check size={12} aria-hidden="true" />
-                      <span>Marquer remis</span>
-                    </button>
-                  ) : null}
-                  {item.loanStatus === 'checked_out' || item.loanStatus === 'overdue' ? (
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ height: 28, padding: '0 10px', fontSize: 11, color: '#17402c' }}
-                      onClick={() => void transition(item, 'returned')}
-                    >
-                      <RotateCcw size={12} aria-hidden="true" />
-                      <span>Réceptionner retour</span>
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ))
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })
         )}
       </div>
     </div>

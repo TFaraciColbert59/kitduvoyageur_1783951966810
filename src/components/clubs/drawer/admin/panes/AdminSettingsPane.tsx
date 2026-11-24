@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { Check, Eye, Lock, ShieldCheck } from 'lucide-react';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import type { ClubItemData, ClubToastPayload, ClubVisibility } from '../../ClubDrawerTypes';
+import { AdminAccordionCard, AdminStatusPill } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,14 +41,15 @@ export function AdminSettingsPane({
   const [saving, setSaving] = useState(false);
 
   const canEdit = caps.has('club.edit_settings');
+  const activeVisibilityMeta =
+    VISIBILITY_OPTIONS.find((v) => v.id === visibility) ?? VISIBILITY_OPTIONS[0];
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEdit || saving) return;
     setSaving(true);
     try {
-      const apiPrivacy =
-        VISIBILITY_OPTIONS.find((v) => v.id === visibility)?.apiValue ?? 'closed';
+      const apiPrivacy = activeVisibilityMeta.apiValue;
       if (UUID_RE.test(activeClub.id) && typeof fetch === 'function') {
         const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}`, {
           method: 'PATCH',
@@ -77,45 +80,47 @@ export function AdminSettingsPane({
   };
 
   return (
-    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
+    <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
           <Eye size={14} aria-hidden="true" />
           <span>Identité & Territoire</span>
         </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label2)' }}>Nom du club</span>
-          <input
-            type="text"
-            className="club-glass-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={!canEdit}
-            minLength={2}
-            maxLength={80}
-            required
-          />
-        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 8 }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Nom du club</span>
+            <input
+              type="text"
+              className="club-glass-input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!canEdit}
+              minLength={2}
+              maxLength={80}
+              required
+            />
+          </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label2)' }}>Massif / Zone</span>
-          <input
-            type="text"
-            className="club-glass-input"
-            value={massif}
-            onChange={(e) => setMassif(e.target.value)}
-            disabled={!canEdit}
-            maxLength={120}
-          />
-        </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Massif / Zone</span>
+            <input
+              type="text"
+              className="club-glass-input"
+              value={massif}
+              onChange={(e) => setMassif(e.target.value)}
+              disabled={!canEdit}
+              maxLength={120}
+            />
+          </label>
+        </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--label2)' }}>Présentation</span>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label2)' }}>Présentation</span>
           <textarea
             className="club-glass-input"
-            rows={3}
-            style={{ height: 'auto', padding: '8px 12px', resize: 'vertical' }}
+            rows={2}
+            style={{ height: 'auto', padding: '7px 10px', resize: 'vertical' }}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             disabled={!canEdit}
@@ -124,61 +129,52 @@ export function AdminSettingsPane({
         </label>
       </div>
 
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-          <Lock size={14} aria-hidden="true" />
-          <span>Visibilité & Accès</span>
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: '10px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
+            <Lock size={14} aria-hidden="true" />
+            <span>Visibilité & Accès</span>
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--label2)' }}>{activeVisibilityMeta.desc}</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {VISIBILITY_OPTIONS.map((opt) => {
-            const active = visibility === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={!canEdit}
-                onClick={() => setVisibility(opt.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '9px 12px',
-                  borderRadius: 12,
-                  border: active
-                    ? '1px solid rgba(23, 64, 44, 0.28)'
-                    : '0.5px solid rgba(23, 43, 36, 0.1)',
-                  background: active ? 'rgba(23, 64, 44, 0.09)' : 'rgba(255, 255, 255, 0.55)',
-                  cursor: canEdit ? 'pointer' : 'default',
-                  textAlign: 'left',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--label)' }}>{opt.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--label2)' }}>{opt.desc}</div>
-                </div>
-                {active ? <Check size={15} color="#17402c" aria-hidden="true" /> : null}
-              </button>
-            );
-          })}
-        </div>
+
+        <SegmentedControl
+          size="sm"
+          showLabels
+          ariaLabel="Visibilité du club"
+          value={visibility}
+          onChange={(id) => {
+            if (canEdit) setVisibility(id as ClubVisibility);
+          }}
+          items={VISIBILITY_OPTIONS.map((opt) => ({
+            id: opt.id,
+            label: opt.label,
+          }))}
+        />
       </div>
 
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-          <ShieldCheck size={14} aria-hidden="true" />
-          <span>Charte & Règlement</span>
-        </div>
+      <AdminAccordionCard
+        title="Charte & Règlement"
+        icon={<ShieldCheck size={14} aria-hidden="true" />}
+        badge={
+          <AdminStatusPill tone={charter.trim() ? 'sage' : 'neutral'}>
+            {charter.trim() ? 'Renseignée' : 'Vide'}
+          </AdminStatusPill>
+        }
+        defaultOpen={false}
+      >
         <textarea
           className="club-glass-input"
           rows={3}
-          style={{ height: 'auto', padding: '8px 12px', resize: 'vertical' }}
+          style={{ height: 'auto', padding: '8px 10px', resize: 'vertical' }}
           value={charter}
           onChange={(e) => setCharter(e.target.value)}
           disabled={!canEdit}
           placeholder="Règles de sécurité, respect en montagne, fonctionnement du club…"
           maxLength={1000}
+          aria-label="Charte et règlement du club"
         />
-      </div>
+      </AdminAccordionCard>
 
       {canEdit ? (
         <button
@@ -188,8 +184,8 @@ export function AdminSettingsPane({
           style={{
             height: 38,
             justifyContent: 'center',
-            background: 'rgba(23, 64, 44, 0.12)',
-            color: '#17402c',
+            background: 'var(--club-soft-bg, #d3ebd9)',
+            color: 'var(--tint, #17402c)',
             fontWeight: 700,
           }}
         >

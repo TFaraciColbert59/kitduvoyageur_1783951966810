@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Ban, Check, EyeOff, Flag, Trash2, Volume2, VolumeX } from 'lucide-react';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import type { ClubContentReport, ClubMember } from '@/features/clubs/types';
 import type { ClubItemData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
@@ -30,6 +31,14 @@ export function AdminModerationPane({
   const canResolve = caps.has('moderation.resolve_reports');
   const canMute = caps.has('members.mute');
   const canBan = caps.has('members.ban_or_kick');
+
+  const segments = [
+    { id: 'reports', label: `Signalements (${reports.length})`, visible: true },
+    { id: 'muted', label: `Sourdines (${mutedMembers.length})`, visible: canMute },
+    { id: 'banned', label: `Bannis (${bannedMembers.length})`, visible: canBan },
+  ].filter((s) => s.visible);
+
+  const [activeTab, setActiveTab] = useState<string>('reports');
 
   const loadModeration = useCallback(async () => {
     if (!UUID_RE.test(activeClub.id) || typeof fetch !== 'function') return;
@@ -118,95 +127,108 @@ export function AdminModerationPane({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            <Flag size={14} aria-hidden="true" />
-            <span>File des signalements</span>
-          </span>
-          <span className="club-badge-sage">{reports.length}</span>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {segments.length > 1 ? (
+        <SegmentedControl
+          size="sm"
+          showLabels
+          ariaLabel="Catégories de modération"
+          value={activeTab}
+          onChange={setActiveTab}
+          items={segments.map((s) => ({ id: s.id, label: s.label }))}
+        />
+      ) : null}
 
-        {loading ? (
-          <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement…</span>
-        ) : reports.length === 0 ? (
-          <ClubEmptyCard
-            icon={<Flag size={18} />}
-            title="Aucun signalement ouvert"
-            description="La communauté est calme — rien à modérer pour le moment."
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {reports.map((rep) => (
+      {activeTab === 'reports' ? (
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
+          {loading ? (
+            <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement…</span>
+          ) : reports.length === 0 ? (
+            <ClubEmptyCard
+              icon={<Flag size={17} />}
+              title="Aucun signalement ouvert"
+              description="La communauté est calme — rien à modérer."
+            />
+          ) : (
+            reports.map((rep) => (
               <div
                 key={rep.id}
                 style={{
-                  padding: 10,
+                  padding: '8px 10px',
                   borderRadius: 12,
-                  background: 'rgba(255, 255, 255, 0.6)',
+                  background: 'rgba(255, 255, 255, 0.62)',
                   border: '0.5px solid rgba(23, 43, 36, 0.08)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
                 }}
               >
-                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{rep.reason}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {canResolve ? (
-                    <>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11 }}
-                        onClick={() => void resolveReport(rep.id, 'hide_message')}
-                      >
-                        <EyeOff size={11} aria-hidden="true" />
-                        <span>Masquer</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11, color: '#b91c1c' }}
-                        onClick={() => void resolveReport(rep.id, 'delete_message')}
-                      >
-                        <Trash2 size={11} aria-hidden="true" />
-                        <span>Supprimer</span>
-                      </button>
-                      {canMute ? (
-                        <button
-                          type="button"
-                          className="lkdv-carnet-btn-soft"
-                          style={{ height: 26, padding: '0 8px', fontSize: 11 }}
-                          onClick={() => void resolveReport(rep.id, 'mute_author')}
-                        >
-                          <VolumeX size={11} aria-hidden="true" />
-                          <span>Muter 24h</span>
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ height: 26, padding: '0 8px', fontSize: 11 }}
-                        onClick={() => void resolveReport(rep.id, 'dismiss')}
-                      >
-                        <Check size={11} aria-hidden="true" />
-                        <span>Ignorer</span>
-                      </button>
-                    </>
-                  ) : null}
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--label)' }}>
+                    {rep.reason}
+                  </div>
                 </div>
+                {canResolve ? (
+                  <div style={{ display: 'inline-flex', gap: 4, flex: 'none' }}>
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ height: 28, width: 28, padding: 0, justifyContent: 'center' }}
+                      aria-label="Masquer le message"
+                      title="Masquer"
+                      onClick={() => void resolveReport(rep.id, 'hide_message')}
+                    >
+                      <EyeOff size={12} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ height: 28, width: 28, padding: 0, justifyContent: 'center', color: '#991b1b', background: 'var(--club-danger-bg, #f5ddd9)' }}
+                      aria-label="Supprimer le message"
+                      title="Supprimer"
+                      onClick={() => void resolveReport(rep.id, 'delete_message')}
+                    >
+                      <Trash2 size={12} aria-hidden="true" />
+                    </button>
+                    {canMute ? (
+                      <button
+                        type="button"
+                        className="lkdv-carnet-btn-soft"
+                        style={{ height: 28, width: 28, padding: 0, justifyContent: 'center', color: '#92400e', background: 'var(--club-warn-bg, #fbf1dc)' }}
+                        aria-label="Muter l’auteur 24h"
+                        title="Muter 24h"
+                        onClick={() => void resolveReport(rep.id, 'mute_author')}
+                      >
+                        <VolumeX size={12} aria-hidden="true" />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="lkdv-carnet-btn-soft"
+                      style={{ height: 28, width: 28, padding: 0, justifyContent: 'center', color: 'var(--tint, #17402c)', background: 'var(--club-soft-bg, #d3ebd9)' }}
+                      aria-label="Ignorer le signalement"
+                      title="Ignorer"
+                      onClick={() => void resolveReport(rep.id, 'dismiss')}
+                    >
+                      <Check size={12} aria-hidden="true" />
+                    </button>
+                  </div>
+                ) : null}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      ) : null}
 
-      {canMute ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <b style={{ fontSize: 12.5, color: '#17402c' }}>Membres en sourdine ({mutedMembers.length})</b>
+      {activeTab === 'muted' && canMute ? (
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px' }}>
           {mutedMembers.length === 0 ? (
-            <span style={{ fontSize: 11.5, color: 'var(--label2)' }}>Aucun membre muté.</span>
+            <ClubEmptyCard
+              icon={<Volume2 size={17} />}
+              title="Aucun membre en sourdine"
+              description="Les membres mis en sourdine temporaire apparaîtront ici."
+            />
           ) : (
             mutedMembers.map((m) => (
               <div
@@ -215,16 +237,16 @@ export function AdminModerationPane({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '6px 8px',
+                  padding: '7px 9px',
                   borderRadius: 10,
-                  background: 'rgba(255, 255, 255, 0.55)',
+                  background: 'rgba(255, 255, 255, 0.58)',
                 }}
               >
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>{m.displayName}</span>
                 <button
                   type="button"
                   className="lkdv-carnet-btn-soft"
-                  style={{ height: 26, padding: '0 8px', fontSize: 11 }}
+                  style={{ height: 26, padding: '0 9px', fontSize: 11, color: 'var(--tint, #17402c)' }}
                   onClick={() => void unmute(m.userId)}
                 >
                   <Volume2 size={12} aria-hidden="true" />
@@ -236,11 +258,14 @@ export function AdminModerationPane({
         </div>
       ) : null}
 
-      {canBan ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <b style={{ fontSize: 12.5, color: '#17402c' }}>Membres bannis ({bannedMembers.length})</b>
+      {activeTab === 'banned' && canBan ? (
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px' }}>
           {bannedMembers.length === 0 ? (
-            <span style={{ fontSize: 11.5, color: 'var(--label2)' }}>Aucun membre banni.</span>
+            <ClubEmptyCard
+              icon={<Ban size={17} />}
+              title="Aucun membre banni"
+              description="Les membres exclus du club apparaîtront ici."
+            />
           ) : (
             bannedMembers.map((m) => (
               <div
@@ -249,16 +274,16 @@ export function AdminModerationPane({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '6px 8px',
+                  padding: '7px 9px',
                   borderRadius: 10,
-                  background: 'rgba(255, 255, 255, 0.55)',
+                  background: 'rgba(255, 255, 255, 0.58)',
                 }}
               >
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>{m.displayName}</span>
                 <button
                   type="button"
                   className="lkdv-carnet-btn-soft"
-                  style={{ height: 26, padding: '0 8px', fontSize: 11 }}
+                  style={{ height: 26, padding: '0 9px', fontSize: 11, color: 'var(--tint, #17402c)' }}
                   onClick={() => void unban(m.userId)}
                 >
                   <Ban size={12} aria-hidden="true" />

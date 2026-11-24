@@ -1,11 +1,23 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Crown, History, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Crown,
+  History,
+  RotateCcw,
+  Shield,
+  Sliders,
+  Trash2,
+  UserCog,
+  VolumeX,
+} from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import type { ClubAuditEntry } from '@/features/clubs/types';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
 import { AdminGlassSelect } from '../AdminGlassSelect';
+import { AdminAccordionCard, AdminStatusPill } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -18,16 +30,64 @@ export interface AdminSecurityAuditPaneProps {
   onToast?: (toast: ClubToastPayload) => void;
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  role_change: 'Changement de grade',
-  status_change: 'Changement de statut',
-  mute_change: 'Mise en sourdine',
-  pole_change: 'Permission pôle',
-  member_override_change: 'Surcharge individuelle',
-  member_override_reset: 'Réinitialisation membre',
-  role_policy_change: 'Matrice de rôle',
-  role_policy_reset: 'Réinitialisation rôle',
-  transfer_ownership: 'Transfert de propriété',
+const ACTION_META: Record<
+  string,
+  { label: string; icon: React.ReactNode; bg: string; color: string }
+> = {
+  role_change: {
+    label: 'Changement de grade',
+    icon: <UserCog size={13} aria-hidden="true" />,
+    bg: 'var(--club-soft-bg, #d3ebd9)',
+    color: 'var(--tint, #17402c)',
+  },
+  status_change: {
+    label: 'Changement de statut',
+    icon: <Shield size={13} aria-hidden="true" />,
+    bg: 'var(--club-soft-bg, #d3ebd9)',
+    color: 'var(--tint, #17402c)',
+  },
+  mute_change: {
+    label: 'Mise en sourdine',
+    icon: <VolumeX size={13} aria-hidden="true" />,
+    bg: 'var(--club-warn-bg, #fbf1dc)',
+    color: '#92400e',
+  },
+  pole_change: {
+    label: 'Permission pôle',
+    icon: <Sliders size={13} aria-hidden="true" />,
+    bg: 'var(--club-soft-bg, #d3ebd9)',
+    color: 'var(--tint, #17402c)',
+  },
+  member_override_change: {
+    label: 'Surcharge individuelle',
+    icon: <UserCog size={13} aria-hidden="true" />,
+    bg: 'var(--club-soft-bg, #d3ebd9)',
+    color: 'var(--tint, #17402c)',
+  },
+  member_override_reset: {
+    label: 'Réinitialisation membre',
+    icon: <RotateCcw size={13} aria-hidden="true" />,
+    bg: 'rgba(23, 43, 36, 0.08)',
+    color: 'var(--label2, #56665d)',
+  },
+  role_policy_change: {
+    label: 'Matrice de rôle',
+    icon: <Sliders size={13} aria-hidden="true" />,
+    bg: 'var(--club-soft-bg, #d3ebd9)',
+    color: 'var(--tint, #17402c)',
+  },
+  role_policy_reset: {
+    label: 'Réinitialisation rôle',
+    icon: <RotateCcw size={13} aria-hidden="true" />,
+    bg: 'rgba(23, 43, 36, 0.08)',
+    color: 'var(--label2, #56665d)',
+  },
+  transfer_ownership: {
+    label: 'Transfert de propriété',
+    icon: <Crown size={13} aria-hidden="true" />,
+    bg: 'var(--club-danger-bg, #f5ddd9)',
+    color: '#991b1b',
+  },
 };
 
 export function AdminSecurityAuditPane({
@@ -40,8 +100,10 @@ export function AdminSecurityAuditPane({
   const [auditEntries, setAuditEntries] = useState<ClubAuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [transferTargetId, setTransferTargetId] = useState('');
+  const [confirmTransferOpen, setConfirmTransferOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const canViewAudit = caps.has('members.view_audit_log');
@@ -73,6 +135,9 @@ export function AdminSecurityAuditPane({
   const eligibleSuccessors = members.filter(
     (m) => (m.userId || m.id) !== currentUserId && m.rawRole !== 'founder',
   );
+  const selectedSuccessor = eligibleSuccessors.find(
+    (m) => (m.userId || m.id) === transferTargetId,
+  );
 
   const handleTransfer = async () => {
     if (!canTransfer || !transferTargetId || transferring) return;
@@ -95,6 +160,7 @@ export function AdminSecurityAuditPane({
         subtitle: 'Vous êtes désormais Administrateur.',
       });
       setTransferTargetId('');
+      setConfirmTransferOpen(false);
     } catch (err) {
       onToast?.({
         title: 'Échec du transfert',
@@ -105,7 +171,7 @@ export function AdminSecurityAuditPane({
     }
   };
 
-  const handleDeleteClub = async () => {
+  const requestDeleteClub = () => {
     if (!canDelete || deleting) return;
     const needle = deleteConfirm.trim().toLowerCase();
     if (
@@ -118,6 +184,11 @@ export function AdminSecurityAuditPane({
       });
       return;
     }
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteClub = async () => {
+    if (!canDelete || deleting) return;
     setDeleting(true);
     try {
       if (UUID_RE.test(activeClub.id) && typeof fetch === 'function') {
@@ -131,6 +202,7 @@ export function AdminSecurityAuditPane({
       }
       onToast?.({ title: 'Club supprimé', subtitle: activeClub.name });
       setDeleteConfirm('');
+      setConfirmDeleteOpen(false);
     } catch (err) {
       onToast?.({
         title: 'Suppression impossible',
@@ -142,15 +214,19 @@ export function AdminSecurityAuditPane({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {canViewAudit ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            <History size={14} aria-hidden="true" />
-            <span>Journal d’audit sécurité</span>
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
+              <History size={14} aria-hidden="true" />
+              <span>Journal d’audit</span>
+            </span>
+            <AdminStatusPill tone="neutral">{auditEntries.length}</AdminStatusPill>
           </div>
+
           {loading ? (
-            <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement du journal…</span>
+            <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement…</span>
           ) : auditEntries.length === 0 ? (
             <ClubEmptyCard
               icon={<History size={18} />}
@@ -159,45 +235,68 @@ export function AdminSecurityAuditPane({
             />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {auditEntries.slice(0, 25).map((entry) => (
-                <div
-                  key={entry.id}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.55)',
-                    border: '0.5px solid rgba(23, 43, 36, 0.08)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12, fontWeight: 600 }}>
-                    <span>{ACTION_LABELS[entry.action] ?? entry.action}</span>
-                    <span style={{ fontSize: 10.5, color: 'var(--label2)' }}>
-                      {entry.createdAt.slice(0, 16).replace('T', ' ')}
+              {auditEntries.slice(0, 25).map((entry) => {
+                const meta = ACTION_META[entry.action] ?? {
+                  label: entry.action,
+                  icon: <History size={13} aria-hidden="true" />,
+                  bg: 'rgba(23, 43, 36, 0.08)',
+                  color: 'var(--label2, #56665d)',
+                };
+                return (
+                  <div
+                    key={entry.id}
+                    style={{
+                      padding: '7px 9px',
+                      borderRadius: 12,
+                      background: 'rgba(255, 255, 255, 0.62)',
+                      border: '0.5px solid rgba(23, 43, 36, 0.08)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 9,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: 8,
+                        background: meta.bg,
+                        color: meta.color,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flex: 'none',
+                      }}
+                    >
+                      {meta.icon}
                     </span>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {meta.label}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'var(--label2)' }}>
+                        {entry.createdAt.slice(0, 16).replace('T', ' ')}
+                        {entry.targetRole ? ` · ${entry.targetRole}` : ''}
+                      </div>
+                    </div>
                   </div>
-                  {entry.targetRole ? (
-                    <span style={{ fontSize: 11, color: 'var(--label2)' }}>
-                      Rôle cible : {entry.targetRole}
-                    </span>
-                  ) : null}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       ) : null}
 
       {canTransfer ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            <Crown size={14} aria-hidden="true" />
-            <span>Souveraineté — Transférer la propriété</span>
-          </div>
+        <AdminAccordionCard
+          title="Transférer la propriété"
+          icon={<Crown size={14} aria-hidden="true" />}
+          badge={<AdminStatusPill tone="warn">Souveraineté</AdminStatusPill>}
+          tone="warn"
+          defaultOpen={false}
+        >
           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--label2)' }}>
-            Désigne un nouveau Fondateur de manière atomique. Vous passerez automatiquement Administrateur.
+            Désigne un nouveau Fondateur. Vous passerez automatiquement Administrateur.
           </p>
           <AdminGlassSelect
             ariaLabel="Choisir le successeur fondateur"
@@ -212,32 +311,32 @@ export function AdminSecurityAuditPane({
           <button
             type="button"
             disabled={!transferTargetId || transferring}
-            onClick={() => void handleTransfer()}
+            onClick={() => setConfirmTransferOpen(true)}
             className="lkdv-carnet-btn-soft"
-            style={{ justifyContent: 'center', height: 36, color: '#17402c', fontWeight: 700 }}
+            style={{
+              justifyContent: 'center',
+              height: 34,
+              background: 'var(--club-warn-bg, #fbf1dc)',
+              color: '#92400e',
+              fontWeight: 700,
+            }}
           >
             <Crown size={14} aria-hidden="true" />
-            <span>{transferring ? 'Transfert…' : 'Transférer le statut Fondateur'}</span>
+            <span>Transférer le statut Fondateur</span>
           </button>
-        </div>
+        </AdminAccordionCard>
       ) : null}
 
       {canDelete ? (
-        <div
-          className="club-glass-card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            border: '0.5px solid rgba(185, 28, 28, 0.25)',
-          }}
+        <AdminAccordionCard
+          title="Supprimer le club"
+          icon={<AlertTriangle size={14} aria-hidden="true" />}
+          badge={<AdminStatusPill tone="danger">Critique</AdminStatusPill>}
+          tone="danger"
+          defaultOpen={false}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#b91c1c' }}>
-            <AlertTriangle size={14} aria-hidden="true" />
-            <span>Zone critique — Supprimer le club</span>
-          </div>
           <p style={{ margin: 0, fontSize: 11.5, color: 'var(--label2)' }}>
-            Action irréversible. Tapez <b>{activeClub.slug}</b> pour confirmer la suppression définitive.
+            Action irréversible. Tapez <b>{activeClub.slug}</b> pour confirmer.
           </p>
           <input
             type="text"
@@ -250,21 +349,46 @@ export function AdminSecurityAuditPane({
           <button
             type="button"
             disabled={deleting || !deleteConfirm.trim()}
-            onClick={() => void handleDeleteClub()}
+            onClick={requestDeleteClub}
             className="lkdv-carnet-btn-soft"
             style={{
               justifyContent: 'center',
-              height: 36,
-              background: 'rgba(185, 28, 28, 0.1)',
-              color: '#b91c1c',
+              height: 34,
+              background: 'var(--club-danger-bg, #f5ddd9)',
+              color: '#991b1b',
               fontWeight: 700,
             }}
           >
             <Trash2 size={14} aria-hidden="true" />
-            <span>{deleting ? 'Suppression…' : 'Supprimer définitivement le club'}</span>
+            <span>Supprimer définitivement le club</span>
           </button>
-        </div>
+        </AdminAccordionCard>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmTransferOpen}
+        title="Transférer la propriété ?"
+        description={
+          selectedSuccessor
+            ? `${selectedSuccessor.name} deviendra Fondateur de ${activeClub.name}. Vous passerez Administrateur.`
+            : undefined
+        }
+        confirmLabel="Transférer"
+        loading={transferring}
+        onConfirm={() => void handleTransfer()}
+        onCancel={() => setConfirmTransferOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title={`Supprimer ${activeClub.name} ?`}
+        description="Cette suppression est définitive et effacera les salons, sorties et historiques associés."
+        confirmLabel="Supprimer définitivement"
+        variant="destructive"
+        loading={deleting}
+        onConfirm={() => void handleDeleteClub()}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 }

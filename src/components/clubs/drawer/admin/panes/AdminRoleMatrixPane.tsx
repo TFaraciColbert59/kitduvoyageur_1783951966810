@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Lock, RotateCcw, Shield } from 'lucide-react';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Switch } from '@/components/ui/Switch';
 import {
   CLUB_DEFAULT_ROLE_CAPABILITIES,
@@ -12,6 +13,7 @@ import {
 } from '@/features/clubs/types';
 import type { ClubItemData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { CAPABILITY_DOMAIN_GROUPS } from '../adminConfig';
+import { AdminAccordionCard, AdminStatusPill } from '../AdminPrimitives';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -115,14 +117,15 @@ export function AdminRoleMatrixPane({ activeClub, caps, onToast }: AdminRoleMatr
   };
 
   const customCount = rolePolicies.filter((p) => p.role === selectedRole).length;
+  const domainGroups = CAPABILITY_DOMAIN_GROUPS.filter((g) => g.domain !== 'sovereignty');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
             <Shield size={14} aria-hidden="true" />
-            <span>Matrice des droits par rôle</span>
+            <span>Matrice des rôles</span>
           </span>
           {customCount > 0 ? (
             <button
@@ -132,75 +135,79 @@ export function AdminRoleMatrixPane({ activeClub, caps, onToast }: AdminRoleMatr
               onClick={() => void resetRole()}
             >
               <RotateCcw size={11} aria-hidden="true" />
-              <span>Réinitialiser</span>
+              <span>Réinitialiser ({customCount})</span>
             </button>
           ) : null}
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {editableRoles.map((r) => {
-            const active = selectedRole === r;
-            return (
-              <button
-                key={r}
-                type="button"
-                className={`club-filter-pill ${active ? 'is-active' : ''}`}
-                onClick={() => setSelectedRole(r)}
-              >
-                {active ? <span className="club-filter-pill-bg" /> : null}
-                <span className="club-filter-pill-label">{CLUB_ROLE_LABELS[r]}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <span style={{ fontSize: 11.5, color: 'var(--label2)' }}>
-          Modifie les droits par défaut de tous les membres ayant le grade <b>{CLUB_ROLE_LABELS[selectedRole]}</b> dans ce club.
-        </span>
+        <SegmentedControl
+          size="sm"
+          showLabels
+          ariaLabel="Sélectionner un rôle"
+          value={selectedRole}
+          onChange={(id) => setSelectedRole(id as Exclude<ClubRole, 'founder'>)}
+          items={editableRoles.map((r) => ({
+            id: r,
+            label: CLUB_ROLE_LABELS[r],
+          }))}
+        />
       </div>
 
-      {CAPABILITY_DOMAIN_GROUPS.filter((g) => g.domain !== 'sovereignty').map((group) => (
-        <div key={group.domain} className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.06em', color: '#56665d' }}>
-            {group.domainLabel.toUpperCase()}
-          </div>
-          {group.items.map((item) => {
-            const { allowed, isCustom } = resolveForRole(item.key);
-            const canToggle = caps.canDelegate(item.key, selectedRole);
-            return (
-              <div
-                key={item.key}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  padding: '6px 8px',
-                  borderRadius: 10,
-                  background: 'rgba(255, 255, 255, 0.55)',
-                  opacity: canToggle ? 1 : 0.55,
-                }}
-              >
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--label)' }}>{item.label}</div>
-                  <div style={{ fontSize: 10, color: isCustom ? '#17402c' : 'var(--label2)' }}>
-                    {isCustom ? 'personnalisé club' : 'défaut système'}
+      {domainGroups.map((group, idx) => {
+        const activeCount = group.items.filter((item) => resolveForRole(item.key).allowed).length;
+        return (
+          <AdminAccordionCard
+            key={group.domain}
+            title={group.domainLabel}
+            badge={
+              <AdminStatusPill tone={activeCount > 0 ? 'sage' : 'neutral'}>
+                {activeCount}/{group.items.length} actifs
+              </AdminStatusPill>
+            }
+            defaultOpen={idx === 0}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+              {group.items.map((item) => {
+                const { allowed, isCustom } = resolveForRole(item.key);
+                const canToggle = caps.canDelegate(item.key, selectedRole);
+                return (
+                  <div
+                    key={item.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 8,
+                      padding: '6px 8px',
+                      borderRadius: 10,
+                      background: 'rgba(255, 255, 255, 0.58)',
+                      opacity: canToggle ? 1 : 0.55,
+                    }}
+                  >
+                    <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label)' }}>
+                        {item.label}
+                      </span>
+                      {isCustom ? (
+                        <AdminStatusPill tone="sage">personnalisé</AdminStatusPill>
+                      ) : null}
+                    </div>
+                    {canToggle ? (
+                      <Switch
+                        checked={allowed}
+                        onCheckedChange={(val) => void togglePolicy(item.key, val)}
+                        aria-label={`${item.label} pour ${CLUB_ROLE_LABELS[selectedRole]}`}
+                      />
+                    ) : (
+                      <Lock size={13} aria-label="Droit verrouillé" style={{ opacity: 0.6 }} />
+                    )}
                   </div>
-                </div>
-                {canToggle ? (
-                  <Switch
-                    checked={allowed}
-                    onCheckedChange={(val) => void togglePolicy(item.key, val)}
-                    aria-label={`${item.label} pour ${CLUB_ROLE_LABELS[selectedRole]}`}
-                  />
-                ) : (
-                  <Lock size={13} aria-label="Droit verrouillé" style={{ opacity: 0.6 }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ))}
+                );
+              })}
+            </div>
+          </AdminAccordionCard>
+        );
+      })}
     </div>
   );
 }

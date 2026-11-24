@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Check, Copy, Link2, UserCheck, X } from 'lucide-react';
+import { Check, Copy, Link2, QrCode, UserCheck, X } from 'lucide-react';
 import type { ClubJoinRequest } from '@/features/clubs/types';
 import type { ClubItemData, ClubToastPayload } from '../../ClubDrawerTypes';
 import { ClubEmptyCard } from '../../ClubSharedUi';
+import { AdminStatusPill } from '../AdminPrimitives';
+import { AdminQrCodeSvg } from '../AdminQrCodeSvg';
 import type { UseClubCapabilitiesResult } from '../useClubCapabilities';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -25,6 +27,7 @@ export function AdminMembersAccessPane({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [showQr, setShowQr] = useState(true);
 
   const canReview = caps.has('members.review_requests');
   const canInvites = caps.has('members.manage_invites');
@@ -100,11 +103,13 @@ export function AdminMembersAccessPane({
             payload.data.shareUrl ||
               `${origin}/clubs/${encodeURIComponent(activeClub.slug)}?invite=${payload.data.token}`,
           );
+          setShowQr(true);
           onToast?.({ title: 'Lien d’invitation généré ✓' });
           return;
         }
       }
       setInviteUrl(fallbackUrl);
+      setShowQr(true);
       onToast?.({ title: 'Lien d’invitation prêt ✓' });
     } finally {
       setCreatingInvite(false);
@@ -112,68 +117,91 @@ export function AdminMembersAccessPane({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {canReview ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
               <UserCheck size={14} aria-hidden="true" />
               <span>Demandes d’adhésion</span>
             </span>
-            <span className="club-badge-sage">{requests.length}</span>
+            <AdminStatusPill tone={requests.length > 0 ? 'warn' : 'neutral'}>
+              {requests.length}
+            </AdminStatusPill>
           </div>
 
           {loading ? (
             <span style={{ fontSize: 12, color: 'var(--label2)' }}>Chargement…</span>
           ) : requests.length === 0 ? (
             <ClubEmptyCard
-              icon={<UserCheck size={18} />}
+              icon={<UserCheck size={17} />}
               title="Aucune demande en attente"
-              description="Les nouvelles candidatures au club apparaîtront ici."
+              description="Les nouvelles candidatures apparaîtront ici."
             />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {requests.map((req) => (
                 <div
                   key={req.id}
                   style={{
-                    padding: 10,
+                    padding: '7px 9px',
                     borderRadius: 12,
-                    background: 'rgba(255, 255, 255, 0.6)',
+                    background: 'rgba(255, 255, 255, 0.62)',
                     border: '0.5px solid rgba(23, 43, 36, 0.08)',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: 6,
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                    <b style={{ fontSize: 13 }}>{req.displayName}</b>
-                    <div style={{ display: 'inline-flex', gap: 6 }}>
-                      <button
-                        type="button"
-                        disabled={busyId === req.id}
-                        onClick={() => void handleReview(req.id, true)}
-                        className="lkdv-carnet-btn-soft"
-                        style={{ height: 28, padding: '0 10px', color: '#17402c', background: 'rgba(23, 64, 44, 0.1)' }}
-                      >
-                        <Check size={13} aria-hidden="true" />
-                        <span>Accepter</span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === req.id}
-                        onClick={() => void handleReview(req.id, false)}
-                        className="lkdv-carnet-btn-soft"
-                        style={{ height: 28, padding: '0 10px', color: '#b91c1c' }}
-                      >
-                        <X size={13} aria-hidden="true" />
-                        <span>Refuser</span>
-                      </button>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {req.displayName}
                     </div>
+                    {req.message ? (
+                      <div style={{ fontSize: 11, color: 'var(--label2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {req.message}
+                      </div>
+                    ) : null}
                   </div>
-                  {req.message ? (
-                    <p style={{ margin: 0, fontSize: 11.5, color: 'var(--label2)' }}>{req.message}</p>
-                  ) : null}
+                  <div style={{ display: 'inline-flex', gap: 5, flex: 'none' }}>
+                    <button
+                      type="button"
+                      disabled={busyId === req.id}
+                      onClick={() => void handleReview(req.id, true)}
+                      className="lkdv-carnet-btn-soft"
+                      aria-label={`Accepter ${req.displayName}`}
+                      title="Accepter"
+                      style={{
+                        height: 28,
+                        width: 28,
+                        padding: 0,
+                        justifyContent: 'center',
+                        color: 'var(--tint, #17402c)',
+                        background: 'var(--club-soft-bg, #d3ebd9)',
+                      }}
+                    >
+                      <Check size={13} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === req.id}
+                      onClick={() => void handleReview(req.id, false)}
+                      className="lkdv-carnet-btn-soft"
+                      aria-label={`Refuser ${req.displayName}`}
+                      title="Refuser"
+                      style={{
+                        height: 28,
+                        width: 28,
+                        padding: 0,
+                        justifyContent: 'center',
+                        color: '#991b1b',
+                        background: 'var(--club-danger-bg, #f5ddd9)',
+                      }}
+                    >
+                      <X size={13} aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -182,46 +210,91 @@ export function AdminMembersAccessPane({
       ) : null}
 
       {canInvites ? (
-        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: '#17402c' }}>
-            <Link2 size={14} aria-hidden="true" />
-            <span>Liens & QR d’invitation</span>
+        <div className="club-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--tint, #17402c)' }}>
+              <Link2 size={14} aria-hidden="true" />
+              <span>Lien & QR d’invitation</span>
+            </span>
+            {inviteUrl ? (
+              <button
+                type="button"
+                className="lkdv-carnet-btn-soft"
+                style={{ height: 26, padding: '0 8px', fontSize: 11, color: 'var(--tint, #17402c)' }}
+                onClick={() => setShowQr((v) => !v)}
+                aria-expanded={showQr}
+              >
+                <QrCode size={12} aria-hidden="true" />
+                <span>{showQr ? 'Masquer QR' : 'Afficher QR'}</span>
+              </button>
+            ) : null}
           </div>
-          <p style={{ margin: 0, fontSize: 11.5, color: 'var(--label2)' }}>
-            Créez un lien d’invitation révocable pour intégrer des membres directement.
-          </p>
+
           <button
             type="button"
             disabled={creatingInvite}
             onClick={() => void handleGenerateInvite()}
             className="lkdv-carnet-btn-soft"
-            style={{ justifyContent: 'center', height: 36, color: '#17402c', fontWeight: 700 }}
+            style={{
+              justifyContent: 'center',
+              height: 34,
+              background: 'var(--club-soft-bg, #d3ebd9)',
+              color: 'var(--tint, #17402c)',
+              fontWeight: 700,
+            }}
           >
             <Link2 size={14} aria-hidden="true" />
-            <span>{creatingInvite ? 'Génération…' : 'Générer un lien d’invitation'}</span>
+            <span>{creatingInvite ? 'Génération…' : inviteUrl ? 'Nouveau lien révocable' : 'Générer un lien d’invitation'}</span>
           </button>
+
           {inviteUrl ? (
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <input
-                type="text"
-                readOnly
-                className="club-glass-input"
-                value={inviteUrl}
-                style={{ flex: 1, fontSize: 11.5 }}
-              />
-              <button
-                type="button"
-                className="lkdv-carnet-btn-soft"
-                style={{ height: 34, padding: '0 10px', flex: 'none' }}
-                onClick={() => {
-                  void navigator.clipboard?.writeText(inviteUrl).catch(() => {});
-                  onToast?.({ title: 'Lien copié ✓' });
-                }}
-                aria-label="Copier le lien d’invitation"
-              >
-                <Copy size={14} aria-hidden="true" />
-              </button>
-            </div>
+            <>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  type="text"
+                  readOnly
+                  className="club-glass-input"
+                  value={inviteUrl}
+                  aria-label="Lien d’invitation généré"
+                  style={{ flex: 1, fontSize: 11.5 }}
+                />
+                <button
+                  type="button"
+                  className="lkdv-carnet-btn-soft"
+                  style={{ height: 34, width: 34, padding: 0, justifyContent: 'center', flex: 'none' }}
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(inviteUrl).catch(() => {});
+                    onToast?.({ title: 'Lien copié ✓' });
+                  }}
+                  aria-label="Copier le lien d’invitation"
+                  title="Copier le lien"
+                >
+                  <Copy size={14} aria-hidden="true" />
+                </button>
+              </div>
+
+              {showQr ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 10,
+                    borderRadius: 14,
+                    background: 'rgba(255, 255, 255, 0.72)',
+                    border: '0.5px solid rgba(23, 64, 44, 0.12)',
+                  }}
+                >
+                  <AdminQrCodeSvg value={inviteUrl} size={108} />
+                  <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <b style={{ fontSize: 12.5, color: 'var(--tint, #17402c)' }}>{activeClub.name}</b>
+                    <span style={{ fontSize: 11, color: 'var(--label2)' }}>
+                      Scannez ce QR code en sortie ou au refuge pour rejoindre le club instantanément.
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+            </>
           ) : null}
         </div>
       ) : null}
