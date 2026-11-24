@@ -137,12 +137,11 @@ def progress(t):
 
 # ---------- caméra : cible T, cap (azimut du haut de l'écran), rayon du globe Rg, glissement vers le centre ----------
 W_CENTER = (-73.03, -51.02)
-KEYS = [  # (t, lon, lat, cap°, Rg)
-    (0.0,   4.0, 47.0, 0, 1500), (10.4, 1.0, 45.5, 0, 1500),                     # la question : l'Europe, presque immobile
-    (13.33, -68.0, -40.0, 196, 1650),                                               # respiration : la Terre tourne vers l'Amérique du Sud
-    (14.6, -70.6, -44.0, 190, 1700), (15.6, -71.4, -50.6, 186, 2600),               # le vol
-    (16.6, -72.7, -51.15, 60, 26000),                                               # le bus : agrandissement vers la Patagonie
-    (17.6, -73.03, -51.01, 0, 170000),                                              # le catamaran : le W entre dans le globe, nord en haut
+KEYS = [  # (t, lon, lat, cap°, Rg) — le nord reste toujours en haut : le globe roule, il ne pivote jamais
+    (0.0,   4.0, 47.0, 0, 1500), (10.4, 1.0, 45.5, 0, 1500),                        # la question : l'Europe, presque immobile
+    (13.33, -69.5, -45.0, 0, 1600),                                                 # respiration : la Terre roule jusqu'à l'Amérique du Sud
+    (15.3, -71.0, -49.5, 0, 1700),                                                  # le plan, puis le vol
+    (17.9, -73.03, -51.01, 0, 170000),                                              # bus et catamaran : une seule plongée jusqu'au W
     (30.0, -73.03, -51.01, 0, 170000)]                                              # le W tenu jusqu'au logo
 def camera(t):
     for i in range(len(KEYS) - 1):
@@ -220,8 +219,8 @@ def visible(xy, front):
 
 def draw_route(img, t, cam):
     ov = np.zeros((H, W), np.float32); ovs = np.zeros((H, W), np.float32)
-    # le trajet prévu apparaît pendant la respiration (10,7 s → 13,3 s)
-    plan = ease((t - 10.7) / 2.4)
+    # le trajet prévu se dessine après la respiration (13,4 s → 14,6 s)
+    plan = ease((t - 13.4) / 1.2)
     if plan > 0:
         pts_plan = ALLPTS if t < 17.3 else ALLPTS[len(SEG[0][2]) + len(SEG[1][2]) - 1:]
         xy, fr = project(pts_plan, cam); vis = visible(xy, fr)

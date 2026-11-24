@@ -55,33 +55,16 @@ html = f'''<template>
   </style>
   <div id="root" data-composition-id="preuves" data-width="1080" data-height="1920">
     <div id="e-scene">
-    <div id="w" class="clip e-shot" data-start="0" data-duration="{round(T0, 3)}" data-track-index="1">
-      <div id="w-cam"><img id="w-img" src="assets/map/w.png" alt="Le W de Torres del Paine vu du satellite">
-        <svg id="w-ov" width="1080" height="1920" viewBox="0 0 1080 1920">
-          <defs><filter id="w-blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter></defs>
-          {halo}
-          {lines}
-          <g id="w-stops">{stop_svg}</g>
-        </svg>
-      </div>
-    </div>
 {chr(10).join(vids)}
     </div>
-    <div id="w-lab" class="clip" data-start="0" data-duration="{round(T0, 3)}" data-track-index="4" data-layout-allow-safe-zone>\\ Le-W · 5-jours · 72-km \\</div>
+    <div id="w-lab" class="clip" data-start="0" data-duration="{round(T0, 3)}" data-track-index="4" data-layout-allow-safe-zone>\\ Paris → Torres-del-Paine · 14 200 km \\</div>
 {chr(10).join(clips)}
   </div>
   <script>
     (function () {{
       const tl = gsap.timeline({{ paused: true }});
       const F = 1 / 30;
-      // Le W : coupe nette depuis la Terre, le tracé laiton se dessine en 0,8 s, les cinq étapes s'allument.
-      tl.fromTo("#w-cam", {{ scale: 1.12 }}, {{ scale: 1.0, duration: {round(T0, 3)}, ease: "power2.out" }}, 0);
-      const segs = gsap.utils.toArray("#w-lines .w-seg");
-      const dmax = Math.max(...segs.map((s) => +s.dataset.d1));
-      segs.forEach((s) => tl.to(s, {{ strokeDashoffset: 0, duration: Math.max(F, (s.dataset.d1 - s.dataset.d0) / dmax * 0.8), ease: "none" }}, 0.12 + s.dataset.d0 / dmax * 0.8));
-      tl.fromTo("#w-halo", {{ opacity: 0 }}, {{ opacity: 1, duration: 0.5 }}, 0.5);
-      gsap.utils.toArray("#w-stops .w-st").forEach((c, i) => tl.to(c, {{ opacity: 1, duration: 2 * F }}, 0.12 + [0, 0.2, 0.4, 0.62, 0.8][i]));
-      tl.set("#w-lab", {{ opacity: 1 }}, 0.1);
+      tl.set("#w-lab", {{ opacity: 1 }}, 0.25);
       // Les preuves : plans animés (vidéos), légende posée sans effet.
 {chr(10).join(js)}
       window.__timelines = window.__timelines || {{}};
