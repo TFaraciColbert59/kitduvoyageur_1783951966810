@@ -1,6 +1,8 @@
 # Prépare les images ChatGPT (assets/gen/NN-*.png|jpg) pour le film : recadrage 9:16 avec 10 % de marge pour la poussée,
 # agrandissement Lanczos, étalonnage léger commun (contraste, chaleur des hautes lumières), sortie assets/prep/NN.jpg.
-# Une image absente est remplacée par une image d'attente marquée (jamais livrée : le rendu final vérifie qu'il n'en reste pas).
+# Si l'image ChatGPT manque, la photo libre assets/photos/NN-*.jpg (Wikimedia Commons, crédits dans CREDITS.md) la remplace,
+# avec son cadrage dans assets/photos/cadrage.json ({"NN": {"fx":0..1, "fy":0..1, "zoom":>=1}}).
+# Une image absente des deux dossiers est remplacée par une image d'attente marquée (jamais livrée : le rendu final vérifie qu'il n'en reste pas).
 import glob, os, re, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
@@ -10,17 +12,23 @@ W,H=1188,2112  # 1080×1920 + 10 %
 NAMES={1:'aube-mer-de-nuages',2:'randonneur-minuscule',3:'condor-vertige',4:'pont-suspendu',5:'torres-embrasees',6:'refuge-heure-bleue',7:'fenetre-meteo',8:'eau-glaciaire',9:'hublot-andes',10:'sac-rien-de-trop',11:'trois-amis-vent',12:'tente-voie-lactee',13:'proches-suivent',14:'guanacos-steppe'}
 # point de cadrage horizontal (0 = gauche, 0,5 = centre, 1 = droite) quand le sujet n'est pas centré
 FOCUS={3:0.36}
-found={}
-for f in glob.glob(os.path.join(GEN,'*')):
-    m=re.match(r'(\d{1,2})',os.path.basename(f))
-    if m and f.lower().endswith(('.png','.jpg','.jpeg','.webp')): found[int(m.group(1))]=f
+import json
+PHO=os.path.join(ROOT,'assets','photos')
+CAD=json.load(open(os.path.join(PHO,'cadrage.json'))) if os.path.exists(os.path.join(PHO,'cadrage.json')) else {}
+found={}; crop={}
+for d in (PHO,GEN):  # GEN en dernier : l'image ChatGPT l'emporte
+    for f in glob.glob(os.path.join(d,'*')):
+        m=re.match(r'(\d{1,2})-',os.path.basename(f))
+        if m and f.lower().endswith(('.png','.jpg','.jpeg','.webp')):
+            n=int(m.group(1)); found[n]=f
+            crop[n]=CAD.get(f'{n:02d}',{}) if d==PHO else {'fx':FOCUS.get(n,0.5)}
 status={}
 for n in range(1,15):
     out=os.path.join(OUT,f'{n:02d}.jpg')
     if n in found:
         im=Image.open(found[n]).convert('RGB'); w,h=im.size
-        s=max(W/w,H/h); im=im.resize((round(w*s),round(h*s)),Image.LANCZOS)
-        fx=FOCUS.get(n,0.5); L=int(round((im.width-W)*fx)); T=(im.height-H)//2; im=im.crop((L,T,L+W,T+H))
+        c=crop[n]; s=max(W/w,H/h)*c.get('zoom',1.0); im=im.resize((round(w*s),round(h*s)),Image.LANCZOS)
+        L=int(round((im.width-W)*c.get('fx',0.5))); T=int(round((im.height-H)*c.get('fy',0.5))); im=im.crop((L,T,L+W,T+H))
         a=np.asarray(im).astype(np.float32)/255
         lum=a.mean(-1,keepdims=True)
         a=lum+(a-lum)*1.06                      # saturation +6 %
