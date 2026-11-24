@@ -3,14 +3,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Check, Eye, Layers, Pencil, Plus, Sparkles, X } from 'lucide-react';
+import { Check, Eye, Layers, MapPin, Mountain, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { CommentItem, type SocialComment } from '@/components/social-kit';
 import { useAuth } from '@/contexts/AuthContext';
 import CommunityFeedPost from '@/features/community/feed/CommunityFeedPost';
 import type { FeedPost } from '@/features/community/feed/useCommunityFeed';
 import type { PostSource } from '@/features/community/feed/postSource';
 import { PostReplyComposer } from '@/features/posts/ui/PostReplyComposer';
-import type { ClubPoleItem } from '../drawer/ClubDrawerTypes';
+import type { ClubOutingData, ClubPoleItem } from '../drawer/ClubDrawerTypes';
+import type { ClubMapSelection } from '../map/clubMapTypes';
 
 export interface ClubStoryViewerEntry {
   id: string;
@@ -26,6 +27,7 @@ export interface ClubStoryHighlight {
   title: string;
   coverUrl: string;
   subtitle?: string;
+  massif?: string;
   createdAtLabel?: string;
   slides: Array<{
     id: string;
@@ -97,6 +99,17 @@ export interface ClubInlineFeedProps {
   onFlyToSpot: (post: ClubFeedPostItem) => void;
   onOpenOutingDetail: (outingId: string) => void;
   onOpenCreatePost: (poleId?: string) => void;
+  mapSelection?: ClubMapSelection;
+  selectedMassifSummary?: {
+    id: string;
+    name: string;
+    outingsCount: number;
+    postsCount: number;
+  } | null;
+  selectedOuting?: ClubOutingData | null;
+  highlightedPostId?: string | null;
+  onClearMapSelection?: () => void;
+  onToggleOutingRsvpById?: (outingId: string) => void;
 }
 
 function SfIcon({ name, size = 18 }: { name: string; size?: number }) {
@@ -233,6 +246,7 @@ function ClubSharePanel({
 function ClubPostCard({
   post,
   clubName,
+  isHighlighted = false,
   onToggleLike,
   onToggleSave,
   onAddComment,
@@ -242,6 +256,7 @@ function ClubPostCard({
 }: {
   post: ClubFeedPostItem;
   clubName: string;
+  isHighlighted?: boolean;
   onToggleLike: (postId: string) => void;
   onToggleSave: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
@@ -285,7 +300,7 @@ function ClubPostCard({
     [hasMedia, post.authorAvatar, post.authorHandle, post.authorName, post.caption, post.comments.length, post.id, post.likes, post.mediaUrl],
   );
 
-  const metaParts = [post.poleName, post.spot, post.timeAgo].filter(Boolean).join(' · ');
+  const metaParts = [post.poleName, post.massif, post.timeAgo].filter(Boolean).join(' · ');
 
   const source: PostSource = {
     liked: Boolean(post.liked),
@@ -315,7 +330,33 @@ function ClubPostCard({
       meta: metaParts,
       badge: post.authorRole,
       pinned: post.pinned,
+      contextAction: post.spot
+        ? {
+            label: post.spot,
+            icon: <MapPin size={11} aria-hidden="true" />,
+            onClick: () => onFlyToSpot(post),
+            ariaLabel: `Centrer la carte 3D sur ${post.spot}`,
+          }
+        : undefined,
     },
+    menuExtras: [
+      {
+        id: 'fly-3d',
+        label: 'Voir sur la carte 3D',
+        icon: <MapPin size={14} aria-hidden="true" />,
+        onSelect: () => onFlyToSpot(post),
+      },
+      ...(post.outingId
+        ? [
+            {
+              id: 'open-outing',
+              label: 'Fiche de la sortie',
+              icon: <Mountain size={14} aria-hidden="true" />,
+              onSelect: () => onOpenOutingDetail(post.outingId!),
+            },
+          ]
+        : []),
+    ],
     overlay: (
       <div className="club-post-bottom-left">
         {post.poleName ? (
@@ -361,7 +402,11 @@ function ClubPostCard({
   };
 
   return (
-    <div className="club-inline-post" id={`club-feed-post-${post.id}`}>
+    <div
+      className={`club-inline-post${isHighlighted ? ' is-map-highlighted' : ''}`}
+      id={`club-feed-post-${post.id}`}
+      data-post-id={post.id}
+    >
       <CommunityFeedPost
         embedded
         post={feedPost}
@@ -372,17 +417,42 @@ function ClubPostCard({
   );
 }
 
-function matchesPole(post: ClubFeedPostItem, pole: ClubPoleItem): boolean {
-  if (post.poleId && post.poleId === pole.id) return true;
-  if (post.poleName && post.poleName.toLowerCase() === pole.name.toLowerCase()) return true;
-  const hay = `${post.spot || ''} ${post.caption || ''} ${post.metricsChip || ''}`
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-  const words = `${pole.name} ${pole.specialty}`
+function normalizeMatchText(raw?: string | null): string {
+  return String(raw || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    .trim();
+}
+
+function slugifyMassifText(raw?: string | null): string {
+  return normalizeMatchText(raw).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function matchesMassifTarget(
+  fields: Array<string | undefined | null>,
+  targetName: string,
+  targetId?: string,
+): boolean {
+  const normTarget = normalizeMatchText(targetName);
+  const slugTarget = targetId || slugifyMassifText(targetName);
+  const tokens = normTarget.split(/[^a-z0-9]+/).filter((t) => t.length >= 4);
+  for (const field of fields) {
+    if (!field) continue;
+    const normField = normalizeMatchText(field);
+    if (!normField) continue;
+    if (slugTarget && slugifyMassifText(field) === slugTarget) return true;
+    if (normTarget && (normField.includes(normTarget) || normTarget.includes(normField))) return true;
+    if (tokens.some((t) => normField.includes(t))) return true;
+  }
+  return false;
+}
+
+function matchesPole(post: ClubFeedPostItem, pole: ClubPoleItem): boolean {
+  if (post.poleId && post.poleId === pole.id) return true;
+  if (post.poleName && post.poleName.toLowerCase() === pole.name.toLowerCase()) return true;
+  const hay = normalizeMatchText(`${post.spot || ''} ${post.caption || ''} ${post.metricsChip || ''}`);
+  const words = normalizeMatchText(`${pole.name} ${pole.specialty}`)
     .split(/[^a-z0-9]+/)
     .filter((w) => w.length >= 4 && w !== 'pole');
   return words.some((w) => hay.includes(w));
@@ -409,6 +479,12 @@ export function ClubInlineFeed({
   onFlyToSpot,
   onOpenOutingDetail,
   onOpenCreatePost,
+  mapSelection = null,
+  selectedMassifSummary = null,
+  selectedOuting = null,
+  highlightedPostId = null,
+  onClearMapSelection,
+  onToggleOutingRsvpById,
 }: ClubInlineFeedProps) {
   const [internalPoleId, setInternalPoleId] = useState<string>('all');
   const [polesMenuOpen, setPolesMenuOpen] = useState(false);
@@ -457,14 +533,69 @@ export function ClubInlineFeed({
   );
 
   const [visiblePostCount, setVisiblePostCount] = useState(18);
-  const filteredPosts = useMemo(() => {
-    if (!selectedPole) return posts || [];
-    return (posts || []).filter((post) => matchesPole(post, selectedPole));
-  }, [posts, selectedPole]);
+
+  const { filteredPosts, usedOutingMassifFallback } = useMemo(() => {
+    const base = selectedPole
+      ? (posts || []).filter((post) => matchesPole(post, selectedPole))
+      : (posts || []);
+
+    if (mapSelection?.kind === 'massif') {
+      const massifFiltered = base.filter((post) =>
+        matchesMassifTarget([post.massif, post.spot, post.caption], mapSelection.name, mapSelection.id),
+      );
+      return { filteredPosts: massifFiltered, usedOutingMassifFallback: false };
+    }
+
+    if (mapSelection?.kind === 'outing' && selectedOuting) {
+      const direct = base.filter((post) => post.outingId === selectedOuting.id);
+      if (direct.length > 0) {
+        return { filteredPosts: direct, usedOutingMassifFallback: false };
+      }
+      const fallback = base.filter((post) =>
+        matchesMassifTarget([post.massif, post.spot, post.caption], selectedOuting.massif),
+      );
+      return { filteredPosts: fallback, usedOutingMassifFallback: fallback.length > 0 };
+    }
+
+    return { filteredPosts: base, usedOutingMassifFallback: false };
+  }, [mapSelection, posts, selectedOuting, selectedPole]);
+
+  const filteredHighlights = useMemo(() => {
+    if (mapSelection?.kind === 'massif') {
+      return highlights.filter((hl) =>
+        matchesMassifTarget(
+          [hl.massif, hl.title, hl.subtitle, hl.slides[0]?.caption],
+          mapSelection.name,
+          mapSelection.id,
+        ),
+      );
+    }
+    if (mapSelection?.kind === 'outing' && selectedOuting) {
+      const matching = highlights.filter((hl) =>
+        matchesMassifTarget(
+          [hl.massif, hl.title, hl.subtitle, hl.slides[0]?.caption],
+          selectedOuting.massif,
+        ),
+      );
+      return matching.length > 0 ? matching : highlights;
+    }
+    return highlights;
+  }, [highlights, mapSelection, selectedOuting]);
 
   useEffect(() => {
     setVisiblePostCount(18);
-  }, [selectedPoleId, posts.length]);
+  }, [selectedPoleId, posts.length, mapSelection]);
+
+  const targetPostId =
+    highlightedPostId || (mapSelection?.kind === 'post' ? mapSelection.id : null);
+
+  useEffect(() => {
+    if (!targetPostId) return;
+    const idx = filteredPosts.findIndex((p) => p.id === targetPostId);
+    if (idx >= 0 && idx >= visiblePostCount) {
+      setVisiblePostCount(idx + 4);
+    }
+  }, [filteredPosts, targetPostId, visiblePostCount]);
 
   const visiblePosts = useMemo(
     () => filteredPosts.slice(0, visiblePostCount),
@@ -639,18 +770,112 @@ export function ClubInlineFeed({
       </div>
     ) : null;
 
+  const massifBanner =
+    mapSelection?.kind === 'massif' ? (
+      <div
+        className="club-map-filter-pill"
+        role="region"
+        aria-label={`Filtre massif ${selectedMassifSummary?.name || mapSelection.name}`}
+      >
+        <div className="club-map-filter-pill__meta">
+          <span aria-hidden="true">🏔️</span>
+          <b>{selectedMassifSummary?.name || mapSelection.name}</b>
+          <span>
+            · {selectedMassifSummary?.outingsCount ?? 0} sortie{(selectedMassifSummary?.outingsCount ?? 0) > 1 ? 's' : ''} ·{' '}
+            {selectedMassifSummary?.postsCount ?? filteredPosts.length} post
+            {(selectedMassifSummary?.postsCount ?? filteredPosts.length) > 1 ? 's' : ''}
+          </span>
+        </div>
+        {onClearMapSelection ? (
+          <button
+            type="button"
+            className="club-map-filter-pill__clear"
+            onClick={onClearMapSelection}
+            aria-label="Tout voir"
+          >
+            <span>Tout voir</span>
+            <X size={12} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+
+  const activeOutingCapsule =
+    mapSelection?.kind === 'outing' && selectedOuting ? (
+      <div
+        className="club-active-outing-capsule"
+        role="region"
+        aria-label={`Sortie sélectionnée : ${selectedOuting.title}`}
+      >
+        <div className="club-active-outing-capsule__head">
+          <div className="club-active-outing-capsule__titles">
+            <span className="club-active-outing-capsule__kicker">
+              {selectedOuting.status === 'live'
+                ? '● En direct'
+                : selectedOuting.status === 'completed'
+                  ? 'Sortie effectuée'
+                  : 'Sortie à venir'}{' '}
+              · {selectedOuting.massif}
+            </span>
+            <b>{selectedOuting.title}</b>
+            <small>
+              {selectedOuting.dateLabel || selectedOuting.date} · {selectedOuting.km} km · +
+              {Number(selectedOuting.dplus || 0).toLocaleString('fr-FR')} m
+              {selectedOuting.maxAlt ? ` · ${selectedOuting.maxAlt} m` : ''}
+            </small>
+          </div>
+          {onClearMapSelection ? (
+            <button
+              type="button"
+              className="club-active-outing-capsule__close"
+              onClick={onClearMapSelection}
+              aria-label="Fermer le focus sortie"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+        <div className="club-active-outing-capsule__actions">
+          <button
+            type="button"
+            className={`club-post-rsvp-pill ${selectedOuting.rsvpJoined ? 'joined' : ''}`}
+            onClick={() =>
+              onToggleOutingRsvpById
+                ? onToggleOutingRsvpById(selectedOuting.id)
+                : onToggleRsvp('', selectedOuting.id)
+            }
+            aria-pressed={Boolean(selectedOuting.rsvpJoined)}
+          >
+            {selectedOuting.rsvpJoined ? 'Inscrit ✓' : 'Je viens'}
+          </button>
+          <button
+            type="button"
+            className="club-active-outing-capsule__detail"
+            onClick={() => onOpenOutingDetail(selectedOuting.id)}
+          >
+            Fiche sortie
+          </button>
+          {usedOutingMassifFallback ? (
+            <span className="club-active-outing-capsule__hint">Posts du massif</span>
+          ) : null}
+        </div>
+      </div>
+    ) : null;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {polesBottomRightDock && cardHost ? createPortal(polesBottomRightDock, cardHost) : polesBottomRightDock}
+      {massifBanner}
+      {activeOutingCapsule}
       {/* Stories à la une du club (dans le fil d'actu, style identique à Carnet) */}
-      {highlights.length > 0 || canManageStories ? (
+      {filteredHighlights.length > 0 || (canManageStories && mapSelection?.kind !== 'massif') ? (
         <div
           className="lkdv-ig-hl-row"
           role="group"
           aria-label="Stories à la une du club"
           style={{ padding: '4px 4px 6px', justifyContent: 'flex-start', gap: 10 }}
         >
-          {highlights.map((hl) => (
+          {filteredHighlights.map((hl) => (
             <button
               key={hl.id}
               type="button"
@@ -719,9 +944,13 @@ export function ClubInlineFeed({
           }}
         >
           <b style={{ font: '600 14px var(--sf)', color: 'var(--label)' }}>
-            {selectedPole
-              ? `Le fil du ${selectedPole.name} est calme`
-              : `Le fil de ${clubName} est calme`}
+            {selectedOuting && mapSelection?.kind === 'outing'
+              ? `Aucune publication sur ${selectedOuting.title}`
+              : mapSelection?.kind === 'massif'
+                ? `Aucune publication sur ${mapSelection.name}`
+                : selectedPole
+                  ? `Le fil du ${selectedPole.name} est calme`
+                  : `Le fil de ${clubName} est calme`}
           </b>
           <p style={{ font: '400 12px/1.4 var(--sf)', color: 'var(--label2)', margin: '4px 0 10px' }}>
             {selectedPole
@@ -744,6 +973,7 @@ export function ClubInlineFeed({
               key={post.id}
               post={post}
               clubName={clubName}
+              isHighlighted={targetPostId === post.id}
               onToggleLike={onToggleLike}
               onToggleSave={onToggleSave}
               onAddComment={onAddComment}

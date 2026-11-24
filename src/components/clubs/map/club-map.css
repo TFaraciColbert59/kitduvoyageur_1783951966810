@@ -131,11 +131,24 @@
   display: none;
 }
 
-.lkdv-map-scale {
+.lkdv-map-top-left {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.lkdv-map-top-left > * {
+  pointer-events: auto;
+}
+
+.lkdv-map-scale {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -153,7 +166,7 @@
 
 .lkdv-map-scale button {
   position: relative;
-  width: 30px;
+  width: 28px;
   height: 24px;
   padding: 0;
   border: 0;
@@ -178,21 +191,24 @@
 
 .lkdv-map-controls {
   position: absolute;
-  top: 14px;
+  top: 10px;
   right: 10px;
   z-index: 7;
   display: flex;
   flex-direction: column;
-  width: 44px;
-  overflow: hidden;
+  width: 36px;
+  max-height: calc(100% - 88px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
   border: 0.5px solid rgba(255, 255, 255, 0.8);
-  border-radius: 21px;
-  background: rgba(255, 255, 255, 0.65);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.68);
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.42) 55%,
-    rgba(255, 255, 255, 0.52)
+    rgba(255, 255, 255, 0.76),
+    rgba(255, 255, 255, 0.45) 55%,
+    rgba(255, 255, 255, 0.56)
   );
   -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
@@ -203,10 +219,15 @@
     0 8px 22px rgba(23, 43, 36, 0.12);
 }
 
+.lkdv-map-controls::-webkit-scrollbar {
+  display: none;
+}
+
 .lkdv-map-controls button {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 29px;
+  flex: none;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -217,6 +238,18 @@
   cursor: pointer;
 }
 
+.phone.mapbig .lkdv-map-controls {
+  top: 14px;
+  width: 42px;
+  max-height: calc(100% - 96px);
+  border-radius: 21px;
+}
+
+.phone.mapbig .lkdv-map-controls button {
+  width: 44px;
+  height: 40px;
+}
+
 .lkdv-map-controls button + button {
   box-shadow: 0 -0.5px 0 rgba(23, 43, 36, 0.08);
 }
@@ -225,31 +258,42 @@
   background: rgba(23, 64, 44, 0.06);
 }
 
+.lkdv-map-compass-needle {
+  display: inline-grid;
+  place-items: center;
+  transition: transform 140ms ease-out;
+}
+
 .lkdv-map-attribution {
   position: absolute;
-  right: 10px;
-  top: 10px;
-  z-index: 7;
-  height: 22px;
+  left: 10px;
+  bottom: 10px;
+  right: auto;
+  top: auto;
+  z-index: 6;
+  max-width: calc(100% - 76px);
+  height: 20px;
   padding: 0 8px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  font: 500 10px -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
-  opacity: 0.78;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 9.5px -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  opacity: 0.82;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.486),
-    rgba(255, 255, 255, 0.325) 55%,
-    rgba(255, 255, 255, 0.404)
+    rgba(255, 255, 255, 0.58),
+    rgba(255, 255, 255, 0.38) 55%,
+    rgba(255, 255, 255, 0.46)
   );
-  -webkit-backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
-  backdrop-filter: blur(4px) saturate(1.9) brightness(1.07);
+  -webkit-backdrop-filter: blur(8px) saturate(1.8);
+  backdrop-filter: blur(8px) saturate(1.8);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
     0 0 0 0.5px rgba(23, 43, 36, 0.14),
-    0 8px 22px rgba(23, 43, 36, 0.12);
+    0 4px 12px rgba(23, 43, 36, 0.1);
   color: #172b24;
 }
 
@@ -427,9 +471,33 @@
   align-items: center;
 }
 
-.phone.mapbig .lkdv-map-attribution {
-  top: 10px;
+.lkdv-clubs-v8 .phone:not(.mapbig) .lkdv-map-attribution {
+  bottom: 84px;
+  left: 10px;
+  top: auto;
+  right: auto;
+}
+
+.lkdv-clubs-v8 .phone:not(.mapbig) .lkdv-map-attribution[data-has-scrubber='true'] {
   bottom: auto;
+  top: 74px;
+}
+
+@media (max-width: 600px) {
+  .lkdv-clubs-v8 .phone:not(.mapbig) .lkdv-map-attribution {
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.phone.mapbig .lkdv-map-attribution {
+  top: auto;
+  right: auto;
+  left: 10px;
+  bottom: 10px;
+}
+
+.phone.mapbig .lkdv-map-attribution[data-has-scrubber='true'] {
+  bottom: 8px;
 }
 
 .phone.mapbig .lkdv-map-state,
@@ -1146,7 +1214,518 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lkdv-map-hud[data-hidden='true'] {
-    transition: none;
+  .lkdv-map-hud[data-hidden='true'],
+  .lkdv-club-country-crest::after,
+  .lkdv-club-bloom-pin,
+  .lkdv-club-live-member .lkdv-club-member-dot,
+  .lkdv-map-compass-needle {
+    transition: none !important;
+    animation: none !important;
   }
+}
+
+/* ==========================================================================
+   Carte 3D Cinématique Clubs — Sélecteur de fonds 3D, Morphing 4 Échelles,
+   Story Bloom, Membres Live & Scrubber Altimétrique
+   ========================================================================== */
+
+.lkdv-map-style-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.lkdv-map-style-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 8px rgba(23, 43, 36, 0.12);
+  color: #17402c;
+  font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lkdv-map-style-popover {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: min(290px, calc(100vw - 88px));
+  padding: 5px;
+  border-radius: 16px;
+  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(22px) saturate(190%);
+  backdrop-filter: blur(22px) saturate(190%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 8px 24px rgba(16, 32, 24, 0.18);
+}
+
+.lkdv-map-style-popover button {
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.06);
+  color: #17402c;
+  font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lkdv-map-style-popover button.active {
+  background: #17402c;
+  color: #ffffff;
+}
+
+/* Planétaire : Blason pulsant + pilule Pays */
+.lkdv-club-country-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 5px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 6px 20px rgba(16, 32, 24, 0.22);
+  color: #17402c;
+  font: 650 11.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lkdv-club-country-crest {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #17402c;
+  color: #ffffff;
+  font: 800 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+}
+
+.lkdv-club-country-crest::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(91, 127, 85, 0.65);
+  animation: lkdvCrestPulse 2.2s ease-out infinite;
+}
+
+@keyframes lkdvCrestPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+
+/* Pays : Capsules Massifs agrégées */
+.lkdv-club-massif-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 4px 14px rgba(16, 32, 24, 0.16);
+  color: #17402c;
+  font: 650 11px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.lkdv-club-massif-capsule b {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.1);
+  color: #17402c;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.lkdv-club-massif-capsule.is-selected,
+.lkdv-club-massif-capsule:hover {
+  background: #17402c;
+  color: #ffffff;
+  transform: scale(1.04);
+}
+
+.lkdv-club-massif-capsule.is-selected b,
+.lkdv-club-massif-capsule:hover b {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Membres en partage live */
+.lkdv-club-live-member {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #10b981;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(16, 32, 24, 0.24);
+  cursor: pointer;
+  overflow: visible;
+}
+
+.lkdv-club-live-member.is-fuzzy {
+  border-color: #60a5fa;
+  border-style: dashed;
+}
+
+.lkdv-club-member-img,
+.lkdv-club-avatar-initial {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  background: #17402c;
+  color: #ffffff;
+  font: 700 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+}
+
+.lkdv-club-member-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 1.5px solid #ffffff;
+  animation: lkdvLiveDot 1.8s ease-in-out infinite;
+}
+
+@keyframes lkdvLiveDot {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+/* Éclosion Story Bloom en cascade */
+.lkdv-club-bloom-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 156px;
+  height: 24px;
+  padding: 0 8px 0 4px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--bloom-accent, #17402c) 55%, #ffffff);
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 4px 14px rgba(16, 32, 24, 0.18);
+  color: #172b24;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+  animation: lkdvBloomPop 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lkdv-club-bloom-ico {
+  font-size: 12px;
+  line-height: 1;
+  flex: none;
+}
+
+.lkdv-club-bloom-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes lkdvBloomPop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.76);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Callout enrichi */
+.lkdv-map-callout-snippet {
+  margin: 0 0 8px !important;
+  font-size: 10.5px !important;
+  color: #172b24 !important;
+  opacity: 0.88;
+}
+
+.lkdv-map-callout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lkdv-map-callout-cta.is-secondary {
+  background: rgba(255, 255, 255, 0.72) !important;
+  color: #17402c !important;
+  border: 0.5px solid rgba(23, 64, 44, 0.22) !important;
+}
+
+.lkdv-map-callout-badge.is-live {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #047857 !important;
+}
+
+.lkdv-map-callout-badge.is-upcoming {
+  background: rgba(224, 159, 62, 0.2) !important;
+  color: #92400e !important;
+}
+
+/* Scrubber Altimétrique Liquid Glass (toujours au-dessus de la #tabbar flottante) */
+.lkdv-map-root[data-has-scrubber='true'] .lkdv-map-attribution {
+  display: none !important;
+}
+
+.lkdv-map-scrubber {
+  position: absolute;
+  left: 10px;
+  right: 52px;
+  bottom: 84px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 18px;
+  border: 0.5px solid rgba(255, 255, 255, 0.88);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.84),
+    rgba(247, 252, 245, 0.68)
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
+  backdrop-filter: blur(22px) saturate(185%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 24px rgba(16, 32, 24, 0.16);
+  color: #17402c;
+}
+
+.phone.mapbig .lkdv-map-scrubber {
+  left: 10px;
+  right: 10px;
+  bottom: 86px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .lkdv-clubs-v8 .phone:not(.mapbig) .lkdv-map-scrubber {
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.phone.sheet-open .lkdv-map-scrubber {
+  display: none;
+}
+
+.lkdv-map-scrubber-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lkdv-map-scrubber-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.lkdv-map-scrubber-title strong {
+  font: 650 11.5px/1.2 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lkdv-map-scrubber-title span {
+  flex: none;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #2f6b45;
+}
+
+.lkdv-map-scrubber-close {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(23, 64, 44, 0.08);
+  color: #17402c;
+  cursor: pointer;
+}
+
+.lkdv-map-scrubber-profile {
+  position: relative;
+  width: 100%;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 0.5px solid rgba(23, 64, 44, 0.1);
+  overflow: hidden;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.lkdv-map-scrubber-profile svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lkdv-map-scrubber-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.lkdv-map-scrubber-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-map-scrubber-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  flex: none;
+  border: 0.5px solid rgba(23, 64, 44, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #17402c;
+  font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lkdv-map-scrubber-btn.is-active {
+  background: #17402c;
+  border-color: #17402c;
+  color: #ffffff;
+}
+
+.lkdv-map-solar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.lkdv-map-solar-label {
+  font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.lkdv-map-solar-row input[type='range'] {
+  flex: 1;
+  height: 4px;
+  accent-color: #e09f3e;
+  cursor: pointer;
+}
+
+.lkdv-map-solar-reset {
+  height: 20px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.12);
+  color: #17402c;
+  font: 600 9.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lkdv-map-summit-strip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-top: 2px;
+}
+
+.lkdv-map-summit-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-map-summit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  flex: none;
+  border: 0.5px solid rgba(23, 64, 44, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #17402c;
+  font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lkdv-map-summit-chip.is-front {
+  background: #f5c451;
+  border-color: #d97706;
+  color: #172b24;
+}
+
+/* Mode plein soleil (.phone.outdoor) : contraste renforcé */
+.lkdv-map-root[data-outdoor='true'] .lkdv-map-scale,
+.lkdv-map-root[data-outdoor='true'] .lkdv-map-controls,
+.lkdv-map-root[data-outdoor='true'] .lkdv-map-style-trigger,
+.lkdv-map-root[data-outdoor='true'] .lkdv-map-scrubber,
+.lkdv-map-root[data-outdoor='true'] .lkdv-map-attribution {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(23, 43, 36, 0.32) !important;
+  color: #0b2418 !important;
 }

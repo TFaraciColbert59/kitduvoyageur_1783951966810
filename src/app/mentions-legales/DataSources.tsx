@@ -76,6 +76,20 @@ export const DATA_SOURCES: DataSource[] = [
     ],
   },
   {
+    label: 'Cartes 3D des Clubs',
+    parts: [
+      'Relief 3D LiDAR alpin : ',
+      { text: 'Mapterhorn', href: 'https://mapterhorn.com/' },
+      ' (tuiles ',
+      { text: 'tiles.mapterhorn.com', href: 'https://tiles.mapterhorn.com/' },
+      ', open-data BSD-3 / CC-BY) ; fonds aérien 20 cm et carte topographique : ',
+      { text: 'IGN Géoplateforme', href: 'https://geoservices.ign.fr/' },
+      ' (Orthophotos 20 cm & Plan IGN v2 via ',
+      { text: 'data.geopf.fr', href: 'https://data.geopf.fr/' },
+      ', Licence Ouverte Etalab 2.0).',
+    ],
+  },
+  {
     label: 'Recherche de lieux',
     parts: [
       'Photon (komoot) ; ',

@@ -54,6 +54,25 @@ const EXPECTED: Expected[] = [
     ],
   },
   {
+    label: 'Cartes 3D des Clubs',
+    says: [
+      'Mapterhorn',
+      'tiles.mapterhorn.com',
+      'BSD-3 / CC-BY',
+      'IGN Géoplateforme',
+      'Orthophotos 20 cm & Plan IGN v2',
+      'data.geopf.fr',
+      'Licence Ouverte Etalab 2.0',
+    ],
+    links: {
+      Mapterhorn: 'https://mapterhorn.com/',
+      'tiles.mapterhorn.com': 'https://tiles.mapterhorn.com/',
+      'IGN Géoplateforme': 'https://geoservices.ign.fr/',
+      'data.geopf.fr': 'https://data.geopf.fr/',
+    },
+    uses: [],
+  },
+  {
     // https://meteoalarm.org/en/live/page/terms-and-conditions, § 5 (relu le 2026-10-11)
     label: 'Alertes météo officielles',
     says: [
