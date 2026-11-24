@@ -794,7 +794,25 @@ export function ClubSortiesDrawerBody({
                 safetyChecklist: [],
                 recurrence: null,
                 past: false,
-                routeTrace: null,
+                routeTrace:
+                  o.routeTrace && o.routeTrace.length >= 2
+                    ? o.routeTrace
+                    : (() => {
+                        const baseLat = Number.isFinite(o.lat) ? o.lat : 45.8;
+                        const baseLng = Number.isFinite(o.lng) ? o.lng : 6.8;
+                        const kmFactor = Math.min(24, Math.max(6, o.km || 12));
+                        const dpFactor = Math.min(26, Math.max(8, (o.dplus || 800) / 80));
+                        const pts: Array<[number, number]> = [];
+                        for (let i = 0; i < 6; i += 1) {
+                          const t = i / 5;
+                          const phase = (baseLat * 17.3 + baseLng * 11.7 + i * 1.15);
+                          const x = 6 + t * 88;
+                          const ridge = Math.sin(phase) * (dpFactor * 0.65) + Math.cos(t * Math.PI * (kmFactor / 8)) * 12;
+                          const y = Math.max(10, Math.min(90, 52 - ridge - t * 14));
+                          pts.push([Math.round(x * 10) / 10, Math.round(y * 10) / 10]);
+                        }
+                        return pts;
+                      })(),
                 distanceKmFromMe: null,
                 lat: o.lat ?? null,
                 lng: o.lng ?? null,

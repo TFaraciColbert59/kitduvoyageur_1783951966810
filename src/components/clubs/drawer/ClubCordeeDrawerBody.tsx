@@ -51,6 +51,17 @@ function resolveMemberGearImage(name: string, category: string, imageUrl?: strin
   return '/assets/images/product-backpack.jpg';
 }
 
+function roleToneForMember(role: string, rawRole?: string): string {
+  if (rawRole === 'founder' || role === 'Fondateur') return 'founder';
+  if (rawRole === 'admin' || role === 'Administrateur') return 'admin';
+  if (role === 'Guide & Sécurité') return 'guide';
+  if (role === 'Encadrant') return 'encadrant';
+  if (rawRole === 'moderator' || role === 'Modérateur') return 'moderator';
+  if (rawRole === 'volunteer' || role === 'Bénévole') return 'volunteer';
+  if (role === 'Nouveau') return 'newcomer';
+  return 'member';
+}
+
 export function hasClubRole(member: Pick<ClubMemberData, 'role' | 'rawRole'>): boolean {
   if (member.rawRole === 'admin' || member.rawRole === 'moderator') return true;
   return (
@@ -149,7 +160,12 @@ function CordeeMemberList({
               <div className="lkdv-carnet-crew-meta">
                 <div className="lkdv-carnet-crew-name-row">
                   <b>{displayName}</b>
-                  <span className="lkdv-carnet-chip-soft">{p.role}</span>
+                  <span
+                    className="lkdv-carnet-chip-soft"
+                    data-role-tone={roleToneForMember(p.role, p.rawRole)}
+                  >
+                    {p.role}
+                  </span>
                 </div>
                 <div className="lkdv-carnet-crew-stats">
                   <span>

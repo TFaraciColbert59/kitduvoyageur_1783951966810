@@ -655,37 +655,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     }
   };
 
-  // Shared compact header (period filter is anchored bottom-right next to lenses)
-  const activeWindowLabel = WINDOW_OPTIONS.find((w) => w.id === windowKey)?.label ?? 'Tout';
-  const renderTopControls = () => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: '#56665d',
-          letterSpacing: '0.02em',
-        }}
-      >
-        Période : <b style={{ color: '#172b24' }}>{activeWindowLabel}</b>
-      </span>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: 'none' }}>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            padding: '3px 8px',
-            borderRadius: 999,
-            background: tierBadge.bg,
-            color: tierBadge.color,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {tierBadge.label}
-        </span>
-      </div>
-    </div>
-  );
+  const renderTopControls = () => null;
 
   // ============================================================================
   // 0.1 — SORTIES, TERRAINS & ÉVÉNEMENTS (KOMOOT-STYLE)

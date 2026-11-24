@@ -1289,28 +1289,60 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(23, 43, 36, 0.08);
-  color: #172b24;
+  border: 0.5px solid rgba(23, 64, 44, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(23, 64, 44, 0.08);
+  color: #2f5540;
 }
 
-.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="founder"] {
-  background: #17402c;
-  color: #ffffff;
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="newcomer"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="newcomer"] {
+  background: rgba(23, 64, 44, 0.05);
+  color: #4b6e5a;
 }
 
-.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="guide"] {
-  background: rgba(23, 64, 44, 0.16);
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="member"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="member"] {
+  background: rgba(23, 64, 44, 0.09);
+  color: #345b46;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="volunteer"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="volunteer"] {
+  background: rgba(23, 64, 44, 0.13);
+  color: #274f3a;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="moderator"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="moderator"] {
+  background: rgba(23, 64, 44, 0.18);
+  color: #1e4732;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="encadrant"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="encadrant"] {
+  background: rgba(23, 64, 44, 0.22);
   color: #17402c;
 }
 
-.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="encadrant"] {
-  background: rgba(91, 127, 85, 0.18);
-  color: #24482a;
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="guide"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="guide"] {
+  background: rgba(23, 64, 44, 0.27);
+  color: #133624;
 }
 
-.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="newcomer"] {
-  background: rgba(217, 119, 6, 0.14);
-  color: #92400e;
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="admin"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="admin"] {
+  background: rgba(23, 64, 44, 0.33);
+  color: #0e2d1e;
+}
+
+.lkdv-club-carnet-drawer .lkdv-club-hero-role-pill[data-role-tone="founder"],
+.lkdv-club-carnet-drawer .lkdv-carnet-chip-soft[data-role-tone="founder"] {
+  background: rgba(23, 64, 44, 0.40);
+  color: #0a2216;
+  border-color: rgba(23, 64, 44, 0.28);
 }
 
 /* Frise chronologique des sorties & archives GPX : centrage vertical, compactée vers le haut & pas de débordement latéral */

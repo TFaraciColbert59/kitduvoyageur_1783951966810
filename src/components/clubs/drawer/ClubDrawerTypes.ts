@@ -118,6 +118,7 @@ export interface ClubOutingData {
   requiredGear: string[];
   lat: number;
   lng: number;
+  routeTrace?: Array<[number, number]> | null;
   coverUrl?: string;
   weatherSummary?: string;
 }

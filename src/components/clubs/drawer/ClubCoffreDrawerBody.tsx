@@ -10,7 +10,6 @@ import {
   Check,
   ChevronLeft,
   Copy,
-  Eye,
   Layers,
   Package,
   Search,
@@ -468,7 +467,13 @@ export function ClubCoffreDrawerBody({
             description="Mutualisez votre matériel technique avec les membres de la cordée."
           />
         ) : (
-          <ClubStaggerList style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ClubStaggerList
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: 10,
+            }}
+          >
             {visibleVault.map((g, idx) => {
               const isClubOwned = g.ownershipScope === 'club';
               const qtyAvail = g.quantityAvailable ?? (g.available ? 1 : 0);
@@ -501,17 +506,19 @@ export function ClubCoffreDrawerBody({
               return (
                 <ClubStaggerCard
                   key={g.id}
-                  className="li nt club-outing-row club-glass-card"
+                  className="club-glass-card"
                   style={{
                     cursor: 'pointer',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
+                    flexDirection: 'column',
+                    padding: 8,
+                    gap: 7,
+                    borderRadius: 18,
+                    minWidth: 0,
                   }}
                   onClick={() => setSelectedGearIndex(idx)}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                  <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 0.85', borderRadius: 12, overflow: 'hidden', background: 'rgba(23, 64, 44, 0.06)' }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={resolveGearProductImage(g.name, g.category, g.imageUrl)}
@@ -519,50 +526,59 @@ export function ClubCoffreDrawerBody({
                       loading="lazy"
                       decoding="async"
                       style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 12,
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'cover',
-                        background: 'rgba(23, 64, 44, 0.06)',
-                        flex: 'none',
+                        display: 'block',
                       }}
                     />
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <b
-                        style={{
-                          display: 'block',
-                          fontSize: 13.5,
-                          lineHeight: 1.25,
-                          color: 'var(--label)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {g.name}
-                      </b>
-                      <div
-                        style={{
-                          fontSize: 11.5,
-                          color: 'var(--label2)',
-                          marginTop: 2,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {isClubOwned ? 'Parc du club' : g.ownerName} · {weightLabel} · {conditionLabel}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 4, flexWrap: 'wrap' }}>
-                        <span className={g.reservedByMe || (isClubOwned && qtyAvail > 0) ? 'club-badge-sage' : 'club-badge-soft'}>
-                          {g.reservedByMe
-                            ? 'Demandé ✓'
-                            : isClubOwned || qtyTotal > 1
-                              ? `${qtyAvail}/${qtyTotal} dispo`
-                              : g.available
-                                ? 'Disponible'
-                                : 'Prêté'}
-                        </span>
+                    <span
+                      className={g.reservedByMe || (isClubOwned && qtyAvail > 0) ? 'club-badge-sage' : 'club-badge-soft'}
+                      style={{
+                        position: 'absolute',
+                        top: 6,
+                        left: 6,
+                        fontSize: 9.5,
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                      }}
+                    >
+                      {g.reservedByMe
+                        ? 'Demandé ✓'
+                        : isClubOwned || qtyTotal > 1
+                          ? `${qtyAvail}/${qtyTotal} dispo`
+                          : g.available
+                            ? 'Disponible'
+                            : 'Prêté'}
+                    </span>
+                  </div>
+                  <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <b
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        fontSize: 12.5,
+                        lineHeight: 1.2,
+                        color: 'var(--label)',
+                      }}
+                    >
+                      {g.name}
+                    </b>
+                    <div
+                      style={{
+                        fontSize: 10.5,
+                        color: 'var(--label2)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {weightLabel} · {conditionLabel}
+                    </div>
+                    {epiState || depositEur > 0 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 1 }}>
                         {epiState ? (
                           <span
                             className="club-badge-soft"
@@ -570,6 +586,7 @@ export function ClubCoffreDrawerBody({
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 3,
+                              fontSize: 9.5,
                               color:
                                 epiState === 'expired'
                                   ? '#b91c1c'
@@ -585,32 +602,19 @@ export function ClubCoffreDrawerBody({
                             }}
                           >
                             {epiState === 'ok' ? (
-                              <ShieldCheck size={11} aria-hidden="true" />
+                              <ShieldCheck size={10} aria-hidden="true" />
                             ) : (
-                              <AlertTriangle size={11} aria-hidden="true" />
+                              <AlertTriangle size={10} aria-hidden="true" />
                             )}
-                            EPI{g.epiExpiresAt ? ` · ${g.epiExpiresAt}` : ''}
+                            EPI
                           </span>
                         ) : null}
                         {depositEur > 0 ? (
-                          <span className="club-badge-soft">Caution {depositEur} €</span>
+                          <span className="club-badge-soft" style={{ fontSize: 9.5 }}>{depositEur} €</span>
                         ) : null}
                       </div>
-                    </div>
+                    ) : null}
                   </div>
-                  <button
-                    type="button"
-                    className={`reseau-btn ${g.reservedByMe ? 'active' : ''} club-icon-pill`}
-                    style={{ flex: 'none' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedGearIndex(idx);
-                    }}
-                    aria-label={g.reservedByMe ? 'Demandé · Voir la fiche' : 'Voir l’équipement'}
-                    title={g.reservedByMe ? 'Demandé · Voir' : 'Voir'}
-                  >
-                    {g.reservedByMe ? <Check size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-                  </button>
                 </ClubStaggerCard>
               );
             })}
@@ -618,7 +622,7 @@ export function ClubCoffreDrawerBody({
               <button
                 type="button"
                 className="lkdv-carnet-btn-soft"
-                style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
+                style={{ gridColumn: '1 / -1', width: '100%', justifyContent: 'center', marginTop: 4 }}
                 onClick={() => setVisibleVaultCount((c) => c + 50)}
               >
                 Afficher 50 de plus ({remainingVaultCount} restants)
