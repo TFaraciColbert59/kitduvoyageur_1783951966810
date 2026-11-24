@@ -2,18 +2,19 @@
   <style>
     #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
     #root .m-shot { position:absolute; inset:0; overflow:hidden; }
-    #root .m-cam { position:absolute; inset:0; transform-origin:50% 50%; }
+    #root .m-cam { position:absolute; inset:0; transform-origin:50% 50%; z-index:0; }
+    #root .m-shot::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse 58% 10% at 50% 50.2%, rgba(6,18,12,0.28), rgba(6,18,12,0) 100%); }
     #root .m-cam img { position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }
-    #root .m-word { position:absolute; left:0; right:0; top:912px; text-align:center; font-family:"EB Garamond",serif; font-weight:400; font-size:80px; line-height:96px; color:#FAF8F5; letter-spacing:0; text-shadow:0 2px 28px rgba(11,31,23,0.55), 0 0 2px rgba(11,31,23,0.35); white-space:nowrap; }
+    #root .m-word { position:absolute; z-index:2; left:0; right:0; top:912px; text-align:center; font-family:"EB Garamond",serif; font-weight:400; font-size:80px; line-height:96px; color:#FAF8F5; letter-spacing:0; text-shadow:0 2px 28px rgba(11,31,23,0.55), 0 0 2px rgba(11,31,23,0.35); white-space:nowrap; }
     #root .m-word span { display:inline-block; }
   </style>
   <div id="root" data-composition-id="mots" data-width="1080" data-height="1920">
     <div id="m1" class="clip m-shot" data-start="0" data-duration="1.333" data-track-index="1">
-      <div id="m1-cam" class="m-cam"><img src="assets/prep/01.jpg" alt="Mer de nuages à l'aube au-dessus du massif du Paine"></div>
+      <div id="m1-cam" class="m-cam"><img src="assets/prep/01.jpg" alt="Les Cuernos du Paine sous un ciel d'aube rose"></div>
       <div id="m1-w" class="m-word" data-var-text="mot1">Partir</div>
     </div>
     <div id="m2" class="clip m-shot" data-start="1.333" data-duration="0.667" data-track-index="2">
-      <div id="m2-cam" class="m-cam"><img src="assets/prep/02.jpg" alt="Randonneuse minuscule face aux Cuernos"></div>
+      <div id="m2-cam" class="m-cam"><img src="assets/prep/02.jpg" alt="Deux randonneurs minuscules sous un arc-en-ciel"></div>
       <div id="m2-w" class="m-word"><span>l</span><span>o</span><span>i</span><span>n</span><span>.</span></div>
     </div>
     <div id="m3" class="clip m-shot" data-start="2" data-duration="0.667" data-track-index="1">
@@ -21,7 +22,7 @@
       <div id="m3-w" class="m-word" data-var-text="mot3">Sans</div>
     </div>
     <div id="m4" class="clip m-shot" data-start="2.667" data-duration="0.666" data-track-index="2">
-      <div id="m4-cam" class="m-cam"><img src="assets/prep/04.jpg" alt="Pont suspendu face au glacier Grey"></div>
+      <div id="m4-cam" class="m-cam"><img src="assets/prep/04.jpg" alt="Passerelle suspendue au-dessus d'un torrent, les Cuernos au fond"></div>
       <div id="m4-w" class="m-word" data-var-text="mot4">rien</div>
     </div>
     <div id="m5" class="clip m-shot" data-start="3.333" data-duration="1.334" data-track-index="1">
