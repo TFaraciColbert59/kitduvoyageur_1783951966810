@@ -45,8 +45,8 @@ const CommunityCreateKitSheetV2 = dynamic(
   () => import('@/features/community/v2/create/CreateSheetV2'),
   { ssr: false }
 );
-const CompteMap = dynamic(
-  () => import('@/components/compte/map/CompteMap').then((m) => m.CompteMap),
+const CarnetMap = dynamic(
+  () => import('@/components/carnet/map/CarnetMap').then((m) => m.CarnetMap),
   { ssr: false }
 );
 const CarnetCreateSheet = dynamic(
@@ -1071,7 +1071,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
         inert={overlayOpen ? true : undefined}
         aria-hidden={overlayOpen ? true : undefined}
       >
-        <CompteMap
+        <CarnetMap
           authState={detail.isOwner ? 'owner' : 'guest'}
           context={{ mode: 'overview' }}
           variant="carnet"

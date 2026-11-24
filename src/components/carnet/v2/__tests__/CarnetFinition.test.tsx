@@ -50,8 +50,8 @@ vi.mock('@/lib/supabase/client', () => {
     }),
   };
 });
-vi.mock('@/components/compte/map/CompteMap', () => ({
-  CompteMap: (props: Record<string, unknown>) => {
+vi.mock('@/components/carnet/map/CarnetMap', () => ({
+  CarnetMap: (props: Record<string, unknown>) => {
     mapProps.push(props);
     return <div data-testid="compte-map-mock" />;
   },

@@ -52,7 +52,7 @@ vi.mock('@/lib/supabase/client', () => {
     }),
   };
 });
-vi.mock('@/components/compte/map/CompteMap', () => ({ CompteMap: () => <div data-testid="compte-map-mock" /> }));
+vi.mock('@/components/carnet/map/CarnetMap', () => ({ CarnetMap: () => <div data-testid="compte-map-mock" /> }));
 vi.mock('@/components/carnet/profile/CarnetPostSheet', () => ({ CarnetPostSheet: () => <div /> }));
 vi.mock('@/components/communaute/StoriesViewer', () => ({
   default: (props: {

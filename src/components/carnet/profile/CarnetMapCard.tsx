@@ -6,9 +6,9 @@ import type { CarnetDetail } from '@/features/carnet/detail/types';
 import { carnetTraceEmptyState } from '@/features/carnet/detail/traceEmptyState';
 import type { CarnetPlaceFocus } from './CarnetCard';
 
-/** Carte du monde du Compte, telle quelle : MapLibre 3D, HUD, crédits Esri. */
-const CompteMap = dynamic(
-  () => import('@/components/compte/map/CompteMap').then((mod) => mod.CompteMap),
+/** Carte dédiée Carnet (dupliquée de la carte Compte) : MapLibre 3D, HUD, crédits Esri. */
+const CarnetMap = dynamic(
+  () => import('@/components/carnet/map/CarnetMap').then((mod) => mod.CarnetMap),
   {
     ssr: false,
     loading: () => <div className="ckp-mapzone-loading">Initialisation du Relief 3D…</div>,
@@ -38,7 +38,7 @@ export function CarnetMapCard({ detail, focus = null }: CarnetMapCardProps) {
   return (
     <section className="ckp-mapzone" aria-label={`Carte du monde — ${detail.title}`}>
       <div className="ckp-mapzone-canvas">
-        <CompteMap
+        <CarnetMap
           authState={authState}
           context={{ mode: 'overview' }}
           focus={focus}

@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -18,6 +18,10 @@ import '@/styles/communaute-v2.css';
 import '@/styles/communaute-v2-shell.css';
 import './club-adaptation.css';
 import './drawer/club-drawers-v2.css';
+import './map/club-map.css';
+import type { CompteMapPayload, MapMassif, MapTrack, TrackPoint } from '@/features/compte/map/types';
+import { boundsOf as boundsOfMapPoints } from '@/features/compte/map/geometry';
+import { useClubMapContext } from './map/useClubMapContext';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
 import type { ClubChallengeSummary, ClubRole } from '@/features/clubs';
@@ -55,6 +59,30 @@ const isUuid = (val?: string | null): val is string => Boolean(val && UUID_RE.te
 // Le tiroir du club (~25 Ko gz avec ses dépendances) ne sert qu'à l'ouverture d'un tiroir :
 // il est monté seulement quand `drawerMount` est renseigné, donc chargé à ce moment-là
 // (et préchargé au repos une fois l'écran prêt).
+class ClubMapBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error('[club-map]', error);
+  }
+  render() {
+    if (this.state.failed) {
+      return <div className="lkdv-map-unavailable">Carte momentanément indisponible</div>;
+    }
+    return this.props.children;
+  }
+}
+
+const ClubMap = dynamic(
+  () => import('./map/ClubMap').then((mod) => mod.ClubMap),
+  { ssr: false },
+);
+
 const loadClubDrawerHost = () => import('./drawer/ClubDrawerHost').then((m) => ({ default: m.ClubDrawerHost }));
 const ClubDrawerHost = dynamic(loadClubDrawerHost, { ssr: false });
 const CreateSheetV2 = dynamic(
@@ -209,6 +237,36 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [islandToast, setIslandToast] = useState<ClubIslandToast | null>(null);
   const [runtimeOverlay, setRuntimeOverlay] = useState<ClubRuntimeOverlayState | null>(null);
   const [isOutdoor, setIsOutdoor] = useState(false);
+  const [mapRoot, setMapRoot] = useState<HTMLElement | null>(null);
+  const [mapVisible, setMapVisible] = useState(false);
+  const clubMapContext = useClubMapContext();
+
+  useEffect(() => {
+    if (!mapRoot || mapVisible) return;
+    let cancelled = false;
+    const show = () => {
+      if (!cancelled) setMapVisible(true);
+    };
+    const observer =
+      typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(
+            (entries) => {
+              if (entries.some((entry) => entry.isIntersecting)) {
+                observer?.disconnect();
+                show();
+              }
+            },
+            { rootMargin: '120px' },
+          )
+        : null;
+    observer?.observe(mapRoot);
+    const fallback = window.setTimeout(show, 400);
+    return () => {
+      cancelled = true;
+      observer?.disconnect();
+      window.clearTimeout(fallback);
+    };
+  }, [mapRoot, mapVisible]);
 
   // Community CreateSheetV2 state (identical to /communaute creation drawer)
   const [communityCreateOpen, setCommunityCreateOpen] = useState(false);
@@ -395,6 +453,16 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       }
 
       el.innerHTML = COMPTE_V8_HTML;
+      const mapNode = el.querySelector<HTMLElement>('#maplibre-compte-canvas');
+      if (mapNode) setMapRoot(mapNode);
+      (window as any).__lkdvClubMapOpenOuting = (id: string) => {
+        pendingDrawerIntentRef.current = { tab: 2, outingId: id };
+        triggerAct('openClubDrawer', '2:0');
+      };
+      (window as any).__lkdvClubMapOpenMassif = () => {
+        pendingDrawerIntentRef.current = { tab: 2 };
+        triggerAct('openClubDrawer', '2:0');
+      };
       cleanup = runtime.initClubLiquidGlassRuntime(el);
       const initialFeedEl = el.querySelector('#lkdv-club-feed-root') as HTMLElement | null;
       if (initialFeedEl) {
@@ -2729,6 +2797,93 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     [activeClub.id, showIslandToast, user?.id],
   );
 
+  const clubMapPayload = useMemo<CompteMapPayload>(() => {
+    const baseLat = Number.isFinite(activeClub.lat) ? activeClub.lat : 45.9237;
+    const baseLng = Number.isFinite(activeClub.lng) ? activeClub.lng : 6.8694;
+    const tracks: MapTrack[] = clubOutings.slice(0, 24).map((o, idx) => {
+      const oLat = Number.isFinite(o.lat) && o.lat !== 0 ? o.lat : baseLat + ((idx % 5) - 2) * 0.04;
+      const oLng = Number.isFinite(o.lng) && o.lng !== 0 ? o.lng : baseLng + (((idx * 3) % 5) - 2) * 0.05;
+      const r = Math.min(0.055, Math.max(0.014, (o.km || 14) / 620));
+      const coords: TrackPoint[] = Array.from({ length: 13 }, (_, step) => {
+        if (step === 12) return { lng: oLng, lat: oLat };
+        const theta = (step / 12) * Math.PI * 2;
+        const wobble = 1 + 0.28 * Math.sin(theta * 3 + idx * 1.1) + 0.14 * Math.cos(theta * 2 - idx);
+        return {
+          lng: Number((oLng + Math.cos(theta) * r * 1.25 * wobble).toFixed(5)),
+          lat: Number((oLat + Math.sin(theta) * r * 0.85 * wobble).toFixed(5)),
+        };
+      });
+      const b = boundsOfMapPoints(coords) ?? [oLng - 0.02, oLat - 0.02, oLng + 0.02, oLat + 0.02];
+      const massifId = String(o.massif || activeClub.massif || 'alpes')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-');
+      return {
+        id: o.id,
+        title: o.title,
+        startedAt: o.startsAtIso ?? null,
+        year: o.startsAtIso ? new Date(o.startsAtIso).getFullYear() : new Date().getFullYear(),
+        km: o.km || 0,
+        dplus: o.dplus || 0,
+        maxAlt: o.maxAlt || null,
+        verified: o.status === 'completed',
+        visibility: 'collective_anonymized',
+        massif: o.massif || activeClub.massif || null,
+        massifId,
+        kitId: null,
+        kitName: null,
+        carnetId: null,
+        photosCount: 0,
+        participantsCount: o.participantsCount || 0,
+        coordinates: coords,
+        bounds: b,
+        start: coords[0],
+        end: coords[coords.length - 1],
+      };
+    });
+
+    const massifMap = new Map<string, { name: string; pts: TrackPoint[]; outings: number }>();
+    for (const tr of tracks) {
+      const key = tr.massifId || 'alpes';
+      const entry = massifMap.get(key) ?? { name: tr.massif || activeClub.massif || 'Alpes', pts: [], outings: 0 };
+      entry.pts.push(tr.start);
+      entry.outings += 1;
+      massifMap.set(key, entry);
+    }
+    const massifs: MapMassif[] = Array.from(massifMap.entries()).map(([id, m]) => {
+      const avgLng = m.pts.reduce((acc, p) => acc + p.lng, 0) / Math.max(1, m.pts.length);
+      const avgLat = m.pts.reduce((acc, p) => acc + p.lat, 0) / Math.max(1, m.pts.length);
+      return {
+        id,
+        name: m.name,
+        countryCode: 'FR',
+        center: { lng: avgLng, lat: avgLat },
+        outings: m.outings,
+        verified: true,
+      };
+    });
+
+    const allPts = tracks.flatMap((t) => t.coordinates);
+    const totalBounds =
+      boundsOfMapPoints(allPts) ?? [baseLng - 0.15, baseLat - 0.12, baseLng + 0.15, baseLat + 0.12];
+
+    return {
+      tracks,
+      massifs,
+      carnets: [],
+      pois: [],
+      stats: {
+        outings: clubOutings.length,
+        km: Math.round(clubOutings.reduce((s, o) => s + (o.km || 0), 0)),
+        dplus: Math.round(clubOutings.reduce((s, o) => s + (o.dplus || 0), 0)),
+        massifs: massifs.length,
+        countries: 1,
+      },
+      bounds: totalBounds,
+      truncated: false,
+      generatedAt: new Date().toISOString(),
+    };
+  }, [activeClub.lat, activeClub.lng, activeClub.massif, clubOutings]);
+
   return (
     <div
       className="lkdv-compte-v8 lkdv-club-v8 lkdv-clubs-v8"
@@ -2742,6 +2897,19 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         <Link href="/communaute">Tous les clubs</Link>
       </div>
       <div ref={containerRef} />
+      {mapRoot && mapVisible
+        ? createPortal(
+            <ClubMapBoundary>
+              <ClubMap
+                authState="owner"
+                context={clubMapContext}
+                clubData={clubMapPayload}
+                contextMode={Boolean(drawerMount)}
+              />
+            </ClubMapBoundary>,
+            mapRoot,
+          )
+        : null}
       {feedRoot &&
         createPortal(
           <ClubInlineFeed

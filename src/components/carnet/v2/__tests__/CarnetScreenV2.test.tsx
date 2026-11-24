@@ -58,8 +58,8 @@ vi.mock('@/lib/supabase/client', () => ({
 
 const MAP_PROPS = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
 
-vi.mock('@/components/compte/map/CompteMap', () => ({
-  CompteMap: (props: Record<string, unknown>) => {
+vi.mock('@/components/carnet/map/CarnetMap', () => ({
+  CarnetMap: (props: Record<string, unknown>) => {
     MAP_PROPS.current = props;
     return <div data-testid="compte-map-mock">Map</div>;
   },
@@ -236,12 +236,12 @@ const mockDetail: CarnetDetail = {
 };
 
 describe('CarnetScreenV2 Component', () => {
-  it('affiche le titre du carnet, le cadre de présentation et la carte', () => {
+  it('affiche le titre du carnet, le cadre de présentation et la carte', async () => {
     render(<CarnetScreenV2 detail={mockDetail} />);
 
     expect(screen.getByTestId('carnet-v2-root')).toBeTruthy();
     expect(screen.getAllByText('Tour des Écrins').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByTestId('compte-map-mock')).toBeTruthy();
+    expect(await screen.findByTestId('compte-map-mock')).toBeTruthy();
   });
 
   it('transmet à la carte l’état vide réel et la propriété calculée côté serveur', () => {
