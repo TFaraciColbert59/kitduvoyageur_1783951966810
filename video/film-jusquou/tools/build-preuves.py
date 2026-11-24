@@ -16,7 +16,7 @@ P = [(12, 1.5, 'Chili · sans-visa', 'in'), (7, 1.5, 'Bus · Puerto-Natales · 7
      (18, 0.5, 'Mirador-Británico · km-34', 'down'), (17, 0.5, 'Guanacos · km-61', 'in'),
      (15, 0.5, 'Carte · hors-ligne', 'out'), (16, 1.25, 'Maman · en-direct', 'in'),
      (19, 2.0, 'Torres · aube · 4h50', 'rise')]
-LABTOP = {14: 560, 16: 270}  # légende déplacée quand le centre de l'image est trop clair
+LABTOP = {14: 560, 16: 270, 17: 270}  # légende déplacée quand le centre de l'image est trop clair
 ALT = {12: 'Passeport sur la tablette, les Andes par le hublot', 7: 'Maya endormie contre la vitre du bus',
        8: 'Tom sur le pont du catamaran', 9: 'Fenêtre éclairée du refuge, chaussures qui sèchent',
        10: "Gourde sous un filet d'eau glaciaire", 11: 'Nuage lenticulaire vu depuis la tente', 13: 'Le contenu du sac, vu du dessus',
