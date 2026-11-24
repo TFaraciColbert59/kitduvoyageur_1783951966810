@@ -43,6 +43,7 @@ import {
 import { Switch } from '@/components/ui/Switch';
 import { KitCard, type KitProductView } from '@/components/compte/drawer/cards/KitCard';
 import type { PickerProduct } from '@/features/community/create/kit/types';
+import { CollapsibleHeroPreview } from '@/features/community/v2/create/photo/CollapsibleHeroPreview';
 import { mapClubStandardKitToKitEntry } from './clubKitAdapter';
 
 const KitProductSheetV2 = dynamic(
@@ -442,7 +443,16 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const eventsScrollRef = useRef<HTMLDivElement | null>(null);
   const eventsTouchYRef = useRef<number | null>(null);
   const [eventsCompact, setEventsCompact] = useState(false);
+  const perfScrollRef = useRef<HTMLDivElement | null>(null);
+  const perfTouchYRef = useRef<number | null>(null);
+  const [perfCompact, setPerfCompact] = useState(false);
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeSubTab !== 0 || !active) {
+      setPerfCompact(false);
+    }
+  }, [active, activeSubTab]);
 
   useEffect(() => {
     if (activeSubTab !== 1 || !active) {
@@ -1641,35 +1651,83 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     outingsCount: { label: 'Sorties', unit: '' },
   };
 
+  const forwardPerfHeaderWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const scroller = perfScrollRef.current;
+    if (!scroller) return;
+    scroller.scrollTop += e.deltaY;
+    const top = scroller.scrollTop;
+    setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+  };
+  const forwardPerfHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    perfTouchYRef.current = e.touches[0]?.clientY ?? null;
+  };
+  const forwardPerfHeaderTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const scroller = perfScrollRef.current;
+    const lastY = perfTouchYRef.current;
+    const nextY = e.touches[0]?.clientY;
+    if (!scroller || lastY == null || nextY == null) return;
+    const deltaY = lastY - nextY;
+    perfTouchYRef.current = nextY;
+    scroller.scrollTop += deltaY;
+    const top = scroller.scrollTop;
+    setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+  };
+
   return (
-    <div className="club-drawer-pane-content" data-testid="club-stats-perf-pane">
-      {renderTopControls()}
-
-      {error ? (
-        <div
-          className="club-glass-card"
-          role="alert"
-          style={{ padding: '8px 10px', fontSize: 11.5, color: '#926614', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
-          <span>Aperçu local ({error})</span>
-          <button type="button" className="lkdv-carnet-btn-soft" style={{ height: 26, fontSize: 11 }} onClick={() => void fetchStats(true)}>
-            Réessayer
-          </button>
-        </div>
-      ) : null}
-
-      {/* 1. SCORE DE PERFORMANCE DU CLUB (ANNEAU STRAVA / KOMOOT) */}
+    <div
+      className="club-drawer-pane-content"
+      data-testid="club-stats-perf-pane"
+      style={{
+        flex: '1 1 0',
+        height: '100%',
+        minHeight: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
       <div
-        className="club-glass-card"
-        data-testid="club-performance-score-card"
-        style={{
-          padding: 13,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 11,
-          background: 'linear-gradient(145deg, rgba(23, 64, 44, 0.09) 0%, rgba(255, 255, 255, 0.9) 65%)',
-        }}
+        style={{ flex: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}
+        onWheel={forwardPerfHeaderWheel}
+        onTouchStart={forwardPerfHeaderTouchStart}
+        onTouchMove={forwardPerfHeaderTouchMove}
       >
+        {renderTopControls()}
+
+        {error ? (
+          <div
+            className="club-glass-card"
+            role="alert"
+            style={{ padding: '8px 10px', fontSize: 11.5, color: '#926614', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <span>Aperçu local ({error})</span>
+            <button type="button" className="lkdv-carnet-btn-soft" style={{ height: 26, fontSize: 11 }} onClick={() => void fetchStats(true)}>
+              Réessayer
+            </button>
+          </div>
+        ) : null}
+
+        {/* 1. SCORE DE PERFORMANCE DU CLUB — se réduit en pilule aperçu 35px au scroll */}
+        <CollapsibleHeroPreview
+          collapsed={perfCompact}
+          onExpand={() => setPerfCompact(false)}
+          title={`Score ${score.total}/100 · ${score.grade}`}
+          subtitle={`+${score.deltaPct}%`}
+          badge={<span style={{ fontSize: 10, fontWeight: 800 }}>{score.total}</span>}
+          testId="club-performance-score-preview"
+        >
+          <div
+            className="club-glass-card"
+            data-testid="club-performance-score-card"
+            style={{
+              padding: 13,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 11,
+              background: 'linear-gradient(145deg, rgba(23, 64, 44, 0.09) 0%, rgba(255, 255, 255, 0.9) 65%)',
+            }}
+          >
         <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
           <div style={{ position: 'relative', width: 78, height: 78, flex: 'none' }}>
             <svg width="78" height="78" viewBox="0 0 78 78" aria-hidden="true" style={{ transform: 'rotate(-90deg)' }}>
@@ -1744,6 +1802,27 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
           })}
         </div>
       </div>
+        </CollapsibleHeroPreview>
+      </div>
+
+      {/* Zone scrollable indépendante sous le score fixe */}
+      <div
+        ref={perfScrollRef}
+        onScroll={(e) => {
+          const top = e.currentTarget.scrollTop;
+          setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+        }}
+        style={{
+          flex: '1 1 0',
+          minHeight: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          paddingBottom: 56,
+        }}
+      >
 
       {/* 2. KPI PRINCIPAUX 2×2 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -1975,6 +2054,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
             {stats.managementView ? `${stats.managementView.activeRate30dPct}% actifs` : `${stats.summary.membersCount} pers.`}
           </div>
         </button>
+      </div>
       </div>
     </div>
   );
