@@ -238,7 +238,8 @@ def draw_route(img, t, cam):
     # le vol et le bus s'effacent quand le W entre dans le globe (sinon leurs grandes lignes barrent la carte)
     n_far = len(SEG[0][2]) + len(SEG[1][2])
     fade_far = 1 - ease((t - 17.3) / 0.7)
-    for part, alpha in ((done[:n_far], fade_far), (done[n_far - 1:], 1.0)):
+    n_fl = len(SEG[0][2]); fade_fl = 1 - ease((t - 15.75) / 0.5)          # le vol s'efface dès que le bus part
+    for part, alpha in ((done[:n_fl], min(fade_far, fade_fl)), (done[n_fl - 1:n_far], fade_far), (done[n_far - 1:], 1.0)):
         if len(part) < 2 or alpha <= 0: continue
         xy, fr = project(part, cam); vis = visible(xy, fr)
         tmp = np.zeros((H, W), np.float32)
