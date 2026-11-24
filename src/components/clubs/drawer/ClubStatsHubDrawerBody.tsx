@@ -440,40 +440,74 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
   const kitsScrollRef = useRef<HTMLDivElement | null>(null);
   const kitsTouchYRef = useRef<number | null>(null);
   const [kitsCompact, setKitsCompact] = useState(false);
+  const kitsLockUntilRef = useRef(0);
+  const kitsLastTopRef = useRef(0);
+
   const eventsScrollRef = useRef<HTMLDivElement | null>(null);
   const eventsTouchYRef = useRef<number | null>(null);
   const [eventsCompact, setEventsCompact] = useState(false);
+  const eventsLockUntilRef = useRef(0);
+  const eventsLastTopRef = useRef(0);
+
   const perfScrollRef = useRef<HTMLDivElement | null>(null);
   const perfTouchYRef = useRef<number | null>(null);
   const [perfCompact, setPerfCompact] = useState(false);
+  const perfLockUntilRef = useRef(0);
+  const perfLastTopRef = useRef(0);
+
   const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null);
+
+  const updateSectionCollapse = useCallback(
+    (
+      scroller: HTMLElement | null,
+      setCompact: React.Dispatch<React.SetStateAction<boolean>>,
+      lockRef: React.MutableRefObject<number>,
+      lastTopRef: React.MutableRefObject<number>,
+    ) => {
+      if (!scroller) return;
+      const now = Date.now();
+      const top = scroller.scrollTop;
+      const prevTop = lastTopRef.current;
+      lastTopRef.current = top;
+      if (now < lockRef.current) return;
+      const overflow = scroller.scrollHeight - scroller.clientHeight;
+      setCompact((prev) => {
+        if (!prev && top > 20 && top >= prevTop && overflow > 20) {
+          lockRef.current = now + 600;
+          return true;
+        }
+        if (prev && top <= 2 && prevTop > 4 && top < prevTop) {
+          lockRef.current = now + 500;
+          return false;
+        }
+        return prev;
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (activeSubTab !== 0 || !active) {
       setPerfCompact(false);
+      perfLastTopRef.current = 0;
+      perfLockUntilRef.current = 0;
     }
   }, [active, activeSubTab]);
 
   useEffect(() => {
     if (activeSubTab !== 1 || !active) {
       setEventsCompact(false);
+      eventsLastTopRef.current = 0;
+      eventsLockUntilRef.current = 0;
     }
   }, [active, activeSubTab]);
 
   useEffect(() => {
     if (activeSubTab !== 2 || !active) {
       setKitsCompact(false);
-      return;
+      kitsLastTopRef.current = 0;
+      kitsLockUntilRef.current = 0;
     }
-    const scroller = kitsPaneRef.current?.closest('.lkdv-lens-pane') as HTMLElement | null;
-    if (!scroller) return;
-    const onScroll = () => {
-      const top = scroller.scrollTop;
-      setKitsCompact((prev) => (top > 24 ? true : top <= 8 ? false : prev));
-    };
-    onScroll();
-    scroller.addEventListener('scroll', onScroll, { passive: true });
-    return () => scroller.removeEventListener('scroll', onScroll);
   }, [active, activeSubTab]);
   const [selectedKitProductState, setSelectedKitProductState] = useState<{
     kitTitle: string;
@@ -665,8 +699,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       const scroller = eventsScrollRef.current;
       if (!scroller) return;
       scroller.scrollTop += e.deltaY;
-      if (e.deltaY > 6) setEventsCompact(true);
-      else if (scroller.scrollTop <= 6 && e.deltaY < -6) setEventsCompact(false);
+      updateSectionCollapse(scroller, setEventsCompact, eventsLockUntilRef, eventsLastTopRef);
     };
 
     const forwardHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -680,9 +713,9 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       const dy = prevY - curY;
       eventsTouchYRef.current = curY;
       const scroller = eventsScrollRef.current;
-      if (scroller) scroller.scrollTop += dy;
-      if (dy > 4) setEventsCompact(true);
-      else if ((!scroller || scroller.scrollTop <= 6) && dy < -4) setEventsCompact(false);
+      if (!scroller) return;
+      scroller.scrollTop += dy;
+      updateSectionCollapse(scroller, setEventsCompact, eventsLockUntilRef, eventsLastTopRef);
     };
 
     return (
@@ -780,10 +813,14 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
         {/* Zone scrollable indépendante */}
         <div
           ref={eventsScrollRef}
-          onScroll={(e) => {
-            const top = e.currentTarget.scrollTop;
-            setEventsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
-          }}
+          onScroll={(e) =>
+            updateSectionCollapse(
+              e.currentTarget,
+              setEventsCompact,
+              eventsLockUntilRef,
+              eventsLastTopRef,
+            )
+          }
           style={{
             flex: '1 1 0',
             minHeight: 0,
@@ -987,8 +1024,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       const scroller = kitsScrollRef.current;
       if (!scroller) return;
       scroller.scrollTop += e.deltaY;
-      const top = scroller.scrollTop;
-      setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+      updateSectionCollapse(scroller, setKitsCompact, kitsLockUntilRef, kitsLastTopRef);
     };
     const forwardKitsHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
       kitsTouchYRef.current = e.touches[0]?.clientY ?? null;
@@ -1001,8 +1037,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       const deltaY = lastY - nextY;
       kitsTouchYRef.current = nextY;
       scroller.scrollTop += deltaY;
-      const top = scroller.scrollTop;
-      setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+      updateSectionCollapse(scroller, setKitsCompact, kitsLockUntilRef, kitsLastTopRef);
     };
     return (
       <div
@@ -1116,10 +1151,14 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
         {/* Zone scrollable indépendante sous l'en-tête fixe */}
         <div
           ref={kitsScrollRef}
-          onScroll={(e) => {
-            const top = e.currentTarget.scrollTop;
-            setKitsCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
-          }}
+          onScroll={(e) =>
+            updateSectionCollapse(
+              e.currentTarget,
+              setKitsCompact,
+              kitsLockUntilRef,
+              kitsLastTopRef,
+            )
+          }
           style={{
             flex: '1 1 0',
             minHeight: 0,
@@ -1655,8 +1694,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     const scroller = perfScrollRef.current;
     if (!scroller) return;
     scroller.scrollTop += e.deltaY;
-    const top = scroller.scrollTop;
-    setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+    updateSectionCollapse(scroller, setPerfCompact, perfLockUntilRef, perfLastTopRef);
   };
   const forwardPerfHeaderTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     perfTouchYRef.current = e.touches[0]?.clientY ?? null;
@@ -1669,8 +1707,7 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
     const deltaY = lastY - nextY;
     perfTouchYRef.current = nextY;
     scroller.scrollTop += deltaY;
-    const top = scroller.scrollTop;
-    setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
+    updateSectionCollapse(scroller, setPerfCompact, perfLockUntilRef, perfLastTopRef);
   };
 
   return (
@@ -1808,10 +1845,14 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
       {/* Zone scrollable indépendante sous le score fixe */}
       <div
         ref={perfScrollRef}
-        onScroll={(e) => {
-          const top = e.currentTarget.scrollTop;
-          setPerfCompact((prev) => (top > 18 ? true : top <= 6 ? false : prev));
-        }}
+        onScroll={(e) =>
+          updateSectionCollapse(
+            e.currentTarget,
+            setPerfCompact,
+            perfLockUntilRef,
+            perfLastTopRef,
+          )
+        }
         style={{
           flex: '1 1 0',
           minHeight: 0,
@@ -2020,41 +2061,6 @@ export function ClubStatsHubDrawerBody(props: ClubStatsHubDrawerBodyProps) {
           </button>
         </div>
       )}
-
-      {/* 5. ACCÈS RAPIDE AUX SOUS-ANALYSES */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-        <button
-          type="button"
-          className="club-glass-card"
-          style={{ border: 0, cursor: 'pointer', padding: '9px 8px', textAlign: 'left' }}
-          onClick={() => onSwitchTabAndLens(0, 1)}
-        >
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: '#172b24' }}>Événements</div>
-          <div style={{ fontSize: 10.5, color: '#56665d', marginTop: 2 }}>{stats.summary.totalEventsOrganized} sorties</div>
-        </button>
-        <button
-          type="button"
-          className="club-glass-card"
-          style={{ border: 0, cursor: 'pointer', padding: '9px 8px', textAlign: 'left' }}
-          onClick={() => onSwitchTabAndLens(0, 2)}
-        >
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: '#172b24' }}>Kits & Coffre</div>
-          <div style={{ fontSize: 10.5, color: '#56665d', marginTop: 2 }}>{stats.summary.standardKitsCount} kits</div>
-        </button>
-        <button
-          type="button"
-          className="club-glass-card"
-          style={{ border: 0, cursor: 'pointer', padding: '9px 8px', textAlign: 'left' }}
-          onClick={() => onSwitchTabAndLens(0, 3)}
-        >
-          <div style={{ fontSize: 11.5, fontWeight: 700, color: '#172b24' }}>
-            {stats.managementView ? 'Pilotage' : 'Membres'}
-          </div>
-          <div style={{ fontSize: 10.5, color: '#56665d', marginTop: 2 }}>
-            {stats.managementView ? `${stats.managementView.activeRate30dPct}% actifs` : `${stats.summary.membersCount} pers.`}
-          </div>
-        </button>
-      </div>
       </div>
     </div>
   );
