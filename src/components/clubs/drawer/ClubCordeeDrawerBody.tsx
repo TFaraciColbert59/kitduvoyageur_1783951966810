@@ -520,9 +520,11 @@ function InspectedMemberPane({
             })}
           </div>
         ) : (
-          <p style={{ margin: '8px 0', fontSize: 12.5, color: 'var(--label2)' }}>
-            Aucun kit partagé pour ce voyageur.
-          </p>
+          <div className="lkdv-carnet-empty-card" style={{ marginTop: 4 }}>
+            <Package size={22} aria-hidden="true" />
+            <b>Aucun kit partagé</b>
+            <p>{pName} n’a pas encore partagé de kit ou d’équipement dans ce club.</p>
+          </div>
         )
       ) : null}
 
