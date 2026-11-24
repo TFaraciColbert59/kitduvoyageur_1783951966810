@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import {
+  Camera,
   ChevronLeft,
   ChevronRight,
   Handshake,
@@ -158,7 +159,13 @@ function CordeeMemberList({
                     <span>· Sac {(kitWeightG / 1000).toFixed(1).replace('.', ',')} kg</span>
                   ) : p.massif ? (
                     <span>· {p.massif}</span>
-                  ) : null}
+                  ) : (
+            <div className="lkdv-carnet-empty-card" style={{ marginTop: 4 }}>
+              <Camera size={22} aria-hidden="true" />
+              <b>Aucune publication dans le club</b>
+              <p>{pName} n’a pas encore publié de photo ou de récit dans le club.</p>
+            </div>
+          )}
                 </div>
               </div>
               <ChevronRight size={15} className="lkdv-carnet-chevron" />
@@ -371,12 +378,24 @@ function InspectedMemberPane({
                     {m.mediaUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.mediaUrl} alt="" loading="lazy" />
-                    ) : null}
+                    ) : (
+            <div className="lkdv-carnet-empty-card" style={{ marginTop: 4 }}>
+              <Camera size={22} aria-hidden="true" />
+              <b>Aucune publication dans le club</b>
+              <p>{pName} n’a pas encore publié de photo ou de récit dans le club.</p>
+            </div>
+          )}
                   </button>
                 ))}
               </div>
             </>
-          ) : null}
+          ) : (
+            <div className="lkdv-carnet-empty-card" style={{ marginTop: 4 }}>
+              <Camera size={22} aria-hidden="true" />
+              <b>Aucune publication dans le club</b>
+              <p>{pName} n’a pas encore publié de photo ou de récit dans le club.</p>
+            </div>
+          )}
         </>
       ) : null}
 
