@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1080, height=1920" />
-    <title>LKDV — aperçu de la vidéo ultime (20 s)</title>
+    <title>LKDV — aperçu dynamique de la vidéo ultime</title>
     <script src="assets/lib/gsap.min.js"></script>
     <script src="assets/lib/MorphSVGPlugin.min.js"></script>
     <link rel="stylesheet" href="assets/fonts.css" />
@@ -15,122 +15,311 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="21.3" data-width="1080" data-height="1920">
-      <video id="nuit" class="clip" src="assets/video/nuit.mp4" muted playsinline data-start="0" data-duration="3.8" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:1"></video>
-      <div id="encre" class="clip encre" data-start="3.4" data-duration="17.900000000000002" data-track-index="1" style="z-index:2"></div>
-      <div id="terre" style="position:absolute;left:-1060px;top:1190px;width:3200px;height:3200px;border-radius:1600px;overflow:hidden;z-index:40;box-shadow:0 -8px 70px rgba(150,190,230,.45), 0 0 0 2px rgba(190,220,255,.35);background:#06120C"><div id="sol" style="position:absolute;left:600px;top:-120px;width:2600px;height:1950px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.62) saturate(.9)"></div><div style="position:absolute;inset:0;border-radius:1600px;background:radial-gradient(circle at 50% 8%,rgba(0,0,0,0) 0%,rgba(6,18,12,.25) 18%,rgba(6,18,12,.85) 42%)"></div></div>
-      <svg id="fil" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:45;overflow:visible" aria-hidden="true"><path id="plan" d="M209.8 1236.7 L222.9 1228.1 L237.8 1227.9 L253.4 1232.3 L267.9 1230.9 L281.1 1221.9 L294.8 1215.0 L309.8 1216.8 L325.2 1221.6 L339.5 1219.3 L353.1 1210.5 L367.2 1205.5 L382.2 1209.2 L397.3 1214.0 L411.6 1210.8 L425.5 1202.5 L439.9 1199.6 L454.8 1204.9 L469.6 1209.5 L484.0 1205.5 L498.3 1198.0 L512.9 1197.3 L527.5 1204.0 L542.1 1208.0 L556.6 1203.4 L571.3 1197.0 L585.8 1198.5 L600.1 1206.2 L614.5 1209.5 L629.3 1204.5 L644.2 1199.6 L658.6 1203.3 L672.5 1211.7 L686.9 1214.1 L702.0 1209.0 L717.0 1205.9 L731.0 1211.6 L744.6 1220.2 L759.0 1221.8 L774.4 1216.8 L789.3 1215.7" fill="none" stroke="#FAF8F5" stroke-opacity=".75" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round" opacity="0"/><path id="r1" d="M209.8 1236.7 L223.2 1228.0 L238.4 1227.8 L254.3 1232.1 L269.1 1230.7 L282.6 1221.7 L296.5 1214.7 L311.9 1216.5 L327.5 1221.3 L342.1 1219.0 L356.0 1210.2 L370.4 1205.1 L385.8 1208.9 L401.1 1213.7 L415.7 1210.5 L430.0 1202.2 L444.7 1199.3 L459.9 1204.7 L474.9 1209.3 L489.6 1205.3 L504.3 1197.8 L519.1 1197.2 L534.1 1203.9 L548.9 1208.0 L563.7 1203.5 L578.7 1197.2 L593.6 1198.8 L608.1 1206.6 L622.8 1209.9" fill="none" stroke="none"/><path id="r2" d="M623.1 1204.2 L635.3 1199.1 L647.0 1202.5 L658.4 1210.6 L670.1 1212.7 L682.5 1207.1 L694.8 1203.5 L706.2 1208.8 L717.2 1216.9 L729.1 1217.9 L741.7 1212.3 L754.0 1210.5 L765.0 1217.4 L775.8 1225.2 L787.9 1225.1" fill="none" stroke="#D0A070" stroke-width="7" stroke-linecap="round" opacity="0"/><path id="anneau" d="M540.0 430.0 L560.3 431.6 L580.2 436.4 L599.0 444.2 L616.4 454.8 L631.9 468.1 L645.2 483.6 L655.8 501.0 L663.6 519.8 L668.4 539.7 L670.0 560.0 L668.4 580.3 L663.6 600.2 L655.8 619.0 L645.2 636.4 L631.9 651.9 L616.4 665.2 L599.0 675.8 L580.2 683.6 L560.3 688.4 L540.0 690.0 L519.7 688.4 L499.8 683.6 L481.0 675.8 L463.6 665.2 L448.1 651.9 L434.8 636.4 L424.2 619.0 L416.4 600.2 L411.6 580.3 L410.0 560.0 L411.6 539.7 L416.4 519.8 L424.2 501.0 L434.8 483.6 L448.1 468.1 L463.6 454.8 L481.0 444.2 L499.8 436.4 L519.7 431.6 L540.0 430.0" fill="none" stroke="none"/><path id="trait" opacity="0" d="M200.0 832.0 L224.3 834.5 L248.6 834.7 L272.9 832.4 L297.1 829.7 L321.4 829.1 L345.7 831.2 L370.0 834.0 L394.3 835.0 L418.6 833.2 L442.9 830.4 L467.1 829.0 L491.4 830.4 L515.7 833.3 L540.0 835.0 L564.3 834.0 L588.6 831.1 L612.9 829.1 L637.1 829.7 L661.4 832.4 L685.7 834.7 L710.0 834.5 L734.3 832.0 L758.6 829.5 L782.9 829.3 L807.1 831.6 L831.4 834.3 L855.7 834.9 L880.0 832.8" fill="none" stroke="#D0A070" stroke-width="8" stroke-linecap="round"/><circle id="pin0" cx="209.8" cy="1236.7" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/><circle id="pin1" cx="623.1" cy="1204.2" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/><circle id="pin2" cx="788.4" cy="1221.6" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/></svg>
-      <div id="lab0" class="hud" style="left:210px;top:1259px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Annecy</span><span class="lb">Kayak</span></div>
-      <div id="lab1" class="hud" style="left:623px;top:1226px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Chamonix</span><span class="lb">Via ferrata</span></div>
-      <div id="lab2" class="hud" style="left:788px;top:1144px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Lac Blanc</span><span class="lb">Refuge · 2 352 m</span></div>
-      <div id="hud1" class="hud" style="left:60px;top:150px"><span style="width:14px;height:14px;border-radius:7px;background:#E07A5F;display:inline-block"></span><span class="lb">En direct</span><span class="mono">3:41:08</span></div>
-      <div id="hud2" class="hud light" style="left:300px;top:860px;font-size:40px;padding:22px 34px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v6"/></svg><span>200 m</span><span style="font-weight:500;color:#5E6B63">· à gauche</span></div>
-      <div id="six" class="kick" style="top:690px;z-index:50">Il y a six mois</div>
-      <div id="ppm" class="big" style="top:740px;font-size:140px;opacity:1;z-index:50"><span class="ppm" style="opacity:0">P</span><span class="ppm" style="opacity:0">a</span><span class="ppm" style="opacity:0">s</span><span class="ppm" style="opacity:0"> </span><span class="ppm" style="opacity:0">p</span><span class="ppm" style="opacity:0">o</span><span class="ppm" style="opacity:0">u</span><span class="ppm" style="opacity:0">r</span><span class="ppm" style="opacity:0"> </span><span class="ppm" style="opacity:0">m</span><span class="ppm" style="opacity:0">o</span><span class="ppm" style="opacity:0">i</span><span class="ppm" style="opacity:0">.</span></div>
-      <div id="ph" style="position:absolute;left:325px;top:150px;width:430px;height:932px;border-radius:58px;border:9px solid #0A0F0C;box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.08);z-index:31;opacity:0"><div style="position:absolute;left:50%;top:12px;width:100px;height:30px;margin-left:-50px;border-radius:15px;background:#000"></div></div>
-      <video id="v0" class="clip" src="assets/video/explorer.mp4" muted playsinline data-start="7.75" data-duration="3.5" data-media-start="0.9" data-playback-rate="1" data-track-index="3" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
-      <video id="v1" class="clip" src="assets/video/compas.mp4" muted playsinline data-start="11.2" data-duration="3.45" data-media-start="0.7" data-playback-rate="1" data-track-index="4" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
-      <video id="v2" class="clip" src="assets/video/club.mp4" muted playsinline data-start="14.6" data-duration="2.75" data-media-start="0.9" data-playback-rate="1.45" data-track-index="3" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
-      <div id="ex0" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">Je ne saurais pas où aller.<span id="exb0" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
-      <div id="ex1" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">C'est trop compliqué.<span id="exb1" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
-      <div id="ex2" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">Je n'ai personne avec qui partir.<span id="exb2" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
-      <div id="ch0" class="hud light" style="left:278px;top:1265px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg><span>Point d'eau</span><span style="font-weight:500;color:#5E6B63">à 20 min</span></div>
-      <div id="ch1" class="hud light" style="left:720px;top:1330px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 12 4l9 16"/><path d="M12 4v16"/><path d="m8.5 20 3.5-6 3.5 6"/><path d="M2 20h20"/></svg><span>Bivouac</span><span style="font-weight:500;color:#5E6B63">permis ici</span></div>
-      <div id="ch2" class="hud light" style="left:761px;top:1270px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19V6"/><path d="M3 15h18v4"/><path d="M21 15v-3a3 3 0 0 0-3-3h-7v6"/><circle cx="7" cy="11" r="2"/></svg><span>Nuit</span><span style="font-weight:500;color:#5E6B63">Refuge du Lac Blanc</span></div>
-      <div id="ch3" class="hud light" style="left:360px;top:1300px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="1.8"/><circle cx="17" cy="9" r="1.8"/><circle cx="10" cy="5.5" r="1.8"/><circle cx="14" cy="5.5" r="1.8"/><path d="M12 12c-3 0-5.5 3-5.5 5.5 0 1.7 1.5 2.5 3 2 1-.3 1.6-.6 2.5-.6s1.5.3 2.5.6c1.5.5 3-.3 3-2C17.5 15 15 12 12 12z"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Marmotte des Alpes</span></div>
-      <div id="ch4" class="hud light" style="left:457px;top:1265px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3.2-5.5 6.5-5.5s6 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2 .7 3.3 2.5 3.6 5.2"/></svg><span>Rencontre</span><span style="font-weight:500;color:#5E6B63">Claire · guide</span></div>
-      <div id="ch5" class="hud light" style="left:747px;top:1330px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2.5"/><path d="M12 6.5a3 3 0 1 1 3 3 3 3 0 1 1-3 3 3 3 0 1 1-3-3 3 3 0 1 1 3-3"/><path d="M12 12v9"/><path d="M12 17c-2 0-3.5-1-4-3M12 18c2 0 3.5-1 4-3"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Gentiane de Koch</span></div>
-      <div id="st0" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:500 34px/1.2 'JetBrains Mono',monospace;color:#F1D3AE;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">« Dans deux cents mètres, à gauche. »</span></div>
-      <div id="st1" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Il y a six mois,</span></div>
-      <div id="st2" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">tu disais encore :</span></div>
-      <div id="st3" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">La carte est vivante.</span></div>
-      <div id="st4" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Une phrase.</span></div>
-      <div id="st5" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">C'est tout ce qu'on te demande.</span></div>
-      <div id="st6" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Des inconnus, puis des prénoms.</span></div>
-      <img id="logo" src="assets/img/badge-anneau.png" alt="" style="position:absolute;left:420px;top:440px;width:240px;height:240px;opacity:0;z-index:50">
-      <div id="wm" style="position:absolute;left:0;right:0;top:770px;text-align:center;font:700 60px/1 Inter,sans-serif;letter-spacing:.18em;color:#FAF8F5;opacity:0;z-index:50">LE KIT DU VOYAGEUR</div>
-      <div id="tag" class="big" style="top:860px;font-size:58px;color:#D0A070;z-index:50">Là où la carte se termine.</div>
-      <audio id="son" class="clip" src="audio/bande-son.wav" data-start="0" data-duration="21.3" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21.6" data-width="1080" data-height="1920">
+      <div id="encre" class="encre" style="z-index:1"></div>
+      <div id="flash" style="position:absolute;inset:0;background:#FAF8F5;opacity:0;z-index:900;pointer-events:none"></div>
+      <div id="vig" style="position:absolute;inset:0;z-index:850;pointer-events:none;background:radial-gradient(120% 85% at 50% 45%,rgba(0,0,0,0) 55%,rgba(6,18,12,.6) 100%)"></div>
+      <div id="ppm" class="sh" style="position:absolute;inset:0;z-index:80"><div id="w0" style="position:absolute;left:0;right:0;top:420px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:300px;color:#FAF8F5;opacity:0">PAS</div><div id="w1" style="position:absolute;left:0;right:0;top:700px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:300px;color:#FAF8F5;opacity:0">POUR</div><div id="w2" style="position:absolute;left:0;right:0;top:980px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:300px;color:#FAF8F5;opacity:0">MOI.</div></div>
+      <div id="slash0" style="position:absolute;left:-200px;top:900px;width:1480px;height:34px;background:#D0A070;transform-origin:0 50%;z-index:85;box-shadow:0 0 40px rgba(208,160,112,.8)"></div>
+      <video id="v1" class="clip sh" src="assets/video/nuit.mp4" muted playsinline data-start="1.7" data-duration="1.5" data-media-start="0.6" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:60"></video>
+      <video id="v2" class="clip sh" src="assets/video/j19.mp4" muted playsinline data-start="3.2" data-duration="0.5" data-media-start="2.0" data-playback-rate="1.0" data-track-index="2" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:61"></video>
+      <video id="v3" class="clip sh" src="assets/video/j01.mp4" muted playsinline data-start="3.7" data-duration="0.5" data-media-start="1.2" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:62"></video>
+      <div id="g200" class="hud light sh" style="left:250px;top:880px;font-size:64px;padding:26px 44px;z-index:90"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v6"/></svg><span>200 m</span><span style="font-weight:500;color:#5E6B63">· à gauche</span></div>
+      <div id="alt" class="sh" style="position:absolute;left:0;right:0;top:260px;text-align:center;font:700 150px/1 'JetBrains Mono',monospace;color:#FAF8F5;text-shadow:0 6px 40px rgba(0,0,0,.7);z-index:90;opacity:0"><span id="altn">2 100</span><span style="font-size:70px;color:#D0A070"> m</span></div>
+      <div id="e1a" class="sh" style="position:absolute;left:0;right:0;top:700px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;z-index:95;opacity:0">Je ne saurais</div>
+      <div id="e1b" class="sh" style="position:absolute;left:0;right:0;top:850px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#D0A070;z-index:95;opacity:0">pas où aller ?</div>
+      <div id="es1" style="position:absolute;left:-150px;top:860px;width:1380px;height:26px;background:#D0A070;transform-origin:0 50%;z-index:96;box-shadow:0 0 30px rgba(208,160,112,.7)"></div>
+      <div id="eb1" style="position:absolute;inset:0;background:#06120C;z-index:94;opacity:0"></div>
+      <div id="e2a" class="sh" style="position:absolute;left:0;right:0;top:700px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;z-index:95;opacity:0">C'est trop</div>
+      <div id="e2b" class="sh" style="position:absolute;left:0;right:0;top:850px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#D0A070;z-index:95;opacity:0">compliqué ?</div>
+      <div id="es2" style="position:absolute;left:-150px;top:860px;width:1380px;height:26px;background:#D0A070;transform-origin:0 50%;z-index:96;box-shadow:0 0 30px rgba(208,160,112,.7)"></div>
+      <div id="eb2" style="position:absolute;inset:0;background:#06120C;z-index:94;opacity:0"></div>
+      <div id="e3a" class="sh" style="position:absolute;left:0;right:0;top:700px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;z-index:95;opacity:0">Personne</div>
+      <div id="e3b" class="sh" style="position:absolute;left:0;right:0;top:850px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#D0A070;z-index:95;opacity:0">avec qui partir ?</div>
+      <div id="es3" style="position:absolute;left:-150px;top:860px;width:1380px;height:26px;background:#D0A070;transform-origin:0 50%;z-index:96;box-shadow:0 0 30px rgba(208,160,112,.7)"></div>
+      <div id="eb3" style="position:absolute;inset:0;background:#06120C;z-index:94;opacity:0"></div>
+      <div id="terre" style="position:absolute;left:-1060px;top:1190px;width:3200px;height:3200px;border-radius:1600px;overflow:hidden;z-index:40;box-shadow:0 -10px 90px rgba(150,190,230,.55),0 0 0 3px rgba(190,220,255,.4);background:#06120C;opacity:0"><div id="sol" style="position:absolute;left:600px;top:-120px;width:2600px;height:1950px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.7) saturate(1.05)"></div><div style="position:absolute;inset:0;border-radius:1600px;background:radial-gradient(circle at 50% 8%,rgba(0,0,0,0) 0%,rgba(6,18,12,.25) 18%,rgba(6,18,12,.85) 42%)"></div></div>
+      <svg id="fil" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:50;overflow:visible" aria-hidden="true"><path id="plan" d="M182.8 1242.7 L195.5 1232.9 L210.3 1232.9 L226.2 1238.2 L240.6 1236.8 L253.4 1226.5 L266.8 1218.6 L281.9 1220.9 L297.4 1226.5 L311.7 1223.9 L324.8 1213.7 L338.7 1207.8 L353.9 1212.2 L369.1 1217.8 L383.2 1214.0 L396.8 1204.2 L411.1 1200.7 L426.1 1206.8 L441.0 1212.0 L455.2 1207.2 L469.2 1198.2 L483.7 1197.2 L498.5 1204.8 L513.0 1209.2 L527.4 1203.5 L541.9 1195.8 L556.4 1197.3 L570.8 1205.9 L585.2 1209.4 L599.8 1203.1 L614.6 1197.0 L629.0 1200.9 L642.9 1210.2 L657.2 1212.5 L672.3 1206.0 L687.2 1201.8 L701.2 1208.0 L714.7 1217.5 L729.1 1218.7 L744.5 1212.3 L759.5 1210.3 L773.0 1218.4 L786.2 1227.8 L800.8 1227.8 L816.5 1221.9" fill="none" stroke="#FAF8F5" stroke-opacity=".8" stroke-width="5" stroke-dasharray="3 13" stroke-linecap="round" opacity="0"/><path id="route" d="M182.8 1242.7 L195.5 1232.9 L210.3 1232.9 L226.2 1238.2 L240.6 1236.8 L253.4 1226.5 L266.8 1218.6 L281.9 1220.9 L297.4 1226.5 L311.7 1223.9 L324.8 1213.7 L338.7 1207.8 L353.9 1212.2 L369.1 1217.8 L383.2 1214.0 L396.8 1204.2 L411.1 1200.7 L426.1 1206.8 L441.0 1212.0 L455.2 1207.2 L469.2 1198.2 L483.7 1197.2 L498.5 1204.8 L513.0 1209.2 L527.4 1203.5 L541.9 1195.8 L556.4 1197.3 L570.8 1205.9 L585.2 1209.4 L599.8 1203.1 L614.6 1197.0 L629.0 1200.9 L642.9 1210.2 L657.2 1212.5 L672.3 1206.0 L687.2 1201.8 L701.2 1208.0 L714.7 1217.5 L729.1 1218.7 L744.5 1212.3 L759.5 1210.3 L773.0 1218.4 L786.2 1227.8 L800.8 1227.8 L816.5 1221.9" fill="none" stroke="#D0A070" stroke-width="10" stroke-linecap="round" style="filter:drop-shadow(0 0 12px rgba(255,200,140,.95))" opacity="0"/><path id="anneau" d="M540.0 440.0 L560.9 441.4 L581.4 445.5 L601.2 452.2 L620.0 461.4 L637.4 473.1 L653.1 486.9 L666.9 502.6 L678.6 520.0 L687.8 538.8 L694.5 558.6 L698.6 579.1 L700.0 600.0 L698.6 620.9 L694.5 641.4 L687.8 661.2 L678.6 680.0 L666.9 697.4 L653.1 713.1 L637.4 726.9 L620.0 738.6 L601.2 747.8 L581.4 754.5 L560.9 758.6 L540.0 760.0 L519.1 758.6 L498.6 754.5 L478.8 747.8 L460.0 738.6 L442.6 726.9 L426.9 713.1 L413.1 697.4 L401.4 680.0 L392.2 661.2 L385.5 641.4 L381.4 620.9 L380.0 600.0 L381.4 579.1 L385.5 558.6 L392.2 538.8 L401.4 520.0 L413.1 502.6 L426.9 486.9 L442.6 473.1 L460.0 461.4 L478.8 452.2 L498.6 445.5 L519.1 441.4 L540.0 440.0" fill="none" stroke="none"/><circle id="pin0" cx="182.8" cy="1242.7" r="12" fill="#FAF8F5" stroke="#D0A070" stroke-width="6" opacity="0"/><circle id="pin1" cx="623.1" cy="1204.2" r="12" fill="#FAF8F5" stroke="#D0A070" stroke-width="6" opacity="0"/><circle id="pin2" cx="815.8" cy="1226.1" r="12" fill="#FAF8F5" stroke="#D0A070" stroke-width="6" opacity="0"/></svg>
+      <div id="ph" class="sh" style="position:absolute;left:290px;top:110px;width:500px;height:1084px;border-radius:66px;border:10px solid #0A0F0C;box-shadow:0 50px 120px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.1);z-index:52;opacity:0"><div style="position:absolute;left:50%;top:14px;width:116px;height:34px;margin-left:-58px;border-radius:17px;background:#000"></div></div>
+      <video id="v4" class="clip sh" src="assets/video/explorer.mp4" muted playsinline data-start="4.7" data-duration="1.55" data-media-start="0.85" data-playback-rate="1.0" data-track-index="4" style="position:absolute;left:300px;top:120px;width:480px;height:1064px;object-fit:cover;object-position:top;border-radius:56px;z-index:51"></video>
+      <div id="map0w" class="sh" style="position:absolute;inset:0;overflow:hidden;z-index:63;opacity:0;perspective:1200px"><img id="map0" src="assets/img/plan-z12.jpg" alt="" style="position:absolute;left:-2486px;top:23px;width:3533px;height:2061px;transform-origin:3026px 937px;"></div>
+      <div id="map0t" class="sh" style="position:absolute;left:0;right:0;top:1300px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:210px;color:#FAF8F5;text-shadow:0 10px 50px rgba(0,0,0,.6);z-index:70;opacity:0">Plan</div>
+      <div id="map1w" class="sh" style="position:absolute;inset:0;overflow:hidden;z-index:64;opacity:0;perspective:1200px"><img id="map1" src="assets/img/relief-z12.jpg" alt="" style="position:absolute;left:-2486px;top:23px;width:3533px;height:2061px;transform-origin:3026px 937px;"></div>
+      <div id="map1t" class="sh" style="position:absolute;left:0;right:0;top:1300px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:210px;color:#FAF8F5;text-shadow:0 10px 50px rgba(0,0,0,.6);z-index:71;opacity:0">Relief</div>
+      <div id="map2w" class="sh" style="position:absolute;inset:0;overflow:hidden;z-index:65;opacity:0;perspective:1200px"><img id="map2" src="assets/img/alpes-z12.jpg" alt="" style="position:absolute;left:-2486px;top:23px;width:3533px;height:2061px;transform-origin:3026px 937px;"></div>
+      <div id="map2t" class="sh" style="position:absolute;left:0;right:0;top:1300px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:210px;color:#FAF8F5;text-shadow:0 10px 50px rgba(0,0,0,.6);z-index:72;opacity:0">Satellite</div>
+      <div id="map3w" class="sh" style="position:absolute;inset:0;overflow:hidden;z-index:66;opacity:0;perspective:1200px"><img id="map3" src="assets/img/alpes-z12.jpg" alt="" style="position:absolute;left:-2486px;top:23px;width:3533px;height:2061px;transform-origin:3026px 937px;transform-origin:50% 60%;"></div>
+      <div id="map3t" class="sh" style="position:absolute;left:0;right:0;top:1300px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:210px;color:#FAF8F5;text-shadow:0 10px 50px rgba(0,0,0,.6);z-index:73;opacity:0">3D</div>
+      <video id="v5" class="clip sh" src="assets/video/compas.mp4" muted playsinline data-start="7.7" data-duration="3.5" data-media-start="0.7" data-playback-rate="1.0" data-track-index="5" style="position:absolute;left:300px;top:120px;width:480px;height:1064px;object-fit:cover;object-position:top;border-radius:56px;z-index:51"></video>
+      <div id="kw0" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">5 jours</div>
+      <div id="kw1" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#D0A070;text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">Les Alpes</div>
+      <div id="kw2" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">Rando</div>
+      <div id="kw3" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#D0A070;text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">Via ferrata</div>
+      <div id="kw4" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:0.01em;line-height:0.92;font-size:150px;color:#FAF8F5;text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">Kayak</div>
+      <div id="prep" class="sh" style="position:absolute;left:150px;right:150px;top:1050px;height:120px;border-radius:60px;background:#0B0F0C;color:#FAF8F5;display:flex;flex-direction:column;justify-content:center;padding:0 40px;z-index:91;opacity:0"><div style="font:600 38px Inter">Je prépare ton aventure…</div><div style="font:500 26px Inter;color:rgba(250,248,245,.7);margin-top:6px">Nuits, trajet, kit et budget</div></div>
+      <video id="v6" class="clip sh" src="assets/video/club.mp4" muted playsinline data-start="11.7" data-duration="1.0" data-media-start="1.7" data-playback-rate="1.5" data-track-index="4" style="position:absolute;left:300px;top:120px;width:480px;height:1064px;object-fit:cover;object-position:top;border-radius:56px;z-index:51"></video>
+      <video id="v7" class="clip sh" src="assets/video/g10.mp4" muted playsinline data-start="12.7" data-duration="0.5" data-media-start="0.6" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:66"></video>
+      <video id="v8" class="clip sh" src="assets/video/g11.mp4" muted playsinline data-start="13.2" data-duration="0.5" data-media-start="0.6" data-playback-rate="1.0" data-track-index="2" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:67"></video>
+      <video id="v9" class="clip sh" src="assets/video/g12.mp4" muted playsinline data-start="13.7" data-duration="0.5" data-media-start="0.8" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:68"></video>
+      <div id="nm0" class="hud light sh" style="left:120px;top:560px;font-size:34px;padding:12px 24px;z-index:92">Julien</div>
+      <div id="nm1" class="hud light sh" style="left:300px;top:560px;font-size:34px;padding:12px 24px;z-index:92">Sofia</div>
+      <div id="nm2" class="hud light sh" style="left:680px;top:560px;font-size:34px;padding:12px 24px;z-index:92">Marc</div>
+      <div id="nm3" class="hud light sh" style="left:905px;top:560px;font-size:34px;padding:12px 24px;z-index:92">Claire</div>
+      <video id="v10" class="clip sh" src="assets/video/j16.mp4" muted playsinline data-start="14.2" data-duration="0.175" data-media-start="0.4" data-playback-rate="1.0" data-track-index="2" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:69"></video>
+      <video id="v11" class="clip sh" src="assets/video/j17.mp4" muted playsinline data-start="14.375" data-duration="0.175" data-media-start="0.6" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:70"></video>
+      <video id="v12" class="clip sh" src="assets/video/j18.mp4" muted playsinline data-start="14.549999999999999" data-duration="0.175" data-media-start="1.2" data-playback-rate="1.0" data-track-index="2" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:71"></video>
+      <video id="v13" class="clip sh" src="assets/video/j19.mp4" muted playsinline data-start="14.725" data-duration="0.175" data-media-start="3.0" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:72"></video>
+      <video id="v14" class="clip sh" src="assets/video/a02.mp4" muted playsinline data-start="14.9" data-duration="2.05" data-media-start="1.5" data-playback-rate="1.0" data-track-index="2" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:74"></video>
+      <div id="ch0" class="hud light sh" style="left:760px;top:1260px;font-size:30px;padding:12px 22px;z-index:80"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19V6"/><path d="M3 15h18v4"/><path d="M21 15v-3a3 3 0 0 0-3-3h-7v6"/><circle cx="7" cy="11" r="2"/></svg><span>Nuit</span><span style="font-weight:500;color:#5E6B63">Refuge du Lac Blanc</span></div>
+      <div id="ch1" class="hud light sh" style="left:290px;top:1330px;font-size:30px;padding:12px 22px;z-index:80"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="1.8"/><circle cx="17" cy="9" r="1.8"/><circle cx="10" cy="5.5" r="1.8"/><circle cx="14" cy="5.5" r="1.8"/><path d="M12 12c-3 0-5.5 3-5.5 5.5 0 1.7 1.5 2.5 3 2 1-.3 1.6-.6 2.5-.6s1.5.3 2.5.6c1.5.5 3-.3 3-2C17.5 15 15 12 12 12z"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Marmotte des Alpes</span></div>
+      <div id="ch2" class="hud light sh" style="left:640px;top:1400px;font-size:30px;padding:12px 22px;z-index:80"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3.2-5.5 6.5-5.5s6 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2 .7 3.3 2.5 3.6 5.2"/></svg><span>Rencontre</span><span style="font-weight:500;color:#5E6B63">Claire · guide</span></div>
+      <div id="ch3" class="hud light sh" style="left:300px;top:1470px;font-size:30px;padding:12px 22px;z-index:80"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8.5a15 15 0 0 1 6-3.2M22 8.5a15 15 0 0 0-8.6-3.9"/><path d="M5 12a10 10 0 0 1 4-2.3M19 12a10 10 0 0 0-2.7-1.8"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/><path d="M12 19.5v.1"/><path d="M3 3l18 18"/></svg><span>Hors ligne</span><span style="font-weight:500;color:#5E6B63">carte prête</span></div>
+      <div id="ch4" class="hud light sh" style="left:700px;top:1540px;font-size:30px;padding:12px 22px;z-index:80"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2.5"/><path d="M12 6.5a3 3 0 1 1 3 3 3 3 0 1 1-3 3 3 3 0 1 1-3-3 3 3 0 1 1 3-3"/><path d="M12 12v9"/><path d="M12 17c-2 0-3.5-1-4-3M12 18c2 0 3.5-1 4-3"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Gentiane de Koch</span></div>
+      <div id="enc2" style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,#10291E 0%,#06120C 70%);z-index:74;opacity:0"></div>
+      <div id="wave0" style="position:absolute;left:380px;top:440px;width:320px;height:320px;border-radius:160px;border:6px solid #D0A070;z-index:79;opacity:0"></div>
+      <div id="wave1" style="position:absolute;left:380px;top:440px;width:320px;height:320px;border-radius:160px;border:6px solid #D0A070;z-index:79;opacity:0"></div>
+      <div id="wave2" style="position:absolute;left:380px;top:440px;width:320px;height:320px;border-radius:160px;border:6px solid #D0A070;z-index:79;opacity:0"></div>
+      <img id="logo" class="sh" src="assets/img/badge-anneau.png" alt="" style="position:absolute;left:390px;top:450px;width:300px;height:300px;opacity:0;z-index:81">
+      <div id="wm" class="sh" style="position:absolute;left:0;right:0;top:820px;text-align:center;font:700 74px/1 Inter,sans-serif;letter-spacing:.16em;color:#FAF8F5;z-index:82"><span class="lt" style="display:inline-block;opacity:0">L</span><span class="lt" style="display:inline-block;opacity:0">E</span><span class="lt" style="display:inline-block;opacity:0">&nbsp;</span><span class="lt" style="display:inline-block;opacity:0">K</span><span class="lt" style="display:inline-block;opacity:0">I</span><span class="lt" style="display:inline-block;opacity:0">T</span><span class="lt" style="display:inline-block;opacity:0">&nbsp;</span><span class="lt" style="display:inline-block;opacity:0">D</span><span class="lt" style="display:inline-block;opacity:0">U</span><span class="lt" style="display:inline-block;opacity:0">&nbsp;</span><span class="lt" style="display:inline-block;opacity:0">V</span><span class="lt" style="display:inline-block;opacity:0">O</span><span class="lt" style="display:inline-block;opacity:0">Y</span><span class="lt" style="display:inline-block;opacity:0">A</span><span class="lt" style="display:inline-block;opacity:0">G</span><span class="lt" style="display:inline-block;opacity:0">E</span><span class="lt" style="display:inline-block;opacity:0">U</span><span class="lt" style="display:inline-block;opacity:0">R</span></div>
+      <div id="tag" class="big" style="top:930px;font-size:66px;color:#D0A070;z-index:82">Là où la carte se termine.</div>
+      <div id="st0" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:600 42px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">pas pour moi.</span></div>
+      <div id="st1" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:500 34px/1.2 'JetBrains Mono',monospace;color:#F1D3AE;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">« Dans deux cents mètres, à gauche. »</span></div>
+      <div id="st2" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:600 42px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">La carte est vivante.</span></div>
+      <div id="st3" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:600 42px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">Une phrase.</span></div>
+      <div id="st4" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:600 42px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">C'est tout ce qu'on te demande.</span></div>
+      <div id="st5" style="position:absolute;left:40px;right:40px;top:1800px;text-align:center;font:600 42px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:870;opacity:0"><span style="display:inline-block;padding:10px 26px;border-radius:34px;background:rgba(6,18,12,.7)">Des inconnus, puis des prénoms.</span></div>
+      <audio id="son" class="clip" src="audio/bande-son2.wav" data-start="0" data-duration="21.6" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
     </div>
     <script>
       gsap.registerPlugin(MorphSVGPlugin);
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#encre", {"opacity": 0}, {"opacity": 1, "duration": 0.4}, 3.4);
-      tl.fromTo("#sol", {"x": 0}, {"x": -260, "duration": 21.3, "ease": "none"}, 0);
-      tl.fromTo("#terre", {"y": 160}, {"y": 0, "duration": 1.4, "ease": "power3.out"}, 0.1);
-      tl.fromTo("#plan", {"opacity": 0}, {"opacity": 1, "duration": 0.8}, 1.0);
-      (function(){const p=document.getElementById("trait"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.set(p,{opacity:1},6.45); tl.to(p,{strokeDashoffset:0,duration:0.45,ease:"power2.inOut"},6.45);tl.to(p,{morphSVG:{shape:"#r1"},duration:0.9,ease:"power3.inOut"},7.05);tl.set(p,{strokeDasharray:"none"},7.05);tl.to(p,{morphSVG:{shape:"#anneau"},duration:1.0,ease:"power3.inOut"},17.15);const q=document.getElementById("r2"); const L2=q.getTotalLength(); gsap.set(q,{strokeDasharray:L2+" "+L2, strokeDashoffset:L2});tl.to(q,{opacity:1,strokeDashoffset:0,duration:1.2,ease:"power1.inOut"},15.4); tl.to(q,{opacity:0,duration:0.4},17.15);})();
-      tl.to("#plan", {"opacity": 0, "duration": 0.5}, 17.1);
-      tl.fromTo("#pin0", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 1.4);
-      tl.fromTo("#lab0", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 1.6);
-      tl.to("#lab0", {"opacity": 0, "duration": 0.3}, 7.6);
-      tl.to("#pin0", {"opacity": 0, "duration": 0.4}, 17.1);
-      tl.fromTo("#pin1", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 1.7);
-      tl.fromTo("#lab1", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 1.9000000000000001);
-      tl.to("#lab1", {"opacity": 0, "duration": 0.3}, 7.6);
-      tl.to("#pin1", {"opacity": 0, "duration": 0.4}, 17.1);
-      tl.fromTo("#pin2", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 2.0);
-      tl.fromTo("#lab2", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 2.2);
-      tl.to("#lab2", {"opacity": 0, "duration": 0.3}, 7.6);
-      tl.to("#pin2", {"opacity": 0, "duration": 0.4}, 17.1);
-      tl.fromTo("#hud1", {"opacity": 0, "y": -10}, {"opacity": 1, "y": 0, "duration": 0.4}, 0.3);
-      tl.to("#hud1", {"opacity": 0, "duration": 0.3}, 3.2);
-      tl.fromTo("#hud2", {"opacity": 0, "scale": 0.9}, {"opacity": 1, "scale": 1, "duration": 0.45, "ease": "back.out(2)"}, 0.45);
-      tl.to("#hud2", {"opacity": 0, "duration": 0.3}, 2.9);
-      tl.fromTo("#six", {"opacity": 0}, {"opacity": 1, "duration": 0.5}, 3.3);
-      tl.to("#six", {"opacity": 0, "duration": 0.3}, 6.9);
-      tl.to(".ppm",{opacity:1,duration:0.01,stagger:0.045},5.92);
-      tl.to("#ppm", {"opacity": 0, "y": -20, "duration": 0.35}, 7.0);
-      tl.fromTo("#ph", {"opacity": 0, "y": 80, "scale": 0.94}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.6, "ease": "power3.out"}, 7.6);
-      tl.to("#ph", {"opacity": 0, "scale": 0.9, "duration": 0.4}, 16.95);
-      tl.fromTo("#v0", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 7.75);
-      tl.fromTo("#v1", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 11.2);
-      tl.fromTo("#v2", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 14.6);
-      tl.to("#v2", {"opacity": 0, "duration": 0.35}, 16.95);
-      gsap.set("#exb0",{scaleX:0});
-      tl.fromTo("#ex0", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 7.6);
-      tl.fromTo("#exb0", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 10.35);
-      tl.to("#ex0", {"opacity": 0, "duration": 0.25}, 10.8);
-      gsap.set("#exb1",{scaleX:0});
-      tl.fromTo("#ex1", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 11.2);
-      tl.fromTo("#exb1", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 13.75);
-      tl.to("#ex1", {"opacity": 0, "duration": 0.25}, 14.200000000000001);
-      gsap.set("#exb2",{scaleX:0});
-      tl.fromTo("#ex2", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 14.6);
-      tl.fromTo("#exb2", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 16.35);
-      tl.to("#ex2", {"opacity": 0, "duration": 0.25}, 16.8);
-      tl.fromTo("#ch0", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 9.7);
-      tl.to("#ch0", {"opacity": 0, "duration": 0.3}, 10.799999999999999);
-      tl.fromTo("#ch1", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 10.2);
-      tl.to("#ch1", {"opacity": 0, "duration": 0.3}, 10.799999999999999);
-      tl.fromTo("#ch2", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 12.4);
-      tl.to("#ch2", {"opacity": 0, "duration": 0.3}, 14.2);
-      tl.fromTo("#ch3", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 13.0);
-      tl.to("#ch3", {"opacity": 0, "duration": 0.3}, 14.2);
-      tl.fromTo("#ch4", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 15.0);
-      tl.to("#ch4", {"opacity": 0, "duration": 0.3}, 16.7);
-      tl.fromTo("#ch5", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 15.5);
-      tl.to("#ch5", {"opacity": 0, "duration": 0.3}, 16.7);
-      tl.fromTo("#st0", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 0.35000000000000003);
-      tl.to("#st0", {"opacity": 0, "duration": 0.2}, 2.2);
-      tl.fromTo("#st1", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 3.1);
-      tl.to("#st1", {"opacity": 0, "duration": 0.2}, 4.3);
-      tl.fromTo("#st2", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 4.3);
-      tl.to("#st2", {"opacity": 0, "duration": 0.2}, 5.85);
-      tl.fromTo("#st3", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 9.35);
-      tl.to("#st3", {"opacity": 0, "duration": 0.2}, 10.9);
-      tl.fromTo("#st4", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 11.649999999999999);
-      tl.to("#st4", {"opacity": 0, "duration": 0.2}, 12.85);
-      tl.fromTo("#st5", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 12.899999999999999);
-      tl.to("#st5", {"opacity": 0, "duration": 0.2}, 14.45);
-      tl.fromTo("#st6", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 14.75);
-      tl.to("#st6", {"opacity": 0, "duration": 0.2}, 16.9);
-      tl.fromTo("#logo", {"opacity": 0, "scale": 0.7, "rotation": -25}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.8, "ease": "back.out(1.6)"}, 17.9);
-      tl.to("#trait",{opacity:0,duration:0.5},18.3);
-      tl.fromTo("#wm", {"opacity": 0, "y": 16}, {"opacity": 1, "y": 0, "duration": 0.6}, 17.75);
-      tl.fromTo("#tag", {"opacity": 0, "y": 16}, {"opacity": 1, "y": 0, "duration": 0.7}, 19.4);
-      tl.fromTo("#terre", {"filter": "brightness(1)"}, {"filter": "brightness(1.25)", "duration": 1.5}, 17.6);
+      tl.fromTo("#w0", {"opacity": 0, "scale": 2.2, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 0.9);
+      tl.to(".sh", {keyframes:[{x:-26,y:13,duration:0.035},{x:21,y:-16,duration:0.035},{x:-13,y:8,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 0.9);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 0.9);
+      tl.fromTo("#w1", {"opacity": 0, "scale": 2.2, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 1.15);
+      tl.to(".sh", {keyframes:[{x:-26,y:13,duration:0.035},{x:21,y:-16,duration:0.035},{x:-13,y:8,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 1.15);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 1.15);
+      tl.fromTo("#w2", {"opacity": 0, "scale": 2.2, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 1.42);
+      tl.to(".sh", {keyframes:[{x:-26,y:13,duration:0.035},{x:21,y:-16,duration:0.035},{x:-13,y:8,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 1.42);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 1.42);
+      gsap.set("#slash0",{rotation:-14, scaleX:0});
+      tl.to("#slash0", {"scaleX": 1, "duration": 0.12, "ease": "power4.out"}, 1.6);
+      tl.to("#w0", {"y": -900, "rotation": -12, "duration": 0.35, "ease": "power3.in"}, 1.75);
+      tl.to("#w1", {"x": -1300, "rotation": 8, "duration": 0.35, "ease": "power3.in"}, 1.75);
+      tl.to("#w2", {"y": 900, "rotation": 10, "duration": 0.35, "ease": "power3.in"}, 1.75);
+      tl.to("#slash0", {"opacity": 0, "duration": 0.2}, 1.85);
+      tl.set("#w0", {"opacity": 0}, 2.12);
+      tl.set("#w1", {"opacity": 0}, 2.12);
+      tl.set("#w2", {"opacity": 0}, 2.12);
+      tl.fromTo("#flash", {"opacity": 0.9}, {"opacity": 0, "duration": 0.3, "ease": "power2.out", "immediateRender": false}, 1.7);
+      tl.to(".sh", {keyframes:[{x:-34,y:17,duration:0.035},{x:27,y:-20,duration:0.035},{x:-17,y:10,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 1.7);
+      tl.fromTo("#v1", {"scale": 1.35, "x": 0}, {"scale": 1.02, "x": 0, "duration": 1.5000000000000002, "ease": "power3.out"}, 1.7);
+      tl.fromTo("#v2", {"scale": 1.3, "x": 0}, {"scale": 1.05, "x": 0, "duration": 0.5, "ease": "power3.out"}, 3.2);
+      tl.fromTo("#v3", {"scale": 1.3, "x": 0}, {"scale": 1.05, "x": 0, "duration": 0.5, "ease": "power3.out"}, 3.7);
+      tl.fromTo("#flash", {"opacity": 0.4}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 3.2);
+      tl.to(".sh", {keyframes:[{x:-14,y:7,duration:0.035},{x:11,y:-8,duration:0.035},{x:-7,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 3.2);
+      tl.fromTo("#flash", {"opacity": 0.4}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 3.7);
+      tl.to(".sh", {keyframes:[{x:-14,y:7,duration:0.035},{x:11,y:-8,duration:0.035},{x:-7,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 3.7);
+      tl.fromTo("#g200", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.25, "ease": "expo.out"}, 2.25);
+      tl.to("#g200", {"opacity": 0, "scale": 0.8, "duration": 0.15}, 4.05);
+      tl.fromTo("#alt", {"opacity": 0, "scale": 1.4, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.2, "ease": "expo.out"}, 2.0);
+      tl.to("#alt", {"opacity": 0, "duration": 0.12}, 4.1);
+      (function(){const o={v:2100}; const el=document.getElementById("altn"); tl.to(o,{v:2352,duration:2.0,ease:"power2.out",onUpdate:()=>{el.textContent=Math.round(o.v).toLocaleString("fr-FR").replace(/\u202f/g," ");}},2.0);})();
+      gsap.set("#es1",{rotation:-9, scaleX:0});
+      tl.fromTo("#eb1", {"opacity": 0}, {"opacity": 0.92, "duration": 0.06}, 4.18);
+      tl.fromTo("#e1a", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 4.2);
+      tl.fromTo("#e1b", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 4.45);
+      tl.to(".sh", {keyframes:[{x:-24,y:12,duration:0.035},{x:19,y:-14,duration:0.035},{x:-12,y:7,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 4.2);
+      tl.to(".sh", {keyframes:[{x:-18,y:9,duration:0.035},{x:14,y:-11,duration:0.035},{x:-9,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 4.45);
+      tl.fromTo("#flash", {"opacity": 0.5}, {"opacity": 0, "duration": 0.18, "ease": "power2.out", "immediateRender": false}, 4.2);
+      tl.to("#es1", {"scaleX": 1, "duration": 0.1, "ease": "power4.out"}, 4.62);
+      tl.to("#e1a", {"x": -1300, "rotation": -8, "duration": 0.3, "ease": "power3.in"}, 4.7);
+      tl.to("#e1b", {"x": 1300, "rotation": 8, "duration": 0.3, "ease": "power3.in"}, 4.7);
+      tl.to("#es1", {"opacity": 0, "duration": 0.15}, 4.75);
+      tl.set("#e1a", {"opacity": 0}, 5.02);
+      tl.set("#e1b", {"opacity": 0}, 5.02);
+      tl.to("#eb1", {"opacity": 0, "duration": 0.2}, 4.7);
+      tl.fromTo("#flash", {"opacity": 0.7}, {"opacity": 0, "duration": 0.25, "ease": "power2.out", "immediateRender": false}, 4.7);
+      tl.to(".sh", {keyframes:[{x:-30,y:15,duration:0.035},{x:24,y:-18,duration:0.035},{x:-15,y:9,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 4.7);
+      gsap.set("#es2",{rotation:-9, scaleX:0});
+      tl.fromTo("#eb2", {"opacity": 0}, {"opacity": 0.92, "duration": 0.06}, 7.18);
+      tl.fromTo("#e2a", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 7.2);
+      tl.fromTo("#e2b", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 7.45);
+      tl.to(".sh", {keyframes:[{x:-24,y:12,duration:0.035},{x:19,y:-14,duration:0.035},{x:-12,y:7,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 7.2);
+      tl.to(".sh", {keyframes:[{x:-18,y:9,duration:0.035},{x:14,y:-11,duration:0.035},{x:-9,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 7.45);
+      tl.fromTo("#flash", {"opacity": 0.5}, {"opacity": 0, "duration": 0.18, "ease": "power2.out", "immediateRender": false}, 7.2);
+      tl.to("#es2", {"scaleX": 1, "duration": 0.1, "ease": "power4.out"}, 7.62);
+      tl.to("#e2a", {"x": -1300, "rotation": -8, "duration": 0.3, "ease": "power3.in"}, 7.7);
+      tl.to("#e2b", {"x": 1300, "rotation": 8, "duration": 0.3, "ease": "power3.in"}, 7.7);
+      tl.to("#es2", {"opacity": 0, "duration": 0.15}, 7.75);
+      tl.set("#e2a", {"opacity": 0}, 8.02);
+      tl.set("#e2b", {"opacity": 0}, 8.02);
+      tl.to("#eb2", {"opacity": 0, "duration": 0.2}, 7.7);
+      tl.fromTo("#flash", {"opacity": 0.7}, {"opacity": 0, "duration": 0.25, "ease": "power2.out", "immediateRender": false}, 7.7);
+      tl.to(".sh", {keyframes:[{x:-30,y:15,duration:0.035},{x:24,y:-18,duration:0.035},{x:-15,y:9,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 7.7);
+      gsap.set("#es3",{rotation:-9, scaleX:0});
+      tl.fromTo("#eb3", {"opacity": 0}, {"opacity": 0.92, "duration": 0.06}, 11.18);
+      tl.fromTo("#e3a", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 11.2);
+      tl.fromTo("#e3b", {"opacity": 0, "scale": 1.8, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.16, "ease": "expo.out"}, 11.45);
+      tl.to(".sh", {keyframes:[{x:-24,y:12,duration:0.035},{x:19,y:-14,duration:0.035},{x:-12,y:7,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 11.2);
+      tl.to(".sh", {keyframes:[{x:-18,y:9,duration:0.035},{x:14,y:-11,duration:0.035},{x:-9,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 11.45);
+      tl.fromTo("#flash", {"opacity": 0.5}, {"opacity": 0, "duration": 0.18, "ease": "power2.out", "immediateRender": false}, 11.2);
+      tl.to("#es3", {"scaleX": 1, "duration": 0.1, "ease": "power4.out"}, 11.62);
+      tl.to("#e3a", {"x": -1300, "rotation": -8, "duration": 0.3, "ease": "power3.in"}, 11.7);
+      tl.to("#e3b", {"x": 1300, "rotation": 8, "duration": 0.3, "ease": "power3.in"}, 11.7);
+      tl.to("#es3", {"opacity": 0, "duration": 0.15}, 11.75);
+      tl.set("#e3a", {"opacity": 0}, 12.02);
+      tl.set("#e3b", {"opacity": 0}, 12.02);
+      tl.to("#eb3", {"opacity": 0, "duration": 0.2}, 11.7);
+      tl.fromTo("#flash", {"opacity": 0.7}, {"opacity": 0, "duration": 0.25, "ease": "power2.out", "immediateRender": false}, 11.7);
+      tl.to(".sh", {keyframes:[{x:-30,y:15,duration:0.035},{x:24,y:-18,duration:0.035},{x:-15,y:9,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 11.7);
+      tl.fromTo("#terre", {"opacity": 0, "y": 500}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "expo.out"}, 4.7);
+      tl.fromTo("#sol", {"x": 0}, {"x": -900, "duration": 16.900000000000002, "ease": "none"}, 4.7);
+      tl.fromTo("#plan", {"opacity": 0}, {"opacity": 1, "duration": 0.4}, 5.0);
+      tl.fromTo("#pin0", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 12}, "duration": 0.25, "ease": "back.out(3)"}, 5.0);
+      tl.fromTo("#pin1", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 12}, "duration": 0.25, "ease": "back.out(3)"}, 5.12);
+      tl.fromTo("#pin2", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 12}, "duration": 0.25, "ease": "back.out(3)"}, 5.24);
+      tl.fromTo("#ph, #v4", {"y": 900, "rotationX": 50, "scale": 0.7, "opacity": 0}, {"opacity": 1, "x": 0, "y": 0, "rotationY": 0, "rotationX": 0, "rotation": 0, "scale": 1, "duration": 0.45, "ease": "expo.out"}, 4.7);
+      tl.to(".sh", {keyframes:[{x:-14,y:7,duration:0.035},{x:11,y:-8,duration:0.035},{x:-7,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 4.8);
+      tl.fromTo("#ph, #v4", {"scale": 1}, {"scale": 1.28, "y": -150, "duration": 0.5, "ease": "expo.inOut"}, 5.55);
+      tl.to("#ph", {"opacity": 0, "duration": 0.1}, 6.2);
+      tl.set("#map0w", {"opacity": 1}, 6.25);
+      tl.set("#map0w", {"opacity": 0}, 7.2);
+      tl.fromTo("#map0", {"scale": 1.25}, {"scale": 1.0, "duration": 0.3, "ease": "expo.out"}, 6.25);
+      tl.fromTo("#map0t", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.14, "ease": "expo.out"}, 6.25);
+      tl.set("#map0t", {"opacity": 0}, 6.5);
+      tl.fromTo("#flash", {"opacity": 0.3}, {"opacity": 0, "duration": 0.12, "ease": "power2.out", "immediateRender": false}, 6.25);
+      tl.set("#map1w", {"opacity": 1}, 6.5);
+      tl.set("#map1w", {"opacity": 0}, 7.2);
+      tl.fromTo("#map1", {"scale": 1.25}, {"scale": 1.0, "duration": 0.3, "ease": "expo.out"}, 6.5);
+      tl.fromTo("#map1t", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.14, "ease": "expo.out"}, 6.5);
+      tl.set("#map1t", {"opacity": 0}, 6.75);
+      tl.fromTo("#flash", {"opacity": 0.3}, {"opacity": 0, "duration": 0.12, "ease": "power2.out", "immediateRender": false}, 6.5);
+      tl.set("#map2w", {"opacity": 1}, 6.75);
+      tl.set("#map2w", {"opacity": 0}, 7.2);
+      tl.fromTo("#map2", {"scale": 1.25}, {"scale": 1.0, "duration": 0.3, "ease": "expo.out"}, 6.75);
+      tl.fromTo("#map2t", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.14, "ease": "expo.out"}, 6.75);
+      tl.set("#map2t", {"opacity": 0}, 7.0);
+      tl.fromTo("#flash", {"opacity": 0.3}, {"opacity": 0, "duration": 0.12, "ease": "power2.out", "immediateRender": false}, 6.75);
+      tl.set("#map3w", {"opacity": 1}, 7.0);
+      tl.set("#map3w", {"opacity": 0}, 7.2);
+      tl.fromTo("#map3", {"scale": 1.25}, {"scale": 1.0, "duration": 0.3, "ease": "expo.out"}, 7.0);
+      tl.fromTo("#map3t", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.14, "ease": "expo.out"}, 7.0);
+      tl.set("#map3t", {"opacity": 0}, 7.2);
+      tl.fromTo("#flash", {"opacity": 0.3}, {"opacity": 0, "duration": 0.12, "ease": "power2.out", "immediateRender": false}, 7.0);
+      tl.fromTo("#map3", {"rotationX": 0, "scale": 1.6}, {"rotationX": 55, "scale": 2.1, "duration": 0.2, "ease": "expo.out"}, 7.0);
+      tl.fromTo("#ph, #v5", {"x": 1100, "rotationY": -60, "scale": 0.8, "opacity": 0}, {"opacity": 1, "x": 0, "y": 0, "rotationY": 0, "rotationX": 0, "rotation": 0, "scale": 1, "duration": 0.45, "ease": "expo.out"}, 7.7);
+      tl.to(".sh", {keyframes:[{x:-14,y:7,duration:0.035},{x:11,y:-8,duration:0.035},{x:-7,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 7.8);
+      tl.set("#ph", {"opacity": 1}, 7.7);
+      tl.fromTo("#ph, #v5", {"scale": 1}, {"scale": 0.78, "y": -170, "duration": 0.5, "ease": "expo.inOut"}, 8.05);
+      tl.fromTo("#kw0", {"opacity": 0, "scale": 1.9, "rotation": 4}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 8.2);
+      tl.to(".sh", {keyframes:[{x:-10,y:5,duration:0.035},{x:8,y:-6,duration:0.035},{x:-5,y:3,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 8.2);
+      tl.set("#kw0", {"opacity": 0}, 8.68);
+      tl.fromTo("#kw1", {"opacity": 0, "scale": 1.9, "rotation": -4}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 8.7);
+      tl.to(".sh", {keyframes:[{x:-10,y:5,duration:0.035},{x:8,y:-6,duration:0.035},{x:-5,y:3,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 8.7);
+      tl.set("#kw1", {"opacity": 0}, 9.18);
+      tl.fromTo("#kw2", {"opacity": 0, "scale": 1.9, "rotation": 4}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 9.2);
+      tl.to(".sh", {keyframes:[{x:-10,y:5,duration:0.035},{x:8,y:-6,duration:0.035},{x:-5,y:3,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 9.2);
+      tl.set("#kw2", {"opacity": 0}, 9.68);
+      tl.fromTo("#kw3", {"opacity": 0, "scale": 1.9, "rotation": -4}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 9.7);
+      tl.to(".sh", {keyframes:[{x:-10,y:5,duration:0.035},{x:8,y:-6,duration:0.035},{x:-5,y:3,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 9.7);
+      tl.set("#kw3", {"opacity": 0}, 10.18);
+      tl.fromTo("#kw4", {"opacity": 0, "scale": 1.9, "rotation": 4}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 10.2);
+      tl.to(".sh", {keyframes:[{x:-10,y:5,duration:0.035},{x:8,y:-6,duration:0.035},{x:-5,y:3,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 10.2);
+      tl.set("#kw4", {"opacity": 0}, 10.68);
+      tl.fromTo("#prep", {"opacity": 0, "scale": 1.4, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.2, "ease": "expo.out"}, 10.7);
+      tl.to("#prep", {"opacity": 0, "duration": 0.12}, 11.12);
+      tl.fromTo("#route", {"opacity": 0}, {"opacity": 1, "duration": 0.01}, 10.7);
+      (function(){const p=document.getElementById("route"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L}); tl.to(p,{strokeDashoffset:L*0.45,duration:0.5,ease:"power2.out"},10.7); tl.to(p,{strokeDashoffset:0,duration:1.1,ease:"power2.inOut"},15.0); tl.set(p,{strokeDasharray:"none"},16.3); tl.to(p,{morphSVG:{shape:"#anneau"},duration:0.55,ease:"expo.inOut"},16.35);})();
+      tl.to("#ph", {"opacity": 0, "duration": 0.08}, 11.15);
+      tl.fromTo("#ph, #v6", {"x": -1100, "rotationY": 60, "scale": 0.8, "opacity": 0}, {"opacity": 1, "x": 0, "y": 0, "rotationY": 0, "rotationX": 0, "rotation": 0, "scale": 1, "duration": 0.45, "ease": "expo.out"}, 11.7);
+      tl.to(".sh", {keyframes:[{x:-14,y:7,duration:0.035},{x:11,y:-8,duration:0.035},{x:-7,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 11.8);
+      tl.set("#ph", {"opacity": 1}, 11.7);
+      tl.fromTo("#ph, #v6", {"rotation": 0}, {"rotation": -4, "scale": 1.08, "duration": 0.9, "ease": "power2.inOut"}, 11.8);
+      tl.to("#ph", {"opacity": 0, "duration": 0.05}, 12.68);
+      tl.fromTo("#v7", {"scale": 1.35, "x": 0}, {"scale": 1.05, "x": 0, "duration": 0.5, "ease": "power3.out"}, 12.7);
+      tl.fromTo("#v8", {"scale": 1.35, "x": 0}, {"scale": 1.05, "x": 0, "duration": 0.5, "ease": "power3.out"}, 13.2);
+      tl.fromTo("#v9", {"scale": 1.3, "x": 0}, {"scale": 1.05, "x": 0, "duration": 0.5, "ease": "power3.out"}, 13.7);
+      tl.fromTo("#flash", {"opacity": 0.45}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 12.7);
+      tl.to(".sh", {keyframes:[{x:-16,y:8,duration:0.035},{x:13,y:-10,duration:0.035},{x:-8,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 12.7);
+      tl.fromTo("#flash", {"opacity": 0.45}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 13.2);
+      tl.to(".sh", {keyframes:[{x:-16,y:8,duration:0.035},{x:13,y:-10,duration:0.035},{x:-8,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 13.2);
+      tl.fromTo("#flash", {"opacity": 0.45}, {"opacity": 0, "duration": 0.15, "ease": "power2.out", "immediateRender": false}, 13.7);
+      tl.to(".sh", {keyframes:[{x:-16,y:8,duration:0.035},{x:13,y:-10,duration:0.035},{x:-8,y:5,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 13.7);
+      gsap.set("#nm0",{xPercent:-50});
+      tl.fromTo("#nm0", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 13.75);
+      tl.set("#nm0", {"opacity": 0}, 14.2);
+      gsap.set("#nm1",{xPercent:-50});
+      tl.fromTo("#nm1", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 13.83);
+      tl.set("#nm1", {"opacity": 0}, 14.2);
+      gsap.set("#nm2",{xPercent:-50});
+      tl.fromTo("#nm2", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 13.91);
+      tl.set("#nm2", {"opacity": 0}, 14.2);
+      gsap.set("#nm3",{xPercent:-50});
+      tl.fromTo("#nm3", {"opacity": 0, "scale": 1.6, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.15, "ease": "expo.out"}, 13.99);
+      tl.set("#nm3", {"opacity": 0}, 14.2);
+      tl.fromTo("#v10", {"scale": 1.4, "x": 0}, {"scale": 1.2, "x": 0, "duration": 0.1750000000000007, "ease": "power3.out"}, 14.2);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.1, "ease": "power2.out", "immediateRender": false}, 14.2);
+      tl.to(".sh", {keyframes:[{x:-12,y:6,duration:0.035},{x:10,y:-7,duration:0.035},{x:-6,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 14.2);
+      tl.fromTo("#v11", {"scale": 1.4, "x": 0}, {"scale": 1.2, "x": 0, "duration": 0.1750000000000007, "ease": "power3.out"}, 14.375);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.1, "ease": "power2.out", "immediateRender": false}, 14.375);
+      tl.to(".sh", {keyframes:[{x:-12,y:6,duration:0.035},{x:10,y:-7,duration:0.035},{x:-6,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 14.375);
+      tl.fromTo("#v12", {"scale": 1.4, "x": 0}, {"scale": 1.2, "x": 0, "duration": 0.1750000000000007, "ease": "power3.out"}, 14.55);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.1, "ease": "power2.out", "immediateRender": false}, 14.55);
+      tl.to(".sh", {keyframes:[{x:-12,y:6,duration:0.035},{x:10,y:-7,duration:0.035},{x:-6,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 14.55);
+      tl.fromTo("#v13", {"scale": 1.4, "x": 0}, {"scale": 1.2, "x": 0, "duration": 0.1750000000000007, "ease": "power3.out"}, 14.725);
+      tl.fromTo("#flash", {"opacity": 0.35}, {"opacity": 0, "duration": 0.1, "ease": "power2.out", "immediateRender": false}, 14.725);
+      tl.to(".sh", {keyframes:[{x:-12,y:6,duration:0.035},{x:10,y:-7,duration:0.035},{x:-6,y:4,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 14.725);
+      tl.fromTo("#v14", {"scale": 1.5, "x": 0}, {"scale": 1.08, "x": 0, "duration": 2.049999999999999, "ease": "power3.out"}, 14.9);
+      tl.set("#terre", {"zIndex": 75}, 14.9);
+      tl.set("#fil", {"zIndex": 76}, 14.9);
+      tl.fromTo("#terre", {"y": 700}, {"y": 0, "duration": 0.7, "ease": "expo.out"}, 14.9);
+      tl.fromTo("#flash", {"opacity": 1.0}, {"opacity": 0, "duration": 0.45, "ease": "power2.out", "immediateRender": false}, 14.9);
+      tl.to(".sh", {keyframes:[{x:-40,y:20,duration:0.035},{x:32,y:-24,duration:0.035},{x:-20,y:12,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 14.9);
+      gsap.set("#ch0",{xPercent:-50});
+      tl.fromTo("#ch0", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.18, "ease": "expo.out"}, 15.3);
+      tl.to("#ch0", {"opacity": 0, "y": 30, "duration": 0.2}, 16.6);
+      gsap.set("#ch1",{xPercent:-50});
+      tl.fromTo("#ch1", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.18, "ease": "expo.out"}, 15.5);
+      tl.to("#ch1", {"opacity": 0, "y": 30, "duration": 0.2}, 16.6);
+      gsap.set("#ch2",{xPercent:-50});
+      tl.fromTo("#ch2", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.18, "ease": "expo.out"}, 15.7);
+      tl.to("#ch2", {"opacity": 0, "y": 30, "duration": 0.2}, 16.6);
+      gsap.set("#ch3",{xPercent:-50});
+      tl.fromTo("#ch3", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.18, "ease": "expo.out"}, 15.9);
+      tl.to("#ch3", {"opacity": 0, "y": 30, "duration": 0.2}, 16.6);
+      gsap.set("#ch4",{xPercent:-50});
+      tl.fromTo("#ch4", {"opacity": 0, "scale": 1.5, "rotation": 0}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.18, "ease": "expo.out"}, 16.05);
+      tl.to("#ch4", {"opacity": 0, "y": 30, "duration": 0.2}, 16.6);
+      tl.to("#plan", {"opacity": 0, "duration": 0.2}, 16.3);
+      tl.to("#pin0", {"opacity": 0, "duration": 0.15}, 16.3);
+      tl.to("#pin1", {"opacity": 0, "duration": 0.15}, 16.3);
+      tl.to("#pin2", {"opacity": 0, "duration": 0.15}, 16.3);
+      tl.set("#enc2", {"opacity": 1, "zIndex": 74}, 16.95);
+      tl.fromTo("#wave0", {"opacity": 0.9, "scale": 1}, {"opacity": 0, "scale": 4, "duration": 0.9, "ease": "expo.out", "immediateRender": false}, 16.95);
+      tl.fromTo("#wave1", {"opacity": 0.9, "scale": 1}, {"opacity": 0, "scale": 5, "duration": 1.1, "ease": "expo.out", "immediateRender": false}, 17.03);
+      tl.fromTo("#wave2", {"opacity": 0.9, "scale": 1}, {"opacity": 0, "scale": 6, "duration": 1.3, "ease": "expo.out", "immediateRender": false}, 17.11);
+      tl.fromTo("#logo", {"opacity": 0, "scale": 2.2, "rotation": -40}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.5, "ease": "expo.out"}, 16.95);
+      tl.to("#route", {"opacity": 0, "duration": 0.25}, 17.05);
+      tl.fromTo("#flash", {"opacity": 1.0}, {"opacity": 0, "duration": 0.5, "ease": "power2.out", "immediateRender": false}, 16.95);
+      tl.to(".sh", {keyframes:[{x:-40,y:20,duration:0.035},{x:32,y:-24,duration:0.035},{x:-20,y:12,duration:0.04},{x:0,y:0,duration:0.06}], ease:"none"}, 16.95);
+      tl.fromTo(".lt",{opacity:0,y:60,scale:1.8},{opacity:1,y:0,scale:1,duration:0.35,ease:"expo.out",stagger:0.03},17.25);
+      tl.fromTo("#tag", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.6, "ease": "expo.out"}, 18.95);
+      tl.fromTo("#terre", {"filter": "brightness(1)"}, {"filter": "brightness(1.35)", "duration": 1.5}, 17.0);
+      tl.to("#root > *", {"opacity": 0, "duration": 0.4}, 21.15);
+      tl.fromTo("#st0", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 0.86);
+      tl.to("#st0", {"opacity": 0, "duration": 0.12}, 1.6);
+      tl.fromTo("#st1", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 2.16);
+      tl.to("#st1", {"opacity": 0, "duration": 0.12}, 4.15);
+      tl.fromTo("#st2", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 5.66);
+      tl.to("#st2", {"opacity": 0, "duration": 0.12}, 7.15);
+      tl.fromTo("#st3", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 8.16);
+      tl.to("#st3", {"opacity": 0, "duration": 0.12}, 8.98);
+      tl.fromTo("#st4", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 9.01);
+      tl.to("#st4", {"opacity": 0, "duration": 0.12}, 10.65);
+      tl.fromTo("#st5", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.12}, 11.71);
+      tl.to("#st5", {"opacity": 0, "duration": 0.12}, 13.65);
       window.__timelines["main"] = tl;
     </script>
   </body>
