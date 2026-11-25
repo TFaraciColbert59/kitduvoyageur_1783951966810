@@ -1,0 +1,14 @@
+.hyperframes/
+renders/
+node_modules/
+assets/prep/
+assets/depth/
+assets/earth/test-*.jpg
+audio/orgue.wav
+audio/voix-finale.wav
+audio/tmp/
+audio/mix-brut.wav
+assets/tiles/
+assets/shots/
+audio/bande-son.wav
+audio/bande-son.wav
