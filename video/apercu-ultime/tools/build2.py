@@ -108,9 +108,9 @@ def phone_in(t, vid_id, frm):
     sel = f'#ph, #{vid_id}'
     T(sel, dict(frm, opacity=0), {'opacity': 1, 'x': 0, 'y': 0, 'rotationY': 0, 'rotationX': 0, 'rotation': 0, 'scale': 1, 'duration': 0.45, 'ease': 'expo.out'}, t)
     shake(t + 0.1, 14)
-s1 = screen('explorer', 4.7, 6.25, 0.85)
+s1 = screen('explorer', 4.7, 6.2, 1.0)   # le tiroir apparaît (clic à 0,98 s + 0,5 s de l'app) pile sur le temps 5,2 s
 phone_in(4.7, s1, {'y': 900, 'rotationX': 50, 'scale': 0.7})
-T(f'#ph, #{s1}', {'scale': 1}, {'scale': 1.28, 'y': -150, 'duration': 0.5, 'ease': 'expo.inOut'}, 5.55)
+T(f'#ph, #{s1}', {'scale': 1}, {'scale': 1.28, 'y': -150, 'duration': 0.35, 'ease': 'expo.out'}, 5.7)
 TO('#ph', {'opacity': 0, 'duration': 0.1}, 6.2)
 # stroboscope des fonds : Plan · Relief · Satellite · 3D (Chamonix)
 meta = json.load(open(os.path.join(HERE, '..', 'presentation', 'assets', 'img', 'alpes.json')))['z12']
@@ -119,7 +119,7 @@ def P12(lon, lat):
     y = (1 - math.log(math.tan(math.radians(lat)) + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n
     return x - meta['ox'], y - meta['oy']
 X, Y = P12(6.88, 45.94); s = 1.15
-for k, (src, lab, t) in enumerate([('plan-z12', 'Plan', 6.25), ('relief-z12', 'Relief', 6.5), ('alpes-z12', 'Satellite', 6.75), ('alpes-z12', '3D', 7.0)]):
+for k, (src, lab, t) in enumerate([('plan-z12', 'Plan', 6.2), ('relief-z12', 'Relief', 6.45), ('alpes-z12', 'Satellite', 6.7), ('alpes-z12', '3D', 6.95)]):
     i = f'map{k}'
     rot = 'transform-origin:50% 60%;' if k == 3 else ''
     h.append(f'<div id="{i}w" class="sh" style="position:absolute;inset:0;overflow:hidden;z-index:{63 + k};opacity:0;perspective:1200px"><img id="{i}" src="assets/img/{src}.jpg" alt="" '
@@ -129,12 +129,12 @@ for k, (src, lab, t) in enumerate([('plan-z12', 'Plan', 6.25), ('relief-z12', 'R
     T(f'#{i}', {'scale': 1.25}, {'scale': 1.0, 'duration': 0.3, 'ease': 'expo.out'}, t)
     slam(f'{i}t', t, 1.6, 0.14); SET(f'#{i}t', {'opacity': 0}, t + 0.25 if k < 3 else 7.2)
     flash(t, 0.3, 0.12)
-T('#map3', {'rotationX': 0, 'scale': 1.6}, {'rotationX': 55, 'scale': 2.1, 'duration': 0.2, 'ease': 'expo.out'}, 7.0)
+T('#map3', {'rotationX': 0, 'scale': 1.6}, {'rotationX': 55, 'scale': 2.1, 'duration': 0.2, 'ease': 'expo.out'}, 6.95)
 # Compas : la phrase, mot à mot
-s2 = screen('compas', 7.7, 11.2, 0.7)
+s2 = screen('compas', 7.7, 11.2, 0.826)   # chaque mot tapé tombe sur un temps (8,2 · 8,7 · 9,2 · 9,7 · 10,2)
 phone_in(7.7, s2, {'x': 1100, 'rotationY': -60, 'scale': 0.8})
 SET('#ph', {'opacity': 1}, 7.7)
-T(f'#ph, #{s2}', {'scale': 1}, {'scale': 0.78, 'y': -170, 'duration': 0.5, 'ease': 'expo.inOut'}, 8.05)
+T(f'#ph, #{s2}', {'scale': 1}, {'scale': 0.78, 'y': -170, 'duration': 0.25, 'ease': 'expo.out'}, 7.95)
 for k, (w, t) in enumerate([('5 jours', 8.2), ('Les Alpes', 8.7), ('Rando', 9.2), ('Via ferrata', 9.7), ('Kayak', 10.2)]):
     i = f'kw{k}'
     h.append(f'<div id="{i}" class="sh" style="position:absolute;left:0;right:0;top:1040px;text-align:center;{ANTON};font-size:150px;color:{"#D0A070" if k % 2 else "#FAF8F5"};text-shadow:0 8px 40px rgba(0,0,0,.6);z-index:90;opacity:0">{w}</div>')
@@ -143,59 +143,69 @@ h.append(f'<div id="prep" class="sh" style="position:absolute;left:150px;right:1
          f'<div style="font:600 38px Inter">Je prépare ton aventure…</div><div style="font:500 26px Inter;color:rgba(250,248,245,.7);margin-top:6px">Nuits, trajet, kit et budget</div></div>')
 slam('prep', 10.7, 1.4, 0.2); TO('#prep', {'opacity': 0, 'duration': 0.12}, 11.12)
 T('#route', {'opacity': 0}, {'opacity': 1, 'duration': 0.01}, 10.7)
-j.append('(function(){const p=document.getElementById("route"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L}); tl.to(p,{strokeDashoffset:L*0.45,duration:0.5,ease:"power2.out"},10.7); tl.to(p,{strokeDashoffset:0,duration:1.1,ease:"power2.inOut"},15.0); tl.set(p,{strokeDasharray:"none"},16.3); tl.to(p,{morphSVG:{shape:"#anneau"},duration:0.55,ease:"expo.inOut"},16.35);})();')
+j.append('(function(){const p=document.getElementById("route"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L}); tl.to(p,{strokeDashoffset:L*0.45,duration:0.5,ease:"power2.out"},10.7); tl.to(p,{strokeDashoffset:0,duration:1.5,ease:"power1.inOut"},14.7); tl.set(p,{strokeDasharray:"none"},16.2); tl.to(p,{morphSVG:{shape:"#anneau"},duration:0.5,ease:"expo.inOut"},16.2);})();')
 TO('#ph', {'opacity': 0, 'duration': 0.08}, 11.15)
 # Cordée des Alpes
-s3 = screen('club', 11.7, 12.7, 1.7, 1.5)
+s3 = screen('club', 11.7, 13.2, 0.364, 2.0)   # espaces 11,95 · membres 12,45 · sorties 12,7
 phone_in(11.7, s3, {'x': -1100, 'rotationY': 60, 'scale': 0.8})
 SET('#ph', {'opacity': 1}, 11.7)
-T(f'#ph, #{s3}', {'rotation': 0}, {'rotation': -4, 'scale': 1.08, 'duration': 0.9, 'ease': 'power2.inOut'}, 11.8)
-TO('#ph', {'opacity': 0, 'duration': 0.05}, 12.68)
-vid('g10', 12.7, 13.2, 0.6, z=66, zoom=(1.35, 1.05))
-vid('g11', 13.2, 13.7, 0.6, z=67, zoom=(1.35, 1.05))
+T(f'#ph, #{s3}', {'rotation': 0}, {'rotation': -4, 'scale': 1.08, 'duration': 0.25, 'ease': 'expo.out'}, 12.45)
+TO('#ph', {'opacity': 0, 'duration': 0.05}, 13.17)
+vid('g10', 13.2, 13.45, 0.6, z=66, zoom=(1.35, 1.1))
+vid('g11', 13.45, 13.7, 0.6, z=67, zoom=(1.35, 1.1))
 vid('g12', 13.7, 14.2, 0.8, z=68, zoom=(1.3, 1.05))
-for t in (12.7, 13.2, 13.7): flash(t, 0.45, 0.15); shake(t, 16)
+for t in (13.2, 13.45, 13.7): flash(t, 0.45, 0.15); shake(t, 16)
 for k, (nm, x) in enumerate([('Julien', 120), ('Sofia', 300), ('Marc', 680), ('Claire', 905)]):
     i = f'nm{k}'
     h.append(f'<div id="{i}" class="hud light sh" style="left:{x}px;top:560px;font-size:34px;padding:12px 24px;z-index:92">{nm}</div>')
-    j.append(f'gsap.set("#{i}",{{xPercent:-50}});'); slam(i, 13.75 + 0.08 * k, 1.6, 0.15); SET(f'#{i}', {'opacity': 0}, 14.2)
+    j.append(f'gsap.set("#{i}",{{xPercent:-50}});'); slam(i, 13.7 + 0.125 * k, 1.6, 0.12); SET(f'#{i}', {'opacity': 0}, 14.2)
 # rafale : kayak, échelle, paroi, nuit
 for k, (s_, ms) in enumerate([('j16', 0.4), ('j17', 0.6), ('j18', 1.2), ('j19', 3.0)]):
-    t0 = 14.2 + 0.175 * k
-    vid(s_, t0, t0 + 0.175, ms, z=69 + k, zoom=(1.4, 1.2))
+    t0 = 14.2 + 0.125 * k
+    vid(s_, t0, t0 + 0.125, ms, z=69 + k, zoom=(1.4, 1.2))
     flash(t0, 0.35, 0.1); shake(t0, 12)
 # DROP : l'aube au Lac Blanc, la Terre surgit, la route se remplit, la carte vit
-vid('a02', 14.9, 16.95, 1.5, z=74, zoom=(1.5, 1.08))
-SET('#terre', {'zIndex': 75}, 14.9); SET('#fil', {'zIndex': 76}, 14.9)
-T('#terre', {'y': 700}, {'y': 0, 'duration': 0.7, 'ease': 'expo.out'}, 14.9)
-flash(14.9, 1.0, 0.45); shake(14.9, 40)
-chips = [('bed', 'Nuit', 'Refuge du Lac Blanc', 760, 1260, 15.3), ('paw', 'Pokédex', 'Marmotte des Alpes', 290, 1330, 15.5), ('users', 'Rencontre', 'Claire · guide', 640, 1400, 15.7),
-         ('nowifi', 'Hors ligne', 'carte prête', 300, 1470, 15.9), ('flower', 'Pokédex', 'Gentiane de Koch', 700, 1540, 16.05)]
+vid('a02', 14.7, 16.75, 1.5, z=74, zoom=(1.5, 1.08))
+SET('#terre', {'zIndex': 75}, 14.7); SET('#fil', {'zIndex': 76}, 14.7)
+T('#terre', {'y': 700}, {'y': 0, 'duration': 0.5, 'ease': 'expo.out', 'immediateRender': False}, 14.7)
+flash(14.7, 1.0, 0.45); shake(14.7, 40)
+chips = [('bed', 'Nuit', 'Refuge du Lac Blanc', 760, 1260, 15.2), ('paw', 'Pokédex', 'Marmotte des Alpes', 290, 1330, 15.45), ('users', 'Rencontre', 'Claire · guide', 640, 1400, 15.7),
+         ('nowifi', 'Hors ligne', 'carte prête', 300, 1470, 15.95), ('flower', 'Pokédex', 'Gentiane de Koch', 700, 1540, 16.2)]
 for k, (icn, a, b, x, y, t) in enumerate(chips):
     i = f'ch{k}'
     h.append(f'<div id="{i}" class="hud light sh" style="left:{x}px;top:{y}px;font-size:30px;padding:12px 22px;z-index:80">{ico(icn)}<span>{a}</span><span style="font-weight:500;color:#5E6B63">{b}</span></div>')
-    j.append(f'gsap.set("#{i}",{{xPercent:-50}});'); slam(i, t, 1.5, 0.18); TO(f'#{i}', {'opacity': 0, 'y': 30, 'duration': 0.2}, 16.6)
-TO('#plan', {'opacity': 0, 'duration': 0.2}, 16.3)
-for k in range(3): TO(f'#pin{k}', {'opacity': 0, 'duration': 0.15}, 16.3)
+    j.append(f'gsap.set("#{i}",{{xPercent:-50}});'); slam(i, t, 1.5, 0.18); TO(f'#{i}', {'opacity': 0, 'y': 30, 'duration': 0.15}, 16.45)
+TO('#plan', {'opacity': 0, 'duration': 0.15}, 16.2)
+for k in range(3): TO(f'#pin{k}', {'opacity': 0, 'duration': 0.15}, 16.2)
 # LOGO : l'anneau claque, onde de choc, le nom
 h.append('<div id="enc2" style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 40%,#10291E 0%,#06120C 70%);z-index:74;opacity:0"></div>')
-SET('#enc2', {'opacity': 1, 'zIndex': 74}, 16.95)
+SET('#enc2', {'opacity': 1, 'zIndex': 74}, 16.7)
 for k in range(3):
     i = f'wave{k}'
     h.append(f'<div id="{i}" style="position:absolute;left:{540 - 160}px;top:{600 - 160}px;width:320px;height:320px;border-radius:160px;border:6px solid #D0A070;z-index:79;opacity:0"></div>')
-    T(f'#{i}', {'opacity': 0.9, 'scale': 1}, {'opacity': 0, 'scale': 4 + k, 'duration': 0.9 + 0.2 * k, 'ease': 'expo.out', 'immediateRender': False}, 16.95 + 0.08 * k)
+    T(f'#{i}', {'opacity': 0.9, 'scale': 1}, {'opacity': 0, 'scale': 4 + k, 'duration': 0.9 + 0.2 * k, 'ease': 'expo.out', 'immediateRender': False}, 16.7 + 0.125 * k)
 h.append('<img id="logo" class="sh" src="assets/img/badge-anneau.png" alt="" style="position:absolute;left:390px;top:450px;width:300px;height:300px;opacity:0;z-index:81">')
-T('#logo', {'opacity': 0, 'scale': 2.2, 'rotation': -40}, {'opacity': 1, 'scale': 1, 'rotation': 0, 'duration': 0.5, 'ease': 'expo.out'}, 16.95)
-TO('#route', {'opacity': 0, 'duration': 0.25}, 17.05)
-flash(16.95, 1.0, 0.5); shake(16.95, 40)
+T('#logo', {'opacity': 0, 'scale': 2.2, 'rotation': -40}, {'opacity': 1, 'scale': 1, 'rotation': 0, 'duration': 0.4, 'ease': 'expo.out'}, 16.7)
+TO('#route', {'opacity': 0, 'duration': 0.2}, 16.75)
+flash(16.7, 1.0, 0.5); shake(16.7, 40)
 letters = 'LE KIT DU VOYAGEUR'
 h.append('<div id="wm" class="sh" style="position:absolute;left:0;right:0;top:820px;text-align:center;font:700 74px/1 Inter,sans-serif;letter-spacing:.16em;color:#FAF8F5;z-index:82">'
          + ''.join(f'<span class="lt" style="display:inline-block;opacity:0">{c if c != " " else "&nbsp;"}</span>' for c in letters) + '</div>')
-j.append('tl.fromTo(".lt",{opacity:0,y:60,scale:1.8},{opacity:1,y:0,scale:1,duration:0.35,ease:"expo.out",stagger:0.03},17.25);')
+j.append('tl.fromTo(".lt",{opacity:0,y:60,scale:1.8},{opacity:1,y:0,scale:1,duration:0.35,ease:"expo.out",stagger:0.0625},17.2);')
 h.append('<div id="tag" class="big" style="top:930px;font-size:66px;color:#D0A070;z-index:82">Là où la carte se termine.</div>')
 T('#tag', {'opacity': 0, 'y': 30}, {'opacity': 1, 'y': 0, 'duration': 0.6, 'ease': 'expo.out'}, 18.95)
-T('#terre', {'filter': 'brightness(1)'}, {'filter': 'brightness(1.35)', 'duration': 1.5}, 17.0)
+T('#terre', {'filter': 'brightness(1)'}, {'filter': 'brightness(1.35)', 'duration': 1.5, 'immediateRender': False}, 16.7)
 TO('#root > *', {'opacity': 0, 'duration': 0.4}, D - 0.45)
+
+# ---------- la pulsation : halo de l'horizon et vignette battent sur chaque grosse caisse
+h.append('<div id="halo" style="position:absolute;left:-200px;right:-200px;top:1050px;height:420px;background:radial-gradient(60% 50% at 50% 60%,rgba(208,160,112,.55),rgba(208,160,112,0) 70%);z-index:77;opacity:0;pointer-events:none;mix-blend-mode:screen"></div>')
+kicks = [1.7 + 0.5 * i for i in range(26)] + [14.7 + 0.25 * i for i in range(8)]
+for t in kicks:
+    strong = t >= 14.7 or abs(((t - 1.7) / 0.5) % 2 - 1) < 1e-6
+    T('#halo', {'opacity': 0.9 if strong else 0.55}, {'opacity': 0, 'duration': 0.32 if t < 14.7 else 0.2, 'ease': 'power2.out', 'immediateRender': False}, t)
+    T('#vig', {'opacity': 1}, {'opacity': 0.55, 'duration': 0.3, 'ease': 'power2.out', 'immediateRender': False}, t)
+    if 4.7 <= t < 14.7 and not (6.2 <= t < 7.2):
+        j.append(f'tl.fromTo("#terre", {{scale:1.012}}, {{scale:1, duration:0.3, ease:"power2.out", immediateRender:false}}, {t});')
 
 # sous-titres en haut, sur pastille
 caps = [(0.9, 1.6, 'pas pour moi.', ''), (2.2, 4.15, '« Dans deux cents mètres, à gauche. »', 'app'), (5.7, 7.15, 'La carte est vivante.', ''),

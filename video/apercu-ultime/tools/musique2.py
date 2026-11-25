@@ -103,7 +103,7 @@ def whoosh(dur=0.5, gain=0.25):
     n = int(SR * dur); t = np.arange(n) / SR; u = t / dur
     return lp(rng.standard_normal(n), 2500) * np.sin(np.pi * u) ** 2 * gain
 
-beats = [T0 + i * BEAT for i in range(int((14.9 - T0) / BEAT))]
+beats = [T0 + i * BEAT for i in range(int(round((14.7 - T0) / BEAT)))]
 # intro : trois coups secs sur « PAS / POUR / MOI. », puis l'entaille
 for t, m in [(0.9, 'G2 D3 G3 Bb3'), (1.15, 'F2 C3 F3 A3'), (1.42, 'Eb2 Bb2 Eb3 G3')]:
     add(kick(1.0), t); add(organ(g(m), 0.32, att=0.005, rel=0.12, stops=(0.8, 1, 0.5, 0.2), gain=0.22), t)
@@ -126,19 +126,19 @@ for i, t in enumerate(beats):
 for t in [4.2, 7.2, 11.2]: add(boom(0.55), t); add(whoosh(0.4, 0.2), t - 0.35)
 for t in [4.7, 7.7, 11.7]: add(clap(0.45), t)
 # montée finale : bruit qui s'ouvre + roulement qui accélère
-add(riser(2.0, 0.32), 12.9)
-t = 13.9; dt = 0.125
-while t < 14.88: add(clap(0.12 + 0.25 * (t - 13.9)), t); t += dt; dt = max(0.04, dt * 0.85)
+add(riser(2.0, 0.32), 12.7)
+t = 13.7; dt = 0.125
+while t < 14.68: add(clap(0.12 + 0.25 * (t - 13.7)), t); t += dt; dt = max(0.04, dt * 0.85)
 # DROP : tutti orgue + chœur, grosse caisse en double temps
-add(boom(1.2), 14.9)
-add(organ(g('G1 G2 D3 G3 Bb3 D4 G4'), 2.2, att=0.02, rel=0.8, stops=(0.8, 1, 0.5, 0.2), gain=0.2), 14.9)
-add(choir(g('Bb4 D5 G5'), 2.0, att=0.15, rel=0.8, gain=0.16), 14.9)
-for i in range(8): add(kick(0.7), 14.9 + 0.25 * i); add(hat(0.06), 14.9 + 0.25 * i + 0.125)
-add(whoosh(0.6, 0.3), 16.35)
+add(boom(1.2), 14.7)
+add(organ(g('G1 G2 D3 G3 Bb3 D4 G4'), 2.2, att=0.02, rel=0.8, stops=(0.8, 1, 0.5, 0.2), gain=0.2), 14.7)
+add(choir(g('Bb4 D5 G5'), 2.0, att=0.15, rel=0.8, gain=0.16), 14.7)
+for i in range(8): add(kick(0.7), 14.7 + 0.25 * i); add(hat(0.06), 14.7 + 0.25 * i + 0.125)
+add(whoosh(0.5, 0.3), 16.2)
 # logo : impact et accord final (sol majeur) qui s'éteint
-add(boom(1.3), 16.9)
-add(organ(g('G1 G2 D3 G3 B3 D4 G4'), DUR - 16.9 + 0.3, att=0.02, rel=3.0, stops=(0.8, 0.9, 0.45, 0.12), gain=0.2), 16.9)
-add(choir(g('B4 D5 G5'), DUR - 16.9, att=0.2, rel=3.0, gain=0.15), 16.9); add(glass(NOTE['G5'], 4, 0.03), 17.3)
+add(boom(1.3), 16.7)
+add(organ(g('G1 G2 D3 G3 B3 D4 G4'), DUR - 16.7 + 0.3, att=0.02, rel=3.0, stops=(0.8, 0.9, 0.45, 0.12), gain=0.2), 16.7)
+add(choir(g('B4 D5 G5'), DUR - 16.7, att=0.2, rel=3.0, gain=0.15), 16.7); add(glass(NOTE['G5'], 4, 0.03), 17.3)
 
 def ir(sec, seed):
     r = np.random.default_rng(seed); n = int(SR * sec); t = np.arange(n) / SR
