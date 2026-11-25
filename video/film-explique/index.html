@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>LKDV — Rien oublié, version expliquée (voix off, 9:16)</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <script src="assets/lib/MorphSVGPlugin.min.js"></script>
+    <script src="assets/lib/MotionPathPlugin.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1080px; height:1920px; overflow:hidden; background:#F3F0EA; }
+      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#F3F0EA; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1080" data-height="1920">
+      <div id="fond" class="clip" data-composition-id="fond" data-composition-src="compositions/fond.html" data-start="0" data-duration="30" data-track-index="0" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:1"></div>
+      <div id="acteA" class="clip" data-composition-id="acteA" data-composition-src="compositions/acteA.html" data-start="0" data-duration="10.667" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:5"></div>
+      <div id="respire" class="clip" data-composition-id="respire" data-composition-src="compositions/respire.html" data-start="10.667" data-duration="2.666" data-track-index="2" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:6"></div>
+      <div id="acteB" class="clip" data-composition-id="acteB" data-composition-src="compositions/acteB.html" data-start="13.333" data-duration="11" data-track-index="1" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:5"></div>
+      <div id="fin" class="clip" data-composition-id="fin" data-composition-src="compositions/fin.html" data-start="24.333" data-duration="5.667" data-track-index="2" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:5"></div>
+      <div id="texte" class="clip" data-composition-id="texte" data-composition-src="compositions/texte.html" data-start="0" data-duration="30" data-track-index="9" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:20"></div>
+      <audio id="bande" class="clip" src="assets/audio/bande-son.wav" data-start="0" data-duration="30" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

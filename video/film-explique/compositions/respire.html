@@ -1,0 +1,37 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; }
+    #r-svg { position:absolute; left:0; top:0; }
+    #r-big { position:absolute; left:0; right:0; top:760px; text-align:center; font-family:"Anton",sans-serif; font-size:300px; line-height:1; color:#FAF8F5; opacity:0; }
+    #r-sub { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1110px; font-family:"JetBrains Mono",monospace; font-size:30px; letter-spacing:0.08em; color:#D0A070; text-transform:uppercase; opacity:0; }
+  </style>
+  <div id="root" data-composition-id="respire" data-width="1080" data-height="1920">
+    <svg id="r-svg" width="1080" height="1920" viewBox="0 0 1080 1920" aria-hidden="true">
+      <g id="r-dots" fill="#0B1F17"></g>
+      <path id="r-w" d="M300 660 L400 560 L470 640 L540 520 L610 640 L680 560 L780 660" fill="none" stroke="#D0A070" stroke-width="10" stroke-linecap="butt" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/>
+    </svg>
+    <div id="r-big"><span id="r-n">0</span> KM</div>
+    <div id="r-sub" data-layout-allow-safe-zone>le W · Torres del Paine</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // trame de points : les points grossissent en diagonale jusqu'à couvrir l'écran, puis repartent
+      const g = document.getElementById("r-dots"); const S = 60;
+      for (let y = 0; y <= 1920 + S; y += S) for (let x = 0; x <= 1080 + S; x += S) {
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 0); g.appendChild(c);
+        const k = (x + y) / 3000;
+        tl.to(c, { attr: { r: 46 }, duration: 0.28, ease: "power2.in" }, 0.0 + k * 0.32);
+        tl.to(c, { attr: { r: 0 }, duration: 0.26, ease: "power2.out" }, 2.25 + k * 0.3);
+      }
+      tl.fromTo("#r-big", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(2)" }, 0.55);
+      const n = { v: 0 }; tl.to(n, { v: 72, duration: 1.2, ease: "power3.out", onUpdate: () => { document.getElementById("r-n").textContent = Math.round(n.v); } }, 0.6);
+      tl.to("#r-w", { strokeDashoffset: 0, duration: 1.0, ease: "power2.inOut" }, 0.7);
+      tl.fromTo("#r-sub", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }, 1.1);
+      tl.to(["#r-big", "#r-sub", "#r-w"], { opacity: 0, duration: 0.2, ease: "power2.in" }, 2.2);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["respire"] = tl;
+    })();
+  </script>
+</template>

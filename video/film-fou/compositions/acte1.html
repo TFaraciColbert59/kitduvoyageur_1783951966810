@@ -1,0 +1,180 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; }
+    #a-svg { position:absolute; left:0; top:0; }
+    #root .a-word { position:absolute; left:0; right:0; text-align:center; font-family:"EB Garamond",serif; font-weight:500; color:#FAF8F5; white-space:nowrap; line-height:1; }
+    #root .a-word span { display:inline-block; opacity:0; }
+    #a-w1 { top:420px; font-size:190px; }
+    #a-w2 { top:400px; font-size:200px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; color:#0F2C1E; }
+    #a-w3 { top:330px; font-size:430px; color:#17402C; }
+    #a-w4 { top:420px; font-size:230px; color:#17402C; }
+    #a-w5 { top:420px; font-size:220px; }
+    #a-w6 { top:380px; font-size:150px; color:#17402C; }
+    #a-big { position:absolute; left:0; right:0; text-align:center; top:800px; font-family:"EB Garamond",serif; font-weight:500; font-size:210px; color:#FAF8F5; white-space:nowrap; line-height:1; opacity:0;
+             text-shadow:0 0 50px rgba(250,248,245,0.35), 0 0 120px rgba(208,160,112,0.35); }
+    #a-big span { display:inline-block; }
+    #a-mark { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1250px; font-family:"Inter",sans-serif; font-weight:600; font-size:38px; letter-spacing:0.26em; color:#17402C; white-space:pre; padding-left:0.26em; }
+    #a-mark span { display:inline-block; opacity:0; }
+  </style>
+  <div id="root" data-composition-id="acte1" data-width="1080" data-height="1920">
+    <svg id="a-svg" width="1080" height="1920" viewBox="0 0 1080 1920" aria-hidden="true">
+      <rect id="a-bg" x="0" y="0" width="1080" height="1920" fill="#FAF8F5"/>
+      <path id="a-mount2" d="M-20 1920 L-20 1420 L180 1250 L300 1330 L470 1120 L600 1260 L760 1080 L900 1220 L1100 1100 L1100 1920 Z" fill="#0F2C1E" opacity="0"/>
+      <circle id="a-ring" cx="540" cy="960" r="250" fill="none" stroke="#17402C" stroke-width="12" stroke-dasharray="1571" stroke-dashoffset="1571"/>
+      <path id="a-shape" d="M540 935 C554 935 565 946 565 960 C565 974 554 985 540 985 C526 985 515 974 515 960 C515 946 526 935 540 935 Z" fill="#D0A070"/>
+      <g id="a-hair" fill="none" stroke="#0F2C1E" stroke-width="7" stroke-linecap="round" opacity="0">
+        <path id="a-h1" d="M420 600 C330 640 250 600 170 640"/>
+        <path id="a-h2" d="M380 700 C300 760 220 720 130 780"/>
+        <path id="a-h3" d="M360 820 C290 880 210 850 140 910"/>
+        <path id="a-h4" d="M350 960 C300 1020 230 1000 170 1060"/>
+      </g>
+      <circle id="a-walker" r="11" fill="#FAF8F5" opacity="0"/>
+      <g id="a-rings" fill="none" stroke-linecap="round"></g>
+      <g id="a-dust"></g>
+      <g id="a-faces"></g>
+      <circle id="a-dot" cx="540" cy="960" r="26" fill="#D0A070" opacity="0"/>
+    </svg>
+    <div id="a-mark"><span>L</span><span>E</span><span> </span><span>K</span><span>I</span><span>T</span><span> </span><span>D</span><span>U</span><span> </span><span>V</span><span>O</span><span>Y</span><span>A</span><span>G</span><span>E</span><span>U</span><span>R</span></div>
+    <div id="a-w1" class="a-word"><span>J</span><span>u</span><span>s</span><span>q</span><span>u</span><span>’</span><span>o</span><span>ù</span></div>
+    <div id="a-w2" class="a-word"><span>i</span><span>r</span><span>a</span><span>i</span><span>s</span><span>-</span><span>t</span><span>u</span></div>
+    <div id="a-w3" class="a-word"><span>s</span><span>i</span></div>
+    <div id="a-w4" class="a-word"><span>r</span><span>i</span><span>e</span><span>n</span></div>
+    <div id="a-w5" class="a-word"><span>n</span><span>e</span></div>
+    <div id="a-w6" class="a-word"><span>m</span><span>a</span><span>n</span><span>q</span><span>u</span><span>a</span><span>i</span><span>t</span><span>&nbsp;</span><span>?</span></div>
+    <div id="a-big"><span>m</span><span>a</span><span>n</span><span>q</span><span>u</span><span>a</span><span>i</span><span>t</span><span>&nbsp;</span><span id="a-q">?</span></div>
+  </div>
+  <script>
+    (function () {
+      gsap.registerPlugin(MorphSVGPlugin, MotionPathPlugin);
+      const tl = gsap.timeline({ paused: true });
+      const B = 60 / 90;   // un temps de la musique
+      // Formes successives de la même forme laiton (elle ne disparaît jamais)
+      const NEEDLE = "M540 700 L586 960 L540 1220 L494 960 Z";
+      const MOUNT = "M-20 1920 L-20 1250 L140 1080 L230 1150 L350 880 L440 990 L540 700 L620 820 L720 610 L800 760 L880 660 L980 880 L1100 820 L1100 1920 Z";
+      const RIDGE = "M-20 1250 L140 1080 L230 1150 L350 880 L440 990 L540 700 L620 820 L720 610 L800 760 L880 660 L980 880 L1100 820";
+      const FACE = "M330 1560 C330 1330 300 1200 320 1090 C340 900 320 700 450 560 C560 440 740 440 820 540 C880 610 890 690 880 750 C878 790 900 830 945 895 L975 940 C965 965 925 975 905 980 C915 1005 925 1025 910 1040 C925 1055 920 1080 900 1090 C905 1130 885 1160 845 1170 C805 1180 765 1200 745 1240 C735 1340 745 1440 765 1560 Z";
+      let star = "";
+      for (let i = 0; i < 16; i++) { const a = -Math.PI / 2 + i * Math.PI / 8; const r = i % 4 === 0 ? 380 : (i % 2 === 0 ? 170 : 90); star += (i ? " L" : "M") + (540 + r * Math.cos(a)).toFixed(1) + " " + (980 + r * Math.sin(a)).toFixed(1); }
+      star += " Z";
+      const bg = (c, t) => tl.set("#a-bg", { attr: { fill: c } }, t);
+      const letters = (sel) => gsap.utils.toArray(sel + " span");
+
+      // 0 – 2,0 s : le point bat, devient l'aiguille qui tourne comme une toupie, l'anneau se dessine, le nom tombe
+      tl.fromTo("#a-shape", { scale: 0 }, { scale: 1.5, duration: 0.18, ease: "back.out(3)", svgOrigin: "540 960" }, 0);
+      tl.to("#a-shape", { scale: 1, duration: 0.12, ease: "sine.inOut", svgOrigin: "540 960" }, 0.18);
+      tl.to("#a-shape", { morphSVG: NEEDLE, duration: 0.35, ease: "power3.inOut" }, 0.3);
+      tl.fromTo("#a-shape", { rotation: 0 }, { rotation: 720 + 360, duration: 1.0, ease: "power3.out", svgOrigin: "540 960" }, 0.3);
+      tl.to("#a-ring", { attr: { "stroke-dashoffset": 0 }, duration: 0.8, ease: "power2.inOut" }, 0.2);
+      letters("#a-mark").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: -60 }, { opacity: 1, y: 0, duration: 0.35, ease: "back.out(2.4)" }, 0.55 + i * 0.03));
+
+      // 2,0 s — « Jusqu'où » : fond forêt, l'anneau s'envole, l'aiguille s'étire en chaîne de montagnes, un marcheur grimpe la crête
+      bg("#17402C", 2.0);
+      tl.to("#a-ring", { scale: 4, opacity: 0, duration: 0.35, ease: "power2.in", svgOrigin: "540 960" }, 1.95);
+      letters("#a-mark").forEach((el, i) => tl.to(el, { y: 200 + (i % 3) * 40, opacity: 0, rotation: (i % 2 ? 30 : -30), duration: 0.3, ease: "power2.in" }, 1.95 + i * 0.008));
+      tl.to("#a-shape", { morphSVG: MOUNT, rotation: 1080, duration: 0.5, ease: "expo.inOut" }, 2.0);
+      tl.fromTo("#a-mount2", { opacity: 0, y: 200 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" }, 2.15);
+      letters("#a-w1").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 160, rotation: 12 }, { opacity: 1, y: 0, rotation: 0, duration: 0.42, ease: "back.out(2)" }, 2.05 + i * 0.04));
+      tl.set("#a-walker", { opacity: 1 }, 2.45);
+      tl.fromTo("#a-walker", { motionPath: { path: RIDGE, start: 0, end: 0 } }, { motionPath: { path: RIDGE, start: 0, end: 0.55 }, duration: 0.85, ease: "none" }, 2.45);
+
+      // 3,333 s — « irais-tu » : fond sauge, la montagne se referme en profil de Léa, ses cheveux claquent au vent
+      bg("#5B7F55", 3.333);
+      letters("#a-w1").forEach((el, i) => tl.to(el, { y: -260, opacity: 0, duration: 0.25, ease: "power2.in" }, 3.3 + i * 0.015));
+      tl.to(["#a-mount2", "#a-walker"], { opacity: 0, duration: 0.2 }, 3.3);
+      tl.to("#a-shape", { morphSVG: FACE, attr: { fill: "#FAF8F5" }, duration: 0.45, ease: "expo.inOut" }, 3.333);
+      tl.to("#a-hair", { opacity: 1, duration: 0.2 }, 3.6);
+      ["#a-h1", "#a-h2", "#a-h3", "#a-h4"].forEach((h, i) => {
+        for (let k = 0; k < 6; k++) tl.to(h, { x: (k % 2 ? -14 : 10) * (1 + i * 0.3), y: (k % 2 ? 8 : -6), duration: 0.17, ease: "sine.inOut" }, 3.62 + k * 0.17);
+      });
+      letters("#a-w2").forEach((el, i) => tl.fromTo(el, { opacity: 0, x: 240, skewX: -20 }, { opacity: 1, x: 0, skewX: 0, duration: 0.4, ease: "expo.out" }, 3.4 + i * 0.035));
+
+      // 4,667 s — « si » : fond laiton, le profil se replie en rose des vents qui s'emballe
+      bg("#D0A070", 4.667);
+      letters("#a-w2").forEach((el, i) => tl.to(el, { x: -300, opacity: 0, duration: 0.2, ease: "power2.in" }, 4.62 + i * 0.01));
+      tl.to("#a-hair", { opacity: 0, duration: 0.15 }, 4.62);
+      tl.to("#a-shape", { morphSVG: star, attr: { fill: "#17402C" }, duration: 0.3, ease: "expo.inOut" }, 4.667);
+      tl.to("#a-shape", { rotation: 1080 + 540, duration: 0.66, ease: "power2.in", svgOrigin: "540 980" }, 4.667);
+      letters("#a-w3").forEach((el, i) => tl.fromTo(el, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.45, ease: "elastic.out(1, 0.45)" }, 4.7 + i * 0.06));
+
+      // 5,333 s — « rien » : fond pierre, la rose explose en poussière de brouillard qui dérive, le mot se dissout
+      bg("#FAF8F5", 5.333);
+      letters("#a-w3").forEach((el, i) => tl.to(el, { scale: 3, opacity: 0, duration: 0.2, ease: "power2.in" }, 5.3));
+      tl.to("#a-shape", { scale: 0, opacity: 0, duration: 0.12, ease: "power2.in", svgOrigin: "540 980" }, 5.333);
+      const dust = document.getElementById("a-dust"); let s = 11; const dots = [];
+      const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+      for (let i = 0; i < 160; i++) {
+        const a = rnd() * Math.PI * 2, r0 = rnd() * 300, r1 = 300 + rnd() * 900, sz = 4 + rnd() * 12;
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", 540 + r0 * Math.cos(a)); c.setAttribute("cy", 980 + r0 * Math.sin(a)); c.setAttribute("r", sz);
+        c.setAttribute("fill", i % 5 === 0 ? "#D0A070" : (i % 3 === 0 ? "#5B7F55" : "#17402C")); c.setAttribute("opacity", "0");
+        dust.appendChild(c); dots.push([c, a, r0, r1]);
+        tl.set(c, { opacity: 0.85 }, 5.333);
+        tl.to(c, { x: (r1 - r0) * Math.cos(a), y: (r1 - r0) * Math.sin(a) * 0.8 - 120 * rnd(), opacity: 0.15, duration: 1.3, ease: "expo.out" }, 5.333);
+      }
+      letters("#a-w4").forEach((el, i) => {
+        tl.fromTo(el, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.2, ease: "power2.out" }, 5.36 + i * 0.03);
+        tl.to(el, { x: (i - 1.5) * 70, y: -40 + (i % 2) * 60, opacity: 0.35, filter: "blur(6px)", duration: 1.1, ease: "sine.inOut" }, 5.56);
+      });
+
+      // 6,667 s — « ne » : la poussière se range en courbes de niveau qui se dessinent ; la forme laiton revient au centre
+      bg("#17402C", 6.667);
+      letters("#a-w4").forEach((el, i) => tl.to(el, { opacity: 0, duration: 0.12 }, 6.62));
+      const rings = document.getElementById("a-rings"); const ringPaths = [];
+      for (let k = 0; k < 7; k++) {
+        let d = ""; const R = 120 + k * 75;
+        for (let j = 0; j <= 72; j++) { const a = j / 72 * Math.PI * 2; const r = R * (1 + 0.09 * Math.sin(3 * a + k) + 0.05 * Math.sin(5 * a - k * 0.7));
+          d += (j ? " L" : "M") + (540 + r * Math.cos(a)).toFixed(1) + " " + (1060 + r * 1.08 * Math.sin(a)).toFixed(1); }
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", d + " Z"); p.setAttribute("pathLength", "1"); p.setAttribute("stroke-dasharray", "1 1"); p.setAttribute("stroke-dashoffset", "1");
+        p.setAttribute("stroke", k % 3 === 0 ? "#D0A070" : "#FAF8F5"); p.setAttribute("stroke-width", k % 3 === 0 ? 7 : 4); p.setAttribute("opacity", k % 3 === 0 ? 1 : 0.7);
+        rings.appendChild(p); ringPaths.push(p);
+        tl.to(p, { attr: { "stroke-dashoffset": 0 }, duration: 0.45, ease: "power2.out" }, 6.7 + k * 0.04);
+      }
+      dots.forEach(([c, a, r0, r1], i) => {
+        const R = 120 + (i % 7) * 75, aa = a;
+        tl.to(c, { x: 540 + R * Math.cos(aa) - +c.getAttribute("cx"), y: 1060 + R * 1.08 * Math.sin(aa) - +c.getAttribute("cy"), opacity: 0.9, duration: 0.3, ease: "power3.inOut" }, 6.667);
+        tl.to(c, { opacity: 0, duration: 0.15 }, 6.98);
+      });
+      tl.to("#a-shape", { morphSVG: "M540 1000 C575 1000 600 1030 600 1060 C600 1095 575 1120 540 1120 C505 1120 480 1095 480 1060 C480 1030 505 1000 540 1000 Z", attr: { fill: "#D0A070" }, rotation: 0, duration: 0.01 }, 6.667);
+      tl.fromTo("#a-shape", { scale: 0, opacity: 1 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(3)", svgOrigin: "540 1060", immediateRender: false }, 6.7);
+      letters("#a-w5").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: -120 }, { opacity: 1, y: 0, duration: 0.3, ease: "bounce.out" }, 6.7 + i * 0.05));
+      tl.to("#a-rings", { rotation: 25, duration: 0.67, ease: "none", svgOrigin: "540 1060" }, 6.667);
+
+      // 7,333 s — « manquait ? » : fond pierre, les courbes s'effacent, la forme laiton se dédouble en trois visages qui rebondissent
+      bg("#FAF8F5", 7.333);
+      letters("#a-w5").forEach((el, i) => tl.to(el, { opacity: 0, y: 80, duration: 0.15 }, 7.3));
+      tl.to("#a-rings", { opacity: 0, scale: 1.6, duration: 0.25, ease: "power2.in", svgOrigin: "540 1060" }, 7.3);
+      tl.to("#a-shape", { opacity: 0, duration: 0.05 }, 7.333);
+      const faces = document.getElementById("a-faces");
+      const FC = [["#5B7F55", 280, 1160], ["#D0A070", 540, 1110], ["#17402C", 800, 1160]];
+      FC.forEach(([col, fx, fy], i) => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.setAttribute("id", "a-face" + i);
+        g.innerHTML = `<circle cx="${fx}" cy="${fy}" r="150" fill="${col}"/>
+          <circle cx="${fx - 48}" cy="${fy - 30}" r="13" fill="#FAF8F5"/><circle cx="${fx + 48}" cy="${fy - 30}" r="13" fill="#FAF8F5"/>
+          <path d="M${fx - 78} ${fy + 22} Q${fx} ${fy + 120} ${fx + 78} ${fy + 22} Z" fill="#FAF8F5"/>`;
+        faces.appendChild(g);
+        tl.fromTo(g, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: "elastic.out(1, 0.5)", svgOrigin: `${fx} ${fy}` }, 7.36 + i * 0.07);
+        for (let k = 0; k < 3; k++) {
+          tl.to(g, { y: -70, rotation: (i - 1) * 8, duration: B / 2, ease: "power2.out", svgOrigin: `${fx} ${fy}` }, 7.333 + B + k * B + i * 0.05);
+          tl.to(g, { y: 0, rotation: 0, duration: B / 2, ease: "bounce.out", svgOrigin: `${fx} ${fy}` }, 7.333 + B * 1.5 + k * B + i * 0.05);
+        }
+      });
+      letters("#a-w6").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 90, rotation: -15 }, { opacity: 1, y: 0, rotation: 0, duration: 0.4, ease: "back.out(2.2)" }, 7.36 + i * 0.03));
+
+      // 9,0 s — entrée du chœur : fond vert profond, les visages s'envolent, « manquait ? » devient immense, le « ? » tourne et enfle
+      bg("#0F2C1E", 9.0);
+      FC.forEach((f, i) => tl.to("#a-face" + i, { y: -1400, rotation: (i - 1) * 60, duration: 0.5, ease: "power3.in" }, 8.95 + i * 0.04));
+      letters("#a-w6").forEach((el, i) => tl.to(el, { opacity: 0, duration: 0.1 }, 8.97));
+      tl.fromTo("#a-big", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.45, ease: "expo.out" }, 9.0);
+      gsap.utils.toArray("#a-big span").forEach((el, i) => tl.fromTo(el, { y: 200 * (i % 2 ? 1 : -1) }, { y: 0, duration: 0.5, ease: "expo.out" }, 9.0 + i * 0.02));
+      tl.to("#a-q", { rotation: 360, scale: 1.7, duration: 1.45, ease: "power2.inOut" }, 9.05);
+      tl.to("#a-big", { scale: 1.08, duration: 1.4, ease: "none" }, 9.45);
+
+      // 10,55 s — tout est aspiré en un point laiton (la Terre naîtra de ce point)
+      tl.to("#a-big", { scale: 0, opacity: 0, duration: 0.12, ease: "power3.in" }, 10.55);
+      tl.fromTo("#a-dot", { opacity: 0, scale: 0 }, { opacity: 1, scale: 1, duration: 0.12, ease: "back.out(3)", svgOrigin: "540 960" }, 10.55);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["acte1"] = tl;
+    })();
+  </script>
+</template>
