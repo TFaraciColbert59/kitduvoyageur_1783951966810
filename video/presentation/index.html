@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>LKDV — « Pas pour moi », présentation de l'app (9:16)</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="stylesheet" href="assets/ui.css" />
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+      #vig { position:absolute; inset:0; pointer-events:none; background: radial-gradient(130% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(6,18,12,0.55) 100%),
+              linear-gradient(180deg, rgba(6,18,12,0.35) 0%, rgba(6,18,12,0) 14%, rgba(6,18,12,0) 76%, rgba(6,18,12,0.55) 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="331.128" data-width="1080" data-height="1920">
+      <video id="bg-a01" class="clip" src="assets/shots/a01.mp4" muted playsinline data-start="0.0" data-duration="5.6" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:1"></video>
+      <video id="bg-a02" class="clip" src="assets/shots/a02.mp4" muted playsinline data-start="5.2" data-duration="7.7" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:2"></video>
+      <div id="bg-e00" class="clip encre" data-start="12.5" data-duration="5.34" data-track-index="0" style="z-index:3"></div>
+      <div id="bg-e01" class="clip encre" data-start="17.44" data-duration="2.8" data-track-index="1" style="z-index:4"></div>
+      <video id="bg-b03" class="clip" src="assets/shots/b03.mp4" muted playsinline data-start="19.84" data-duration="6.66" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:5"></video>
+      <video id="bg-b04" class="clip" src="assets/shots/b04.mp4" muted playsinline data-start="26.1" data-duration="5.7" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:6"></video>
+      <video id="bg-b05" class="clip" src="assets/shots/b05.mp4" muted playsinline data-start="31.4" data-duration="1.7" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:7"></video>
+      <img id="bg-f05" class="clip" src="assets/prep/05-flou.jpg" alt="" data-start="32.7" data-duration="6.27" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:8">
+      <div id="bg-e02" class="clip encre" data-start="38.57" data-duration="2.8" data-track-index="0" style="z-index:9"></div>
+      <img id="bg-f06" class="clip" src="assets/prep/06-flou.jpg" alt="" data-start="40.97" data-duration="28.23" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:10">
+      <div id="bg-e2m" class="clip encre" data-start="68.8" data-duration="12.8" data-track-index="0" style="z-index:11"></div>
+      <div id="bg-e2d" class="clip encre" data-start="81.2" data-duration="15.033" data-track-index="1" style="z-index:12"></div>
+      <video id="bg-c06" class="clip" src="assets/shots/c06.mp4" muted playsinline data-start="95.833" data-duration="4.6" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:13"></video>
+      <video id="bg-c07" class="clip" src="assets/shots/c07.mp4" muted playsinline data-start="100.033" data-duration="2.2" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:14"></video>
+      <video id="bg-c08" class="clip" src="assets/shots/c08.mp4" muted playsinline data-start="101.833" data-duration="2.3" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:15"></video>
+      <video id="bg-c07b" class="clip" src="assets/shots/c07b.mp4" muted playsinline data-start="103.733" data-duration="2.5" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:16"></video>
+      <img id="bg-f07" class="clip" src="assets/prep/07-flou.jpg" alt="" data-start="105.833" data-duration="4.17" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:17">
+      <div id="bg-e03" class="clip encre" data-start="109.603" data-duration="2.79" data-track-index="1" style="z-index:18"></div>
+      <video id="bg-d09" class="clip" src="assets/shots/d09.mp4" muted playsinline data-start="111.993" data-duration="3.24" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:19"></video>
+      <img id="bg-f09" class="clip" src="assets/prep/09-flou.jpg" alt="" data-start="114.833" data-duration="32.86" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:20">
+      <div id="bg-e04" class="clip encre" data-start="147.293" data-duration="2.8" data-track-index="0" style="z-index:21"></div>
+      <img id="bg-f10" class="clip" src="assets/prep/10-flou.jpg" alt="" data-start="149.693" data-duration="8.04" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:22">
+      <video id="bg-g10" class="clip" src="assets/shots/g10.mp4" muted playsinline data-start="157.333" data-duration="3.6" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:23"></video>
+      <video id="bg-g11" class="clip" src="assets/shots/g11.mp4" muted playsinline data-start="160.533" data-duration="3.9" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:24"></video>
+      <video id="bg-g12" class="clip" src="assets/shots/g12.mp4" muted playsinline data-start="164.033" data-duration="4.8" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:25"></video>
+      <img id="bg-f12" class="clip" src="assets/prep/12-flou.jpg" alt="" data-start="168.433" data-duration="5.16" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:26">
+      <div id="bg-e05" class="clip encre" data-start="173.193" data-duration="2.8" data-track-index="0" style="z-index:27"></div>
+      <video id="bg-h14" class="clip" src="assets/shots/h14.mp4" muted playsinline data-start="175.593" data-duration="3.94" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:28"></video>
+      <img id="bg-f14" class="clip" src="assets/prep/14-flou.jpg" alt="" data-start="179.133" data-duration="6.0" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:29">
+      <video id="bg-h13" class="clip" src="assets/shots/h13.mp4" muted playsinline data-start="184.733" data-duration="2.8" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:30"></video>
+      <img id="bg-f13" class="clip" src="assets/prep/13-flou.jpg" alt="" data-start="187.133" data-duration="18.26" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:31">
+      <div id="bg-e06" class="clip encre" data-start="204.993" data-duration="2.8" data-track-index="1" style="z-index:32"></div>
+      <video id="bg-i15" class="clip" src="assets/shots/i15.mp4" muted playsinline data-start="207.393" data-duration="2.24" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:33"></video>
+      <img id="bg-f15" class="clip" src="assets/prep/15-flou.jpg" alt="" data-start="209.233" data-duration="10.43" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:34">
+      <div id="bg-e07" class="clip encre" data-start="219.263" data-duration="2.8" data-track-index="0" style="z-index:35"></div>
+      <video id="bg-j16" class="clip" src="assets/shots/j16.mp4" muted playsinline data-start="221.663" data-duration="2.47" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:36"></video>
+      <video id="bg-j17" class="clip" src="assets/shots/j17.mp4" muted playsinline data-start="223.733" data-duration="2.8" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:37"></video>
+      <video id="bg-j18" class="clip" src="assets/shots/j18.mp4" muted playsinline data-start="226.133" data-duration="3.9" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:38"></video>
+      <video id="bg-j01" class="clip" src="assets/shots/j01.mp4" muted playsinline data-start="229.633" data-duration="6.2" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:39"></video>
+      <video id="bg-j19" class="clip" src="assets/shots/j19.mp4" muted playsinline data-start="235.433" data-duration="7.3" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:40"></video>
+      <img id="bg-f19" class="clip" src="assets/prep/19-flou.jpg" alt="" data-start="242.333" data-duration="6.9" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:41">
+      <div id="bg-e7s" class="clip encre" data-start="248.833" data-duration="5.0" data-track-index="1" style="z-index:42"></div>
+      <video id="bg-j02" class="clip" src="assets/shots/j02.mp4" muted playsinline data-start="253.433" data-duration="6.5" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:43"></video>
+      <video id="bg-j20" class="clip" src="assets/shots/j20.mp4" muted playsinline data-start="259.533" data-duration="7.56" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:44"></video>
+      <img id="bg-f02" class="clip" src="assets/prep/02-flou.jpg" alt="" data-start="266.693" data-duration="7.24" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:45">
+      <video id="bg-k21" class="clip" src="assets/shots/k21.mp4" muted playsinline data-start="273.533" data-duration="1.75" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:46"></video>
+      <video id="bg-k22" class="clip" src="assets/shots/k22.mp4" muted playsinline data-start="274.883" data-duration="2.65" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:47"></video>
+      <img id="bg-f12b" class="clip" src="assets/prep/12-flou.jpg" alt="" data-start="277.133" data-duration="5.08" data-track-index="1" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:48">
+      <img id="bg-f14b" class="clip" src="assets/prep/14-flou.jpg" alt="" data-start="281.813" data-duration="18.22" data-track-index="0" style="position:absolute;left:-54px;top:-96px;width:1188px;height:2112px;object-fit:cover;z-index:49">
+      <video id="bg-m23" class="clip" src="assets/shots/m23.mp4" muted playsinline data-start="299.633" data-duration="3.9" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:50"></video>
+      <video id="bg-m24" class="clip" src="assets/shots/m24.mp4" muted playsinline data-start="303.133" data-duration="5.91" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:51"></video>
+      <video id="bg-n25" class="clip" src="assets/shots/n25.mp4" muted playsinline data-start="308.643" data-duration="8.79" data-track-index="1" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:52"></video>
+      <div id="bg-e10" class="clip encre" data-start="317.033" data-duration="14.095" data-track-index="0" style="z-index:53"></div>
+      <div id="vig" class="clip" data-start="0" data-duration="331.128" data-track-index="2" style="z-index:150"></div>
+      <div id="ch0" class="clip" data-composition-id="ch0" data-composition-src="compositions/ch0.html" data-start="0.0" data-duration="17.441" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:200"></div>
+      <div id="ch1" class="clip" data-composition-id="ch1" data-composition-src="compositions/ch1.html" data-start="17.441" data-duration="21.125" data-track-index="5" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:201"></div>
+      <div id="ch2" class="clip" data-composition-id="ch2" data-composition-src="compositions/ch2.html" data-start="38.566" data-duration="71.032" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:202"></div>
+      <div id="ch3" class="clip" data-composition-id="ch3" data-composition-src="compositions/ch3.html" data-start="109.598" data-duration="37.695" data-track-index="5" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:203"></div>
+      <div id="ch4" class="clip" data-composition-id="ch4" data-composition-src="compositions/ch4.html" data-start="147.293" data-duration="25.898" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:204"></div>
+      <div id="ch5" class="clip" data-composition-id="ch5" data-composition-src="compositions/ch5.html" data-start="173.191" data-duration="31.805" data-track-index="5" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:205"></div>
+      <div id="ch6" class="clip" data-composition-id="ch6" data-composition-src="compositions/ch6.html" data-start="204.996" data-duration="14.268" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:206"></div>
+      <div id="ch7" class="clip" data-composition-id="ch7" data-composition-src="compositions/ch7.html" data-start="219.264" data-duration="47.431" data-track-index="5" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:207"></div>
+      <div id="ch8" class="clip" data-composition-id="ch8" data-composition-src="compositions/ch8.html" data-start="266.695" data-duration="15.123" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:208"></div>
+      <div id="ch9" class="clip" data-composition-id="ch9" data-composition-src="compositions/ch9.html" data-start="281.818" data-duration="26.825" data-track-index="5" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:209"></div>
+      <div id="ch10" class="clip" data-composition-id="ch10" data-composition-src="compositions/ch10.html" data-start="308.643" data-duration="22.485" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:210"></div>
+      <video id="kitstudio" class="clip" src="assets/app/kit-studio-coloris.mp4" muted playsinline data-start="192.833" data-duration="2.9" data-track-index="6" style="position:absolute;left:233px;top:249px;width:614px;height:1362px;object-fit:cover;object-position:top;border-radius:63px;z-index:300"></video>
+      <div id="excuses" class="clip" data-composition-id="excuses" data-composition-src="compositions/excuses.html" data-start="0" data-duration="331.128" data-track-index="8" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:400"></div>
+      <div id="texte" class="clip" data-composition-id="texte" data-composition-src="compositions/texte.html" data-start="0" data-duration="331.128" data-track-index="9" data-track-kind="graphics" data-width="1080" data-height="1920" style="z-index:500"></div>
+      <audio id="bande" class="clip" src="audio/bande-son.wav" data-start="0" data-duration="331.128" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#bg-a02", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 5.2);
+      tl.fromTo("#bg-e00", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 12.5);
+      tl.fromTo("#bg-e01", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 17.44);
+      tl.fromTo("#bg-b03", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 19.84);
+      tl.fromTo("#bg-b04", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 26.1);
+      tl.fromTo("#bg-b05", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 31.4);
+      tl.fromTo("#bg-f05", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:6.27, ease:"none"}, 32.7);
+      tl.fromTo("#bg-f05", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 32.7);
+      tl.fromTo("#bg-e02", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 38.57);
+      tl.fromTo("#bg-f06", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:28.23, ease:"none"}, 40.97);
+      tl.fromTo("#bg-f06", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 40.97);
+      tl.fromTo("#bg-e2m", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 68.8);
+      tl.fromTo("#bg-e2d", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 81.2);
+      tl.fromTo("#bg-c06", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 95.833);
+      tl.fromTo("#bg-c07", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 100.033);
+      tl.fromTo("#bg-c08", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 101.833);
+      tl.fromTo("#bg-c07b", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 103.733);
+      tl.fromTo("#bg-f07", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:4.17, ease:"none"}, 105.833);
+      tl.fromTo("#bg-f07", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 105.833);
+      tl.fromTo("#bg-e03", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 109.603);
+      tl.fromTo("#bg-d09", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 111.993);
+      tl.fromTo("#bg-f09", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:32.86, ease:"none"}, 114.833);
+      tl.fromTo("#bg-f09", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 114.833);
+      tl.fromTo("#bg-e04", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 147.293);
+      tl.fromTo("#bg-f10", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:8.04, ease:"none"}, 149.693);
+      tl.fromTo("#bg-f10", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 149.693);
+      tl.fromTo("#bg-g10", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 157.333);
+      tl.fromTo("#bg-g11", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 160.533);
+      tl.fromTo("#bg-g12", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 164.033);
+      tl.fromTo("#bg-f12", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:5.16, ease:"none"}, 168.433);
+      tl.fromTo("#bg-f12", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 168.433);
+      tl.fromTo("#bg-e05", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 173.193);
+      tl.fromTo("#bg-h14", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 175.593);
+      tl.fromTo("#bg-f14", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:6.0, ease:"none"}, 179.133);
+      tl.fromTo("#bg-f14", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 179.133);
+      tl.fromTo("#bg-h13", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 184.733);
+      tl.fromTo("#bg-f13", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:18.26, ease:"none"}, 187.133);
+      tl.fromTo("#bg-f13", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 187.133);
+      tl.fromTo("#bg-e06", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 204.993);
+      tl.fromTo("#bg-i15", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 207.393);
+      tl.fromTo("#bg-f15", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:10.43, ease:"none"}, 209.233);
+      tl.fromTo("#bg-f15", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 209.233);
+      tl.fromTo("#bg-e07", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 219.263);
+      tl.fromTo("#bg-j16", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 221.663);
+      tl.fromTo("#bg-j17", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 223.733);
+      tl.fromTo("#bg-j18", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 226.133);
+      tl.fromTo("#bg-j01", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 229.633);
+      tl.fromTo("#bg-j19", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 235.433);
+      tl.fromTo("#bg-f19", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:6.9, ease:"none"}, 242.333);
+      tl.fromTo("#bg-f19", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 242.333);
+      tl.fromTo("#bg-e7s", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 248.833);
+      tl.fromTo("#bg-j02", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 253.433);
+      tl.fromTo("#bg-j20", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 259.533);
+      tl.fromTo("#bg-f02", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:7.24, ease:"none"}, 266.693);
+      tl.fromTo("#bg-f02", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 266.693);
+      tl.fromTo("#bg-k21", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 273.533);
+      tl.fromTo("#bg-k22", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 274.883);
+      tl.fromTo("#bg-f12b", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:5.08, ease:"none"}, 277.133);
+      tl.fromTo("#bg-f12b", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 277.133);
+      tl.fromTo("#bg-f14b", {scale:1.0, x:-18}, {scale:1.06, x:18, duration:18.22, ease:"none"}, 281.813);
+      tl.fromTo("#bg-f14b", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 281.813);
+      tl.fromTo("#bg-m23", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 299.633);
+      tl.fromTo("#bg-m24", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 303.133);
+      tl.fromTo("#bg-n25", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 308.643);
+      tl.fromTo("#bg-e10", {opacity:0}, {opacity:1, duration:0.4, ease:"power1.inOut"}, 317.033);
+      tl.fromTo("#kitstudio", {opacity:0}, {opacity:1, duration:0.3}, 192.833);
+      tl.to("#kitstudio", {opacity:0, duration:0.3}, 195.433);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

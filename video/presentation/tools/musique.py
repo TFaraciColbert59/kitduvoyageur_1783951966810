@@ -72,12 +72,12 @@ def glass(m, dur, gain=0.04):
     n = int(SR * dur); t = np.arange(n) / SR; f = hz(m)
     return (np.sin(2 * np.pi * f * t) + 0.3 * np.sin(2 * np.pi * f * 2.01 * t)) * env(n, 0.8, 1.2) * gain
 
-NOTE = dict(G1=31, A1=33, Bb1=34, C2=36, D2=38, Eb2=39, F2=41, G2=43, A2=45, Bb2=46, C3=48, D3=50, Eb3=51, F3=53, Fs3=54, G3=55, A3=57, Bb3=58, B3=59, C4=60,
+NOTE = dict(Ab1=32, Ab3=56, Ab4=68, G1=31, A1=33, Bb1=34, C2=36, D2=38, Eb2=39, F2=41, G2=43, A2=45, Bb2=46, C3=48, D3=50, Eb3=51, F3=53, Fs3=54, G3=55, A3=57, Bb3=58, B3=59, C4=60,
             D4=62, Eb4=63, F4=65, Fs4=66, G4=67, A4=69, Bb4=70, B4=71, C5=72, D5=74, Eb5=75, F5=77, G5=79)
 g = lambda s: [NOTE[x] for x in s.split()]
 CH = {'Gm': ('G2', 'G3 Bb3 D4'), 'Eb': ('Eb2', 'G3 Bb3 Eb4'), 'Bb': ('Bb1', 'F3 Bb3 D4'), 'F': ('F2', 'F3 A3 C4'), 'Cm': ('C2', 'G3 C4 Eb4'),
-      'D': ('D2', 'Fs3 A3 D4'), 'G': ('G1', 'G3 B3 D4'), 'Dsus': ('D2', 'A3 D4 G4')}
-ARP = {'Gm': 'G4 Bb4 D5 Bb4', 'Eb': 'G4 Bb4 Eb5 Bb4', 'Bb': 'F4 Bb4 D5 Bb4', 'F': 'F4 A4 C5 A4', 'Cm': 'G4 C5 Eb5 C5', 'D': 'Fs4 A4 D5 A4', 'G': 'G4 B4 D5 B4', 'Dsus': 'G4 A4 D5 A4'}
+      'D': ('D2', 'Fs3 A3 D4'), 'G': ('G1', 'G3 B3 D4'), 'Dsus': ('D2', 'A3 D4 G4'), 'Ab': ('Ab1', 'Ab3 C4 Eb4')}
+ARP = {'Gm': 'G4 Bb4 D5 Bb4', 'Eb': 'G4 Bb4 Eb5 Bb4', 'Bb': 'F4 Bb4 D5 Bb4', 'F': 'F4 A4 C5 A4', 'Cm': 'G4 C5 Eb5 C5', 'D': 'Fs4 A4 D5 A4', 'G': 'G4 B4 D5 B4', 'Dsus': 'G4 A4 D5 A4', 'Ab': 'Ab4 C5 Eb5 C5'}
 def phrase_t(txt): return next(p['debut'] for p in TL['phrases'] if p['texte'] == txt)
 chap = {c['bloc']: c for c in TL['chapitres']}
 
@@ -107,7 +107,13 @@ v = lambda i: chap[i]['voix_debut'] - 0.2
 # I — pas sportif : pulsation de marche douce
 section(v(1), chap[1]['fin'], ['Gm', 'Eb', 'Bb', 'F'], lvl=0.45, arp='E', arp_vel=0.05)
 # II — rêver : cordes et verre, ouvert
-section(v(2), chap[2]['fin'], ['Eb', 'Bb', 'Cm', 'F'], lvl=0.5, strg=True, arp='E', arp_vel=0.045)
+dem = phrase_t('Et demain, bien plus.'); une = phrase_t('sur une seule carte.')
+section(v(2), dem - 0.6, ['Eb', 'Bb', 'Cm', 'F'], lvl=0.5, strg=True, arp='E', arp_vel=0.045)
+# les couches de demain : la musique s'élargit (doubles croches, chœur), puis s'ouvre sur « une seule carte »
+section(dem - 0.6, une - 0.2, ['Cm', 'Ab', 'Eb', 'Bb'], lvl=0.72, strg=True, cho=True, arp='S', arp_vel=0.06)
+add(roll(NOTE['Eb2'] + 12, 2.0, 0.12), une - 2.2)
+add(organ(g('Eb2 Bb2 G3 Bb3 Eb4'), 4.0, att=0.15, rel=2.0, stops=(0.8, 0.9, 0.5, 0.2), gain=0.08), une - 0.2)
+section(une + 3.6, chap[2]['fin'], ['Eb', 'Bb', 'Cm', 'F'], lvl=0.45, strg=True, arp='E', arp_vel=0.04)
 add(glass(NOTE['G5'], 5, 0.02), v(2) + 12, pan=0.3); add(glass(NOTE['D5'] + 12, 5, 0.016), v(2) + 18, pan=-0.3)
 # III — le Compas : la machine se met en route, doubles croches, puis suspens sur « Vigilance »
 vig = phrase_t('Vigilance.')
