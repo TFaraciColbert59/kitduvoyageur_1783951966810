@@ -283,7 +283,7 @@ export function notAPlaceEn(plainName: string): boolean {
 
 /** Fin d'un nom de lieu en anglais : un mot qui ouvre une autre idée (insensible à la casse). */
 export const PLACE_END_EN =
-  /\s(?:in|on|at|with|by|as|and|or|next|this|tomorrow|today|tonight|leaving|starting|departing|arriving|returning|during|over|under|about|around|budget|then|via|near|before|after|hiking|hike|trekking|trek|skiing|climbing|biking|cycling|kayaking|camping|road|trip|holiday|vacation|getaway|we|i|my|our|sunday|monday|tuesday|wednesday|thursday|friday|saturday|january|february|march|april|may|june|july|august|september|october|november|december|summer|winter|spring|autumn|christmas|easter|half|an)(?=[\s,-]|$)/i;
+  /\s(?:in|on|at|with|by|as|and|or|next|this|tomorrow|today|tonight|leaving|starting|departing|arriving|returning|during|over|under|about|around|budget|then|via|near|before|after|hiking|hike|trekking|trek|skiing|climbing|biking|cycling|kayaking|camping|road|trip|holiday|vacation|getaway|we|i|my|our|sunday|monday|tuesday|wednesday|thursday|friday|saturday|january|february|march|april|may|june|july|august|september|october|november|december|summer|winter|spring|autumn|christmas|easter|half|an|solo|alone)(?=[\s,-]|$)/i;
 
 /** Nom commun en minuscule après un nom propre (« the Atlas mountains », « the Ardèche river ») : sensible à la casse. */
 export const PLACE_TAIL_EN =

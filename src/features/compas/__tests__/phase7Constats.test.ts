@@ -378,3 +378,42 @@ describe('C-023 · jeux def2 : régions que la carte range sur un homonyme', () 
     expect(knownRegion('Himalaya indien Ladakh', null)).toMatchObject({ countryCode: 'IN', name: 'Ladakh' });
   });
 });
+
+describe('C-024 · un mot de groupe dit après le lieu n’est pas dans son nom', () => {
+  const read = (say: string) => parseIntentRules(say, TODAY, 'fr');
+  const dest = (say: string) => read(say).find((a) => a.type === 'set_destination');
+  const party = (say: string) => read(say).find((a) => a.type === 'set_party_size');
+  it('jeu monde n°41 « 3 days in Cape Town solo » → Cape Town, 1 personne', () => {
+    expect(dest('3 days in Cape Town solo')).toMatchObject({ place: 'Cape Town' });
+    expect(party('3 days in Cape Town solo')).toMatchObject({ count: 1 });
+  });
+  it('en français aussi : « 3 jours à Lyon seul », « week-end à Annecy seule »', () => {
+    expect(dest('3 jours à Lyon seul')).toMatchObject({ place: 'Lyon' });
+    expect(dest('week-end à Annecy seule')).toMatchObject({ place: 'Annecy' });
+    expect(party('3 jours à Lyon seul')).toMatchObject({ count: 1 });
+  });
+  it('dit avant le lieu, rien ne change (« 3 days solo in Cape Town », « 3 jours en solo à Lyon »)', () => {
+    expect(dest('3 days solo in Cape Town')).toMatchObject({ place: 'Cape Town' });
+    expect(dest('3 jours en solo à Lyon')).toMatchObject({ place: 'Lyon' });
+  });
+});
+
+describe('C-025 · la durée dite en chinois est lue', () => {
+  const days = (say: string) => parseIntentRules(say, TODAY, 'fr').find((a) => a.type === 'set_duration');
+  it('jeu monde n°32 « 东京三天自由行 » → 3 jours, lieu 东京', () => {
+    expect(days('东京三天自由行')).toMatchObject({ days: 3 });
+    expect(parseIntentRules('东京三天自由行', TODAY, 'fr').find((a) => a.type === 'set_destination')).toMatchObject({ place: '东京' });
+  });
+  it('dix, onze, vingt, deux (两) et les chiffres arabes', () => {
+    expect(days('京都十天')).toMatchObject({ days: 10 });
+    expect(days('北海道十一天')).toMatchObject({ days: 11 });
+    expect(days('西藏二十天')).toMatchObject({ days: 20 });
+    expect(days('上海两天')).toMatchObject({ days: 2 });
+    expect(days('大阪5天')).toMatchObject({ days: 5 });
+  });
+  it('semaines (周, 星期) et nuits (晚, 夜 : une journée de plus)', () => {
+    expect(days('日本两周')).toMatchObject({ days: 14 });
+    expect(days('台湾一个星期')).toMatchObject({ days: 7 });
+    expect(days('香港三晚')).toMatchObject({ days: 4 });
+  });
+});

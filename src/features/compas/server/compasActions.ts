@@ -2112,6 +2112,12 @@ const createTripSchema = z.object({
   say: z.string().trim().min(2).max(280).optional(),
 });
 
+/**
+ * Codes PostgreSQL d'un refus passager : délai dépassé (57014), verrou indisponible (55P03),
+ * conflit de sérialisation (40001), interblocage (40P01). Rien n'est écrit quand ils tombent.
+ */
+const TRANSIENT_DB_CODES = new Set(['57014', '55P03', '40001', '40P01']);
+
 const CREATE_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
   hiking: 'Randonnée',
   trekking: 'Trek',
@@ -2166,26 +2172,31 @@ export async function compasCreateTripAction(
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-    const { data: created, error } = await supabase
-      .from('trips')
-      .insert({
-        user_id: user.id,
-        slug: `${base}-${suffix}`,
-        title: `${label} · nouvelle aventure`,
-        status: 'draft',
-        visibility: 'private',
-        difficulty: 'moderate',
-        primary_activity: parsed.data.activity,
-        budget_currency: 'EUR',
-        // La phrase vit sur le voyage, pas dans l'onglet : quitter la page avant
-        // qu'elle soit appliquée ne la perd pas, elle est reprise à l'ouverture.
-        metadata: {
-          created_with: 'compas',
-          ...(parsed.data.say ? { compas: { start_say: parsed.data.say } } : {}),
-        },
-      })
-      .select('id, slug, title')
-      .single();
+    const insertTrip = () =>
+      supabase
+        .from('trips')
+        .insert({
+          user_id: user.id,
+          slug: `${base}-${suffix}`,
+          title: `${label} · nouvelle aventure`,
+          status: 'draft',
+          visibility: 'private',
+          difficulty: 'moderate',
+          primary_activity: parsed.data.activity,
+          budget_currency: 'EUR',
+          // La phrase vit sur le voyage, pas dans l'onglet : quitter la page avant
+          // qu'elle soit appliquée ne la perd pas, elle est reprise à l'ouverture.
+          metadata: {
+            created_with: 'compas',
+            ...(parsed.data.say ? { compas: { start_say: parsed.data.say } } : {}),
+          },
+        })
+        .select('id, slug, title')
+        .single();
+    let { data: created, error } = await insertTrip();
+    // Refus passager de la base (délai dépassé dans les déclencheurs, verrou, conflit) : la requête
+    // annulée est défaite en entier, sans voyage à moitié créé ; on la rejoue une fois (constat C-027).
+    if (error && TRANSIENT_DB_CODES.has(error.code ?? '')) ({ data: created, error } = await insertTrip());
     if (error || !created) {
       console.error('[compas] compasCreateTripAction insert', error?.code);
       return actionError('compas.server.create.failed');
