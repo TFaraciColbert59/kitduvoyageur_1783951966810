@@ -431,6 +431,15 @@ describe('C-029 · Svaneti : la Haute-Svanétie des treks, pas la Basse-Svanéti
   });
 });
 
+describe('C-032 · Machu Picchu reste au Pérou quand Photon ne répond pas (C-020 revenu)', () => {
+  it('rejeu monde n°7 « trek 4 jours au Machu Picchu, chemin de l’Inca » : le site, jamais le sommet de l’État de Washington', () => {
+    const p = knownRegion('Machu Picchu', null);
+    expect(p).toMatchObject({ countryCode: 'PE', name: 'Machu Picchu' });
+    expect(p!.lat).toBeCloseTo(-13.1643, 3);
+    expect(knownRegion('Machupicchu', null)?.countryCode).toBe('PE');
+  });
+});
+
 describe('C-031 · régions dites avec leur pays : l’endroit où l’on va, pas le centre administratif', () => {
   const within = (p: ReturnType<typeof knownRegion>, [s, n, w, e]: [number, number, number, number]) =>
     p != null && p.lat >= s && p.lat <= n && p.lon >= w && p.lon <= e;

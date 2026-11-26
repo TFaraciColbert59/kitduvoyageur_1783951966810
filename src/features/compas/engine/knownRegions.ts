@@ -72,6 +72,13 @@ const REGIONS: Record<string, Region> = {
     bases: { AR: { name: 'Mendoza', lat: -32.8894, lon: -68.8446 } },
     countries: { AR: 'Argentine' },
   },
+  // Constat C-032 (C-020 revenu au rejeu local du 26 nov.) : quand Photon répond 503, le repli rend d'abord un
+  // sommet homonyme de l'État de Washington. Le site, relevé sur OpenStreetMap (`tourism=attraction`).
+  machupicchu: {
+    label: 'Machu Picchu',
+    bases: { PE: { name: 'Machu Picchu', lat: -13.1643, lon: -72.545 } },
+    countries: { PE: 'Pérou' },
+  },
   tatry: {
     label: 'Tatras',
     bases: {
