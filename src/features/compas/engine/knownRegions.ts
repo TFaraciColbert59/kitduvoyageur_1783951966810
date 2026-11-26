@@ -50,6 +50,28 @@ const REGIONS: Record<string, Region> = {
     bases: { GE: { name: 'Mestia', lat: 43.0458, lon: 42.728 } },
     countries: { GE: 'Géorgie' },
   },
+  // Constat C-031 (jeu monde local du 26 nov.) : la carte rend la région administrative ou un sommet homonyme,
+  // loin de l'endroit où l'on va. Coordonnées des villes de base relevées sur OpenStreetMap (Photon, Nominatim).
+  rocheusescanadiennes: {
+    label: 'Rocheuses canadiennes',
+    bases: { CA: { name: 'Banff', lat: 51.1751, lon: -115.5721 } },
+    countries: { CA: 'Canada' },
+  },
+  atacama: {
+    label: 'Désert d’Atacama',
+    bases: { CL: { name: 'San Pedro de Atacama', lat: -22.9108, lon: -68.2001 } },
+    countries: { CL: 'Chili' },
+  },
+  cusco: {
+    label: 'Cusco',
+    bases: { PE: { name: 'Cusco', lat: -13.5171, lon: -71.9785 } },
+    countries: { PE: 'Pérou' },
+  },
+  mendoza: {
+    label: 'Mendoza',
+    bases: { AR: { name: 'Mendoza', lat: -32.8894, lon: -68.8446 } },
+    countries: { AR: 'Argentine' },
+  },
   tatry: {
     label: 'Tatras',
     bases: {
@@ -72,6 +94,19 @@ const ALIASES: Record<string, string> = {
   hautesvanetie: 'svaneti',
   uppersvaneti: 'svaneti',
   zemosvaneti: 'svaneti',
+  canadarocheuses: 'rocheusescanadiennes',
+  rocheusescanada: 'rocheusescanadiennes',
+  canadianrockies: 'rocheusescanadiennes',
+  montagnesrocheusescanadiennes: 'rocheusescanadiennes',
+  chiliatacama: 'atacama',
+  atacamachili: 'atacama',
+  desertdatacama: 'atacama',
+  atacamadesert: 'atacama',
+  cuzco: 'cusco',
+  peroucusco: 'cusco',
+  cuscoperou: 'cusco',
+  argentinemendoza: 'mendoza',
+  mendozaargentine: 'mendoza',
 };
 
 const key = (s: string) =>

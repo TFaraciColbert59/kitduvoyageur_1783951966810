@@ -431,6 +431,30 @@ describe('C-029 · Svaneti : la Haute-Svanétie des treks, pas la Basse-Svanéti
   });
 });
 
+describe('C-031 · régions dites avec leur pays : l’endroit où l’on va, pas le centre administratif', () => {
+  const within = (p: ReturnType<typeof knownRegion>, [s, n, w, e]: [number, number, number, number]) =>
+    p != null && p.lat >= s && p.lat <= n && p.lon >= w && p.lon <= e;
+  it('jeu monde n°11 « Canada Rocheuses » → Banff (et non un sommet du nord de la Colombie-Britannique)', () => {
+    const p = knownRegion('Canada Rocheuses', null);
+    expect(p).toMatchObject({ countryCode: 'CA' });
+    expect(within(p, [50.5, 53.5, -119, -114.5])).toBe(true);
+    expect(knownRegion('Canadian Rockies', null)?.countryCode).toBe('CA');
+    // « Rocheuses » seules : deux pays possibles, la table ne tranche pas.
+    expect(knownRegion('Rocheuses', null)).toBeNull();
+  });
+  it('jeu monde n°26 « Chili Atacama » → San Pedro de Atacama (et non la région de Copiapó)', () => {
+    const p = knownRegion('Chili Atacama', null);
+    expect(p).toMatchObject({ countryCode: 'CL' });
+    expect(within(p, [-23.6, -22.3, -68.6, -67.6])).toBe(true);
+    expect(knownRegion('Désert d’Atacama', null)?.countryCode).toBe('CL');
+  });
+  it('jeu monde n°18 « Pérou Cusco » et n°24 « Argentine Mendoza » → la ville, pas la province', () => {
+    expect(within(knownRegion('Pérou Cusco', null), [-13.9, -13.2, -72.4, -71.6])).toBe(true);
+    expect(within(knownRegion('Cuzco', null), [-13.9, -13.2, -72.4, -71.6])).toBe(true);
+    expect(within(knownRegion('Argentine Mendoza', null), [-33.4, -32.5, -69.3, -68.4])).toBe(true);
+  });
+});
+
 describe('C-030 · une ville dite en anglais est cherchée sous son nom français', () => {
   it('rejeu monde n°41 « Cape Town » → « Le Cap » (Photon, en français, ne connaît pas « Cape Town »)', () => {
     expect(canonicalPlaceName('Cape Town')).toBe('Le Cap');
