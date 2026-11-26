@@ -4,7 +4,7 @@ import { knownRegion } from '../engine/knownRegions';
 import { parseIntentRules } from '../engine/intent';
 import { understandRequest } from '../engine/request';
 import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
-import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { looseRank, naturalInsideBigPlace, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -395,6 +395,27 @@ describe('C-024 · un mot de groupe dit après le lieu n’est pas dans son nom'
   it('dit avant le lieu, rien ne change (« 3 days solo in Cape Town », « 3 jours en solo à Lyon »)', () => {
     expect(dest('3 days solo in Cape Town')).toMatchObject({ place: 'Cape Town' });
     expect(dest('3 jours en solo à Lyon')).toMatchObject({ place: 'Lyon' });
+  });
+});
+
+describe('C-028 · un fleuve se juge sur son cours, pas sur le centre de son emprise', () => {
+  // Emprises [ouest, nord, est, sud] rendues par Photon le 26 nov. 2026.
+  const loireDepartement: [number, number, number, number] = [3.6884431, 46.2765323, 4.7607591, 45.2310638];
+  const laLoire = { lat: 47.6668145, lon: 1.5159195, osmTag: 'waterway=river', extent: [-2.1776242, 47.9036077, 4.2765483, 44.761382] as [number, number, number, number] };
+  it('jeu France/Europe n°5 « 4 jours de vélo sur la Loire à vélo » : la Loire (fleuve) traverse le département de la Loire', () => {
+    expect(naturalInsideBigPlace(laLoire, loireDepartement)).toBe(true);
+  });
+  it('un sommet homonyme hors de la région reste refusé (« Normandie » ≠ un sommet près du Mont-Dore)', () => {
+    const normandie: [number, number, number, number] = [-1.95, 50.08, 1.8, 48.18];
+    expect(naturalInsideBigPlace({ lat: 45.57, lon: 2.81, osmTag: 'natural=peak', extent: null }, normandie)).toBe(false);
+  });
+  it('un lieu naturel non fluvial dont seule l’emprise recoupe reste refusé', () => {
+    const parcVoisin = { lat: 47.6, lon: 1.5, osmTag: 'boundary=protected_area', extent: [-2.1, 47.9, 4.2, 44.8] as [number, number, number, number] };
+    expect(naturalInsideBigPlace(parcVoisin, loireDepartement)).toBe(false);
+  });
+  it('une rivière loin du département est refusée', () => {
+    const autre = { lat: 43.6, lon: 1.4, osmTag: 'waterway=river', extent: [0.5, 44.2, 2.4, 42.9] as [number, number, number, number] };
+    expect(naturalInsideBigPlace(autre, loireDepartement)).toBe(false);
   });
 });
 

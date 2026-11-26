@@ -119,7 +119,7 @@ import { icpFoodLevel } from '../engine/icp';
 import { abroadForVignette, carDrives, needsVignette, tollCurrency, tollsBasis, tripTolls } from '../engine/tolls';
 import { getEurRate } from './rates';
 import { after } from 'next/server';
-import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, pickPlace, sleepPlaceFix, stageTitleFor, withinPlaceExtent, type CompasPlace } from '../engine/places';
+import { bareAdminName, destinationRadiusKm, distanceKm, isAdminName, maxLegKm, naturalInsideBigPlace, pickPlace, sleepPlaceFix, stageTitleFor, type CompasPlace } from '../engine/places';
 import { unifyStageNames, untangleStages } from '../engine/stageOrder';
 import { COUNTRY_SCALE_KM, WIDE_STAY_FROM_DAYS, keepCountry } from '../engine/countryBases';
 import { isIslandAnchor, isLargeIsland, onIslandContour, pickIslandZone, type IslandContour } from '../engine/islands';
@@ -1622,9 +1622,9 @@ async function runAutofill(input: z.input<typeof schema>, hold: ClaimHold): Prom
       // trouve : « Normandie » devenait un sommet homonyme près du Mont-Dore (13 oct.) ; le volcan du
       // Puy de Dôme, lui, est dans son département. Un quartier homonyme (Chartreuse à Toulouse)
       // n'a pas cette exigence : ce n'est pas le lieu voulu. La rivière du référentiel, cherchée près
-      // du lieu, n'en a pas besoin.
+      // du lieu, n'en a pas besoin. Un fleuve se juge sur son cours (« la Loire à vélo », C-028).
       const insideBig = (p: CompasPlace) =>
-        p === known || !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || withinPlaceExtent(p, anchor.extent);
+        p === known || !BIG_ADMIN_KINDS.has(anchor?.kind ?? '') || !anchor?.extent || naturalInsideBigPlace(p, anchor.extent);
       let nat = found && (replaceable || isRiver(found)) && insideBig(found) ? found : null;
       // Sur l'eau, la rivière cherchée aussi sous son article (« Le Tarn »), sur la carte seule.
       if (activity === 'water' && !isRiver(nat)) nat = (await lookupRiver(anchor.name, anchor.countryCode, { referential: 'skip' })) ?? nat;
