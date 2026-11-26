@@ -1,0 +1,9 @@
+15:16:32 app : /home/claude/kitduvoyageur_1783951966810
+HEAD : d52a00641eb4846c99095d07c0c8ccd34e1b37f0 (2026-11-23 16:14:07 +0100)
+origin/main : d52a00641eb4846c99095d07c0c8ccd34e1b37f0
+src modifié localement : non
+verdict : OK, dernier main
+base : http://localhost:3000
+le : 2026-11-26T15:16:32.439Z
+15:16:43 ✓ pro
+15:16:53 ✓ manifeste
