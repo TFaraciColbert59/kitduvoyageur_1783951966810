@@ -56,7 +56,10 @@ const inZone = (t, zone) => {
 const scored = rows.map((r, k) => {
   const id = idOf.get(r.say) ?? null;
   const want = id ? expected[id] : null;
-  const trip = r.trip ?? (extra ? extra.find((t) => t.say === r.say) ?? extra[k] ?? null : null);
+  // Liste relue en base : par phrase quand elle les porte (une phrase sans voyage n'en prend aucun),
+  // sinon dans l'ordre des phrases.
+  const bySay = extra?.some((t) => typeof t.say === 'string');
+  const trip = r.trip ?? (extra ? (bySay ? extra.find((t) => t.say === r.say) ?? null : extra[k] ?? null) : null);
   const ready = !r.error && /Ton aventure est prête/.test(r.head ?? '');
   const country = trip?.country ?? null;
   const countryOk = Boolean(want && country && want.pays.includes(country));

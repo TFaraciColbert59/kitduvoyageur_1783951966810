@@ -59,3 +59,19 @@ Mesure sur le dernier aperçu : monde 48 sur 50 (96 %), France/Europe 50 sur 50 
 Cause commune (constat **C-023**) : le remplissage (`autofillActions`) relisait `destination_name` avec `lookupDestination` seul, sans la résolution de « Où » (pays dit, régions célèbres, référentiel). Corrigé au commit `c8946c18` : même `resolvePlaceByName` ; table fermée étendue (Highlands, Ladakh). Rejeu à faire sur un aperçu portant `c8946c18` ou plus récent.
 
 Banc d'écran def2 : 234 / 303 contrôles vérifiés (77,2 %), 5 scénarios en échec (Équipe : une personne de plus/de moins ; « Quand » : note du calendrier ; « Tout préparer pour moi » ; deux délais de création d'aventure à 90 s). Les trois premiers sont des attentes dépendantes de la météo ou de la charge ; rejoués sur l'aperçu `q0yaqrgb4` (`8140d409`) : résultat dans l'entrée suivante.
+
+## 2026-11-26 — Passage local (conteneur de la session, ni aperçu ni production)
+
+Plus de production ni d'aperçu (Tony, 26 nov. : « On a pas de prod que du local »). L'appli est construite depuis `main` (`d52a0064` ; `FAST_BUILD=1`, car `main` a 31 erreurs de types) et servie par `next start` dans le conteneur, sur la base Supabase partagée, avec les seules clés publiques. Conditions dégradées : IA éteinte ; pas de clé de service, donc référentiel des lieux et cache partagé en écriture indisponibles ; pas de Geoapify ni de LocationIQ. Photon a répondu 503 par moments, Overpass (private.coffee) a expiré plus de 100 fois. **Les itinéraires en pâtissent et ne sont pas notés ici ; la lecture de la phrase et la résolution de la destination n'en dépendent pas.** Le lanceur est adapté à l'écran v5 et crée une session d'essai anonyme ; les deux jeux tournent en parallèle, une session chacun. Notation : `score-run.mjs` contre `attendus.json` (pays, zone de l'ancre, durée). Les zones ont été resserrées ce jour pour FE05, MO11, MO17, MO18, MO24 et MO26, car le pays seul laissait passer ces écarts.
+
+| Passage | Build | Phrases | Prêtes | Lieux justes | Avec la durée | Écarts (constats) |
+|---|---|---|---|---|---|---|
+| France/Europe | `main` (port 4028) | 50 | 50 | 49 (98 %) | 49 | FE05 « la Loire à vélo » → le département (C-028) |
+| Monde | `main` (port 4028) | 50 | 49 | 44 (88 %) | 44 | MO04 création annulée par la base (C-027) ; MO11 Rocheuses, MO18 Cusco, MO24 Mendoza, MO26 Atacama loin de l'endroit visé (C-031) ; MO17 Basse-Svanétie (C-029) |
+| Rejeux ciblés | corrigé (port 4029) | 10 (11 passages) | 10 | 10 | 10 | FE05, MO04, MO11, MO17, MO18, MO24, MO26, MO32 (C-025), MO35, MO41 (C-024 ; le 1er passage a révélé C-030, rejoué ensuite) |
+| France/Europe, non-régression | corrigé (port 4029) | 50 | (en cours) | | | |
+| Monde, non-régression | corrigé (port 4029) | 50 | (en cours) | | | |
+
+Lecture hors ligne des 100 phrases (`parseIntentRules`, avant correction) : 99 durées justes (n°32 en chinois : C-025) et un lieu mal découpé (n°41 « Cape Town solo » : C-024).
+
+Écarts vus mais non corrigés : sans IA, un sentier nommé (Kungsleden, Laugavegur, West Highland Way) se ramène au pays quand la phrase dit le pays (comportement prévu, annoncé). Les Alpes en ski donnent l'Italie, les Pyrénées et le Pays basque l'Espagne (C-006, décidé). C-026 : une ancre instable quand Photon refuse, à surveiller.
