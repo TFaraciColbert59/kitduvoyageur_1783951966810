@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>LKDV — présentation complète</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <script src="assets/lib/MorphSVGPlugin.min.js"></script>
+    <script src="assets/lib/MotionPathPlugin.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1920px; height:1080px; overflow:hidden; background:#06120C; }
+      #root { position:relative; width:1920px; height:1080px; overflow:hidden; background:radial-gradient(120% 90% at 50% 40%,#0E2219 0%,#06120C 70%); -webkit-font-smoothing:antialiased; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10.5" data-width="1920" data-height="1080">
+      <div id="grain" style="position:absolute;left:-60px;top:-60px;width:2040px;height:1200px;background:url(assets/img/grain.png);opacity:.05;z-index:800;pointer-events:none;mix-blend-mode:overlay"></div>
+      <div id="vig" style="position:absolute;inset:0;z-index:780;pointer-events:none;background:radial-gradient(90% 80% at 50% 45%,rgba(0,0,0,0) 55%,rgba(4,12,8,.6) 100%)"></div>
+      <div id="lux" style="position:absolute;left:952px;top:592px;width:16px;height:16px;border-radius:8px;background:#FFE7C2;box-shadow:0 0 36px 10px rgba(255,214,160,.55);z-index:130;opacity:0"></div>
+      <svg id="sv" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;left:0;top:0;z-index:125;overflow:visible" aria-hidden="true"><path id="trG" d="M960.0 600 L951.8 600 L943.5 600 L935.2 600 L927.0 600 L918.8 600 L910.5 600 L902.2 600 L894.0 600 L885.8 600 L877.5 600 L869.2 600 L861.0 600 L852.8 600 L844.5 600 L836.2 600 L828.0 600 L819.8 600 L811.5 600 L803.2 600 L795.0 600 L786.8 600 L778.5 600 L770.2 600 L762.0 600 L753.8 600 L745.5 600 L737.2 600 L729.0 600 L720.8 600 L712.5 600 L704.2 600 L696.0 600 L687.8 600 L679.5 600 L671.2 600 L663.0 600 L654.8 600 L646.5 600 L638.2 600 L630.0 600" fill="none" stroke="#D0A070" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 6px rgba(255,200,140,.7))"/><path id="trD" d="M960.0 600 L968.2 600 L976.5 600 L984.8 600 L993.0 600 L1001.2 600 L1009.5 600 L1017.8 600 L1026.0 600 L1034.2 600 L1042.5 600 L1050.8 600 L1059.0 600 L1067.2 600 L1075.5 600 L1083.8 600 L1092.0 600 L1100.2 600 L1108.5 600 L1116.8 600 L1125.0 600 L1133.2 600 L1141.5 600 L1149.8 600 L1158.0 600 L1166.2 600 L1174.5 600 L1182.8 600 L1191.0 600 L1199.2 600 L1207.5 600 L1215.8 600 L1224.0 600 L1232.2 600 L1240.5 600 L1248.8 600 L1257.0 600 L1265.2 600 L1273.5 600 L1281.8 600 L1290.0 600" fill="none" stroke="#D0A070" stroke-width="3" stroke-linecap="round" style="filter:drop-shadow(0 0 6px rgba(255,200,140,.7))"/><path id="hzG" d="M960.0 880.0 L936.2 880.1 L912.4 880.4 L888.5 881.0 L864.7 881.7 L840.9 882.7 L817.1 883.9 L793.3 885.3 L769.6 887.0 L745.8 888.8 L722.1 890.9 L698.4 893.2 L674.7 895.7 L651.0 898.4 L627.4 901.4 L603.8 904.5 L580.2 907.9 L556.6 911.5 L533.1 915.3 L509.6 919.3 L486.2 923.5 L462.8 928.0 L439.4 932.6 L416.1 937.5 L392.8 942.6 L369.6 947.9 L346.4 953.4 L323.3 959.2 L300.2 965.1 L277.2 971.3 L254.3 977.6 L231.4 984.2 L208.5 991.0 L185.7 998.0 L163.0 1005.2 L140.4 1012.6 L117.8 1020.2 L95.3 1028.0 L72.9 1036.0 L50.5 1044.3 L28.2 1052.7" fill="none" stroke="none"/><path id="hzD" d="M960.0 880.0 L983.8 880.1 L1007.6 880.4 L1031.5 881.0 L1055.3 881.7 L1079.1 882.7 L1102.9 883.9 L1126.7 885.3 L1150.4 887.0 L1174.2 888.8 L1197.9 890.9 L1221.6 893.2 L1245.3 895.7 L1269.0 898.4 L1292.6 901.4 L1316.2 904.5 L1339.8 907.9 L1363.4 911.5 L1386.9 915.3 L1410.4 919.3 L1433.8 923.5 L1457.2 928.0 L1480.6 932.6 L1503.9 937.5 L1527.2 942.6 L1550.4 947.9 L1573.6 953.4 L1596.7 959.2 L1619.8 965.1 L1642.8 971.3 L1665.7 977.6 L1688.6 984.2 L1711.5 991.0 L1734.3 998.0 L1757.0 1005.2 L1779.6 1012.6 L1802.2 1020.2 L1824.7 1028.0 L1847.1 1036.0 L1869.5 1044.3 L1891.8 1052.7" fill="none" stroke="none"/></svg>
+      <div id="spG" style="position:absolute;left:0;top:0;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:5px;background:#FFE7C2;box-shadow:0 0 18px 6px rgba(255,214,160,.6);z-index:131;opacity:0"></div>
+      <div id="spD" style="position:absolute;left:0;top:0;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:5px;background:#FFE7C2;box-shadow:0 0 18px 6px rgba(255,214,160,.6);z-index:131;opacity:0"></div>
+      <div id="t1" style="position:absolute;left:120px;right:120px;top:404px;height:28px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.14;letter-spacing:0.34em;color:#D0A070;white-space:nowrap"><span class="t1w" style="display:inline-block">LE KIT DU VOYAGEUR</span></div></div>
+      <div id="t2" style="position:absolute;left:120px;right:120px;top:452px;height:127px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-weight:400;font-weight:400;font-size:104px;line-height:1.2;letter-spacing:-0.005em;color:#FAF8F5;white-space:nowrap"><span class="t2w" style="display:inline-block">Là</span> <span class="t2w" style="display:inline-block">où</span> <span class="t2w" style="display:inline-block">la</span> <span class="t2w" style="display:inline-block">carte</span> <span class="t2w" style="display:inline-block">se</span> <span class="t2w" style="display:inline-block">termine.</span></div></div>
+      <div id="terre" style="position:absolute;left:-1640px;top:880px;width:5200px;height:5200px;border-radius:2600px;overflow:hidden;z-index:40;box-shadow:0 -14px 90px rgba(150,190,230,.45),0 0 0 2px rgba(190,220,255,.32);background:#06120C;opacity:0"><div id="sol" style="position:absolute;left:1100px;top:-140px;width:3000px;height:2250px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.6) saturate(.95)"></div><div style="position:absolute;inset:0;border-radius:2600px;background:radial-gradient(circle at 50% 3%,rgba(0,0,0,0) 0%,rgba(6,18,12,.35) 6%,rgba(6,18,12,.92) 15%)"></div></div>
+      <div id="vercors" style="position:absolute;left:951px;top:883px;width:18px;height:18px;border-radius:9px;background:#FAF8F5;border:4px solid #D0A070;box-shadow:0 0 0 10px rgba(208,160,112,.2),0 0 24px rgba(255,200,140,.7);z-index:46;opacity:0"></div>
+      <div id="t3" style="position:absolute;left:120px;right:120px;top:918px;height:23px;overflow:hidden;text-align:center;z-index:47"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:18px;line-height:1.14;letter-spacing:0.26em;color:rgba(250,248,245,.75);white-space:nowrap"><span class="t3w" style="display:inline-block">VERCORS · 5–7 JUIN</span></div></div>
+      <div id="t4" style="position:absolute;left:120px;right:120px;top:330px;height:89px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:76px;line-height:1.14;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span class="t4w" style="display:inline-block">Une</span> <span class="t4w" style="display:inline-block">aventure,</span></div></div>
+      <div id="t5" style="position:absolute;left:120px;right:120px;top:420px;height:89px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:76px;line-height:1.14;letter-spacing:-0.022em;color:rgba(250,248,245,.62);white-space:nowrap"><span class="t5w" style="display:inline-block">de</span> <span class="t5w" style="display:inline-block">l’envie</span> <span class="t5w" style="display:inline-block">au</span> <span class="t5w" style="display:inline-block">retour.</span></div></div>
+      <svg id="sv3" width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;left:0;top:0;z-index:56;overflow:visible" aria-hidden="true"><path id="contour" d="M960.0 892.0 L960 865 L1066.6 865.0 A52 52 0 0 0 1118.6 813.0 L1118.6 255.0 A52 52 0 0 0 1066.6 203.0 L853.4 203.0 A52 52 0 0 0 801.4 255.0 L801.4 813.0 A52 52 0 0 0 853.4 865.0 L960 865.0" fill="none" stroke="#D0A070" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px rgba(255,200,140,.6))"/></svg>
+      <div id="ph" style="position:absolute;left:801.4px;top:203.0px;width:317.2px;height:662.0px;border-radius:52px;background:#0A0F0C;box-shadow:0 50px 120px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.12);z-index:55;opacity:0"></div>
+      <div id="scr" style="position:absolute;left:812.4px;top:214px;width:295.2px;height:640px;border-radius:41px;overflow:hidden;z-index:57;opacity:0"><img id="scri" src="assets/screens/hub.png" alt="" style="display:block;width:100%;height:100%"><div style="position:absolute;left:50%;top:9px;width:92px;height:27px;margin-left:-46px;border-radius:14px;background:#000"></div></div>
+      <div id="t6" style="position:absolute;left:120px;right:120px;top:70px;height:28px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.14;letter-spacing:0.3em;color:#D0A070;white-space:nowrap"><span class="t6w" style="display:inline-block">01 · LE HUB</span></div></div>
+      <div id="t7" style="position:absolute;left:120px;right:120px;top:106px;height:66px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:56px;line-height:1.14;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span class="t7w" style="display:inline-block">Ton</span> <span class="t7w" style="display:inline-block">aventure,</span> <span class="t7w" style="display:inline-block">d’un</span> <span class="t7w" style="display:inline-block">coup</span> <span class="t7w" style="display:inline-block">d’œil.</span></div></div>
+      <div id="tumeteo" style="position:absolute;left:612px;top:318px;width:274px;height:176px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:70;opacity:0"><img src="assets/real/hub-meteo.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tubudget" style="position:absolute;left:1308px;top:318px;width:272px;height:176px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:71;opacity:0"><img src="assets/real/hub-budget.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tucarte" style="position:absolute;left:292px;top:498px;width:320px;height:546px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:72;opacity:0"><img src="assets/real/hub-carte.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tuetapes" style="position:absolute;left:1626px;top:498px;width:226px;height:546px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:73;opacity:0"><img src="assets/real/hub-etapes.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tucarnet" style="position:absolute;left:612px;top:540px;width:274px;height:132px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:74;opacity:0"><img src="assets/real/hub-carnet.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tukits" style="position:absolute;left:1308px;top:540px;width:272px;height:132px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:75;opacity:0"><img src="assets/real/hub-kits.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tupaperasse" style="position:absolute;left:436px;top:856px;width:552px;height:104px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:76;opacity:0"><img src="assets/real/hub-paperasse.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="tugroupe" style="position:absolute;left:1484px;top:858px;width:552px;height:143px;border-radius:33px;overflow:hidden;box-shadow:0 26px 60px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:77;opacity:0"><img src="assets/real/hub-groupe.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="t8" style="position:absolute;left:120px;right:120px;top:972px;height:37px;overflow:hidden;text-align:center;z-index:121"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.14;letter-spacing:-0.005em;color:rgba(250,248,245,.9);white-space:nowrap"><span class="t8w" style="display:inline-block">Météo,</span> <span class="t8w" style="display:inline-block">budget,</span> <span class="t8w" style="display:inline-block">carte,</span> <span class="t8w" style="display:inline-block">étapes,</span> <span class="t8w" style="display:inline-block">carnet,</span> <span class="t8w" style="display:inline-block">kits,</span> <span class="t8w" style="display:inline-block">papiers</span> <span class="t8w" style="display:inline-block">et</span> <span class="t8w" style="display:inline-block">groupe</span> <span class="t8w" style="display:inline-block">:</span> <span class="t8w" style="display:inline-block">tout</span> <span class="t8w" style="display:inline-block">ton</span> <span class="t8w" style="display:inline-block">voyage</span> <span class="t8w" style="display:inline-block">sur</span> <span class="t8w" style="display:inline-block">un</span> <span class="t8w" style="display:inline-block">écran.</span></div></div>
+      <audio id="son" class="clip" src="audio/bande-son.wav" data-start="0" data-duration="10.5" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    </div>
+    <script>
+      gsap.registerPlugin(MorphSVGPlugin, MotionPathPlugin);
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#grain",{x:0,y:0},{x:-48,y:37,duration:10.5,ease:"steps(126)"},0);
+      tl.fromTo("#lux", {"opacity": 0, "scale": 0.2}, {"opacity": 1, "scale": 1, "duration": 0.6, "ease": "power2.out"}, 0.3);
+      tl.to("#lux", {"scale": 1.35, "duration": 0.3, "ease": "sine.inOut", "yoyo": true, "repeat": 1}, 0.7);
+      tl.to("#lux", {"opacity": 0, "scale": 0.4, "duration": 0.4, "ease": "power2.in"}, 1.3);
+      (function(){const p=document.getElementById("trG"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:1.0,ease:"power2.inOut"},1.0); tl.set(p,{strokeDasharray:"none"},2.05);tl.to(p,{morphSVG:{shape:"#hzG"},duration:1.25,ease:"power3.inOut"},3.8); tl.to(p,{opacity:0,duration:0.8},5.0);})();
+      tl.set("#spG",{opacity:1},1.0); tl.fromTo("#spG",{motionPath:{path:"#trG",align:"#trG",alignOrigin:[0.5,0.5],start:0,end:0}},{motionPath:{path:"#trG",align:"#trG",alignOrigin:[0.5,0.5],start:0,end:1},duration:1.0,ease:"power2.inOut",immediateRender:false},1.0);tl.to("#spG",{opacity:0,scale:0.3,duration:0.4},2.0);
+      (function(){const p=document.getElementById("trD"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:1.0,ease:"power2.inOut"},1.0); tl.set(p,{strokeDasharray:"none"},2.05);tl.to(p,{morphSVG:{shape:"#hzD"},duration:1.25,ease:"power3.inOut"},3.8); tl.to(p,{opacity:0,duration:0.8},5.0);})();
+      tl.set("#spD",{opacity:1},1.0); tl.fromTo("#spD",{motionPath:{path:"#trD",align:"#trD",alignOrigin:[0.5,0.5],start:0,end:0}},{motionPath:{path:"#trD",align:"#trD",alignOrigin:[0.5,0.5],start:0,end:1},duration:1.0,ease:"power2.inOut",immediateRender:false},1.0);tl.to("#spD",{opacity:0,scale:0.3,duration:0.4},2.0);
+      gsap.set(".t1w",{yPercent:140});
+      tl.to(".t1w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},1.45);
+      tl.to(".t1w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},3.25);
+      gsap.set(".t2w",{yPercent:140});
+      tl.to(".t2w",{yPercent:0,duration:1.0,ease:"expo.out",stagger:0.08},1.7);
+      tl.to(".t2w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},3.25);
+      tl.fromTo("#terre", {"opacity": 0}, {"opacity": 1, "duration": 1.1, "ease": "power2.out"}, 4.3);
+      tl.fromTo("#sol", {"x": 0}, {"x": -260, "duration": 6.2, "ease": "none"}, 4.3);
+      tl.fromTo("#vercors", {"opacity": 0, "scale": 0.2}, {"opacity": 1, "scale": 1, "duration": 0.6, "ease": "back.out(2)"}, 4.9);
+      gsap.set(".t3w",{yPercent:140});
+      tl.to(".t3w",{yPercent:0,duration:0.7,ease:"expo.out",stagger:0.05},5.0);
+      tl.to(".t3w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},6.25);
+      gsap.set(".t4w",{yPercent:140});
+      tl.to(".t4w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},5.2);
+      tl.to(".t4w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},6.2);
+      gsap.set(".t5w",{yPercent:140});
+      tl.to(".t5w",{yPercent:0,duration:0.6,ease:"expo.out",stagger:0.0333},5.45);
+      tl.to(".t5w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},6.2);
+      (function(){const p=document.getElementById("contour"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.75,ease:"power2.inOut"},6.6); tl.to(p,{opacity:0,duration:0.5},7.4);})();
+      tl.fromTo("#ph", {"opacity": 0}, {"opacity": 1, "duration": 0.5}, 7.15);
+      tl.fromTo("#scr", {"opacity": 0, "scale": 0.97}, {"opacity": 1, "scale": 1, "duration": 0.7, "ease": "power2.out"}, 7.3);
+      gsap.set(".t6w",{yPercent:140});
+      tl.to(".t6w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},7.85);
+      gsap.set(".t7w",{yPercent:140});
+      tl.to(".t7w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},8.0);
+      gsap.set("#tumeteo",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tumeteo", {"opacity": 0, "x": 278.14084507042253, "y": -53.92175273865416, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": -1.5, "duration": 0.95, "ease": "expo.out"}, 8.25);
+      tl.to("#tumeteo", {"y": 6, "duration": 1.3, "ease": "sine.inOut"}, 9.2);
+      gsap.set("#tubudget",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tubudget", {"opacity": 0, "x": -277.640062597809, "y": -53.92175273865416, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": 1.5, "duration": 0.95, "ease": "expo.out"}, 8.375);
+      tl.to("#tubudget", {"y": -6, "duration": 1.175, "ease": "sine.inOut"}, 9.325);
+      gsap.set("#tucarte",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tucarte", {"opacity": 0, "x": 609.7840375586854, "y": -49.50860719874805, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": 1.2, "duration": 0.95, "ease": "expo.out"}, 8.5);
+      tl.to("#tucarte", {"y": 6, "duration": 1.05, "ease": "sine.inOut"}, 9.45);
+      gsap.set("#tuetapes",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tuetapes", {"opacity": 0, "x": -584.1220657276995, "y": -49.50860719874805, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": -1.2, "duration": 0.95, "ease": "expo.out"}, 8.625);
+      tl.to("#tuetapes", {"y": -6, "duration": 0.925, "ease": "sine.inOut"}, 9.575);
+      gsap.set("#tucarnet",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tucarnet", {"opacity": 0, "x": 278.14084507042253, "y": 82.01251956181522, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": -0.8, "duration": 0.95, "ease": "expo.out"}, 8.75);
+      tl.to("#tucarnet", {"y": 6, "duration": 0.8, "ease": "sine.inOut"}, 9.7);
+      gsap.set("#tukits",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tukits", {"opacity": 0, "x": -277.7652582159624, "y": 82.01251956181522, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": 0.8, "duration": 0.95, "ease": "expo.out"}, 8.875);
+      tl.to("#tukits", {"y": -6, "duration": 0.675, "ease": "sine.inOut"}, 9.825);
+      gsap.set("#tupaperasse",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tupaperasse", {"opacity": 0, "x": 524.0, "y": -171.26447574334907, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": 0.8, "duration": 0.95, "ease": "expo.out"}, 9.0);
+      tl.to("#tupaperasse", {"y": 6, "duration": 0.55, "ease": "sine.inOut"}, 9.95);
+      gsap.set("#tugroupe",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#tugroupe", {"opacity": 0, "x": -524.0, "y": -107.91236306729274, "scale": 0.5007824726134585, "rotation": 0}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "rotation": -0.8, "duration": 0.95, "ease": "expo.out"}, 9.125);
+      tl.to("#tugroupe", {"y": -6, "duration": 0.42500000000000004, "ease": "sine.inOut"}, 10.075);
+      tl.to("#scri", {"filter": "brightness(.5)", "duration": 0.8, "ease": "power2.out"}, 8.25);
+      gsap.set(".t8w",{yPercent:140});
+      tl.to(".t8w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.02},9.0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
