@@ -114,14 +114,18 @@ async function anonymousSession(supa) {
     secure: protocol === 'https:',
     sameSite: 'Lax',
   }));
-  return { client, cookies };
+  return { client, cookies, userId: data.user?.id ?? null };
 }
 
-/** Le dernier voyage de la personne, tel qu'il est rangé en base (lieu, pays, dates, ancre). */
-async function latestTrip(client) {
+/**
+ * Le dernier voyage de la personne, tel qu'il est rangé en base (lieu, pays, dates, ancre). Filtré sur
+ * elle : la RLS laisse aussi lire les voyages publics, dont des voyages de démonstration datés du futur.
+ */
+async function latestTrip(client, userId) {
   const { data, error } = await client
     .from('trips')
     .select('id, title, destination_name, destination_country_code, start_date, end_date, party_size, metadata')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(1);
   if (error || !data?.[0]) return { error: error?.message ?? 'aucun voyage' };
@@ -143,9 +147,11 @@ async function latestTrip(client) {
 
 const supa = process.env.STORAGE_STATE || process.env.COMPAS_DEMO ? null : supabasePublicEnv();
 let reader = null;
+let readerUser = null;
 if (supa) {
   const session = await anonymousSession(supa);
-  reader = session.client;
+  reader = session.userId ? session.client : null;
+  readerUser = session.userId;
   await context.addCookies(session.cookies);
 } else if (!process.env.STORAGE_STATE) {
   await page.goto(`${base}/connexion?next=/compas`, {
@@ -209,7 +215,7 @@ for (const [i, say] of phrases.entries()) {
       head = (await status.innerText().catch(() => '')).slice(0, 600);
     }
     await page.screenshot({ path: path.join(outDir, `${slug}.png`), fullPage: false });
-    const trip = reader ? await latestTrip(reader).catch((e) => ({ error: String(e).slice(0, 200) })) : undefined;
+    const trip = reader ? await latestTrip(reader, readerUser).catch((e) => ({ error: String(e).slice(0, 200) })) : undefined;
     log({ i: i + 1, say, url: page.url(), seconds: Math.round((Date.now() - t0) / 1000), head, ...(trip ? { trip } : {}) });
     console.info(slug, Math.round((Date.now() - t0) / 1000), 's', say);
   } catch (e) {

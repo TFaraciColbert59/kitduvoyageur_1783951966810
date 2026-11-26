@@ -107,6 +107,12 @@ const PLACE_ALIASES: Record<string, string> = {
   mailand: 'Milan', milano: 'Milan', venedig: 'Venise', venezia: 'Venise', florenz: 'Florence', firenze: 'Florence', rom: 'Rome',
   roma: 'Rome', wien: 'Vienne', praga: 'Prague', lisboa: 'Lisbonne', sevilla: 'Séville', napoli: 'Naples', neapel: 'Naples',
   mallorca: 'Majorque',
+  // Exonymes anglais (« 3 days in Cape Town ») : Photon, interrogé en français, ne connaît que « Le Cap » (C-030).
+  capetown: 'Le Cap', london: 'Londres', lisbon: 'Lisbonne', seville: 'Séville', venice: 'Venise', vienna: 'Vienne',
+  edinburgh: 'Édimbourg', copenhagen: 'Copenhague', geneva: 'Genève', brussels: 'Bruxelles', athens: 'Athènes',
+  beijing: 'Pékin', seoul: 'Séoul', tbilisi: 'Tbilissi', marrakesh: 'Marrakech', tuscany: 'Toscane', sardinia: 'Sardaigne',
+  sicily: 'Sicile', crete: 'Crète', corsica: 'Corse', majorca: 'Majorque', andalusia: 'Andalousie', catalonia: 'Catalogne',
+  bavaria: 'Bavière', patagonia: 'Patagonie',
   东京: 'Tokyo', 東京: 'Tokyo', 京都: 'Kyoto', 大阪: 'Osaka', 北京: 'Pékin', 上海: 'Shanghai', 香港: 'Hong Kong', 首尔: 'Séoul',
   巴黎: 'Paris', 伦敦: 'Londres', 纽约: 'New York', 曼谷: 'Bangkok', 新加坡: 'Singapour', 台北: 'Taipei', 罗马: 'Rome',
   巴塞罗那: 'Barcelone', 悉尼: 'Sydney', 东京都: 'Tokyo', schweizeralpen: 'Alpes suisses', himalaya: 'Himalaya',

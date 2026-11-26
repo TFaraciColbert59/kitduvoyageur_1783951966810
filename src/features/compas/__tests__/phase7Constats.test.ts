@@ -431,6 +431,46 @@ describe('C-029 · Svaneti : la Haute-Svanétie des treks, pas la Basse-Svanéti
   });
 });
 
+describe('C-030 · une ville dite en anglais est cherchée sous son nom français', () => {
+  it('rejeu monde n°41 « Cape Town » → « Le Cap » (Photon, en français, ne connaît pas « Cape Town »)', () => {
+    expect(canonicalPlaceName('Cape Town')).toBe('Le Cap');
+  });
+  it('les autres exonymes anglais courants', () => {
+    const pairs: Array<[string, string]> = [
+      ['London', 'Londres'],
+      ['Lisbon', 'Lisbonne'],
+      ['Seville', 'Séville'],
+      ['Venice', 'Venise'],
+      ['Vienna', 'Vienne'],
+      ['Edinburgh', 'Édimbourg'],
+      ['Copenhagen', 'Copenhague'],
+      ['Geneva', 'Genève'],
+      ['Brussels', 'Bruxelles'],
+      ['Athens', 'Athènes'],
+      ['Beijing', 'Pékin'],
+      ['Seoul', 'Séoul'],
+      ['Tbilisi', 'Tbilissi'],
+      ['Marrakesh', 'Marrakech'],
+      ['Tuscany', 'Toscane'],
+      ['Sardinia', 'Sardaigne'],
+      ['Sicily', 'Sicile'],
+      ['Crete', 'Crète'],
+      ['Corsica', 'Corse'],
+      ['Majorca', 'Majorque'],
+      ['Andalusia', 'Andalousie'],
+      ['Catalonia', 'Catalogne'],
+      ['Bavaria', 'Bavière'],
+      ['Patagonia', 'Patagonie'],
+    ];
+    for (const [en, fr] of pairs) expect(canonicalPlaceName(en), en).toBe(fr);
+  });
+  it('un nom déjà français ou identique reste sans équivalent (Kyoto, Reykjavik, Vercors)', () => {
+    expect(canonicalPlaceName('Kyoto')).toBeNull();
+    expect(canonicalPlaceName('Reykjavik')).toBeNull();
+    expect(canonicalPlaceName('Vercors')).toBeNull();
+  });
+});
+
 describe('C-025 · la durée dite en chinois est lue', () => {
   const days = (say: string) => parseIntentRules(say, TODAY, 'fr').find((a) => a.type === 'set_duration');
   it('jeu monde n°32 « 东京三天自由行 » → 3 jours, lieu 东京', () => {
