@@ -1,0 +1,76 @@
+# Banque d'effets du trailer : provenance et licences
+
+54 fichiers WAV (34 jusqu'à la v4, 20 ajoutés pour la v5, voir plus bas), 48 kHz, 24 bits, mono, crête échantillon à −3,0 dBFS (mesurée avec `volumedetect`, FFmpeg 6.1.1 ; les 3 sons d'habillage v4 sont écrits avec FFmpeg 6.0), 7 à 450 Ko chacun, 5,6 Mo en tout. **Uniquement du CC0 ou des sons générés.** Tous ont été mesurés, aucun n'a été écouté.
+
+## Prises réelles CC0 : Kenney (4 fichiers)
+
+Source : les dépôts officiels de Kenney sur GitHub. Le README de chaque dépôt dit : « Assets included in this package (2D sprites, 3D models and sound effects) are CC0 licensed » (https://creativecommons.org/publicdomain/zero/1.0/). Le code de ces dépôts est sous licence MIT, mais les sons sont CC0. Licence lue dans le README de chaque dépôt cloné le 2026-11-11. kenney.nl n'était pas joignable depuis la session (le proxy refuse l'accès), la licence n'a donc pas pu être recoupée sur ce site.
+
+Import : `node tools/audio/import-cc0.mjs <dossier des clones>` (rognage, mono, 48 kHz, crête à −3 dBFS en deux passes ; la commande FFmpeg exacte est affichée à chaque fichier).
+
+| Fichier | Dépôt @ commit | Fichier source | Rognage | Auteur | Licence |
+|---|---|---|---|---|---|
+| `pas-sentier-a.wav` | https://github.com/KenneyNL/Starter-Kit-FPS @ 185fd2326d74 | `sounds/walking.ogg` | 2,40 s + 0,80 s (deux pas) | Kenney | CC0 1.0 |
+| `pas-sentier-b.wav` | idem | `sounds/walking.ogg` | 3,60 s + 0,80 s | Kenney | CC0 1.0 |
+| `clac-boucle-a.wav` | idem | `sounds/weapon_change.ogg` | 0,24 s + 0,18 s (le dernier clac seul) | Kenney | CC0 1.0 |
+| `pied-pierre.wav` | https://github.com/KenneyNL/Starter-Kit-3D-Platformer @ 3fa8a04b1c01 | `sounds/land.ogg` | 0 + 0,06 s | Kenney | CC0 1.0 |
+
+Le `weapon_change.ogg` d'origine semble atteindre 0 dBFS : sa première passe de normalisation a dû être corrigée. Ce son est peut-être écrêté à la source, il faut l'écouter.
+
+## Sons générés (30 fichiers)
+
+Ils sont faits par synthèse de bruit filtré (rose, blanc ou brun, filtres à variables d'état, enveloppes), avec une graine fixe : deux exécutions donnent des fichiers identiques. Tony a explicitement autorisé cette méthode. Aucun droit de tiers. La recette de chaque son est écrite dans `tools/audio/gen-sfx.mjs` (objet `RECIPES`, avec ses paramètres et sa graine). La commande exacte est `node tools/audio/gen-sfx.mjs <nom>`, ou la même commande sans argument pour tout régénérer. Outils : `tools/audio/synth.mjs`, Node 22, FFmpeg 6.1.1 pour l'écriture du WAV.
+
+| Fichier(s) | Recette (graine) |
+|---|---|
+| `whoosh-court-a/b/c.wav` | bruit rose en passe-bande balayé (400→2 600, 2 800→500, 700→4 200 Hz) + souffle aigu, enveloppe en cloche (11, 12, 13) |
+| `whoosh-long-a/b.wav` | idem, 1,5 et 1,9 s (180→3 200, 4 200→260 Hz) (21, 22) |
+| `impact-sourd-a/b.wav` | sinus qui plonge (120→38 Hz) + bruit brun en passe-bas, décroissance exponentielle (31, 32) |
+| `impact-sec-a/b.wav` | claquement de bruit en passe-haut + corps à 190 ou 240 Hz (41, 42) |
+| `crash-a/b.wav` | bruit en passe-haut à longue traîne, pour masquer les raccords (51, 52) |
+| `clac-boucle-b.wav` | deux transitoires plastiques à 11 ms d'écart (61), variante du clac réel |
+| `sonnette.wav` | « ding-dong » : deux notes (mi 5, do 5) à partiels de cloche (71). C'est un son tonal synthétisé, à remplacer de préférence par une vraie prise CC0 |
+| `souffle-a/b.wav` | bruit rose en passe-bande doux, enveloppe de respiration (81, 82) |
+| `vent-altitude-a/b.wav` | bruit rose en passe-bande modulé (rafales) + grondement brun, 3,2 s (91, 92) |
+| `feu-crepitement.wav` | grondement brun + craquements résonants aléatoires, 2,6 s (101) |
+| `pluie-vitre.wav` | gouttes très brèves et denses + chuintement en passe-haut, 2,4 s (111) |
+| `rails-train.wav` | grondement + paires de chocs de bogie toutes les 0,62 s, 2,2 s (121) |
+| `gravillons-a/b.wav` | grains denses en passe-haut, en nuage (131, 132) |
+| `declic-photo.wav` | deux clics de volet à 70 ms d'écart (141) |
+| `notification.wav` | deux tics brefs, sans mélodie (151) ; non placé dans la piste |
+| `eclaboussure-torrent.wav` | gerbe de bruit en passe-bande + gouttes qui retombent (161) |
+| `montee-riser.wav` | passe-bande et niveau qui montent pendant 2,9 s, pic à la fin (171) |
+| `impact-final.wav` | sous-grave long (95→30 Hz) + crash, 2,6 s (181) |
+| `souffle-cosmos.wav` | habillage v4 : grondement brun très grave + souffle rose dont le passe-bande (160→1 400 Hz) et le niveau montent, 1,36 s, de l'image 0 à l'allumage du Soleil (191) |
+| `impact-soleil.wav` | habillage v4 : coup sourd (110→40 Hz) + éclat aigu en passe-haut balayé, 2,0 s, sur l'allumage du Soleil (201) |
+| `impact-logo.wav` | habillage v4 : sous-grave (90→28 Hz) + corps + crash, queue de 2,15 s qui descend sous −60 dB, sous le coup final du logo (211) |
+
+## Sons ajoutés pour le mix v5 (20 fichiers, 15/11/2026)
+
+Générés par `node tools/audio/gen-sfx.mjs --v5` (FFmpeg 6.0 pour l'écriture, Node 26), mêmes règles que ci-dessus : graine fixe, crête à −3 dBFS, mono 48 kHz 24 bits, aucun droit de tiers. Trois d'entre eux sont **dérivés des prises Kenney CC0** (traitement seulement, la licence CC0 suit le son). Mesurés, aucun n'a été écouté. Utilisés par `tools/audio/sfx-cues-v5.json` (voir `qa/SON-V5.md`).
+
+| Fichier(s) | Recette (graine) |
+|---|---|
+| `tap-pouce-a/b/c.wav` | tap de pulpe sur une vitre : choc en passe-bande 280–360 Hz + tic à 1,9–2,5 kHz très bas, passe-bas 5 kHz, 90 ms (301, 302, 303) |
+| `clac-boucle-c.wav` | boucle de sangle plastique : glissement, puis claquement (déclic 3,4 kHz + corps 1,15 kHz + second déclic à 6 ms) et petit choc grave des mains (311) |
+| `papier-carton.wav` | froissements de papier de soie en deux bouffées + choc sourd du carton, 0,95 s (321) |
+| `pas-escalier-a.wav` | **dérivé** de `pas-sentier-a.wav` (Kenney, CC0) : passe-haut 90 Hz + réverbération de cage d'escalier (Schroeder, 4 peignes, 2 passe-tout) |
+| `appui-pierre.wav` | **dérivé** de `pied-pierre.wav` (Kenney, CC0) + écrasement de gravier synthétisé (70 grains, 90 ms) + choc sinus 110→70 Hz (331) |
+| `reception-rocher.wav` | **dérivé** de `pied-pierre.wav` (Kenney, CC0) ralenti ×0,85 + gerbe d'eau courte synthétisée (341) |
+| `torrent-g/d.wav` | eau qui court (bruit rose large + brun) et bulles (sinus montants brefs), 1,3 s, paire gauche/droite (351, 352) |
+| `vent-crete-g/d.wav` | air en passe-bande à rafales lentes, sifflement très bas, peu de grondement, 3,8 s, paire (361, 362) |
+| `feu-bivouac-g/d.wav` | flamme douce + braises qui craquent + rares gros claquements, 7,4 s, paire (371, 372) |
+| `pluie-interieur-g/d.wav` | pluie entendue à travers la vitre (passe-bas 5,5 kHz), gouttes sur le verre, 5,6 s, paire (381, 382) |
+| `whoosh-doux-a/b/c/d.wav` | bruit rose en passe-bande balayé (2 400→380, 600→2 000, 1 800→450, 300→2 600 Hz), presque sans souffle aigu, passe-bas 6 kHz (391–394) |
+
+## Sources examinées et écartées
+
+| Source | Motif |
+|---|---|
+| Effets livrés avec le skill media-use (`audio/assets/sfx/`) | Pixabay Content License (son `CREDITS.md`) : licence libre, mais pas CC0. Rien n'a été copié |
+| Meta Open Sound, Oculus Audio Pack (github.com/facebookincubator/Meta-open-sound) | CC BY 4.0 (`corpora/oculus-audio-pack/LICENSE`) : il exige un crédit, ce qui est hors du brief. Seuls les instruments de ce dépôt sont CC0, et ils sont inutiles ici |
+| Freesound, OpenGameArt, Wikimedia Commons, kenney.nl, Openverse | Le proxy de la session refuse l'accès (CONNECT 403) le 2026-11-11 |
+
+## Musique
+
+STORM II (GENER8ION) est un **titre commercial**. Il n'est pas versionné et n'est jamais téléchargé par les agents. **Il faut une licence de synchronisation avant toute diffusion publique du trailer ; elle reste à vérifier.**

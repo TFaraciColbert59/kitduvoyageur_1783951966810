@@ -1,0 +1,110 @@
+{
+  "_note": "Réglages d'incrustation par vidéo source (flow/clips/plans/). plages = images montées ± 8 (base 0). etats : première capture, puis changements à l'image « a » (mode fondu, glisse_haut, glisse_bas ; durée en images). rotation : degrés (sens trigonométrique) appliqués à la capture avant de la poser (180 = tête-bêche, 90 = haut de l'appli à gauche). bas_impose : y (px) où les coins bas hors champ sont posés sur les côtés prolongés. marge_coins : part de chaque bord (haut, droite, bas, gauche) ignorée près des coins arrondis.",
+  "p07.mp4": {
+    "plans": ["P07 (22–63)"],
+    "note": "v6 (15/11) : P07 = images 22–63. Le pouce descend (n°22–31) : le carnet (E01a) glisse vers le bas et laisse place au fil de la communauté (E13), dont la carte « Carnet de la semaine » montre le lac ; le pouce remonte jusqu'à la carte (point le plus haut n°41–43, ≈ 0,55 de la hauteur de l'écran) : au toucher, la photo s'ouvre en grand (n°43–47, la vignette grandit jusqu'au plein écran sur fond noir) et reste jusqu'à la fin (n°48–63). La plongée P09 continue sur n°64–84. La photo est l'image 30 de p10.mp4 (première image de P10), pour que la plongée de P09 (tools/incrustation/plonge.py) y arrive sans saut. Ancienne version : flow/clips/incrustes/p07-v3.mp4.",
+    "plages": [[14, 93]],
+    "etats": [
+      {"ecran": "E01a"},
+      {"a": 22, "ecran": "E13", "mode": "glisse_bas", "duree": 6},
+      {"a": 43, "ecran": "PHOTO:flow/clips/plans/p10.mp4:30", "mode": "ouvre_photo", "depuis": [0.05, 0.152, 0.95, 0.413], "duree": 5}
+    ],
+    "lumiere": {"gain": 0.92, "teinte": [1.04, 0.97, 0.9], "teinte_force": 0.35, "noir": 0.02},
+    "flou": 0.5, "ombrage": 0.5,
+    "reflet": {"force": 0.05, "angle": 35, "couleur": [1.0, 0.9, 0.75], "largeur": 0.3, "fond": 0.015}
+  },
+  "p12.mp4": {
+    "plans": ["P12 (24–44)"],
+    "plages": [[16, 52]],
+    "axe_long": "vertical", "bord_mobile": 2, "rapport_impose": 2.232, "rayon_recherche": 2.0, "tolerance_parallele": 0,
+    "etats": [{"ecran": "E02a"}, {"a": 31, "ecran": "E02b", "mode": "fondu", "duree": 2}],
+    "lumiere": {"gain": 0.92, "teinte": [1.05, 0.96, 0.86], "teinte_force": 0.35, "noir": 0.02},
+    "flou": 0.6, "ombrage": 0.5,
+    "reflet": {"force": 0.05, "angle": 35, "couleur": [1.0, 0.9, 0.75], "largeur": 0.3, "fond": 0.015}
+  },
+  "p13.mp4": {
+    "plans": ["P13 (20–40)", "P15 (98–108)"],
+    "plages": [[12, 48], [90, 116]],
+    "etats": [{"ecran": "E03"}, {"a": 70, "ecran": "E04", "mode": "fondu", "duree": 2}],
+    "lumiere": {"gain": 0.92, "teinte": [1.05, 0.96, 0.86], "teinte_force": 0.35, "noir": 0.02},
+    "flou": 0.5, "ombrage": 0.5,
+    "reflet": {"force": 0.05, "angle": 35, "couleur": [1.0, 0.9, 0.75], "largeur": 0.3, "fond": 0.015}
+  },
+  "p16.mp4": {
+    "plans": ["P16 (8–38)"],
+    "plages": [[0, 46]],
+    "rotation": 180,
+    "parallele_force": [0], "lissage": 13,
+    "zones_forcees": [[0.13, 0.067, 0.1], [0.87, 0.067, 0.1], [0.13, 0.933, 0.1], [0.87, 0.933, 0.1]],
+    "etats": [{"ecran": "E05a"}, {"a": 24, "ecran": "E05b", "mode": "fondu", "duree": 4}],
+    "lumiere": {"gain": 0.95, "teinte": [1.05, 0.97, 0.88], "teinte_force": 0.3, "noir": 0.02},
+    "flou": 0.4, "ombrage": 0.3,
+    "reflet": {"force": 0.05, "angle": 20, "couleur": [1.0, 0.92, 0.8], "largeur": 0.4, "fond": 0.015}
+  },
+  "p17.mp4": {
+    "plans": ["P17 (16–26)"],
+    "plages": [[8, 34]],
+    "rotation": 180,
+    "bas_impose": 1700,
+    "quad_init": [[400, 590], [1590, 585], [2100, 1700], [-150, 1700]],
+    "marge_coins": [0.2, 0.15, 0.2, 0.15],
+    "etats": [{"ecran": "E06"}],
+    "lumiere": {"gain": 0.95, "teinte": [1.05, 0.96, 0.86], "teinte_force": 0.3, "noir": 0.02},
+    "flou": 0.8, "ombrage": 0.6,
+    "reflet": {"force": 0.05, "angle": 30, "couleur": [1.0, 0.9, 0.75], "largeur": 0.3, "fond": 0.015}
+  },
+  "p25.mp4": {
+    "plans": ["P25 (14–24)"],
+    "plages": [[6, 32]],
+    "etats": [{"ecran": "E07"}],
+    "lumiere": {"gain": 1.0, "teinte": [1.04, 0.98, 0.92], "teinte_force": 0.25, "noir": 0.03},
+    "flou": 0.5, "ombrage": 0.4,
+    "reflet": {"force": 0.06, "angle": 30, "couleur": [1.0, 0.92, 0.8], "largeur": 0.35, "fond": 0.02}
+  },
+  "p29.mp4": {
+    "plans": ["P29 (20–40)"],
+    "plages": [[12, 48]],
+    "etats": [{"ecran": "E08"}],
+    "lumiere": {"gain": 1.0, "teinte": [1.04, 0.98, 0.92], "teinte_force": 0.25, "noir": 0.03},
+    "flou": 0.5, "ombrage": 0.4,
+    "reflet": {"force": 0.06, "angle": 30, "couleur": [1.0, 0.92, 0.8], "largeur": 0.35, "fond": 0.02}
+  },
+  "p31.mp4": {
+    "plans": ["P31 (45–65)"],
+    "plages": [[37, 73]],
+    "axe_long": "horizontal",
+    "rotation": 90,
+    "marge_coins": [0.1, 0.2, 0.1, 0.2],
+    "etats": [{"ecran": "E09"}],
+    "lumiere": {"gain": 1.0, "teinte": [1.0, 1.0, 1.0], "teinte_force": 0.0, "noir": 0.04},
+    "flou": 0.4, "ombrage": 0.4,
+    "reflet": {"force": 0.07, "angle": 30, "couleur": [0.95, 0.97, 1.0], "largeur": 0.35, "fond": 0.025}
+  },
+  "p36.mp4": {
+    "plans": ["P36 (1–11)"],
+    "plages": [[0, 19]],
+    "lissage": 1,
+    "rayon_recherche": 2.5,
+    "etats": [{"ecran": "E10"}],
+    "lumiere": {"gain": 1.0, "teinte": [1.03, 0.99, 0.94], "teinte_force": 0.2, "noir": 0.03},
+    "flou": 0.5, "ombrage": 0.4,
+    "reflet": {"force": 0.06, "angle": 30, "couleur": [1.0, 0.95, 0.88], "largeur": 0.35, "fond": 0.02}
+  },
+  "p48-2.mp4": {
+    "plans": ["P49 (20–29)", "P48 (34–65)"],
+    "plages": [[12, 73]],
+    "tolerance_parallele": 0,
+    "etats": [{"ecran": "E12"}, {"a": 31, "ecran": "E09", "mode": "fondu", "duree": 2}],
+    "lumiere": {"gain": 0.78, "teinte": [1.0, 0.86, 0.72], "teinte_force": 0.35, "noir": 0.02},
+    "flou": 0.6, "ombrage": 0.5,
+    "reflet": {"force": 0.05, "angle": -30, "couleur": [1.0, 0.7, 0.4], "largeur": 0.3, "fond": 0.01}
+  },
+  "p51.mp4": {
+    "plans": ["P51 (12–43)"],
+    "plages": [[4, 51]],
+    "etats": [{"ecran": "E13"}],
+    "lumiere": {"gain": 0.82, "teinte": [0.92, 0.95, 1.05], "teinte_force": 0.3, "noir": 0.02},
+    "flou": 0.6, "ombrage": 0.5,
+    "reflet": {"force": 0.05, "angle": 30, "couleur": [0.9, 0.85, 1.0], "largeur": 0.3, "fond": 0.012}
+  }
+}

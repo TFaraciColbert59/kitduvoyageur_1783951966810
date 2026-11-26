@@ -1,0 +1,12 @@
+/* Incrustation téléphone : l'écran passe SOUS la plaque percée, les doigts restent devant. */
+.ph-cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 50% 50%; }
+.ph-plate { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 2; }
+.ph-back { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 0; }
+.ph-screen { position: absolute; left: 0; top: 0; overflow: hidden; z-index: 1; background: #FAF8F5; backface-visibility: hidden; }
+.ph-layer { position: absolute; left: 0; top: 0; width: 1290px; height: auto; display: block; }
+.ph-tint { position: absolute; inset: 0; mix-blend-mode: multiply; opacity: 0.28; }
+.ph-glare {
+  position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.55;
+  background-image: linear-gradient(118deg, rgba(255,255,255,0) 38%, rgba(255,255,255,0.13) 47%, rgba(255,255,255,0.04) 53%, rgba(255,255,255,0) 62%);
+  background-size: 260% 260%;
+}

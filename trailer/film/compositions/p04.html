@@ -1,0 +1,56 @@
+<!-- P04 (images 220–272, 52 images) — cosmos-vfx. Traversée : on sort du blanchiment commencé dans P03 (même
+     TR.cloudPass, p = (F − 198) / 52, même graine), le nuage se déchire en trouée centrale sur la ville (img04),
+     poussée continue vers le centre qui accélère, flou radial, raccord sur la plongée de P05. -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p04-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p04-shot, .p04-shot-inner { position: absolute; inset: 0; }
+    .p04-shot { opacity: 0; }
+    .p04-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p04-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+  <div id="root" data-composition-id="p04" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
+    <div id="p04-frame" class="p04-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p04-shot-1" class="p04-shot" data-src="img04" data-seq="0" data-seq-count="1">
+        <div id="p04-shot-1-inner" class="p04-shot-inner">
+          <img id="p04-shot-1-img" class="p04-shot-img" src="assets/footage/img04.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+    </div>
+    <canvas id="p04-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/fx/plates.js"></script>
+  <script src="lib/fx/transitions.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX, TR = FX.Transitions;
+      var N = 52, F0 = 220, W = 1920, H = 1080;
+      var O = [970, 560]; // le cœur de la ville sous la trouée
+      var img = document.getElementById("p04-shot-1-img");
+      var ctx = document.getElementById("p04-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var clouds = FX.Plates.shared("clouds", 404);
+      var clock = FX.bindClock("p04", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        var u = f / (N - 1);
+        var s = 1.15 + 0.55 * u + 0.35 * u * u;
+        var sh = 2.5 * (1 - u);
+        var sx = (FX.hash2(F0 + f, 1, 31) - 0.5) * 2 * sh, sy = (FX.hash2(F0 + f, 2, 31) - 0.5) * 2 * sh;
+        bx.setTransform(s, 0, 0, s, O[0] - O[0] * s + sx, O[1] - O[1] * s + sy);
+        bx.drawImage(img, 0, 0, W, H);
+        TR.radialBlur(ctx, buf, { amount: 0.04 + 0.04 * u * u, origin: [960, 540], samples: 10 });
+        var p = FX.clamp((F0 + f - 198) / 52, 0, 1);
+        TR.cloudPass(ctx, p, { clouds: clouds, hole: true, origin: [960, 560], density: 1.25 });
+      });
+      img.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p04"] = clock.tl;
+    })();
+  </script>
+</template>

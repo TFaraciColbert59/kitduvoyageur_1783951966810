@@ -1,0 +1,548 @@
+[
+ {
+  "image": 0,
+  "lumMoy": 0.1815,
+  "partBlanc90": 0.0007,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00211,
+  "rgbMoy": [
+   47,
+   46,
+   50
+  ]
+ },
+ {
+  "image": 1,
+  "lumMoy": 0.1639,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00206,
+  "rgbMoy": [
+   42,
+   41,
+   46
+  ]
+ },
+ {
+  "image": 2,
+  "lumMoy": 0.1727,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00879,
+  "rgbMoy": [
+   42,
+   44,
+   50
+  ]
+ },
+ {
+  "image": 3,
+  "lumMoy": 0.1773,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.01131,
+  "rgbMoy": [
+   43,
+   45,
+   53
+  ]
+ },
+ {
+  "image": 4,
+  "lumMoy": 0.1806,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00777,
+  "rgbMoy": [
+   44,
+   46,
+   55
+  ]
+ },
+ {
+  "image": 5,
+  "lumMoy": 0.1821,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00486,
+  "rgbMoy": [
+   44,
+   46,
+   57
+  ]
+ },
+ {
+  "image": 6,
+  "lumMoy": 0.1844,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00495,
+  "rgbMoy": [
+   45,
+   47,
+   58
+  ]
+ },
+ {
+  "image": 7,
+  "lumMoy": 0.1807,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0035,
+  "rgbMoy": [
+   43,
+   46,
+   58
+  ]
+ },
+ {
+  "image": 8,
+  "lumMoy": 0.1733,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00434,
+  "rgbMoy": [
+   40,
+   44,
+   57
+  ]
+ },
+ {
+  "image": 9,
+  "lumMoy": 0.1658,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0052,
+  "rgbMoy": [
+   37,
+   43,
+   55
+  ]
+ },
+ {
+  "image": 10,
+  "lumMoy": 0.1585,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00329,
+  "rgbMoy": [
+   34,
+   41,
+   54
+  ]
+ },
+ {
+  "image": 11,
+  "lumMoy": 0.1561,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0033,
+  "rgbMoy": [
+   32,
+   41,
+   54
+  ]
+ },
+ {
+  "image": 12,
+  "lumMoy": 0.1559,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0042,
+  "rgbMoy": [
+   34,
+   40,
+   52
+  ]
+ },
+ {
+  "image": 13,
+  "lumMoy": 0.1422,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00541,
+  "rgbMoy": [
+   34,
+   36,
+   42
+  ]
+ },
+ {
+  "image": 14,
+  "lumMoy": 0.1365,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00059,
+  "rgbMoy": [
+   35,
+   35,
+   37
+  ]
+ },
+ {
+  "image": 15,
+  "lumMoy": 0.1392,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00173,
+  "rgbMoy": [
+   36,
+   35,
+   37
+  ]
+ },
+ {
+  "image": 16,
+  "lumMoy": 0.1425,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0001,
+  "rgbMoy": [
+   35,
+   36,
+   40
+  ]
+ },
+ {
+  "image": 17,
+  "lumMoy": 0.141,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00002,
+  "rgbMoy": [
+   33,
+   36,
+   42
+  ]
+ },
+ {
+  "image": 18,
+  "lumMoy": 0.1427,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00003,
+  "rgbMoy": [
+   32,
+   37,
+   45
+  ]
+ },
+ {
+  "image": 19,
+  "lumMoy": 0.1497,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.02063,
+  "rgbMoy": [
+   32,
+   39,
+   45
+  ]
+ },
+ {
+  "image": 20,
+  "lumMoy": 0.1487,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.07103,
+  "rgbMoy": [
+   30,
+   41,
+   37
+  ]
+ },
+ {
+  "image": 21,
+  "lumMoy": 0.1455,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.06522,
+  "rgbMoy": [
+   27,
+   40,
+   37
+  ]
+ },
+ {
+  "image": 22,
+  "lumMoy": 0.1444,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05815,
+  "rgbMoy": [
+   26,
+   40,
+   38
+  ]
+ },
+ {
+  "image": 23,
+  "lumMoy": 0.1437,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05102,
+  "rgbMoy": [
+   25,
+   40,
+   39
+  ]
+ },
+ {
+  "image": 24,
+  "lumMoy": 0.1435,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05009,
+  "rgbMoy": [
+   25,
+   40,
+   39
+  ]
+ },
+ {
+  "image": 25,
+  "lumMoy": 0.1413,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0519,
+  "rgbMoy": [
+   24,
+   39,
+   38
+  ]
+ },
+ {
+  "image": 26,
+  "lumMoy": 0.1382,
+  "partBlanc90": 0,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05274,
+  "rgbMoy": [
+   23,
+   39,
+   37
+  ]
+ },
+ {
+  "image": 27,
+  "lumMoy": 0.1357,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0515,
+  "rgbMoy": [
+   23,
+   38,
+   36
+  ]
+ },
+ {
+  "image": 28,
+  "lumMoy": 0.1332,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05243,
+  "rgbMoy": [
+   22,
+   37,
+   35
+  ]
+ },
+ {
+  "image": 29,
+  "lumMoy": 0.1311,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05616,
+  "rgbMoy": [
+   22,
+   37,
+   34
+  ]
+ },
+ {
+  "image": 30,
+  "lumMoy": 0.1295,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.06132,
+  "rgbMoy": [
+   21,
+   36,
+   34
+  ]
+ },
+ {
+  "image": 31,
+  "lumMoy": 0.1279,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.06269,
+  "rgbMoy": [
+   21,
+   36,
+   33
+  ]
+ },
+ {
+  "image": 32,
+  "lumMoy": 0.1258,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.05722,
+  "rgbMoy": [
+   20,
+   36,
+   32
+  ]
+ },
+ {
+  "image": 33,
+  "lumMoy": 0.1226,
+  "partBlanc90": 0.0001,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.04974,
+  "rgbMoy": [
+   20,
+   35,
+   32
+  ]
+ },
+ {
+  "image": 34,
+  "lumMoy": 0.1187,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.03993,
+  "rgbMoy": [
+   20,
+   33,
+   31
+  ]
+ },
+ {
+  "image": 35,
+  "lumMoy": 0.1141,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.02997,
+  "rgbMoy": [
+   19,
+   32,
+   29
+  ]
+ },
+ {
+  "image": 36,
+  "lumMoy": 0.1092,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.02133,
+  "rgbMoy": [
+   19,
+   30,
+   28
+  ]
+ },
+ {
+  "image": 37,
+  "lumMoy": 0.1045,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.01522,
+  "rgbMoy": [
+   19,
+   29,
+   27
+  ]
+ },
+ {
+  "image": 38,
+  "lumMoy": 0.1006,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.01127,
+  "rgbMoy": [
+   18,
+   28,
+   26
+  ]
+ },
+ {
+  "image": 39,
+  "lumMoy": 0.0978,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00894,
+  "rgbMoy": [
+   18,
+   27,
+   26
+  ]
+ },
+ {
+  "image": 40,
+  "lumMoy": 0.097,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.0083,
+  "rgbMoy": [
+   18,
+   27,
+   26
+  ]
+ },
+ {
+  "image": 41,
+  "lumMoy": 0.0967,
+  "partBlanc90": 0.0002,
+  "noirPur": 0,
+  "procheE4501C": 0,
+  "proche1C2620": 0.00843,
+  "rgbMoy": [
+   18,
+   27,
+   25
+  ]
+ }
+]

@@ -1,0 +1,38 @@
+<!-- P52 — LA REMONTÉE DE NUIT (images 1293–1334 du film, 42 images à 24 i/s) — cosmos-vfx.
+     Miroir de la descente de l'ouverture, en sens inverse et de nuit, en un seul mouvement :
+     la vitre du bus de Noah sous la pluie (dernière image de P51) → la ville de nuit (img05 puis img04, passées de nuit)
+     → une couche de nuages sombres (en code, éclairée d'en dessous par la ville et d'en haut par la lune)
+     → la Terre de nuit (img39), exactement au cadrage de la première image de la fin (image 1335 du film). -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    #p52-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p52-plate { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; opacity: 0; pointer-events: none; }
+  </style>
+  <div id="root" data-composition-id="p52" data-width="1920" data-height="1080" data-duration="1.75">
+    <!-- Plaques (non étalonnées) : dernière image montée de P51 (flow/clips/incrustes/p51.mp4, image source 43),
+         img05 et img04 (la ville de l'ouverture), img39 (la Terre de nuit de la fin). -->
+    <img id="p52-p51" class="p52-plate" src="assets/footage/p51-43.png" alt="" />
+    <img id="p52-img05" class="p52-plate" src="assets/footage/img05.png" alt="" />
+    <img id="p52-img04" class="p52-plate" src="assets/footage/img04.png" alt="" />
+    <img id="p52-img39" class="p52-plate" src="assets/footage/img39.png" alt="" />
+    <canvas id="p52-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+  </div>
+  <script>
+    /* ===================== CONFIG — CALAGE (images du plan, 24 i/s ; image du film = 1293 + image du plan) =====================
+     * T_NUAGES : on entre dans la couche de nuages (temps du film 124 = image 1303 → 10).
+     * T_SORTIE : on sort des nuages, la Terre de nuit apparaît (temps 125 = image 1314 → 21).
+     * T_ORBITE : arrivée en orbite, la poussée freine (temps 126 = image 1324 → 31).
+     * DUREE    : 42 ; la dernière image (41) = cadrage d'img39 à l'image 1335 (échelle 1, centrée, sans roulis).
+     *            Reporter DUREE/24 dans les deux data-duration (ici et index.html) — contrôlé à l'exécution.
+     * Garder 4 <= T_NUAGES < T_SORTIE - 4 < T_ORBITE - 8 < DUREE - 10. Tout le reste est normalisé entre ces repères. */
+    window.LKDV_REMONTEE = {
+      T_NUAGES: 10,
+      T_SORTIE: 21,
+      T_ORBITE: 31,
+      DUREE: 42,
+      FPS: 24,
+    };
+  </script>
+  <script src="lib/remontee/remontee.js"></script>
+</template>

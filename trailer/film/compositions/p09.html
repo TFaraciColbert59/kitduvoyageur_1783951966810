@@ -1,0 +1,156 @@
+<!-- P09 (images 508–560, 52 images) — landscape-director. Le pouce tape (img07), poussée VIOLENTE dans l'écran
+     jusqu'à ce que la photo du lac (img09) remplisse le cadre.
+     - Images 0–9 : tape (petit coup de zoom + secousse), caméra centrée sur l'écran.
+     - Images 10–51 : zoom exponentiel en inExpo de 1,30 à 9 sur le centre de l'écran (945, 485), flou de zoom
+       proportionnel à la vitesse.
+     - PROVISOIRE : img09 est incrusté dans l'écran vert à travers un masque calculé à l'exécution sur les pixels verts
+       d'img07 (le pouce reste devant). ui-builder remplacera ce remplissage par la capture E1 (photo du carnet).
+       La photo est tenue en espace écran : couverture de l'écran au départ, puis plein cadre à 1,08 sur la dernière
+       image (= première image de P10). -->
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+    .p09-frame { position: absolute; inset: 0; overflow: hidden; }
+    .p09-shot, .p09-shot-inner { position: absolute; inset: 0; }
+    .p09-shot { opacity: 0; }
+    .p09-shot-img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    #p09-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .p09-ph-src { position: absolute; left: 0; top: 0; width: 2px; height: 2px; overflow: hidden; opacity: 0; pointer-events: none; }
+    .p09-ph-src img { position: absolute; left: 0; top: 0; width: 2px; height: 2px; }
+  </style>
+  <div id="root" data-composition-id="p09" data-width="1920" data-height="1080" data-duration="0.8666666666666667">
+    <div id="p09-frame" class="p09-frame" data-layout-allow-overflow>
+      <!-- hf-footage:begin (zone réécrite par tools/timeline/sync-footage.mjs) -->
+      <div id="p09-shot-1" class="p09-shot" data-src="img07" data-seq="0" data-seq-count="1">
+        <div id="p09-shot-1-inner" class="p09-shot-inner">
+          <img id="p09-shot-1-img" class="p09-shot-img" src="assets/footage/img07.png" alt="" />
+        </div>
+      </div>
+    <!-- hf-footage:end -->
+      <!-- Photo du lac (provisoire, dans l'écran) : source du canevas uniquement. -->
+      <img id="p09-lake-img" class="p09-shot-img" src="assets/footage/img09.png" alt="" style="opacity: 0" />
+    </div>
+    <canvas data-color-grading="{&quot;preset&quot;:null,&quot;intensity&quot;:1,&quot;adjust&quot;:{&quot;exposure&quot;:0,&quot;contrast&quot;:0,&quot;highlights&quot;:0,&quot;shadows&quot;:0,&quot;whites&quot;:0,&quot;blacks&quot;:0,&quot;temperature&quot;:0,&quot;tint&quot;:0,&quot;vibrance&quot;:0,&quot;saturation&quot;:0},&quot;details&quot;:{&quot;vignette&quot;:0,&quot;vignetteMidpoint&quot;:0.5,&quot;vignetteRoundness&quot;:0,&quot;vignetteFeather&quot;:0.65,&quot;grain&quot;:0,&quot;grainSize&quot;:0.25,&quot;grainRoughness&quot;:0.5},&quot;effects&quot;:{&quot;blur&quot;:0,&quot;pixelate&quot;:0,&quot;chromaBleed&quot;:0,&quot;tapeDamage&quot;:0,&quot;tapeTracking&quot;:0,&quot;tapeNoise&quot;:1,&quot;tapeSpeed&quot;:0.5,&quot;filmArtifacts&quot;:0,&quot;halftone&quot;:0,&quot;halftoneSize&quot;:0,&quot;twoInkPrint&quot;:0,&quot;twoInkPrintSize&quot;:0,&quot;ascii&quot;:0,&quot;asciiSize&quot;:0.06578947368421052,&quot;asciiInvert&quot;:0,&quot;asciiStyle&quot;:0,&quot;asciiColor&quot;:1,&quot;asciiRotation&quot;:0,&quot;dither&quot;:0,&quot;ditherSize&quot;:0,&quot;bloom&quot;:0,&quot;bloomRadius&quot;:8,&quot;monoScreen&quot;:0,&quot;monoScreenSize&quot;:0,&quot;monoScreenAngle&quot;:0,&quot;monoScreenSpread&quot;:0,&quot;monoScreenShape&quot;:0,&quot;monoScreenInvert&quot;:0,&quot;scanlines&quot;:0,&quot;scanlineCount&quot;:0,&quot;scanlineSoftness&quot;:0,&quot;chromaticAberration&quot;:0,&quot;chromaticAngle&quot;:0,&quot;crtCurvature&quot;:0,&quot;digitalGlitch&quot;:0,&quot;digitalGlitchColorSplit&quot;:0,&quot;digitalGlitchLineTear&quot;:0,&quot;digitalGlitchPixelate&quot;:0,&quot;digitalGlitchBlockAmount&quot;:0,&quot;digitalGlitchBlockDisplacement&quot;:0,&quot;digitalGlitchBlockOpacity&quot;:0,&quot;digitalGlitchSpeed&quot;:0,&quot;engraving&quot;:0,&quot;engravingSpacing&quot;:0.4117647058823529,&quot;engravingMinThickness&quot;:0.2,&quot;engravingMaxThickness&quot;:0.4571428571428572,&quot;engravingAngle&quot;:0.25,&quot;engravingContrast&quot;:0.4666666666666667,&quot;engravingSharpness&quot;:0.59,&quot;engravingWave&quot;:0.2,&quot;engravingWaveFrequency&quot;:0.2222222222222222,&quot;crosshatch&quot;:0,&quot;crosshatchSpacing&quot;:0.28,&quot;crosshatchThickness&quot;:0.25,&quot;crosshatchAngle&quot;:0.25,&quot;crosshatchContrast&quot;:0.3333333333333333,&quot;crosshatchEdges&quot;:0.5,&quot;crosshatchLineWeight&quot;:0,&quot;crosshatchWave&quot;:0.33,&quot;crosshatchWaveFrequency&quot;:0.2222222222222222,&quot;kuwahara&quot;:0,&quot;kuwaharaRadius&quot;:0.14285714285714285,&quot;kuwaharaSharpness&quot;:0.3125,&quot;kuwaharaSaturation&quot;:0.5},&quot;lut&quot;:{&quot;src&quot;:&quot;assets/luts/lkdv-trailer.cube&quot;,&quot;intensity&quot;:1},&quot;colorSpace&quot;:&quot;rec709&quot;}" id="p09-canvas" width="1920" height="1080" data-layout-allow-overflow></canvas>
+    <!-- ui-builder : sources de l'incrustation (plaque percée + captures réelles), lues par le canvas -->
+    <div id="p09-ph-src" class="p09-ph-src" aria-hidden="true">
+        <img id="p09-ph-plate" src="assets/phone/img07.plate.png" alt="" />
+        <img id="p09-ph-s0" src="assets/phone/screens/E01b-carnet-jour1-photo.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/fx/core.js"></script>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var FX = window.LKDVFX;
+      var N = 52, W = 1920, H = 1080, TAP = 10;
+      var SCX = 945, SCY = 485; // centre de l'écran vert d'img07
+      var img = document.getElementById("p09-shot-1-img");
+      // ui-builder : écran incrusté dans l'image source (suit la caméra du plan au pixel, flou de mouvement compris)
+      var PH = window.LKDVPhone.compositor({ base: img, plate: document.getElementById("p09-ph-plate"), meta: {"box":[780,169,337,636],"corners":[[786.586,191.054],[1067.819,176.244],[1112.59,778.356],[836.848,798.753]],"radius":41.28,"blur":0.7,"ambient":{"rgb":[0.3577,0.2867,0.238],"luminance":0.2982}}, states: [{ img: document.getElementById("p09-ph-s0") }], cam: function (f) { return camAt(f); } });
+      var SRC = img;
+      var lake = document.getElementById("p09-lake-img");
+      var ctx = document.getElementById("p09-canvas").getContext("2d");
+      var buf = FX.canvas(W, H), bx = buf.getContext("2d");
+      var scr = FX.canvas(W, H), sx = scr.getContext("2d");
+      var mask = null; // masque alpha de l'écran vert (coordonnées img07)
+      function prepMask() {
+        if (mask || !img.complete || !img.naturalWidth) return;
+        var m = FX.canvas(W, H), mx = m.getContext("2d");
+        mx.drawImage(img, 0, 0, W, H);
+        try {
+          var d = mx.getImageData(0, 0, W, H), a = d.data;
+          for (var i = 0; i < a.length; i += 4) {
+            var k = Math.min(a[i + 1] - a[i], a[i + 1] - a[i + 2]);
+            var al = FX.clamp((k - 25) / 50, 0, 1);
+            a[i] = a[i + 1] = a[i + 2] = 255;
+            a[i + 3] = Math.round(255 * al);
+          }
+          mx.putImageData(d, 0, 0);
+        } catch (e) {
+          // Repli : rectangle arrondi intérieur à l'écran.
+          mx.clearRect(0, 0, W, H);
+          mx.fillStyle = "#fff";
+          mx.beginPath();
+          mx.moveTo(806, 182); mx.lineTo(1070, 182); mx.lineTo(1104, 786); mx.lineTo(836, 791);
+          mx.closePath();
+          mx.fill();
+        }
+        mask = m;
+      }
+      /* Corrections-2 : P09 NAÎT du rond de la pupille de P08. Images 0–7 : zoom arrière depuis la photo
+       * (écran tenu serré, S 3,4 → 1,30) dans un rond qui s'ouvre (rayon 110 px = reflet bombé de P08 à la coupe
+       * → plein cadre), puis tape (8–15) et poussée (16–51) comme avant ; dernière image inchangée (= entrée de P10). */
+      var INTRO = 8, TAPLEN = 8;
+      function introAt(f) { return f < INTRO ? FX.ease.inOutCubic(f / INTRO) : 1; }
+      function camAt(f) {
+        var tf = f - INTRO;
+        var tap = tf >= 0 && tf < TAPLEN ? Math.sin(Math.PI * tf / TAPLEN) : 0;
+        var v = FX.ramp(INTRO + TAPLEN, N - 1, f);
+        var S = 1.30 * Math.exp(Math.log(9 / 1.30) * FX.ease.inCubic(v)) * (1 + 0.035 * tap);
+        var cx = SCX, cy = FX.lerp(505, SCY, FX.ease.inQuad(v));
+        if (f < INTRO) {
+          var p = introAt(f);
+          S = Math.exp(FX.lerp(Math.log(3.4), Math.log(1.30), p));
+          cy = FX.lerp(SCY, 505, p);
+        }
+        var sh = 4 * tap;
+        cx += (FX.hash2(f, 1, 91) - 0.5) * 2 * sh;
+        cy += (FX.hash2(f, 2, 92) - 0.5) * 2 * sh;
+        cx = FX.clamp(cx, W / 2 / S, W - W / 2 / S);
+        cy = FX.clamp(cy, H / 2 / S, H - H / 2 / S);
+        return { S: S, cx: cx, cy: cy, v: v };
+      }
+      window.__lkdvCam = window.__lkdvCam || {};
+      window.__lkdvCam.p09 = camAt;
+      var clock = FX.bindClock("p09", N, function (t, f) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#0B1F17";
+        ctx.fillRect(0, 0, W, H);
+        if (!img.complete || !img.naturalWidth) return;
+        prepMask();
+        var c = camAt(f);
+        var T = [c.S, 0, 0, c.S, W / 2 - c.S * c.cx, H / 2 - c.S * c.cy];
+        bx.setTransform(T[0], T[1], T[2], T[3], T[4], T[5]);
+        bx.drawImage(PH.frame(f), 0, 0, W, H);
+        bx.setTransform(1, 0, 0, 1, 0, 0);
+        if (lake.complete && lake.naturalWidth && mask) {
+          // Écran : masque transformé, puis la photo par-dessus (espace écran).
+          sx.setTransform(1, 0, 0, 1, 0, 0);
+          sx.clearRect(0, 0, W, H);
+          sx.setTransform(T[0], T[1], T[2], T[3], T[4], T[5]);
+          sx.drawImage(mask, 0, 0);
+          sx.setTransform(1, 0, 0, 1, 0, 0);
+          sx.globalCompositeOperation = "source-in";
+          var px = 960 + c.S * (SCX - c.cx), py = 540 + c.S * (SCY - c.cy);
+          var lw = Math.min(1920 * FX.lerp(1, 1.08, c.v), Math.max(1093 * c.S, 1920 * 0.6));
+          if (1093 * c.S >= 1920) lw = 1920 * FX.lerp(1, 1.08, c.v);
+          if (f < INTRO) lw = Math.max(lw, 640 * c.S * 16 / 9); // intro serrée : la photo couvre tout l'écran vert
+          var lh = lw * 9 / 16;
+          sx.drawImage(lake, px - lw / 2, py - lh / 2, lw, lh);
+          sx.globalCompositeOperation = "source-over";
+          bx.drawImage(scr, 0, 0);
+        }
+        if (f === N - 1 && lake.complete && lake.naturalWidth) {
+          // Dernière image : plein cadre exact, raccord avec la première image de P10 (img09 à 1,08).
+          bx.drawImage(lake, W / 2 - W * 0.54, H / 2 - H * 0.54, W * 1.08, H * 1.08);
+        }
+        if (f < INTRO) {
+          // Rond de la pupille qui s'ouvre : hors du rond, l'encre (pupille) à bord doux.
+          var p = introAt(f);
+          var R = FX.lerp(110, 1250, p), ccx = 960, ccy = FX.lerp(535, 540, p);
+          var gI = bx.createRadialGradient(ccx, ccy, R * 0.82, ccx, ccy, R * 1.12);
+          gI.addColorStop(0, "rgba(11,31,23,0)");
+          gI.addColorStop(1, "rgba(11,31,23,1)");
+          bx.fillStyle = gI;
+          bx.fillRect(0, 0, W, H);
+        }
+        var amount = 0.10 * Math.pow(c.v, 1.5) * (f === N - 1 ? 0.5 : 1) + (f < INTRO ? 0.05 * (1 - introAt(f)) : 0);
+        FX.zoomBlur(ctx, buf, 960, 540, amount, 10, W, H);
+      });
+      img.addEventListener("load", function () { mask = null; clock.redraw(); });
+      Array.prototype.forEach.call(document.querySelectorAll("#p09-ph-src img"), function (n) { n.addEventListener("load", function () { clock.redraw(); }); });
+      lake.addEventListener("load", function () { clock.redraw(); });
+      window.__timelines["p09"] = clock.tl;
+    })();
+  </script>
+</template>

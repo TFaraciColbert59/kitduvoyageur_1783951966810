@@ -1,0 +1,43 @@
+<template>
+  <link rel="stylesheet" href="lib/phone/phone.css" />
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: #0B1F17; }
+  </style>
+  <div id="root" data-composition-id="pl-front-white" data-width="1920" data-height="1080" data-layout-allow-overflow>
+    <div id="pl-front-white-cam" class="ph-cam">
+      <div id="pl-front-white-screen" class="ph-screen" data-phone='{"corners":[[847.103,331.612],[1043.532,342.24],[1057.372,753.958],[833.442,758.706]],"radius":23.85,"blur":0.29,"ambient":{"rgb":[0.3187,0.2469,0.2006],"luminance":0.2588}}'>
+        <img id="pl-front-white-s0" class="ph-layer" src="assets/screens/E05b-kit-studio-bilan.png" alt="" style="opacity:1" />
+        <div class="ph-tint"></div>
+        <div class="ph-glare"></div>
+      </div>
+      <img id="pl-front-white-plate" class="ph-plate" src="assets/plates/front-white.keyed.png" alt="" />
+    </div>
+  </div>
+  <script src="lib/phone/phone.js"></script>
+  <script>
+    (function () {
+      var D = 1.5, CX = 945.4, CY = 546.6;
+      var cam = document.getElementById('pl-front-white-cam');
+      var scr = document.getElementById('pl-front-white-screen');
+      var timing = { states: [] };
+      function ease(p) { return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+      function pose(t) {
+        var p = ease(Math.max(0, Math.min(1, t / D)));
+        return { s: 1 + 0.07 * p, r: -1.4 * p, x: -26 * p, y: -10 * p };
+      }
+      function apply(t) {
+        var a = pose(t), b = pose(Math.max(0, t - 1 / 60));
+        cam.style.transformOrigin = CX + 'px ' + CY + 'px';
+        cam.style.transform = 'translate(' + a.x.toFixed(2) + 'px,' + a.y.toFixed(2) + 'px) rotate(' + a.r.toFixed(3) + 'deg) scale(' + a.s.toFixed(4) + ')';
+        var speed = Math.hypot(a.x - b.x, a.y - b.y, (a.s - b.s) * 900, (a.r - b.r) * 15) * 60;
+        window.LKDVPhone.render(scr, t, { x: a.x, y: a.y, speed: speed }, timing);
+      }
+      var st = { t: 0 };
+      var tl = gsap.timeline({ paused: true });
+      tl.fromTo(st, { t: 0 }, { t: D, duration: D, ease: 'none', onUpdate: function () { apply(st.t); } }, 0);
+      apply(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines['pl-front-white'] = tl;
+    })();
+  </script>
+</template>

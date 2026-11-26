@@ -1,0 +1,5 @@
+[
+ {"label":"LUT 60 %","grading":{"lut":{"src":"assets/luts/lkdv-trailer.cube","intensity":0.6}}},
+ {"label":"LUT 100 %","grading":{"lut":{"src":"assets/luts/lkdv-trailer.cube","intensity":1}}},
+ {"label":"LUT 130 %","grading":{"lut":{"src":"assets/luts/lkdv-trailer-130.cube","intensity":1}}}
+]
