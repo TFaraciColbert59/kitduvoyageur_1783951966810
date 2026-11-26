@@ -1,11 +1,18 @@
 # Présentation complète de LKDV — 9:16 (1080×1920), 20 premières secondes, 120 BPM (un temps = 0,5 s).
-#   0–3 s   HOOK : un vrai écran par temps, téléphone en gros plan ; un verbe claque en haut à chaque temps
-#           (Préparer · T'équiper · Partir · Raconter · Partager · Progresser).
-#   3–5 s   IMPACT : le téléphone recule, les six écrans rentrent dedans (doubles croches) → « Toute ton aventure. Une seule app. »
-#   5–7 s   01 · LE HUB : les huit vraies tuiles jaillissent autour du téléphone puis rentrent.
-#   7–19 s  huit vrais tiroirs du Hub, un toutes les 1,5 s : le doigt touche la tuile, le tiroir monte, son détail réel
-#           sort de l'écran et se pose sur le temps.
-#   19–20 s « Ce n'était que le Hub. »
+# v3 : on CHANGE DE SCÈNE toutes les 1,5 s environ ; chaque scène a sa composition, sa couleur et son mouvement propres.
+#   S0  0,0–2,0  HOOK : huit mots géants (Anton), un par croche, fonds alternés ; la vraie tuile du Hub claque avec chaque mot.
+#   S1  2,0–3,0  « Tout ça… » / « …dans une seule app. » (encre) ; les huit tuiles s'aspirent au centre.
+#   S2  3,0–4,5  Le téléphone tombe et flotte en 3D devant « HUB » géant rempli par le vrai écran.
+#   S3  4,5–6,0  Fond pierre : deux rangées de vraies tuiles défilent en sens contraire.
+#   S4  6,0–7,5  Météo : gros plan du vrai tiroir, la frise horaire glisse ; « 6,8° » géant en contour.
+#   S5  7,5–9,0  Carte : la vraie carte du tiroir couchée en perspective ; le repère réel pulse.
+#   S6  9,0–10,5 Kits : la vraie checklist défile plein cadre ; « 11 » géant.
+#   S7  10,5–12  Budget, fond laiton : les trois vraies cartes claquent une par temps.
+#   S8  12–13,5  Étapes : le vrai bouton « Démarrer le voyage », pressé sur le temps.
+#   S9  13,5–15  Paperasse : un mot par temps, le liseré laiton passe d'onglet en onglet.
+#   S10 15–16,5  Écran coupé en diagonale : Carnet (raconter) / Groupe (ensemble).
+#   S11 16,5–18,5 Carrousel 3D des huit vrais détails autour du téléphone, puis aspiration.
+#   S12 18,5–20  « Ce n'était que le Hub. »
 # Tout ce qui ressemble à l'app EST l'app : captures 393×852 à 3x du compte de démo sur main (assets/screens, assets/real).
 import os, math, json
 from PIL import Image
@@ -13,8 +20,9 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D = 20.0
 W, H = 1080, 1920
 INK, STONE, BRASS, GREY = '#0B1F17', '#FAF8F5', '#D0A070', 'rgba(250,248,245,.66)'
+FOREST, SAGE, DEEP = '#17402C', '#5B7F55', '#06120C'
 SANS = "font-family:Inter,sans-serif"
-OUT_E = 'expo.out'
+ANTON = "font-family:Anton,Inter,sans-serif;font-weight:400"
 h, j = [], []
 k_ = [0]
 def uid(p): k_[0] += 1; return f'{p}{k_[0]}'
@@ -24,167 +32,266 @@ def T(sel, a, b, t, ir=True):
     j.append(f'tl.fromTo("{sel}", {json.dumps(a)}, {json.dumps(b)}, {round(t, 3)});')
 def TO(sel, b, t): j.append(f'tl.to("{sel}", {json.dumps(b)}, {round(t, 3)});')
 def SET(sel, b, t): j.append(f'tl.set("{sel}", {json.dumps(b)}, {round(t, 3)});')
+def size_of(src): return Image.open(os.path.join(HERE, src)).size
 
-def mline(text, top, t_in, t_out=None, size=60, weight=700, color=STONE, track='-0.025em', lh=1.14, z=120, words=True, dur=0.6, stag=0.04, out=0.28):
-    """Ligne qui monte d'un masque exact (mot à mot) ; sortie rapide vers le haut (out secondes), finie à t_out."""
-    i = uid('t'); hgt = math.ceil(size * lh) + 2
-    ws = text.split(' ') if words else [text]
-    inner = ' '.join(f'<span class="{i}w" style="display:inline-block">{w}</span>' for w in ws)
-    h.append(f'<div id="{i}" style="position:absolute;left:60px;right:60px;top:{top}px;height:{hgt}px;overflow:hidden;text-align:center;z-index:{z}">'
-             f'<div style="{SANS};font-weight:{weight};font-size:{size}px;line-height:{lh};letter-spacing:{track};color:{color};white-space:nowrap">{inner}</div></div>')
-    j.append(f'gsap.set(".{i}w",{{yPercent:140}});')
-    if t_out is not None:
-        avail = (t_out - out) - t_in - 0.03; tot = dur + stag * (len(ws) - 1)
-        if tot > avail: kk = max(avail, 0.2) / tot; dur, stag = max(0.2, dur * kk), stag * kk
-    j.append(f'tl.to(".{i}w",{{yPercent:0,duration:{round(dur, 3)},ease:"{OUT_E}",stagger:{round(stag, 4)}}},{round(t_in, 3)});')
-    if t_out is not None:
-        j.append(f'tl.to(".{i}w",{{yPercent:-140,duration:{out},ease:"power3.in",stagger:0.015}},{round(t_out - out, 3)});')
+class Scene:
+    """Un plan plein cadre visible de t0 à t1 (coupe sèche aux bornes, sauf transition explicite)."""
+    def __init__(self, t0, t1, bg, z):
+        self.id = uid('S'); self.t0, self.t1, self.z = t0, t1, z; self.kids = []
+        h.append(None); self.slot = len(h) - 1; self.bg = bg
+        j.append(f'gsap.set("#{self.id}",{{autoAlpha:0}});')
+        SET(f'#{self.id}', {'autoAlpha': 1}, t0); SET(f'#{self.id}', {'autoAlpha': 0}, t1)
+    def add(self, html): self.kids.append(html)
+    def close(self):
+        h[self.slot] = (f'<div id="{self.id}" style="position:absolute;inset:0;overflow:hidden;background:{self.bg};z-index:{self.z};perspective:1600px">' + ''.join(self.kids) + '</div>')
+
+def text(sc, txt, x, y, t_in, size=80, color=STONE, family=SANS, weight=700, track='-0.025em', lh=1.1, align='left', words=True, dur=0.45, stag=0.035, w=None, extra='', t_out=None, out=0.2):
+    """Texte masqué qui monte (mot à mot). x = bord gauche (align left), centre (center) ou bord droit (right)."""
+    i = uid('t'); hgt = math.ceil(size * lh) + 4
+    ws = txt.split(' ') if words else [txt]
+    inner = ' '.join(f'<span class="{i}w" style="display:inline-block">{w_}</span>' for w_ in ws)
+    if align == 'center': pos = f'left:0;right:0;text-align:center'
+    elif align == 'right': pos = f'right:{W - x}px;text-align:right'
+    else: pos = f'left:{x}px;text-align:left'
+    sc.add(f'<div id="{i}" style="position:absolute;{pos};top:{y}px;height:{hgt}px;overflow:hidden;{extra}">'
+           f'<div style="{family};font-weight:{weight};font-size:{size}px;line-height:{lh};letter-spacing:{track};color:{color};white-space:nowrap">{inner}</div></div>')
+    j.append(f'gsap.set(".{i}w",{{yPercent:130}});')
+    j.append(f'tl.to(".{i}w",{{yPercent:0,duration:{dur},ease:"expo.out",stagger:{stag}}},{round(t_in, 3)});')
+    if t_out is not None: j.append(f'tl.to(".{i}w",{{yPercent:-130,duration:{out},ease:"power3.in",stagger:0.015}},{round(t_out - out, 3)});')
     return i
 
-# ---------- fond, grain, vignette, Terre
-h.append(f'<div id="grain" style="position:absolute;left:-60px;top:-60px;width:{W + 120}px;height:{H + 120}px;background:url(assets/img/grain.png);opacity:.05;z-index:800;pointer-events:none;mix-blend-mode:overlay"></div>')
+def img(sc, src, cx, cy, w, rad=0, z=1, shadow=True, extra='', op=1):
+    iw, ih = size_of(src); hh = ih * w / iw; i = uid('i')
+    sh = 'box-shadow:0 30px 80px rgba(4,12,8,.45),0 0 0 1px rgba(255,255,255,.14);' if shadow else ''
+    sc.add(f'<div id="{i}" style="position:absolute;left:{cx - w / 2:.1f}px;top:{cy - hh / 2:.1f}px;width:{w:.1f}px;height:{hh:.1f}px;border-radius:{rad}px;overflow:hidden;{sh}z-index:{z};opacity:{op};{extra}">'
+           f'<img src="{src}" alt="" style="display:block;width:100%;height:100%"></div>')
+    return i, hh
+
+def phone(sc, src, cx, cy, sh, z=5, extra=''):
+    """Un vrai écran (393×852) dans un cadre de téléphone ; sh = hauteur de l'écran en px."""
+    s = sh / 852; sw = 393 * s; bz = 12 * sh / 900; rad = 58 * sh / 900; i = uid('p')
+    sc.add(f'<div id="{i}" style="position:absolute;left:{cx - sw / 2 - bz:.1f}px;top:{cy - sh / 2 - bz:.1f}px;width:{sw + 2 * bz:.1f}px;height:{sh + 2 * bz:.1f}px;border-radius:{rad + bz:.1f}px;'
+           f'background:#0A0F0C;box-shadow:0 60px 140px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.14);z-index:{z};{extra}">'
+           f'<div style="position:absolute;left:{bz:.1f}px;top:{bz:.1f}px;width:{sw:.1f}px;height:{sh:.1f}px;border-radius:{rad:.1f}px;overflow:hidden">'
+           f'<img id="{i}i" src="{src}" alt="" style="display:block;width:100%;height:100%"></div>'
+           f'<div style="position:absolute;left:50%;top:{bz + 10 * s:.1f}px;width:{104 * s:.0f}px;height:{31 * s:.0f}px;margin-left:-{52 * s:.0f}px;border-radius:{16 * s:.0f}px;background:#000"></div></div>')
+    return i
+
+TILES = ['meteo', 'carte', 'budget', 'etapes', 'paperasse', 'kits', 'carnet', 'groupe']
+WORDS = {'meteo': 'MÉTÉO', 'carte': 'CARTE', 'budget': 'BUDGET', 'etapes': 'ÉTAPES', 'paperasse': 'PAPIERS', 'kits': 'KITS', 'carnet': 'CARNET', 'groupe': 'GROUPE'}
+
+# ---------- grain et vignette (au-dessus de tout)
+h.append(f'<div id="grain" style="position:absolute;left:-60px;top:-60px;width:{W + 120}px;height:{H + 120}px;background:url(assets/img/grain.png);opacity:.06;z-index:800;pointer-events:none;mix-blend-mode:overlay"></div>')
 j.append(f'tl.fromTo("#grain",{{x:0,y:0}},{{x:-48,y:37,duration:{D},ease:"steps({int(D * 12)})"}},0);')
-h.append('<div id="vig" style="position:absolute;inset:0;z-index:780;pointer-events:none;background:radial-gradient(120% 85% at 50% 42%,rgba(0,0,0,0) 58%,rgba(4,12,8,.55) 100%)"></div>')
-CX = 540; R = 1600; HOR = 1730; CY = HOR + R
-h.append(f'<div id="terre" style="position:absolute;left:{CX - R}px;top:{HOR}px;width:{2 * R}px;height:{2 * R}px;border-radius:{R}px;overflow:hidden;z-index:20;'
-         f'box-shadow:0 -12px 80px rgba(150,190,230,.42),0 0 0 2px rgba(190,220,255,.3);background:#06120C;opacity:0">'
-         f'<div id="sol" style="position:absolute;left:{R - 1300}px;top:0;width:2600px;height:1950px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.6)"></div>'
-         f'<div style="position:absolute;inset:0;border-radius:{R}px;background:radial-gradient(circle at 50% 5%,rgba(0,0,0,0) 0%,rgba(6,18,12,.3) 11%,rgba(6,18,12,.9) 28%)"></div></div>')
-T('#terre', {'opacity': 0, 'y': 120}, {'opacity': 1, 'y': 0, 'duration': 0.9, 'ease': 'expo.out'}, 3.0)
-T('#sol', {'x': 0}, {'x': -300, 'duration': D - 3.0, 'ease': 'none'}, 3.0)
+h.append('<div id="vig" style="position:absolute;inset:0;z-index:780;pointer-events:none;background:radial-gradient(120% 85% at 50% 45%,rgba(0,0,0,0) 60%,rgba(4,12,8,.4) 100%)"></div>')
+h.append(f'<div id="flash" style="position:absolute;inset:0;background:{STONE};z-index:700;opacity:0;pointer-events:none"></div>')
+def flash(t, a=0.6):
+    T('#flash', {'opacity': a}, {'opacity': 0, 'duration': 0.3, 'ease': 'power2.out'}, t, ir=False)
 
-# ---------- le téléphone (un seul, qui change d'échelle) : écran 393×852 points à l'échelle S
-S = 1.12; SW, SH = 393 * S, 852 * S
-SX, SY = CX - SW / 2, 440                                   # écran à taille normale
-BZ = 13; RAD = 58
-h.append(f'<div id="ph" style="position:absolute;left:{SX - BZ:.1f}px;top:{SY - BZ:.1f}px;width:{SW + 2 * BZ:.1f}px;height:{SH + 2 * BZ:.1f}px;border-radius:{RAD + BZ}px;background:#0A0F0C;'
-         f'box-shadow:0 60px 140px rgba(0,0,0,.6),0 0 0 1.5px rgba(255,255,255,.14);z-index:50;transform-origin:50% 50%">'
-         f'<div id="scr" style="position:absolute;left:{BZ}px;top:{BZ}px;width:{SW:.1f}px;height:{SH:.1f}px;border-radius:{RAD}px;overflow:hidden;background:#E9EEEA">SCREENS</div>'
-         f'<div style="position:absolute;left:50%;top:{BZ + 11}px;width:104px;height:31px;margin-left:-52px;border-radius:16px;background:#000;z-index:5"></div></div>')
-SCREENS = []
-def scr_img(src, z, extra=''):
-    i = uid('e'); SCREENS.append(f'<img id="{i}" src="{src}" alt="" style="position:absolute;left:0;top:0;width:100%;height:100%;z-index:{z};{extra}">'); return i
+# ================= S0 · HOOK (0 – 2) : un mot par croche
+BGS = [(DEEP, STONE), (STONE, INK), (BRASS, INK), (FOREST, STONE), (INK, BRASS), (STONE, FOREST), (SAGE, STONE), (DEEP, BRASS)]
+for k, name in enumerate(TILES):
+    t0 = 0.25 * k; bg, fg = BGS[k]
+    sc = Scene(t0, t0 + 0.25, bg, 10 + k)
+    word = WORDS[name]
+    wi = uid('w')
+    sc.add(f'<div id="{wi}" style="position:absolute;left:0;right:0;top:330px;text-align:center;{ANTON};font-size:{300 if len(word) <= 6 else 250}px;line-height:1;letter-spacing:.01em;color:{fg}">{word}</div>')
+    T(f'#{wi}', {'scale': 1.35, 'y': 0}, {'scale': 1, 'y': 0, 'duration': 0.22, 'ease': 'expo.out'}, t0)
+    rot = [-6, 5, -4, 7, -5, 4, -7, 5][k]
+    ti, _ = img(sc, f'assets/real/hub-{name}.png', 540 + [-60, 70, -40, 60, -70, 50, -50, 40][k], 1150, 640 if name not in ('carte', 'etapes') else 420, rad=36, z=3)
+    T(f'#{ti}', {'scale': 0.6, 'rotation': rot * 2, 'y': 160}, {'scale': 1, 'rotation': rot, 'y': 0, 'duration': 0.22, 'ease': 'back.out(1.6)'}, t0)
+    sc.close()
+# ================= S1 · « Tout ça… dans une seule app. » (2 – 3)
+sc = Scene(2.0, 3.0, INK, 30)
+for k, name in enumerate(TILES):
+    a = math.radians(k * 45 + 20); rx, ry = 540 + 380 * math.cos(a), 960 + 520 * math.sin(a)
+    ti, _ = img(sc, f'assets/real/hub-{name}.png', rx, ry, 300 if name not in ('carte', 'etapes') else 190, rad=18, z=2)
+    T(f'#{ti}', {'opacity': 0, 'scale': 0.4}, {'opacity': 1, 'scale': 1, 'duration': 0.25, 'ease': 'back.out(1.6)'}, 2.0 + 0.03 * k)
+    TO(f'#{ti}', {'x': 540 - rx, 'y': 960 - ry, 'scale': 0.1, 'rotation': 90, 'opacity': 0, 'duration': 0.38, 'ease': 'power3.in'}, 2.6)
+text(sc, 'Tout ça…', 540, 800, 2.0, size=130, align='center', words=False, dur=0.3, t_out=2.5, out=0.12)
+text(sc, '…dans une seule app.', 540, 830, 2.5, size=96, color=BRASS, align='center', dur=0.3, stag=0.03)
+sc.close()
 
-# ================= 0 · HOOK (0 – 3)
-BIG = 1.42                                                   # le téléphone en gros plan pendant le hook
-PH_CY = SY + SH / 2
-HOOK_Y = 1080                                                # centre du téléphone pendant le hook
-SET('#ph', {'scale': BIG, 'y': HOOK_Y - PH_CY}, 0)
-HOOK = [('Préparer.', 'compas'), ('T’équiper.', 'kit-studio'), ('Partir.', 'compte_suivi-en-direct'),
-        ('Raconter.', 'dev_carnet-v2'), ('Partager.', 'carnets'), ('Progresser.', 'compte')]
-dirs = [(0, 0), (1, 0), (0, 1), (-1, 0), (0, -1), (1, 0)]
-hook_ids = []
-for b, ((word, src), (dx, dy)) in enumerate(zip(HOOK, dirs)):
-    t = 0.5 * b
-    i = scr_img(f'assets/screens/ecrans/{src}.png', 10 + b, 'opacity:0')
-    hook_ids.append(i)
-    if b == 0:
-        T(f'#{i}', {'opacity': 1, 'scale': 1.25}, {'opacity': 1, 'scale': 1, 'duration': 0.24, 'ease': 'expo.out'}, 0.0)
-    else:   # chaque écran arrive juste avant le temps et se pose dessus
-        T(f'#{i}', {'opacity': 1, 'xPercent': 100 * dx, 'yPercent': 100 * dy, 'scale': 1 if (dx or dy) else 1.3},
-          {'opacity': 1, 'xPercent': 0, 'yPercent': 0, 'scale': 1, 'duration': 0.2, 'ease': 'power4.out'}, t - 0.12, ir=False)
-        prev = hook_ids[b - 1]
-        TO(f'#{prev}', {'xPercent': -30 * dx, 'yPercent': -30 * dy, 'filter': 'brightness(.45)', 'duration': 0.2, 'ease': 'power4.out'}, t - 0.12)
-    # contretemps : petit coup de zoom (sur la charleston)
-    T(f'#{i}', {'scale': 1}, {'scale': 1.035, 'duration': 0.1, 'ease': 'power2.out', 'yoyo': True, 'repeat': 1}, t + 0.25, ir=False)
-    # le verbe claque en haut, sur le temps
-    mline(word, 120, t - 0.03, t + 0.5 if b < 5 else 2.98, size=150, weight=700, words=False, dur=0.22, out=0.12, z=130)
-# éclair blanc sur l'impact
-h.append('<div id="flash" style="position:absolute;inset:0;background:#FAF8F5;z-index:700;opacity:0;pointer-events:none"></div>')
-T('#flash', {'opacity': 0.0}, {'opacity': 0.55, 'duration': 0.04}, 2.98, ir=False); TO('#flash', {'opacity': 0, 'duration': 0.35, 'ease': 'power2.out'}, 3.02)
+# ================= S2 · LE HUB en 3D (3 – 4,5)
+sc = Scene(3.0, 4.5, f'radial-gradient(120% 80% at 50% 45%,#14352A 0%,{DEEP} 75%)', 40)
+hb = uid('hb')
+sc.add(f'<div id="{hb}" style="position:absolute;left:-40px;top:250px;{ANTON};font-size:880px;line-height:.9;letter-spacing:-.01em;white-space:nowrap;'
+       f'background:url(assets/screens/hub.png) 0 0/1080px auto;-webkit-background-clip:text;background-clip:text;color:transparent;opacity:.5">HUB</div>')
+T(f'#{hb}', {'x': 120, 'backgroundPosition': '0px 0px'}, {'x': -120, 'backgroundPosition': '0px -500px', 'duration': 1.5, 'ease': 'none'}, 3.0)
+ph = phone(sc, 'assets/screens/hub.png', 540, 1000, 1080, z=5, extra='transform-style:preserve-3d')
+T(f'#{ph}', {'y': -1500, 'rotationX': 0, 'rotationY': 0, 'rotationZ': -8}, {'y': 0, 'rotationX': 14, 'rotationY': -24, 'rotationZ': 0, 'duration': 0.5, 'ease': 'back.out(1.1)'}, 3.0)
+TO(f'#{ph}', {'rotationY': 18, 'rotationX': 8, 'duration': 1.0, 'ease': 'sine.inOut'}, 3.5)
+text(sc, '01 · LE HUB', 96, 120, 3.25, size=30, color=BRASS, weight=600, track='.3em', words=False)
+text(sc, 'Ton aventure,', 96, 1600, 3.4, size=84)
+text(sc, 'd’un coup d’œil.', 96, 1700, 3.6, size=84, weight=500, color=GREY)
+sc.close()
 
-# ================= IMPACT (3 – 5) : le téléphone recule, les six écrans rentrent dedans
-TO('#ph', {'scale': 1, 'y': 0, 'duration': 0.6, 'ease': 'expo.out'}, 3.0)
-hub = scr_img('assets/screens/hub.png', 30, 'opacity:0')
-T(f'#{hub}', {'opacity': 0}, {'opacity': 1, 'duration': 0.15}, 3.0, ir=False)
-for b in range(6): TO(f'#{hook_ids[b]}', {'opacity': 0, 'duration': 0.01}, 3.2)
-# les six écrans, en cartes, éventail autour du téléphone puis aspirés dedans (doubles croches à 3,5)
-fan = [(-330, -420, -14), (330, -420, 14), (-390, 60, -10), (390, 60, 10), (-330, 520, -6), (330, 520, 6)]
-for b, ((_, src), (fx, fy, rot)) in enumerate(zip(HOOK, fan)):
-    i = uid('c'); cw, chh = 393 * 0.52, 852 * 0.52
-    h.append(f'<div id="{i}" style="position:absolute;left:{CX}px;top:{PH_CY:.0f}px;width:{cw:.0f}px;height:{chh:.0f}px;border-radius:30px;overflow:hidden;'
-             f'box-shadow:0 24px 60px rgba(0,0,0,.5);z-index:45;opacity:0"><img src="assets/screens/ecrans/{src}.png" alt="" style="width:100%;height:100%;display:block"></div>')
-    j.append(f'gsap.set("#{i}",{{xPercent:-50,yPercent:-50}});')
-    T(f'#{i}', {'opacity': 0, 'x': 0, 'y': 0, 'rotation': 0, 'scale': 1.6}, {'opacity': 1, 'x': fx, 'y': fy, 'rotation': rot, 'scale': 1, 'duration': min(0.5, 3.5 + 0.125 * b - 0.2 - 3.0), 'ease': 'expo.out'}, 3.0)
-    TO(f'#{i}', {'x': 0, 'y': 0, 'rotation': 0, 'scale': 0.35, 'opacity': 0, 'duration': 0.3, 'ease': 'power3.in'}, 3.5 + 0.125 * b - 0.18)
-mline('LE KIT DU VOYAGEUR', 150, 3.25, 4.95, size=24, weight=600, color=BRASS, track='0.32em', words=False, dur=0.5)
-mline('Toute ton aventure.', 194, 3.45, 4.95, size=76, dur=0.5)
-mline('Une seule app.', 290, 3.95, 4.95, size=76, weight=500, color=GREY, dur=0.5)
+# ================= S3 · défilé de tuiles sur pierre (4,5 – 6)
+sc = Scene(4.5, 6.0, STONE, 50)
+T(f'#{sc.id}', {'xPercent': 100}, {'xPercent': 0, 'duration': 0.25, 'ease': 'power4.out'}, 4.5, ir=False)   # coup de fouet
+rows = [(['meteo', 'budget', 'carnet', 'kits', 'meteo', 'budget'], 640, -1), (['paperasse', 'groupe', 'paperasse', 'groupe'], 1180, 1)]
+for names, y, d in rows:
+    rid = uid('row'); x = 0; parts = []
+    for n in names:
+        iw, ih = size_of(f'assets/real/hub-{n}.png'); hgt = 300 if n in ('paperasse', 'groupe') else 330; w_ = iw * hgt / ih
+        parts.append(f'<div style="position:absolute;left:{x:.0f}px;top:{-hgt / 2:.0f}px;width:{w_:.0f}px;height:{hgt}px;border-radius:30px;overflow:hidden;box-shadow:0 24px 60px rgba(11,31,23,.22)">'
+                     f'<img src="assets/real/hub-{n}.png" alt="" style="width:100%;height:100%;display:block"></div>'); x += w_ + 36
+    sc.add(f'<div id="{rid}" style="position:absolute;left:0;top:{y}px;width:{x:.0f}px;height:1px">' + ''.join(parts) + '</div>')
+    span = x - W
+    T(f'#{rid}', {'x': 0 if d < 0 else -span}, {'x': -span if d < 0 else 0, 'duration': 1.5, 'ease': 'power1.inOut'}, 4.5)
+text(sc, 'Tout ton voyage.', 540, 250, 4.62, size=104, color=INK, align='center')
+text(sc, 'Sur un seul écran.', 540, 1520, 4.85, size=84, color=FOREST, weight=500, align='center')
+sc.close()
 
-# ================= 01 · LE HUB (5 – 7) : les tuiles jaillissent puis rentrent
-mline('01 · LE HUB', 150, 4.98, None, size=24, weight=600, color=BRASS, track='0.3em', words=False, dur=0.5)
-mline('Ton aventure,', 194, 5.0, 6.95, size=76, dur=0.5)
-mline('d’un coup d’œil.', 290, 5.25, 6.95, size=76, weight=500, color=GREY, dur=0.5)
-BOX = {'meteo': (37, 24, 584, 376), 'budget': (598, 24, 1143, 376), 'carte': (37, 390, 677, 1483), 'etapes': (690, 390, 1143, 1483),
-       'carnet': (37, 1497, 584, 1762), 'kits': (598, 1497, 1142, 1762), 'paperasse': (37, 1776, 1142, 1984), 'groupe': (37, 1998, 1142, 2284)}
-DEST = {'meteo': (178, 560, 1.4, -5), 'budget': (902, 560, 1.4, 5), 'carte': (172, 920, 1.12, 3), 'etapes': (912, 920, 1.12, -3),
-        'carnet': (184, 1290, 1.4, -3), 'kits': (896, 1290, 1.4, 3), 'paperasse': (540, 1500, 1.28, 1.5), 'groupe': (540, 1636, 1.28, -1.5)}
-ORDER = ['meteo', 'budget', 'carte', 'etapes', 'carnet', 'kits', 'paperasse', 'groupe']
-def in_screen(box):   # centre d'une boîte (px 3x de la capture) dans l'écran du téléphone à taille normale
-    x0, y0, x1, y1 = box; return SX + (x0 + x1) / 6 * S, SY + (y0 + y1) / 6 * S
-for k, name in enumerate(ORDER):
-    bx0, by0, bx1, by1 = BOX[name]; cw, chh = (bx1 - bx0) / 3, (by1 - by0) / 3
-    sx, sy = in_screen(BOX[name]); dx, dy, sc, rot = DEST[name]
-    i = f'tu{name}'
-    h.append(f'<div id="{i}" style="position:absolute;left:{dx}px;top:{dy}px;width:{cw * sc:.0f}px;height:{chh * sc:.0f}px;border-radius:{22 * sc:.0f}px;overflow:hidden;'
-             f'box-shadow:0 24px 56px rgba(4,12,8,.5),0 0 0 1px rgba(255,255,255,.16);z-index:{60 + k};opacity:0">'
-             f'<img src="assets/real/hub-{name}.png" alt="" style="display:block;width:100%;height:100%"></div>')
-    j.append(f'gsap.set("#{i}",{{xPercent:-50,yPercent:-50}});')
-    t = 5.5 + 0.125 * k
-    T(f'#{i}', {'opacity': 0, 'x': sx - dx, 'y': sy - dy, 'scale': S / sc, 'rotation': 0},
-      {'opacity': 1, 'x': 0, 'y': 0, 'scale': 1, 'rotation': rot, 'duration': min(0.55, 6.6 - t), 'ease': 'expo.out'}, t)
-    TO(f'#{i}', {'x': sx - dx, 'y': sy - dy, 'scale': S / sc, 'rotation': 0, 'duration': 0.32, 'ease': 'power3.in'}, 6.62 + 0.012 * k)
-    TO(f'#{i}', {'opacity': 0, 'duration': 0.01}, 6.95)
-T(f'#{hub}', {'filter': 'brightness(1)'}, {'filter': 'brightness(.45)', 'duration': 0.4}, 5.5, ir=False)
-TO(f'#{hub}', {'filter': 'brightness(1)', 'duration': 0.3}, 6.65)
+# ================= S4 · MÉTÉO (6 – 7,5) : zoom à travers la tuile, gros plan du vrai tiroir
+sc = Scene(6.0, 7.5, f'linear-gradient(180deg,#0E2A3A 0%,{DEEP} 100%)', 60)
+big = uid('bg')
+sc.add(f'<div id="{big}" style="position:absolute;left:0;right:0;top:120px;text-align:center;{ANTON};font-size:560px;line-height:1;color:transparent;-webkit-text-stroke:3px rgba(208,160,112,.55)">6,8°</div>')
+T(f'#{big}', {'scale': 1.4, 'opacity': 0}, {'scale': 1, 'opacity': 1, 'duration': 0.6, 'ease': 'expo.out'}, 6.0)
+mi, mh = img(sc, 'assets/real/tiroir-meteo.png', 540, 900, 980, rad=50, z=3)
+T(f'#{mi}', {'scale': 0.32, 'y': 300, 'rotation': -6}, {'scale': 1, 'y': 0, 'rotation': 0, 'duration': 0.5, 'ease': 'expo.out'}, 6.0)
+fr, fh = img(sc, 'assets/real/tiroir-meteo-frise.png', 540, 1290, 1020, rad=40, z=2)
+T(f'#{fr}', {'x': 700, 'opacity': 0}, {'x': 0, 'opacity': 1, 'duration': 0.45, 'ease': 'expo.out'}, 6.5)
+TO(f'#{fr}', {'x': -60, 'duration': 0.55, 'ease': 'none'}, 6.95)
+text(sc, 'MÉTÉO', 96, 1560, 6.5, size=34, color=BRASS, weight=600, track='.28em', words=False)
+text(sc, 'MET Norway, heure par heure.', 96, 1612, 6.62, size=60)
+sc.close()
 
-# ================= 7 – 19 : les huit tiroirs réels
-TXT = {'meteo': ('Météo.', 'MET Norway, heure par heure.'), 'budget': ('Budget.', 'Dépensé, prévu, ce qu’il reste.'),
-       'carte': ('Carte.', 'Ta trace, même hors ligne.'), 'etapes': ('Étapes.', 'Jour après jour, jusqu’au départ.'),
-       'carnet': ('Carnet.', 'Moments, notes, puis le récit.'), 'kits': ('Kits.', 'La checklist de ton sac.'),
-       'paperasse': ('Paperasse.', 'Billets, réservations, urgences.'), 'groupe': ('Groupe.', 'Ton équipe, et sa sécurité.')}
-CROP = {'meteo': (30, 380, 1152, 740), 'budget': (40, 910, 1140, 1130), 'carte': (40, 370, 1152, 1500), 'etapes': (30, 370, 1152, 600),
-        'carnet': (40, 370, 1150, 715), 'kits': (30, 866, 1152, 1425), 'paperasse': (40, 380, 1150, 550), 'groupe': (30, 330, 1152, 800)}
-CW = {'carte': 560, 'kits': 860}                              # largeur du détail posé (sinon 900)
-PANEL_TOP = 190                                               # haut du tiroir dans la capture (px 3x) : le haut de l'écran reste le Hub
-h.append(f'<svg id="svt" width="{W}" height="{H}" style="position:absolute;left:0;top:0;z-index:90;overflow:visible;pointer-events:none" aria-hidden="true"></svg>')
-for i_, name in enumerate(ORDER):
-    t0 = 7.0 + 1.5 * i_
-    a, b = TXT[name]
-    mline(a, 194, t0 - 0.04, t0 + 1.5 if i_ < 7 else 19.0, size=84, dur=0.4, out=0.2)
-    mline(b, 296, t0 + 0.06, t0 + 1.5 if i_ < 7 else 19.0, size=40, weight=500, color=GREY, dur=0.45, stag=0.025, out=0.2)
-    # le doigt touche la tuile : un anneau laiton s'ouvre sur elle
-    tx, ty = in_screen(BOX[name]); rg = uid('g')
-    h.append(f'<div id="{rg}" style="position:absolute;left:{tx - 40:.0f}px;top:{ty - 40:.0f}px;width:80px;height:80px;border-radius:40px;border:4px solid {BRASS};background:rgba(208,160,112,.25);z-index:95;opacity:0"></div>')
-    T(f'#{rg}', {'opacity': 1, 'scale': 0.3}, {'opacity': 0, 'scale': 1.8, 'duration': 0.45, 'ease': 'power2.out'}, t0, ir=False)
-    # le vrai tiroir monte dans l'écran (seule sa partie basse : le haut de la capture est le Hub, identique)
-    dr = uid('d'); top_pct = PANEL_TOP / 2556 * 100
-    SCREENS.append(f'<img id="{dr}" src="assets/screens/tiroirs/hub-{name}.png" alt="" style="position:absolute;left:0;top:0;width:100%;height:100%;z-index:{40 + i_};'
-                   f'clip-path:inset({top_pct:.2f}% 0 0 0);opacity:0">')
-    T(f'#{dr}', {'opacity': 1, 'yPercent': 100}, {'opacity': 1, 'yPercent': 0, 'duration': 0.42, 'ease': 'expo.out'}, t0 + 0.06, ir=False)
-    TO(f'#{dr}', {'yPercent': 100, 'duration': 0.26, 'ease': 'power3.in'}, t0 + 1.22)
-    # son détail réel sort de l'écran et se pose sur le temps (t0 + 0,5)
-    cx0, cy0, cx1, cy1 = CROP[name]; iw, ih = cx1 - cx0, cy1 - cy0
-    w_ = CW.get(name, 900); h_ = ih * w_ / iw
-    ccx, ccy = SX + (cx0 + cx1) / 6 * S, SY + (cy0 + cy1) / 6 * S
-    dy_ = 1190 if name != 'carte' else 1080
-    co = uid('k'); s0 = (iw / 3 * S) / w_
-    h.append(f'<div id="{co}" style="position:absolute;left:{CX}px;top:{dy_}px;width:{w_:.0f}px;height:{h_:.0f}px;border-radius:{26 * w_ / (iw / 3):.0f}px;overflow:hidden;'
-             f'box-shadow:0 34px 90px rgba(4,12,8,.6),0 0 0 1px rgba(255,255,255,.18);z-index:{100 + i_};opacity:0;background:#fff">'
-             f'<img src="assets/real/tiroir-{name}.png" alt="" style="display:block;width:100%;height:100%"></div>')
-    j.append(f'gsap.set("#{co}",{{xPercent:-50,yPercent:-50}});')
-    T(f'#{co}', {'opacity': 0, 'x': ccx - CX, 'y': ccy - dy_, 'scale': s0}, {'opacity': 1, 'x': 0, 'y': 0, 'scale': 1, 'duration': 0.44, 'ease': 'back.out(1.25)'}, t0 + 0.08 + 0.0, ir=True)
-    TO(f'#{co}', {'y': -10, 'duration': 0.6, 'ease': 'sine.out'}, t0 + 0.55)
-    TO(f'#{co}', {'x': ccx - CX, 'y': ccy - dy_, 'scale': s0, 'opacity': 0, 'duration': 0.26, 'ease': 'power3.in'}, t0 + 1.2)
-    TO(f'#{hub}', {'filter': 'brightness(.62)', 'duration': 0.2}, t0 + 0.06); TO(f'#{hub}', {'filter': 'brightness(1)', 'duration': 0.2}, t0 + 1.25)
+# ================= S5 · CARTE (7,5 – 9) : la vraie carte couchée en perspective
+sc = Scene(7.5, 9.0, f'linear-gradient(180deg,{DEEP} 0%,#14352A 100%)', 70)
+j.append(f'gsap.set("#{sc.id}",{{clipPath:"circle(0% at 50% 50%)"}});')
+T(f'#{sc.id}', {'clipPath': 'circle(0% at 50% 55%)'}, {'clipPath': 'circle(80% at 50% 55%)', 'duration': 0.35, 'ease': 'power3.out'}, 7.5, ir=False)
+ci, chh = img(sc, 'assets/real/tiroir-carte.png', 540, 1060, 940, rad=56, z=2, extra='transform-origin:50% 60%')
+T(f'#{ci}', {'rotationX': 0, 'scale': 1.25}, {'rotationX': 38, 'scale': 1, 'duration': 0.9, 'ease': 'expo.out'}, 7.5)
+TO(f'#{ci}', {'rotationZ': -6, 'duration': 0.6, 'ease': 'sine.inOut'}, 8.4)
+# le repère réel (Le Pont-de-Claix) : un anneau laiton pulse dessus, sur chaque temps
+pin = uid('pn')
+sc.add(f'<div id="{pin}" style="position:absolute;left:{540 - 940 / 2 + 940 * 0.587 - 60:.0f}px;top:{1060 - chh / 2 + chh * 0.535 - 60:.0f}px;width:120px;height:120px;border-radius:60px;border:5px solid {BRASS};z-index:4;opacity:0"></div>')
+for t in (8.0, 8.5):
+    T(f'#{pin}', {'scale': 0.2, 'opacity': 1}, {'scale': 1.6, 'opacity': 0, 'duration': 0.45, 'ease': 'power2.out'}, t, ir=False)
+text(sc, 'CARTE', 540, 150, 7.6, size=34, color=BRASS, weight=600, track='.28em', words=False, align='center')
+text(sc, 'Ta trace,', 540, 205, 7.7, size=110, align='center')
+text(sc, 'même hors ligne.', 540, 330, 7.9, size=110, color=GREY, weight=500, align='center')
+sc.close()
 
-# ================= 19 – 20 : « Ce n'était que le Hub. »
-mline('Ce n’était', 194, 19.0, None, size=84, dur=0.45)
-mline('que le Hub.', 296, 19.25, None, size=84, weight=500, color=BRASS, dur=0.45)
-TO('#ph', {'scale': 0.94, 'duration': 0.5, 'ease': 'expo.out'}, 19.5)
-TO('#root > *:not(audio)', {'opacity': 0, 'duration': 0.3}, D - 0.3)
+# ================= S6 · KITS (9 – 10,5) : la vraie checklist défile plein cadre
+sc = Scene(9.0, 10.5, STONE, 80)
+T(f'#{sc.id}', {'yPercent': 100}, {'yPercent': 0, 'duration': 0.25, 'ease': 'power4.out'}, 9.0, ir=False)
+onze = uid('o')
+sc.add(f'<div id="{onze}" style="position:absolute;right:30px;top:40px;{ANTON};font-size:640px;line-height:1;color:rgba(23,64,44,.1)">11</div>')
+T(f'#{onze}', {'y': 200}, {'y': -60, 'duration': 1.5, 'ease': 'none'}, 9.0)
+li, lh_ = img(sc, 'assets/real/tiroir-kits-liste.png', 540, 0, 900, rad=44, z=3, shadow=True)
+T(f'#{li}', {'y': 1500}, {'y': 1150, 'duration': 0.35, 'ease': 'expo.out'}, 9.0)
+TO(f'#{li}', {'y': 640, 'duration': 1.15, 'ease': 'power1.inOut'}, 9.35)
+mask = uid('m')
+sc.add(f'<div id="{mask}" style="position:absolute;left:0;right:0;top:0;height:660px;background:linear-gradient({STONE} 82%,rgba(250,248,245,0));z-index:4"></div>')
+text(sc, 'KITS', 96, 150, 9.1, size=34, color=SAGE, weight=600, track='.28em', words=False, extra='z-index:5')
+text(sc, 'Ton sac,', 96, 205, 9.2, size=110, color=INK, extra='z-index:5')
+text(sc, 'objet par objet.', 96, 330, 9.4, size=110, color=FOREST, weight=500, extra='z-index:5')
+sc.close()
 
-html_body = '\n'.join('      ' + x for x in h).strip().replace('SCREENS', ''.join(SCREENS))
+# ================= S7 · BUDGET (10,5 – 12) : fond laiton, trois vraies cartes, une par temps
+sc = Scene(10.5, 12.0, BRASS, 90)
+euro = uid('eu')
+sc.add(f'<div id="{euro}" style="position:absolute;left:0;right:0;top:420px;text-align:center;{ANTON};font-size:1100px;line-height:1;color:rgba(11,31,23,.08)">€</div>')
+T(f'#{euro}', {'rotation': -12, 'scale': 1.2}, {'rotation': 6, 'scale': 1, 'duration': 1.5, 'ease': 'none'}, 10.5)
+for k, (n, y, rot) in enumerate([('rythme', 760, -4), ('projection', 1060, 3), ('marge', 1380, -2)]):
+    bi, _ = img(sc, f'assets/real/budget-{n}.png', 540 + [-90, 80, 0][k], y, 640 if n != 'marge' else 720, rad=40, z=3 + k)
+    T(f'#{bi}', {'scale': 2.4, 'opacity': 0, 'rotation': rot * 3}, {'scale': 1, 'opacity': 1, 'rotation': rot, 'duration': 0.24, 'ease': 'power4.in'}, 10.5 + 0.5 * k - 0.2)
+    T(f'#{bi}', {'y': 0}, {'y': 10, 'duration': 0.08, 'yoyo': True, 'repeat': 1, 'ease': 'power2.out'}, 10.5 + 0.5 * k + 0.04, ir=False)
+text(sc, 'BUDGET', 96, 150, 10.55, size=34, color=INK, weight=600, track='.28em', words=False)
+text(sc, 'Ce qui part,', 96, 205, 10.65, size=110, color=INK)
+text(sc, 'ce qui reste.', 96, 330, 10.85, size=110, color=STONE, weight=500)
+sc.close()
+
+# ================= S8 · ÉTAPES (12 – 13,5) : le vrai bouton, pressé sur le temps
+sc = Scene(12.0, 13.5, FOREST, 100)
+T(f'#{sc.id}', {'xPercent': -100}, {'xPercent': 0, 'duration': 0.25, 'ease': 'power4.out'}, 12.0, ir=False)
+jj = uid('jj')
+sc.add(f'<div id="{jj}" style="position:absolute;left:0;right:0;top:150px;text-align:center;{ANTON};font-size:400px;line-height:1;color:transparent;-webkit-text-stroke:3px rgba(208,160,112,.6)">J-191</div>')
+T(f'#{jj}', {'scale': 1.3, 'opacity': 0}, {'scale': 1, 'opacity': 1, 'duration': 0.5, 'ease': 'expo.out'}, 12.0)
+TO(f'#{jj}', {'scale': 0.94, 'duration': 1.0, 'ease': 'none'}, 12.5)
+ei, eh = img(sc, 'assets/real/tiroir-etapes.png', 540, 1000, 1000, rad=60, z=3)
+T(f'#{ei}', {'scale': 0.7, 'opacity': 0}, {'scale': 1, 'opacity': 1, 'duration': 0.4, 'ease': 'expo.out'}, 12.05)
+# appui sur « Démarrer le voyage » (le bouton est à ~70 % de la largeur, ~44 % de la hauteur de la découpe)
+bx, by = 540 - 500 + 1000 * 0.705, 1000 - eh / 2 + eh * 0.43
+TO(f'#{ei}', {'scale': 0.965, 'duration': 0.06, 'ease': 'power2.in'}, 12.5); TO(f'#{ei}', {'scale': 1, 'duration': 0.25, 'ease': 'back.out(3)'}, 12.56)
+rp = uid('rp')
+sc.add(f'<div id="{rp}" style="position:absolute;left:{bx - 90:.0f}px;top:{by - 90:.0f}px;width:180px;height:180px;border-radius:90px;background:rgba(208,160,112,.35);border:4px solid {BRASS};z-index:5;opacity:0"></div>')
+T(f'#{rp}', {'scale': 0.2, 'opacity': 1}, {'scale': 2.4, 'opacity': 0, 'duration': 0.48, 'ease': 'power2.out'}, 12.5, ir=False)
+T(f'#{rp}', {'scale': 0.2, 'opacity': 1}, {'scale': 2.4, 'opacity': 0, 'duration': 0.6, 'ease': 'power2.out'}, 13.0, ir=False)
+text(sc, 'ÉTAPES', 984, 1300, 12.15, size=34, color=BRASS, weight=600, track='.28em', words=False, align='right')
+text(sc, 'Jour après jour,', 984, 1355, 12.25, size=100, align='right')
+text(sc, 'jusqu’au départ.', 984, 1470, 12.45, size=100, color=GREY, weight=500, align='right')
+sc.close()
+
+# ================= S9 · PAPERASSE (13,5 – 15) : un mot par temps, le liseré passe d'onglet en onglet
+sc = Scene(13.5, 15.0, INK, 110)
+j.append(f'gsap.set("#{sc.id}",{{clipPath:"inset(50% 0% 50% 0%)"}});')
+T(f'#{sc.id}', {'clipPath': 'inset(50% 0% 50% 0%)'}, {'clipPath': 'inset(0% 0% 0% 0%)', 'duration': 0.3, 'ease': 'power4.out'}, 13.5, ir=False)
+pi, phh = img(sc, 'assets/real/tiroir-paperasse.png', 540, 1020, 1000, rad=60, z=3)
+T(f'#{pi}', {'y': 300, 'opacity': 0}, {'y': 0, 'opacity': 1, 'duration': 0.4, 'ease': 'expo.out'}, 13.5)
+ring = uid('rg')
+tabs = [(0.205, 0.33), (0.5, 0.33), (0.79, 0.30)]           # centre et largeur des trois onglets, en fraction de la découpe
+sc.add(f'<div id="{ring}" style="position:absolute;left:{540 - 500 + 1000 * tabs[0][0] - 1000 * tabs[0][1] / 2:.0f}px;top:{1020 - phh / 2 + 12:.0f}px;width:{1000 * tabs[0][1]:.0f}px;height:{phh - 24:.0f}px;'
+       f'border-radius:{(phh - 24) / 2:.0f}px;border:5px solid {BRASS};box-shadow:0 0 30px rgba(208,160,112,.6);z-index:4;opacity:0"></div>')
+SET(f'#{ring}', {'opacity': 1}, 13.55)
+for k, ((cx_, wf), word) in enumerate(zip(tabs, ['Billets.', 'Réservations.', 'Urgences.'])):
+    t = 13.5 + 0.5 * k
+    if k: TO(f'#{ring}', {'x': 1000 * (cx_ - tabs[0][0]), 'width': 1000 * wf, 'duration': 0.22, 'ease': 'power3.inOut'}, t - 0.06)
+    text(sc, word, 540, 430, t - 0.03, size=150, family=ANTON, weight=400, track='.01em', color=[STONE, BRASS, STONE][k], align='center', words=False, dur=0.2, t_out=t + 0.5 if k < 2 else None, out=0.1)
+pp = phone(sc, 'assets/screens/tiroirs/hub-paperasse.png', 540, 1900, 1050, z=2)
+T(f'#{pp}', {'y': 700}, {'y': 0, 'duration': 0.6, 'ease': 'expo.out'}, 13.6)
+text(sc, 'PAPERASSE · TOUT AU MÊME ENDROIT', 540, 1240, 13.7, size=30, color=GREY, weight=600, track='.22em', words=False, align='center')
+sc.close()
+
+# ================= S10 · Écran coupé en diagonale : Carnet / Groupe (15 – 16,5)
+sc = Scene(15.0, 16.5, DEEP, 120)
+top_ = uid('dg'); bot_ = uid('dg')
+sc.add(f'<div id="{top_}" style="position:absolute;inset:0;background:{STONE};clip-path:polygon(0 0,100% 0,100% 38%,0 62%);z-index:1"></div>')
+sc.add(f'<div id="{bot_}" style="position:absolute;inset:0;background:{FOREST};clip-path:polygon(0 62%,100% 38%,100% 100%,0 100%);z-index:1"></div>')
+T(f'#{top_}', {'xPercent': -100}, {'xPercent': 0, 'duration': 0.3, 'ease': 'power4.out'}, 15.0)
+T(f'#{bot_}', {'xPercent': 100}, {'xPercent': 0, 'duration': 0.3, 'ease': 'power4.out'}, 15.0)
+ca, _ = img(sc, 'assets/real/tiroir-carnet.png', 560, 520, 900, rad=50, z=3)
+T(f'#{ca}', {'x': -1100, 'rotation': -8}, {'x': 0, 'rotation': -3, 'duration': 0.45, 'ease': 'expo.out'}, 15.1)
+gr, _ = img(sc, 'assets/real/tiroir-groupe.png', 520, 1420, 900, rad=50, z=3)
+T(f'#{gr}', {'x': 1100, 'rotation': 8}, {'x': 0, 'rotation': 3, 'duration': 0.45, 'ease': 'expo.out'}, 15.5)
+text(sc, 'Raconter.', 96, 150, 15.1, size=120, color=INK, family=ANTON, weight=400, track='.01em', words=False, extra='z-index:4')
+text(sc, 'Ensemble.', 984, 1660, 15.5, size=120, color=BRASS, family=ANTON, weight=400, track='.01em', words=False, align='right', extra='z-index:4')
+sc.close()
+
+# ================= S11 · Carrousel 3D des huit vrais détails (16,5 – 18,5)
+sc = Scene(16.5, 18.5, f'radial-gradient(120% 80% at 50% 50%,#14352A 0%,{DEEP} 75%)', 130)
+flash(16.5, 0.5)
+car = uid('car'); RR = 470
+cards = ['tiroir-meteo', 'budget-marge', 'tiroir-carte', 'tiroir-etapes', 'tiroir-carnet', 'tiroir-kits', 'tiroir-paperasse', 'tiroir-groupe']
+inner = []
+for k, c in enumerate(cards):
+    iw, ih = size_of(f'assets/real/{c}.png'); cw = 560 if c != 'tiroir-carte' else 380; chh2 = ih * cw / iw
+    inner.append(f'<div style="position:absolute;left:{-cw / 2:.0f}px;top:{-chh2 / 2:.0f}px;width:{cw}px;height:{chh2:.0f}px;border-radius:26px;overflow:hidden;backface-visibility:hidden;'
+                 f'transform:rotateY({k * 45}deg) translateZ({RR}px);box-shadow:0 20px 50px rgba(0,0,0,.45)"><img src="assets/real/{c}.png" alt="" style="width:100%;height:100%;display:block"></div>')
+sc.add(f'<div id="{car}" style="position:absolute;left:540px;top:1000px;width:0;height:0;transform-style:preserve-3d;z-index:3">' + ''.join(inner) + '</div>')
+T(f'#{car}', {'rotationY': 0, 'rotationX': -8, 'scale': 0.3}, {'rotationY': -300, 'rotationX': -8, 'scale': 1, 'duration': 1.6, 'ease': 'power2.inOut'}, 16.5)
+TO(f'#{car}', {'scale': 0, 'duration': 0.35, 'ease': 'power3.in'}, 18.1)
+ph2 = phone(sc, 'assets/screens/hub.png', 540, 1000, 600, z=2)
+T(f'#{ph2}', {'scale': 0.8, 'opacity': 0.6}, {'scale': 1, 'opacity': 1, 'duration': 1.6, 'ease': 'none'}, 16.5)
+TO(f'#{ph2}', {'scale': 1.1, 'duration': 0.3, 'ease': 'power3.in'}, 18.2)
+text(sc, 'Huit tiroirs.', 540, 400, 16.6, size=110, align='center')
+text(sc, 'Un seul geste.', 540, 1460, 17.0, size=110, color=BRASS, weight=500, align='center')
+sc.close()
+
+# ================= S12 · « Ce n'était que le Hub. » (18,5 – 20)
+sc = Scene(18.5, 20.0, STONE, 140)
+flash(18.5, 0.8)
+ph3 = phone(sc, 'assets/screens/hub.png', 540, 1220, 860, z=2)
+T(f'#{ph3}', {'y': 900, 'rotationX': 30}, {'y': 0, 'rotationX': 0, 'duration': 0.6, 'ease': 'expo.out'}, 18.5)
+text(sc, 'Ce n’était', 540, 200, 18.5, size=150, color=INK, family=ANTON, weight=400, track='.01em', align='center', words=False, dur=0.3)
+text(sc, 'que le Hub.', 540, 370, 18.75, size=150, color=FOREST, family=ANTON, weight=400, track='.01em', align='center', words=False, dur=0.3)
+text(sc, 'LE KIT DU VOYAGEUR', 540, 580, 19.1, size=30, color=SAGE, weight=600, track='.32em', words=False, align='center')
+sc.close()
+TO('#root > *:not(audio)', {'opacity': 0, 'duration': 0.25}, D - 0.25)
+
+html_body = '\n'.join('      ' + x for x in h).strip()
 html = f'''<!doctype html>
 <html lang="fr">
   <head>
@@ -195,8 +302,8 @@ html = f'''<!doctype html>
     <link rel="stylesheet" href="assets/fonts.css" />
     <style>
       * {{ margin:0; padding:0; box-sizing:border-box; }}
-      html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:#06120C; }}
-      #root {{ position:relative; width:{W}px; height:{H}px; overflow:hidden; background:radial-gradient(120% 80% at 50% 38%,#10291E 0%,#06120C 72%); -webkit-font-smoothing:antialiased; }}
+      html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:{DEEP}; }}
+      #root {{ position:relative; width:{W}px; height:{H}px; overflow:hidden; background:{DEEP}; -webkit-font-smoothing:antialiased; }}
     </style>
   </head>
   <body>
