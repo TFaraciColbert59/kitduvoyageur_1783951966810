@@ -3,3 +3,6 @@ renders/
 node_modules/
 audio/*.wav
 audio/*.mp3
+.venv/
+refs/*
+!refs/liens.txt
