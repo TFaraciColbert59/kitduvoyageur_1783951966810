@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p13 · Drop, suivi en direct</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: #0b1a12; }
+  #world { position: absolute; inset: 0; perspective: 1400px; perspective-origin: 540px 600px; }
+  #plane { position: absolute; left: -260px; top: -380px; width: 1600px; height: 2600px; transform: rotateX(46deg) rotateZ(8deg) scale(1.3); transform-origin: 1080px 1200px; }
+  #plane img, #plane svg { position: absolute; left: 0; top: 0; width: 1600px; height: 2600px; }
+  #flash { background: radial-gradient(120% 60% at 50% 0%, rgba(208,160,112,0.55), rgba(208,160,112,0) 55%); mix-blend-mode: screen; }
+  #fog { background: linear-gradient(180deg, rgba(11,26,18,0.85) 0%, rgba(11,26,18,0) 26%); }
+  #sheet { left: 60px; top: 1010px; width: 960px; padding: 38px 40px 34px; }
+  #sheet h3 { font-size: 56px; font-weight: 800; color: #1f2a24; letter-spacing: -0.01em; }
+  #sheet .sub { font-size: 36px; color: var(--label2); margin-top: 4px; }
+  #sheet .tab { margin-top: 24px; height: 92px; padding: 0 36px; gap: 14px; background: #fff; font-size: 40px; font-weight: 700; color: var(--forest); box-shadow: 0 8px 24px rgba(11,31,23,0.12); }
+  #chrono { position: absolute; right: 60px; top: 150px; font-size: 150px; font-weight: 800; color: var(--forest); letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  #chrono .blur { filter: blur(2px); }
+  .mets { display: flex; gap: 16px; margin-top: 30px; }
+  .mets div { flex: 1; border-radius: 30px; background: rgba(255,255,255,0.85); padding: 18px 20px; }
+  .mets b { display: block; font-size: 34px; letter-spacing: 0.04em; color: var(--sage); font-weight: 700; }
+  .mets span { font-size: 50px; font-weight: 800; color: #1f2a24; white-space: nowrap; }
+  #sos { left: 800px; top: 850px; width: 200px; height: 200px; border-radius: 50%; background: var(--brick); color: #fff; font-size: 62px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 20px rgba(168,68,58,0.25), 0 24px 50px rgba(6,18,12,0.5); }
+  #me { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: var(--stone); border: 14px solid var(--forest); box-shadow: 0 0 0 26px rgba(208,160,112,0.45), 0 0 80px rgba(208,160,112,0.9); transform: translate(-50%, -50%); }
+  #pin { position: absolute; width: 120px; height: 120px; background: var(--brass); border-radius: 50% 50% 50% 0; transform: translate(-50%, -100%) rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 30px rgba(6,18,12,0.5); }
+</style></head>
+<body><div id="frame">
+  <div id="world"><div id="plane"><img src="assets/sat/sat-w.jpg"><svg id="wsvg" viewBox="0 0 1600 2600"></svg></div></div>
+  <div id="fog" class="fill"></div>
+  <div id="flash" class="fill"></div>
+  <div id="me"></div>
+  <div id="pin"><svg width="70" height="70" viewBox="0 0 32 32" fill="none" style="transform: rotate(45deg)"><path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#17402C" stroke-width="2.4" stroke-linejoin="round"/><path d="M2 24 L30 24" stroke="#17402C" stroke-width="2.4"/></svg></div>
+  <div id="sos" class="abs">SOS</div>
+  <div id="sheet" class="abs glass">
+    <h3>Le W · jour 2</h3><div class="sub">Randonnée · Suivi en cours</div>
+    <span class="tab pill"><i data-ic="activity" data-s="44" data-w="2.4"></i>Direct</span>
+    <div id="chrono">4:12:<span class="blur">36</span></div>
+    <div class="mets"><div><b>DISTANCE</b><span>15,1 km</span></div><div><b>VITESSE</b><span>3,6 km/h</span></div><div><b>D+</b><span>318 m</span></div></div>
+  </div>
+</div>
+<script src="icons.js"></script>
+<script>
+  window.__ready = false;
+  fetch('assets/sat/sat-w.json').then(r => r.json()).then(J => {
+    let h = '';
+    for (const [k, pts] of Object.entries(J.routes)) {
+      const d = 'M' + pts.map(p => p.join(' ')).join(' L');
+      h += `<path d="${d}" fill="none" stroke="rgba(208,160,112,0.35)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#D0A070" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" ${k === 'boat' ? 'stroke-dasharray="2 30"' : ''}/>`;
+    }
+    document.getElementById('wsvg').innerHTML = h;
+    // position en direct : au milieu du W ; départ (Refugio Chileno) = épingle
+    const plane = document.getElementById('plane');
+    const put = (el, x, y) => { const m = document.createElement('i'); m.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:1px;height:1px`; plane.appendChild(m); const r = m.getBoundingClientRect(); el.style.left = r.left + 'px'; el.style.top = r.top + 'px'; };
+    const w = J.routes.w; put(document.getElementById('me'), ...w[Math.floor(w.length * 0.55)]);
+    put(document.getElementById('pin'), J.stops[0].x, J.stops[0].y);
+    window.__ready = true;
+  });
+</script>
+</body></html>

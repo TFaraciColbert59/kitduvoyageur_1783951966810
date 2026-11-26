@@ -1,0 +1,315 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: radial-gradient(120% 120% at 66% 52%, #f9f7f3 0%, #eeeae3 50%, #e0dad0 100%);
+    }
+    #kc-canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    #kc-kicker {
+      position: absolute;
+      left: 124px;
+      top: 300px;
+      color: #5b7f55;
+      font-weight: 700;
+      font-size: 28px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    #kc-title {
+      position: absolute;
+      left: 120px;
+      top: 346px;
+      width: 760px;
+      color: #17402c;
+      font-weight: 800;
+      font-size: 104px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #kc-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+    #kc-title .w {
+      display: inline-block;
+    }
+    #kc-cap {
+      position: absolute;
+      left: 124px;
+      top: 880px;
+      height: 76px;
+      padding: 0 30px 0 26px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 40px rgba(11, 31, 23, 0.14);
+      color: #17402c;
+      font-size: 32px;
+    }
+    #kc-chip {
+      width: 26px;
+      height: 26px;
+      margin-right: 12px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 0 1px rgba(11, 31, 23, 0.18);
+      background: #2d482a;
+    }
+    .kc-word {
+      position: relative;
+      display: inline-block;
+      text-align: center;
+      height: 40px;
+      line-height: 40px;
+    }
+    .kc-word .r,
+    .kc-word .b {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      white-space: nowrap;
+    }
+    .kc-word .r {
+      font-weight: 500;
+      color: rgba(23, 64, 44, 0.74);
+    }
+    .kc-word .b {
+      font-weight: 800;
+      opacity: 0;
+    }
+    .kc-dot {
+      color: rgba(23, 64, 44, 0.7);
+      font-weight: 500;
+    }
+  </style>
+  <div id="root" data-composition-id="kit3dCouleur" data-width="1920" data-height="1080" data-layout-allow-overlap>
+    <canvas id="kc-canvas" width="1920" height="1080"></canvas>
+    <div id="kc-kicker">Kit Studio</div>
+    <div id="kc-title"><span class="w kc-w">Ta</span> <span class="w kc-w">couleur,</span><br /><em><span class="w kc-w">ton</span> <span class="w kc-w">sac</span></em></div>
+    <div id="kc-cap">
+      <span id="kc-chip"></span>
+      <span class="kc-word" style="width: 100px"><span class="r" id="kc-r0">Forêt</span><span class="b" id="kc-b0">Forêt</span></span>
+      <span class="kc-dot">·</span>
+      <span class="kc-word" style="width: 112px"><span class="r" id="kc-r1">Sauge</span><span class="b" id="kc-b1">Sauge</span></span>
+      <span class="kc-dot">·</span>
+      <span class="kc-word" style="width: 112px"><span class="r" id="kc-r2">Pierre</span><span class="b" id="kc-b2">Pierre</span></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const ID = "kit3dCouleur";
+      const DUR = 1.875;
+      const BEAT = 0.46875;
+      const T_SAUGE = BEAT; // temps 2
+      const T_PIERRE = 2 * BEAT; // temps 3
+      const TR = 0.12; // durée de la transition de teinte
+
+      const root = document.querySelector('[data-composition-id="' + ID + '"]');
+      const canvas = root.querySelector("#kc-canvas");
+      window.__hf = window.__hf || {};
+      window.__hf.buildReady = window.__hf.buildReady || {};
+
+      // Coloris réels du Kit Studio (domain/catalog.ts, COLORWAYS[*].body)
+      const CW = { foret: 0x2d482a, sauge: 0x789972, pierre: 0xb5aba0 };
+
+      const ready = (async () => {
+        const base = new URL("assets/", document.baseURI).href;
+        const THREE = await import(base + "lib/three-bundle.js");
+        const { GLTFLoader, RoomEnvironment, MeshoptDecoder } = THREE;
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+        renderer.setPixelRatio(1);
+        renderer.setSize(1920, 1080, false);
+        renderer.setClearColor(0x000000, 0);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.05;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        scene.environmentIntensity = 0.6;
+
+        const key = new THREE.DirectionalLight(0xfff1dc, 2.3);
+        key.position.set(-1.2, 2.9, 1.9);
+        key.castShadow = true;
+        key.shadow.mapSize.set(2048, 2048);
+        Object.assign(key.shadow.camera, { left: -0.8, right: 0.8, top: 0.8, bottom: -0.8, near: 0.5, far: 7 });
+        key.shadow.bias = -0.0004;
+        key.shadow.normalBias = 0.01;
+        scene.add(key);
+        const rim = new THREE.DirectionalLight(0xdfe9ff, 1.5);
+        rim.position.set(1.9, 1.6, -1.8);
+        scene.add(rim);
+        scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c8, 0.55));
+
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ color: 0x0b1f17, opacity: 0.2 }));
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const sc = document.createElement("canvas");
+        sc.width = sc.height = 256;
+        const g = sc.getContext("2d");
+        const grd = g.createRadialGradient(128, 128, 6, 128, 128, 128);
+        grd.addColorStop(0, "rgba(11,31,23,0.5)");
+        grd.addColorStop(0.5, "rgba(11,31,23,0.16)");
+        grd.addColorStop(1, "rgba(11,31,23,0)");
+        g.fillStyle = grd;
+        g.fillRect(0, 0, 256, 256);
+        const contact = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false }));
+        contact.rotation.x = -Math.PI / 2;
+        contact.position.y = 0.002;
+        scene.add(contact);
+
+        // Plongée serrée (≈ 30°), trois-quarts avant droit : autre point de vue que le plan de la taille.
+        const camera = new THREE.PerspectiveCamera(24, 1920 / 1080, 0.05, 30);
+        camera.setViewOffset(1920, 1080, -330, -40, 1920, 1080);
+
+        const loader = new GLTFLoader();
+        await MeshoptDecoder.ready;
+        loader.setMeshoptDecoder(MeshoptDecoder);
+        const load = (u) => new Promise((res, rej) => loader.load(base + u, res, undefined, rej));
+        const zones = await new Promise((res, rej) => new THREE.TextureLoader().load(base + "3d/lkdv-one-45.zones.webp", res, undefined, rej));
+        zones.flipY = false;
+        zones.colorSpace = THREE.NoColorSpace;
+        const [bagG, m04G, m13G] = await Promise.all([load("3d/lkdv-one-45.glb"), load("3d/lkdv-m04.glb"), load("3d/lkdv-m13.glb")]);
+
+        // Teinte du Kit Studio (scene/bag/atlas.ts) : la couleur du coloris multiplie la luminance de
+        // l'albédo sur les zones textiles (canal R de la carte de zones).
+        const tint = { value: new THREE.Color(CW.foret) };
+        const body = bagG.scene;
+        body.traverse((n) => {
+          if (!n.isMesh) return;
+          n.castShadow = true;
+          const m = n.material;
+          if (!m || !m.map || n.name === "LKDV_LOGO" || n.name === "LKDV_ECUSSON_SUPPORT" || m.name === "LKDV_MARQUAGE_PIERRE" || m.name === "LKDV_Ecusson_Tisse") return;
+          m.customProgramCacheKey = () => "lkdv-film-tint-c";
+          m.onBeforeCompile = (sh) => {
+            sh.uniforms.zonesMap = { value: zones };
+            sh.uniforms.tintColor = tint;
+            sh.fragmentShader = sh.fragmentShader
+              .replace("#include <uv_pars_fragment>", "#include <uv_pars_fragment>\nuniform sampler2D zonesMap;\nuniform vec3 tintColor;")
+              .replace(
+                "#include <map_fragment>",
+                "#include <map_fragment>\n#ifdef USE_MAP\n{ float z = texture2D(zonesMap, vMapUv).r; float lum = dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722)); diffuseColor.rgb = mix(diffuseColor.rgb, tintColor * lum * 2.2, z); }\n#endif",
+              );
+          };
+          m.needsUpdate = true;
+        });
+
+        // Pose des modules, identique au plan de la taille : M13 sur la façade, M04 sur le flanc droit.
+        const meshes = [];
+        body.updateMatrixWorld(true);
+        body.traverse((n) => n.isMesh && meshes.push(n));
+        const ray = new THREE.Raycaster();
+        const V = (x, y, z) => new THREE.Vector3(x, y, z);
+        function surface(axis, a0, a1, b0, b1) {
+          let best = -Infinity;
+          for (let i = 0; i <= 6; i++) {
+            for (let j = 0; j <= 4; j++) {
+              const y = a0 + ((a1 - a0) * i) / 6;
+              const s = b0 + ((b1 - b0) * j) / 4;
+              ray.set(axis === "z" ? V(s, y, 2) : V(2, y, s), axis === "z" ? V(0, 0, -1) : V(-1, 0, 0));
+              const hit = ray.intersectObjects(meshes, false)[0];
+              if (hit) best = Math.max(best, axis === "z" ? hit.point.z : hit.point.x);
+            }
+          }
+          return best;
+        }
+        const box = new THREE.Box3().setFromObject(body);
+        const H = box.max.y;
+        const fz = surface("z", 0.33 - 0.18, 0.33 + 0.18, -0.03, 0.03);
+        const fx = surface("x", 0.3 - 0.08, 0.3 + 0.08, 0.02 - 0.05, 0.02 + 0.05);
+
+        const rig = new THREE.Group();
+        scene.add(rig);
+        rig.add(body);
+        const m04 = m04G.scene;
+        const m13 = m13G.scene;
+        [m04, m13].forEach((m) => m.traverse((n) => n.isMesh && (n.castShadow = true)));
+        m04.rotation.y = Math.PI / 2;
+        m04.position.set(fx + 0.038 - 0.006, 0.3 - 0.1, 0.02);
+        m13.position.set(0, 0.33 - 0.225, fz + 0.0415 - 0.006);
+        rig.add(m04);
+        rig.add(m13);
+        contact.scale.set((box.max.x - box.min.x) * 1.55, (box.max.z - box.min.z) * 1.9, 1);
+
+        const clamp01 = (x) => Math.min(1, Math.max(0, x));
+        const seg = (t, a, d) => clamp01((t - a) / d);
+        const inOut = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+        const cA = new THREE.Color(), cB = new THREE.Color();
+        function colorAt(t) {
+          if (t < T_PIERRE) return cA.setHex(CW.foret).lerp(cB.setHex(CW.sauge), inOut(seg(t, T_SAUGE, TR)));
+          return cA.setHex(CW.sauge).lerp(cB.setHex(CW.pierre), inOut(seg(t, T_PIERRE, TR)));
+        }
+
+        const EL = (30 * Math.PI) / 180;
+        const AZ = (40 * Math.PI) / 180;
+        const dist = H * 2.95;
+        const ty = H * 0.42;
+        camera.position.set(Math.sin(AZ) * Math.cos(EL) * dist, ty + Math.sin(EL) * dist, Math.cos(AZ) * Math.cos(EL) * dist);
+        camera.lookAt(0, ty, 0);
+
+        function render(t) {
+          // Rotation lente du sac (≈ 14° sur le plan) et léger rapprochement de la caméra.
+          rig.rotation.y = -0.16 + (t / DUR) * 0.245;
+          const k = 1 + 0.035 * (t / DUR);
+          camera.zoom = k;
+          camera.updateProjectionMatrix();
+          tint.value.copy(colorAt(t));
+          renderer.render(scene, camera);
+        }
+
+        await renderer.compileAsync(scene, camera);
+        render(0);
+        return render;
+      })();
+      window.__hf.buildReady[ID] = ready;
+
+      ready.then((render) => {
+        const tl = gsap.timeline({ paused: true });
+        const clock = { t: 0 };
+        tl.to(clock, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(clock.t) }, 0);
+
+        tl.fromTo("#kc-kicker", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power2.out" }, 0.05);
+        tl.fromTo(".kc-w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, stagger: 0.03, ease: "power2.out" }, 0.05);
+        tl.fromTo("#kc-cap", { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out" }, 0.1);
+
+        // Le mot du coloris courant passe en gras en même temps que la teinte ; la pastille prend la couleur.
+        tl.fromTo("#kc-b0", { opacity: 1 }, { opacity: 1, duration: 0.01 }, 0);
+        tl.fromTo("#kc-r0", { opacity: 0 }, { opacity: 0, duration: 0.01 }, 0);
+        const step = (from, to, at, hex) => {
+          tl.to("#kc-b" + from, { opacity: 0, duration: 0.12, ease: "power2.inOut" }, at);
+          tl.to("#kc-r" + from, { opacity: 1, duration: 0.12, ease: "power2.inOut" }, at);
+          tl.to("#kc-r" + to, { opacity: 0, duration: 0.12, ease: "power2.inOut" }, at);
+          tl.to("#kc-b" + to, { opacity: 1, duration: 0.12, ease: "power2.inOut" }, at);
+          tl.to("#kc-chip", { backgroundColor: hex, duration: 0.12, ease: "power2.inOut" }, at);
+        };
+        step(0, 1, T_SAUGE, "#789972");
+        step(1, 2, T_PIERRE, "#b5aba0");
+
+        window.__timelines = window.__timelines || {};
+        window.__timelines[ID] = tl;
+      });
+    })();
+  </script>
+</template>

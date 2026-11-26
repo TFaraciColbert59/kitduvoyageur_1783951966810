@@ -1,0 +1,142 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    .p-bg {
+      position: absolute;
+      inset: 0;
+    }
+    .p-bg img {
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #p-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 31, 23, 0.74) 0%, rgba(11, 31, 23, 0.42) 50%, rgba(11, 31, 23, 0.12) 100%);
+    }
+    #p-phone {
+      position: absolute;
+      left: 1180px;
+      top: 70px;
+      width: 444px;
+      height: 940px;
+      border-radius: 70px;
+      background: #0b1f17;
+      padding: 16px;
+      box-shadow: 0 40px 90px rgba(11, 31, 23, 0.55), inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+    }
+    #p-screen {
+      position: relative;
+      width: 412px;
+      height: 908px;
+      border-radius: 56px;
+      overflow: hidden;
+      background: #faf8f5;
+    }
+    .p-shot {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 412px;
+      height: 908px;
+      object-fit: cover;
+      object-position: top;
+    }
+    #p-title {
+      position: absolute;
+      left: 120px;
+      top: 330px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 110px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+    #p-title div {
+      display: block;
+    }
+    #p-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    .p-cap {
+      position: absolute;
+      left: 124px;
+      top: 740px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 28px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.88);
+      backdrop-filter: blur(24px) saturate(1.5);
+      color: #17402c;
+      font-size: 32px;
+      font-weight: 700;
+    }
+    .p-cap i {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5b7f55;
+    }
+  </style>
+  <div id="root" data-composition-id="partage" data-width="1920" data-height="1080">
+    <div class="p-bg" id="p-bg1"><img src="assets/img/detail-hero.jpg" alt="" /></div>
+    <div class="p-bg" id="p-bg2"><img src="assets/img/community-morning.jpg" alt="" /></div>
+    <div class="p-bg" id="p-bg3"><img src="assets/img/mountain-1.jpg" alt="" /></div>
+    <div id="p-shade"></div>
+    <div id="p-title">
+      <div id="p-w1">Raconte.</div>
+      <div id="p-w2">Rejoins.</div>
+      <div id="p-w3"><em>Repars.</em></div>
+    </div>
+    <div class="p-cap" id="p-cap1"><i></i>Carnet : Tour du Mont-Blanc, 5 jours</div>
+    <div class="p-cap" id="p-cap1b"><i></i>Carnets en route : Crêtes du Queyras</div>
+    <div class="p-cap" id="p-cap2"><i></i>Clubs : Vercors Alpin, 128 membres</div>
+    <div class="p-cap" id="p-cap3"><i></i>Sorties : Traversée du Vercors, 13 nov.</div>
+    <div id="p-phone">
+      <div id="p-screen">
+        <img class="p-shot" id="p-s1" src="assets/shots/carnet-fiche.png" alt="" />
+        <img class="p-shot" id="p-s1b" src="assets/shots/carnets-hub.png" alt="" />
+        <img class="p-shot" id="p-s2" src="assets/shots/clubs.png" alt="" />
+        <img class="p-shot" id="p-s3" src="assets/shots/sorties.png" alt="" />
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Coupe franche sur le téléphone immobile : seul le monde autour change (raccord sur l'objet).
+      const at = [0, 3.75, 5.63];
+      tl.fromTo("#p-bg2", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.inOut" }, at[1]);
+      tl.fromTo("#p-bg3", { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power2.inOut" }, at[2]);
+      tl.fromTo("#p-s1b", { y: 908 }, { y: 0, duration: 0.42, ease: "expo.out" }, 1.78);
+      tl.fromTo("#p-s2", { y: 908 }, { y: 0, duration: 0.42, ease: "expo.out" }, at[1] - 0.1);
+      tl.fromTo("#p-s3", { y: 908 }, { y: 0, duration: 0.42, ease: "expo.out" }, at[2] - 0.1);
+
+      // Un mot par écran, chacun posé sur la mesure.
+      tl.fromTo("#p-w1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, 0.15);
+      tl.fromTo("#p-w2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, at[1]);
+      tl.fromTo("#p-w3", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, at[2]);
+      const capAt = [0.2, 1.88, 3.75, 5.63];
+      ["#p-cap1", "#p-cap1b", "#p-cap2", "#p-cap3"].forEach((id, i) => {
+        tl.fromTo(id, { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, capAt[i]);
+        if (i < 3) tl.to(id, { opacity: 0, filter: "blur(6px)", duration: 0.13 }, capAt[i + 1] - 0.15);
+      });
+
+      // Sortie : on plonge dans l'écran ; il grandit au-delà du cadre.
+      tl.to(["#p-title", "#p-cap3"], { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 8.4);
+      tl.to("#p-phone", { scale: 3.4, x: -300, filter: "blur(10px)", duration: 0.7, ease: "power3.in" }, 8.62);
+      window.__timelines["partage"] = tl;
+    })();
+  </script>
+</template>

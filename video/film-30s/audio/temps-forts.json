@@ -1,0 +1,1634 @@
+{
+ "duree_s": 30.0,
+ "sr": 48000,
+ "grille": {
+  "bpm": 92.8009,
+  "periode_temps_s": 0.646545,
+  "periode_mesure_s": 2.586181,
+  "signature": "4/4",
+  "premier_temps_s": 0.0,
+  "temps": [
+   0.0,
+   0.647,
+   1.293,
+   1.94,
+   2.586,
+   3.233,
+   3.879,
+   4.526,
+   5.172,
+   5.819,
+   6.465,
+   7.112,
+   7.759,
+   8.405,
+   9.052,
+   9.698,
+   10.345,
+   10.991,
+   11.638,
+   12.284,
+   12.931,
+   13.577,
+   14.224,
+   14.871,
+   15.517,
+   16.164,
+   16.81,
+   17.457,
+   18.103,
+   18.75,
+   19.396,
+   20.043,
+   20.689,
+   21.336,
+   21.983,
+   22.629,
+   23.276,
+   23.922,
+   24.569,
+   25.215,
+   25.862,
+   26.508,
+   27.155,
+   27.801,
+   28.448,
+   29.095,
+   29.741
+  ],
+  "mesures": [
+   {
+    "n": 1,
+    "t": 0.0
+   },
+   {
+    "n": 2,
+    "t": 2.586
+   },
+   {
+    "n": 3,
+    "t": 5.172
+   },
+   {
+    "n": 4,
+    "t": 7.759
+   },
+   {
+    "n": 5,
+    "t": 10.345
+   },
+   {
+    "n": 6,
+    "t": 12.931
+   },
+   {
+    "n": 7,
+    "t": 15.517
+   },
+   {
+    "n": 8,
+    "t": 18.103
+   },
+   {
+    "n": 9,
+    "t": 20.689
+   },
+   {
+    "n": 10,
+    "t": 23.276
+   },
+   {
+    "n": 11,
+    "t": 25.862
+   },
+   {
+    "n": 12,
+    "t": 28.448
+   }
+  ]
+ },
+ "montage": [
+  {
+   "seg": 1,
+   "film_t0": 0.0,
+   "film_t1": 5.1724,
+   "src_t0": 170.6611,
+   "src_t1": 175.8335,
+   "bars": "67-68",
+   "xfade": null
+  },
+  {
+   "seg": 2,
+   "film_t0": 5.1724,
+   "film_t1": 25.8618,
+   "src_t0": 139.6269,
+   "src_t1": 160.3164,
+   "bars": "55-62",
+   "xfade": [
+    5.1144,
+    5.1244
+   ]
+  },
+  {
+   "seg": 3,
+   "film_t0": 25.8618,
+   "film_t1": 28.448,
+   "src_t0": 199.1091,
+   "src_t1": 201.6953,
+   "bars": "78-78",
+   "xfade": [
+    25.8418,
+    25.8518
+   ]
+  },
+  {
+   "seg": "final",
+   "film_impact": 28.448,
+   "src_impact": 201.7243,
+   "offset_ms": 29,
+   "hold_s": 0.55,
+   "tail": "RT60 2.2s",
+   "contiguous": false
+  }
+ ],
+ "temps_forts": [
+  {
+   "t": 0.0,
+   "nature": "downbeat",
+   "force": 0.7,
+   "note": "mesure 1 du film",
+   "temps": 0,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 0.0,
+   "nature": "impact",
+   "force": 0.9,
+   "note": "ouverture : retour du beat après une cassure (source 170,661 s, mesure 67)",
+   "temps": 0,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 0.025,
+   "nature": "kick",
+   "force": 0.68,
+   "temps": 0,
+   "ecart_grille_ms": 25
+  },
+  {
+   "t": 0.19,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 0.357,
+   "nature": "kick",
+   "force": 0.4,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 0.539,
+   "nature": "kick",
+   "force": 0.35,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 0.645,
+   "nature": "kick",
+   "force": 0.66,
+   "temps": 1,
+   "ecart_grille_ms": -2
+  },
+  {
+   "t": 0.657,
+   "nature": "snare",
+   "force": 0.82,
+   "temps": 1,
+   "ecart_grille_ms": 10
+  },
+  {
+   "t": 0.817,
+   "nature": "kick",
+   "force": 0.48,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.212,
+   "nature": "snare",
+   "force": 0.74,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.282,
+   "nature": "kick",
+   "force": 0.96,
+   "temps": 2,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 1.42,
+   "nature": "kick",
+   "force": 0.6,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.475,
+   "nature": "snare",
+   "force": 0.66,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.646,
+   "nature": "kick",
+   "force": 0.67,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.808,
+   "nature": "kick",
+   "force": 0.36,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 1.943,
+   "nature": "snare",
+   "force": 0.69,
+   "temps": 3,
+   "ecart_grille_ms": 3
+  },
+  {
+   "t": 2.016,
+   "nature": "kick",
+   "force": 0.62,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 2.271,
+   "nature": "snare",
+   "force": 0.52,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 2.329,
+   "nature": "kick",
+   "force": 0.43,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 2.422,
+   "nature": "kick",
+   "force": 0.77,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 2.582,
+   "nature": "snare",
+   "force": 0.37,
+   "temps": 4,
+   "ecart_grille_ms": -4
+  },
+  {
+   "t": 2.584,
+   "nature": "kick",
+   "force": 0.65,
+   "temps": 4,
+   "ecart_grille_ms": -2
+  },
+  {
+   "t": 2.586,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 2 du film",
+   "temps": 4,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 2.793,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 3.243,
+   "nature": "snare",
+   "force": 0.84,
+   "temps": 5,
+   "ecart_grille_ms": 10
+  },
+  {
+   "t": 3.246,
+   "nature": "kick",
+   "force": 0.79,
+   "temps": 5,
+   "ecart_grille_ms": 13
+  },
+  {
+   "t": 3.42,
+   "nature": "kick",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 3.765,
+   "nature": "snare",
+   "force": 0.64,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 3.773,
+   "nature": "kick",
+   "force": 0.89,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 3.869,
+   "nature": "kick",
+   "force": 0.84,
+   "temps": 6,
+   "ecart_grille_ms": -10
+  },
+  {
+   "t": 3.894,
+   "nature": "snare",
+   "force": 0.45,
+   "temps": 6,
+   "ecart_grille_ms": 15
+  },
+  {
+   "t": 4.041,
+   "nature": "kick",
+   "force": 0.53,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.174,
+   "nature": "snare",
+   "force": 0.65,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.229,
+   "nature": "kick",
+   "force": 0.75,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.351,
+   "nature": "kick",
+   "force": 0.39,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.543,
+   "nature": "snare",
+   "force": 0.62,
+   "temps": 7,
+   "ecart_grille_ms": 17
+  },
+  {
+   "t": 4.58,
+   "nature": "kick",
+   "force": 0.59,
+   "temps": 7,
+   "ecart_grille_ms": 54
+  },
+  {
+   "t": 4.667,
+   "nature": "snare",
+   "force": 0.64,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.7,
+   "nature": "kick",
+   "force": 0.56,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 4.886,
+   "nature": "kick",
+   "force": 0.4,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 5.009,
+   "nature": "kick",
+   "force": 0.84,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 5.054,
+   "nature": "snare",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 5.172,
+   "nature": "downbeat",
+   "force": 0.7,
+   "note": "mesure 3 du film",
+   "temps": 8,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 5.172,
+   "nature": "impact",
+   "force": 0.6,
+   "note": "raccord vers le sommet du pont (source 139,627 s, mesure 55) : changement de texture, plus dense et plus fort (pas d'attaque isolée)",
+   "temps": 8,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 5.392,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 5.565,
+   "nature": "kick",
+   "force": 0.56,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 5.841,
+   "nature": "kick",
+   "force": 0.56,
+   "temps": 9,
+   "ecart_grille_ms": 22
+  },
+  {
+   "t": 5.99,
+   "nature": "kick",
+   "force": 0.63,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 6.344,
+   "nature": "kick",
+   "force": 0.47,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 6.452,
+   "nature": "kick",
+   "force": 0.91,
+   "temps": 10,
+   "ecart_grille_ms": -13
+  },
+  {
+   "t": 6.593,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 7.115,
+   "nature": "kick",
+   "force": 0.91,
+   "temps": 11,
+   "ecart_grille_ms": 3
+  },
+  {
+   "t": 7.265,
+   "nature": "kick",
+   "force": 0.39,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 7.759,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 4 du film",
+   "temps": 12,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 7.764,
+   "nature": "kick",
+   "force": 0.76,
+   "temps": 12,
+   "ecart_grille_ms": 5
+  },
+  {
+   "t": 7.958,
+   "nature": "kick",
+   "force": 0.44,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 8.41,
+   "nature": "kick",
+   "force": 0.47,
+   "temps": 13,
+   "ecart_grille_ms": 5
+  },
+  {
+   "t": 8.577,
+   "nature": "kick",
+   "force": 0.37,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 8.935,
+   "nature": "kick",
+   "force": 0.91,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 9.027,
+   "nature": "snare",
+   "force": 0.55,
+   "temps": 14,
+   "ecart_grille_ms": -25
+  },
+  {
+   "t": 9.041,
+   "nature": "kick",
+   "force": 0.92,
+   "temps": 14,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 9.213,
+   "nature": "kick",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 9.38,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 9.558,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 9.703,
+   "nature": "snare",
+   "force": 0.52,
+   "temps": 15,
+   "ecart_grille_ms": 5
+  },
+  {
+   "t": 9.743,
+   "nature": "kick",
+   "force": 0.61,
+   "temps": 15,
+   "ecart_grille_ms": 45
+  },
+  {
+   "t": 9.884,
+   "nature": "kick",
+   "force": 0.39,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 10.343,
+   "nature": "snare",
+   "force": 0.61,
+   "temps": 16,
+   "ecart_grille_ms": -2
+  },
+  {
+   "t": 10.345,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 5 du film",
+   "temps": 16,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 10.373,
+   "nature": "kick",
+   "force": 0.68,
+   "temps": 16,
+   "ecart_grille_ms": 28
+  },
+  {
+   "t": 10.499,
+   "nature": "kick",
+   "force": 0.56,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 10.669,
+   "nature": "kick",
+   "force": 0.37,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 10.98,
+   "nature": "snare",
+   "force": 0.42,
+   "temps": 17,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 10.994,
+   "nature": "kick",
+   "force": 0.81,
+   "temps": 17,
+   "ecart_grille_ms": 3
+  },
+  {
+   "t": 11.162,
+   "nature": "kick",
+   "force": 0.48,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 11.514,
+   "nature": "snare",
+   "force": 0.4,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 11.541,
+   "nature": "kick",
+   "force": 0.87,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 11.612,
+   "nature": "snare",
+   "force": 0.68,
+   "temps": 18,
+   "ecart_grille_ms": -26
+  },
+  {
+   "t": 11.627,
+   "nature": "kick",
+   "force": 0.81,
+   "temps": 18,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 11.764,
+   "nature": "kick",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 11.968,
+   "nature": "kick",
+   "force": 0.37,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 12.161,
+   "nature": "kick",
+   "force": 0.47,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 12.289,
+   "nature": "snare",
+   "force": 0.56,
+   "temps": 19,
+   "ecart_grille_ms": 5
+  },
+  {
+   "t": 12.32,
+   "nature": "kick",
+   "force": 0.61,
+   "temps": 19,
+   "ecart_grille_ms": 36
+  },
+  {
+   "t": 12.931,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 6 du film",
+   "temps": 20,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 12.949,
+   "nature": "snare",
+   "force": 0.43,
+   "temps": 20,
+   "ecart_grille_ms": 18
+  },
+  {
+   "t": 12.954,
+   "nature": "kick",
+   "force": 0.6,
+   "temps": 20,
+   "ecart_grille_ms": 23
+  },
+  {
+   "t": 13.086,
+   "nature": "kick",
+   "force": 0.5,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 13.184,
+   "nature": "kick",
+   "force": 0.38,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 13.336,
+   "nature": "snare",
+   "force": 0.38,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 13.577,
+   "nature": "cassure",
+   "force": 0.9,
+   "note": "batterie et basse coupées (source 148,032 s) ; le grave s'éteint ~40-55 ms avant ce temps, le temps attendu ne frappe pas",
+   "temps": 21,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 13.955,
+   "nature": "silence",
+   "force": 0.8,
+   "note": "quasi-silence (-15 dB sous la médiane), puis nappe tenue + montée jusqu'au drop (reprise du son à 14,26 s)",
+   "fin": 14.255,
+   "duree_ms": 300,
+   "temps": 22,
+   "ecart_grille_ms": -269
+  },
+  {
+   "t": 14.276,
+   "nature": "snare",
+   "force": 0.65,
+   "temps": 22,
+   "ecart_grille_ms": 52
+  },
+  {
+   "t": 15.517,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 7 du film",
+   "temps": 24,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 15.518,
+   "nature": "drop",
+   "force": 1.0,
+   "note": "DROP : tout revient (source 149,972 s, mesure 59), plus forte nouveauté du morceau",
+   "temps": 24,
+   "ecart_grille_ms": 1
+  },
+  {
+   "t": 15.62,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 15.785,
+   "nature": "kick",
+   "force": 0.4,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 15.875,
+   "nature": "kick",
+   "force": 0.38,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 16.164,
+   "nature": "kick",
+   "force": 0.82,
+   "temps": 25,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 16.177,
+   "nature": "snare",
+   "force": 0.56,
+   "temps": 25,
+   "ecart_grille_ms": 13
+  },
+  {
+   "t": 16.335,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 16.612,
+   "nature": "snare",
+   "force": 0.73,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 16.686,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 16.799,
+   "nature": "kick",
+   "force": 0.92,
+   "temps": 26,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 16.811,
+   "nature": "snare",
+   "force": 0.57,
+   "temps": 26,
+   "ecart_grille_ms": 1
+  },
+  {
+   "t": 16.937,
+   "nature": "kick",
+   "force": 0.61,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.248,
+   "nature": "snare",
+   "force": 0.53,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.461,
+   "nature": "kick",
+   "force": 0.85,
+   "temps": 27,
+   "ecart_grille_ms": 4
+  },
+  {
+   "t": 17.616,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.652,
+   "nature": "snare",
+   "force": 0.54,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.767,
+   "nature": "kick",
+   "force": 0.35,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.862,
+   "nature": "snare",
+   "force": 0.71,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 17.864,
+   "nature": "kick",
+   "force": 0.37,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 18.094,
+   "nature": "snare",
+   "force": 0.56,
+   "temps": 28,
+   "ecart_grille_ms": -9
+  },
+  {
+   "t": 18.103,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 8 du film",
+   "temps": 28,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 18.13,
+   "nature": "kick",
+   "force": 0.69,
+   "temps": 28,
+   "ecart_grille_ms": 27
+  },
+  {
+   "t": 18.205,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 18.256,
+   "nature": "snare",
+   "force": 0.44,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 18.371,
+   "nature": "kick",
+   "force": 0.37,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 18.745,
+   "nature": "kick",
+   "force": 0.89,
+   "temps": 29,
+   "ecart_grille_ms": -5
+  },
+  {
+   "t": 18.762,
+   "nature": "snare",
+   "force": 0.7,
+   "temps": 29,
+   "ecart_grille_ms": 12
+  },
+  {
+   "t": 18.922,
+   "nature": "kick",
+   "force": 0.36,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 18.988,
+   "nature": "snare",
+   "force": 0.55,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 19.092,
+   "nature": "snare",
+   "force": 0.56,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 19.278,
+   "nature": "kick",
+   "force": 1.0,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 19.386,
+   "nature": "kick",
+   "force": 0.85,
+   "temps": 30,
+   "ecart_grille_ms": -10
+  },
+  {
+   "t": 19.41,
+   "nature": "snare",
+   "force": 0.46,
+   "temps": 30,
+   "ecart_grille_ms": 14
+  },
+  {
+   "t": 19.558,
+   "nature": "kick",
+   "force": 0.51,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 19.581,
+   "nature": "snare",
+   "force": 0.5,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 19.725,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 20.047,
+   "nature": "kick",
+   "force": 0.81,
+   "temps": 31,
+   "ecart_grille_ms": 4
+  },
+  {
+   "t": 20.063,
+   "nature": "snare",
+   "force": 0.66,
+   "temps": 31,
+   "ecart_grille_ms": 20
+  },
+  {
+   "t": 20.168,
+   "nature": "snare",
+   "force": 0.43,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 20.217,
+   "nature": "kick",
+   "force": 0.49,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 20.45,
+   "nature": "kick",
+   "force": 0.38,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 20.689,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 9 du film",
+   "temps": 32,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 20.694,
+   "nature": "snare",
+   "force": 0.59,
+   "temps": 32,
+   "ecart_grille_ms": 5
+  },
+  {
+   "t": 20.701,
+   "nature": "kick",
+   "force": 0.7,
+   "temps": 32,
+   "ecart_grille_ms": 12
+  },
+  {
+   "t": 20.906,
+   "nature": "kick",
+   "force": 0.55,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.009,
+   "nature": "kick",
+   "force": 0.55,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.337,
+   "nature": "kick",
+   "force": 0.78,
+   "temps": 33,
+   "ecart_grille_ms": 1
+  },
+  {
+   "t": 21.344,
+   "nature": "snare",
+   "force": 0.85,
+   "temps": 33,
+   "ecart_grille_ms": 8
+  },
+  {
+   "t": 21.507,
+   "nature": "kick",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.588,
+   "nature": "snare",
+   "force": 0.62,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.878,
+   "nature": "snare",
+   "force": 0.46,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.886,
+   "nature": "kick",
+   "force": 0.79,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 21.972,
+   "nature": "kick",
+   "force": 0.83,
+   "temps": 34,
+   "ecart_grille_ms": -11
+  },
+  {
+   "t": 22.144,
+   "nature": "kick",
+   "force": 0.39,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 22.207,
+   "nature": "snare",
+   "force": 0.61,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 22.318,
+   "nature": "kick",
+   "force": 0.77,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 22.45,
+   "nature": "kick",
+   "force": 0.47,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 22.645,
+   "nature": "snare",
+   "force": 0.74,
+   "temps": 35,
+   "ecart_grille_ms": 16
+  },
+  {
+   "t": 22.665,
+   "nature": "kick",
+   "force": 0.71,
+   "temps": 35,
+   "ecart_grille_ms": 36
+  },
+  {
+   "t": 22.786,
+   "nature": "kick",
+   "force": 0.67,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 23.013,
+   "nature": "kick",
+   "force": 0.48,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 23.113,
+   "nature": "kick",
+   "force": 0.51,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 23.275,
+   "nature": "snare",
+   "force": 0.62,
+   "temps": 36,
+   "ecart_grille_ms": -1
+  },
+  {
+   "t": 23.276,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 10 du film",
+   "temps": 36,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 23.28,
+   "nature": "kick",
+   "force": 0.71,
+   "temps": 36,
+   "ecart_grille_ms": 4
+  },
+  {
+   "t": 23.465,
+   "nature": "kick",
+   "force": 0.55,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 23.659,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 23.914,
+   "nature": "snare",
+   "force": 0.74,
+   "temps": 37,
+   "ecart_grille_ms": -8
+  },
+  {
+   "t": 23.917,
+   "nature": "kick",
+   "force": 0.75,
+   "temps": 37,
+   "ecart_grille_ms": -5
+  },
+  {
+   "t": 24.043,
+   "nature": "snare",
+   "force": 0.48,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.151,
+   "nature": "kick",
+   "force": 0.42,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.451,
+   "nature": "snare",
+   "force": 0.52,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.461,
+   "nature": "kick",
+   "force": 0.5,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.56,
+   "nature": "kick",
+   "force": 0.79,
+   "temps": 38,
+   "ecart_grille_ms": -9
+  },
+  {
+   "t": 24.565,
+   "nature": "snare",
+   "force": 1.0,
+   "temps": 38,
+   "ecart_grille_ms": -4
+  },
+  {
+   "t": 24.664,
+   "nature": "snare",
+   "force": 0.41,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.734,
+   "nature": "kick",
+   "force": 0.39,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.885,
+   "nature": "snare",
+   "force": 0.51,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 24.904,
+   "nature": "kick",
+   "force": 0.8,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.007,
+   "nature": "snare",
+   "force": 0.5,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.036,
+   "nature": "kick",
+   "force": 0.46,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.154,
+   "nature": "kick",
+   "force": 0.38,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.233,
+   "nature": "snare",
+   "force": 0.67,
+   "temps": 39,
+   "ecart_grille_ms": 18
+  },
+  {
+   "t": 25.29,
+   "nature": "kick",
+   "force": 0.87,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.401,
+   "nature": "kick",
+   "force": 0.43,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.599,
+   "nature": "kick",
+   "force": 0.53,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.738,
+   "nature": "kick",
+   "force": 0.68,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 25.855,
+   "nature": "snare",
+   "force": 0.56,
+   "temps": 40,
+   "ecart_grille_ms": -7
+  },
+  {
+   "t": 25.862,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 11 du film",
+   "temps": 40,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 25.9,
+   "nature": "kick",
+   "force": 0.5,
+   "temps": 40,
+   "ecart_grille_ms": 38
+  },
+  {
+   "t": 26.043,
+   "nature": "kick",
+   "force": 0.57,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 26.294,
+   "nature": "snare",
+   "force": 0.58,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 26.441,
+   "nature": "snare",
+   "force": 0.58,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 26.508,
+   "nature": "cassure",
+   "force": 0.85,
+   "note": "batterie et basse coupées, phrases a cappella (source 199,756 s) ; le grave s'éteint ~40-55 ms avant ce temps, le temps attendu ne frappe pas",
+   "temps": 41,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 26.546,
+   "nature": "snare",
+   "force": 0.83,
+   "temps": 41,
+   "ecart_grille_ms": 38
+  },
+  {
+   "t": 27.057,
+   "nature": "snare",
+   "force": 0.46,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 27.214,
+   "nature": "snare",
+   "force": 0.68,
+   "temps": 42,
+   "ecart_grille_ms": 59
+  },
+  {
+   "t": 27.222,
+   "nature": "kick",
+   "force": 0.46,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 27.541,
+   "nature": "snare",
+   "force": 0.45,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 27.801,
+   "nature": "snare",
+   "force": 0.83,
+   "temps": 43,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 27.933,
+   "nature": "snare",
+   "force": 0.53,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.14,
+   "nature": "silence",
+   "force": 0.8,
+   "note": "silence (-30 à -40 dB sous la médiane, petit souffle vocal 28,22-28,28 s) juste avant l'impact final",
+   "fin": 28.447,
+   "duree_ms": 307,
+   "temps": 44,
+   "ecart_grille_ms": -308
+  },
+  {
+   "t": 28.226,
+   "nature": "snare",
+   "force": 0.58,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.448,
+   "nature": "downbeat",
+   "force": 0.6,
+   "note": "mesure 12 du film",
+   "temps": 44,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 28.448,
+   "nature": "final",
+   "force": 1.0,
+   "note": "IMPACT FINAL (source 201,724 s, mesure 79) puis queue de réverbération synthétique jusqu'à 30,000 s",
+   "temps": 44,
+   "ecart_grille_ms": 0
+  },
+  {
+   "t": 28.524,
+   "nature": "kick",
+   "force": 0.65,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.687,
+   "nature": "kick",
+   "force": 0.56,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.774,
+   "nature": "snare",
+   "force": 0.52,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.865,
+   "nature": "snare",
+   "force": 0.46,
+   "temps": null,
+   "ecart_grille_ms": null
+  },
+  {
+   "t": 28.9,
+   "nature": "kick",
+   "force": 0.43,
+   "temps": null,
+   "ecart_grille_ms": null
+  }
+ ],
+ "fichiers": [
+  "musique-30s.wav",
+  "musique-30s.mp3"
+ ],
+ "source": {
+  "fichier": "b1ee4763-Insta_Saver_jayz_audio_No_Church_In_The_Wild_feat._Frank_Ocean.mp3",
+  "duree_s": 272.534,
+  "bpm": 92.8009,
+  "premier_temps_de_mesure_s": -0.0268,
+  "note": "temps source = temps dans le fichier client décodé (ffmpeg)"
+ },
+ "sonie": {
+  "integree_lufs": -14.0,
+  "crete_vraie_dbtp": -2.75,
+  "mesure": "ffmpeg loudnorm -14.07 / ebur128 -13.93"
+ },
+ "legende": {
+  "downbeat": "1er temps de mesure (grille)",
+  "kick": "attaque grosse caisse mesurée (35-120 Hz)",
+  "snare": "attaque caisse claire / claquement mesurée (1,5-6 kHz)",
+  "drop": "retour massif de tout le groupe",
+  "impact": "accent structurel",
+  "cassure": "batterie et basse coupées",
+  "silence": "quasi-silence (t = début, fin = fin)",
+  "final": "impact final"
+ }
+}

@@ -1,0 +1,76 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+    }
+    #vq-bg {
+      position: absolute;
+      inset: -40px;
+    }
+    #vq-bg img {
+      width: 1160px;
+      height: 2000px;
+      object-fit: cover;
+    }
+    #vq-shade {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 31, 23, 0.3);
+    }
+    #vq-head {
+      position: absolute;
+      left: 120px;
+      top: 300px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 96px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+    #vq-head em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    .vq {
+      position: absolute;
+      padding: 24px 38px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.78);
+      backdrop-filter: blur(24px) saturate(1.5);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 18px 44px rgba(11, 31, 23, 0.25);
+      color: #17402c;
+      font-weight: 700;
+      font-size: 50px;
+      white-space: nowrap;
+    }
+  </style>
+  <div id="root" data-composition-id="vquestions" data-width="1080" data-height="1920">
+    <div id="vq-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="vq-shade"></div>
+    <div id="vq-head">Mais avant<br /><em>de partir…</em></div>
+    <div class="vq" id="vq1" style="left: 120px; top: 540px">Quel parcours ?</div>
+    <div class="vq" id="vq2" style="left: 300px; top: 652px">Combien de nuits ?</div>
+    <div class="vq" id="vq3" style="left: 140px; top: 764px">Où dormir ?</div>
+    <div class="vq" id="vq4" style="left: 150px; top: 876px">Qui porte le réchaud ?</div>
+    <div class="vq" id="vq5" style="left: 120px; top: 988px">Quel budget ?</div>
+    <div class="vq" id="vq6" style="left: 280px; top: 1100px">Il fera quel temps ?</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#vq-bg", { filter: "blur(0px)" }, { filter: "blur(10px)", duration: 0.4, ease: "power2.inOut" }, 0);
+      tl.fromTo("#vq-head", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18 }, 0.02);
+      for (let i = 1; i <= 6; i++) {
+        tl.fromTo("#vq" + i, { opacity: 0, scale: 0.6, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.28, ease: "back.out(1.4)" }, 0.2 + (i - 1) * 0.19);
+      }
+      // Balayage : tout part à droite d'un seul geste.
+      tl.to([".vq", "#vq-head"], { x: 1300, filter: "blur(12px)", duration: 0.26, ease: "power3.in", stagger: 0.01 }, 1.38);
+      window.__timelines["vquestions"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,56 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#F3F0EA; }
+    #root .f-blob { position:absolute; border-radius:50%; filter:blur(110px); }
+    #f-b1 { left:-160px; top:520px; width:620px; height:620px; background:rgba(91,127,85,0.30); }
+    #f-b2 { left:640px; top:900px; width:560px; height:560px; background:rgba(208,160,112,0.34); }
+    #f-b3 { left:300px; top:1380px; width:520px; height:520px; background:rgba(224,122,95,0.20); }
+    #f-svg { position:absolute; left:0; top:0; }
+  </style>
+  <div id="root" data-composition-id="fond" data-width="1080" data-height="1920">
+    <div id="f-b1" class="f-blob"></div>
+    <div id="f-b2" class="f-blob"></div>
+    <div id="f-b3" class="f-blob"></div>
+    <svg id="f-svg" width="1080" height="1920" viewBox="0 0 1080 1920" aria-hidden="true"><g id="f-conf"></g><g id="f-spark"></g></svg>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const D = 30;
+      // taches pastel qui dérivent lentement
+      tl.to("#f-b1", { x: 180, y: -140, duration: D, ease: "sine.inOut" }, 0);
+      tl.to("#f-b2", { x: -220, y: 160, duration: D, ease: "sine.inOut" }, 0);
+      tl.to("#f-b3", { x: 160, y: -260, duration: D, ease: "sine.inOut" }, 0);
+      // confettis : petits rectangles aux couleurs de la charte qui tombent en tournant (graines fixes)
+      let s = 23; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+      const COL = ["#17402C", "#5B7F55", "#D0A070", "#E07A5F", "#0B1F17"];
+      const conf = document.getElementById("f-conf");
+      for (let i = 0; i < 46; i++) {
+        const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        const w = 8 + rnd() * 10, h = 4 + rnd() * 6, x = rnd() * 1080, y = rnd() * 1920;
+        r.setAttribute("x", -w / 2); r.setAttribute("y", -h / 2); r.setAttribute("width", w); r.setAttribute("height", h); r.setAttribute("rx", 1.5);
+        r.setAttribute("fill", COL[i % COL.length]); r.setAttribute("opacity", (0.45 + rnd() * 0.45).toFixed(2));
+        conf.appendChild(r);
+        const fall = 120 + rnd() * 260, rot = (rnd() - 0.5) * 1400, sway = (rnd() - 0.5) * 120;
+        gsap.set(r, { x: x, y: y, rotation: rnd() * 360 });
+        tl.to(r, { y: y + fall * D / 10, x: x + sway, rotation: "+=" + rot, duration: D, ease: "none" }, 0);
+      }
+      // étincelles (étoiles à quatre branches) qui scintillent
+      const sp = document.getElementById("f-spark");
+      for (let i = 0; i < 14; i++) {
+        const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const x = 60 + rnd() * 960, y = 380 + rnd() * 1300, R = 9 + rnd() * 10, r0 = R * 0.28;
+        p.setAttribute("d", `M${x} ${y - R} L${x + r0} ${y - r0} L${x + R} ${y} L${x + r0} ${y + r0} L${x} ${y + R} L${x - r0} ${y + r0} L${x - R} ${y} L${x - r0} ${y - r0} Z`);
+        p.setAttribute("fill", i % 3 === 0 ? "#E07A5F" : "#0B1F17"); p.setAttribute("opacity", "0");
+        sp.appendChild(p);
+        const ph = rnd() * 3;
+        for (let t = ph; t < D; t += 2.2 + rnd() * 2) {
+          tl.fromTo(p, { opacity: 0, scale: 0.3, svgOrigin: `${x} ${y}` }, { opacity: 0.8, scale: 1, duration: 0.35, ease: "back.out(3)", svgOrigin: `${x} ${y}`, immediateRender: false }, t);
+          tl.to(p, { opacity: 0, scale: 0.4, duration: 0.4, ease: "sine.in", svgOrigin: `${x} ${y}` }, t + 0.5);
+        }
+      }
+      window.__timelines = window.__timelines || {};
+      window.__timelines["fond"] = tl;
+    })();
+  </script>
+</template>

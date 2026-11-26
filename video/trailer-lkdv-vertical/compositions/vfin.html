@@ -1,0 +1,125 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    #vf-bg {
+      position: absolute;
+      inset: 0;
+    }
+    #vf-bg img {
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+    }
+    #vf-shade {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 31, 23, 0.52);
+    }
+    #vf-claim {
+      position: absolute;
+      left: 120px;
+      top: 480px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 128px;
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+    #vf-claim .w {
+      display: inline-block;
+    }
+    #vf-claim em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    #vf-badge {
+      position: absolute;
+      left: 350px;
+      top: 292px;
+      width: 380px;
+      height: 380px;
+      filter: drop-shadow(0 26px 50px rgba(11, 31, 23, 0.55));
+    }
+    #vf-badge img {
+      width: 380px;
+      height: 380px;
+    }
+    #vf-word {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 700px;
+      text-align: center;
+      color: #faf8f5;
+    }
+    #vf-name {
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    #vf-name em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    #vf-motto {
+      margin-top: 22px;
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #dfe8dc;
+    }
+    #vf-row {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 1080px;
+      display: flex;
+      justify-content: center;
+    }
+    #vf-cta {
+      padding: 26px 50px;
+      border-radius: 999px;
+      background: #faf8f5;
+      color: #17402c;
+      font-size: 46px;
+      font-weight: 800;
+      box-shadow: 0 18px 40px rgba(11, 31, 23, 0.35);
+    }
+  </style>
+  <div id="root" data-composition-id="vfin" data-width="1080" data-height="1920">
+    <div id="vf-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="vf-shade"></div>
+    <div id="vf-claim"><span class="w">Une</span><br /><span class="w">phrase.</span><br /><span class="w">Tout</span> <span class="w">le</span><br /><span class="w"><em>voyage.</em></span></div>
+    <div id="vf-badge"><img src="assets/img/lkdv-badge.png" alt="Badge LKDV, Le Kit du Voyageur" /></div>
+    <div id="vf-word">
+      <div id="vf-name">Le Kit du <em>Voyageur</em></div>
+      <div id="vf-motto">Préparer · Explorer · Partager</div>
+    </div>
+    <div id="vf-row"><div id="vf-cta">lekitduvoyageur.fr</div></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#vf-bg", { filter: "blur(14px)", scale: 1.08 }, { filter: "blur(0px)", scale: 1, duration: 0.5, ease: "expo.out" }, 0);
+      tl.fromTo("#vf-claim .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.11 }, 0.12);
+      tl.to("#vf-claim", { opacity: 0, filter: "blur(10px)", duration: 0.2 }, 1.66);
+      // Le badge arrive comme une boussole qui se cale, sur la mesure (33,25 s du film).
+      tl.fromTo("#vf-badge", { opacity: 0, scale: 0.55, rotation: -120 }, { opacity: 1, scale: 1, rotation: 0, duration: 1.0, ease: "back.out(1.25)" }, 1.86);
+      tl.fromTo("#vf-word", { clipPath: "inset(0% 50% 0% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6, ease: "power3.out" }, 2.45);
+      tl.fromTo("#vf-motto", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.9);
+      tl.fromTo("#vf-cta", { opacity: 0, y: 30, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out" }, 3.25);
+      window.__timelines["vfin"] = tl;
+    })();
+  </script>
+</template>

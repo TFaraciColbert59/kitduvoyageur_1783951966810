@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>LKDV — aperçu de la vidéo ultime</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <script src="assets/lib/MorphSVGPlugin.min.js"></script>
+    <script src="assets/lib/MotionPathPlugin.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="stylesheet" href="assets/ui.css" />
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#06120C; -webkit-font-smoothing:antialiased; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="31.0" data-width="1080" data-height="1920">
+      <div id="encre" class="encre" style="z-index:1"></div>
+      <div id="grain" style="position:absolute;left:-60px;top:-60px;width:1200px;height:2040px;background:url(assets/img/grain.png);opacity:.06;z-index:800;pointer-events:none;mix-blend-mode:overlay"></div>
+      <div id="vig" style="position:absolute;inset:0;z-index:780;pointer-events:none;background:radial-gradient(120% 85% at 50% 42%,rgba(0,0,0,0) 58%,rgba(6,18,12,.55) 100%)"></div>
+      <video id="v1" class="clip" src="assets/video/j01.mp4" muted playsinline data-start="0.0" data-duration="7.4" data-media-start="0.0" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:10;"></video>
+      <div id="lux" style="position:absolute;left:571px;top:619px;width:18px;height:18px;border-radius:9px;background:#FFE7C2;box-shadow:0 0 40px 12px rgba(255,214,160,.55);z-index:20;opacity:0"></div>
+      <div id="t2" style="position:absolute;left:64px;right:64px;top:168px;height:27px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t2w" style="display:inline-block">05 H 12 · 2 352 M</span></span></div></div>
+      <div id="t3" style="position:absolute;left:64px;right:64px;top:214px;height:70px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:60px;line-height:1.12;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t3w" style="display:inline-block">Il</span> <span class="t3w" style="display:inline-block">y</span> <span class="t3w" style="display:inline-block">a</span> <span class="t3w" style="display:inline-block">six</span> <span class="t3w" style="display:inline-block">mois,</span></span></div></div>
+      <div id="t4" style="position:absolute;left:64px;right:64px;top:294px;height:63px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:54px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.62);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t4w" style="display:inline-block">tu</span> <span class="t4w" style="display:inline-block">disais</span> <span class="t4w" style="display:inline-block">encore</span> <span class="t4w" style="display:inline-block">:</span></span></div></div>
+      <div id="ppm" style="position:absolute;left:0;right:0;top:560px;height:176px;overflow:hidden;text-align:center;z-index:121"><div id="ppmi" style="font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-weight:400;font-size:150px;line-height:1.15;color:#D0A070">pas pour moi.</div></div>
+      <svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:125;overflow:visible" aria-hidden="true"><path id="trait" d="M300.0 668 L310.0 668 L320.0 668 L330.0 668 L340.0 668 L350.0 668 L360.0 668 L370.0 668 L380.0 668 L390.0 668 L400.0 668 L410.0 668 L420.0 668 L430.0 668 L440.0 668 L450.0 668 L460.0 668 L470.0 668 L480.0 668 L490.0 668 L500.0 668 L510.0 668 L520.0 668 L530.0 668 L540.0 668 L550.0 668 L560.0 668 L570.0 668 L580.0 668 L590.0 668 L600.0 668 L610.0 668 L620.0 668 L630.0 668 L640.0 668 L650.0 668 L660.0 668 L670.0 668 L680.0 668 L690.0 668 L700.0 668 L710.0 668 L720.0 668 L730.0 668 L740.0 668 L750.0 668 L760.0 668 L770.0 668 L780.0 668" fill="none" stroke="#D0A070" stroke-width="5" stroke-linecap="round" style="filter:drop-shadow(0 0 8px rgba(255,200,140,.7))"/><path id="horiz" d="M-59.4 1828.5 L-35.6 1819.1 L-11.6 1810.1 L12.5 1801.5 L36.7 1793.2 L61.1 1785.4 L85.6 1777.9 L110.2 1770.8 L134.9 1764.1 L159.7 1757.9 L184.6 1752.0 L209.6 1746.5 L234.7 1741.4 L259.9 1736.7 L285.1 1732.4 L310.4 1728.6 L335.8 1725.1 L361.2 1722.0 L386.6 1719.4 L412.1 1717.1 L437.7 1715.3 L463.2 1713.8 L488.8 1712.8 L514.4 1712.2 L540.0 1712.0 L565.6 1712.2 L591.2 1712.8 L616.8 1713.8 L642.3 1715.3 L667.9 1717.1 L693.4 1719.4 L718.8 1722.0 L744.2 1725.1 L769.6 1728.6 L794.9 1732.4 L820.1 1736.7 L845.3 1741.4 L870.4 1746.5 L895.4 1752.0 L920.3 1757.9 L945.1 1764.1 L969.8 1770.8 L994.4 1777.9 L1018.9 1785.4 L1043.3 1793.2 L1067.5 1801.5 L1091.6 1810.1 L1115.6 1819.1 L1139.4 1828.5" fill="none" stroke="none"/></svg>
+      <div id="terre" style="position:absolute;left:-1060px;top:1712px;width:3200px;height:3200px;border-radius:1600px;overflow:hidden;z-index:40;box-shadow:0 -12px 80px rgba(150,190,230,.42),0 0 0 2px rgba(190,220,255,.3);background:#06120C;opacity:0"><div id="sol" style="position:absolute;left:300px;top:-120px;width:2600px;height:1950px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.62) saturate(.95)"></div><div style="position:absolute;inset:0;border-radius:1600px;background:radial-gradient(circle at 50% 6%,rgba(0,0,0,0) 0%,rgba(6,18,12,.3) 14%,rgba(6,18,12,.9) 34%)"></div></div>
+      <svg id="sv2" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:46;overflow:visible" aria-hidden="true"><path id="plan" d="M209.4 1756.7 L219.8 1754.6 L230.3 1752.5 L240.7 1750.4 L251.2 1748.5 L261.6 1746.6 L272.1 1744.7 L282.6 1743.0 L293.1 1741.3 L303.6 1739.7 L314.1 1738.1 L324.7 1736.6 L335.2 1735.2 L345.8 1733.9 L356.3 1732.6 L366.9 1731.5 L377.5 1730.3 L388.1 1729.3 L398.7 1728.3 L409.3 1727.4 L419.9 1726.5 L430.5 1725.8 L441.1 1725.1 L451.7 1724.5 L462.3 1723.9 L473.0 1723.4 L483.6 1723.0 L494.2 1722.7 L504.9 1722.4 L515.5 1722.2 L526.1 1722.1 L536.8 1722.0 L547.4 1722.0 L558.0 1722.1 L568.7 1722.3 L579.3 1722.5 L589.9 1722.8 L600.6 1723.2 L611.2 1723.6 L621.8 1724.1 L632.5 1724.7 L643.1 1725.3 L653.7 1726.1 L664.3 1726.9 L674.9 1727.7 L685.5 1728.7 L696.1 1729.7 L706.7 1730.8 L717.2 1731.9 L727.8 1733.1 L738.4 1734.4 L748.9 1735.8 L759.5 1737.2 L770.0 1738.7 L780.5 1740.3 L791.0 1741.9 L801.5 1743.7 L812.0 1745.4 L822.5 1747.3 L832.9 1749.2 L843.4 1751.2" fill="none" stroke="#FAF8F5" stroke-opacity=".55" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round" opacity="0"/><path id="route" d="M209.4 1756.7 L219.8 1754.6 L230.3 1752.5 L240.7 1750.4 L251.2 1748.5 L261.6 1746.6 L272.1 1744.7 L282.6 1743.0 L293.1 1741.3 L303.6 1739.7 L314.1 1738.1 L324.7 1736.6 L335.2 1735.2 L345.8 1733.9 L356.3 1732.6 L366.9 1731.5 L377.5 1730.3 L388.1 1729.3 L398.7 1728.3 L409.3 1727.4 L419.9 1726.5 L430.5 1725.8 L441.1 1725.1 L451.7 1724.5 L462.3 1723.9 L473.0 1723.4 L483.6 1723.0 L494.2 1722.7 L504.9 1722.4 L515.5 1722.2 L526.1 1722.1 L536.8 1722.0 L547.4 1722.0 L558.0 1722.1 L568.7 1722.3 L579.3 1722.5 L589.9 1722.8 L600.6 1723.2 L611.2 1723.6 L621.8 1724.1 L632.5 1724.7 L643.1 1725.3 L653.7 1726.1 L664.3 1726.9 L674.9 1727.7 L685.5 1728.7 L696.1 1729.7 L706.7 1730.8 L717.2 1731.9 L727.8 1733.1 L738.4 1734.4 L748.9 1735.8 L759.5 1737.2 L770.0 1738.7 L780.5 1740.3 L791.0 1741.9 L801.5 1743.7 L812.0 1745.4 L822.5 1747.3 L832.9 1749.2 L843.4 1751.2" fill="none" stroke="#D0A070" stroke-width="6" stroke-linecap="round" style="filter:drop-shadow(0 0 8px rgba(255,200,140,.8))" opacity="0"/><circle id="pin0" cx="209.4" cy="1756.7" r="7" fill="#FAF8F5" stroke="#D0A070" stroke-width="4" opacity="0"/><circle id="pin1" cx="623.2" cy="1724.2" r="7" fill="#FAF8F5" stroke="#D0A070" stroke-width="4" opacity="0"/><circle id="pin2" cx="843.4" cy="1751.2" r="7" fill="#FAF8F5" stroke="#D0A070" stroke-width="4" opacity="0"/></svg>
+      <div id="pl0" style="position:absolute;left:209px;top:1779px;font-family:Inter,sans-serif;font-weight:600;font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:rgba(250,248,245,.7);z-index:47;opacity:0">Annecy</div>
+      <div id="pl1" style="position:absolute;left:623px;top:1746px;font-family:Inter,sans-serif;font-weight:600;font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:rgba(250,248,245,.7);z-index:47;opacity:0">Chamonix</div>
+      <div id="pl2" style="position:absolute;left:843px;top:1773px;font-family:Inter,sans-serif;font-weight:600;font-size:18px;letter-spacing:.2em;text-transform:uppercase;color:rgba(250,248,245,.7);z-index:47;opacity:0">Lac Blanc</div>
+      <div id="t5" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t5w" style="display:inline-block">TON ITINÉRAIRE</span></span></div></div>
+      <div id="t6" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t6w" style="display:inline-block">Prévu</span> <span class="t6w" style="display:inline-block">en</span> <span class="t6w" style="display:inline-block">pointillés,</span> <span class="t6w" style="display:inline-block">parcouru</span> <span class="t6w" style="display:inline-block">en</span> <span class="t6w" style="display:inline-block">plein.</span></span></div></div>
+      <svg id="sv3" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:56;overflow:visible" aria-hidden="true"><path id="contour" d="M623.2 1724.2 L623.2 1470 L710 1470 A70 70 0 0 0 780 1400 L780 500 A70 70 0 0 0 710 430 L370 430 A70 70 0 0 0 300 500 L300 1400 A70 70 0 0 0 370 1470 L540 1470" fill="none" stroke="#D0A070" stroke-width="3" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px rgba(255,200,140,.6))"/></svg>
+      <div id="ph" style="position:absolute;left:300px;top:430px;width:480px;height:1040px;border-radius:70px;border:10px solid #0A0F0C;box-shadow:0 60px 140px rgba(0,0,0,.55),0 0 0 1.5px rgba(255,255,255,.12);z-index:55;opacity:0"><div style="position:absolute;left:50%;top:14px;width:118px;height:34px;margin-left:-59px;border-radius:17px;background:#000"></div></div>
+      <div id="scr" style="position:absolute;left:310px;top:440px;width:460px;height:1020px;border-radius:60px;overflow:hidden;z-index:54"><video id="s7" class="clip" src="assets/video/explorer.mp4" muted playsinline data-start="8.9" data-duration="3.5" data-media-start="0.9" data-playback-rate="1.0" data-track-index="6" style="position:absolute;left:0;top:0;width:460px;height:1020px;object-fit:cover;object-position:top;opacity:0"></video><video id="s8" class="clip" src="assets/video/compas.mp4" muted playsinline data-start="11.9" data-duration="4.45" data-media-start="0.726" data-playback-rate="1.0" data-track-index="5" style="position:absolute;left:0;top:0;width:460px;height:1020px;object-fit:cover;object-position:top;opacity:0"></video><video id="s9" class="clip" src="assets/video/club.mp4" muted playsinline data-start="15.95" data-duration="2.85" data-media-start="0.814" data-playback-rate="1.0" data-track-index="6" style="position:absolute;left:0;top:0;width:460px;height:1020px;object-fit:cover;object-position:top;opacity:0"></video></div>
+      <div id="t10" style="position:absolute;left:64px;right:64px;top:168px;height:27px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t10w" style="display:inline-block">EXPLORER</span></span></div></div>
+      <div id="t11" style="position:absolute;left:64px;right:64px;top:214px;height:61px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:52px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.86);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t11w" style="display:inline-block">Je</span> <span class="t11w" style="display:inline-block">ne</span> <span class="t11w" style="display:inline-block">saurais</span> <span class="t11w" style="display:inline-block">pas</span> <span class="t11w" style="display:inline-block">où</span> <span class="t11w" style="display:inline-block">aller.</span><span id="t11b" style="position:absolute;left:-8px;right:-8px;top:54%;height:3px;background:#D0A070;border-radius:2px;transform-origin:0 50%;box-shadow:0 0 10px rgba(208,160,112,.6)"></span></span></div></div>
+      <div id="t12" style="position:absolute;left:64px;right:64px;top:214px;height:70px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:60px;line-height:1.12;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t12w" style="display:inline-block">La</span> <span class="t12w" style="display:inline-block">carte</span> <span class="t12w" style="display:inline-block">est</span> <span class="t12w" style="display:inline-block">vivante.</span></span></div></div>
+      <div id="t13" style="position:absolute;left:64px;right:64px;top:300px;height:45px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:38px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.62);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t13w" style="display:inline-block">Le</span> <span class="t13w" style="display:inline-block">globe</span> <span class="t13w" style="display:inline-block">s’ouvre</span> <span class="t13w" style="display:inline-block">sur</span> <span class="t13w" style="display:inline-block">toi.</span></span></div></div>
+      <div id="f14d" style="position:absolute;left:310px;top:440px;width:460px;height:1020px;border-radius:60px;z-index:57;opacity:0;pointer-events:none;background:linear-gradient(to bottom, rgba(6,18,12,.45) 0, rgba(6,18,12,.45) 680px, rgba(0,0,0,0) 680px, rgba(0,0,0,0) 1018px, rgba(6,18,12,.45) 1018px)"></div>
+      <svg id="f14" width="1080" height="1920" style="position:absolute;left:0;top:0;z-index:58;overflow:visible;pointer-events:none" aria-hidden="true"><rect id="f14r" x="316" y="1120" width="448" height="337" rx="28" fill="none" stroke="#D0A070" stroke-width="2.5"/></svg>
+      <div id="ld15" style="position:absolute;left:539px;top:1474px;width:2px;height:28px;background:linear-gradient(#D0A070,rgba(208,160,112,.2));transform-origin:50% 0;z-index:119"></div>
+      <div id="t16" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t16w" style="display:inline-block">LE MONDE</span></span></div></div>
+      <div id="t17" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t17w" style="display:inline-block">Pays,</span> <span class="t17w" style="display:inline-block">régions</span> <span class="t17w" style="display:inline-block">et</span> <span class="t17w" style="display:inline-block">destinations</span> <span class="t17w" style="display:inline-block">phares,</span> <span class="t17w" style="display:inline-block">selon</span> <span class="t17w" style="display:inline-block">la</span> <span class="t17w" style="display:inline-block">saison.</span></span></div></div>
+      <div id="t18" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t18w" style="display:inline-block">FOND DE CARTE</span></span></div></div>
+      <div id="t19" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t19w" style="display:inline-block">Relief</span> <span class="t19w" style="display:inline-block">3D,</span> <span class="t19w" style="display:inline-block">satellite</span> <span class="t19w" style="display:inline-block">ou</span> <span class="t19w" style="display:inline-block">plan</span> <span class="t19w" style="display:inline-block">:</span> <span class="t19w" style="display:inline-block">la</span> <span class="t19w" style="display:inline-block">carte</span> <span class="t19w" style="display:inline-block">qu’il</span> <span class="t19w" style="display:inline-block">faut</span> <span class="t19w" style="display:inline-block">au</span> <span class="t19w" style="display:inline-block">terrain.</span></span></div></div>
+      <div id="r20" style="position:absolute;left:540px;top:1330px;width:820px;height:125px;border-radius:28px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:110;opacity:0"><img src="assets/real/fond-de-carte.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="t21" style="position:absolute;left:64px;right:64px;top:168px;height:27px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t21w" style="display:inline-block">LE COMPAS</span></span></div></div>
+      <div id="t22" style="position:absolute;left:64px;right:64px;top:214px;height:61px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:52px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.86);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t22w" style="display:inline-block">C’est</span> <span class="t22w" style="display:inline-block">trop</span> <span class="t22w" style="display:inline-block">compliqué.</span><span id="t22b" style="position:absolute;left:-8px;right:-8px;top:54%;height:3px;background:#D0A070;border-radius:2px;transform-origin:0 50%;box-shadow:0 0 10px rgba(208,160,112,.6)"></span></span></div></div>
+      <div id="t23" style="position:absolute;left:64px;right:64px;top:214px;height:70px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:60px;line-height:1.12;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t23w" style="display:inline-block">Une</span> <span class="t23w" style="display:inline-block">phrase.</span></span></div></div>
+      <div id="t24" style="position:absolute;left:64px;right:64px;top:300px;height:45px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:38px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.62);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t24w" style="display:inline-block">C’est</span> <span class="t24w" style="display:inline-block">tout</span> <span class="t24w" style="display:inline-block">ce</span> <span class="t24w" style="display:inline-block">qu’on</span> <span class="t24w" style="display:inline-block">te</span> <span class="t24w" style="display:inline-block">demande.</span></span></div></div>
+      <div id="f25d" style="position:absolute;left:310px;top:440px;width:460px;height:1020px;border-radius:60px;z-index:57;opacity:0;pointer-events:none;background:linear-gradient(to bottom, rgba(6,18,12,.45) 0, rgba(6,18,12,.45) 548px, rgba(0,0,0,0) 548px, rgba(0,0,0,0) 916px, rgba(6,18,12,.45) 916px)"></div>
+      <svg id="f25" width="1080" height="1920" style="position:absolute;left:0;top:0;z-index:58;overflow:visible;pointer-events:none" aria-hidden="true"><rect id="f25r" x="316" y="988" width="448" height="368" rx="28" fill="none" stroke="#D0A070" stroke-width="2.5"/></svg>
+      <div id="ld26" style="position:absolute;left:539px;top:1474px;width:2px;height:28px;background:linear-gradient(#D0A070,rgba(208,160,112,.2));transform-origin:50% 0;z-index:119"></div>
+      <div id="t27" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t27w" style="display:inline-block">LE COMPAS, TON PRÉPARATEUR</span></span></div></div>
+      <div id="t28" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t28w" style="display:inline-block">Il</span> <span class="t28w" style="display:inline-block">lit</span> <span class="t28w" style="display:inline-block">ta</span> <span class="t28w" style="display:inline-block">demande</span> <span class="t28w" style="display:inline-block">et</span> <span class="t28w" style="display:inline-block">vérifie</span> <span class="t28w" style="display:inline-block">tout</span> <span class="t28w" style="display:inline-block">sur</span> <span class="t28w" style="display:inline-block">la</span> <span class="t28w" style="display:inline-block">carte.</span></span></div></div>
+      <div id="prep" style="position:absolute;left:540px;top:1588px;width:620px;height:131px;z-index:72;opacity:0"><div id="prepi" style="position:absolute;inset:0;border-radius:65px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)"><img src="assets/real/compas-prepare.png" alt="" style="display:block;width:100%;height:100%"></div><div id="prepd" style="position:absolute;left:50%;top:50%;width:131px;height:131px;margin:-65px 0 0 -65px;border-radius:50%;background:#D0A070;opacity:0"></div></div>
+      <div id="t29" style="position:absolute;left:64px;right:64px;top:168px;height:27px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:22px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t29w" style="display:inline-block">CORDÉE DES ALPES</span></span></div></div>
+      <div id="t30" style="position:absolute;left:64px;right:64px;top:214px;height:61px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:52px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.86);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t30w" style="display:inline-block">Je</span> <span class="t30w" style="display:inline-block">n’ai</span> <span class="t30w" style="display:inline-block">personne</span> <span class="t30w" style="display:inline-block">avec</span> <span class="t30w" style="display:inline-block">qui</span> <span class="t30w" style="display:inline-block">partir.</span><span id="t30b" style="position:absolute;left:-8px;right:-8px;top:54%;height:3px;background:#D0A070;border-radius:2px;transform-origin:0 50%;box-shadow:0 0 10px rgba(208,160,112,.6)"></span></span></div></div>
+      <div id="t31" style="position:absolute;left:64px;right:64px;top:214px;height:70px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:60px;line-height:1.12;letter-spacing:-0.022em;color:#FAF8F5;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t31w" style="display:inline-block">Des</span> <span class="t31w" style="display:inline-block">inconnus,</span></span></div></div>
+      <div id="t32" style="position:absolute;left:64px;right:64px;top:300px;height:45px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:38px;line-height:1.12;letter-spacing:-0.022em;color:rgba(250,248,245,.62);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t32w" style="display:inline-block">puis</span> <span class="t32w" style="display:inline-block">des</span> <span class="t32w" style="display:inline-block">prénoms.</span></span></div></div>
+      <div id="f33d" style="position:absolute;left:310px;top:440px;width:460px;height:1020px;border-radius:60px;z-index:57;opacity:0;pointer-events:none;background:linear-gradient(to bottom, rgba(6,18,12,.45) 0, rgba(6,18,12,.45) 114px, rgba(0,0,0,0) 114px, rgba(0,0,0,0) 640px, rgba(6,18,12,.45) 640px)"></div>
+      <svg id="f33" width="1080" height="1920" style="position:absolute;left:0;top:0;z-index:58;overflow:visible;pointer-events:none" aria-hidden="true"><rect id="f33r" x="316" y="554" width="448" height="526" rx="28" fill="none" stroke="#D0A070" stroke-width="2.5"/></svg>
+      <div id="ld34" style="position:absolute;left:539px;top:1474px;width:2px;height:28px;background:linear-gradient(#D0A070,rgba(208,160,112,.2));transform-origin:50% 0;z-index:119"></div>
+      <div id="t35" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t35w" style="display:inline-block">LA CORDÉE</span></span></div></div>
+      <div id="t36" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t36w" style="display:inline-block">Membres,</span> <span class="t36w" style="display:inline-block">guides</span> <span class="t36w" style="display:inline-block">et</span> <span class="t36w" style="display:inline-block">encadrants</span> <span class="t36w" style="display:inline-block">d’un</span> <span class="t36w" style="display:inline-block">club</span> <span class="t36w" style="display:inline-block">près</span> <span class="t36w" style="display:inline-block">de</span> <span class="t36w" style="display:inline-block">chez</span> <span class="t36w" style="display:inline-block">toi.</span></span></div></div>
+      <div id="r37" style="position:absolute;left:540px;top:1170px;width:680px;height:92px;border-radius:26px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:70;opacity:0"><img src="assets/real/membre-camille.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="r38" style="position:absolute;left:540px;top:1270px;width:680px;height:92px;border-radius:26px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:71;opacity:0"><img src="assets/real/membre-genevieve.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="r39" style="position:absolute;left:540px;top:1370px;width:680px;height:92px;border-radius:26px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:72;opacity:0"><img src="assets/real/membre-jeanluc.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <video id="v40" class="clip" src="assets/video/g12.mp4" muted playsinline data-start="18.4" data-duration="2.5" data-media-start="0.6" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:65;"></video>
+      <div id="gb41" style="position:absolute;left:0;right:0;top:1292px;height:440px;background:linear-gradient(rgba(6,18,12,0),rgba(6,18,12,.72) 45%,rgba(6,18,12,.72) 70%,rgba(6,18,12,0));z-index:118;opacity:0"></div>
+      <div id="t42" style="position:absolute;left:64px;right:64px;top:1512px;height:25px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#D0A070;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t42w" style="display:inline-block">RENCONTRES</span></span></div></div>
+      <div id="t43" style="position:absolute;left:64px;right:64px;top:1548px;height:36px;overflow:hidden;text-align:center;z-index:120"><div style="font-family:Inter,sans-serif;font-weight:500;font-size:30px;line-height:1.12;letter-spacing:-0.005em;color:rgba(250,248,245,.88);white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t43w" style="display:inline-block">Ceux</span> <span class="t43w" style="display:inline-block">que</span> <span class="t43w" style="display:inline-block">tu</span> <span class="t43w" style="display:inline-block">croises</span> <span class="t43w" style="display:inline-block">en</span> <span class="t43w" style="display:inline-block">chemin</span> <span class="t43w" style="display:inline-block">rejoignent</span> <span class="t43w" style="display:inline-block">ton</span> <span class="t43w" style="display:inline-block">carnet.</span></span></div></div>
+      <div id="r44" style="position:absolute;left:310px;top:620px;width:402px;height:169px;border-radius:37px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:110;opacity:0"><img src="assets/real/rencontre-marc.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="r45" style="position:absolute;left:751px;top:620px;width:440px;height:169px;border-radius:37px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:110;opacity:0"><img src="assets/real/rencontre-gardienne.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <video id="v46" class="clip" src="assets/video/a02.mp4" muted playsinline data-start="20.0" data-duration="6.0" data-media-start="0.5" data-playback-rate="1.0" data-track-index="3" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:68;"></video>
+      <div id="t47" style="position:absolute;left:64px;right:64px;top:214px;height:70px;overflow:hidden;text-align:center;z-index:130"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:60px;line-height:1.12;letter-spacing:-0.022em;color:#0B1F17;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t47w" style="display:inline-block">Puis</span> <span class="t47w" style="display:inline-block">le</span> <span class="t47w" style="display:inline-block">lac.</span></span></div></div>
+      <div id="t48" style="position:absolute;left:64px;right:64px;top:214px;height:65px;overflow:hidden;text-align:center;z-index:130"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:56px;line-height:1.12;letter-spacing:-0.022em;color:#0B1F17;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t48w" style="display:inline-block">Le</span> <span class="t48w" style="display:inline-block">Mont-Blanc,</span> <span class="t48w" style="display:inline-block">qui</span> <span class="t48w" style="display:inline-block">s’allume.</span></span></div></div>
+      <div id="toi" style="position:absolute;left:0;right:0;top:250px;height:182px;overflow:hidden;text-align:center;z-index:130"><div id="toii" style="font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-weight:400;font-size:150px;line-height:1.2;color:#0B1F17">Toi. <span style="color:#7E5A30">Ici.</span></div></div>
+      <div id="voile" style="position:absolute;left:0;right:0;top:930px;height:200px;background:radial-gradient(60% 50% at 50% 50%,rgba(250,248,245,.78),rgba(250,248,245,0));z-index:109;opacity:0"></div>
+      <div id="t49" style="position:absolute;left:64px;right:64px;top:1000px;height:25px;overflow:hidden;text-align:center;z-index:111"><div style="font-family:Inter,sans-serif;font-weight:700;font-size:20px;line-height:1.12;letter-spacing:0.26em;color:#0B1F17;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t49w" style="display:inline-block">LE FIL DE BORD</span></span></div></div>
+      <div id="t50" style="position:absolute;left:64px;right:64px;top:1036px;height:38px;overflow:hidden;text-align:center;z-index:111"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:32px;line-height:1.12;letter-spacing:-0.005em;color:#0B1F17;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t50w" style="display:inline-block">Ton</span> <span class="t50w" style="display:inline-block">carnet</span> <span class="t50w" style="display:inline-block">s’écrit</span> <span class="t50w" style="display:inline-block">en</span> <span class="t50w" style="display:inline-block">marchant.</span></span></div></div>
+      <div id="r51" style="position:absolute;left:540px;top:1190px;width:470px;height:218px;border-radius:43px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:110;opacity:0"><img src="assets/real/nuit-pigeonnier.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="r52" style="position:absolute;left:540px;top:1390px;width:470px;height:182px;border-radius:43px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:111;opacity:0"><img src="assets/real/pokedex-bouquetin.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="r53" style="position:absolute;left:540px;top:1560px;width:565px;height:182px;border-radius:43px;overflow:hidden;box-shadow:0 28px 70px rgba(6,18,12,.45),0 0 0 1px rgba(255,255,255,.08);z-index:112;opacity:0"><img src="assets/real/performance-j1.png" alt="" style="display:block;width:100%;height:100%"></div>
+      <div id="moi" style="position:absolute;left:0;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:12px;background:#D0A070;border:4px solid #FAF8F5;box-shadow:0 0 0 10px rgba(208,160,112,.25),0 0 30px rgba(255,200,140,.8);z-index:72;opacity:0"></div>
+      <div id="enc2" style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 38%,#10291E 0%,#06120C 70%);z-index:71;opacity:0"></div>
+      <div id="anneau" style="position:absolute;left:390px;top:550px;width:300px;height:300px;border-radius:150px;border:3px solid #D0A070;z-index:73;opacity:0;box-shadow:0 0 40px rgba(208,160,112,.35)"></div>
+      <img id="logo" src="assets/img/badge-anneau.png" alt="" style="position:absolute;left:400px;top:560px;width:280px;height:280px;z-index:74;opacity:0">
+      <div id="t54" style="position:absolute;left:64px;right:64px;top:930px;height:67px;overflow:hidden;text-align:center;z-index:80"><div style="font-family:Inter,sans-serif;font-weight:600;font-size:58px;line-height:1.12;letter-spacing:0.2em;color:#FAF8F5;white-space:nowrap"><span style="position:relative;display:inline-block"><span class="t54w" style="display:inline-block">LE KIT DU VOYAGEUR</span></span></div></div>
+      <div id="tag" style="position:absolute;left:0;right:0;top:1016px;height:84px;overflow:hidden;text-align:center;z-index:80"><div id="tagi" style="font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-weight:400;font-size:62px;line-height:1.3;color:#D0A070">Là où la carte se termine.</div></div>
+      <audio id="son" class="clip" src="audio/bande-son3.wav" data-start="0" data-duration="31.0" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    </div>
+    <script>
+      gsap.registerPlugin(MorphSVGPlugin, MotionPathPlugin);
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#grain",{x:0,y:0},{x:-48,y:37,duration:31.0,ease:"steps(372)"},0);
+      gsap.set("#v1",{clipPath:"circle(0px at 580px 628px)"});
+      tl.fromTo("#v1", {"clipPath": "circle(0px at 580px 628px)", "scale": 1.12}, {"clipPath": "circle(2300px at 580px 628px)", "duration": 1.8, "ease": "power3.inOut"}, 0.5);
+      tl.to("#v1", {"scale": 1.0, "duration": 5.6, "ease": "none"}, 1.8);
+      tl.fromTo("#lux", {"opacity": 0, "scale": 0.2}, {"opacity": 1, "scale": 1, "duration": 0.5, "ease": "power2.out"}, 0.05);
+      tl.to("#lux", {"opacity": 0, "scale": 3, "duration": 0.9, "ease": "power2.in"}, 0.9);
+      gsap.set(".t2w",{yPercent:140});
+      tl.to(".t2w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},1.1);
+      tl.to(".t2w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},2.1);
+      gsap.set(".t3w",{yPercent:140});
+      tl.to(".t3w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},2.72);
+      tl.to(".t3w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},6.4);
+      gsap.set(".t4w",{yPercent:140});
+      tl.to(".t4w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},3.93);
+      tl.to(".t4w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},6.4);
+      gsap.set("#ppmi",{yPercent:140});
+      tl.to("#ppmi", {"yPercent": 0, "duration": 1.0, "ease": "expo.out"}, 5.45);
+      (function(){const p=document.getElementById("trait"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.7,ease:"power2.inOut"},6.15); tl.set(p,{strokeDasharray:"none"},6.9);tl.to(p,{morphSVG:{shape:"#horiz"},duration:1.3,ease:"power3.inOut"},6.95); tl.to(p,{opacity:0,duration:0.6},8.25);})();
+      tl.to("#ppmi", {"yPercent": -140, "duration": 0.6, "ease": "power3.in"}, 6.9);
+      tl.to("#v1", {"opacity": 0, "duration": 1.0, "ease": "power2.inOut"}, 6.6);
+      tl.fromTo("#terre", {"opacity": 0}, {"opacity": 1, "duration": 1.0, "ease": "power2.out"}, 7.7);
+      tl.fromTo("#sol", {"x": 0}, {"x": -360, "duration": 23.3, "ease": "none"}, 7.7);
+      gsap.set("#pl0",{xPercent:-50});
+      tl.fromTo("#pin0", {"opacity": 0, "attr": {"r": 1}}, {"opacity": 1, "attr": {"r": 7}, "duration": 0.5, "ease": "back.out(2)"}, 8.0);
+      tl.fromTo("#pl0", {"opacity": 0, "y": 6}, {"opacity": 1, "y": 0, "duration": 0.6}, 8.1);
+      tl.to("#pl0", {"opacity": 0, "duration": 0.5}, 9.6);
+      gsap.set("#pl1",{xPercent:-50});
+      tl.fromTo("#pin1", {"opacity": 0, "attr": {"r": 1}}, {"opacity": 1, "attr": {"r": 7}, "duration": 0.5, "ease": "back.out(2)"}, 8.15);
+      tl.fromTo("#pl1", {"opacity": 0, "y": 6}, {"opacity": 1, "y": 0, "duration": 0.6}, 8.25);
+      tl.to("#pl1", {"opacity": 0, "duration": 0.5}, 9.6);
+      gsap.set("#pl2",{xPercent:-50});
+      tl.fromTo("#pin2", {"opacity": 0, "attr": {"r": 1}}, {"opacity": 1, "attr": {"r": 7}, "duration": 0.5, "ease": "back.out(2)"}, 8.3);
+      tl.fromTo("#pl2", {"opacity": 0, "y": 6}, {"opacity": 1, "y": 0, "duration": 0.6}, 8.4);
+      tl.to("#pl2", {"opacity": 0, "duration": 0.5}, 9.6);
+      tl.fromTo("#plan", {"opacity": 0}, {"opacity": 1, "duration": 0.8}, 8.0);
+      gsap.set(".t5w",{yPercent:140});
+      tl.to(".t5w",{yPercent:0,duration:0.45,ease:"expo.out",stagger:0.0281},7.85);
+      tl.to(".t5w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},8.35);
+      gsap.set(".t6w",{yPercent:140});
+      tl.to(".t6w",{yPercent:0,duration:0.3,ease:"expo.out",stagger:0.0085},7.97);
+      tl.to(".t6w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},8.35);
+      (function(){const p=document.getElementById("route"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.set(p,{opacity:1},15.9); tl.to(p,{strokeDashoffset:L*0.348,duration:1.0,ease:"power2.inOut"},15.9);tl.to(p,{strokeDashoffset:0,duration:1.8,ease:"power2.inOut"},20.4);})();
+      (function(){const p=document.getElementById("contour"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.7,ease:"power2.inOut"},8.8); tl.to(p,{opacity:0,duration:0.5},9.5);})();
+      tl.fromTo("#ph", {"opacity": 0}, {"opacity": 1, "duration": 0.5}, 9.3);
+      tl.to("#ph", {"opacity": 0, "scale": 1.04, "duration": 0.5, "ease": "power2.in"}, 18.45);
+      tl.to("#scr", {"opacity": 0, "duration": 0.2}, 18.6);
+      tl.fromTo("#s7", {"opacity": 0, "scale": 0.98}, {"opacity": 1, "scale": 1, "duration": 0.5, "ease": "power2.out"}, 9.35);
+      gsap.set(".t10w",{yPercent:140});
+      tl.to(".t10w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},8.3);
+      tl.to(".t10w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},11.5);
+      gsap.set(".t11w",{yPercent:140});
+      tl.to(".t11w",{yPercent:0,duration:0.65,ease:"expo.out",stagger:0.0361},8.4);
+      gsap.set("#t11b",{scaleX:0});
+      tl.to("#t11b",{scaleX:1,duration:0.45,ease:"power2.inOut"},9.0);
+      tl.to(".t11w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},9.28);
+      tl.to("#t11b",{opacity:0,duration:0.3},9.28);
+      gsap.set(".t12w",{yPercent:140});
+      tl.to(".t12w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},9.76);
+      tl.to(".t12w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},11.5);
+      gsap.set(".t13w",{yPercent:140});
+      tl.to(".t13w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},10.2);
+      tl.to(".t13w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},11.5);
+      (function(){const p=document.getElementById("f14r"); const L=2*(448+337); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.9,ease:"power2.inOut"},9.6); tl.to(p,{opacity:0,duration:0.4},10.6);})();
+      tl.fromTo("#f14d", {"opacity": 0}, {"opacity": 1, "duration": 0.6}, 9.8);
+      tl.to("#f14d", {"opacity": 0, "duration": 0.4}, 10.6);
+      tl.fromTo("#ld15", {"scaleY": 0, "opacity": 1}, {"scaleY": 1, "opacity": 1, "duration": 0.5, "ease": "power2.out"}, 9.6);
+      tl.to("#ld15", {"opacity": 0, "duration": 0.3}, 10.65);
+      gsap.set(".t16w",{yPercent:140});
+      tl.to(".t16w",{yPercent:0,duration:0.65,ease:"expo.out",stagger:0.0406},9.75);
+      tl.to(".t16w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},10.45);
+      gsap.set(".t17w",{yPercent:140});
+      tl.to(".t17w",{yPercent:0,duration:0.44,ease:"expo.out",stagger:0.0129},9.87);
+      tl.to(".t17w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},10.45);
+      gsap.set(".t18w",{yPercent:140});
+      tl.to(".t18w",{yPercent:0,duration:0.4,ease:"expo.out",stagger:0.025},11.05);
+      tl.to(".t18w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},11.5);
+      gsap.set(".t19w",{yPercent:140});
+      tl.to(".t19w",{yPercent:0,duration:0.3,ease:"expo.out",stagger:0.0067},11.17);
+      tl.to(".t19w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},11.5);
+      gsap.set("#r20",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r20", {"opacity": 0, "x": 0, "y": -74.0, "scale": 0.56}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.7, "ease": "expo.out"}, 10.9);
+      tl.to("#r20", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 11.95);
+      gsap.set(".t21w",{yPercent:140});
+      tl.to(".t21w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},12.0);
+      tl.to(".t21w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},15.4);
+      tl.fromTo("#s8", {"opacity": 1, "x": 460}, {"opacity": 1, "x": 0, "duration": 0.7, "ease": "power4.inOut"}, 11.95);
+      tl.fromTo("#s7", {"x": 0, "filter": "brightness(1)"}, {"x": -138.0, "filter": "brightness(.5)", "duration": 0.7, "ease": "power4.inOut", "immediateRender": false}, 11.95);
+      tl.to("#s7", {"opacity": 0, "duration": 0.01}, 12.65);
+      gsap.set(".t22w",{yPercent:140});
+      tl.to(".t22w",{yPercent:0,duration:0.513,ease:"expo.out",stagger:0.0285},11.95);
+      gsap.set("#t22b",{scaleX:0});
+      tl.to("#t22b",{scaleX:1,duration:0.45,ease:"power2.inOut"},12.35);
+      tl.to(".t22w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},12.57);
+      tl.to("#t22b",{opacity:0,duration:0.3},12.57);
+      gsap.set(".t23w",{yPercent:140});
+      tl.to(".t23w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},13.05);
+      tl.to(".t23w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},15.4);
+      gsap.set(".t24w",{yPercent:140});
+      tl.to(".t24w",{yPercent:0,duration:0.845,ease:"expo.out",stagger:0.047},14.27);
+      tl.to(".t24w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},15.4);
+      (function(){const p=document.getElementById("f25r"); const L=2*(448+368); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.9,ease:"power2.inOut"},12.45); tl.to(p,{opacity:0,duration:0.4},14.5);})();
+      tl.fromTo("#f25d", {"opacity": 0}, {"opacity": 1, "duration": 0.6}, 12.65);
+      tl.to("#f25d", {"opacity": 0, "duration": 0.4}, 14.5);
+      tl.fromTo("#ld26", {"scaleY": 0, "opacity": 1}, {"scaleY": 1, "opacity": 1, "duration": 0.5, "ease": "power2.out"}, 12.45);
+      tl.to("#ld26", {"opacity": 0, "duration": 0.3}, 14.45);
+      gsap.set(".t27w",{yPercent:140});
+      tl.to(".t27w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},12.6);
+      tl.to(".t27w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},14.25);
+      gsap.set(".t28w",{yPercent:140});
+      tl.to(".t28w",{yPercent:0,duration:0.85,ease:"expo.out",stagger:0.025},12.72);
+      tl.to(".t28w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},14.25);
+      gsap.set("#prep",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#prep", {"opacity": 0, "x": 0, "y": -483.98, "scale": 0.45}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.8, "ease": "expo.out"}, 14.7);
+      tl.to("#prepi", {"scaleX": 0.2109375, "opacity": 0, "duration": 0.35, "ease": "power3.inOut"}, 15.7);
+      tl.to("#prepd", {"opacity": 1, "duration": 0.25}, 15.75);
+      tl.to("#prep", {"scale": 0.15, "x": 83.2141704262807, "y": 136.1790397402276, "duration": 0.55, "ease": "power3.in"}, 16.0);
+      tl.to("#prep", {"opacity": 0, "duration": 0.1}, 16.55);
+      tl.fromTo("#pin1", {"attr": {"r": 7}}, {"attr": {"r": 13}, "duration": 0.2, "yoyo": true, "repeat": 1, "immediateRender": false}, 16.55);
+      gsap.set(".t29w",{yPercent:140});
+      tl.to(".t29w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},16.0);
+      tl.to(".t29w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},18.2);
+      tl.fromTo("#s9", {"opacity": 1, "x": 460}, {"opacity": 1, "x": 0, "duration": 0.7, "ease": "power4.inOut"}, 16.0);
+      tl.fromTo("#s8", {"x": 0, "filter": "brightness(1)"}, {"x": -138.0, "filter": "brightness(.5)", "duration": 0.7, "ease": "power4.inOut", "immediateRender": false}, 16.0);
+      tl.to("#s8", {"opacity": 0, "duration": 0.01}, 16.7);
+      gsap.set(".t30w",{yPercent:140});
+      tl.to(".t30w",{yPercent:0,duration:0.524,ease:"expo.out",stagger:0.0291},15.95);
+      gsap.set("#t30b",{scaleX:0});
+      tl.to("#t30b",{scaleX:1,duration:0.45,ease:"power2.inOut"},16.3);
+      tl.to(".t30w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},16.67);
+      tl.to("#t30b",{opacity:0,duration:0.3},16.67);
+      gsap.set(".t31w",{yPercent:140});
+      tl.to(".t31w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},17.15);
+      tl.to(".t31w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},19.5);
+      gsap.set(".t32w",{yPercent:140});
+      tl.to(".t32w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},18.0);
+      tl.to(".t32w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},19.5);
+      (function(){const p=document.getElementById("f33r"); const L=2*(448+526); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.to(p,{strokeDashoffset:0,duration:0.9,ease:"power2.inOut"},16.9); tl.to(p,{opacity:0,duration:0.4},17.900000000000002);})();
+      tl.fromTo("#f33d", {"opacity": 0}, {"opacity": 1, "duration": 0.6}, 17.1);
+      tl.to("#f33d", {"opacity": 0, "duration": 0.4}, 17.9);
+      tl.fromTo("#ld34", {"scaleY": 0, "opacity": 1}, {"scaleY": 1, "opacity": 1, "duration": 0.5, "ease": "power2.out"}, 16.85);
+      tl.to("#ld34", {"opacity": 0, "duration": 0.3}, 18.05);
+      gsap.set(".t35w",{yPercent:140});
+      tl.to(".t35w",{yPercent:0,duration:0.8,ease:"expo.out",stagger:0.05},17.0);
+      tl.to(".t35w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},17.85);
+      gsap.set(".t36w",{yPercent:140});
+      tl.to(".t36w",{yPercent:0,duration:0.538,ease:"expo.out",stagger:0.0158},17.12);
+      tl.to(".t36w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},17.85);
+      gsap.set("#r37",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r37", {"opacity": 0, "x": 83.2141704262807, "y": 554.1790397402276, "scale": 0.12}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.75, "ease": "expo.out"}, 16.7);
+      tl.to("#r37", {"x": 0, "y": -322.0, "scale": 0.5, "opacity": 0, "duration": 0.55, "ease": "power3.in"}, 17.85);
+      gsap.set("#r38",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r38", {"opacity": 0, "x": 83.2141704262807, "y": 454.1790397402276, "scale": 0.12}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.75, "ease": "expo.out"}, 16.84);
+      tl.to("#r38", {"x": 0, "y": -422.0, "scale": 0.5, "opacity": 0, "duration": 0.55, "ease": "power3.in"}, 17.89);
+      gsap.set("#r39",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r39", {"opacity": 0, "x": 83.2141704262807, "y": 354.1790397402276, "scale": 0.12}, {"opacity": 1, "x": 0, "y": 0, "scale": 1, "duration": 0.75, "ease": "expo.out"}, 16.98);
+      tl.to("#r39", {"x": 0, "y": -522.0, "scale": 0.5, "opacity": 0, "duration": 0.55, "ease": "power3.in"}, 17.93);
+      gsap.set("#v40",{clipPath:"inset(440px 310px 460px 310px round 60px)"});
+      tl.fromTo("#v40", {"clipPath": "inset(440px 310px 460px 310px round 60px)", "scale": 1.0}, {"clipPath": "inset(0px 0px 0px 0px round 0px)", "duration": 1.0, "ease": "power4.inOut"}, 18.45);
+      tl.to("#v40", {"scale": 1.06, "duration": 2.0, "ease": "none"}, 18.9);
+      tl.set("#terre", {"zIndex": 66}, 18.4);
+      tl.set("#sv2", {"zIndex": 67}, 18.4);
+      tl.fromTo("#gb41", {"opacity": 0}, {"opacity": 1, "duration": 0.6}, 18.8);
+      tl.to("#gb41", {"opacity": 0, "duration": 0.4}, 20.15);
+      gsap.set(".t42w",{yPercent:140});
+      tl.to(".t42w",{yPercent:0,duration:0.6,ease:"expo.out",stagger:0.0375},19.0);
+      tl.to(".t42w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},19.65);
+      gsap.set(".t43w",{yPercent:140});
+      tl.to(".t43w",{yPercent:0,duration:0.389,ease:"expo.out",stagger:0.0114},19.12);
+      tl.to(".t43w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},19.65);
+      gsap.set("#r44",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r44", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.7, "ease": "expo.out"}, 18.9);
+      tl.to("#r44", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 19.9);
+      gsap.set("#r45",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r45", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.7, "ease": "expo.out"}, 19.12);
+      tl.to("#r45", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 19.9);
+      gsap.set("#v46",{clipPath:"inset(100% 0% 0% 0%)"});
+      tl.fromTo("#v46", {"clipPath": "inset(100% 0% 0% 0%)", "scale": 1.1}, {"clipPath": "inset(0% 0% 0% 0%)", "scale": 1.04, "duration": 0.95, "ease": "power3.inOut"}, 20.0);
+      tl.to("#v46", {"scale": 1.0, "duration": 5.0, "ease": "none"}, 20.95);
+      tl.set("#terre", {"zIndex": 69}, 19.95);
+      tl.set("#sv2", {"zIndex": 70}, 19.95);
+      gsap.set(".t47w",{yPercent:140});
+      tl.to(".t47w",{yPercent:0,duration:0.315,ease:"expo.out",stagger:0.0175},20.85);
+      tl.to(".t47w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},21.25);
+      gsap.set(".t48w",{yPercent:140});
+      tl.to(".t48w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},21.8);
+      tl.to(".t48w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},23.2);
+      gsap.set("#toii",{yPercent:140});
+      tl.to("#toii", {"yPercent": 0, "duration": 1.1, "ease": "expo.out"}, 23.85);
+      tl.to("#toii", {"yPercent": -140, "duration": 0.6, "ease": "power3.in"}, 25.1);
+      tl.fromTo("#voile", {"opacity": 0}, {"opacity": 1, "duration": 0.6}, 20.9);
+      tl.to("#voile", {"opacity": 0, "duration": 0.4}, 24.4);
+      gsap.set(".t49w",{yPercent:140});
+      tl.to(".t49w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},21.0);
+      tl.to(".t49w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},24.25);
+      gsap.set(".t50w",{yPercent:140});
+      tl.to(".t50w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.03},21.12);
+      tl.to(".t50w",{yPercent:-140,duration:0.5,ease:"power3.in",stagger:0.025},24.25);
+      gsap.set("#r51",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r51", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "expo.out"}, 21.25);
+      tl.to("#r51", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 24.35);
+      gsap.set("#r52",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r52", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "expo.out"}, 21.7);
+      tl.to("#r52", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 24.4);
+      gsap.set("#r53",{xPercent:-50,yPercent:-50});
+      tl.fromTo("#r53", {"opacity": 0, "y": 30}, {"opacity": 1, "y": 0, "duration": 0.8, "ease": "expo.out"}, 22.15);
+      tl.to("#r53", {"opacity": 0, "y": -12, "duration": 0.4, "ease": "power2.in"}, 24.45);
+      tl.set("#moi",{opacity:1},20.4); tl.fromTo("#moi",{motionPath:{path:"#route",align:"#route",alignOrigin:[0,0],start:0.652,end:0.652}},{motionPath:{path:"#route",align:"#route",alignOrigin:[0,0],start:0.652,end:1},duration:1.8,ease:"power2.inOut",immediateRender:false},20.4);
+      tl.to("#plan", {"opacity": 0, "duration": 0.5}, 24.8);
+      tl.to("#pin0", {"opacity": 0, "duration": 0.4}, 24.8);
+      tl.to("#pin1", {"opacity": 0, "duration": 0.4}, 24.8);
+      tl.to("#pin2", {"opacity": 0, "duration": 0.4}, 24.8);
+      tl.fromTo("#enc2", {"opacity": 0}, {"opacity": 1, "duration": 0.9, "ease": "power2.inOut"}, 25.0);
+      tl.to("#route", {"opacity": 0, "duration": 0.6}, 25.0);
+      tl.to("#moi",{x:540,y:700,duration:0.9,ease:"power3.inOut"},25.1);
+      tl.fromTo("#anneau", {"opacity": 0, "scale": 0.08}, {"opacity": 1, "scale": 1, "duration": 0.55, "ease": "expo.out"}, 25.95);
+      tl.to("#moi", {"opacity": 0, "scale": 0.5, "duration": 0.3}, 25.95);
+      tl.fromTo("#logo", {"opacity": 0, "scale": 0.92}, {"opacity": 1, "scale": 1, "duration": 1.0, "ease": "power2.out"}, 26.4);
+      tl.to("#anneau", {"opacity": 0, "scale": 1.25, "duration": 0.9, "ease": "power2.out"}, 26.5);
+      gsap.set(".t54w",{yPercent:140});
+      tl.to(".t54w",{yPercent:0,duration:0.9,ease:"expo.out",stagger:0.05},26.6);
+      gsap.set("#tagi",{yPercent:140});
+      tl.to("#tagi", {"yPercent": 0, "duration": 1.1, "ease": "expo.out"}, 27.45);
+      tl.fromTo("#terre", {"filter": "brightness(1)"}, {"filter": "brightness(1.2)", "duration": 2.0, "immediateRender": false}, 25.5);
+      tl.to("#root > *:not(audio)", {"opacity": 0, "duration": 0.9}, 30.0);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

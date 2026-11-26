@@ -1,0 +1,130 @@
+<template>
+  <!-- Plan 07 · Plongée et sources — film 7,112 → 8,405 (hôte 6,912 ; local = film − 6,912).
+       Iris depuis la flèche 6,952 → 7,112 ; globe satellite réel (Esri) qui plonge vers la Patagonie ;
+       7,759 : explosion des 7 logos réels des sources (8 images) ; 7,80 → 7,95 : zoom-through dans l'imagerie du parc ;
+       le W (tracé OpenStreetMap) se trace 7,920 → 8,360 ; « le W » en Garamond 8,05. Sortie : dézoom brusque (s08). -->
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s07-iris { position:absolute; inset:0; background:#04080b; overflow:hidden; clip-path:circle(0px at 895px 620px); }
+    #s07-shake { position:absolute; inset:0; }
+    #s07-gw { position:absolute; left:-182px; top:-17px; width:1500px; height:1500px; }
+    .s07-g { position:absolute; inset:0; width:1500px; height:1500px; display:block; transform-origin:722px 917px; }
+    #s07-g1 { transform:scale(1.06); filter:blur(6px); opacity:0; }
+    #s07-g2 { transform:scale(1.14); filter:blur(14px); opacity:0; }
+    #s07-rad { position:absolute; inset:0; background:radial-gradient(circle at 540px 900px, rgba(4,8,11,0) 0, rgba(4,8,11,0) 380px, rgba(4,8,11,0.55) 950px); }
+    #s07-satclip { position:absolute; inset:0; clip-path:circle(0px at 464px 618px); }
+    #s07-sw { position:absolute; left:-752px; top:-978px; width:2432px; height:3952px; }
+    #s07-sat { position:absolute; inset:0; width:100%; height:100%; display:block; }
+    #s07-svg { position:absolute; inset:0; width:100%; height:100%; }
+    #s07-shade { position:absolute; inset:0; opacity:0; background:linear-gradient(180deg, rgba(6,18,12,0.25) 0%, rgba(6,18,12,0) 25%, rgba(6,18,12,0) 60%, rgba(6,18,12,0.55) 100%); }
+    #s07-pt { position:absolute; left:520px; top:880px; width:40px; height:40px; border-radius:50%; background:#D0A070; box-shadow:0 0 0 14px rgba(208,160,112,0.3), 0 0 60px rgba(208,160,112,0.9); opacity:0; }
+    .s07-trail { position:absolute; left:540px; top:892px; height:16px; border-radius:16px; transform-origin:0 50%; background:linear-gradient(90deg, rgba(208,160,112,0), rgba(208,160,112,0.8)); opacity:0; }
+    .s07-logo { position:absolute; left:0; top:0; height:124px; padding:0 36px; border-radius:40px; background:#fff; display:flex; align-items:center; gap:18px; box-shadow:0 24px 60px rgba(0,0,0,0.45); white-space:nowrap; opacity:0; }
+    .s07-logo b { font-size:42px; font-weight:800; color:#1f2a24; letter-spacing:-0.01em; }
+    .s07-dk { background:#0b2d4f; }
+    #s07-gar { position:absolute; left:84px; top:1420px; font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; font-size:150px; color:#FAF8F5; white-space:nowrap; text-shadow:0 10px 40px rgba(6,18,12,0.7); opacity:0; }
+  </style>
+  <div id="root" data-composition-id="s07" data-width="1080" data-height="1920">
+    <div id="s07-iris"><div id="s07-shake">
+      <div id="s07-gw">
+        <img id="s07-g2" class="s07-g" src="assets/sat/globe-patagonie.png" alt="">
+        <img id="s07-g1" class="s07-g" src="assets/sat/globe-patagonie.png" alt="">
+        <img id="s07-g0" class="s07-g" src="assets/sat/globe-patagonie.png" alt="">
+      </div>
+      <div id="s07-rad"></div>
+      <div id="s07-satclip"><div id="s07-sw">
+        <img id="s07-sat" src="assets/sat/sat-w.jpg" alt="">
+        <svg id="s07-svg" viewBox="0 0 1600 2600" preserveAspectRatio="none">
+          <defs><mask id="s07-mboat" maskUnits="userSpaceOnUse" x="0" y="0" width="1600" height="2600"><path id="s07-mb" d="M477 1313 L482 1313 L496 1323 L568 1377 L597 1396 L613 1402 L655 1407 L717 1400 L775 1387 L793 1381 L802 1371 L806 1362 L805 1354 L790 1325 L787 1313 L796 1283 L810 1270 L812 1255 L814 1253 L816 1255" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-dasharray="496" stroke-dashoffset="496"/></mask></defs>
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path id="s07-pw0" d="M1079 701 L1082 717 L1093 728 L1106 734 L1114 745 L1120 780 L1113 809 L1106 825 L1104 870 L1095 882 L1089 883 L1086 888 L1084 897 L1073 904 L1067 918 L1033 935 L1006 963 L1005 970 L1001 971 L998 978 L986 986 L979 997 L966 1005 L957 1014 L950 1016 L922 1041 L914 1046 L906 1045 L901 1051 L869 1056 L864 1059 L856 1056 L840 1057 L834 1050 L827 1053 L818 1049 L810 1049 L800 1054 L786 1055 L765 1046 L754 1054 L738 1054 L727 1059 L723 1059 L721 1055 L716 1059 L693 1062 L675 1069 L671 1067 L668 1071 L664 1069 L660 1072 L655 1071 L655 1080 L644 1091 L627 1089 L612 1109 L586 1128 L579 1139 L567 1148 L551 1165 L549 1172 L543 1179 L538 1189 L541 1201 L538 1214 L523 1232 L521 1244 L518 1244 L514 1260 L515 1273 L512 1291 L502 1294 L501 1297 L480 1300 L477 1313" stroke="#17402C" stroke-width="18" stroke-dasharray="1079" stroke-dashoffset="1079"/>
+            <path id="s07-pw1" d="M1079 701 L1082 717 L1093 728 L1106 734 L1114 745 L1120 780 L1113 809 L1106 825 L1104 870 L1095 882 L1089 883 L1086 888 L1084 897 L1073 904 L1067 918 L1033 935 L1006 963 L1005 970 L1001 971 L998 978 L986 986 L979 997 L966 1005 L957 1014 L950 1016 L922 1041 L914 1046 L906 1045 L901 1051 L869 1056 L864 1059 L856 1056 L840 1057 L834 1050 L827 1053 L818 1049 L810 1049 L800 1054 L786 1055 L765 1046 L754 1054 L738 1054 L727 1059 L723 1059 L721 1055 L716 1059 L693 1062 L675 1069 L671 1067 L668 1071 L664 1069 L660 1072 L655 1071 L655 1080 L644 1091 L627 1089 L612 1109 L586 1128 L579 1139 L567 1148 L551 1165 L549 1172 L543 1179 L538 1189 L541 1201 L538 1214 L523 1232 L521 1244 L518 1244 L514 1260 L515 1273 L512 1291 L502 1294 L501 1297 L480 1300 L477 1313" stroke="#D0A070" stroke-width="9" stroke-dasharray="1079" stroke-dashoffset="1079"/>
+            <g mask="url(#s07-mboat)"><path d="M477 1313 L482 1313 L496 1323 L568 1377 L597 1396 L613 1402 L655 1407 L717 1400 L775 1387 L793 1381 L802 1371 L806 1362 L805 1354 L790 1325 L787 1313 L796 1283 L810 1270 L812 1255 L814 1253 L816 1255" stroke="#17402C" stroke-width="18"/><path d="M477 1313 L482 1313 L496 1323 L568 1377 L597 1396 L613 1402 L655 1407 L717 1400 L775 1387 L793 1381 L802 1371 L806 1362 L805 1354 L790 1325 L787 1313 L796 1283 L810 1270 L812 1255 L814 1253 L816 1255" stroke="#D0A070" stroke-width="9" stroke-dasharray="2 22"/></g>
+            <path id="s07-pr0" d="M816 1255 L825 1247 L831 1246 L836 1258 L821 1275 L802 1288 L796 1303 L798 1322 L805 1333 L814 1331 L813 1339 L823 1362 L825 1372 L837 1380 L833 1394 L838 1419 L836 1421 L828 1419" stroke="#17402C" stroke-width="18" stroke-dasharray="246" stroke-dashoffset="246"/>
+            <path id="s07-pr1" d="M816 1255 L825 1247 L831 1246 L836 1258 L821 1275 L802 1288 L796 1303 L798 1322 L805 1333 L814 1331 L813 1339 L823 1362 L825 1372 L837 1380 L833 1394 L838 1419 L836 1421 L828 1419" stroke="#D0A070" stroke-width="9" stroke-dasharray="246" stroke-dashoffset="246"/>
+            <path id="s07-p20" d="M828 1419 L836 1421 L838 1420 L840 1450 L835 1464 L835 1480 L826 1489 L826 1500 L819 1508 L815 1518 L818 1524 L848 1535 L867 1560 L880 1571 L889 1587 L894 1601 L889 1618 L892 1623 L897 1627 L895 1632 L901 1652 L900 1679 L904 1687 L913 1725 L920 1731 L916 1752 L924 1767 L920 1771 L916 1771 L911 1777 L914 1786 L896 1822 L914 1849 L925 1854 L928 1851 L934 1850" stroke="#17402C" stroke-width="18" stroke-dasharray="543" stroke-dashoffset="543"/>
+            <path id="s07-p21" d="M828 1419 L836 1421 L838 1420 L840 1450 L835 1464 L835 1480 L826 1489 L826 1500 L819 1508 L815 1518 L818 1524 L848 1535 L867 1560 L880 1571 L889 1587 L894 1601 L889 1618 L892 1623 L897 1627 L895 1632 L901 1652 L900 1679 L904 1687 L913 1725 L920 1731 L916 1752 L924 1767 L920 1771 L916 1771 L911 1777 L914 1786 L896 1822 L914 1849 L925 1854 L928 1851 L934 1850" stroke="#D0A070" stroke-width="9" stroke-dasharray="543" stroke-dashoffset="543"/>
+            <path id="s07-p30" d="M934 1850 L928 1851 L926 1854 L914 1849 L896 1822 L914 1786 L911 1777 L916 1771 L920 1771 L924 1767 L916 1753 L920 1731 L913 1725 L908 1700 L910 1678 L907 1670 L908 1663 L914 1656 L916 1651 L922 1648 L924 1640 L941 1617 L964 1610 L974 1601 L984 1599 L990 1589 L1001 1583 L1028 1557 L1037 1554 L1037 1547 L1033 1540 L1038 1526 L1034 1487 L1043 1458 L1041 1445 L1054 1430 L1048 1428 L1040 1428 L1038 1423 L1028 1416 L1018 1380 L1020 1374 L1016 1365 L1030 1360" stroke="#17402C" stroke-width="18" stroke-dasharray="649" stroke-dashoffset="649"/>
+            <path id="s07-p31" d="M934 1850 L928 1851 L926 1854 L914 1849 L896 1822 L914 1786 L911 1777 L916 1771 L920 1771 L924 1767 L916 1753 L920 1731 L913 1725 L908 1700 L910 1678 L907 1670 L908 1663 L914 1656 L916 1651 L922 1648 L924 1640 L941 1617 L964 1610 L974 1601 L984 1599 L990 1589 L1001 1583 L1028 1557 L1037 1554 L1037 1547 L1033 1540 L1038 1526 L1034 1487 L1043 1458 L1041 1445 L1054 1430 L1048 1428 L1040 1428 L1038 1423 L1028 1416 L1018 1380 L1020 1374 L1016 1365 L1030 1360" stroke="#D0A070" stroke-width="9" stroke-dasharray="649" stroke-dashoffset="649"/>
+          </g>
+          <g fill="#FAF8F5" stroke="#17402C" stroke-width="8">
+            <circle id="s07-st1" cx="1079" cy="701" r="22" opacity="0"/>
+            <circle id="s07-st2" cx="828" cy="1419" r="22" opacity="0"/>
+            <circle id="s07-st3" cx="934" cy="1850" r="22" opacity="0"/>
+            <circle id="s07-st4" cx="1030" cy="1360" r="22" opacity="0"/>
+          </g>
+        </svg>
+      </div></div>
+      <div id="s07-shade"></div>
+      <div id="s07-trails"></div>
+      <div id="s07-pt"></div>
+      <div id="s07-logos">
+        <div id="s07-l0" class="s07-logo"><img src="assets/logos/wikimediacommons-color.svg" style="height:76px" alt=""><b>Wikimedia Commons</b></div>
+        <div id="s07-l1" class="s07-logo"><img src="assets/logos/openstreetmap-color.svg" style="height:76px" alt=""><b>OpenStreetMap</b></div>
+        <div id="s07-l2" class="s07-logo s07-dk"><img src="assets/logos/geonames.svg" style="height:62px" alt=""></div>
+        <div id="s07-l3" class="s07-logo"><img src="assets/logos/nvidia-green.svg" style="height:76px" alt=""><b>NVIDIA</b></div>
+        <div id="s07-l4" class="s07-logo"><img src="assets/logos/met-norway.svg" style="height:74px" alt=""></div>
+        <div id="s07-l5" class="s07-logo"><img src="assets/logos/nasa-color.svg" style="height:80px" alt=""><b>NASA</b></div>
+        <div id="s07-l6" class="s07-logo"><img src="assets/logos/esri-color.svg" style="height:76px" alt=""><b>Esri</b></div>
+      </div>
+      <div id="s07-gar">le W</div>
+    </div></div>
+  </div>
+  <script>
+    (function () {
+      const F = 1 / 30, T0 = 0.2, BOOM = 0.847, END = 1.493;
+      const GO = { x: 895, y: 620 };            // flèche de s06
+      const C = { x: 540, y: 900 };             // Patagonie à l'écran pendant l'explosion
+      const tl = gsap.timeline({ paused: true });
+      // --- Iris depuis la flèche (5 images).
+      tl.fromTo("#s07-iris", { clipPath: "circle(0px at " + GO.x + "px " + GO.y + "px)" }, { clipPath: "circle(2400px at " + GO.x + "px " + GO.y + "px)", duration: T0 - 0.04, ease: "expo.in" }, 0.04);
+      // --- Globe : plonge vers la Patagonie (origine sur Torres del Paine).
+      tl.fromTo("#s07-gw", { scale: 0.58, rotation: 10, x: 0, y: 0, transformOrigin: "722px 917px" }, { scale: 1.95, rotation: 0, duration: BOOM, ease: "power2.in" }, 0);
+      tl.to("#s07-gw", { scale: 9, x: -76, y: -282, duration: 1.04 - BOOM, ease: "expo.in" }, BOOM);
+      tl.fromTo(["#s07-g1"], { opacity: 0 }, { opacity: 0.35, duration: 0.3, ease: "power2.in" }, BOOM - 0.3);
+      tl.fromTo(["#s07-g2"], { opacity: 0 }, { opacity: 0.2, duration: 0.3, ease: "power2.in" }, BOOM - 0.3);
+      tl.fromTo("#s07-g0", { filter: "blur(0px)" }, { filter: "blur(10px)", duration: 1.04 - BOOM, ease: "expo.in" }, BOOM);
+      tl.to("#s07-rad", { opacity: 0, duration: 0.15, ease: "none" }, 0.95);
+      // Point de Patagonie (laiton) avant l'explosion.
+      tl.set("#s07-pt", { opacity: 1 }, 0.45);
+      tl.fromTo("#s07-pt", { scale: 0 }, { scale: 1, duration: 0.25, ease: "elastic.out(1, 0.5)", immediateRender: false }, 0.45);
+      tl.to("#s07-pt", { scale: 2.4, opacity: 0, duration: 4 * F, ease: "power2.out" }, BOOM);
+      // --- 7,759 : explosion des 7 logos réels en couronne, sortie du cadre en 8 images.
+      const slots = [[540, 330], [330, 560], [790, 600], [250, 900], [840, 920], [330, 1240], [770, 1260]];
+      const tr = document.getElementById("s07-trails");
+      slots.forEach(([x, y], i) => {
+        const dx = x - C.x, dy = y - C.y, ang = Math.atan2(dy, dx), dist = Math.hypot(dx, dy);
+        const t = document.createElement("div"); t.className = "s07-trail"; t.id = "s07-t" + i; t.style.width = Math.max(40, dist - 100) + "px"; tr.appendChild(t);
+        const rot = i % 2 ? 3 : -3;
+        tl.set("#s07-l" + i, { opacity: 1 }, BOOM);
+        tl.fromTo("#s07-l" + i, { xPercent: -50, yPercent: -50, x: C.x, y: C.y, scale: 0.2, rotation: 0 }, { x: x, y: y, scale: 1, rotation: rot, duration: 3 * F, ease: "expo.out", immediateRender: false }, BOOM);
+        tl.to("#s07-l" + i, { x: x + dx * 0.08, y: y + dy * 0.08, duration: 2 * F, ease: "none" }, BOOM + 3 * F);
+        const k = 1500 / dist;
+        tl.to("#s07-l" + i, { x: C.x + dx * k, y: C.y + dy * k, scale: 1.5, rotation: rot * 3, filter: "blur(6px)", duration: 3 * F, ease: "power2.in" }, BOOM + 5 * F);
+        tl.set("#s07-t" + i, { opacity: 1 }, BOOM);
+        tl.fromTo("#s07-t" + i, { rotation: ang * 57.2958, x: Math.cos(ang) * 40, y: Math.sin(ang) * 40 - 8, scaleX: 0 }, { scaleX: 1, duration: 3 * F, ease: "expo.out", immediateRender: false }, BOOM);
+        tl.to("#s07-t" + i, { scaleX: 2.4, opacity: 0, duration: 5 * F, ease: "power2.in" }, BOOM + 3 * F);
+      });
+      tl.fromTo("#s07-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -8 }, { x: -10, y: 6 }, { x: 6, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, BOOM);
+      // --- Zoom-through : l'imagerie du parc s'ouvre depuis la Patagonie et remplit le cadre.
+      tl.fromTo("#s07-satclip", { clipPath: "circle(0px at 464px 618px)" }, { clipPath: "circle(1500px at 464px 618px)", duration: 1.04 - 0.89, ease: "expo.in" }, 0.89);
+      tl.fromTo("#s07-sw", { scale: 0.14, filter: "blur(14px)", transformOrigin: "1216px 1596px" }, { scale: 1.1, filter: "blur(0px)", duration: 1.04 - 0.89, ease: "expo.in" }, 0.89);
+      tl.to("#s07-sw", { scale: 1.0, duration: END - 1.04, ease: "power2.out" }, 1.04);
+      tl.fromTo("#s07-shade", { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, 1.04);
+      // --- Le W se trace (tracé OSM réel, 4 étapes) : 7,920 → 8,360.
+      const seg = [["w", "#s07-pw0,#s07-pw1", 1079, 1.008, 1.22], ["boat", "#s07-mb", 496, 1.22, 1.29], ["road", "#s07-pr0,#s07-pr1", 246, 1.29, 1.32], ["leg2", "#s07-p20,#s07-p21", 543, 1.32, 1.39], ["leg3", "#s07-p30,#s07-p31", 649, 1.39, 1.448]];
+      seg.forEach(([, sel, L, a, b]) => {
+        tl.fromTo(sel.split(","), { attr: { "stroke-dashoffset": L } }, { attr: { "stroke-dashoffset": 0 }, duration: b - a, ease: "none" }, a);
+      });
+      [["#s07-st1", 1.008], ["#s07-st2", 1.32], ["#s07-st3", 1.39], ["#s07-st4", 1.448]].forEach(([sel, t]) => {
+        tl.set(sel, { attr: { opacity: 1 } }, t);
+        tl.fromTo(sel, { attr: { r: 0 } }, { attr: { r: 22 }, duration: 4 * F, ease: "back.out(3)", immediateRender: false }, t);
+      });
+      // « le W » en Garamond.
+      tl.fromTo("#s07-gar", { opacity: 0, filter: "blur(10px)", y: 30 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: 5 * F, ease: "expo.out" }, 1.14);
+      tl.to("#s07-gar", { opacity: 0, filter: "blur(10px)", scale: 0.9, duration: 2 * F, ease: "power3.in" }, 1.39);
+      tl.set({}, {}, END);
+      window.__timelines["s07"] = tl;
+    })();
+  </script>
+</template>

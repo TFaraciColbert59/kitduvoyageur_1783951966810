@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>LKDV — aperçu de la vidéo ultime (20 s)</title>
+    <script src="assets/lib/gsap.min.js"></script>
+    <script src="assets/lib/MorphSVGPlugin.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts.css" />
+    <link rel="stylesheet" href="assets/ui.css" />
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      html, body { width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+      #root { position:relative; width:1080px; height:1920px; overflow:hidden; background:#06120C; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="21.3" data-width="1080" data-height="1920">
+      <video id="nuit" class="clip" src="assets/video/nuit.mp4" muted playsinline data-start="0" data-duration="3.8" data-track-index="0" style="position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover;z-index:1"></video>
+      <div id="encre" class="clip encre" data-start="3.4" data-duration="17.900000000000002" data-track-index="1" style="z-index:2"></div>
+      <div id="terre" style="position:absolute;left:-1060px;top:1190px;width:3200px;height:3200px;border-radius:1600px;overflow:hidden;z-index:40;box-shadow:0 -8px 70px rgba(150,190,230,.45), 0 0 0 2px rgba(190,220,255,.35);background:#06120C"><div id="sol" style="position:absolute;left:600px;top:-120px;width:2600px;height:1950px;background:url(assets/img/alpes-z8.jpg) center/cover;filter:brightness(.62) saturate(.9)"></div><div style="position:absolute;inset:0;border-radius:1600px;background:radial-gradient(circle at 50% 8%,rgba(0,0,0,0) 0%,rgba(6,18,12,.25) 18%,rgba(6,18,12,.85) 42%)"></div></div>
+      <svg id="fil" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;left:0;top:0;z-index:45;overflow:visible" aria-hidden="true"><path id="plan" d="M209.8 1236.7 L222.9 1228.1 L237.8 1227.9 L253.4 1232.3 L267.9 1230.9 L281.1 1221.9 L294.8 1215.0 L309.8 1216.8 L325.2 1221.6 L339.5 1219.3 L353.1 1210.5 L367.2 1205.5 L382.2 1209.2 L397.3 1214.0 L411.6 1210.8 L425.5 1202.5 L439.9 1199.6 L454.8 1204.9 L469.6 1209.5 L484.0 1205.5 L498.3 1198.0 L512.9 1197.3 L527.5 1204.0 L542.1 1208.0 L556.6 1203.4 L571.3 1197.0 L585.8 1198.5 L600.1 1206.2 L614.5 1209.5 L629.3 1204.5 L644.2 1199.6 L658.6 1203.3 L672.5 1211.7 L686.9 1214.1 L702.0 1209.0 L717.0 1205.9 L731.0 1211.6 L744.6 1220.2 L759.0 1221.8 L774.4 1216.8 L789.3 1215.7" fill="none" stroke="#FAF8F5" stroke-opacity=".75" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round" opacity="0"/><path id="r1" d="M209.8 1236.7 L223.2 1228.0 L238.4 1227.8 L254.3 1232.1 L269.1 1230.7 L282.6 1221.7 L296.5 1214.7 L311.9 1216.5 L327.5 1221.3 L342.1 1219.0 L356.0 1210.2 L370.4 1205.1 L385.8 1208.9 L401.1 1213.7 L415.7 1210.5 L430.0 1202.2 L444.7 1199.3 L459.9 1204.7 L474.9 1209.3 L489.6 1205.3 L504.3 1197.8 L519.1 1197.2 L534.1 1203.9 L548.9 1208.0 L563.7 1203.5 L578.7 1197.2 L593.6 1198.8 L608.1 1206.6 L622.8 1209.9" fill="none" stroke="none"/><path id="r2" d="M623.1 1204.2 L635.3 1199.1 L647.0 1202.5 L658.4 1210.6 L670.1 1212.7 L682.5 1207.1 L694.8 1203.5 L706.2 1208.8 L717.2 1216.9 L729.1 1217.9 L741.7 1212.3 L754.0 1210.5 L765.0 1217.4 L775.8 1225.2 L787.9 1225.1" fill="none" stroke="#D0A070" stroke-width="7" stroke-linecap="round" opacity="0"/><path id="anneau" d="M540.0 430.0 L560.3 431.6 L580.2 436.4 L599.0 444.2 L616.4 454.8 L631.9 468.1 L645.2 483.6 L655.8 501.0 L663.6 519.8 L668.4 539.7 L670.0 560.0 L668.4 580.3 L663.6 600.2 L655.8 619.0 L645.2 636.4 L631.9 651.9 L616.4 665.2 L599.0 675.8 L580.2 683.6 L560.3 688.4 L540.0 690.0 L519.7 688.4 L499.8 683.6 L481.0 675.8 L463.6 665.2 L448.1 651.9 L434.8 636.4 L424.2 619.0 L416.4 600.2 L411.6 580.3 L410.0 560.0 L411.6 539.7 L416.4 519.8 L424.2 501.0 L434.8 483.6 L448.1 468.1 L463.6 454.8 L481.0 444.2 L499.8 436.4 L519.7 431.6 L540.0 430.0" fill="none" stroke="none"/><path id="trait" opacity="0" d="M200.0 832.0 L224.3 834.5 L248.6 834.7 L272.9 832.4 L297.1 829.7 L321.4 829.1 L345.7 831.2 L370.0 834.0 L394.3 835.0 L418.6 833.2 L442.9 830.4 L467.1 829.0 L491.4 830.4 L515.7 833.3 L540.0 835.0 L564.3 834.0 L588.6 831.1 L612.9 829.1 L637.1 829.7 L661.4 832.4 L685.7 834.7 L710.0 834.5 L734.3 832.0 L758.6 829.5 L782.9 829.3 L807.1 831.6 L831.4 834.3 L855.7 834.9 L880.0 832.8" fill="none" stroke="#D0A070" stroke-width="8" stroke-linecap="round"/><circle id="pin0" cx="209.8" cy="1236.7" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/><circle id="pin1" cx="623.1" cy="1204.2" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/><circle id="pin2" cx="788.4" cy="1221.6" r="9" fill="#FAF8F5" stroke="#D0A070" stroke-width="5" opacity="0"/></svg>
+      <div id="lab0" class="hud" style="left:210px;top:1259px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Annecy</span><span class="lb">Kayak</span></div>
+      <div id="lab1" class="hud" style="left:623px;top:1226px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Chamonix</span><span class="lb">Via ferrata</span></div>
+      <div id="lab2" class="hud" style="left:788px;top:1144px;transform:translateX(-50%);font-size:22px;padding:8px 16px;z-index:46"><span>Lac Blanc</span><span class="lb">Refuge · 2 352 m</span></div>
+      <div id="hud1" class="hud" style="left:60px;top:150px"><span style="width:14px;height:14px;border-radius:7px;background:#E07A5F;display:inline-block"></span><span class="lb">En direct</span><span class="mono">3:41:08</span></div>
+      <div id="hud2" class="hud light" style="left:300px;top:860px;font-size:40px;padding:22px 34px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v6"/></svg><span>200 m</span><span style="font-weight:500;color:#5E6B63">· à gauche</span></div>
+      <div id="six" class="kick" style="top:690px;z-index:50">Il y a six mois</div>
+      <div id="ppm" class="big" style="top:740px;font-size:140px;opacity:1;z-index:50"><span class="ppm" style="opacity:0">P</span><span class="ppm" style="opacity:0">a</span><span class="ppm" style="opacity:0">s</span><span class="ppm" style="opacity:0"> </span><span class="ppm" style="opacity:0">p</span><span class="ppm" style="opacity:0">o</span><span class="ppm" style="opacity:0">u</span><span class="ppm" style="opacity:0">r</span><span class="ppm" style="opacity:0"> </span><span class="ppm" style="opacity:0">m</span><span class="ppm" style="opacity:0">o</span><span class="ppm" style="opacity:0">i</span><span class="ppm" style="opacity:0">.</span></div>
+      <div id="ph" style="position:absolute;left:325px;top:150px;width:430px;height:932px;border-radius:58px;border:9px solid #0A0F0C;box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.08);z-index:31;opacity:0"><div style="position:absolute;left:50%;top:12px;width:100px;height:30px;margin-left:-50px;border-radius:15px;background:#000"></div></div>
+      <video id="v0" class="clip" src="assets/video/explorer.mp4" muted playsinline data-start="7.75" data-duration="3.5" data-media-start="0.9" data-playback-rate="1" data-track-index="3" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
+      <video id="v1" class="clip" src="assets/video/compas.mp4" muted playsinline data-start="11.2" data-duration="3.45" data-media-start="0.7" data-playback-rate="1" data-track-index="4" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
+      <video id="v2" class="clip" src="assets/video/club.mp4" muted playsinline data-start="14.6" data-duration="2.75" data-media-start="0.9" data-playback-rate="1.45" data-track-index="3" style="position:absolute;left:334px;top:159px;width:412px;height:914px;object-fit:cover;object-position:top;border-radius:49px;z-index:30"></video>
+      <div id="ex0" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">Je ne saurais pas où aller.<span id="exb0" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
+      <div id="ex1" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">C'est trop compliqué.<span id="exb1" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
+      <div id="ex2" style="position:absolute;left:0;right:0;top:62px;text-align:center;z-index:60;opacity:0"><span style="position:relative;display:inline-block;padding:10px 30px;border-radius:36px;background:rgba(6,18,12,.6);border:1px solid rgba(208,160,112,.3);font-family:'EB Garamond Italic',Georgia,serif;font-style:italic;font-size:44px;color:#FAF8F5">Je n'ai personne avec qui partir.<span id="exb2" style="position:absolute;left:24px;right:24px;top:52%;height:4px;background:#D0A070;border-radius:2px;transform-origin:0 50%"></span></span></div>
+      <div id="ch0" class="hud light" style="left:278px;top:1265px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg><span>Point d'eau</span><span style="font-weight:500;color:#5E6B63">à 20 min</span></div>
+      <div id="ch1" class="hud light" style="left:720px;top:1330px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20 12 4l9 16"/><path d="M12 4v16"/><path d="m8.5 20 3.5-6 3.5 6"/><path d="M2 20h20"/></svg><span>Bivouac</span><span style="font-weight:500;color:#5E6B63">permis ici</span></div>
+      <div id="ch2" class="hud light" style="left:761px;top:1270px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19V6"/><path d="M3 15h18v4"/><path d="M21 15v-3a3 3 0 0 0-3-3h-7v6"/><circle cx="7" cy="11" r="2"/></svg><span>Nuit</span><span style="font-weight:500;color:#5E6B63">Refuge du Lac Blanc</span></div>
+      <div id="ch3" class="hud light" style="left:360px;top:1300px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="1.8"/><circle cx="17" cy="9" r="1.8"/><circle cx="10" cy="5.5" r="1.8"/><circle cx="14" cy="5.5" r="1.8"/><path d="M12 12c-3 0-5.5 3-5.5 5.5 0 1.7 1.5 2.5 3 2 1-.3 1.6-.6 2.5-.6s1.5.3 2.5.6c1.5.5 3-.3 3-2C17.5 15 15 12 12 12z"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Marmotte des Alpes</span></div>
+      <div id="ch4" class="hud light" style="left:457px;top:1265px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.5-3.5 3.2-5.5 6.5-5.5s6 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18 14.8c2 .7 3.3 2.5 3.6 5.2"/></svg><span>Rencontre</span><span style="font-weight:500;color:#5E6B63">Claire · guide</span></div>
+      <div id="ch5" class="hud light" style="left:747px;top:1330px;transform:translateX(-50%);font-size:24px;padding:10px 18px;z-index:47"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2.5"/><path d="M12 6.5a3 3 0 1 1 3 3 3 3 0 1 1-3 3 3 3 0 1 1-3-3 3 3 0 1 1 3-3"/><path d="M12 12v9"/><path d="M12 17c-2 0-3.5-1-4-3M12 18c2 0 3.5-1 4-3"/></svg><span>Pokédex</span><span style="font-weight:500;color:#5E6B63">Gentiane de Koch</span></div>
+      <div id="st0" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:500 34px/1.2 'JetBrains Mono',monospace;color:#F1D3AE;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">« Dans deux cents mètres, à gauche. »</span></div>
+      <div id="st1" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Il y a six mois,</span></div>
+      <div id="st2" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">tu disais encore :</span></div>
+      <div id="st3" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">La carte est vivante.</span></div>
+      <div id="st4" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Une phrase.</span></div>
+      <div id="st5" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">C'est tout ce qu'on te demande.</span></div>
+      <div id="st6" style="position:absolute;left:40px;right:40px;top:1098px;text-align:center;font:600 40px/1.2 Inter,sans-serif;color:#FAF8F5;z-index:70;opacity:0"><span style="display:inline-block;padding:8px 22px;border-radius:30px;background:rgba(6,18,12,.62)">Des inconnus, puis des prénoms.</span></div>
+      <img id="logo" src="assets/img/badge-anneau.png" alt="" style="position:absolute;left:420px;top:440px;width:240px;height:240px;opacity:0;z-index:50">
+      <div id="wm" style="position:absolute;left:0;right:0;top:770px;text-align:center;font:700 60px/1 Inter,sans-serif;letter-spacing:.18em;color:#FAF8F5;opacity:0;z-index:50">LE KIT DU VOYAGEUR</div>
+      <div id="tag" class="big" style="top:860px;font-size:58px;color:#D0A070;z-index:50">Là où la carte se termine.</div>
+      <audio id="son" class="clip" src="audio/bande-son.wav" data-start="0" data-duration="21.3" data-track-index="20" data-volume="1" data-timeline-role="music"></audio>
+    </div>
+    <script>
+      gsap.registerPlugin(MorphSVGPlugin);
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#encre", {"opacity": 0}, {"opacity": 1, "duration": 0.4}, 3.4);
+      tl.fromTo("#sol", {"x": 0}, {"x": -260, "duration": 21.3, "ease": "none"}, 0);
+      tl.fromTo("#terre", {"y": 160}, {"y": 0, "duration": 1.4, "ease": "power3.out"}, 0.1);
+      tl.fromTo("#plan", {"opacity": 0}, {"opacity": 1, "duration": 0.8}, 1.0);
+      (function(){const p=document.getElementById("trait"); const L=p.getTotalLength(); gsap.set(p,{strokeDasharray:L+" "+L, strokeDashoffset:L});tl.set(p,{opacity:1},6.45); tl.to(p,{strokeDashoffset:0,duration:0.45,ease:"power2.inOut"},6.45);tl.to(p,{morphSVG:{shape:"#r1"},duration:0.9,ease:"power3.inOut"},7.05);tl.set(p,{strokeDasharray:"none"},7.05);tl.to(p,{morphSVG:{shape:"#anneau"},duration:1.0,ease:"power3.inOut"},17.15);const q=document.getElementById("r2"); const L2=q.getTotalLength(); gsap.set(q,{strokeDasharray:L2+" "+L2, strokeDashoffset:L2});tl.to(q,{opacity:1,strokeDashoffset:0,duration:1.2,ease:"power1.inOut"},15.4); tl.to(q,{opacity:0,duration:0.4},17.15);})();
+      tl.to("#plan", {"opacity": 0, "duration": 0.5}, 17.1);
+      tl.fromTo("#pin0", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 1.4);
+      tl.fromTo("#lab0", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 1.6);
+      tl.to("#lab0", {"opacity": 0, "duration": 0.3}, 7.6);
+      tl.to("#pin0", {"opacity": 0, "duration": 0.4}, 17.1);
+      tl.fromTo("#pin1", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 1.7);
+      tl.fromTo("#lab1", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 1.9000000000000001);
+      tl.to("#lab1", {"opacity": 0, "duration": 0.3}, 7.6);
+      tl.to("#pin1", {"opacity": 0, "duration": 0.4}, 17.1);
+      tl.fromTo("#pin2", {"opacity": 0, "attr": {"r": 2}}, {"opacity": 1, "attr": {"r": 9}, "duration": 0.4, "ease": "back.out(3)"}, 2.0);
+      tl.fromTo("#lab2", {"opacity": 0, "y": 10}, {"opacity": 1, "y": 0, "duration": 0.4}, 2.2);
+      tl.to("#lab2", {"opacity": 0, "duration": 0.3}, 7.6);
+      tl.to("#pin2", {"opacity": 0, "duration": 0.4}, 17.1);
+      tl.fromTo("#hud1", {"opacity": 0, "y": -10}, {"opacity": 1, "y": 0, "duration": 0.4}, 0.3);
+      tl.to("#hud1", {"opacity": 0, "duration": 0.3}, 3.2);
+      tl.fromTo("#hud2", {"opacity": 0, "scale": 0.9}, {"opacity": 1, "scale": 1, "duration": 0.45, "ease": "back.out(2)"}, 0.45);
+      tl.to("#hud2", {"opacity": 0, "duration": 0.3}, 2.9);
+      tl.fromTo("#six", {"opacity": 0}, {"opacity": 1, "duration": 0.5}, 3.3);
+      tl.to("#six", {"opacity": 0, "duration": 0.3}, 6.9);
+      tl.to(".ppm",{opacity:1,duration:0.01,stagger:0.045},5.92);
+      tl.to("#ppm", {"opacity": 0, "y": -20, "duration": 0.35}, 7.0);
+      tl.fromTo("#ph", {"opacity": 0, "y": 80, "scale": 0.94}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.6, "ease": "power3.out"}, 7.6);
+      tl.to("#ph", {"opacity": 0, "scale": 0.9, "duration": 0.4}, 16.95);
+      tl.fromTo("#v0", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 7.75);
+      tl.fromTo("#v1", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 11.2);
+      tl.fromTo("#v2", {"opacity": 0}, {"opacity": 1, "duration": 0.3}, 14.6);
+      tl.to("#v2", {"opacity": 0, "duration": 0.35}, 16.95);
+      gsap.set("#exb0",{scaleX:0});
+      tl.fromTo("#ex0", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 7.6);
+      tl.fromTo("#exb0", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 10.35);
+      tl.to("#ex0", {"opacity": 0, "duration": 0.25}, 10.8);
+      gsap.set("#exb1",{scaleX:0});
+      tl.fromTo("#ex1", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 11.2);
+      tl.fromTo("#exb1", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 13.75);
+      tl.to("#ex1", {"opacity": 0, "duration": 0.25}, 14.200000000000001);
+      gsap.set("#exb2",{scaleX:0});
+      tl.fromTo("#ex2", {"opacity": 0, "y": -12}, {"opacity": 1, "y": 0, "duration": 0.4}, 14.6);
+      tl.fromTo("#exb2", {"scaleX": 0}, {"scaleX": 1, "duration": 0.4, "ease": "power2.inOut"}, 16.35);
+      tl.to("#ex2", {"opacity": 0, "duration": 0.25}, 16.8);
+      tl.fromTo("#ch0", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 9.7);
+      tl.to("#ch0", {"opacity": 0, "duration": 0.3}, 10.799999999999999);
+      tl.fromTo("#ch1", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 10.2);
+      tl.to("#ch1", {"opacity": 0, "duration": 0.3}, 10.799999999999999);
+      tl.fromTo("#ch2", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 12.4);
+      tl.to("#ch2", {"opacity": 0, "duration": 0.3}, 14.2);
+      tl.fromTo("#ch3", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 13.0);
+      tl.to("#ch3", {"opacity": 0, "duration": 0.3}, 14.2);
+      tl.fromTo("#ch4", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 15.0);
+      tl.to("#ch4", {"opacity": 0, "duration": 0.3}, 16.7);
+      tl.fromTo("#ch5", {"opacity": 0, "y": 16, "scale": 0.9}, {"opacity": 1, "y": 0, "scale": 1, "duration": 0.4, "ease": "back.out(2)"}, 15.5);
+      tl.to("#ch5", {"opacity": 0, "duration": 0.3}, 16.7);
+      tl.fromTo("#st0", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 0.35000000000000003);
+      tl.to("#st0", {"opacity": 0, "duration": 0.2}, 2.2);
+      tl.fromTo("#st1", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 3.1);
+      tl.to("#st1", {"opacity": 0, "duration": 0.2}, 4.3);
+      tl.fromTo("#st2", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 4.3);
+      tl.to("#st2", {"opacity": 0, "duration": 0.2}, 5.85);
+      tl.fromTo("#st3", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 9.35);
+      tl.to("#st3", {"opacity": 0, "duration": 0.2}, 10.9);
+      tl.fromTo("#st4", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 11.649999999999999);
+      tl.to("#st4", {"opacity": 0, "duration": 0.2}, 12.85);
+      tl.fromTo("#st5", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 12.899999999999999);
+      tl.to("#st5", {"opacity": 0, "duration": 0.2}, 14.45);
+      tl.fromTo("#st6", {"opacity": 0, "y": 8}, {"opacity": 1, "y": 0, "duration": 0.2}, 14.75);
+      tl.to("#st6", {"opacity": 0, "duration": 0.2}, 16.9);
+      tl.fromTo("#logo", {"opacity": 0, "scale": 0.7, "rotation": -25}, {"opacity": 1, "scale": 1, "rotation": 0, "duration": 0.8, "ease": "back.out(1.6)"}, 17.9);
+      tl.to("#trait",{opacity:0,duration:0.5},18.3);
+      tl.fromTo("#wm", {"opacity": 0, "y": 16}, {"opacity": 1, "y": 0, "duration": 0.6}, 17.75);
+      tl.fromTo("#tag", {"opacity": 0, "y": 16}, {"opacity": 1, "y": 0, "duration": 0.7}, 19.4);
+      tl.fromTo("#terre", {"filter": "brightness(1)"}, {"filter": "brightness(1.25)", "duration": 1.5}, 17.6);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

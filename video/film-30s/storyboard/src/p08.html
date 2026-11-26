@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p08 · Le voyage se monte</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--forest); }
+  #bg { background: radial-gradient(80% 60% at 50% 50%, #1f5038 0%, #17402C 60%, #0f2c1e 100%); }
+  #stage { position: absolute; inset: 0; perspective: 1400px; perspective-origin: 540px 900px; }
+  #grid { position: absolute; left: 70px; top: 230px; width: 940px; height: 1260px; transform: rotateY(-16deg) rotateX(8deg) rotateZ(-3deg); transform-style: preserve-3d; }
+  .t { position: absolute; border-radius: 48px; background: rgba(250,248,245,0.92); border: 2px solid rgba(255,255,255,0.9); box-shadow: 0 30px 70px rgba(6,18,12,0.45); padding: 34px 38px; color: #1f2a24; overflow: hidden; }
+  .t .k { font-size: 34px; font-weight: 700; color: var(--sage); letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 12px; }
+  .t .v { font-size: 92px; font-weight: 800; letter-spacing: -0.03em; color: var(--forest); margin-top: 14px; line-height: 1; white-space: nowrap; }
+  .t .s { font-size: 34px; color: var(--label2); margin-top: 10px; white-space: nowrap; }
+  #map { left: 0; top: 0; width: 560px; height: 520px; padding: 0; }
+  #map img { position: absolute; left: -60px; top: -250px; width: 640px; }
+  #map svg { position: absolute; left: -60px; top: -250px; width: 640px; height: 1040px; }
+  #map .cap { position: absolute; left: 24px; bottom: 24px; height: 70px; padding: 0 26px; background: rgba(250,248,245,0.92); font-size: 36px; font-weight: 800; color: var(--forest); }
+  #km { left: 590px; top: 0; width: 350px; height: 250px; }
+  #met { left: 590px; top: 270px; width: 350px; height: 250px; }
+  #bud { left: -40px; top: 550px; width: 1020px; height: 330px; background: var(--stone); box-shadow: 0 0 0 6px var(--brass), 0 40px 90px rgba(6,18,12,0.6); transform: translateZ(80px) scale(1.04); }
+  #bud .v { font-size: 200px; font-weight: 900; color: var(--forest); letter-spacing: -0.03em; margin-top: 4px; }
+  #bud .v span { color: var(--brass); }
+  #bud .s { position: absolute; right: 40px; top: 40px; }
+  #grp { left: 0; top: 910px; width: 300px; height: 250px; }
+  #sac { left: 320px; top: 910px; width: 300px; height: 250px; }
+  #pap { left: 640px; top: 910px; width: 300px; height: 250px; }
+  #grp .v, #sac .v, #pap .v { font-size: 76px; }
+  #ghost { left: 70px; top: 790px; font-size: 200px; color: var(--brass); opacity: 0.3; filter: blur(3px); }
+</style></head>
+<body><div id="frame">
+  <div id="bg" class="fill"></div>
+  <div id="stage"><div id="grid">
+    <div id="map" class="t"><img src="assets/sat/sat-w.jpg"><svg id="wsvg" viewBox="0 0 1600 2600" preserveAspectRatio="none"></svg><div class="cap pill">Le W · 4 étapes</div></div>
+    <div id="km" class="t"><div class="k"><i data-ic="route" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Parcours</div><div class="v" style="font-size:76px">61,5 km</div><div class="s">5 jours</div></div>
+    <div id="met" class="t"><div class="k"><i data-ic="rain" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Averses</div><div class="v" style="font-size:80px">4° / 8°</div><div class="s">MET Norway</div></div>
+    <div id="bud" class="t"><div class="k"><i data-ic="euro" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Budget</div><div class="v">4 194 <span>€</span></div><div class="s">1 398 € par personne</div></div>
+    <div id="grp" class="t"><div class="k"><i data-ic="users" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Nous</div><div class="v">3</div><div class="s">voyageurs</div></div>
+    <div id="sac" class="t"><div class="k"><i data-ic="bag" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Sac</div><div class="v">2,9 kg</div><div class="s">14 objets</div></div>
+    <div id="pap" class="t"><div class="k"><i data-ic="file" data-s="40" data-c="#5B7F55" data-w="2.4"></i>Papiers</div><div class="v">✓</div><div class="s">Chili</div></div>
+  </div></div>
+</div>
+<script src="icons.js"></script>
+<script>
+  fetch('assets/sat/sat-w.json').then(r => r.json()).then(J => {
+    const svg = document.getElementById('wsvg'); let h = '';
+    for (const [k, pts] of Object.entries(J.routes)) {
+      const d = 'M' + pts.map(p => p.join(' ')).join(' L');
+      h += `<path d="${d}" fill="none" stroke="#17402C" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#D0A070" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" ${k === 'boat' ? 'stroke-dasharray="2 22"' : ''}/>`;
+    }
+    J.stops.forEach(s => { h += `<circle cx="${s.x}" cy="${s.y}" r="26" fill="#FAF8F5" stroke="#17402C" stroke-width="8"/>`; });
+    svg.innerHTML = h; window.__ready = true;
+  });
+  window.__ready = false;
+</script>
+</body></html>

@@ -1,0 +1,48 @@
+<template>
+  <style>
+    #ch0 { position:absolute; inset:0; overflow:hidden; }
+    
+  </style>
+  <div id="ch0" data-composition-id="ch0" data-width="1080" data-height="1920">
+<div id="ch0-hud1" class="hud" style="left:60px;top:150px;"><span style="width:14px;height:14px;border-radius:7px;background:#E07A5F;display:inline-block"></span><span class="lb">En direct</span><span class="mono" id="ch0-chrono">3:41:08</span></div>
+<div id="ch0-hud2" class="hud" style="left:700px;top:150px;"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 20 6.5-11 4 6.5 2.5-4L21 20z"/></svg><span class="mono" id="ch0-alt">2 291 m</span></div>
+<div id="ch0-hud3" class="hud light" style="left:300px;top:1330px;font-size:40px;padding:22px 34px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v6"/></svg><span>200 m</span><span style="font-weight:500;color:#5E6B63">· à gauche</span></div>
+<div id="ch0-h" class="kick" style="top:330px;font-size:64px;letter-spacing:0.08em;color:#FAF8F5">05:12</div>
+<div id="ch0-lab4" style="position:absolute;left:520px;top:1180px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%);opacity:0;z-index:30"><div style="width:3px;height:70px;background:linear-gradient(rgba(250,248,245,0),#FAF8F5)"></div><div class="hud light" style="position:relative;opacity:1;left:0;top:0;font-size:32px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Lac Blanc</span><span class="mono" style="font-size:24px;color:#7E5A30">2 352 m</span></div></div>
+<div id="ch0-lab5" style="position:absolute;left:760px;top:360px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%);opacity:0;z-index:30"><div class="hud light" style="position:relative;opacity:1;left:0;top:0;font-size:32px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Mont-Blanc</span><span class="mono" style="font-size:24px;color:#7E5A30">4 806 m</span></div><div style="width:3px;height:70px;background:linear-gradient(#FAF8F5,rgba(250,248,245,0))"></div></div>
+<div id="ch0-six" class="kick" style="top:760px">Il y a six mois</div>
+<div id="ch0-ppm" class="big" style="top:840px;font-size:150px;opacity:1"><span id="ch0-ty6" class="" style="white-space:pre-wrap"><span class="ch0-ty6c" style="opacity:0">P</span><span class="ch0-ty6c" style="opacity:0">a</span><span class="ch0-ty6c" style="opacity:0">s</span><span class="ch0-ty6c" style="opacity:0"> </span><span class="ch0-ty6c" style="opacity:0">p</span><span class="ch0-ty6c" style="opacity:0">o</span><span class="ch0-ty6c" style="opacity:0">u</span><span class="ch0-ty6c" style="opacity:0">r</span><span class="ch0-ty6c" style="opacity:0"> </span><span class="ch0-ty6c" style="opacity:0">m</span><span class="ch0-ty6c" style="opacity:0">o</span><span class="ch0-ty6c" style="opacity:0">i</span><span class="ch0-ty6c" style="opacity:0">.</span></span></div>
+<div id="ch0-wm" style="position:absolute;left:0;right:0;top:930px;text-align:center;font:700 64px/1 Inter, sans-serif;letter-spacing:0.18em;color:#FAF8F5;opacity:0">LE KIT DU VOYAGEUR</div>
+<div id="ch0-tag" class="big" style="top:1020px;font-size:56px;color:#D0A070">Là où la carte se termine.</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#ch0-hud1", {"opacity": 0, "y": 16}, {"opacity": 1, "duration": 0.45, "ease": "power3.out", "y": 0}, 0.3);
+      tl.to("#ch0-hud1", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 5.0);
+      tl.fromTo("#ch0-hud2", {"opacity": 0, "y": 16}, {"opacity": 1, "duration": 0.45, "ease": "power3.out", "y": 0}, 0.5);
+      tl.to("#ch0-hud2", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 5.0);
+      (function(){const o={v:2291}; const el=document.getElementById("ch0-alt"); tl.to(o, {v:2318, duration:4.6, ease:"power2.out", onUpdate:()=>{const v=o.v; el.textContent=""+Math.round(v).toLocaleString("fr-FR").replace(/\u202f/g, "\u2009")+" m";}}, 0.5);})();
+      (function(){const o={v:0}; const el=document.getElementById("ch0-chrono"); tl.to(o, {v:4, duration:4.8, ease:"power2.out", onUpdate:()=>{const v=o.v; el.textContent="3:41:0"+Math.round(v).toLocaleString("fr-FR").replace(/\u202f/g, "\u2009")+"";}}, 0.3);})();
+      tl.fromTo("#ch0-hud3", {"opacity": 0, "y": 16}, {"opacity": 1, "duration": 0.45, "ease": "power3.out", "y": 0}, 0.55);
+      tl.to("#ch0-hud3", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 2.7);
+      tl.fromTo("#ch0-h", {"opacity": 0, "y": 16}, {"opacity": 1, "duration": 0.4, "ease": "power3.out", "y": 0}, 3.827);
+      tl.to("#ch0-h", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 5.1);
+      tl.fromTo("#ch0-lab4", {"opacity": 0, "y": 20}, {"opacity": 1, "duration": 0.5, "ease": "power3.out", "y": 0}, 5.319);
+      tl.to("#ch0-lab4", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 12.0);
+      tl.fromTo("#ch0-lab5", {"opacity": 0, "y": 20}, {"opacity": 1, "duration": 0.5, "ease": "power3.out", "y": 0}, 6.495);
+      tl.to("#ch0-lab5", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 12.0);
+      tl.fromTo("#ch0-six", {"opacity": 0, "y": 10}, {"opacity": 1, "duration": 0.5, "ease": "power3.out", "y": 0}, 12.617);
+      tl.to("#ch0-six", {"opacity": 0, "duration": 0.3, "ease": "power2.in"}, 15.7);
+      tl.to(".ch0-ty6c", {opacity:1, duration:0.01, stagger:0.0625, ease:"none"}, 15.405);
+      tl.to("#ch0-ppm", {"y": -260, "scale": 0.62, "duration": 0.5, "ease": "power3.inOut"}, 16.05);
+      tl.fromTo("#ch0-wm", {"opacity": 0, "y": 14}, {"opacity": 1, "duration": 0.45, "ease": "power3.out", "y": 0}, 16.2);
+      tl.to("#ch0-wm", {"opacity": 0, "duration": 0.25, "ease": "power2.in"}, 17.141);
+      tl.fromTo("#ch0-tag", {"opacity": 0, "y": 14}, {"opacity": 1, "duration": 0.45, "ease": "power3.out", "y": 0}, 16.45);
+      tl.to("#ch0-tag", {"opacity": 0, "duration": 0.25, "ease": "power2.in"}, 17.141);
+      tl.to("#ch0-ppm", {"opacity": 0, "duration": 0.25, "ease": "power2.in"}, 17.141);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["ch0"] = tl;
+    })();
+  </script>
+</template>

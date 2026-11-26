@@ -1,0 +1,156 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #0f2a1e;
+      font-family: "Inter", sans-serif;
+    }
+    .m-card {
+      position: absolute;
+      left: 980px;
+      top: 90px;
+      width: 760px;
+      height: 900px;
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 30px 70px rgba(11, 31, 23, 0.45);
+    }
+    .m-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .m-g {
+      position: absolute;
+      inset: -60px;
+      filter: blur(28px) saturate(1.1);
+    }
+    .m-g img {
+      width: 2040px;
+      height: 1200px;
+      object-fit: cover;
+    }
+    #m-gshade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 31, 23, 0.7) 0%, rgba(11, 31, 23, 0.35) 60%, rgba(11, 31, 23, 0.25) 100%);
+    }
+    #m-c6 {
+      position: absolute;
+      inset: 0;
+      clip-path: inset(90px 180px 90px 980px round 36px);
+    }
+    #m-c6 img {
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #m-bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+    #m-bg img {
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #m-shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(11, 31, 23, 0.55) 0%, rgba(11, 31, 23, 0.15) 55%, rgba(11, 31, 23, 0) 100%);
+      opacity: 0;
+    }
+    #m-title {
+      position: absolute;
+      left: 120px;
+      top: 330px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 124px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #m-title .w,
+    #m-next .w {
+      display: inline-block;
+    }
+    #m-title em,
+    #m-next em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    #m-next {
+      position: absolute;
+      left: 120px;
+      top: 410px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 104px;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+      text-shadow: 0 4px 30px rgba(11, 31, 23, 0.35);
+    }
+  </style>
+  <div id="root" data-composition-id="montage" data-width="1920" data-height="1080">
+    <div class="m-g" id="m-g1"><img src="assets/img/adventure-bivouac.jpg" alt="" /></div>
+    <div class="m-g" id="m-g2"><img src="assets/img/adventure-kayak.jpg" alt="" /></div>
+    <div class="m-g" id="m-g3"><img src="assets/img/community-hikers.jpg" alt="" /></div>
+    <div class="m-g" id="m-g4"><img src="assets/img/journal-refuge.jpg" alt="" /></div>
+    <div class="m-g" id="m-g5"><img src="assets/img/lake-1.jpg" alt="" /></div>
+    <div id="m-gshade"></div>
+    <div id="m-bg"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="m-shade"></div>
+
+    <div class="m-card" id="m-c1"><img src="assets/img/adventure-bivouac.jpg" alt="" /></div>
+    <div class="m-card" id="m-c2"><img src="assets/img/adventure-kayak.jpg" alt="" /></div>
+    <div class="m-card" id="m-c3"><img src="assets/img/community-hikers.jpg" alt="" /></div>
+    <div class="m-card" id="m-c4"><img src="assets/img/journal-refuge.jpg" alt="" /></div>
+    <div class="m-card" id="m-c5"><img src="assets/img/lake-1.jpg" alt="" /></div>
+    <div id="m-c6"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+
+    <div id="m-title"><span class="w">Là</span> <span class="w">où</span> <span class="w">la</span> <span class="w">carte</span><br /><span class="w"><em>se</em></span> <span class="w"><em>termine.</em></span></div>
+    <div id="m-next"><span class="w">Mais</span> <span class="w">avant</span><br /><span class="w"><em>de</em></span> <span class="w"><em>partir…</em></span></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Temps forts du film : 0,45 · 1,39 · 2,32 · 3,26 · 4,19 (une carte tous les deux temps).
+      const cuts = [0, 0.92, 1.86, 2.79, 3.73];
+      const ids = ["#m-c1", "#m-c2", "#m-c3", "#m-c4", "#m-c5", "#m-c6"];
+
+      // Première carte déjà en place à l'image 0 (vignette lisible).
+      tl.fromTo("#m-c1", { x: 0, opacity: 1, filter: "blur(0px)" }, { x: 0, duration: 0.01 }, 0);
+      for (let i = 1; i < ids.length; i++) {
+        const t = cuts[i - 1] + 0.92 - 0.22;
+        // Arrivée : glisse depuis la droite avec flou horizontal, se pose sur le temps.
+        tl.fromTo(ids[i], { x: 1100, filter: "blur(14px)" }, { x: 0, filter: "blur(0px)", duration: 0.4, ease: "expo.out" }, t);
+        // La carte précédente part à gauche sous la nouvelle.
+        tl.fromTo(ids[i - 1], { opacity: 1 }, { x: -260, opacity: 0, filter: "blur(10px)", duration: 0.3, ease: "power3.in", immediateRender: false }, t);
+      }
+
+      // Le fond flou suit la carte au premier plan (coupe sur le même temps).
+      ["#m-g2", "#m-g3", "#m-g4", "#m-g5"].forEach((id, i) => {
+        tl.fromTo(id, { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power2.inOut" }, cuts[i] + 0.92 - 0.2);
+      });
+
+      // Titre (texte de la page d'accueil LKDV), mot à mot, flou 6 → 0.
+      tl.fromTo("#m-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.09 }, 0.05);
+      tl.to("#m-title", { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 4.05);
+
+      // La dernière carte (le paysage du Compas) devient le monde : elle grandit hors du cadre.
+      tl.fromTo("#m-c6", { clipPath: "inset(90px 180px 90px 980px round 36px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 0.65, ease: "power2.inOut" }, 4.19);
+      tl.fromTo("#m-bg", { opacity: 0 }, { opacity: 1, duration: 0.05 }, 4.86);
+      tl.fromTo("#m-shade", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 4.7);
+      tl.fromTo("#m-next .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.08 }, 4.72);
+      tl.to("#m-next", { opacity: 0, filter: "blur(8px)", duration: 0.18 }, 5.88);
+
+      window.__timelines["montage"] = tl;
+    })();
+  </script>
+</template>

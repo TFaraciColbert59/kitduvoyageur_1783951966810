@@ -1,0 +1,101 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; background: transparent; font-family: "Inter", sans-serif; }
+    #wt-svg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+    #wt-svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .wt-sh { stroke: rgba(11,31,23,0.42); stroke-width: 16; filter: url(#wt-soft); }
+    .wt-edge { stroke: #17402c; stroke-width: 12; }
+    .wt-core { stroke: #faf8f5; stroke-width: 6; }
+    .wt-draw { stroke-dasharray: 100 120; stroke-dashoffset: 110; }
+    .wt-dot-edge { stroke: #17402c; stroke-width: 12; }
+    .wt-dot { stroke: #faf8f5; stroke-width: 6; stroke-dasharray: 0.1 14; }
+    .wt-mask { stroke: #fff; stroke-width: 40; stroke-dasharray: 100 120; stroke-dashoffset: 110; }
+    .wt-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+    .wt-halo { position: absolute; left: -48px; top: -48px; width: 96px; height: 96px; border-radius: 50%; border: 3px solid #faf8f5; opacity: 0; }
+    .wt-dotb { position: absolute; left: -27px; top: -27px; width: 54px; height: 54px; border-radius: 50%; background: #faf8f5; border: 4px solid #17402c; box-shadow: 0 6px 18px rgba(11,31,23,0.45); display: flex; align-items: center; justify-content: center; color: #17402c; font-weight: 800; font-size: 28px; line-height: 1; }
+    .wt-row { position: absolute; left: 1154px; top: 846px; display: flex; gap: 12px; }
+    .wt-row .wt-cap { position: relative; padding: 0 18px; gap: 10px; }
+    .wt-cap { position: absolute; display: flex; align-items: center; gap: 14px; height: 54px; padding: 0 24px; border-radius: 999px; background: rgba(250,248,245,0.92); color: #17402c; font-weight: 700; font-size: 29px; line-height: 1; white-space: nowrap; box-shadow: 0 10px 28px rgba(11,31,23,0.30); }
+    .wt-cap .wt-n { display: flex; align-items: center; justify-content: center; min-width: 42px; height: 42px; padding: 0 10px; margin-left: -14px; border-radius: 999px; background: #17402c; color: #faf8f5; font-weight: 800; font-size: 28px; }
+    .wt-cap .wt-arr { font-weight: 800; font-size: 29px; color: #5b7f55; }
+  </style>
+  <div id="root" data-composition-id="wTrace" data-width="1920" data-height="1080" data-duration="3.5" data-layout-allow-overflow data-layout-allow-overlap>
+    <svg id="wt-svg" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="wt-soft" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="4" /></filter>
+        <mask id="wt-m-boat" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080"><path id="wt-boat-m" class="wt-mask" pathLength="100" d="M735.6 567.9 L738.3 567.8 L747.0 573.9 L790.4 606.4 L807.9 617.7 L817.5 621.4 L842.5 624.2 L879.8 620.5 L915.2 612.6 L926.0 608.8 L931.2 603.0 L933.4 597.5 L933.1 592.3 L923.9 574.9 L922.3 567.8 L927.4 550.0 L936.1 542.1 L937.2 532.8 L938.5 531.8 L939.4 533.1" /></mask>
+      </defs>
+      <g id="wt-w">
+        <path class="wt-sh wt-draw" pathLength="100" d="M1098.0 199.3 L1100.1 208.7 L1106.7 215.1 L1114.2 219.1 L1119.2 225.5 L1122.8 246.7 L1118.7 264.2 L1114.2 273.7 L1113.3 300.7 L1107.7 308.3 L1104.3 309.0 L1102.1 311.8 L1101.3 317.4 L1094.7 321.4 L1090.8 329.7 L1070.4 340.0 L1054.2 357.1 L1053.3 361.0 L1051.1 361.7 L1049.2 366.0 L1042.3 370.6 L1038.1 377.7 L1029.8 382.3 L1024.6 387.6 L1020.5 389.1 L1003.4 403.9 L998.6 406.8 L994.0 406.5 L991.0 410.0 L971.8 412.8 L968.7 414.9 L963.6 413.0 L954.1 413.6 L950.7 409.3 L946.1 411.4 L940.9 409.0 L936.3 409.0 L930.3 412.0 L921.3 412.4 L908.8 406.9 L902.2 411.9 L892.9 411.8 L886.0 414.6 L883.5 414.6 L882.5 412.6 L879.1 414.6 L865.6 416.9 L854.7 420.7 L852.4 419.9 L850.3 422.1 L847.9 420.9 L845.6 422.9 L842.8 422.3 L842.7 427.2 L835.7 433.9 L825.9 432.9 L816.5 444.8 L801.0 456.1 L797.0 462.9 L789.9 468.3 L780.2 478.7 L779.0 483.2 L775.0 487.2 L772.3 493.3 L774.0 500.2 L772.0 508.1 L763.0 519.2 L762.0 526.1 L760.0 526.0 L757.8 536.1 L758.5 543.6 L756.5 554.6 L750.8 556.6 L749.9 558.1 L737.0 560.2 L735.6 567.9" />
+        <path class="wt-edge wt-draw" pathLength="100" d="M1098.0 199.3 L1100.1 208.7 L1106.7 215.1 L1114.2 219.1 L1119.2 225.5 L1122.8 246.7 L1118.7 264.2 L1114.2 273.7 L1113.3 300.7 L1107.7 308.3 L1104.3 309.0 L1102.1 311.8 L1101.3 317.4 L1094.7 321.4 L1090.8 329.7 L1070.4 340.0 L1054.2 357.1 L1053.3 361.0 L1051.1 361.7 L1049.2 366.0 L1042.3 370.6 L1038.1 377.7 L1029.8 382.3 L1024.6 387.6 L1020.5 389.1 L1003.4 403.9 L998.6 406.8 L994.0 406.5 L991.0 410.0 L971.8 412.8 L968.7 414.9 L963.6 413.0 L954.1 413.6 L950.7 409.3 L946.1 411.4 L940.9 409.0 L936.3 409.0 L930.3 412.0 L921.3 412.4 L908.8 406.9 L902.2 411.9 L892.9 411.8 L886.0 414.6 L883.5 414.6 L882.5 412.6 L879.1 414.6 L865.6 416.9 L854.7 420.7 L852.4 419.9 L850.3 422.1 L847.9 420.9 L845.6 422.9 L842.8 422.3 L842.7 427.2 L835.7 433.9 L825.9 432.9 L816.5 444.8 L801.0 456.1 L797.0 462.9 L789.9 468.3 L780.2 478.7 L779.0 483.2 L775.0 487.2 L772.3 493.3 L774.0 500.2 L772.0 508.1 L763.0 519.2 L762.0 526.1 L760.0 526.0 L757.8 536.1 L758.5 543.6 L756.5 554.6 L750.8 556.6 L749.9 558.1 L737.0 560.2 L735.6 567.9" />
+        <path class="wt-core wt-draw" pathLength="100" d="M1098.0 199.3 L1100.1 208.7 L1106.7 215.1 L1114.2 219.1 L1119.2 225.5 L1122.8 246.7 L1118.7 264.2 L1114.2 273.7 L1113.3 300.7 L1107.7 308.3 L1104.3 309.0 L1102.1 311.8 L1101.3 317.4 L1094.7 321.4 L1090.8 329.7 L1070.4 340.0 L1054.2 357.1 L1053.3 361.0 L1051.1 361.7 L1049.2 366.0 L1042.3 370.6 L1038.1 377.7 L1029.8 382.3 L1024.6 387.6 L1020.5 389.1 L1003.4 403.9 L998.6 406.8 L994.0 406.5 L991.0 410.0 L971.8 412.8 L968.7 414.9 L963.6 413.0 L954.1 413.6 L950.7 409.3 L946.1 411.4 L940.9 409.0 L936.3 409.0 L930.3 412.0 L921.3 412.4 L908.8 406.9 L902.2 411.9 L892.9 411.8 L886.0 414.6 L883.5 414.6 L882.5 412.6 L879.1 414.6 L865.6 416.9 L854.7 420.7 L852.4 419.9 L850.3 422.1 L847.9 420.9 L845.6 422.9 L842.8 422.3 L842.7 427.2 L835.7 433.9 L825.9 432.9 L816.5 444.8 L801.0 456.1 L797.0 462.9 L789.9 468.3 L780.2 478.7 L779.0 483.2 L775.0 487.2 L772.3 493.3 L774.0 500.2 L772.0 508.1 L763.0 519.2 L762.0 526.1 L760.0 526.0 L757.8 536.1 L758.5 543.6 L756.5 554.6 L750.8 556.6 L749.9 558.1 L737.0 560.2 L735.6 567.9" />
+      </g>
+      <g id="wt-boat" mask="url(#wt-m-boat)">
+        <path class="wt-sh" d="M735.6 567.9 L738.3 567.8 L747.0 573.9 L790.4 606.4 L807.9 617.7 L817.5 621.4 L842.5 624.2 L879.8 620.5 L915.2 612.6 L926.0 608.8 L931.2 603.0 L933.4 597.5 L933.1 592.3 L923.9 574.9 L922.3 567.8 L927.4 550.0 L936.1 542.1 L937.2 532.8 L938.5 531.8 L939.4 533.1" />
+        <path class="wt-dot-edge" d="M735.6 567.9 L738.3 567.8 L747.0 573.9 L790.4 606.4 L807.9 617.7 L817.5 621.4 L842.5 624.2 L879.8 620.5 L915.2 612.6 L926.0 608.8 L931.2 603.0 L933.4 597.5 L933.1 592.3 L923.9 574.9 L922.3 567.8 L927.4 550.0 L936.1 542.1 L937.2 532.8 L938.5 531.8 L939.4 533.1" />
+        <path class="wt-dot" d="M735.6 567.9 L738.3 567.8 L747.0 573.9 L790.4 606.4 L807.9 617.7 L817.5 621.4 L842.5 624.2 L879.8 620.5 L915.2 612.6 L926.0 608.8 L931.2 603.0 L933.4 597.5 L933.1 592.3 L923.9 574.9 L922.3 567.8 L927.4 550.0 L936.1 542.1 L937.2 532.8 L938.5 531.8 L939.4 533.1" />
+      </g>
+      <g id="wt-road">
+        <path class="wt-sh wt-draw" pathLength="100" d="M939.4 533.1 L944.8 528.2 L948.5 527.6 L951.6 534.9 L942.7 544.8 L931.4 552.6 L927.6 562.0 L929.1 573.3 L933.1 579.9 L938.7 578.8 L937.8 583.6 L944.1 597.1 L945.3 603.2 L952.3 608.3 L950.0 616.9 L953.0 631.9 L951.9 633.1 L946.6 631.6" />
+        <path class="wt-edge wt-draw" pathLength="100" d="M939.4 533.1 L944.8 528.2 L948.5 527.6 L951.6 534.9 L942.7 544.8 L931.4 552.6 L927.6 562.0 L929.1 573.3 L933.1 579.9 L938.7 578.8 L937.8 583.6 L944.1 597.1 L945.3 603.2 L952.3 608.3 L950.0 616.9 L953.0 631.9 L951.9 633.1 L946.6 631.6" />
+        <path class="wt-core wt-draw" pathLength="100" d="M939.4 533.1 L944.8 528.2 L948.5 527.6 L951.6 534.9 L942.7 544.8 L931.4 552.6 L927.6 562.0 L929.1 573.3 L933.1 579.9 L938.7 578.8 L937.8 583.6 L944.1 597.1 L945.3 603.2 L952.3 608.3 L950.0 616.9 L953.0 631.9 L951.9 633.1 L946.6 631.6" />
+      </g>
+      <g id="wt-leg2">
+        <path class="wt-sh wt-draw" pathLength="100" d="M946.6 631.6 L951.8 633.1 L952.7 632.0 L954.2 650.1 L951.0 658.7 L950.9 668.3 L945.8 673.6 L945.4 680.6 L941.3 685.0 L939.1 691.5 L941.0 694.9 L958.9 701.6 L970.4 716.7 L978.0 723.5 L983.8 733.1 L986.3 741.2 L983.5 751.4 L985.2 754.8 L988.4 757.0 L987.1 760.2 L990.8 772.2 L990.2 788.4 L992.8 793.1 L998.0 816.1 L1002.3 819.6 L999.6 832.5 L1004.8 841.3 L1002.5 844.0 L999.6 843.5 L996.7 847.4 L998.5 852.6 L987.6 874.3 L998.7 890.6 L1005.2 893.6 L1007.0 891.8 L1010.8 891.4" />
+        <path class="wt-edge wt-draw" pathLength="100" d="M946.6 631.6 L951.8 633.1 L952.7 632.0 L954.2 650.1 L951.0 658.7 L950.9 668.3 L945.8 673.6 L945.4 680.6 L941.3 685.0 L939.1 691.5 L941.0 694.9 L958.9 701.6 L970.4 716.7 L978.0 723.5 L983.8 733.1 L986.3 741.2 L983.5 751.4 L985.2 754.8 L988.4 757.0 L987.1 760.2 L990.8 772.2 L990.2 788.4 L992.8 793.1 L998.0 816.1 L1002.3 819.6 L999.6 832.5 L1004.8 841.3 L1002.5 844.0 L999.6 843.5 L996.7 847.4 L998.5 852.6 L987.6 874.3 L998.7 890.6 L1005.2 893.6 L1007.0 891.8 L1010.8 891.4" />
+        <path class="wt-core wt-draw" pathLength="100" d="M946.6 631.6 L951.8 633.1 L952.7 632.0 L954.2 650.1 L951.0 658.7 L950.9 668.3 L945.8 673.6 L945.4 680.6 L941.3 685.0 L939.1 691.5 L941.0 694.9 L958.9 701.6 L970.4 716.7 L978.0 723.5 L983.8 733.1 L986.3 741.2 L983.5 751.4 L985.2 754.8 L988.4 757.0 L987.1 760.2 L990.8 772.2 L990.2 788.4 L992.8 793.1 L998.0 816.1 L1002.3 819.6 L999.6 832.5 L1004.8 841.3 L1002.5 844.0 L999.6 843.5 L996.7 847.4 L998.5 852.6 L987.6 874.3 L998.7 890.6 L1005.2 893.6 L1007.0 891.8 L1010.8 891.4" />
+      </g>
+      <g id="wt-leg3">
+        <path class="wt-sh wt-draw" pathLength="100" d="M1010.8 891.4 L1007.3 891.7 L1005.7 893.6 L998.7 890.6 L987.6 874.3 L998.5 852.6 L996.7 847.4 L999.6 843.5 L1002.5 844.0 L1004.8 841.3 L999.7 833.0 L1002.3 819.6 L998.0 816.1 L994.8 800.7 L996.3 788.0 L994.7 783.2 L995.1 778.7 L998.9 774.2 L999.7 771.2 L1003.5 769.5 L1004.4 764.6 L1014.8 751.2 L1028.6 746.7 L1035.1 741.4 L1040.9 740.0 L1044.2 733.9 L1051.0 730.7 L1067.1 714.9 L1072.9 712.7 L1072.9 708.9 L1070.1 704.3 L1073.1 696.1 L1070.8 672.8 L1076.5 655.3 L1075.3 647.3 L1083.2 638.6 L1079.7 636.9 L1074.8 637.4 L1073.1 634.2 L1067.4 629.6 L1061.5 608.1 L1062.8 604.8 L1059.8 598.9 L1068.5 596.1" />
+        <path class="wt-edge wt-draw" pathLength="100" d="M1010.8 891.4 L1007.3 891.7 L1005.7 893.6 L998.7 890.6 L987.6 874.3 L998.5 852.6 L996.7 847.4 L999.6 843.5 L1002.5 844.0 L1004.8 841.3 L999.7 833.0 L1002.3 819.6 L998.0 816.1 L994.8 800.7 L996.3 788.0 L994.7 783.2 L995.1 778.7 L998.9 774.2 L999.7 771.2 L1003.5 769.5 L1004.4 764.6 L1014.8 751.2 L1028.6 746.7 L1035.1 741.4 L1040.9 740.0 L1044.2 733.9 L1051.0 730.7 L1067.1 714.9 L1072.9 712.7 L1072.9 708.9 L1070.1 704.3 L1073.1 696.1 L1070.8 672.8 L1076.5 655.3 L1075.3 647.3 L1083.2 638.6 L1079.7 636.9 L1074.8 637.4 L1073.1 634.2 L1067.4 629.6 L1061.5 608.1 L1062.8 604.8 L1059.8 598.9 L1068.5 596.1" />
+        <path class="wt-core wt-draw" pathLength="100" d="M1010.8 891.4 L1007.3 891.7 L1005.7 893.6 L998.7 890.6 L987.6 874.3 L998.5 852.6 L996.7 847.4 L999.6 843.5 L1002.5 844.0 L1004.8 841.3 L999.7 833.0 L1002.3 819.6 L998.0 816.1 L994.8 800.7 L996.3 788.0 L994.7 783.2 L995.1 778.7 L998.9 774.2 L999.7 771.2 L1003.5 769.5 L1004.4 764.6 L1014.8 751.2 L1028.6 746.7 L1035.1 741.4 L1040.9 740.0 L1044.2 733.9 L1051.0 730.7 L1067.1 714.9 L1072.9 712.7 L1072.9 708.9 L1070.1 704.3 L1073.1 696.1 L1070.8 672.8 L1076.5 655.3 L1075.3 647.3 L1083.2 638.6 L1079.7 636.9 L1074.8 637.4 L1073.1 634.2 L1067.4 629.6 L1061.5 608.1 L1062.8 604.8 L1059.8 598.9 L1068.5 596.1" />
+      </g>
+    </svg>
+    <!-- 1 · Refugio Chileno (point réel) -->
+    <div class="wt-pin" id="wt-p1" style="transform: translate(1098.0px, 199.3px)"><div class="wt-halo" id="wt-h1"></div><div class="wt-dotb" id="wt-d1">1</div></div>
+    <div class="wt-cap" id="wt-c1" style="right: 864px; top: 172px">Refugio Chileno</div>
+    <!-- 2 · Hostería Pehoé (point réel) -->
+    <div class="wt-pin" id="wt-p2" style="transform: translate(946.6px, 631.6px)"><div class="wt-halo" id="wt-h2"></div><div class="wt-dotb" id="wt-d2">2</div></div>
+    <div class="wt-cap" id="wt-c2" style="right: 1015px; top: 605px">Hostería Pehoé</div>
+    <!-- 3·4 · Villa Monzino (point réel ; l'app y place les étapes 3 et 4) -->
+    <div class="wt-pin" id="wt-p34" style="transform: translate(1010.8px, 891.4px)"><div class="wt-halo" id="wt-h34"></div><div class="wt-dotb" id="wt-d34" style="font-size:22px">3·4</div></div>
+    <div class="wt-cap" id="wt-c34" style="left: 1053px; top: 864px">Villa Monzino</div>
+    <!-- 5 · Torres del Paine (centroïde de la commune, point réel) -->
+    <div class="wt-pin" id="wt-p5" style="transform: translate(1068.5px, 596.1px)"><div class="wt-halo" id="wt-h5"></div><div class="wt-dotb" id="wt-d5">5</div></div>
+    <div class="wt-cap" id="wt-c5" style="left: 1110px; top: 569px">Torres del Paine</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const B = 0.46875;
+      // pastilles et étiquettes : invisibles avant leur temps (fromTo = rendu immédiat de l'état de départ)
+      function light(dot, halo, cap, t, dx) {
+        if (dot) {
+          tl.fromTo(dot, { scale: 0 }, { scale: 1, duration: 0.34, ease: "back.out(1.8)" }, t);
+          tl.fromTo(halo, { scale: 0.55, opacity: 0.85 }, { scale: 1.6, opacity: 0, duration: 0.55, ease: "power2.out", immediateRender: false }, t + 0.02);
+        }
+        tl.fromTo(cap, { opacity: 0, x: dx, filter: "blur(6px)" }, { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.32, ease: "expo.out" }, t + 0.07);
+      }
+      function draw(sel, t0, t1, ease) {
+        tl.fromTo(sel, { strokeDashoffset: 110 }, { strokeDashoffset: 0, duration: t1 - t0, ease: ease }, t0);
+      }
+      // temps 0 : Refugio Chileno
+      light("#wt-d1", "#wt-h1", "#wt-c1", 0.0, 14);
+      // le W (relation OSM « La Ruta del W »), le catamaran, la route vers la Hostería
+      draw("#wt-w .wt-draw", 0.1, 0.98, "sine.inOut");
+      draw("#wt-boat-m", 0.98, 1.16, "none");
+      draw("#wt-road .wt-draw", 1.16, 1.39, "power2.out");
+      // temps 3 : Hostería Pehoé
+      light("#wt-d2", "#wt-h2", "#wt-c2", 1.40625, -14);
+      draw("#wt-leg2 .wt-draw", 1.42, 1.85, "power1.inOut");
+      // temps 4 : Villa Monzino
+      light("#wt-d34", "#wt-h34", "#wt-c34", 1.87500, 14);
+      draw("#wt-leg3 .wt-draw", 1.9, 2.33, "power2.out");
+      // temps 5 : Torres del Paine
+      light("#wt-d5", "#wt-h5", "#wt-c5", 2.34375, 14);
+      // tout est posé à 2,76 s ; tenue immobile jusqu'à 3,5 s
+      tl.set({}, {}, 3.5);
+      window.__timelines["wTrace"] = tl;
+    })();
+  </script>
+</template>

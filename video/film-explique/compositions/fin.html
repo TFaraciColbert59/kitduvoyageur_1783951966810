@@ -1,0 +1,51 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; }
+    #e-photo { position:absolute; left:90px; top:520px; width:900px; height:1040px; border-radius:44px; overflow:hidden; box-shadow:0 30px 70px rgba(11,31,23,0.25); }
+    #e-photo img { width:900px; height:1630px; object-fit:cover; display:block; transform-origin:50% 40%; }
+    #f-logo { position:absolute; inset:0; opacity:0; }
+    #f-ring { position:absolute; left:280px; top:600px; width:520px; height:520px; }
+    #f-nd { position:absolute; left:0; top:0; overflow:visible; }
+    #f-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1196px; font-family:"Inter",sans-serif; font-weight:600; font-size:34px; letter-spacing:0.26em; color:#17402C; white-space:pre; padding-left:0.26em; }
+    #f-word span { opacity:0; }
+  </style>
+  <div id="root" data-composition-id="fin" data-width="1080" data-height="1920">
+    <div id="e-photo"><img id="e-img" src="assets/img/torres-grand.jpg" alt="Léa, Tom et Maya face aux Torres à l'aube"></div>
+    <div id="f-logo">
+      <img id="f-ring" src="assets/img/badge-anneau.png" alt="Badge LKDV">
+      <svg id="f-nd" width="1080" height="1920" viewBox="0 0 1080 1920">
+        <defs>
+          <linearGradient id="f-gn" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+          <linearGradient id="f-gs" x1="0" x2="1"><stop offset="0" stop-color="#2f4a3c"/><stop offset="0.5" stop-color="#17402C"/><stop offset="0.5" stop-color="#0f2c1e"/><stop offset="1" stop-color="#0b2117"/></linearGradient>
+        </defs>
+        <g id="f-needle">
+          <path d="M540 676 L564 860 L516 860 Z" fill="url(#f-gn)"/>
+          <path d="M540 1044 L564 860 L516 860 Z" fill="url(#f-gs)" stroke="#9E7243" stroke-width="2"/>
+          <circle cx="540" cy="860" r="15" fill="#06120C" stroke="#D0A070" stroke-width="5"/>
+        </g>
+      </svg>
+      <div id="f-word"><span>L</span><span>E</span><span> </span><span>K</span><span>I</span><span>T</span><span> </span><span>D</span><span>U</span><span> </span><span>V</span><span>O</span><span>Y</span><span>A</span><span>G</span><span>E</span><span>U</span><span>R</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const F = 1 / 30;
+      // le calme : la photo des Torres arrive en douceur et se rapproche lentement
+      tl.fromTo("#e-photo", { opacity: 0, y: 80, scale: 0.94 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "power3.out" }, 0.05);
+      tl.fromTo("#e-img", { scale: 1.0, y: -220 }, { scale: 1.08, y: -300, duration: 3.6, ease: "sine.inOut" }, 0.05);
+      tl.to("#e-photo", { opacity: 0, scale: 0.96, duration: 0.35, ease: "power2.in" }, 3.3);
+      // 28,0 s — le logo : l'anneau, l'aiguille qui cherche le nord, le nom lettre par lettre (la voix le dit en même temps)
+      tl.fromTo("#f-logo", { opacity: 0 }, { opacity: 1, duration: 8 * F, ease: "sine.out" }, 3.667);
+      tl.fromTo("#f-ring", { scale: 0.9 }, { scale: 1, duration: 0.9, ease: "back.out(2)" }, 3.667);
+      gsap.set("#f-needle", { rotation: -110, svgOrigin: "540 860" });
+      tl.fromTo("#f-needle", { rotation: -110 }, { rotation: 16, duration: 0.45, ease: "power2.out", svgOrigin: "540 860", immediateRender: false }, 3.667);
+      tl.to("#f-needle", { rotation: -6, duration: 0.3, ease: "sine.inOut", svgOrigin: "540 860" }, 4.117);
+      tl.to("#f-needle", { rotation: 0, duration: 0.3, ease: "sine.out", svgOrigin: "540 860" }, 4.417);
+      gsap.utils.toArray("#f-word span").forEach((el, i) => tl.set(el, { opacity: 1 }, 3.72 + i * 0.022));
+      tl.to("#f-logo", { scale: 1.015, duration: 1.4, ease: "sine.inOut", transformOrigin: "50% 45%" }, 4.267);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["fin"] = tl;
+    })();
+  </script>
+</template>

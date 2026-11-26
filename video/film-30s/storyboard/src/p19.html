@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p19 · Rencontre</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: #07130d; }
+  #map { position: absolute; left: -900px; top: -300px; width: 2880px; height: 4680px; filter: brightness(0.45) saturate(0.8); transform: rotate(-4deg); }
+  #map img { width: 100%; height: 100%; }
+  #ring1 { left: 140px; top: 460px; width: 800px; height: 800px; border-radius: 50%; border: 22px solid rgba(255,255,255,0.95); box-shadow: 0 0 60px rgba(255,255,255,0.8), inset 0 0 60px rgba(255,255,255,0.6); }
+  #ring2 { left: 320px; top: 640px; width: 440px; height: 440px; border-radius: 50%; border: 10px solid var(--brass); opacity: 0.9; }
+  #core { left: 470px; top: 790px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0.9) 35%, rgba(208,160,112,0.6) 60%, rgba(208,160,112,0) 72%); }
+  .tr { position: absolute; height: 12px; border-radius: 12px; transform-origin: 100% 50%; }
+  .sh { position: absolute; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5); border: 5px solid #fff; }
+  .sh img { width: 100%; height: 100%; object-fit: cover; }
+  #word { left: 56px; top: 1280px; color: var(--stone); }
+  #wordg { left: 80px; top: 1262px; color: var(--brass); filter: blur(4px); }
+  #gar { left: 62px; top: 1206px; font-size: 70px; color: rgba(250,248,245,0.85); }
+</style></head>
+<body><div id="frame">
+  <div id="map"><img src="assets/sat/sat-w.jpg"></div>
+  <div class="tr" style="left:-60px; top:854px; width:540px; background: linear-gradient(90deg, rgba(23,64,44,0), #3D7A52); transform: rotate(-12deg)"></div>
+  <div class="tr" style="left:-40px; top:854px; width:520px; background: linear-gradient(90deg, rgba(208,160,112,0), #D0A070); transform: rotate(205deg)"></div>
+  <div id="ring1" class="abs"></div>
+  <div id="ring2" class="abs"></div>
+  <div id="core" class="abs"></div>
+  <div id="shards"></div>
+  <div id="gar" class="abs gar">une</div>
+  <div id="wordg" class="abs slam ghost" data-fit="960" data-max="300">RENCONTRE.</div>
+  <div id="word" class="abs slam" data-fit="960" data-max="300" data-ghost="wordg">RENCONTRE<span class="dot">.</span></div>
+</div>
+<script>
+  // 24,58 s : onde de choc + éclats de photos qui partent vers la caméra.
+  const ph = ['tdp-mirador-base.jpg', 'tdp-cuernos-01.jpg', 'tdp-amanecer-06.jpg', 'tdp-sunrise-szekely.jpg'];
+  const c = { x: 540, y: 860 };
+  const P = [[-0.9, 470, 170, -14], [-0.2, 430, 140, 10], [0.6, 480, 190, -8], [2.5, 440, 160, 16], [3.3, 400, 120, -20], [4.0, 470, 200, 6], [1.6, 380, 110, 22], [5.2, 450, 150, -6]];
+  P.forEach(([a, r, s, rot], i) => {
+    const d = document.createElement('div'); d.className = 'sh';
+    d.innerHTML = `<img src="../../assets/photos/${ph[i % 4]}">`;
+    const x = c.x + Math.cos(a) * r, y = c.y + Math.sin(a) * r * 1.05;
+    d.style.cssText += `left:${x - s / 2}px; top:${y - s / 2}px; width:${s}px; height:${s * 0.8}px; transform: rotate(${rot}deg); clip-path: polygon(${i % 2 ? '0 10%, 100% 0, 85% 100%, 10% 85%' : '15% 0, 100% 20%, 90% 90%, 0 100%'}); ${s > 180 ? 'filter: blur(2px);' : ''}`;
+    document.getElementById('shards').appendChild(d);
+  });
+</script>
+<script src="fit.js"></script>
+</body></html>

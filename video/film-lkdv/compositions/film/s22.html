@@ -1,0 +1,59 @@
+<template>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; }
+    .ri { position: absolute; inset: 0; overflow: hidden; }
+    .lay { position: absolute; inset: 0; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+    .vw { position: absolute; inset: 0; overflow: hidden; }
+    .wash { position: absolute; inset: 0; }
+    .pw { position: absolute; width: 444px; height: 928px; }
+    .phone { position: absolute; inset: 0; border-radius: 64px; background: #0b1f17; padding: 16px; box-shadow: 0 40px 90px rgba(11,31,23,0.55); }
+    .screen { position: relative; width: 412px; height: 896px; border-radius: 50px; overflow: hidden; background: #faf8f5; }
+    .cam { position: absolute; left: 0; top: 0; width: 412px; height: 896px; }
+    .screen img, .screen video { position: absolute; left: 0; top: 0; width: 412px; height: 896px; object-fit: cover; object-position: center top; }
+    .gc { position: absolute; padding: 10px; border-radius: 32px; background: rgba(250,248,245,0.30); border: 1px solid rgba(255,255,255,0.62); box-shadow: 0 30px 80px rgba(11,31,23,0.38); backdrop-filter: blur(18px) saturate(1.4); -webkit-backdrop-filter: blur(18px) saturate(1.4); }
+    .gc img { display: block; border-radius: 22px; }
+    .mc { position: absolute; width: 300px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 26px 60px rgba(11,31,23,0.45); }
+    .mc img { position: absolute; left: 0; top: 0; width: 300px; height: 300px; }
+    .panel { position: absolute; overflow: hidden; border-radius: 30px; box-shadow: 0 40px 90px rgba(11,31,23,0.5); background: #0b1f17; }
+    .panel .pv { position: absolute; inset: 0; }
+    .panel video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
+    .ttl { position: absolute; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: #faf8f5; white-space: nowrap; }
+    .ttl em { font-family: "EB Garamond", serif; font-style: italic; font-weight: 500; letter-spacing: -0.01em; }
+    .ttl.sh { text-shadow: 0 4px 24px rgba(11,31,23,0.45); }
+    .chap { position: absolute; font-weight: 700; font-size: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: #dfe8dc; }
+    .w { display: inline-block; }
+    .cap { position: absolute; display: flex; align-items: center; gap: 16px; padding: 14px 26px; border-radius: 999px; background: rgba(250,248,245,0.94); color: #17402c; font-size: 30px; font-weight: 700; box-shadow: 0 16px 40px rgba(11,31,23,0.25); white-space: nowrap; }
+    .cap i { width: 14px; height: 14px; border-radius: 50%; background: #5b7f55; }
+    .touch { position: absolute; width: 40px; height: 40px; border-radius: 50%; border: 3px solid #faf8f5; background: rgba(250,248,245,0.22); box-shadow: 0 4px 14px rgba(11,31,23,0.4); opacity: 0; }
+    .dip { position: absolute; inset: 0; background: rgba(11,31,23,0.5); opacity: 0; }
+    .credit { position: absolute; padding: 6px 12px; border-radius: 8px; background: rgba(11,31,23,0.55); color: #dfe8dc; font-size: 16px; font-weight: 400; }
+  </style>
+  <div id="root" data-composition-id="s22" data-width="1920" data-height="1080" data-layout-allow-overflow data-layout-allow-overlap>
+    <div class="ri" id="s22-ri">
+      <div class="wash" style="background: rgb(3,4,9)"></div>
+      <div class="vw" id="s22-glow"><video id="s22-glo" class="clip full" src="assets/map/globe-chili-japon.mp4" muted playsinline data-start="0.0" data-duration="5.975" data-media-start="0" data-track-index="1"></video></div>
+      <div class="pw" id="s22-p1" style="left:120px; top:76px"><div class="phone"><div class="screen"><div class="cam" id="s22-p1-cam"><img src="assets/app/explorer-chili.jpg" alt="" /></div></div></div></div>
+      <div class="chap" id="s22-t-ch" style="left:1274px; top:334px; ">Explorer</div>
+      <div class="ttl sh" id="s22-t" style="left:1270px; top:380px; font-size:66px; color:#faf8f5; "><span class="w s22-t-a">Chaque</span> <span class="w s22-t-a">voyage</span><br /><em><span class="w s22-t-b">en</span> <span class="w s22-t-b">prépare</span> <span class="w s22-t-b">un</span> <span class="w s22-t-b">autre</span></em></div>
+      <div class="pw" id="s22-p2" style="left:1356px; top:76px"><div class="phone"><div class="screen"><div class="cam" id="s22-p2-cam"><img src="assets/app/explorer-japon.jpg" alt="" /></div></div></div></div>
+      <div class="dip" id="s22-dip"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#s22-ri", { clipPath: "inset(260px 110px 374px 1090px round 22px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 0.5, ease: "power3.inOut" }, 0.0);
+      tl.fromTo("#s22-glow", { scale: 1.12 }, { scale: 1, duration: 0.5, ease: "power3.out" }, 0.0);
+      tl.fromTo("#s22-p1", { opacity: 0, scale: 0.9, rotationY: 16, transformOrigin: "50% 50%", transformPerspective: 1800 }, { opacity: 1, duration: 0.25, ease: "power2.out" }, 0.3);
+      tl.to("#s22-p1", { x: -760, rotationY: 40, duration: 0.45, ease: "power3.in" }, 1.6);
+      tl.fromTo("#s22-t-ch", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, 1.9);
+      tl.fromTo(".s22-t-a", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.05, ease: "power2.out" }, 1.95);
+      tl.fromTo(".s22-t-b", { opacity: 0, filter: "blur(10px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.16, ease: "power2.out" }, 2.06);
+      tl.to([".s22-t-a", ".s22-t-b", "#s22-t-ch"], { opacity: 0, filter: "blur(8px)", duration: 0.18, stagger: 0.02, ease: "power2.in" }, 3.75);
+      tl.fromTo("#s22-p2", { y: 1150, scale: 0.9, rotationY: -16, rotationX: 18, transformOrigin: "50% 50%", transformPerspective: 1800 }, { y: 0, rotationX: 0, duration: 0.75, ease: "expo.out" }, 3.95);
+      tl.fromTo("#s22-dip", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 5.875);
+      window.__timelines["s22"] = tl;
+    })();
+  </script>
+</template>

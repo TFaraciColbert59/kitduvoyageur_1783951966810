@@ -1,0 +1,57 @@
+[
+ {
+  "titre": "0. OUVERTURE À FROID (0:00–0:20)",
+  "voix": "Cinq heures douze. / Le Lac Blanc. / En face, le Mont-Blanc. / (silence) / Tu n'as jamais été aussi loin. / (silence) / Il y a six mois, / tu disais encore : / pas pour moi.",
+  "app_ouverture": true
+ },
+ {
+  "titre": "I. « JE NE SUIS PAS SPORTIF » — Explorer « Démarrer », Compte (0:20–0:50)",
+  "voix": "Alors tu as commencé petit. / Un dimanche. Quatre kilomètres. / Puis huit. Puis douze. / Ta montre a tout retenu. / Le souffle. Le dénivelé. / Un premier badge. / Tu ne l'aurais pas cru. / Tes chemins s'allongent. / Ta maison, elle, reste un blanc sur la carte.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "II. « JE NE SAURAIS PAS OÙ ALLER » — Explorer, Lieux, Communauté, Carnets (0:50–1:30)",
+  "voix": "Le globe tourne sous tes doigts. / Les Alpes. / Une vallée. Un refuge. Un point d'eau. / Ici, un bivouac. / Là, un danger signalé hier. / La carte est vivante. / (silence) / Plan. Relief. Satellite. En trois dimensions. / Une carte pour chaque terrain. / Tu filtres. / Les sentiers. L'eau. Les refuges. Les bivouacs. / Rien que ce qui compte pour toi. / (silence) / Le globe, pour rêver. / L'exploration, pour choisir. / Le Compas, pour préparer. / Le terrain, pour avancer. / Le carnet, pour te souvenir. / (silence) / Et demain, bien plus. / Les couloirs aériens. / Les feux de forêt. / Le risque d'avalanche. / La qualité de l'air. / Les crues. / Le ciel étoilé. / Tout ce que le monde sait de lui-même, / sur une seule carte. / (silence) / Et puis un carnet. / Celui d'un inconnu. / Un lac au lever du jour. / Une échelle au-dessus du vide. / Un kayak sur l'eau turquoise. / Un bouton : Préparer ce voyage.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "III. « C'EST TROP COMPLIQUÉ » — Compas : Où, Résa, Verdict (1:30–2:30)",
+  "voix": "Une phrase. / C'est tout ce qu'on te demande. / Cinq jours. Les Alpes. / Marcher. Grimper. Pagayer. / (silence) / Voici ce que j'ai compris. / Le Compas lit la carte. / De vrais sentiers. De vrais refuges. / La météo, heure par heure. / Le train. La première nuit. Le kayak. / Chaque réservation rejoint ton budget. / Puis le verdict. / Pas une note. Des signaux. / La marche ? Prêt. / La via ferrata ? / (silence) / Vigilance. / Première fois.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "IV. « JE N'AI PERSONNE AVEC QUI PARTIR » — Compas « Nous », Bouteille, Clubs, Sorties, Pro, Messagerie, Hub (2:30–3:10)",
+  "voix": "Nous ? / Pour l'instant, toi seul. / (silence) / Alors tu lances une bouteille. / Deux réponses. / Puis un club. / Une via ferrata, encadrée. / Un guide, pour ta première fois. / Tu t'inscris. / Des inconnus, puis des prénoms. / Le groupe marche à ton rythme. / Les messages se croisent. / Et qui doit quoi, à qui.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "V. « JE N'AI PAS LE MATÉRIEL » — Compas « Kit », Hub, Kit Studio, lignées, Boutique (3:10–3:55)",
+  "voix": "Reste le sac. / Tu pensais devoir tout acheter. / Ton inventaire répond : / ceci, tu l'as déjà. / Ceci, il te manque. / Le baudrier, Léa te le prête. / Les longes se louent. / Le reste se trouve d'occasion… / ou s'achète. Au bon endroit. / Dans le Kit Studio, ton sac prend forme. / Ce kit a une lignée. / Éprouvé sur le terrain. / Gardé par huit voyageurs sur dix. / Quatorze pour cent. / Puis prêt.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "VI. « ET SI J'OUBLIE QUELQUE CHOSE ? » — Hub Départ, Documents, Checklist, Sécurité, hors ligne, suivi en direct (3:55–4:15)",
+  "voix": "La veille, tout est prêt. / Les papiers. La liste. / Les cartes, même sans réseau. / Un lien, pour ceux qui t'attendent. / Toi seul décides jusqu'à quand.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "VII. « ET SI JE ME PERDS ? » — sur le terrain (4:15–5:00)",
+  "voix": "Le premier matin, l'eau. / Le deuxième, le vide sous tes pieds. / Et la peur, qui recule d'un pas. / (silence) / Cinq heures douze. / Te revoilà. / Plus de réseau. La carte, elle, est là. / Une voix, au creux de l'oreille. / APP : « Dans deux cents mètres, à gauche. » / Le point d'eau est à vingt minutes. / Le ciel change. L'alerte arrive. / Tu t'écartes du tracé. / Il te le dit. Tu reviens. / Si tout bascule, / le SOS reste à portée de main. / (silence, la musique s'ouvre) / Puis le lac. / Le Mont-Blanc, qui s'allume. / Toi. Ici. / (silence) / Le réseau revient. / Très loin, un téléphone s'allume. / Ta mère voit ton point au bord du lac.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "VIII. RACONTER — Carnet de bord (5:00–5:20)",
+  "voix": "Tu n'as presque rien écrit. / Pourtant tout est là. / Le lac. L'échelle. Le refuge. / Une marmotte. / Une fleur que tu ne savais pas nommer. / Les prénoms de ceux qui étaient là. / Le carnet s'est écrit en marchant.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "IX. TRANSMETTRE — rapport du kit, lignée, part créateur, Compte (5:20–5:45)",
+  "voix": "Au retour, ton sac parle. / Ceci a tout changé. / Ceci n'a jamais servi. / Ceci t'a manqué. / Ta réponse rejoint la lignée. / Les suivants partiront plus légers. / Quand quelqu'un s'équipe d'après ton kit, / une part te revient. / En crédit, pour ton prochain départ. / Le baudrier de Léa rentre. Avec une histoire. / Ton empreinte gagne un massif. / Pas un classement. / La preuve que tu y étais.",
+  "app_ouverture": false
+ },
+ {
+  "titre": "ÉPILOGUE (5:45–6:05)",
+  "voix": "Un soir, quelque part, / quelqu'un qui n'a jamais osé / ouvre ton carnet. / Il touche : Préparer ce voyage. / (silence) / Un sac. Une carte. / Le reste vient de toi. / (silence) / Le Kit du Voyageur. / Là où la carte se termine.",
+  "app_ouverture": false
+ }
+]

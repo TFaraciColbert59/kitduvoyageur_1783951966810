@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p09 · Kit Studio 3D</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--forest); }
+  #bg { background: radial-gradient(90% 60% at 50% 46%, #22573c 0%, #17402C 55%, #0f2c1e 100%); }
+  #floor { left: -200px; right: -200px; top: 1240px; height: 420px; background: radial-gradient(50% 50% at 50% 30%, rgba(6,18,12,0.55), rgba(6,18,12,0) 70%); }
+  #cv { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
+  #word { left: 60px; top: 1130px; font-size: 300px; color: var(--stone); }
+  #wordg { left: 84px; top: 1116px; font-size: 300px; color: var(--brass); filter: blur(3px); }
+  #gar { left: 70px; top: 1392px; font-size: 76px; color: var(--stone); text-shadow: 0 4px 24px rgba(6,18,12,0.8); }
+  #gar b { font-weight: 600; color: var(--brass); font-style: italic; }
+  .flash { border-radius: 50%; background: radial-gradient(circle, rgba(208,160,112,0.55), rgba(208,160,112,0) 70%); }
+  #tag { left: 66px; top: 360px; font-size: 34px; color: rgba(250,248,245,0.75); }
+</style></head>
+<body><div id="frame">
+  <div id="bg" class="fill"></div>
+  <div id="floor" class="abs"></div>
+  <canvas id="cv" width="1080" height="1920"></canvas>
+  <div id="glow" class="abs flash" style="width:260px; height:260px"></div>
+  <div id="gar" class="abs gar"><b>1 244</b> sacs possibles</div>
+  <div id="wordg" class="abs slam ghost">SAC<span>.</span></div>
+  <div id="word" class="abs slam">SAC<span class="dot">.</span></div>
+</div>
+<script>window.__ready = false;</script>
+<script type="module">
+const THREE = await import("./assets/lib/three-bundle.js");
+const { GLTFLoader, RoomEnvironment, MeshoptDecoder } = THREE;
+const canvas = document.getElementById("cv");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(1080, 1920, false); renderer.setClearColor(0, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.92;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.75;
+const key = new THREE.DirectionalLight(0xfff1dc, 2.6); key.position.set(-1.6, 2.6, 2.0); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+Object.assign(key.shadow.camera, { left: -0.9, right: 0.9, top: 0.9, bottom: -0.9, near: 0.5, far: 7 }); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.01; scene.add(key);
+const rim = new THREE.DirectionalLight(0xD0A070, 2.2); rim.position.set(2.0, 1.4, -1.6); scene.add(rim);
+const rim2 = new THREE.DirectionalLight(0xdfe9ff, 0.8); rim2.position.set(-2.0, 1.0, -1.8); scene.add(rim2);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x17402c, 0.5));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.ShadowMaterial({ color: 0x06120c, opacity: 0.45 }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+const loader = new GLTFLoader(); await MeshoptDecoder.ready; loader.setMeshoptDecoder(MeshoptDecoder);
+const load = (u) => new Promise((res, rej) => loader.load(u, res, undefined, rej));
+const tl = new THREE.TextureLoader(); const loadTex = (u) => new Promise((res, rej) => tl.load(u, res, undefined, rej));
+const [gb, zones, m04G, m13G] = await Promise.all([load("assets/3d/lkdv-one-45.glb"), loadTex("assets/3d/lkdv-one-45.zones.webp"), load("assets/3d/lkdv-m04.glb"), load("assets/3d/lkdv-m13.glb")]);
+zones.flipY = false; zones.colorSpace = THREE.NoColorSpace;
+const tint = { value: new THREE.Color(0x2d482a) }; // coloris Forêt (COLORWAYS.foret.body)
+gb.scene.traverse((n) => {
+  if (!n.isMesh) return; n.castShadow = true;
+  const m = n.material;
+  if (!m || !m.map || n.name === "LKDV_LOGO" || n.name === "LKDV_ECUSSON_SUPPORT" || m.name === "LKDV_MARQUAGE_PIERRE" || m.name === "LKDV_Ecusson_Tisse") return;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.zonesMap = { value: zones }; sh.uniforms.tintColor = tint;
+    sh.fragmentShader = sh.fragmentShader.replace("#include <uv_pars_fragment>", "#include <uv_pars_fragment>\nuniform sampler2D zonesMap;\nuniform vec3 tintColor;")
+      .replace("#include <map_fragment>", "#include <map_fragment>\n#ifdef USE_MAP\n{ float z = texture2D(zonesMap, vMapUv).r; float lum = dot(diffuseColor.rgb, vec3(0.2126,0.7152,0.0722)); diffuseColor.rgb = mix(diffuseColor.rgb, tintColor * lum * 2.2, z); }\n#endif");
+  };
+  m.needsUpdate = true;
+});
+const body = gb.scene; scene.add(body);
+const ray = new THREE.Raycaster(); const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const meshes = []; body.traverse((n) => n.isMesh && meshes.push(n)); body.updateMatrixWorld(true);
+function surface(axis, a0, a1, b0, b1) { let best = -Infinity; for (let i = 0; i <= 6; i++) for (let j = 0; j <= 4; j++) { const y = a0 + (a1 - a0) * i / 6, s = b0 + (b1 - b0) * j / 4; ray.set(axis === "z" ? V(s, y, 2) : V(2, y, s), axis === "z" ? V(0, 0, -1) : V(-1, 0, 0)); const h = ray.intersectObjects(meshes, false)[0]; if (h) best = Math.max(best, axis === "z" ? h.point.z : h.point.x); } return best; }
+const P = { m13y: 0.33, m04y: 0.3, m04z: 0.02 };
+const fz = surface("z", P.m13y - 0.18, P.m13y + 0.18, -0.03, 0.03);
+const fx = surface("x", P.m04y - 0.08, P.m04y + 0.08, P.m04z - 0.05, P.m04z + 0.05);
+const m04 = m04G.scene, m13 = m13G.scene;
+[m04, m13].forEach((m) => m.traverse((n) => { if (n.isMesh) n.castShadow = true; }));
+// Instant 11,627 s : M13 vient de se clipser (enfoncement d'1 cm), M04 est posé depuis 10,994 s.
+m04.position.set(fx + 0.038 - 0.006, P.m04y - 0.1, P.m04z); m04.rotation.set(0, Math.PI / 2, 0);
+m13.position.set(0, P.m13y - 0.225 + 0.18, fz + 0.0415 - 0.006 + 0.12); m13.rotation.set(-0.16, 0, 0); // M13 en approche : il se clipse 0,1 s plus tard
+scene.add(m04); scene.add(m13);
+const box = new THREE.Box3().setFromObject(body); const h = box.max.y;
+const camera = new THREE.PerspectiveCamera(24, 1080 / 1920, 0.05, 30);
+const az = 24 * Math.PI / 180, el = 6 * Math.PI / 180, dist = 1.75, ty = 0.40;
+camera.position.set(Math.sin(az) * Math.cos(el) * dist, ty + Math.sin(el) * dist, Math.cos(az) * Math.cos(el) * dist);
+camera.lookAt(0.03, ty, 0.06);
+camera.setViewOffset(1080, 1920, 0, 80, 1080, 1920);
+renderer.render(scene, camera);
+{ const v = new THREE.Vector3(0, 0.362, 0.14).project(camera); const g = document.getElementById('glow'); g.style.left = ((v.x + 1) / 2 * 1080 - 130) + 'px'; g.style.top = ((1 - v.y) / 2 * 1920 - 130) + 'px'; }
+window.__ready = true;
+</script>
+</body></html>

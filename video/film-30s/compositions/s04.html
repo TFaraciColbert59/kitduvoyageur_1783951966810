@@ -1,0 +1,107 @@
+<template>
+  <!-- Plan 04 · Reprendre le kit — film 2,586 → 3,879 (hôte 2,386 ; local = film − 2,386).
+       Entrée 2,486 → 2,586 : le tiroir s'ouvre depuis la pastille « Sac » (suite du zoom-through de s03).
+       Verdicts qui défilent ; la caméra pique sur « Reprendre le kit » : appui 3,243 (local 0,857), explosion en 10 objets 3,773 (local 1,387).
+       Sortie : whip pan vers le haut 3,816 → 3,879 (s05 arrive par le bas). -->
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; }
+    #s04-iris { position:absolute; inset:0; background:#FAF8F5; clip-path:circle(0px at 865px 1078px); }
+    #s04-whip, #s04-shake, #s04-dz { position:absolute; inset:0; }
+    #s04-all { position:absolute; inset:0; opacity:0; }
+    #s04-cam { position:absolute; inset:0; perspective:1400px; perspective-origin:540px 1100px; }
+    #s04-drawer { position:absolute; left:-40px; top:120px; width:1160px; height:1600px; padding:70px 90px; overflow:hidden; background:rgba(250,248,245,0.92); border:2px solid rgba(255,255,255,0.85); border-radius:56px; box-shadow:0 30px 80px rgba(11,31,23,0.22), inset 0 2px 0 rgba(255,255,255,0.9); }
+    #s04-drawer h3 { font-size:64px; font-weight:800; color:#1f2a24; margin-bottom:26px; display:flex; justify-content:space-between; align-items:baseline; white-space:nowrap; }
+    #s04-drawer h3 span { font-size:40px; font-weight:500; color:#56665D; }
+    .s04-filters { display:flex; gap:14px; margin-bottom:30px; }
+    .s04-filters span { height:70px; padding:0 28px; border-radius:999px; background:rgba(23,64,44,0.08); color:#17402C; font-size:36px; font-weight:600; display:inline-flex; align-items:center; white-space:nowrap; }
+    #s04-fon { background:#17402C; color:#fff; }
+    #s04-rowsw { position:relative; height:1040px; overflow:hidden; }
+    #s04-rows { position:absolute; left:0; right:0; top:0; }
+    .s04-row { display:flex; justify-content:space-between; align-items:center; padding:30px 36px; border-radius:40px; background:rgba(255,255,255,0.86); margin-bottom:18px; box-shadow:0 6px 18px rgba(11,31,23,0.06); }
+    .s04-row b { font-size:44px; color:#1f2a24; white-space:nowrap; }
+    .s04-row p { font-size:34px; color:#56665D; margin-top:6px; white-space:nowrap; }
+    .s04-vd { padding:8px 22px; border-radius:999px; font-size:32px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; white-space:nowrap; }
+    .s04-ess { background:#E1EBDE; color:#3D7A52; }
+    .s04-ut { background:rgba(23,43,36,0.06); color:#4B6B7C; }
+    #s04-btnw { position:absolute; left:250px; top:1040px; width:580px; height:150px; }
+    #s04-ring { position:absolute; inset:-60px; border-radius:999px; background:rgba(208,160,112,0.18); box-shadow:0 0 0 26px rgba(208,160,112,0.14); opacity:0; }
+    #s04-btn { position:absolute; inset:0; border-radius:999px; background:#17402C; color:#fff; font-size:52px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:22px; white-space:nowrap; box-shadow:0 24px 50px rgba(11,31,23,0.3); opacity:0; }
+    .s04-chip { position:absolute; left:540px; top:1115px; height:110px; padding:0 40px 0 28px; border-radius:999px; background:#fff; color:#17402C; font-size:44px; font-weight:700; display:flex; align-items:center; gap:18px; white-space:nowrap; box-shadow:0 24px 50px rgba(11,31,23,0.25); border:3px solid rgba(208,160,112,0.8); opacity:0; }
+    .s04-chipin { position:absolute; left:0; top:0; }
+    #s04-pinw { position:absolute; left:0; top:0; width:230px; height:230px; }
+    #s04-pin { position:absolute; inset:0; background:#D0A070; border-radius:50% 50% 50% 0; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 18px 30px rgba(11,31,23,0.35)); }
+  </style>
+  <div id="root" data-composition-id="s04" data-width="1080" data-height="1920">
+    <div id="s04-iris"></div>
+    <div id="s04-whip"><div id="s04-shake"><div id="s04-all"><div id="s04-dz">
+      <div id="s04-cam"><div id="s04-drawer">
+        <h3>Sac · le kit de Maya <span>14 objets</span></h3>
+        <div class="s04-filters"><span>Tous</span><span id="s04-fon">Essentiel</span><span>Utile</span><span>Jamais servi</span></div>
+        <div id="s04-rowsw"><div id="s04-rows">
+          <div class="s04-row"><div><b>Veste imperméable</b><p>« Trois jours de pluie sur cinq. »</p></div><span class="s04-vd s04-ess">Essentiel</span></div>
+          <div class="s04-row"><div><b>Frontale</b><p>« Départ à 4 h pour les tours. »</p></div><span class="s04-vd s04-ess">Essentiel</span></div>
+          <div class="s04-row"><div><b>Bâtons</b><p>« La descente du mirador. »</p></div><span class="s04-vd s04-ut">Utile</span></div>
+          <div class="s04-row"><div><b>Doudoune</b><p>« 2° au refuge le soir. »</p></div><span class="s04-vd s04-ess">Essentiel</span></div>
+          <div class="s04-row"><div><b>Réchaud</b><p>« Les refuges vendent les repas. »</p></div><span class="s04-vd s04-ut">Utile</span></div>
+          <div class="s04-row"><div><b>Gourde filtrante</b><p>« Eau des torrents partout. »</p></div><span class="s04-vd s04-ess">Essentiel</span></div>
+        </div></div>
+      </div></div>
+      <div id="s04-btnw"><div id="s04-ring"></div><div id="s04-btn"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg>Reprendre le kit</div></div>
+      <div id="s04-chips"></div>
+    </div></div></div>
+    <div id="s04-pinw"><div id="s04-pin"><svg width="140" height="140" viewBox="0 0 32 32" fill="none" style="transform:rotate(45deg)"><path d="M2 24 L10 10 L14 16 L20 6 L30 24 Z" stroke="#17402C" stroke-width="2.2" stroke-linejoin="round"/><path d="M2 24 L30 24" stroke="#17402C" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="9" r="1.8" fill="#17402C"/></svg></div></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const F = 1 / 30, T0 = 0.2, TAP = 0.857, BOOM = 1.387, END = 1.493;
+      const SAC = { x: 865, y: 1078 };
+      const tl = gsap.timeline({ paused: true });
+      // Les 10 objets du kit (noms tirés du moteur), déplacement final, échelle, rotation.
+      const items = [["Veste imperméable",-520,-430,1.25,-8],["Frontale",300,-560,1.1,6],["Réchaud",-560,200,1.3,-10],["Gourde",380,240,1.35,8],["Bâtons",-170,-700,0.95,-4],["Doudoune",80,520,1.45,5],["Couverture de survie",-420,-120,0.85,-6],["Trousse de secours",130,-330,0.9,4],["Lunettes cat. 4",-300,420,1.0,-3],["Sac de couchage",420,-120,0.92,7]];
+      const box = '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D0A070" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/></svg>';
+      const root = document.getElementById("s04-chips");
+      items.forEach((it, i) => { const d = document.createElement("div"); d.className = "s04-chip"; d.id = "s04-c" + i; d.innerHTML = box + it[0]; root.appendChild(d); });
+      // --- Entrée : le tiroir s'ouvre depuis la pastille « Sac » (cercle Pierre, 3 images expo.in).
+      tl.fromTo("#s04-iris", { clipPath: "circle(0px at " + SAC.x + "px " + SAC.y + "px)" }, { clipPath: "circle(2300px at " + SAC.x + "px " + SAC.y + "px)", duration: 0.1, ease: "expo.in" }, 0.1);
+      tl.set("#s04-all", { opacity: 1 }, T0);
+      tl.fromTo("#s04-dz", { scale: 1.6, filter: "blur(12px)", transformOrigin: SAC.x + "px " + SAC.y + "px" }, { scale: 0.97, filter: "blur(0px)", duration: 5 * F, ease: "expo.out", immediateRender: false }, T0);
+      tl.to("#s04-dz", { scale: 1, duration: 3 * F, ease: "sine.inOut" }, T0 + 5 * F);
+      // --- Tiroir incliné (X 18°) ; les verdicts défilent.
+      tl.fromTo("#s04-drawer", { rotationX: 12, rotationZ: 2, scale: 1.05, transformOrigin: "50% 100%" }, { rotationX: 22, rotationZ: -1, scale: 1.05, duration: END - T0, ease: "none" }, T0);
+      tl.fromTo("#s04-rows", { y: 0 }, { y: -330, duration: 0.55, ease: "power2.inOut" }, 0.28);
+      tl.to("#s04-rows", { y: -380, duration: END - 0.83, ease: "none" }, 0.83);
+      // --- Bouton : claque à 2,748 (local 0,362), puis la caméra pique dessus.
+      tl.set("#s04-btn", { opacity: 1 }, 0.362);
+      tl.fromTo("#s04-btnw", { scale: 1.45, y: 0 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, 0.362);
+      tl.to("#s04-btnw", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, 0.362 + 3 * F);
+      tl.fromTo("#s04-cam", { scale: 1, y: 0, transformOrigin: "540px 1115px" }, { scale: 1.22, y: -40, duration: 0.42, ease: "power4.inOut" }, 0.43);
+      tl.to("#s04-cam", { scale: 1.28, duration: END - 0.85, ease: "none" }, 0.85);
+      tl.fromTo("#s04-btnw", { y: 0 }, { y: -40, duration: 0.42, ease: "power4.inOut", immediateRender: false }, 0.43);
+      // Appui 3,243 : écrasement 0,9, anneau laiton.
+      tl.to("#s04-btnw", { scale: 0.9, duration: 2 * F, ease: "power2.out" }, TAP);
+      tl.to("#s04-btnw", { scale: 1, duration: 5 * F, ease: "back.out(2)" }, TAP + 5 * F);
+      tl.set("#s04-ring", { opacity: 1 }, TAP);
+      tl.fromTo("#s04-ring", { scale: 0.7 }, { scale: 1.25, opacity: 0, duration: 0.36, ease: "expo.out", immediateRender: false }, TAP);
+      tl.fromTo("#s04-shake", { x: 0, y: 0 }, { keyframes: [{ x: 8, y: -5 }, { x: -6, y: 4 }, { x: 3, y: -2 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, TAP);
+      // Tension avant l'éclatement : le bouton gonfle légèrement.
+      tl.to("#s04-btnw", { scale: 1.08, duration: BOOM - TAP - 0.35, ease: "power2.in" }, TAP + 0.35);
+      // --- 3,773 : le bouton éclate en 10 objets qui volent vers la caméra.
+      tl.to("#s04-btn", { opacity: 0, duration: 2 * F, ease: "none" }, BOOM);
+      tl.to("#s04-btnw", { scale: 1.5, duration: 2 * F, ease: "power2.out" }, BOOM);
+      items.forEach((it, i) => {
+        const [, dx, dy, s, r] = it;
+        tl.set("#s04-c" + i, { opacity: 1 }, BOOM);
+        tl.fromTo("#s04-c" + i, { xPercent: -50, yPercent: -50, x: 0, y: 0, scale: 0.3, rotation: 0, filter: "blur(0px)" }, { x: dx, y: dy, scale: s, rotation: r, filter: s > 1.2 ? "blur(2px)" : "blur(0px)", duration: 3 * F, ease: "expo.out", immediateRender: false }, BOOM);
+        tl.to("#s04-c" + i, { x: dx * 1.5, y: dy * 1.5, scale: s * 1.4, duration: END - BOOM - 3 * F + 0.001, ease: "power1.in" }, BOOM + 3 * F);
+      });
+      tl.fromTo("#s04-shake", { x: 0, y: 0 }, { keyframes: [{ x: 14, y: -8 }, { x: -10, y: 6 }, { x: 6, y: -3 }, { x: 0, y: 0 }], duration: 4 * F, ease: "none", immediateRender: false }, BOOM);
+      // L'épingle-montagne (pictogramme) traverse le cadre en haut à droite.
+      tl.fromTo("#s04-pinw", { x: 1260, y: 230, rotation: -60 }, { x: 470, y: 470, rotation: -30, duration: 0.5, ease: "none" }, 1.13);
+      // --- Sortie : whip pan vers le haut (le plan monte et file, flou directionnel).
+      tl.to("#s04-whip", { y: -900, filter: "blur(16px)", duration: END - 1.447, ease: "power3.in" }, 1.447);
+      tl.set({}, {}, END);
+      window.__timelines["s04"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,170 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; background:transparent; }
+    #s15-whip { position:absolute; inset:0; background:#FAF8F5; }
+    #s15-shake { position:absolute; inset:0; }
+    #s15-cam { position:absolute; inset:0; transform-origin:0 0; }
+    .s15-feedp { position:absolute; left:190px; width:700px; height:380px; }
+    .s15-feed { position:absolute; inset:0; border-radius:48px; overflow:hidden; opacity:0.35; filter:blur(3px); }
+    .s15-feed img { width:100%; height:100%; object-fit:cover; display:block; }
+    #s15-cardp { position:absolute; left:210px; top:470px; width:660px; }
+    #s15-card { position:relative; width:660px; padding:22px; border-radius:56px; background:rgba(250,248,245,0.95); box-shadow:0 0 0 0 #D0A070, 0 40px 90px rgba(11,31,23,0.35); }
+    #s15-card .s15-ph { width:616px; height:340px; border-radius:38px; object-fit:cover; display:block; }
+    #s15-card h4 { font-size:44px; font-weight:800; color:#17402C; margin:20px 10px 4px; white-space:nowrap; }
+    #s15-card p { font-size:34px; color:#56665D; margin:0 10px; white-space:nowrap; }
+    #s15-row { position:relative; height:96px; margin:14px 10px 0; }
+    #s15-cnt { position:absolute; left:0; top:22px; display:flex; gap:34px; font-size:40px; font-weight:700; color:#17402C; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    #s15-cnt span { display:inline-flex; align-items:center; gap:12px; }
+    #s15-btnp { position:absolute; right:0; top:4px; }
+    #s15-btn { display:inline-flex; align-items:center; gap:14px; height:88px; padding:0 40px; border-radius:999px; background:#17402C; color:#FAF8F5; font-size:40px; font-weight:700; white-space:nowrap; box-shadow:0 12px 30px rgba(11,31,23,0.3); }
+    #s15-iris { position:absolute; left:-110px; top:-110px; width:220px; height:220px; border-radius:50%; border:12px solid #D0A070; opacity:0; }
+    #s15-j3p { position:absolute; left:560px; top:-70px; width:300px; height:344px; }
+    #s15-j3 { position:absolute; left:0; top:0; width:300px; padding:16px 16px 60px; background:#FAF8F5; border-radius:14px; box-shadow:0 30px 60px rgba(6,18,12,0.35); }
+    #s15-j3 img { width:268px; height:268px; object-fit:cover; display:block; border-radius:6px; }
+    #s15-j3 b { position:absolute; left:20px; bottom:12px; font-size:34px; color:#17402C; font-weight:700; }
+    #s15-avs { position:absolute; inset:0; }
+    .s15-avp { position:absolute; left:540px; top:735px; width:0; height:0; }
+    .s15-av { position:absolute; border-radius:50%; object-fit:cover; display:block; border:6px solid #fff; box-shadow:0 20px 40px rgba(11,31,23,0.3); opacity:0; }
+    #s15-tomp { position:absolute; left:540px; top:735px; width:0; height:0; }
+    #s15-tom { position:absolute; left:-100px; top:-100px; width:200px; height:200px; border-radius:50%; object-fit:cover; display:block; opacity:0; }
+    .s15-word { position:absolute; left:56px; top:1250px; font-weight:900; font-size:262px; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; color:#17402C; transform-origin:40% 60%; }
+    .s15-dot { color:#D0A070; }
+    #s15-wordg { color:#D0A070; filter:blur(3px); opacity:0; }
+  </style>
+  <div id="root" data-composition-id="s15" data-width="1080" data-height="1920" data-layout-allow-overlap>
+    <div id="s15-whip" data-layout-allow-overflow>
+      <div id="s15-shake" data-layout-allow-overflow>
+        <div id="s15-cam" data-layout-allow-overflow>
+          <div class="s15-feedp" style="top:-120px" data-layout-ignore><div class="s15-feed" id="s15-f1"><img src="assets/app/feed-3.jpg" alt="" style="object-position:50% 25%" /></div></div>
+          <div class="s15-feedp" style="top:1500px" data-layout-ignore><div class="s15-feed" id="s15-f2"><img src="assets/app/feed-4.jpg" alt="" style="object-position:50% 40%" /></div></div>
+          <div id="s15-cardp">
+            <div id="s15-card">
+              <img class="s15-ph" src="assets/photos/tdp-cuernos-01.jpg" alt="" />
+              <h4>Le W · Torres del Paine</h4>
+              <p>Carnet de Léa · 5 jours · 3 voyageurs</p>
+              <div id="s15-row">
+                <div id="s15-cnt"><span>♥ <i id="s15-likes" style="font-style:normal">0</i></span><span>↗ <i id="s15-shares" style="font-style:normal">0</i></span></div>
+                <div id="s15-btnp"><div id="s15-btn"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FAF8F5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Publier</div><div style="position:absolute; left:50%; top:50%"><div id="s15-iris" data-layout-ignore></div></div></div>
+              </div>
+              <div id="s15-j3p" data-layout-ignore><div id="s15-j3"><img src="assets/photos/tdp-amanecer-06.jpg" alt="" /><b>J3</b></div></div>
+            </div>
+          </div>
+        </div>
+        <div id="s15-avs" data-layout-ignore></div>
+        <div class="s15-word" id="s15-wordg" data-layout-ignore>PUBLIÉ.</div>
+        <div class="s15-word" id="s15-word">PUBLIÉ<span class="s15-dot">.</span></div>
+      </div>
+      <div id="s15-tomp" data-layout-ignore><img id="s15-tom" src="assets/avatars/a13.jpg" alt="" /></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const ID = "s15";
+      const DUR = 1.493;
+      const F = 1 / 30;
+      const O = 17.903;
+      const L = (T) => +(T - O).toFixed(4);
+      const T_LAND = L(18.103);  // le whip se pose, J3 tombe sur le carnet
+      const T_PUSH = L(18.205);  // la caméra pique sur « Publier »
+      const T_TAP = L(18.745);   // appui « Publier »
+      const T_FLY = L(18.79);    // le carnet vole dans le fil
+      const T_WORD = L(18.988);  // « PUBLIÉ. »
+      const T_BOOM = L(19.278);  // explosion de 16 avatars
+      const T_FULL = L(19.3667); // l'avatar de Tom remplit le cadre (dernière image de s15)
+
+      const tl = gsap.timeline({ paused: true });
+
+      // Entrée : whip pan vers le haut — le plan arrive par le haut, flou 40 px, se fixe en 2 images.
+      tl.fromTo("#s15-whip", { y: -1920, filter: "blur(40px)" }, { y: 0, filter: "blur(40px)", duration: T_LAND - 2 * F, ease: "power3.out" }, 0);
+      tl.to("#s15-whip", { filter: "blur(0px)", duration: 2 * F, ease: "power2.out" }, T_LAND - 2 * F);
+      // J3 tombe sur le carnet à 18,103 (troisième coup).
+      tl.fromTo("#s15-j3", { y: -520, scale: 1.9, rotation: 22, filter: "blur(8px)" }, { y: 0, scale: 0.72, rotation: 9, filter: "blur(0px)", duration: T_LAND, ease: "power2.in" }, 0);
+
+      // Caméra : poussée vers le bouton « Publier », puis dézoom brusque quand le carnet part dans le fil.
+      // Cadrage « édition » : le carnet occupe l'essentiel du cadre dès 18,103 (×1,5, centré), puis la caméra
+      // pousse vers « Publier » (×1,85) pour l'appui. Origine 0 0 : x = Q − s·P (P point du carnet, Q point écran).
+      const frame = (s, px, py, qx, qy) => ({ scale: s, x: +(qx - s * px).toFixed(1), y: +(qy - s * py).toFixed(1) });
+      const C0 = frame(1.5, 540, 770, 540, 960);   // carnet centré
+      const C1 = frame(1.85, 723, 1012, 620, 1200); // bouton « Publier »
+      tl.fromTo("#s15-cam", { ...C0, rotation: 0 }, { ...C0, rotation: 0, duration: 0.001 }, 0);
+      tl.to("#s15-cam", { ...frame(1.56, 540, 770, 540, 960), duration: T_PUSH - 0.001, ease: "none" }, 0.001);
+      tl.to("#s15-cam", { ...C1, rotation: 2, duration: T_TAP - T_PUSH, ease: "power2.inOut" }, T_PUSH);
+      // Dézoom brusque quand le carnet part dans le fil (même cadrage final qu'avant : ×0,96 → ×1).
+      tl.to("#s15-cam", { scale: 0.96, x: 28.2, y: 40, rotation: 0, duration: 5 * F, ease: "expo.out" }, T_FLY);
+      tl.to("#s15-cam", { scale: 1.0, x: 0, y: 0, duration: DUR - T_FLY - 5 * F, ease: "none" }, T_FLY + 5 * F);
+
+      // Appui : écrasement 0,9, iris laiton.
+      tl.fromTo("#s15-btn", { scale: 1 }, { scale: 0.9, duration: 2 * F, ease: "power2.out" }, T_TAP);
+      tl.to("#s15-btn", { scale: 0, opacity: 0, duration: 4 * F, ease: "power3.in" }, T_TAP + 2 * F);
+      tl.fromTo("#s15-iris", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_TAP);
+      tl.fromTo("#s15-iris", { scale: 0.3 }, { scale: 3.4, duration: 7 * F, ease: "expo.out" }, T_TAP);
+      tl.to("#s15-iris", { opacity: 0, duration: 7 * F - 0.001, ease: "power2.in" }, T_TAP + 0.001);
+
+      // Le carnet vole dans le fil : bord laiton, rotation −4°, posts voisins qui glissent en parallaxe.
+      tl.fromTo("#s15-card", { y: 0, rotation: 0, boxShadow: "0 0 0 0px #D0A070, 0 40px 90px rgba(11,31,23,0.35)" }, { y: -40, rotation: -4, boxShadow: "0 0 0 8px #D0A070, 0 40px 90px rgba(11,31,23,0.35)", duration: 0.3, ease: "expo.out" }, T_FLY);
+      tl.fromTo("#s15-f1", { y: -420 }, { y: 0, duration: 0.35, ease: "expo.out" }, T_FLY);
+      tl.fromTo("#s15-f2", { y: 520 }, { y: 0, duration: 0.35, ease: "expo.out" }, T_FLY);
+      tl.to("#s15-f1", { y: 30, duration: DUR - T_FLY - 0.35, ease: "none" }, T_FLY + 0.35);
+      tl.to("#s15-f2", { y: -30, duration: DUR - T_FLY - 0.35, ease: "none" }, T_FLY + 0.35);
+      tl.to("#s15-j3", { y: -30, x: 20, duration: 0.3, ease: "expo.out" }, T_FLY);
+
+      // Compteurs ♥ et partages qui défilent.
+      const likes = document.getElementById("s15-likes");
+      const shares = document.getElementById("s15-shares");
+      const c = { v: 0 };
+      tl.fromTo(c, { v: 0 }, { v: 1, duration: T_BOOM - T_FLY, ease: "power2.out", onUpdate: () => {
+        likes.textContent = String(Math.round(312 * c.v));
+        shares.textContent = String(Math.round(48 * c.v));
+      } }, T_FLY);
+      tl.fromTo("#s15-cnt", { opacity: 0.35 }, { opacity: 1, duration: 3 * F, ease: "none" }, T_FLY);
+
+      // « PUBLIÉ. » claque sur la caisse claire 18,988.
+      tl.fromTo("#s15-word", { opacity: 0 }, { opacity: 1, duration: F, ease: "none" }, T_WORD);
+      tl.fromTo("#s15-word", { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out" }, T_WORD);
+      tl.to("#s15-word", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, T_WORD + 3 * F);
+      tl.fromTo("#s15-wordg", { opacity: 0, x: 24, y: -14, scale: 1.08 }, { opacity: 0.35, duration: 0.001, ease: "none" }, T_WORD);
+      tl.to("#s15-wordg", { opacity: 0, x: 30, y: -20, scale: 1.12, duration: 2 * F - 0.001, ease: "none" }, T_WORD + 0.001);
+
+      // 19,278 : 16 avatars réels (comptes de démo) explosent du carnet vers la caméra (graine fixe).
+      const files = ["a01", "a02", "a03", "a04", "a05", "a06", "a07", "a08", "a09", "a10", "a11", "a12", "a15", "a16", "a17", "a18"];
+      let seed = 1278;
+      const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+      const avs = document.getElementById("s15-avs");
+      files.forEach((f, i) => {
+        const a = (i / 16) * Math.PI * 2 - Math.PI / 2 + 0.15 + (r() - 0.5) * 0.25;
+        const near = i % 3 === 0;
+        const s = near ? 190 : i % 3 === 1 ? 130 : 96;
+        const rad = (near ? 520 : 440) + r() * 120;
+        const p = document.createElement("div");
+        p.className = "s15-avp";
+        const im = document.createElement("img");
+        im.className = "s15-av";
+        im.src = "assets/avatars/" + f + ".jpg";
+        im.alt = "";
+        im.style.width = im.style.height = s + "px";
+        im.style.left = im.style.top = -s / 2 + "px";
+        p.appendChild(im);
+        avs.appendChild(p);
+        const dx = Math.cos(a) * rad, dy = Math.sin(a) * rad * 1.1;
+        const t0 = T_BOOM + r() * F * 0.8;
+        tl.fromTo(im, { x: 0, y: 0, scale: 0.15, opacity: 0, filter: "blur(0px)" }, { x: dx, y: dy, scale: near ? 1.5 : 1.15, opacity: 1, filter: near ? "blur(3px)" : "blur(0px)", duration: 3 * F, ease: "expo.out" }, t0);
+      });
+      function shake(t, a) {
+        [[a, -0.5 * a], [-0.6 * a, 0.45 * a], [0.43 * a, -0.3 * a], [-0.15 * a, 0.1 * a], [0, 0]].forEach(([x, y], i) =>
+          tl.to("#s15-shake", { x, y, duration: F, ease: "none" }, t + i * F),
+        );
+      }
+      shake(T_LAND, 10);
+      shake(T_WORD, 8);
+      shake(T_BOOM, 22);
+
+      // Zoom-through : l'avatar de Tom (a13) jaillit du carnet et remplit le cadre à la dernière image (s16 commence dedans).
+      tl.fromTo("#s15-tomp", { x: 0, y: 0 }, { x: 0, y: 225, duration: T_FULL - T_BOOM, ease: "power2.in" }, T_BOOM);
+      tl.fromTo("#s15-tom", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_BOOM);
+      tl.fromTo("#s15-tom", { scale: 0.4 }, { scale: 13.5, duration: T_FULL - T_BOOM, ease: "power2.in" }, T_BOOM);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines[ID] = tl;
+    })();
+  </script>
+</template>

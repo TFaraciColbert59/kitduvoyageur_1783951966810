@@ -1,0 +1,165 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      background: #17402c;
+    }
+    #r-world {
+      position: absolute;
+      inset: 0;
+    }
+    #r-still,
+    #r-video {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+    #r-route {
+      position: absolute;
+      inset: 0;
+    }
+    .r-pin circle.o {
+      fill: #17402c;
+      stroke: #faf8f5;
+      stroke-width: 5;
+    }
+    .r-pin text {
+      font: 800 28px "Inter", sans-serif;
+      fill: #faf8f5;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    #r-chips {
+      position: absolute;
+      left: 96px;
+      top: 70px;
+      display: flex;
+      gap: 14px;
+    }
+    .r-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 26px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.84);
+      backdrop-filter: blur(24px) saturate(1.5);
+      box-shadow: 0 10px 28px rgba(11, 31, 23, 0.25);
+      font-size: 28px;
+      font-weight: 600;
+      color: #1f2a24;
+      white-space: nowrap;
+    }
+    .r-chip i {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #17402c;
+    }
+    #r-title {
+      position: absolute;
+      left: 120px;
+      bottom: 150px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 88px;
+      line-height: 1.02;
+      letter-spacing: -0.025em;
+      text-shadow: 0 6px 34px rgba(11, 31, 23, 0.55);
+    }
+    #r-title .w {
+      display: inline-block;
+    }
+    #r-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+    }
+    #r-stat {
+      position: absolute;
+      right: 120px;
+      bottom: 150px;
+      padding: 20px 32px;
+      border-radius: 999px;
+      background: rgba(250, 248, 245, 0.9);
+      backdrop-filter: blur(24px) saturate(1.5);
+      box-shadow: 0 12px 30px rgba(11, 31, 23, 0.3);
+      font-size: 40px;
+      font-weight: 800;
+      color: #17402c;
+    }
+    #r-stat small {
+      font-size: 28px;
+      font-weight: 600;
+      color: #4a5a51;
+      margin-left: 8px;
+    }
+    #r-credit {
+      position: absolute;
+      right: 22px;
+      bottom: 16px;
+      padding: 4px 12px;
+      border-radius: 8px;
+      background: rgba(11, 31, 23, 0.55);
+      color: #faf8f5;
+      font-size: 16px;
+    }
+  </style>
+  <div id="root" data-composition-id="carte" data-width="1920" data-height="1080">
+    <div id="r-world">
+      <img id="r-still" src="assets/map/gavarnie-end.jpg" alt="" />
+      <video id="r-video" class="clip" data-start="0" data-duration="6.45" data-media-start="1.0" data-track-index="0" src="assets/map/gavarnie.mp4" muted playsinline></video>
+      <svg id="r-route" viewBox="0 0 1920 1080">
+        <path id="r-line-halo" d="M941 563 L855 741 L529 333 L1405 612" fill="none" stroke="rgba(250,248,245,0.75)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+        <path id="r-line" d="M941 563 L855 741 L529 333 L1405 612" fill="none" stroke="#17402c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 120" stroke-dashoffset="110" />
+        <g class="r-pin" id="r-p0" transform="translate(941 563)"><circle class="o" r="28" /><text>D</text></g>
+        <g class="r-pin" id="r-p1" transform="translate(855 741)"><circle class="o" r="28" /><text>1</text></g>
+        <g class="r-pin" id="r-p2" transform="translate(529 333)"><circle class="o" r="28" /><text>2</text></g>
+        <g class="r-pin" id="r-p3" transform="translate(1405 612)"><circle class="o" r="28" /><text>A</text></g>
+      </svg>
+    </div>
+    <div id="r-chips">
+      <div class="r-chip" id="r-c0"><i></i>Gavarnie</div>
+      <div class="r-chip" id="r-c1"><i></i>Cabane des Sarradets</div>
+      <div class="r-chip" id="r-c2"><i></i>Refuge de Bayssellance</div>
+      <div class="r-chip" id="r-c3"><i></i>Cirque de Troumouse</div>
+    </div>
+    <div id="r-title"><span class="w">Un</span> <span class="w">parcours</span><br /><span class="w">sur</span> <span class="w">de</span> <span class="w"><em>vrais</em></span> <span class="w">lieux</span></div>
+    <div id="r-stat">D+ 2 750 m<small>44 km</small></div>
+    <div id="r-credit" data-layout-ignore>Imagerie © Esri, Maxar, Earthstar Geographics</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Ouverture en iris depuis le bouton cliqué (bas gauche du panneau).
+      tl.fromTo("#r-world", { clipPath: "circle(0px at 480px 690px)" }, { clipPath: "circle(2300px at 480px 690px)", duration: 0.5, ease: "power3.out" }, 0);
+
+      // Titre pendant la plongée.
+      tl.fromTo("#r-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.14, stagger: 0.07 }, 0.9);
+
+      // La caméra se pose à 3,13 s (local) ; le tracé se dessine d'étape en étape.
+      const T0 = 3.2;
+      tl.fromTo(["#r-line", "#r-line-halo"], { attr: { "stroke-dashoffset": 110 } }, { attr: { "stroke-dashoffset": 0 }, duration: 1.5, ease: "power2.inOut" }, T0 + 0.15);
+      const beat = 0.469;
+      const pinT = [T0 + 0.05, T0 + 0.05 + beat, T0 + 0.05 + 2 * beat, T0 + 0.05 + 3 * beat];
+      ["#r-p0", "#r-p1", "#r-p2", "#r-p3"].forEach((id, i) => {
+        tl.fromTo(id + " circle", { attr: { r: 0 } }, { attr: { r: 28 }, duration: 0.35, ease: "back.out(1.8)" }, pinT[i]);
+        tl.fromTo(id + " text", { opacity: 0 }, { opacity: 1, duration: 0.15 }, pinT[i] + 0.12);
+        tl.fromTo("#r-c" + i, { opacity: 0, y: -30, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, pinT[i]);
+      });
+      tl.fromTo("#r-stat", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.6)" }, 5.37);
+      tl.fromTo("#r-credit", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.6);
+
+      // Sortie : le titre s'efface avant l'arrivée du panneau « Nous ».
+      tl.to("#r-title", { opacity: 0, filter: "blur(8px)", duration: 0.2 }, 6.95);
+      tl.to("#r-stat", { opacity: 0, duration: 0.2 }, 6.95);
+      window.__timelines["carte"] = tl;
+    })();
+  </script>
+</template>

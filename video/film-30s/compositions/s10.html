@@ -1,0 +1,92 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; font-family:"Inter",sans-serif; background:transparent; }
+    #s10-all { position:absolute; inset:0; opacity:0; }
+    #s10-cam { position:absolute; inset:0; }
+    #s10-drift { position:absolute; inset:0; }
+    #s10-shake { position:absolute; inset:0; }
+    #s10-bg { position:absolute; inset:-120px; background:radial-gradient(70% 45% at 50% 50%, #215a3e 0%, #17402C 65%, #0e2b1d 100%); }
+    #s10-behindp { position:absolute; left:60px; top:560px; width:960px; transform:scale(1.28) rotate(-3deg); filter:blur(7px); opacity:0.55; }
+    #s10-behind { position:absolute; left:0; top:0; width:960px; white-space:nowrap; }
+    .s10-pill { display:inline-flex; align-items:center; gap:16px; border-radius:999px; height:130px; padding:0 50px; background:rgba(250,248,245,0.92); color:#17402C; font-size:64px; font-weight:700; vertical-align:top; }
+    .s10-pill i { display:inline-block; width:30px; height:30px; border-radius:50%; background:#5B7F55; }
+    .s10-j { background:rgba(250,248,245,0.3); color:#FAF8F5; margin-left:20px; }
+    .s10-rings { display:flex; gap:36px; margin-top:60px; }
+    .s10-rings div { width:160px; height:160px; border-radius:50%; background:rgba(250,248,245,0.85); display:flex; align-items:center; justify-content:center; }
+    #s10-wordp { position:absolute; left:40px; top:760px; transform:rotate(-2deg); transform-origin:40% 60%; }
+    .s10-slam { position:absolute; left:0; top:0; font-weight:900; font-size:318px; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; transform-origin:45% 55%; }
+    #s10-word { color:#D0A070; }
+    #s10-word span { color:#FAF8F5; }
+    #s10-wordg { color:#FAF8F5; filter:blur(3px); opacity:0; }
+    #s10-tilep { position:absolute; left:230px; top:1230px; }
+    #s10-tile { display:flex; align-items:center; gap:18px; height:112px; padding:0 44px; border-radius:999px; background:rgba(250,248,245,0.95); color:#17402C; font-size:48px; font-weight:700; white-space:nowrap; box-shadow:0 24px 60px rgba(6,18,12,0.5); }
+    #s10-tile i { display:inline-block; width:26px; height:26px; border-radius:50%; background:#3D7A52; box-shadow:0 0 0 8px rgba(61,122,82,0.2); }
+    #s10-tile span { color:#56665D; font-weight:600; margin-left:10px; }
+  </style>
+  <div id="root" data-composition-id="s10" data-width="1080" data-height="1920" data-layout-allow-overlap>
+    <div id="s10-all">
+      <div id="s10-cam" data-layout-allow-overflow>
+        <div id="s10-drift" data-layout-allow-overflow>
+          <div id="s10-shake" data-layout-allow-overflow>
+            <div id="s10-bg"></div>
+            <div id="s10-behindp" data-layout-ignore>
+              <div id="s10-behind">
+                <span class="s10-pill"><i></i>Prêt à partir</span><span class="s10-pill s10-j">J-6</span>
+                <div class="s10-rings">
+                  <div><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                  <div><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></svg></div>
+                  <div><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg></div>
+                  <div><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg></div>
+                  <div><svg width="76" height="76" viewBox="0 0 24 24" fill="none" stroke="#17402C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></div>
+                </div>
+              </div>
+            </div>
+            <div id="s10-wordp">
+              <div id="s10-wordg" class="s10-slam" data-layout-ignore>PRÊT.</div>
+              <div id="s10-word" class="s10-slam">PRÊT<span>.</span></div>
+            </div>
+            <div id="s10-tilep"><div id="s10-tile"><i></i>Prêt à partir<span>· J-6</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const ID = "s10";
+      const DUR = 0.846;
+      const F = 1 / 30;
+      const O = 12.731;
+      const L = (T) => +(T - O).toFixed(4);
+      const T_IN = L(12.931);   // « PRÊT. » + secousse
+      const T_TILE = L(13.086); // la tuile nette « Prêt à partir · J-6 » passe dessous
+      const tl = gsap.timeline({ paused: true });
+
+      // Entrée sur la mesure 12,931 : dézoom brusque depuis la plongée de s09 (×1,25 → ×1, flou 18 → 0, 5 images).
+      tl.fromTo("#s10-all", { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_IN - 0.001);
+      tl.fromTo("#s10-cam", { scale: 1.25, filter: "blur(18px)" }, { scale: 1, filter: "blur(0px)", duration: 5 * F, ease: "expo.out" }, T_IN);
+      // Dérive permanente (caméra qui avance, parallaxe de l'arrière-plan). L'état final est repris tel quel par s11.
+      tl.fromTo("#s10-drift", { scale: 1 }, { scale: 1.06, duration: DUR - T_IN, ease: "none" }, T_IN);
+      tl.fromTo("#s10-behind", { x: 30, y: 0 }, { x: -30, y: -12, duration: DUR - T_IN, ease: "none" }, T_IN);
+
+      // PRÊT. claque (1,45 → 0,93 → 1), fantôme Stone 2 images.
+      tl.fromTo("#s10-word", { opacity: 0 }, { opacity: 1, duration: F, ease: "none" }, T_IN);
+      tl.fromTo("#s10-word", { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out" }, T_IN);
+      tl.to("#s10-word", { scale: 1, duration: 4 * F, ease: "sine.inOut" }, T_IN + 3 * F);
+      tl.fromTo("#s10-wordg", { opacity: 0, x: 22, y: -16, scale: 1.1 }, { opacity: 0.35, duration: 0.001, ease: "none" }, T_IN);
+      tl.to("#s10-wordg", { opacity: 0, x: 30, y: -22, scale: 1.16, duration: 2 * F - 0.001, ease: "none" }, T_IN + 0.001);
+
+      // Secousse 4 images (14 px puis 6 px).
+      const a = 16;
+      [[a, -0.5 * a], [-0.6 * a, 0.45 * a], [0.43 * a, -0.3 * a], [-0.15 * a, 0.1 * a], [0, 0]].forEach(([x, y], i) =>
+        tl.to("#s10-shake", { x, y, duration: F, ease: "none" }, T_IN + i * F),
+      );
+
+      // La tuile réelle arrive en ressort sous le mot.
+      tl.fromTo("#s10-tile", { opacity: 0, y: 140, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.6)" }, T_TILE);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines[ID] = tl;
+    })();
+  </script>
+</template>

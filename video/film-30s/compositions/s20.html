@@ -1,0 +1,161 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; font-family:"Inter",sans-serif; -webkit-font-smoothing:antialiased; }
+    #root .s20-abs { position:absolute; }
+    #s20-all { position:absolute; inset:0; background:#06120C; opacity:0; }
+    #s20-sky { position:absolute; inset:-60px; background-image:
+      radial-gradient(1.5px 1.5px at 12% 20%, rgba(250,248,245,0.7), transparent), radial-gradient(1.5px 1.5px at 80% 12%, rgba(250,248,245,0.6), transparent),
+      radial-gradient(1px 1px at 30% 70%, rgba(250,248,245,0.5), transparent), radial-gradient(1.5px 1.5px at 92% 60%, rgba(250,248,245,0.6), transparent),
+      radial-gradient(1px 1px at 6% 88%, rgba(250,248,245,0.5), transparent), radial-gradient(1px 1px at 55% 6%, rgba(250,248,245,0.5), transparent),
+      radial-gradient(1.5px 1.5px at 70% 92%, rgba(250,248,245,0.5), transparent), radial-gradient(1px 1px at 40% 40%, rgba(250,248,245,0.4), transparent); }
+    #s20-cam { position:absolute; left:0; top:0; width:1080px; height:1920px; }
+    #s20-atm { left:10px; top:70px; width:1060px; height:1060px; border-radius:50%; box-shadow:0 0 120px 20px rgba(91,127,85,0.35), inset 0 0 60px rgba(91,127,85,0.25); }
+    #s20-gbase { left:40px; top:100px; width:1000px; height:1000px; transform:rotate(-8deg); }
+    #s20-spin { position:absolute; inset:0; }
+    #s20-spin > img { position:absolute; left:0; top:0; width:1000px; height:1000px; }
+    #s20-lieux { --s20r:0px; -webkit-mask-image:radial-gradient(circle at 316px 928px, #000 var(--s20r), transparent calc(var(--s20r) + 180px));
+      mask-image:radial-gradient(circle at 316px 928px, #000 var(--s20r), transparent calc(var(--s20r) + 180px)); opacity:0; }
+    #s20-arcs { position:absolute; left:0; top:0; }
+    #s20-anchor { left:316px; top:928px; width:0; height:0; }
+    #s20-satw { position:absolute; left:-1078.8px; top:-701.2px; width:1600px; height:2600px; transform-origin:1078.8px 701.2px; transform:rotate(33deg) scale(0.003125); }
+    #s20-sat { position:absolute; inset:0; overflow:hidden;
+      -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%);
+      -webkit-mask-composite:source-in; mask-image:linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%); mask-composite:intersect; }
+    #s20-sat img { position:absolute; left:0; top:0; width:100%; height:100%; }
+    #s20-sdim { position:absolute; inset:0; background:#06120C; opacity:0.55; }
+    #s20-dot { left:-24px; top:-24px; width:48px; height:48px; border-radius:50%; background:#D0A070; border:6px solid #FAF8F5;
+      box-shadow:0 0 0 12px rgba(208,160,112,0.25), 0 0 40px rgba(208,160,112,0.7); }
+    #s20-shade { position:absolute; left:0; top:960px; width:1080px; height:960px; background:linear-gradient(180deg, rgba(6,18,12,0) 0%, rgba(6,18,12,0.82) 22%, #06120C 60%); opacity:0; }
+    .s20-num { font-weight:900; letter-spacing:-0.02em; line-height:0.9; font-variant-numeric:tabular-nums; white-space:nowrap; color:#D0A070; opacity:0; transform-origin:30% 60%; }
+    .s20-slam { font-weight:900; letter-spacing:-0.04em; line-height:0.86; white-space:nowrap; color:#FAF8F5; opacity:0; transform-origin:20% 60%; }
+    .s20-g { color:#FAF8F5; }
+    .s20-lab { left:60px; top:1104px; font-size:36px; color:rgba(250,248,245,0.75); font-weight:600; letter-spacing:0.1em; text-transform:uppercase; white-space:nowrap; opacity:0; }
+    #s20-n1, #s20-n2 { left:54px; top:1158px; font-size:236px; }
+    #s20-n1g, #s20-n2g { left:76px; top:1144px; font-size:236px; }
+    #s20-w1, #s20-w2 { left:58px; top:1372px; font-size:140px; }
+    #s20-n3 { left:54px; top:1170px; font-size:172px; }
+    #s20-n3g { left:76px; top:1156px; font-size:172px; }
+    #s20-w3 { left:60px; top:1350px; font-size:110px; }
+    #s20-w3 em { font-family:"EB Garamond",Georgia,serif; font-style:italic; font-weight:500; letter-spacing:0; font-size:0.62em; margin-left:18px; color:rgba(250,248,245,0.88); }
+  </style>
+  <div id="root" data-composition-id="s20" data-width="1080" data-height="1920">
+    <div id="s20-all">
+      <div id="s20-sky"></div>
+      <div id="s20-cam">
+        <div id="s20-atm" class="s20-abs"></div>
+        <div id="s20-gbase" class="s20-abs">
+          <div id="s20-spin">
+            <img id="s20-earth" src="assets/sat/globe-nuit.png" alt="">
+            <img id="s20-lieux" src="assets/sat/globe-nuit-lieux.png" alt="">
+            <svg id="s20-arcs" width="1000" height="1000" viewBox="0 0 1000 1000">
+              <g fill="none" stroke="#D0A070" stroke-width="3" stroke-linecap="round">
+                <path id="s20-a1" d="M316 928 C 380 620, 560 330, 713 184" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" opacity="0.95"/>
+                <path id="s20-a2" d="M316 928 C 300 700, 260 470, 180 300" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" opacity="0.6"/>
+                <path id="s20-a3" d="M713 184 C 760 380, 800 560, 850 760" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" opacity="0.6"/>
+              </g>
+              <circle id="s20-e1" cx="713" cy="184" r="8" fill="#FAF8F5" opacity="0"/>
+            </svg>
+            <div id="s20-anchor" class="s20-abs">
+              <div id="s20-satw"><div id="s20-sat"><img src="assets/sat/sat-w.jpg" alt=""><div id="s20-sdim"></div></div></div>
+              <div id="s20-dot" class="s20-abs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="s20-shade"></div>
+      <div id="s20-lab1" class="s20-abs s20-lab">367 747 lieux</div>
+      <div id="s20-lab2" class="s20-abs s20-lab">367 747 lieux · 246 pays</div>
+      <div id="s20-n1g" class="s20-abs s20-num s20-g">367 747</div>
+      <div id="s20-n1" class="s20-abs s20-num">367 747</div>
+      <div id="s20-w1" class="s20-abs s20-slam">LIEUX</div>
+      <div id="s20-n2g" class="s20-abs s20-num s20-g">246</div>
+      <div id="s20-n2" class="s20-abs s20-num">246</div>
+      <div id="s20-w2" class="s20-abs s20-slam">PAYS</div>
+      <div id="s20-n3g" class="s20-abs s20-num s20-g">18 176 400</div>
+      <div id="s20-n3" class="s20-abs s20-num">18 176 400</div>
+      <div id="s20-w3" class="s20-abs s20-slam">AVENTURES<em>possibles</em></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // Plan 20 · bible 25,862 → 28,140 ; hôte à 25,662 : local = film − 25,662.
+      const F = 1 / 30;
+      const L = (T) => +(T - 25.662).toFixed(4);
+      const tl = gsap.timeline({ paused: true });
+      function slam(el, ghost, t) {
+        tl.set(el, { opacity: 1 }, t);
+        tl.fromTo(el, { scale: 1.45 }, { scale: 0.93, duration: 3 * F, ease: "power2.out", immediateRender: false }, t);
+        tl.to(el, { scale: 1, duration: 4 * F, ease: "sine.inOut" }, t + 3 * F);
+        if (ghost) {
+          tl.set(ghost, { opacity: 0.35 }, t);
+          tl.fromTo(ghost, { scale: 1.75 }, { scale: 1.2, duration: 2 * F, ease: "none", immediateRender: false }, t);
+          tl.set(ghost, { opacity: 0 }, t + 2 * F);
+        }
+      }
+      function out(els, t) {
+        tl.to(els, { scale: 0.82, opacity: 0, filter: "blur(10px)", duration: 3 * F, ease: "power3.in" }, t);
+      }
+
+      // ---- Géométrie : globe de 1000 px centré en (540, 600), tourné de −8° (parent fixe) et de SPIN0 (animé).
+      const GC = [540, 600], PL = [316 - 500, 928 - 500], SPIN0 = -25, SPIN1 = 4;
+      const th = (-8 + SPIN0) * Math.PI / 180;
+      const PW = [GC[0] + PL[0] * Math.cos(th) - PL[1] * Math.sin(th), GC[1] + PL[0] * Math.sin(th) + PL[1] * Math.cos(th)];
+      const C = [540, 860];                 // point de rencontre à l'écran (plans 18-19)
+      const S0 = 2880 / 5;                  // satellite de 5 px sur le globe, affiché à 2 880 px (×1,8) au départ
+      const LN = Math.log(S0);
+      const z = { u: 0, q: 1 };
+      const cam = document.getElementById("s20-cam"), dot = document.getElementById("s20-dot");
+      const earth = ["#s20-earth", "#s20-atm"];
+      function draw() {
+        const s = Math.exp(LN * (1 - z.u)) * z.q;
+        const k = z.u * z.u * (3 - 2 * z.u);
+        const ax = C[0] + (PW[0] - C[0]) * k, ay = C[1] + (PW[1] - C[1]) * k;
+        gsap.set(cam, { x: ax - s * PW[0], y: ay - s * PW[1], scale: s, transformOrigin: "0px 0px" });
+        gsap.set(dot, { scale: 1 / s });
+        gsap.set(earth, { opacity: s > 300 ? 0 : 1 });
+        // le satellite net s'efface dans le globe quand il devient petit (pas de « pièce » visible)
+        gsap.set("#s20-sat", { opacity: Math.min(1, Math.max(0, (s - 40) / 160)) });
+      }
+      gsap.set("#s20-spin", { rotation: SPIN0, transformOrigin: "50% 50%" });
+      draw();
+
+      // Entrée (0 → 0,1) : même cadrage que la fin du plan 19 (satellite assombri, point de rencontre).
+      tl.to("#s20-all", { opacity: 1, duration: 3 * F, ease: "none" }, 0);
+      // 25,862 → 26,508 : le recul s'accélère du point de rencontre jusqu'à la Terre entière.
+      const tB = L(26.508);
+      tl.to(z, { u: 1, duration: tB - 0.2, ease: "power2.in", onUpdate: draw }, 0.2);
+      tl.to("#s20-sdim", { opacity: 0.2, duration: tB - 0.2, ease: "power1.in" }, 0.2);
+      // Cassure 26,508 : arrêt brutal (dépassement 0,965) ; le globe tourne et s'allume depuis la Patagonie.
+      tl.to(z, { q: 0.965, duration: 3 * F, ease: "power2.out", onUpdate: draw }, tB);
+      tl.to(z, { q: 1, duration: 4 * F, ease: "sine.inOut", onUpdate: draw }, tB + 3 * F);
+      tl.to("#s20-spin", { rotation: SPIN1, duration: 2.478 - tB, ease: "power3.out" }, tB);
+      tl.set("#s20-lieux", { opacity: 1 }, tB);
+      tl.to("#s20-lieux", { "--s20r": "1500px", duration: 1.15, ease: "power2.out" }, tB);
+      tl.fromTo("#s20-sky", { x: 0, y: 0 }, { x: -40, y: 30, duration: 2.478, ease: "none" }, 0);
+      tl.to("#s20-shade", { opacity: 1, duration: 0.25, ease: "power1.out" }, tB - 0.1);
+
+      // « 367 747 » + « LIEUX » (26,508 · 26,670).
+      slam("#s20-n1", "#s20-n1g", tB);
+      slam("#s20-w1", null, L(26.67));
+      // 27,155 : « 246 » + « PAYS » ; le premier chiffre passe en rappel ; les arcs de la chaîne se tracent.
+      const tP = L(27.155);
+      out(["#s20-n1", "#s20-w1"], tP - 3 * F);
+      tl.fromTo("#s20-lab1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power2.out" }, tP);
+      slam("#s20-n2", "#s20-n2g", tP);
+      slam("#s20-w2", null, L(27.317));
+      tl.to("#s20-a1", { strokeDashoffset: 0, duration: 0.4, ease: "power2.out" }, tP);
+      tl.to(["#s20-a2", "#s20-a3"], { strokeDashoffset: 0, duration: 0.45, ease: "power2.out" }, tP + 0.12);
+      tl.to("#s20-e1", { opacity: 1, duration: 2 * F, ease: "none" }, tP + 0.3);
+      // 27,801 : « 18 176 400 » + « aventures possibles ».
+      const tA = L(27.801);
+      out(["#s20-n2", "#s20-w2"], tA - 3 * F);
+      tl.set("#s20-lab1", { opacity: 0 }, tA);
+      tl.set("#s20-lab2", { opacity: 1 }, tA);
+      slam("#s20-n3", "#s20-n3g", tA);
+      slam("#s20-w3", null, L(27.933));
+
+      tl.set({}, {}, 2.478);
+      window.__timelines["s20"] = tl;
+    })();
+  </script>
+</template>

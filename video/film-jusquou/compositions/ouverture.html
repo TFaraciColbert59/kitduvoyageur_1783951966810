@@ -1,0 +1,47 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; }
+    #root .f-line { position:absolute; left:0; right:0; text-align:center; font-size:76px; line-height:92px; color:#17402C; white-space:nowrap; }
+    #root .f-line span { display:inline-block; opacity:0; margin:0 0.13em; }
+    #o-l1 { top:836px; font-family:"EB Garamond",serif; font-weight:400; }
+    #o-l2 { top:940px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; font-weight:400; }
+    #o-logo { position:absolute; left:0; top:-300px; width:1080px; height:1920px; opacity:0; }
+    #o-ring { position:absolute; left:280px; top:600px; width:520px; height:520px; }
+    #o-nd { position:absolute; left:0; top:0; overflow:visible; }
+    #o-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1390px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#FAF8F5; white-space:pre; padding-left:0.26em; }
+    #o-word span { opacity:0; }
+    </style>
+  <div id="root" data-composition-id="ouverture" data-width="1080" data-height="1920">
+    <div id="o-logo">
+      <img id="o-ring" src="assets/img/badge-anneau.png" alt="Badge LKDV">
+      <svg id="o-nd" width="1080" height="1920" viewBox="0 0 1080 1920">
+        <defs>
+          <linearGradient id="o-gn" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+          <linearGradient id="o-gs" x1="0" x2="1"><stop offset="0" stop-color="#2f4a3c"/><stop offset="0.5" stop-color="#17402C"/><stop offset="0.5" stop-color="#0f2c1e"/><stop offset="1" stop-color="#0b2117"/></linearGradient>
+        </defs>
+        <g id="o-needle">
+          <path d="M540 676 L564 860 L516 860 Z" fill="url(#o-gn)"/>
+          <path d="M540 1044 L564 860 L516 860 Z" fill="url(#o-gs)" stroke="#9E7243" stroke-width="2"/>
+          <circle cx="540" cy="860" r="15" fill="#06120C" stroke="#D0A070" stroke-width="5"/>
+        </g>
+      </svg>
+      <div id="o-word" data-layout-allow-safe-zone><span>L</span><span>E</span><span> </span><span>K</span><span>I</span><span>T</span><span> </span><span>D</span><span>U</span><span> </span><span>V</span><span>O</span><span>Y</span><span>A</span><span>G</span><span>E</span><span>U</span><span>R</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      // Le logo ouvre le film comme il le ferme (référence) : l'aiguille cherche le nord et se fixe à 1,3 s, sur la note de piano.
+      const tl = gsap.timeline({ paused: true });
+      gsap.set("#o-logo", { opacity: 1 });
+      gsap.set("#o-needle", { rotation: -110, svgOrigin: "540 860" });
+      tl.fromTo("#o-needle", { rotation: -110 }, { rotation: 18, duration: 0.6, ease: "power2.out", svgOrigin: "540 860", immediateRender: false }, 0.1);
+      tl.to("#o-needle", { rotation: -7, duration: 0.3, ease: "sine.inOut", svgOrigin: "540 860" }, 0.7);
+      tl.to("#o-needle", { rotation: 2, duration: 0.25, ease: "sine.inOut", svgOrigin: "540 860" }, 1.0);
+      tl.to("#o-needle", { rotation: 0, duration: 0.2, ease: "sine.out", svgOrigin: "540 860" }, 1.25);
+      gsap.utils.toArray("#o-word span").forEach((el, i) => tl.set(el, { opacity: 1 }, 0.35 + i * 0.03));
+      tl.fromTo("#o-logo", { scale: 1 }, { scale: 1.02, duration: 2.0, ease: "none", transformOrigin: "50% 45%" }, 0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["ouverture"] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p21 · Silence, l'aiguille</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--deep); }
+  #glob { left: 190px; top: 410px; width: 700px; height: 700px; opacity: 0.16; filter: blur(2px) grayscale(0.4); transform: scaleX(0.55); }
+  #glob img { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #nd { left: 0; top: 0; }
+</style></head>
+<body><div id="frame">
+  <div id="glob" class="abs"><img src="assets/sat/globe-nuit.png"><img src="assets/sat/globe-nuit-lieux.png"></div>
+  <svg id="nd" class="abs" width="1080" height="1920"></svg>
+</div>
+<script>
+  // 28,30 s : tout est figé ; les points des lieux se replient en aiguille de boussole (mi-parcours).
+  const svg = document.getElementById('nd'); let h = '';
+  h += `<defs><linearGradient id="n" x1="0" x2="1"><stop offset="0" stop-color="#E2BC8C"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#9E7243"/><stop offset="1" stop-color="#7a5632"/></linearGradient></defs>`;
+  // moitié nord déjà formée
+  h += `<path d="M540 330 L590 860 L490 860 Z" fill="url(#n)" opacity="0.95"/>`;
+  let seed = 11; const r = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 420; i++) {
+    // cible : moitié sud de l'aiguille ; origine : la sphère des lieux
+    const t = r(), ty = 860 + t * 530, half = 50 * (1 - t), tx = 540 + (r() * 2 - 1) * half;
+    const a = r() * Math.PI * 2, R = 260 + r() * 140, ox = 540 + Math.cos(a) * R * 0.6, oy = 760 + Math.sin(a) * R;
+    const k = 0.45 + r() * 0.5, x = ox + (tx - ox) * k, y = oy + (ty - oy) * k;
+    h += `<line x1="${x}" y1="${y}" x2="${x + (tx - x) * 0.18}" y2="${y + (ty - y) * 0.18}" stroke="rgba(208,160,112,${0.25 + k * 0.5})" stroke-width="3" stroke-linecap="round"/>`;
+    h += `<circle cx="${x + (tx - x) * 0.18}" cy="${y + (ty - y) * 0.18}" r="${2 + k * 2}" fill="#E8C496" opacity="${0.5 + k * 0.5}"/>`;
+  }
+  h += `<circle cx="540" cy="860" r="22" fill="#06120C" stroke="#D0A070" stroke-width="8"/>`;
+  svg.innerHTML = h;
+</script>
+</body></html>

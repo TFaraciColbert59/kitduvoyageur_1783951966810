@@ -1,0 +1,105 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; pointer-events:none; }
+    #root .k-chip { position:absolute; display:flex; align-items:center; gap:10px; height:52px; padding:0 20px 0 13px; border-radius:26px;
+      background:rgba(11,31,23,0.82); border:1.5px solid rgba(208,160,112,0.65); box-shadow:0 6px 22px rgba(6,18,12,0.55);
+      font-family:"Inter",sans-serif; font-weight:600; font-size:26px; letter-spacing:0.01em; color:#FAF8F5; white-space:nowrap; opacity:0; transform-origin:0 50%; }
+    #root .k-hud { left:0; right:0; margin:0 auto; width:fit-content; top:1262px; transform-origin:50% 50%; }
+    #root .k-pin { position:absolute; width:34px; height:34px; border-radius:17px; display:flex; align-items:center; justify-content:center;
+      background:rgba(11,31,23,0.86); border:2px solid #D0A070; box-shadow:0 2px 10px rgba(6,18,12,0.6); opacity:0; }
+    #root .k-live { border-color:#E07A5F; }
+    #root .k-ring { position:absolute; width:80px; height:80px; border-radius:40px; border:3px solid #E07A5F; opacity:0; }
+    #root .k-dex { position:absolute; width:60px; height:60px; border-radius:30px; overflow:hidden; border:3px solid #D0A070; box-shadow:0 3px 12px rgba(6,18,12,0.6); opacity:0; }
+    #root .k-dex img { width:100%; height:100%; object-fit:cover; display:block; }
+    #root .k-card { position:absolute; display:flex; align-items:center; gap:14px; padding:10px 20px 10px 10px; border-radius:20px;
+      background:rgba(11,31,23,0.86); border:1.5px solid rgba(208,160,112,0.7); box-shadow:0 8px 26px rgba(6,18,12,0.6); opacity:0; transform-origin:0 50%; }
+    #root .k-card img { width:96px; height:96px; border-radius:14px; object-fit:cover; display:block; }
+    #root .k-tag { font-family:"Inter",sans-serif; font-weight:700; font-size:18px; letter-spacing:0.14em; text-transform:uppercase; color:#D0A070; }
+    #root .k-name { font-family:"Inter",sans-serif; font-weight:600; font-size:30px; color:#FAF8F5; margin-top:4px; white-space:nowrap; }
+    #root .k-veh { position:absolute; left:0; top:0; width:50px; height:50px; border-radius:25px; display:flex; align-items:center; justify-content:center;
+      background:rgba(11,31,23,0.88); border:2px solid #D0A070; opacity:0; }
+  </style>
+  <div id="root" data-composition-id="carte" data-width="1080" data-height="1920">
+    <div id="k0-m" class="k-pin" style="left:240px; top:1530px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg></div>
+    <div id="k0-c" class="k-chip" data-layout-allow-safe-zone style="left:40px; top:1330px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg><span>Nuit 1</span></div>
+    <div id="k1-m" class="k-pin" style="left:240px; top:1530px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="#F3D7A8"/><circle cx="16.5" cy="9" r="2.8" fill="#F3D7A8"/><path d="M2.5 20c.6-4 3-6 5.5-6s4.9 2 5.5 6M12.5 20c.4-3.2 2.2-4.8 4-4.8s3.6 1.6 4 4.8" fill="none" stroke="#F3D7A8" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    <div id="k1-c" class="k-chip" data-layout-allow-safe-zone style="left:40px; top:1394px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="#F3D7A8"/><circle cx="16.5" cy="9" r="2.8" fill="#F3D7A8"/><path d="M2.5 20c.6-4 3-6 5.5-6s4.9 2 5.5 6M12.5 20c.4-3.2 2.2-4.8 4-4.8s3.6 1.6 4 4.8" fill="none" stroke="#F3D7A8" stroke-width="1.8" stroke-linecap="round"/></svg><span>Inès et Paulo · même trek</span></div>
+    <div id="k2-m" class="k-pin" style="left:314px; top:1655px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.5 4.6 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.4 6-11z" fill="#9EC9D9"/></svg></div>
+    <div id="k2-c" class="k-chip" data-layout-allow-safe-zone style="left:40px; top:1700px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c3.5 4.6 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.4 6-11z" fill="#9EC9D9"/></svg><span>Eau potable</span></div>
+    <div id="k3-m" class="k-pin" style="left:402px; top:1738px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3M3 19h7" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div id="k3-c" class="k-chip" data-layout-allow-safe-zone style="left:60px; top:1800px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3M3 19h7" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg><span>Départ 6 h · fenêtre météo</span></div>
+    <div id="k4-m" class="k-pin" style="left:462px; top:1645px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="15" rx="3.5" fill="none" stroke="#F3D7A8" stroke-width="2"/><path d="M9 6V4.5a3 3 0 0 1 6 0V6M9 13h6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div id="k4-c" class="k-chip" data-layout-allow-safe-zone style="left:40px; top:1640px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="15" rx="3.5" fill="none" stroke="#F3D7A8" stroke-width="2"/><path d="M9 6V4.5a3 3 0 0 1 6 0V6M9 13h6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg><span>Rien d’oublié</span></div>
+    <div id="k5-m" class="k-pin" style="left:504px; top:1630px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg></div>
+    <div id="k5-c" class="k-chip" data-layout-allow-safe-zone style="left:610px; top:1700px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg><span>Nuit 2</span></div>
+    <div id="k6-m" class="k-pin" style="left:504px; top:1630px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div id="k6-c" class="k-chip" data-layout-allow-safe-zone style="left:610px; top:1762px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg><span>Partagé à 3</span></div>
+    <div id="k7-m" class="k-dex" style="left:506px; top:1466px"><img src="assets/img/dex-condor.jpg" alt=""></div>
+    <div id="k7-c" class="k-card" data-layout-allow-safe-zone style="left:250px; top:1255px"><img src="assets/img/dex-condor.jpg" alt="Condor des Andes"><div><div class="k-tag">Pokédex · vu</div><div class="k-name">Condor des Andes</div></div></div>
+    <div id="k8-m" class="k-dex" style="left:547px; top:1583px"><img src="assets/img/dex-guanaco.jpg" alt=""></div>
+    <div id="k8-c" class="k-card" data-layout-allow-safe-zone style="left:700px; top:1500px"><img src="assets/img/dex-guanaco.jpg" alt="Guanaco"><div><div class="k-tag">Pokédex · vu</div><div class="k-name">Guanaco</div></div></div>
+    <div id="k9-m" class="k-pin" style="left:606px; top:1594px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg></div>
+    <div id="k9-c" class="k-chip" data-layout-allow-safe-zone style="left:680px; top:1660px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg><span>Nuit 3</span></div>
+    <div id="k10-m" class="k-pin" style="left:606px; top:1594px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a13 13 0 0 1 18 0M6.5 13a8 8 0 0 1 11 0M10 16.5a3 3 0 0 1 4 0M4 4l16 16" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div id="k10-c" class="k-chip" data-layout-allow-safe-zone style="left:680px; top:1722px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5a13 13 0 0 1 18 0M6.5 13a8 8 0 0 1 11 0M10 16.5a3 3 0 0 1 4 0M4 4l16 16" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg><span>Carte téléchargée</span></div>
+    <div id="k11-m" class="k-pin k-live" style="left:746px; top:1397px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="#E07A5F"/><path d="M6.5 6.5a8 8 0 0 0 0 11M17.5 6.5a8 8 0 0 1 0 11" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div id="k11-c" class="k-chip" data-layout-allow-safe-zone style="left:740px; top:1290px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="#E07A5F"/><path d="M6.5 6.5a8 8 0 0 0 0 11M17.5 6.5a8 8 0 0 1 0 11" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/></svg><span>Hélène · à 13 000 km</span></div>
+    <div id="k11-r0" class="k-ring" style="left:723px; top:1374px"></div>
+    <div id="k11-r1" class="k-ring" style="left:723px; top:1374px"></div>
+    <div id="k11-r2" class="k-ring" style="left:723px; top:1374px"></div>
+    <div id="k12-m" class="k-pin" style="left:746px; top:1397px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg></div>
+    <div id="k12-c" class="k-chip" data-layout-allow-safe-zone style="left:800px; top:1460px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 3.5a8.5 8.5 0 1 0 5 15.4A7 7 0 0 1 15.5 3.5z" fill="#F3D7A8"/></svg><span>Nuit 4</span></div>
+    <div id="k13-m" class="k-pin" style="left:673px; top:1353px"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4L17 12H6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
+    <div id="k13-c" class="k-chip" data-layout-allow-safe-zone style="left:520px; top:1250px"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4M6 4h11l-2.5 4L17 12H6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Arrivés</span></div>
+    <div id="h0" class="k-chip k-hud" data-layout-allow-safe-zone><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V8.5l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-6z" fill="#F3D7A8"/></svg><span>Vol · Paris → Punta Arenas</span></div>
+    <div id="h1" class="k-chip k-hud" data-layout-allow-safe-zone><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="3" fill="none" stroke="#F3D7A8" stroke-width="2"/><path d="M4 11h16M7.5 18v2.5M16.5 18v2.5" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="14.5" r="1.2" fill="#F3D7A8"/><circle cx="16" cy="14.5" r="1.2" fill="#F3D7A8"/></svg><span>Puerto Natales → Pudeto · 2 h</span></div>
+    <div id="h2" class="k-chip k-hud" data-layout-allow-safe-zone><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18l-2.5 4.5h-13zM12 4v11M12 5l6 8h-6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg><span>Lac Pehoé · 30 min</span></div>
+    <div id="k-veh-plane" class="k-veh"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V8.5l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-6z" fill="#F3D7A8"/></svg></div>
+    <div id="k-veh-bus" class="k-veh"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="14" rx="3" fill="none" stroke="#F3D7A8" stroke-width="2"/><path d="M4 11h16M7.5 18v2.5M16.5 18v2.5" stroke="#F3D7A8" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="14.5" r="1.2" fill="#F3D7A8"/><circle cx="16" cy="14.5" r="1.2" fill="#F3D7A8"/></svg></div>
+    <div id="k-veh-boat" class="k-veh"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18l-2.5 4.5h-13zM12 4v11M12 5l6 8h-6" fill="none" stroke="#F3D7A8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      function pop(sel, t) { tl.fromTo(sel, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(1.8)" }, t); }
+      pop("#k0-c", 17.7); tl.to("#k0-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 19.0);
+      tl.fromTo("#k0-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 17.7);
+      pop("#k1-c", 18.1); tl.to("#k1-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 19.400000000000002);
+      tl.fromTo("#k1-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 18.1);
+      pop("#k2-c", 18.7); tl.to("#k2-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 19.8);
+      tl.fromTo("#k2-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 18.7);
+      pop("#k3-c", 19.35); tl.to("#k3-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 20.55);
+      tl.fromTo("#k3-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 19.35);
+      pop("#k4-c", 20.02); tl.to("#k4-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 21.02);
+      tl.fromTo("#k4-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 20.02);
+      pop("#k5-c", 20.69); tl.to("#k5-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 21.790000000000003);
+      tl.fromTo("#k5-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 20.69);
+      pop("#k6-c", 20.85); tl.to("#k6-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 21.85);
+      tl.fromTo("#k6-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 20.85);
+      pop("#k7-c", 21.19); tl.to("#k7-c", { opacity: 0, scale: 0.9, duration: 0.25, ease: "sine.in" }, 22.09);
+      tl.fromTo("#k7-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 21.34);
+      pop("#k8-c", 21.69); tl.to("#k8-c", { opacity: 0, scale: 0.9, duration: 0.25, ease: "sine.in" }, 22.44);
+      tl.fromTo("#k8-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.35, ease: "back.out(2)" }, 21.84);
+      pop("#k9-c", 22.02); tl.to("#k9-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 22.919999999999998);
+      tl.fromTo("#k9-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 22.02);
+      pop("#k10-c", 22.1); tl.to("#k10-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 22.900000000000002);
+      tl.fromTo("#k10-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 22.1);
+      pop("#k11-c", 22.35); tl.to("#k11-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 23.0);
+      tl.fromTo("#k11-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 22.35);
+      tl.fromTo("#k11-r0", { opacity: 0.9, scale: 0.3 }, { opacity: 0, scale: 2.2, duration: 0.9, ease: "sine.out" }, 22.35);
+      tl.fromTo("#k11-r1", { opacity: 0.9, scale: 0.3 }, { opacity: 0, scale: 2.2, duration: 0.9, ease: "sine.out" }, 22.57);
+      tl.fromTo("#k11-r2", { opacity: 0.9, scale: 0.3 }, { opacity: 0, scale: 2.2, duration: 0.9, ease: "sine.out" }, 22.790000000000003);
+      pop("#k12-c", 22.4); tl.to("#k12-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 23.299999999999997);
+      tl.fromTo("#k12-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 22.4);
+      pop("#k13-c", 23.02); tl.to("#k13-c", { opacity: 0, duration: 0.25, ease: "sine.in" }, 24.32);
+      tl.fromTo("#k13-m", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "back.out(2)" }, 23.02);
+      pop("#h0", 14.7); tl.to("#h0", { opacity: 0, duration: 0.2 }, 15.62);
+      pop("#h1", 15.69); tl.to("#h1", { opacity: 0, duration: 0.2 }, 16.62);
+      pop("#h2", 16.69); tl.to("#h2", { opacity: 0, duration: 0.2 }, 17.62);
+      const V = [[14.4, 1578, 2677, 0, "plane"], [14.433, 1580, 2682, 0, "plane"], [14.467, 1581, 2688, 0, "plane"], [14.5, 1583, 2693, 0, "plane"], [14.533, 1585, 2698, 0, "plane"], [14.567, 1587, 2703, 0, "plane"], [14.6, 1588, 2708, 0, "plane"], [14.633, 1590, 2713, 0, "plane"], [14.667, 1592, 2718, 0, "plane"], [14.7, 1596, 2707, 0, "plane"], [14.733, 1605, 2664, 0, "plane"], [14.767, 1616, 2594, 0, "plane"], [14.8, 1628, 2498, 0, "plane"], [14.833, 1636, 2382, 0, "plane"], [14.867, 1636, 2248, 0, "plane"], [14.9, 1626, 2103, 0, "plane"], [14.933, 1603, 1953, 0, "plane"], [14.967, 1564, 1803, 0, "plane"], [15.0, 1508, 1661, 0, "plane"], [15.033, 1434, 1532, 0, "plane"], [15.067, 1344, 1422, 0, "plane"], [15.1, 1239, 1336, 0, "plane"], [15.133, 1123, 1275, 0, "plane"], [15.167, 999, 1242, 0, "plane"], [15.2, 873, 1234, 1, "plane"], [15.233, 747, 1249, 1, "plane"], [15.267, 627, 1284, 1, "plane"], [15.3, 545, 1336, 1, "plane"], [15.333, 544, 1408, 1, "plane"], [15.367, 544, 1478, 1, "plane"], [15.4, 544, 1542, 1, "plane"], [15.433, 543, 1594, 1, "plane"], [15.467, 543, 1630, 1, "plane"], [15.5, 544, 1644, 1, "plane"], [15.533, 544, 1646, 1, "plane"], [15.567, 544, 1649, 1, "plane"], [15.6, 545, 1652, 1, "plane"], [15.633, 545, 1656, 1, "plane"], [15.667, 546, 1661, 1, "bus"], [15.7, 546, 1667, 1, "bus"], [15.733, 546, 1673, 1, "bus"], [15.767, 546, 1680, 1, "bus"], [15.8, 544, 1687, 1, "bus"], [15.833, 543, 1695, 1, "bus"], [15.867, 540, 1703, 1, "bus"], [15.9, 537, 1712, 1, "bus"], [15.933, 533, 1721, 1, "bus"], [15.967, 528, 1730, 1, "bus"], [16.0, 524, 1737, 1, "bus"], [16.033, 519, 1744, 1, "bus"], [16.067, 513, 1750, 1, "bus"], [16.1, 506, 1756, 1, "bus"], [16.133, 499, 1760, 1, "bus"], [16.167, 490, 1763, 1, "bus"], [16.2, 480, 1766, 1, "bus"], [16.233, 474, 1765, 1, "bus"], [16.267, 472, 1762, 1, "bus"], [16.3, 470, 1758, 1, "bus"], [16.333, 468, 1753, 1, "bus"], [16.367, 454, 1751, 1, "bus"], [16.4, 440, 1748, 1, "bus"], [16.433, 425, 1746, 1, "bus"], [16.467, 409, 1743, 1, "bus"], [16.5, 395, 1764, 1, "bus"], [16.533, 382, 1784, 1, "bus"], [16.567, 369, 1802, 1, "bus"], [16.6, 359, 1818, 1, "bus"], [16.633, 350, 1831, 1, "bus"], [16.667, 341, 1845, 1, "boat"], [16.7, 332, 1859, 1, "boat"], [16.733, 323, 1873, 1, "boat"], [16.767, 314, 1888, 1, "boat"], [16.8, 304, 1902, 1, "boat"], [16.833, 295, 1916, 1, "boat"], [16.867, 286, 1930, 1, "boat"], [16.9, 276, 1944, 1, "boat"], [16.933, 267, 1957, 1, "boat"], [16.967, 258, 1970, 1, "boat"], [17.0, 250, 1981, 0, "boat"], [17.033, 242, 1992, 0, "boat"], [17.067, 235, 2001, 0, "boat"], [17.1, 228, 2008, 0, "boat"], [17.133, 223, 2013, 0, "boat"], [17.167, 219, 2015, 0, "boat"], [17.2, 216, 2015, 0, "boat"], [17.233, 215, 2013, 0, "boat"], [17.267, 215, 2009, 0, "boat"], [17.3, 216, 2002, 0, "boat"], [17.333, 220, 1993, 0, "boat"], [17.367, 225, 1982, 0, "boat"], [17.4, 232, 1969, 1, "boat"], [17.433, 242, 1954, 1, "boat"], [17.467, 253, 1937, 1, "boat"], [17.5, 266, 1920, 1, "boat"], [17.533, 282, 1902, 1, "boat"], [17.567, 299, 1883, 1, "boat"], [17.6, 317, 1864, 1, "boat"], [17.633, 334, 1846, 1, "boat"], [17.667, 351, 1828, 0, "boat"], [17.7, 370, 1805, 0, "boat"], [17.733, 382, 1788, 0, "boat"], [17.767, 391, 1771, 0, "boat"], [17.8, 396, 1756, 0, "boat"], [17.833, 396, 1744, 0, "boat"], [17.867, 390, 1737, 0, "boat"], [17.9, 385, 1729, 0, "boat"], [17.933, 382, 1717, 0, "boat"], [17.967, 373, 1712, 0, "boat"], [18.0, 363, 1703, 0, "boat"], [18.033, 352, 1694, 0, "boat"], [18.067, 342, 1684, 0, "boat"]];
+      V.forEach(([t, x, y, on, ic]) => ["plane", "bus", "boat"].forEach((k) => tl.set("#k-veh-" + k, { x: x - 25, y: y - 62, opacity: on && k === ic ? 1 : 0 }, t)));
+      window.__timelines = window.__timelines || {};
+      window.__timelines["carte"] = tl;
+    })();
+  </script>
+</template>

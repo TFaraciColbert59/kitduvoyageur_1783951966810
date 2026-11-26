@@ -1,0 +1,56 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:#06120C; }
+    #root .m-shot { position:absolute; inset:0; overflow:hidden; }
+    #root .m-cam { position:absolute; inset:0; transform-origin:50% 50%; z-index:0; }
+    #root .m-shot::after { content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:radial-gradient(ellipse 58% 10% at 50% 50.2%, rgba(6,18,12,0.28), rgba(6,18,12,0) 100%); }
+    #root .m-cam img { position:absolute; left:-54px; top:-96px; width:1188px; height:2112px; }
+    #root .m-word { position:absolute; z-index:2; left:0; right:0; top:912px; text-align:center; font-family:"EB Garamond",serif; font-weight:400; font-size:80px; line-height:96px; color:#FAF8F5; letter-spacing:0; text-shadow:0 2px 28px rgba(11,31,23,0.55), 0 0 2px rgba(11,31,23,0.35); white-space:nowrap; }
+    #root .m-word span { display:inline-block; }
+  </style>
+  <div id="root" data-composition-id="mots" data-width="1080" data-height="1920">
+    <div id="m1" class="clip m-shot" data-start="0" data-duration="1.333" data-track-index="1">
+      <div id="m1-cam" class="m-cam"><img src="assets/prep/01.jpg" alt="Les Cuernos du Paine sous un ciel d'aube rose"></div>
+      <div id="m1-w" class="m-word" data-var-text="mot1">Partir</div>
+    </div>
+    <div id="m2" class="clip m-shot" data-start="1.333" data-duration="0.667" data-track-index="2">
+      <div id="m2-cam" class="m-cam"><img src="assets/prep/02.jpg" alt="Deux randonneurs minuscules sous un arc-en-ciel"></div>
+      <div id="m2-w" class="m-word"><span>l</span><span>o</span><span>i</span><span>n</span><span>.</span></div>
+    </div>
+    <div id="m3" class="clip m-shot" data-start="2" data-duration="0.667" data-track-index="1">
+      <div id="m3-cam" class="m-cam"><img src="assets/prep/03.jpg" alt="Condor au-dessus de la vallée du Francés"></div>
+      <div id="m3-w" class="m-word" data-var-text="mot3">Sans</div>
+    </div>
+    <div id="m4" class="clip m-shot" data-start="2.667" data-duration="0.666" data-track-index="2">
+      <div id="m4-cam" class="m-cam"><img src="assets/prep/04.jpg" alt="Passerelle suspendue au-dessus d'un torrent, les Cuernos au fond"></div>
+      <div id="m4-w" class="m-word" data-var-text="mot4">rien</div>
+    </div>
+    <div id="m5" class="clip m-shot" data-start="3.333" data-duration="1.334" data-track-index="1">
+      <div id="m5-cam" class="m-cam"><img src="assets/prep/05.jpg" alt="Les Torres embrasées au lever du soleil"></div>
+      <div id="m5-w" class="m-word" data-var-text="mot5">oublier.</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Plan 1 — l'accroche : montée de drone (l'image glisse vers le bas et se resserre), le mot est là dès l'image 0.
+      tl.fromTo("#m1-cam", { y: 90, scale: 1.1 }, { y: -18, scale: 1.035, duration: 1.333, ease: "power2.out" }, 0);
+      tl.fromTo("#m1-w", { y: 10 }, { y: -4, duration: 1.333, ease: "sine.out" }, 0);
+      // Plan 2 — « loin. » : les lettres s'écartent lentement, la vue se resserre à peine.
+      tl.fromTo("#m2-cam", { scale: 1.02 }, { scale: 1.065, duration: 0.667, ease: "none" }, 1.333);
+      const sp = gsap.utils.toArray("#m2-w span");
+      sp.forEach((el, i) => {
+        tl.fromTo(el, { x: 0 }, { x: (i - 2) * 26, duration: 0.667, ease: "power1.out" }, 1.333);
+      });
+      // Plan 3 — le vide : léger glissement latéral.
+      tl.fromTo("#m3-cam", { x: -26, scale: 1.06 }, { x: 22, scale: 1.075, duration: 0.667, ease: "none" }, 2.0);
+      // Plan 4 — le pont : poussée vers l'avant.
+      tl.fromTo("#m4-cam", { scale: 1.02 }, { scale: 1.07, duration: 0.666, ease: "none" }, 2.667);
+      // Plan 5 — « oublier. » grossit doucement pendant que les Torres s'embrasent.
+      tl.fromTo("#m5-cam", { scale: 1.025, y: 10 }, { scale: 1.09, y: -12, duration: 1.334, ease: "sine.inOut" }, 3.333);
+      tl.fromTo("#m5-w", { scale: 1 }, { scale: 1.32, duration: 1.3, ease: "power1.inOut" }, 3.333);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["mots"] = tl;
+    })();
+  </script>
+</template>

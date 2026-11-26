@@ -1,0 +1,57 @@
+<template>
+  <style>
+    #root { position:absolute; inset:0; overflow:hidden; background:transparent; }
+    #root .f-line { position:absolute; left:0; right:0; text-align:center; font-size:76px; line-height:92px; color:#FAF8F5; white-space:nowrap; text-shadow:0 0 22px rgba(250,248,245,0.22); }
+    #root .f-line span { display:inline-block; opacity:0; margin:0 0.13em; }
+    #f-l1 { top:960px; font-family:"EB Garamond",serif; font-weight:400; }
+    #f-l2 { top:1050px; font-family:"EB Garamond Italic","EB Garamond",serif; font-style:italic; font-weight:400; }
+    #f-logo { position:absolute; left:0; top:-300px; width:1080px; height:1920px; opacity:0; }
+    #f-ring { position:absolute; left:280px; top:600px; width:520px; height:520px; }
+    #f-nd { position:absolute; left:0; top:0; overflow:visible; }
+    #f-word { position:absolute; left:0; right:0; margin:0 auto; width:fit-content; top:1390px; text-align:center; font-family:"Inter",sans-serif; font-weight:600; font-size:32px; letter-spacing:0.26em; color:#FAF8F5; white-space:pre; padding-left:0.26em; }
+    #f-word span { opacity:0; }
+  </style>
+  <div id="root" data-composition-id="fin" data-width="1080" data-height="1920">
+    <div id="f-l1" class="f-line"><span>Le</span><span>voyage</span><span>commence</span></div>
+    <div id="f-l2" class="f-line"><span>bien</span><span>avant</span><span>le</span><span>départ.</span></div>
+    <div id="f-logo">
+      <img id="f-ring" src="assets/img/badge-anneau.png" alt="Badge LKDV">
+      <svg id="f-nd" width="1080" height="1920" viewBox="0 0 1080 1920">
+        <defs>
+          <linearGradient id="f-gn" x1="0" x2="1"><stop offset="0" stop-color="#E9C595"/><stop offset="0.5" stop-color="#D0A070"/><stop offset="0.5" stop-color="#A97B4A"/><stop offset="1" stop-color="#8a6238"/></linearGradient>
+          <linearGradient id="f-gs" x1="0" x2="1"><stop offset="0" stop-color="#2f4a3c"/><stop offset="0.5" stop-color="#17402C"/><stop offset="0.5" stop-color="#0f2c1e"/><stop offset="1" stop-color="#0b2117"/></linearGradient>
+        </defs>
+        <g id="f-needle">
+          <path d="M540 676 L564 860 L516 860 Z" fill="url(#f-gn)"/>
+          <path d="M540 1044 L564 860 L516 860 Z" fill="url(#f-gs)" stroke="#9E7243" stroke-width="2"/>
+          <circle cx="540" cy="860" r="15" fill="#06120C" stroke="#D0A070" stroke-width="5"/>
+        </g>
+      </svg>
+      <div id="f-word" data-layout-allow-safe-zone><span>L</span><span>E</span><span> </span><span>K</span><span>I</span><span>T</span><span> </span><span>D</span><span>U</span><span> </span><span>V</span><span>O</span><span>Y</span><span>A</span><span>G</span><span>E</span><span>U</span><span>R</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const F = 1 / 30;
+      // « Tout est prévu. » puis « Il ne reste qu'à partir. » : les mots se posent un à un, sans effet (comme la référence).
+      const w1 = gsap.utils.toArray("#f-l1 span"), w2 = gsap.utils.toArray("#f-l2 span");
+      // Bascule nette au calme : « Le voyage commence » puis « bien avant le départ. », mot par mot, sans effet.
+      [0.30, 0.52, 0.80].forEach((t, i) => tl.set(w1[i], { opacity: 1 }, t));
+      [1.45, 1.66, 1.84, 1.98].forEach((t, i) => tl.set(w2[i], { opacity: 1 }, t));
+      tl.to(["#f-l1", "#f-l2"], { opacity: 0, duration: 5 * F, ease: "sine.in" }, 3.48);
+      // 28,0 s — le logo : l'anneau, l'aiguille qui se fixe, le nom lettre par lettre (fin commune à la série).
+      tl.fromTo("#f-logo", { opacity: 0 }, { opacity: 1, duration: 8 * F, ease: "sine.out" }, 3.667);
+      tl.fromTo("#f-ring", { scale: 0.95 }, { scale: 1, duration: 1.2, ease: "power2.out" }, 3.667);
+      gsap.set("#f-needle", { rotation: -70, svgOrigin: "540 860" });
+      tl.fromTo("#f-needle", { rotation: -70 }, { rotation: 14, duration: 0.42, ease: "power2.out", svgOrigin: "540 860", immediateRender: false }, 3.667);
+      tl.to("#f-needle", { rotation: -6, duration: 0.3, ease: "sine.inOut", svgOrigin: "540 860" }, 4.087);
+      tl.to("#f-needle", { rotation: 2, duration: 0.24, ease: "sine.inOut", svgOrigin: "540 860" }, 4.387);
+      tl.to("#f-needle", { rotation: 0, duration: 0.24, ease: "sine.out", svgOrigin: "540 860" }, 4.627);
+      gsap.utils.toArray("#f-word span").forEach((el, i) => tl.set(el, { opacity: 1 }, 3.64 + i * 0.018));
+      tl.to("#f-logo", { scale: 1.012, duration: 1.4, ease: "sine.inOut", transformOrigin: "50% 45%" }, 4.267);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["fin"] = tl;
+    })();
+  </script>
+</template>

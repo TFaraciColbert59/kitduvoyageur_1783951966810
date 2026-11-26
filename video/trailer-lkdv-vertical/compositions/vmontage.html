@@ -1,0 +1,105 @@
+<template>
+  <style>
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #17402c;
+      font-family: "Inter", sans-serif;
+    }
+    .vm-g {
+      position: absolute;
+      inset: -80px;
+      filter: blur(30px) saturate(1.1);
+    }
+    .vm-g img {
+      width: 1240px;
+      height: 2080px;
+      object-fit: cover;
+    }
+    #vm-gshade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(11, 31, 23, 0.7) 0%, rgba(11, 31, 23, 0.3) 45%, rgba(11, 31, 23, 0.35) 100%);
+    }
+    .vm-card {
+      position: absolute;
+      left: 150px;
+      top: 700px;
+      width: 780px;
+      height: 820px;
+      border-radius: 40px;
+      overflow: hidden;
+      box-shadow: 0 34px 80px rgba(11, 31, 23, 0.5);
+    }
+    .vm-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #vm-c6 {
+      position: absolute;
+      inset: 0;
+      clip-path: inset(700px 150px 400px 150px round 40px);
+    }
+    #vm-c6 img {
+      width: 1080px;
+      height: 1920px;
+      object-fit: cover;
+    }
+    #vm-title {
+      position: absolute;
+      left: 120px;
+      top: 300px;
+      color: #faf8f5;
+      font-weight: 800;
+      font-size: 110px;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+    }
+    #vm-title .w {
+      display: inline-block;
+    }
+    #vm-title em {
+      font-family: "EB Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+  </style>
+  <div id="root" data-composition-id="vmontage" data-width="1080" data-height="1920">
+    <div class="vm-g" id="vm-g1"><img src="assets/img/adventure-bivouac.jpg" alt="" /></div>
+    <div class="vm-g" id="vm-g2"><img src="assets/img/adventure-kayak.jpg" alt="" /></div>
+    <div class="vm-g" id="vm-g3"><img src="assets/img/community-hikers.jpg" alt="" /></div>
+    <div class="vm-g" id="vm-g4"><img src="assets/img/journal-refuge.jpg" alt="" /></div>
+    <div id="vm-gshade"></div>
+    <div class="vm-card" id="vm-c1"><img src="assets/img/adventure-bivouac.jpg" alt="" /></div>
+    <div class="vm-card" id="vm-c2"><img src="assets/img/adventure-kayak.jpg" alt="" /></div>
+    <div class="vm-card" id="vm-c3"><img src="assets/img/community-hikers.jpg" alt="" /></div>
+    <div class="vm-card" id="vm-c4"><img src="assets/img/journal-refuge.jpg" alt="" /></div>
+    <div id="vm-c6"><img src="assets/img/lkdv-bg-landscape.webp" alt="" /></div>
+    <div id="vm-title"><span class="w">Là</span> <span class="w">où</span> <span class="w">la</span><br /><span class="w">carte</span> <span class="w"><em>se</em></span><br /><span class="w"><em>termine.</em></span></div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      // Temps (film) : 0,43 · 0,90 · 1,37 · 1,84 · 2,31 · 2,78 ; une carte par temps.
+      const at = [0.43, 0.9, 1.37, 1.84];
+      const cards = ["#vm-c1", "#vm-c2", "#vm-c3", "#vm-c4", "#vm-c6"];
+      const grounds = ["#vm-g1", "#vm-g2", "#vm-g3", "#vm-g4"];
+      tl.fromTo("#vm-c1", { y: 0 }, { y: 0, duration: 0.01 }, 0);
+      for (let i = 1; i < cards.length; i++) {
+        const t = at[i - 1] - 0.18;
+        tl.fromTo(cards[i], { x: 1100, filter: "blur(14px)" }, { x: 0, filter: "blur(0px)", duration: 0.36, ease: "expo.out" }, t);
+        tl.fromTo(cards[i - 1], { opacity: 1 }, { x: -220, opacity: 0, filter: "blur(10px)", duration: 0.28, ease: "power3.in", immediateRender: false }, t);
+        if (i < grounds.length) tl.fromTo(grounds[i], { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power2.inOut" }, t);
+      }
+      tl.fromTo("#vm-title .w", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.13, stagger: 0.08 }, 0.04);
+      tl.to("#vm-title", { opacity: 0, filter: "blur(8px)", duration: 0.18 }, 2.5);
+      // La dernière carte (le paysage du Compas) devient le monde.
+      tl.fromTo("#vm-c6", { clipPath: "inset(700px 150px 400px 150px round 40px)" }, { clipPath: "inset(0px 0px 0px 0px round 0px)", duration: 0.6, ease: "power2.inOut" }, 2.55);
+      window.__timelines["vmontage"] = tl;
+    })();
+  </script>
+</template>

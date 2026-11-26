@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>p01 · Un post</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--stone); }
+  .post { position: absolute; border-radius: 64px; overflow: hidden; box-shadow: 0 40px 90px rgba(11,31,23,0.28); }
+  .post img.cover { position: absolute; inset: 0; }
+  #p-top { left: 110px; top: -330px; width: 860px; height: 480px; transform: rotate(-5deg); filter: blur(5px); opacity: 0.85; }
+  #p-bot { left: 150px; top: 1560px; width: 820px; height: 600px; transform: rotate(6deg); filter: blur(5px); opacity: 0.85; }
+  #echo { left: 30px; top: 150px; width: 1020px; height: 1120px; transform: rotate(6deg) scale(1.12); opacity: 0.18; filter: blur(14px); }
+  #main { left: 70px; top: 226px; width: 940px; height: 990px; transform: rotate(3deg); }
+  .author { position: absolute; left: 36px; top: 36px; height: 116px; padding: 0 40px 0 14px; background: rgba(250,248,245,0.82); border: 2px solid rgba(255,255,255,0.9); }
+  .author img { width: 88px; height: 88px; }
+  .author b { font-size: 42px; color: var(--forest); font-weight: 700; display: block; line-height: 1.05; }
+  .author span { font-size: 34px; color: var(--label2); }
+  .more { position: absolute; right: 36px; top: 40px; width: 108px; height: 108px; border-radius: 50%; background: rgba(250,248,245,0.7); display: flex; align-items: center; justify-content: center; }
+  .acts { position: absolute; right: 36px; bottom: 40px; height: 108px; padding: 0 40px; gap: 34px; background: rgba(60,40,30,0.38); color: #fff; font-size: 40px; font-weight: 600; border: 2px solid rgba(255,255,255,0.35); }
+  .acts span { display: inline-flex; align-items: center; gap: 12px; }
+  .carnet { position: absolute; left: 36px; bottom: 40px; height: 108px; padding: 0 36px; gap: 18px; background: rgba(250,248,245,0.88); color: var(--forest); font-size: 38px; font-weight: 700; }
+  #word { left: 52px; top: 1236px; font-size: 290px; color: var(--forest); }
+  #wordg { left: 76px; top: 1222px; font-size: 290px; color: var(--brass); filter: blur(2px); }
+</style></head>
+<body><div id="frame">
+  <div id="p-top" class="post"><img class="cover" src="../../../film-lkdv/assets/app/feed-1.jpg" style="object-position: 50% 6%"></div>
+  <div id="p-bot" class="post"><img class="cover" src="../../../film-lkdv/assets/app/feed-2.jpg" style="object-position: 50% 30%"></div>
+  <div id="echo" class="post"><img class="cover" src="../../assets/photos/tdp-amanecer-06.jpg"></div>
+  <div id="main" class="post">
+    <img class="cover" src="../../assets/photos/tdp-amanecer-06.jpg" style="object-position: 50% 40%">
+    <div class="author pill"><img class="av" src="assets/avatars/a01.jpg"><div><b>Maya Roussel</b><span>Il y a 2 h</span></div></div>
+    <div class="more"><i data-ic="more" data-s="60" data-c="#17402C" data-w="3"></i></div>
+    <div class="carnet pill"><i data-ic="book" data-s="46" data-w="2.4"></i>Carnet · Le W</div>
+    <div class="acts pill"><span><i data-ic="heart" data-s="44" data-c="#fff" data-w="2.4"></i>1</span><span><i data-ic="msg" data-s="44" data-c="#fff" data-w="2.4"></i>3</span></div>
+  </div>
+  <div id="wordg" class="abs slam ghost">POST.</div>
+  <div id="word" class="abs slam">POST<span class="dot">.</span></div>
+</div>
+<script src="icons.js"></script>
+</body></html>

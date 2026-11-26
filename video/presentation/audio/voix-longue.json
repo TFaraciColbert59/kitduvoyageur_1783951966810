@@ -1,0 +1,1079 @@
+{
+ "duree": 312.328,
+ "phrases": [
+  {
+   "bloc": 0,
+   "texte": "Dans deux cents mètres, à gauche.",
+   "app": true,
+   "debut": 0.6,
+   "fin": 2.277
+  },
+  {
+   "bloc": 0,
+   "texte": "Cinq heures douze.",
+   "app": false,
+   "debut": 3.927,
+   "fin": 4.869
+  },
+  {
+   "bloc": 0,
+   "texte": "Le Lac Blanc.",
+   "app": false,
+   "debut": 5.319,
+   "fin": 6.045
+  },
+  {
+   "bloc": 0,
+   "texte": "En face, le Mont-Blanc.",
+   "app": false,
+   "debut": 6.495,
+   "fin": 7.966
+  },
+  {
+   "bloc": 0,
+   "texte": "Tu n'as jamais été aussi loin.",
+   "app": false,
+   "debut": 9.616,
+   "fin": 10.967
+  },
+  {
+   "bloc": 0,
+   "texte": "Il y a six mois,",
+   "app": false,
+   "debut": 12.617,
+   "fin": 13.38
+  },
+  {
+   "bloc": 0,
+   "texte": "tu disais encore :",
+   "app": false,
+   "debut": 13.83,
+   "fin": 14.935
+  },
+  {
+   "bloc": 0,
+   "texte": "pas pour moi.",
+   "app": false,
+   "debut": 15.385,
+   "fin": 15.991
+  },
+  {
+   "bloc": 0,
+   "titre": "0. OUVERTURE À FROID (0:00–0:20)",
+   "bloc_debut": 0.6,
+   "bloc_fin": 15.991
+  },
+  {
+   "bloc": 1,
+   "texte": "Alors tu as commencé petit.",
+   "app": false,
+   "debut": 17.441,
+   "fin": 18.799
+  },
+  {
+   "bloc": 1,
+   "texte": "Un dimanche. Quatre kilomètres.",
+   "app": false,
+   "debut": 19.249,
+   "fin": 21.366
+  },
+  {
+   "bloc": 1,
+   "texte": "Puis huit. Puis douze.",
+   "app": false,
+   "debut": 21.816,
+   "fin": 23.309
+  },
+  {
+   "bloc": 1,
+   "texte": "Ta montre a tout retenu.",
+   "app": false,
+   "debut": 23.759,
+   "fin": 24.792
+  },
+  {
+   "bloc": 1,
+   "texte": "Le souffle. Le dénivelé.",
+   "app": false,
+   "debut": 25.242,
+   "fin": 27.072
+  },
+  {
+   "bloc": 1,
+   "texte": "Un premier badge.",
+   "app": false,
+   "debut": 27.522,
+   "fin": 28.599
+  },
+  {
+   "bloc": 1,
+   "texte": "Tu ne l'aurais pas cru.",
+   "app": false,
+   "debut": 29.049,
+   "fin": 29.91
+  },
+  {
+   "bloc": 1,
+   "texte": "Tes chemins s'allongent.",
+   "app": false,
+   "debut": 30.36,
+   "fin": 31.509
+  },
+  {
+   "bloc": 1,
+   "texte": "Ta maison, elle, reste un blanc sur la carte.",
+   "app": false,
+   "debut": 31.959,
+   "fin": 34.716
+  },
+  {
+   "bloc": 1,
+   "titre": "I. « JE NE SUIS PAS SPORTIF » — Explorer « Démarrer », Compte (0:20–0:50)",
+   "bloc_debut": 17.441,
+   "bloc_fin": 34.716
+  },
+  {
+   "bloc": 2,
+   "texte": "Le globe tourne sous tes doigts.",
+   "app": false,
+   "debut": 36.166,
+   "fin": 37.628
+  },
+  {
+   "bloc": 2,
+   "texte": "Les Alpes.",
+   "app": false,
+   "debut": 38.078,
+   "fin": 38.812
+  },
+  {
+   "bloc": 2,
+   "texte": "Une vallée. Un refuge. Un point d'eau.",
+   "app": false,
+   "debut": 39.262,
+   "fin": 42.397
+  },
+  {
+   "bloc": 2,
+   "texte": "Ici, un bivouac.",
+   "app": false,
+   "debut": 42.847,
+   "fin": 44.135
+  },
+  {
+   "bloc": 2,
+   "texte": "Là, un danger signalé hier.",
+   "app": false,
+   "debut": 44.585,
+   "fin": 46.456
+  },
+  {
+   "bloc": 2,
+   "texte": "La carte est vivante.",
+   "app": false,
+   "debut": 46.906,
+   "fin": 48.204
+  },
+  {
+   "bloc": 2,
+   "texte": "Plan. Relief. Satellite. En trois dimensions.",
+   "app": false,
+   "debut": 49.854,
+   "fin": 53.642
+  },
+  {
+   "bloc": 2,
+   "texte": "Une carte pour chaque terrain.",
+   "app": false,
+   "debut": 54.092,
+   "fin": 55.563
+  },
+  {
+   "bloc": 2,
+   "texte": "Tu filtres.",
+   "app": false,
+   "debut": 56.013,
+   "fin": 56.801
+  },
+  {
+   "bloc": 2,
+   "texte": "Les sentiers. L'eau. Les refuges. Les bivouacs.",
+   "app": false,
+   "debut": 57.251,
+   "fin": 60.957
+  },
+  {
+   "bloc": 2,
+   "texte": "Rien que ce qui compte pour toi.",
+   "app": false,
+   "debut": 61.407,
+   "fin": 62.855
+  },
+  {
+   "bloc": 2,
+   "texte": "Le globe, pour rêver.",
+   "app": false,
+   "debut": 64.505,
+   "fin": 66.165
+  },
+  {
+   "bloc": 2,
+   "texte": "L'exploration, pour choisir.",
+   "app": false,
+   "debut": 66.615,
+   "fin": 68.712
+  },
+  {
+   "bloc": 2,
+   "texte": "Le Compas, pour préparer.",
+   "app": false,
+   "debut": 69.162,
+   "fin": 70.809
+  },
+  {
+   "bloc": 2,
+   "texte": "Le terrain, pour avancer.",
+   "app": false,
+   "debut": 71.259,
+   "fin": 72.818
+  },
+  {
+   "bloc": 2,
+   "texte": "Le carnet, pour te souvenir.",
+   "app": false,
+   "debut": 73.268,
+   "fin": 75.176
+  },
+  {
+   "bloc": 2,
+   "texte": "Et demain, bien plus.",
+   "app": false,
+   "debut": 76.826,
+   "fin": 78.395
+  },
+  {
+   "bloc": 2,
+   "texte": "Les couloirs aériens.",
+   "app": false,
+   "debut": 78.845,
+   "fin": 79.998
+  },
+  {
+   "bloc": 2,
+   "texte": "Les feux de forêt.",
+   "app": false,
+   "debut": 80.448,
+   "fin": 81.305
+  },
+  {
+   "bloc": 2,
+   "texte": "Le risque d'avalanche.",
+   "app": false,
+   "debut": 81.755,
+   "fin": 83.017
+  },
+  {
+   "bloc": 2,
+   "texte": "La qualité de l'air.",
+   "app": false,
+   "debut": 83.467,
+   "fin": 84.619
+  },
+  {
+   "bloc": 2,
+   "texte": "Les crues.",
+   "app": false,
+   "debut": 85.069,
+   "fin": 85.582
+  },
+  {
+   "bloc": 2,
+   "texte": "Le ciel étoilé.",
+   "app": false,
+   "debut": 86.032,
+   "fin": 86.93
+  },
+  {
+   "bloc": 2,
+   "texte": "Tout ce que le monde sait de lui-même,",
+   "app": false,
+   "debut": 87.38,
+   "fin": 88.905
+  },
+  {
+   "bloc": 2,
+   "texte": "sur une seule carte.",
+   "app": false,
+   "debut": 89.355,
+   "fin": 90.637
+  },
+  {
+   "bloc": 2,
+   "texte": "Et puis un carnet.",
+   "app": false,
+   "debut": 92.287,
+   "fin": 93.333
+  },
+  {
+   "bloc": 2,
+   "texte": "Celui d'un inconnu.",
+   "app": false,
+   "debut": 93.783,
+   "fin": 94.892
+  },
+  {
+   "bloc": 2,
+   "texte": "Un lac au lever du jour.",
+   "app": false,
+   "debut": 95.342,
+   "fin": 96.638
+  },
+  {
+   "bloc": 2,
+   "texte": "Une échelle au-dessus du vide.",
+   "app": false,
+   "debut": 97.088,
+   "fin": 98.515
+  },
+  {
+   "bloc": 2,
+   "texte": "Un kayak sur l'eau turquoise.",
+   "app": false,
+   "debut": 98.965,
+   "fin": 100.688
+  },
+  {
+   "bloc": 2,
+   "texte": "Un bouton : Préparer ce voyage.",
+   "app": false,
+   "debut": 101.138,
+   "fin": 103.348
+  },
+  {
+   "bloc": 2,
+   "titre": "II. « JE NE SAURAIS PAS OÙ ALLER » — Explorer, Lieux, Communauté, Carnets (0:50–1:30)",
+   "bloc_debut": 36.166,
+   "bloc_fin": 103.348
+  },
+  {
+   "bloc": 3,
+   "texte": "Une phrase.",
+   "app": false,
+   "debut": 104.798,
+   "fin": 105.569
+  },
+  {
+   "bloc": 3,
+   "texte": "C'est tout ce qu'on te demande.",
+   "app": false,
+   "debut": 106.019,
+   "fin": 107.374
+  },
+  {
+   "bloc": 3,
+   "texte": "Cinq jours. Les Alpes.",
+   "app": false,
+   "debut": 107.824,
+   "fin": 109.526
+  },
+  {
+   "bloc": 3,
+   "texte": "Marcher. Grimper. Pagayer.",
+   "app": false,
+   "debut": 109.976,
+   "fin": 112.525
+  },
+  {
+   "bloc": 3,
+   "texte": "Voici ce que j'ai compris.",
+   "app": false,
+   "debut": 114.175,
+   "fin": 115.411
+  },
+  {
+   "bloc": 3,
+   "texte": "Le Compas lit la carte.",
+   "app": false,
+   "debut": 115.861,
+   "fin": 117.186
+  },
+  {
+   "bloc": 3,
+   "texte": "De vrais sentiers. De vrais refuges.",
+   "app": false,
+   "debut": 117.636,
+   "fin": 119.948
+  },
+  {
+   "bloc": 3,
+   "texte": "La météo, heure par heure.",
+   "app": false,
+   "debut": 120.398,
+   "fin": 122.43
+  },
+  {
+   "bloc": 3,
+   "texte": "Le train. La première nuit. Le kayak.",
+   "app": false,
+   "debut": 122.88,
+   "fin": 125.39
+  },
+  {
+   "bloc": 3,
+   "texte": "Chaque réservation rejoint ton budget.",
+   "app": false,
+   "debut": 125.84,
+   "fin": 127.884
+  },
+  {
+   "bloc": 3,
+   "texte": "Puis le verdict.",
+   "app": false,
+   "debut": 128.334,
+   "fin": 129.328
+  },
+  {
+   "bloc": 3,
+   "texte": "Pas une note. Des signaux.",
+   "app": false,
+   "debut": 129.778,
+   "fin": 131.613
+  },
+  {
+   "bloc": 3,
+   "texte": "La marche ? Prêt.",
+   "app": false,
+   "debut": 132.063,
+   "fin": 133.513
+  },
+  {
+   "bloc": 3,
+   "texte": "La via ferrata ?",
+   "app": false,
+   "debut": 133.963,
+   "fin": 134.858
+  },
+  {
+   "bloc": 3,
+   "texte": "Vigilance.",
+   "app": false,
+   "debut": 136.508,
+   "fin": 137.391
+  },
+  {
+   "bloc": 3,
+   "texte": "Première fois.",
+   "app": false,
+   "debut": 137.841,
+   "fin": 138.643
+  },
+  {
+   "bloc": 3,
+   "titre": "III. « C'EST TROP COMPLIQUÉ » — Compas : Où, Résa, Verdict (1:30–2:30)",
+   "bloc_debut": 104.798,
+   "bloc_fin": 138.643
+  },
+  {
+   "bloc": 4,
+   "texte": "Nous ?",
+   "app": false,
+   "debut": 140.093,
+   "fin": 140.372
+  },
+  {
+   "bloc": 4,
+   "texte": "Pour l'instant, toi seul.",
+   "app": false,
+   "debut": 140.822,
+   "fin": 142.691
+  },
+  {
+   "bloc": 4,
+   "texte": "Alors tu lances une bouteille.",
+   "app": false,
+   "debut": 144.341,
+   "fin": 145.888
+  },
+  {
+   "bloc": 4,
+   "texte": "Deux réponses.",
+   "app": false,
+   "debut": 146.338,
+   "fin": 147.27
+  },
+  {
+   "bloc": 4,
+   "texte": "Puis un club.",
+   "app": false,
+   "debut": 147.72,
+   "fin": 148.675
+  },
+  {
+   "bloc": 4,
+   "texte": "Une via ferrata, encadrée.",
+   "app": false,
+   "debut": 149.125,
+   "fin": 150.532
+  },
+  {
+   "bloc": 4,
+   "texte": "Un guide, pour ta première fois.",
+   "app": false,
+   "debut": 150.982,
+   "fin": 152.86
+  },
+  {
+   "bloc": 4,
+   "texte": "Tu t'inscris.",
+   "app": false,
+   "debut": 153.31,
+   "fin": 154.051
+  },
+  {
+   "bloc": 4,
+   "texte": "Des inconnus, puis des prénoms.",
+   "app": false,
+   "debut": 154.501,
+   "fin": 156.398
+  },
+  {
+   "bloc": 4,
+   "texte": "Le groupe marche à ton rythme.",
+   "app": false,
+   "debut": 156.848,
+   "fin": 158.45
+  },
+  {
+   "bloc": 4,
+   "texte": "Les messages se croisent.",
+   "app": false,
+   "debut": 158.9,
+   "fin": 160.156
+  },
+  {
+   "bloc": 4,
+   "texte": "Et qui doit quoi, à qui.",
+   "app": false,
+   "debut": 160.606,
+   "fin": 162.141
+  },
+  {
+   "bloc": 4,
+   "titre": "IV. « JE N'AI PERSONNE AVEC QUI PARTIR » — Compas « Nous », Bouteille, Clubs, Sorties, Pro, Messagerie, Hub (2:30–3:10)",
+   "bloc_debut": 140.093,
+   "bloc_fin": 162.141
+  },
+  {
+   "bloc": 5,
+   "texte": "Reste le sac.",
+   "app": false,
+   "debut": 163.591,
+   "fin": 164.563
+  },
+  {
+   "bloc": 5,
+   "texte": "Tu pensais devoir tout acheter.",
+   "app": false,
+   "debut": 165.013,
+   "fin": 166.713
+  },
+  {
+   "bloc": 5,
+   "texte": "Ton inventaire répond :",
+   "app": false,
+   "debut": 167.163,
+   "fin": 168.168
+  },
+  {
+   "bloc": 5,
+   "texte": "ceci, tu l'as déjà.",
+   "app": false,
+   "debut": 168.618,
+   "fin": 170.241
+  },
+  {
+   "bloc": 5,
+   "texte": "Ceci, il te manque.",
+   "app": false,
+   "debut": 170.691,
+   "fin": 172.341
+  },
+  {
+   "bloc": 5,
+   "texte": "Le baudrier, Léa te le prête.",
+   "app": false,
+   "debut": 172.791,
+   "fin": 174.731
+  },
+  {
+   "bloc": 5,
+   "texte": "Les longes se louent.",
+   "app": false,
+   "debut": 175.181,
+   "fin": 176.129
+  },
+  {
+   "bloc": 5,
+   "texte": "Le reste se trouve d'occasion…",
+   "app": false,
+   "debut": 176.579,
+   "fin": 177.978
+  },
+  {
+   "bloc": 5,
+   "texte": "ou s'achète. Au bon endroit.",
+   "app": false,
+   "debut": 178.428,
+   "fin": 180.256
+  },
+  {
+   "bloc": 5,
+   "texte": "Dans le Kit Studio, ton sac prend forme.",
+   "app": false,
+   "debut": 180.706,
+   "fin": 183.247
+  },
+  {
+   "bloc": 5,
+   "texte": "Ce kit a une lignée.",
+   "app": false,
+   "debut": 183.697,
+   "fin": 184.825
+  },
+  {
+   "bloc": 5,
+   "texte": "Éprouvé sur le terrain.",
+   "app": false,
+   "debut": 185.275,
+   "fin": 186.524
+  },
+  {
+   "bloc": 5,
+   "texte": "Gardé par huit voyageurs sur dix.",
+   "app": false,
+   "debut": 186.974,
+   "fin": 188.975
+  },
+  {
+   "bloc": 5,
+   "texte": "Quatorze pour cent.",
+   "app": false,
+   "debut": 189.425,
+   "fin": 190.477
+  },
+  {
+   "bloc": 5,
+   "texte": "Puis prêt.",
+   "app": false,
+   "debut": 190.927,
+   "fin": 191.546
+  },
+  {
+   "bloc": 5,
+   "titre": "V. « JE N'AI PAS LE MATÉRIEL » — Compas « Kit », Hub, Kit Studio, lignées, Boutique (3:10–3:55)",
+   "bloc_debut": 163.591,
+   "bloc_fin": 191.546
+  },
+  {
+   "bloc": 6,
+   "texte": "La veille, tout est prêt.",
+   "app": false,
+   "debut": 192.996,
+   "fin": 194.448
+  },
+  {
+   "bloc": 6,
+   "texte": "Les papiers. La liste.",
+   "app": false,
+   "debut": 194.898,
+   "fin": 196.506
+  },
+  {
+   "bloc": 6,
+   "texte": "Les cartes, même sans réseau.",
+   "app": false,
+   "debut": 196.956,
+   "fin": 199.037
+  },
+  {
+   "bloc": 6,
+   "texte": "Un lien, pour ceux qui t'attendent.",
+   "app": false,
+   "debut": 199.487,
+   "fin": 201.486
+  },
+  {
+   "bloc": 6,
+   "texte": "Toi seul décides jusqu'à quand.",
+   "app": false,
+   "debut": 201.936,
+   "fin": 203.414
+  },
+  {
+   "bloc": 6,
+   "titre": "VI. « ET SI J'OUBLIE QUELQUE CHOSE ? » — Hub Départ, Documents, Checklist, Sécurité, hors ligne, suivi en direct (3:55–4:15)",
+   "bloc_debut": 192.996,
+   "bloc_fin": 203.414
+  },
+  {
+   "bloc": 7,
+   "texte": "Le premier matin, l'eau.",
+   "app": false,
+   "debut": 204.864,
+   "fin": 206.507
+  },
+  {
+   "bloc": 7,
+   "texte": "Le deuxième, le vide sous tes pieds.",
+   "app": false,
+   "debut": 206.957,
+   "fin": 208.936
+  },
+  {
+   "bloc": 7,
+   "texte": "Et la peur, qui recule d'un pas.",
+   "app": false,
+   "debut": 209.386,
+   "fin": 211.261
+  },
+  {
+   "bloc": 7,
+   "texte": "Cinq heures douze.",
+   "app": false,
+   "debut": 212.911,
+   "fin": 213.911
+  },
+  {
+   "bloc": 7,
+   "texte": "Te revoilà.",
+   "app": false,
+   "debut": 214.361,
+   "fin": 215.08
+  },
+  {
+   "bloc": 7,
+   "texte": "Plus de réseau. La carte, elle, est là.",
+   "app": false,
+   "debut": 215.53,
+   "fin": 218.257
+  },
+  {
+   "bloc": 7,
+   "texte": "Une voix, au creux de l'oreille.",
+   "app": false,
+   "debut": 218.707,
+   "fin": 220.529
+  },
+  {
+   "bloc": 7,
+   "texte": "Dans deux cents mètres, à gauche.",
+   "app": true,
+   "debut": 220.979,
+   "fin": 222.716
+  },
+  {
+   "bloc": 7,
+   "texte": "Le point d'eau est à vingt minutes.",
+   "app": false,
+   "debut": 223.166,
+   "fin": 225.113
+  },
+  {
+   "bloc": 7,
+   "texte": "Le ciel change. L'alerte arrive.",
+   "app": false,
+   "debut": 225.563,
+   "fin": 227.919
+  },
+  {
+   "bloc": 7,
+   "texte": "Tu t'écartes du tracé.",
+   "app": false,
+   "debut": 228.369,
+   "fin": 229.589
+  },
+  {
+   "bloc": 7,
+   "texte": "Il te le dit. Tu reviens.",
+   "app": false,
+   "debut": 230.039,
+   "fin": 231.68
+  },
+  {
+   "bloc": 7,
+   "texte": "Si tout bascule,",
+   "app": false,
+   "debut": 232.13,
+   "fin": 233.181
+  },
+  {
+   "bloc": 7,
+   "texte": "le SOS reste à portée de main.",
+   "app": false,
+   "debut": 233.631,
+   "fin": 235.11
+  },
+  {
+   "bloc": 7,
+   "texte": "Puis le lac.",
+   "app": false,
+   "debut": 236.76,
+   "fin": 237.557
+  },
+  {
+   "bloc": 7,
+   "texte": "Le Mont-Blanc, qui s'allume.",
+   "app": false,
+   "debut": 238.007,
+   "fin": 239.649
+  },
+  {
+   "bloc": 7,
+   "texte": "Toi. Ici.",
+   "app": false,
+   "debut": 240.099,
+   "fin": 241.22
+  },
+  {
+   "bloc": 7,
+   "texte": "Le réseau revient.",
+   "app": false,
+   "debut": 242.87,
+   "fin": 243.786
+  },
+  {
+   "bloc": 7,
+   "texte": "Très loin, un téléphone s'allume.",
+   "app": false,
+   "debut": 244.236,
+   "fin": 246.359
+  },
+  {
+   "bloc": 7,
+   "texte": "Ta mère voit ton point au bord du lac.",
+   "app": false,
+   "debut": 246.809,
+   "fin": 248.795
+  },
+  {
+   "bloc": 7,
+   "titre": "VII. « ET SI JE ME PERDS ? » — sur le terrain (4:15–5:00)",
+   "bloc_debut": 204.864,
+   "bloc_fin": 248.795
+  },
+  {
+   "bloc": 8,
+   "texte": "Tu n'as presque rien écrit.",
+   "app": false,
+   "debut": 250.245,
+   "fin": 251.58
+  },
+  {
+   "bloc": 8,
+   "texte": "Pourtant tout est là.",
+   "app": false,
+   "debut": 252.03,
+   "fin": 253.102
+  },
+  {
+   "bloc": 8,
+   "texte": "Le lac. L'échelle. Le refuge.",
+   "app": false,
+   "debut": 253.552,
+   "fin": 256.335
+  },
+  {
+   "bloc": 8,
+   "texte": "Une marmotte.",
+   "app": false,
+   "debut": 256.785,
+   "fin": 257.662
+  },
+  {
+   "bloc": 8,
+   "texte": "Une fleur que tu ne savais pas nommer.",
+   "app": false,
+   "debut": 258.112,
+   "fin": 259.949
+  },
+  {
+   "bloc": 8,
+   "texte": "Les prénoms de ceux qui étaient là.",
+   "app": false,
+   "debut": 260.399,
+   "fin": 261.872
+  },
+  {
+   "bloc": 8,
+   "texte": "Le carnet s'est écrit en marchant.",
+   "app": false,
+   "debut": 262.322,
+   "fin": 263.918
+  },
+  {
+   "bloc": 8,
+   "titre": "VIII. RACONTER — Carnet de bord (5:00–5:20)",
+   "bloc_debut": 250.245,
+   "bloc_fin": 263.918
+  },
+  {
+   "bloc": 9,
+   "texte": "Au retour, ton sac parle.",
+   "app": false,
+   "debut": 265.368,
+   "fin": 267.243
+  },
+  {
+   "bloc": 9,
+   "texte": "Ceci a tout changé.",
+   "app": false,
+   "debut": 267.693,
+   "fin": 268.879
+  },
+  {
+   "bloc": 9,
+   "texte": "Ceci n'a jamais servi.",
+   "app": false,
+   "debut": 269.329,
+   "fin": 270.549
+  },
+  {
+   "bloc": 9,
+   "texte": "Ceci t'a manqué.",
+   "app": false,
+   "debut": 270.999,
+   "fin": 271.928
+  },
+  {
+   "bloc": 9,
+   "texte": "Ta réponse rejoint la lignée.",
+   "app": false,
+   "debut": 272.378,
+   "fin": 273.647
+  },
+  {
+   "bloc": 9,
+   "texte": "Les suivants partiront plus légers.",
+   "app": false,
+   "debut": 274.097,
+   "fin": 275.713
+  },
+  {
+   "bloc": 9,
+   "texte": "Quand quelqu'un s'équipe d'après ton kit,",
+   "app": false,
+   "debut": 276.163,
+   "fin": 278.041
+  },
+  {
+   "bloc": 9,
+   "texte": "une part te revient.",
+   "app": false,
+   "debut": 278.491,
+   "fin": 279.579
+  },
+  {
+   "bloc": 9,
+   "texte": "En crédit, pour ton prochain départ.",
+   "app": false,
+   "debut": 280.029,
+   "fin": 282.454
+  },
+  {
+   "bloc": 9,
+   "texte": "Le baudrier de Léa rentre. Avec une histoire.",
+   "app": false,
+   "debut": 282.904,
+   "fin": 285.937
+  },
+  {
+   "bloc": 9,
+   "texte": "Ton empreinte gagne un massif.",
+   "app": false,
+   "debut": 286.387,
+   "fin": 287.622
+  },
+  {
+   "bloc": 9,
+   "texte": "Pas un classement.",
+   "app": false,
+   "debut": 288.072,
+   "fin": 288.974
+  },
+  {
+   "bloc": 9,
+   "texte": "La preuve que tu y étais.",
+   "app": false,
+   "debut": 289.424,
+   "fin": 290.743
+  },
+  {
+   "bloc": 9,
+   "titre": "IX. TRANSMETTRE — rapport du kit, lignée, part créateur, Compte (5:20–5:45)",
+   "bloc_debut": 265.368,
+   "bloc_fin": 290.743
+  },
+  {
+   "bloc": 10,
+   "texte": "Un soir, quelque part,",
+   "app": false,
+   "debut": 292.193,
+   "fin": 293.712
+  },
+  {
+   "bloc": 10,
+   "texte": "quelqu'un qui n'a jamais osé",
+   "app": false,
+   "debut": 294.162,
+   "fin": 295.727
+  },
+  {
+   "bloc": 10,
+   "texte": "ouvre ton carnet.",
+   "app": false,
+   "debut": 296.177,
+   "fin": 297.299
+  },
+  {
+   "bloc": 10,
+   "texte": "Il touche : Préparer ce voyage.",
+   "app": false,
+   "debut": 297.749,
+   "fin": 300.025
+  },
+  {
+   "bloc": 10,
+   "texte": "Un sac. Une carte.",
+   "app": false,
+   "debut": 301.675,
+   "fin": 303.161
+  },
+  {
+   "bloc": 10,
+   "texte": "Le reste vient de toi.",
+   "app": false,
+   "debut": 303.611,
+   "fin": 304.73
+  },
+  {
+   "bloc": 10,
+   "texte": "Le Kit du Voyageur.",
+   "app": false,
+   "debut": 306.38,
+   "fin": 307.674
+  },
+  {
+   "bloc": 10,
+   "texte": "Là où la carte se termine.",
+   "app": false,
+   "debut": 308.124,
+   "fin": 309.878
+  },
+  {
+   "bloc": 10,
+   "titre": "ÉPILOGUE (5:45–6:05)",
+   "bloc_debut": 292.193,
+   "bloc_fin": 309.878
+  }
+ ]
+}
