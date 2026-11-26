@@ -2,3 +2,4 @@
 renders/
 node_modules/
 audio/*.wav
+audio/*.mp3
