@@ -419,6 +419,18 @@ describe('C-028 · un fleuve se juge sur son cours, pas sur le centre de son emp
   });
 });
 
+describe('C-029 · Svaneti : la Haute-Svanétie des treks, pas la Basse-Svanétie', () => {
+  it('jeu monde n°17 « Géorgie Caucase 7 jours en trek à Svaneti » → base Mestia (Géorgie)', () => {
+    expect(knownRegion('Svaneti', 'GE')).toMatchObject({ countryCode: 'GE', name: 'Svanétie' });
+    expect(knownRegion('Svaneti', null)?.lat).toBeCloseTo(43.0458, 3);
+  });
+  it('les autres écritures : Svanétie, Haute-Svanétie, Upper Svaneti, Zemo Svaneti', () => {
+    for (const name of ['Svanétie', 'Haute-Svanétie', 'Upper Svaneti', 'Zemo Svaneti']) {
+      expect(knownRegion(name, null)?.countryCode, name).toBe('GE');
+    }
+  });
+});
+
 describe('C-025 · la durée dite en chinois est lue', () => {
   const days = (say: string) => parseIntentRules(say, TODAY, 'fr').find((a) => a.type === 'set_duration');
   it('jeu monde n°32 « 东京三天自由行 » → 3 jours, lieu 东京', () => {

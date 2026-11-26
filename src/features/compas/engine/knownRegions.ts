@@ -43,6 +43,13 @@ const REGIONS: Record<string, Region> = {
     bases: { IN: { name: 'Leh', lat: 34.1526, lon: 77.5771 } },
     countries: { IN: 'Inde' },
   },
+  // La carte range la région sous son nom géorgien et fait passer la Basse-Svanétie (Racha-Lechkhumi
+  // et Kvemo Svaneti) devant la Haute-Svanétie, celle des treks (Mestia, Ushguli) ; constat C-029.
+  svaneti: {
+    label: 'Svanétie',
+    bases: { GE: { name: 'Mestia', lat: 43.0458, lon: 42.728 } },
+    countries: { GE: 'Géorgie' },
+  },
   tatry: {
     label: 'Tatras',
     bases: {
@@ -61,6 +68,10 @@ const ALIASES: Record<string, string> = {
   hautesterresdecosse: 'highlands',
   himalayaindienladakh: 'ladakh',
   ladakhinde: 'ladakh',
+  svanetie: 'svaneti',
+  hautesvanetie: 'svaneti',
+  uppersvaneti: 'svaneti',
+  zemosvaneti: 'svaneti',
 };
 
 const key = (s: string) =>
