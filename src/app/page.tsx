@@ -350,7 +350,7 @@ export default function HomePage() {
           </section>
 
           {/* ── FOOTER ── */}
-          <footer className="bg-[var(--lkv-forest-950)] pt-20 pb-10 px-4">
+          <footer className="bg-[var(--lkv-forest-950)] pt-20 pb-[calc(var(--page-bottom-inset,108px)+28px)] md:pb-12 px-4">
             <div className="max-w-[1200px] mx-auto">
               <h2 className="text-3xl md:text-4xl font-semibold text-[var(--lkv-on-dark)] mb-16">
                 Ce que vous emportez, <span className="font-serif italic text-[var(--lkv-on-dark-muted)] font-normal">c'est votre<br/>voyage.</span>

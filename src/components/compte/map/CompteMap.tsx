@@ -988,7 +988,8 @@ export function CompteMap({
       const importance = massif.outings >= 5 ? 'high' : massif.outings >= 2 ? 'medium' : 'low';
       element.dataset.importance = importance;
       element.dataset.outings = String(massif.outings);
-      element.setAttribute('aria-label', `${massif.name}, ${massif.outings} sorties`);
+      const outingsWord = massif.outings > 1 ? 'sorties' : 'sortie';
+      element.setAttribute('aria-label', `${massif.name}, ${massif.outings} ${outingsWord}`);
       const count = document.createElement('b');
       count.textContent = String(massif.outings);
       element.append(count);
@@ -996,7 +997,7 @@ export function CompteMap({
       name.className = 'lkdv-map-massif-name';
       name.textContent = massif.name;
       element.append(name);
-      element.title = `${massif.name} · ${massif.outings} sorties`;
+      element.title = `${massif.name} · ${massif.outings} ${outingsWord}`;
       element.addEventListener('click', (event) => {
         event.stopPropagation();
         setSelected({ kind: 'massif', id: massif.id });

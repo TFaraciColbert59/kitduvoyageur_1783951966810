@@ -9,9 +9,6 @@ import {
   type SlotLens,
 } from '@/components/compte/drawer/SlotShell';
 import { CapsuleTabs, type CapsuleTabItem } from '@/components/ui/CapsuleTabs';
-import '@/styles/liquid-selectors.css';
-import '@/styles/liquid-capsules.css';
-import '@/styles/drawer-selectors-tabbar.css';
 import '@/styles/carnet-v2.css';
 import '@/components/clubs/drawer/club-drawers-v2.css';
 import '@/styles/explorer-glass.css';

@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     windowMs: PER_IP.windowMs,
     failMode: 'open',
   });
-  if (!mine.allowed) return new NextResponse(null, { status: 429, headers: rateLimitHeaders(mine) });
+  if (!mine.allowed) return new NextResponse(null, { status: 204, headers: rateLimitHeaders(mine) });
 
   const client = getServiceSupabase();
   if (!client) return new NextResponse(null, { status: 204 });

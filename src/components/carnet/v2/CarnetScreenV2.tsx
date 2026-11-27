@@ -101,7 +101,6 @@ const CarnetLogCreateSheet = dynamic(
   { ssr: false }
 );
 
-import '@/styles/tokens.css';
 import '@/styles/carnet-v2.css';
 import '@/styles/carnet-v2-lenses.css';
 import '@/components/compte/compte-apple-hig.css';

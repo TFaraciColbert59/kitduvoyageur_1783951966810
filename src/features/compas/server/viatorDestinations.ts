@@ -43,7 +43,7 @@ async function loadDestinations(): Promise<ViatorDestination[] | null> {
         },
         signal: AbortSignal.timeout(10_000),
         cache: 'no-store',
-        redirect: 'error',
+        redirect: 'manual',
       });
       if (!res.ok) {
         console.warn('[compas] destinations Viator', res.status);

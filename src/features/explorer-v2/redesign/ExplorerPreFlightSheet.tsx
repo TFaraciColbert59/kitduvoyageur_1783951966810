@@ -438,7 +438,7 @@ export function ExplorerPreFlightSheet({
                     Sortie libre
                   </strong>
                   <span style={{ display: 'block', marginTop: 1, fontSize: 11.5, fontWeight: 600, color: '#56665D' }}>
-                    Sortie libre · Trace enregistrée au fil de tes pas
+                    Trace enregistrée au fil de tes pas
                   </span>
                 </div>
               </div>

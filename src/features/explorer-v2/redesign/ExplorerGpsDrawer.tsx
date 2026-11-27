@@ -1495,17 +1495,18 @@ export function ExplorerGpsDrawer({
           </div>
         ) : null}
 
-        {/* Quick 1-row Waypoint chip popover */}
+        {/* Quick wrapped Waypoint chip popover (all 5 chips visible with zero clipping) */}
         {waypointPopoverOpen && onDropWaypoint ? (
           <div
             role="menu"
             aria-label="Choisir un type de repère"
             style={{
               display: 'flex',
+              flexWrap: 'wrap',
               alignItems: 'center',
-              gap: 5,
-              overflowX: 'auto',
-              padding: '6px 6px',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '7px 7px',
               marginBottom: 8,
               borderRadius: 16,
               background: isNightRed
@@ -1516,7 +1517,6 @@ export function ExplorerGpsDrawer({
               border: isNightRed
                 ? '1px solid rgba(248, 113, 113, 0.35)'
                 : '0.5px solid rgba(23, 64, 44, 0.14)',
-              scrollbarWidth: 'none',
             }}
           >
             {QUICK_WAYPOINT_CHIPS.map((chip) => (
@@ -1529,9 +1529,9 @@ export function ExplorerGpsDrawer({
                   setWaypointPopoverOpen(false);
                 }}
                 style={{
-                  flex: '1 0 auto',
+                  flex: '0 1 auto',
                   height: 30,
-                  padding: '0 9px',
+                  padding: '0 10px',
                   borderRadius: 999,
                   border: isNightRed
                     ? '1px solid rgba(248, 113, 113, 0.4)'

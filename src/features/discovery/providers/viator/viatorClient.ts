@@ -117,7 +117,7 @@ export function createViatorProductSearch(config: ViatorClientConfig) {
         },
         body: JSON.stringify(body),
         cache: 'no-store',
-        redirect: 'error',
+        redirect: 'manual',
         signal: controller.signal,
       });
     } catch {

@@ -145,7 +145,7 @@ function AuthForm() {
   };
 
   return (
-    <div className="lkdv-auth flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[var(--space-12)] pt-16 sm:pt-24">
+    <div className="lkdv-auth flex min-h-[100dvh] items-center justify-center px-[var(--space-4)] pb-[calc(var(--page-bottom-inset,96px)+var(--cookie-banner-h,0px)+28px)] pt-16 sm:pb-[var(--space-12)] sm:pt-24">
       <div className="w-full max-w-[420px]">
         <div className="mb-[var(--space-6)] text-center">
           {/* eslint-disable-next-line @next/next/no-img-element -- logo local de l'app */}

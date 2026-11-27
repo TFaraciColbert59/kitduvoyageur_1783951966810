@@ -96,6 +96,24 @@ function normalize(value: string): string {
     .trim();
 }
 
+const CONTINENT_FR: Readonly<Record<string, string>> = {
+  africa: 'Afrique',
+  antarctica: 'Antarctique',
+  asia: 'Asie',
+  europe: 'Europe',
+  'north america': 'Amérique du Nord',
+  oceania: 'Océanie',
+  'south america': 'Amérique du Sud',
+  'seven seas (open ocean)': 'Océans',
+};
+
+function translateContinent(continent: string | null | undefined): string | null {
+  if (!continent) return null;
+  const trimmed = continent.trim();
+  if (!trimmed) return null;
+  return CONTINENT_FR[trimmed.toLowerCase()] ?? trimmed;
+}
+
 function iconForKind(kind: ExplorerSearchResultKind) {
   switch (kind) {
     case 'country':
@@ -282,7 +300,7 @@ export function ExplorerSearchSheet({
         kind: 'country',
         iso: c.iso,
         title: c.name,
-        meta: c.continent ?? c.iso,
+        meta: translateContinent(c.continent) ?? c.iso,
         coordinates: c.center,
       }));
     }
@@ -296,7 +314,7 @@ export function ExplorerSearchSheet({
           kind: 'country',
           iso: c.iso,
           title: c.name,
-          meta: c.continent ?? c.iso,
+          meta: translateContinent(c.continent) ?? c.iso,
           coordinates: c.center,
         });
         if (out.length >= 4) break;

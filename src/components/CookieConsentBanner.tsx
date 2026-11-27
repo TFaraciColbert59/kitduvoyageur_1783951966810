@@ -25,6 +25,7 @@ export default function CookieConsentBanner() {
     // les seules commandes de l'écran. Le consentement se recueille sur les pages classiques.
     if (isNative() || pathname === '/explorer' || pathname?.startsWith('/explorer')) return;
     if (pathname === '/kit-studio' || pathname?.startsWith('/kit-studio/')) return;
+    if (pathname === '/connexion' || pathname?.startsWith('/connexion/')) return;
 
     const stored = getStoredConsent();
     if (!stored || stored.version !== CONSENT_VERSION) {
@@ -90,7 +91,15 @@ export default function CookieConsentBanner() {
     setVisible(false);
   };
 
-  if (!visible || pathname === '/explorer' || pathname?.startsWith('/explorer')) return null;
+  if (
+    !visible ||
+    pathname === '/explorer' ||
+    pathname?.startsWith('/explorer') ||
+    pathname === '/connexion' ||
+    pathname?.startsWith('/connexion/')
+  ) {
+    return null;
+  }
 
   return (
     // Non-modal: pas de blocage du reste de l'écran

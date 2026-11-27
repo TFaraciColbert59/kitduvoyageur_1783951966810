@@ -1344,7 +1344,7 @@ let defs = function() {
   if (S.step === 0) {
     return {
       title: hName ? ("Profil " + hName) : "Profil personnel",
-      peek: `${P.name || 'Voyageur'} · ${VIS_LABELS[S.vis]} · ${D.totalOutings} sorties`,
+      peek: `${P.name || 'Voyageur'} · ${VIS_LABELS[S.vis]} · ${D.totalOutings} ${D.totalOutings > 1 ? 'sorties' : 'sortie'}`,
       flow: [
         { l: "Pratique", r: () => ({
           per: [2, 4],

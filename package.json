@@ -238,5 +238,11 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "type": "module"
+  "type": "module",
+  "browserslist": [
+    ">= 0.5%",
+    "iOS >= 15",
+    "Safari >= 15",
+    "not dead"
+  ]
 }

@@ -1369,7 +1369,7 @@ function ExplorerV2Inner({
     if (state.summary && !state.activity) {
       setHasInteracted(true);
       setOverlayMode('summary');
-      setDetentState((d) => (d === 'peek' ? 'mid' : d));
+      setDetentState('full');
     }
   }, [state.summary, state.activity]);
 

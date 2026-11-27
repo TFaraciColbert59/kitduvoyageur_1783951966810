@@ -55,6 +55,31 @@ function normalizeKitName(name: string): string {
     .toLowerCase();
 }
 
+const SEASON_LABELS_FR: Readonly<Record<string, string>> = {
+  toute_saison: 'Toute saison',
+  toutes_saisons: 'Toutes saisons',
+  '4_saisons': '4 saisons',
+  '3_saisons': '3 saisons',
+  ete: 'Été',
+  été: 'Été',
+  hiver: 'Hiver',
+  printemps: 'Printemps',
+  automne: 'Automne',
+  mi_saison: 'Mi-saison',
+};
+
+function formatSeasonLabel(season: string | null | undefined): string | null {
+  if (!season) return null;
+  const trimmed = season.trim();
+  if (!trimmed) return null;
+  const key = trimmed.toLowerCase().replace(/[\s-]+/g, '_');
+  return SEASON_LABELS_FR[key] ?? trimmed.replace(/_/g, ' ');
+}
+
+function formatKgFr(kg: number): string {
+  return `${kg.toFixed(1).replace('.', ',')} kg`;
+}
+
 function kitComputedWeightG(kit: ApiKit): number {
   const items = kit.materiel_kit_items ?? [];
   if (typeof kit.total_weight_g === 'number' && kit.total_weight_g > 0) {
@@ -171,7 +196,7 @@ export function RouteKitSubDrawer({
         <div className="xp20-route-header-copy">
           <h2 className="xp20-route-title">Mon Kit & Sac</h2>
           <p className="xp20-route-subtitle">
-            {packWeightKg.toFixed(1)} kg · impacte durée, calories & sécurité
+            {formatKgFr(packWeightKg)} · impacte durée, calories & sécurité
           </p>
         </div>
         <Link
@@ -191,7 +216,7 @@ export function RouteKitSubDrawer({
             <span>
               <Scale size={14} aria-hidden="true" /> Poids porté
             </span>
-            <strong>{customKg.toFixed(1)} kg</strong>
+            <strong>{formatKgFr(customKg)}</strong>
           </div>
           <input
             type="range"
@@ -262,9 +287,9 @@ export function RouteKitSubDrawer({
                       <div className="xp20-kit-copy">
                         <strong>{kit.name}</strong>
                         <span>
-                          {kg.toFixed(1)} kg
-                          {items.length > 0 ? ` · ${items.length} objets` : ''}
-                          {kit.season ? ` · ${kit.season}` : ''}
+                          {formatKgFr(kg)}
+                          {items.length > 0 ? ` · ${items.length} ${items.length > 1 ? 'objets' : 'objet'}` : ''}
+                          {formatSeasonLabel(kit.season) ? ` · ${formatSeasonLabel(kit.season)}` : ''}
                         </span>
                       </div>
                     </button>

@@ -438,7 +438,7 @@ export function FeedCarnetPostCard({
       void Promise.all([
         supabase
           .from('carnets')
-          .select('title, destination, days_count, distance_km, elevation_gain_m, cover_image')
+          .select('title, destination, start_date, end_date, cover_image')
           .eq('id', carnetId)
           .maybeSingle(),
         supabase
@@ -453,13 +453,19 @@ export function FeedCarnetPostCard({
         if (!alive) return;
         const row = carnetRes.data as Record<string, unknown> | null;
         if (row) {
+          let computedDays: number | null = null;
+          if (typeof row.start_date === 'string' && typeof row.end_date === 'string') {
+            const ms = Date.parse(row.end_date) - Date.parse(row.start_date);
+            if (Number.isFinite(ms) && ms >= 0) {
+              computedDays = Math.max(1, Math.round(ms / 86_400_000) + 1);
+            }
+          }
           setCarnet((prev) => ({
             title: String(row.title ?? prev.title),
             destination: typeof row.destination === 'string' ? row.destination : prev.destination,
-            days: Number(row.days_count ?? prev.days) || prev.days,
-            distanceKm: row.distance_km != null ? Number(row.distance_km) : prev.distanceKm,
-            elevationGainM:
-              row.elevation_gain_m != null ? Number(row.elevation_gain_m) : prev.elevationGainM,
+            days: computedDays ?? prev.days,
+            distanceKm: prev.distanceKm,
+            elevationGainM: prev.elevationGainM,
             coverImage:
               typeof row.cover_image === 'string' && row.cover_image
                 ? row.cover_image

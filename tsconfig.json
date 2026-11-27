@@ -47,6 +47,9 @@
     "geo_data",
     "public",
     ".next",
-    ".next-codex-build"
+    ".next-codex-build",
+    ".cloudflare",
+    ".wrangler",
+    "ios"
   ]
 }

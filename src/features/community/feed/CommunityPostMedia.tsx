@@ -197,13 +197,10 @@ export function CommunityPostMedia({
     onLike();
   }, [liked, onLike]);
   const mediaLabel = alt?.trim() || 'Média de la publication';
-  // Le poster d'une vidéo est une image distante comme les autres : sans
-  // passage par l'optimiseur, il partait en 1600 px / 500 Ko pour une carte
-  // de 393 px. Une seule largeur suffit ici (pas de srcset sur `poster`).
-  const optimizedPoster =
-    poster && !poster.startsWith('/_next/image')
-      ? `/_next/image?url=${encodeURIComponent(poster)}&w=828&q=75`
-      : poster;
+  // Sur Cloudflare Workers (vinext), `/_next/image` n'accepte que les chemins locaux
+  // relatifs et rejette les URLs distantes (`https://`) en HTTP 400. On utilise
+  // directement l'URL distante du poster (déjà servie en WebP/JPEG via CDN/Supabase).
+  const optimizedPoster = poster;
 
   useEffect(() => {
     setFailed(false);

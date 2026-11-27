@@ -39,7 +39,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="w-full max-w-[1000px] mx-auto px-4 pt-12 pb-8 flex flex-col gap-3 font-sans" role="contentinfo">
+    <footer className="w-full max-w-[1000px] mx-auto px-4 pt-12 pb-[calc(var(--page-bottom-inset,96px)+20px)] md:pb-8 flex flex-col gap-3 font-sans" role="contentinfo">
 
       {/* NEWSLETTER CAPSULE (Pill shape like header) */}
       <div className="w-full rounded-full px-5 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-3 transition-all" style={glassCapsule}>

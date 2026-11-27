@@ -205,3 +205,6 @@ kit-studio-bundle/
 
 # Rust / WASM build targets
 crates/*/target/
+
+# Keep Explorer edge cache library tracked despite *cache* ignore
+!src/lib/explorer/edgeCache.ts

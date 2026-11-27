@@ -93,8 +93,10 @@ export function LayersPresetsLens({
         paddingBottom: 112,
       }}
     >
-      {ATOMIC_PRESET_TILES.map((preset) => {
+      {ATOMIC_PRESET_TILES.map((preset, index) => {
         const isActive = activePreset === preset.id;
+        const isFullWidthLast =
+          ATOMIC_PRESET_TILES.length % 2 === 1 && index === ATOMIC_PRESET_TILES.length - 1;
         return (
           <StaggerCard
             key={preset.id}
@@ -102,7 +104,8 @@ export function LayersPresetsLens({
             className={isActive ? undefined : 'club-glass-card'}
             onClick={() => onSelectPreset(preset.id)}
             style={{
-              height: 68,
+              gridColumn: isFullWidthLast ? '1 / -1' : undefined,
+              height: 64,
               borderRadius: 18,
               border: 0,
               padding: '0 12px',
@@ -300,7 +303,7 @@ export function LayersOverlaysLens({
   );
 
   return (
-    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 112 }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 140 }}>
       {/* Tiny floating raster badge ONLY when analytical rasters are active */}
       {activeRasterCount > 0 ? (
         <div

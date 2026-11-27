@@ -280,10 +280,10 @@ export function ExplorerSportLaunchSheet({
             flex: '1 1 auto',
             minHeight: 0,
             overflowY: 'auto',
-            padding: '10px 12px 28px',
+            padding: '8px 12px calc(32px + var(--safe-bottom, 0px))',
           }}
         >
-          <StaggerList className="xp20-grid-2">
+          <StaggerList className="xp20-grid-2" style={{ gap: 8 }}>
             {SPORT_TILES.map((tile) => (
               <StaggerCard
                 key={tile.id}
@@ -301,7 +301,7 @@ export function ExplorerSportLaunchSheet({
                   onSelectSport(tile.sport, selection);
                 }}
                 style={{
-                  height: 68,
+                  height: 58,
                   padding: '0 12px',
                   borderRadius: 18,
                   border: 0,

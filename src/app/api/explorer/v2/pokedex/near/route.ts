@@ -96,6 +96,123 @@ interface WikiSummaryResponse {
   };
 }
 
+interface GbifOccurrenceMedia {
+  identifier?: string;
+}
+
+interface GbifOccurrenceRecord {
+  key?: number;
+  speciesKey?: number;
+  taxonKey?: number;
+  species?: string;
+  scientificName?: string;
+  vernacularName?: string;
+  kingdom?: string;
+  class?: string;
+  decimalLatitude?: number;
+  decimalLongitude?: number;
+  eventDate?: string;
+  locality?: string;
+  media?: GbifOccurrenceMedia[];
+}
+
+interface GbifOccurrenceSearchResponse {
+  count?: number;
+  results?: GbifOccurrenceRecord[];
+}
+
+async function fetchGbifFallback(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+): Promise<{ species: PokedexSpeciesItem[]; features: GeoJsonPointFeature[]; totalSpecies: number } | null> {
+  const latDelta = Math.min(1.2, Math.max(0.05, radiusKm / 111));
+  const cosLat = Math.max(0.2, Math.cos((lat * Math.PI) / 180));
+  const lngDelta = Math.min(1.5, Math.max(0.05, radiusKm / (111 * cosLat)));
+  const south = Math.max(-89.9, lat - latDelta).toFixed(4);
+  const north = Math.min(89.9, lat + latDelta).toFixed(4);
+  const west = Math.max(-180, lng - lngDelta).toFixed(4);
+  const east = Math.min(180, lng + lngDelta).toFixed(4);
+  const url =
+    `https://api.gbif.org/v1/occurrence/search?decimalLatitude=${south},${north}` +
+    `&decimalLongitude=${west},${east}&hasCoordinate=true&mediaType=StillImage&limit=40`;
+
+  try {
+    const { data } = await safeFetchJson<GbifOccurrenceSearchResponse>(url, { timeoutMs: 5000 });
+    const rows = data.results ?? [];
+    if (rows.length === 0) return null;
+
+    const byTaxon = new Map<number, PokedexSpeciesItem>();
+    const features: GeoJsonPointFeature[] = [];
+
+    for (const row of rows) {
+      const taxonId = row.speciesKey ?? row.taxonKey ?? row.key;
+      const sciName = (row.species || row.scientificName || '').trim();
+      if (typeof taxonId !== 'number' || !sciName) continue;
+      const photoUrl = sanitizeHttpsUrl(row.media?.find((m) => m.identifier)?.identifier ?? null);
+      const iconic = row.class || row.kingdom || 'Unknown';
+      const existing = byTaxon.get(taxonId);
+      if (existing) {
+        existing.observationCount += 1;
+        if (!existing.photoUrl && photoUrl) existing.photoUrl = photoUrl;
+      } else {
+        byTaxon.set(taxonId, {
+          taxonId,
+          scientificName: sciName,
+          commonName: row.vernacularName?.trim() || sciName,
+          iconicTaxon: iconic,
+          kingdom: mapKingdom(row.kingdom || row.class),
+          observationCount: 1,
+          photoUrl,
+          threatened: false,
+          endemic: false,
+          wikipediaUrl: `https://fr.wikipedia.org/wiki/${encodeURIComponent(sciName.replace(/\s+/g, '_'))}`,
+          summary: null,
+        });
+      }
+
+      if (
+        typeof row.decimalLatitude === 'number' &&
+        typeof row.decimalLongitude === 'number' &&
+        Number.isFinite(row.decimalLatitude) &&
+        Number.isFinite(row.decimalLongitude)
+      ) {
+        features.push({
+          type: 'Feature',
+          id: `gbif-${row.key ?? taxonId}`,
+          geometry: {
+            type: 'Point',
+            coordinates: [row.decimalLongitude, row.decimalLatitude],
+          },
+          properties: {
+            id: row.key ?? taxonId,
+            taxonId,
+            commonName: row.vernacularName?.trim() || sciName,
+            scientificName: sciName,
+            kingdom: mapKingdom(row.kingdom || row.class),
+            photoUrl,
+            observedOn: row.eventDate?.slice(0, 10) ?? null,
+            placeGuess: row.locality ?? null,
+            threatened: false,
+          },
+        });
+      }
+    }
+
+    const species = Array.from(byTaxon.values())
+      .sort((a, b) => b.observationCount - a.observationCount)
+      .slice(0, 24);
+    if (species.length === 0) return null;
+    return {
+      species,
+      features: features.slice(0, 25),
+      totalSpecies: species.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
 const pokedexCache = new LruCache<Omit<PokedexNearPayload, 'meta'>>(128, 24 * 60 * 60_000);
 
 function mapKingdom(iconic: string | undefined): PokedexSpeciesItem['kingdom'] {
@@ -218,15 +335,39 @@ export async function GET(request: Request) {
   const [countsRes, obsRes] = await Promise.allSettled([
     safeFetchJson<INatSpeciesCountsResponse>(
       `https://api.inaturalist.org/v1/observations/species_counts?${countsParams.toString()}`,
-      { timeoutMs: 3200 },
+      { timeoutMs: 4500 },
     ),
     safeFetchJson<INatObservationsResponse>(
       `https://api.inaturalist.org/v1/observations?${obsParams.toString()}`,
-      { timeoutMs: 3200 },
+      { timeoutMs: 4500 },
     ),
   ]);
 
   if (countsRes.status === 'rejected' && obsRes.status === 'rejected') {
+    const gbifFallback = await fetchGbifFallback(qLat, qLng, radiusKm);
+    if (gbifFallback) {
+      const payload: Omit<PokedexNearPayload, 'meta'> = {
+        species: gbifFallback.species,
+        geojson: { type: 'FeatureCollection', features: gbifFallback.features },
+        gbifTileTemplate: GBIF_TILE_TEMPLATE,
+        totalSpecies: gbifFallback.totalSpecies,
+      };
+      const saved = pokedexCache.set(cacheKey, payload, CACHE_TTL_MS);
+      return NextResponse.json(
+        {
+          ...payload,
+          meta: buildApiMeta({
+            source: 'gbif+wikipedia',
+            attribution: 'GBIF (CC BY 4.0), Wikipédia (CC BY-SA)',
+            stale: false,
+            fetchedAtMs: saved.fetchedAt,
+            ttlMs: CACHE_TTL_MS,
+          }),
+        },
+        { status: 200, headers: { 'Cache-Control': CACHE_CONTROL_OK } },
+      );
+    }
+
     const staleEntry = pokedexCache.getStale(cacheKey);
     if (staleEntry) {
       return NextResponse.json(

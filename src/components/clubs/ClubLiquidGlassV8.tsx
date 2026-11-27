@@ -12,8 +12,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import '../compte/compte-v8.css';
 import '../compte/compte-apple-hig.css';
 import '../compte/overlay/compte-drawers.css';
-import '@/features/posts/ui/post-system.css';
-import '@/styles/community-feed.css';
 import '@/styles/communaute-v2.css';
 import '@/styles/communaute-v2-shell.css';
 import './club-adaptation.css';

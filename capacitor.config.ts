@@ -32,7 +32,7 @@ const config: CapacitorConfig = {
   appId: "com.lekitduvoyageur.app",
   appName: "Le Kit du Voyageur",
   webDir: "public",
-  backgroundColor: "#17402C",
+  backgroundColor: "#FBFAF6",
   server: serverUrl
     ? {
         url: serverUrl,
@@ -72,7 +72,7 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: "body" as any,
-      style: "DARK" as any,
+      style: "LIGHT" as any,
       resizeOnFullScreen: true,
     },
     PushNotifications: {
@@ -81,13 +81,13 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: "never",
-    backgroundColor: "#17402C",
+    backgroundColor: "#FBFAF6",
     preferredContentMode: "mobile",
     handleApplicationNotifications: true,
     scheme: "App",
   },
   android: {
-    backgroundColor: "#17402C",
+    backgroundColor: "#FBFAF6",
     allowMixedContent: allowCleartext,
     captureInput: true,
     webContentsDebuggingEnabled: isDevServer,

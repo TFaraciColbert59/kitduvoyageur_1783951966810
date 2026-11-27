@@ -1175,6 +1175,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         web.view.backgroundColor = stoneBg
 
         let window = UIWindow(windowScene: windowScene)
+        window.overrideUserInterfaceStyle = .light
         window.backgroundColor = stoneBg
         window.rootViewController = LKDVNativeTabBarHost(web: web)
         window.makeKeyAndVisible()

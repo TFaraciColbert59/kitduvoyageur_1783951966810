@@ -320,12 +320,13 @@
   right: auto;
   top: auto;
   z-index: 6;
-  max-width: calc(100% - 76px);
+  max-width: min(calc(100% - 20px), calc(100vw - 24px));
+  box-sizing: border-box;
   height: 20px;
+  line-height: 20px;
   padding: 0 8px;
   border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -344,6 +345,14 @@
     0 0 0 0.5px rgba(23, 43, 36, 0.14),
     0 4px 12px rgba(23, 43, 36, 0.1);
   color: #172b24;
+}
+
+.lkdv-map-root .maplibregl-ctrl-attrib {
+  max-width: min(calc(100% - 20px), calc(100vw - 24px)) !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .lkdv-map-attribution a {

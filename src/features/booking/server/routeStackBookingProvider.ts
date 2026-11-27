@@ -610,7 +610,7 @@ async function getPartnerToken(env: BookingProviderEnv): Promise<string> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ apiKey, hmac, timestamp, nonce }),
       cache: 'no-store',
-      redirect: 'error',
+      redirect: 'manual',
       signal: controller.signal,
     });
     if (!response.ok) {

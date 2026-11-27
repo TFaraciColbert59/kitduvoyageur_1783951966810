@@ -485,7 +485,7 @@ export function ExplorerSummarySheet({
             flex: '1 1 auto',
             minHeight: 0,
             overflowY: 'auto',
-            padding: '12px 12px 24px',
+            padding: '12px 12px calc(36px + var(--safe-bottom, 0px))',
             display: 'flex',
             flexDirection: 'column',
             gap: 11,
