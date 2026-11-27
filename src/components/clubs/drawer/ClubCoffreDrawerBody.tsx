@@ -79,6 +79,7 @@ export function ClubCoffreDrawerBody({
   kitSeason: controlledKitSeason,
   vaultFilter: controlledVaultFilter,
   vaultScope: controlledVaultScope,
+  focusedKitId = null,
   onToggleReserveGear,
   onRequestGearLoan,
   onTransitionGearLoan,
@@ -88,6 +89,7 @@ export function ClubCoffreDrawerBody({
   kitSeason?: KitSeasonFilter;
   vaultFilter?: VaultFilterId;
   vaultScope?: VaultScopeId;
+  focusedKitId?: string | null;
   onRequestGearLoan?: (payload: {
     gearItemId: string;
     quantity: number;
@@ -152,13 +154,16 @@ export function ClubCoffreDrawerBody({
   }, [vaultGear, vaultSearch, vaultScope, vaultFilter]);
 
   const filteredKits = useMemo(() => {
-    return standardKits.filter((k) => {
+    const list = standardKits.filter((k) => {
+      if (focusedKitId && k.id === focusedKitId) return true;
       if (kitSeason === 'all') return true;
       const s = normalizeText(k.season);
       if (kitSeason === 'winter') return s.includes('hiver') || s.includes('alpi') || s.includes('4');
       return s.includes('ete') || s.includes('3') || s.includes('printemps') || !s.includes('hiver');
     });
-  }, [standardKits, kitSeason]);
+    if (!focusedKitId) return list;
+    return [...list].sort((a, b) => Number(b.id === focusedKitId) - Number(a.id === focusedKitId));
+  }, [standardKits, kitSeason, focusedKitId]);
 
   // ============================================================================
   // D17 — 3.1 VAULT-KITS ("Kits types du club") — KitCard canonique Profil/Carnet
@@ -180,7 +185,15 @@ export function ClubCoffreDrawerBody({
               return (
                 <ClubStaggerCard
                   key={k.id}
-                  style={{ position: 'relative' }}
+                  data-kit-id={k.id}
+                  style={{
+                    position: 'relative',
+                    borderRadius: 22,
+                    boxShadow:
+                      focusedKitId === k.id
+                        ? '0 0 0 2px #17402c, 0 10px 24px rgba(23, 64, 44, 0.18)'
+                        : undefined,
+                  }}
                 >
                   <KitCard
                     kit={entry}

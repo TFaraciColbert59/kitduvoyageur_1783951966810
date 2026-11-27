@@ -1,19 +1,72 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Map as MapLibreMap, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
+import React, { useEffect, useRef, useState } from 'react';
+import { Compass } from 'lucide-react';
+import {
+  addProtocol,
+  Map as MapLibreMap,
+  removeProtocol,
+  setWorkerUrl,
+  type GeoJSONSource,
+} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { GeoCollection } from '../data/hooks';
-import type { CameraIntent, Level, MapBaseStyle, PoiKind } from '../state/types';
+import type { CameraIntent, Level, MapBaseStyle, PoiKind, Sport } from '../state/types';
+import type { ExplorerMode } from '../state/hudMachine';
+import type { ExplorerPresetId } from '../state/presets';
+import {
+  disposeNonEssentialMapLayers,
+  restoreMapTileCacheBudget,
+  syncUnifiedOverlayLayers,
+} from './layerLifecycle';
+import { registerSlopeProtocol } from './slopeProtocol';
+import { registerContourProtocol } from './contourProtocol';
+import {
+  accentHexFor3DKind,
+  createExplorerThree3DLayer,
+  MAX_FLOATING_3D_ITEMS,
+  normalize3DEntityKind,
+  type ExplorerThree3DController,
+  type Floating3DItem,
+} from './explorerThree3DLayer';
+import { createMapVfxEngine, type MapVfxController } from './mapVfxEngine';
+import { lod3DBudgetForZoom } from '../data/spatialLoader';
+import { selectBalanced3DItems } from './lod3D';
+import {
+  asCartoMap,
+  applyExplorerBaseCartography,
+  applyExplorerSky,
+  applyZoomResponsiveCartography,
+  findFirstSymbolAnchor,
+  findHillshadeBeforeId,
+  GLOBE_TO_MERCATOR_ZOOM,
+  hillshadePaintForTheme,
+  LABELS_SHOW_ALL_ZOOM,
+  resolvePresetCartoProfile,
+  syncPresetVectorCartography,
+  territoryFillOpacityExpression,
+  territoryLineOpacityExpression,
+} from './explorerCartography';
+import { registerExplorerMapSprites } from './mapSprites';
+import {
+  isInteractiveMapLayerId,
+  pickHighestPriorityFeature,
+  type MapInteractiveSelection,
+  type PickableMapFeature,
+} from './featurePicking';
 import { clusterPins, selectVisiblePins, type PinCluster } from './hierarchy';
 import { slopeGradientExpression, type SlopeLayer } from './slope';
 import type { NationalTopoSource } from './nationalTopo';
 import type { DistanceMarker } from './distanceMarkers';
 import {
+  applyExplorerSilkyPhysics,
   boundsOfTrack,
+  centerAt,
   cinematicStartupZoom,
+  easeCinematicOut,
   flyToLevel,
   flyoverTrack,
+  focusTargetPadding,
   followAt,
   followPadding,
   orbitController,
@@ -34,10 +87,13 @@ import {
 } from '@/components/map/engine/createMapStyle';
 import type { SearchViewport } from '../searchArea';
 import { lineStringFromSections, type RouteDraft } from '@/features/adventure-prep/routeRevision';
+import type { ComputedItinerary } from '../routing/types';
 
 export interface MapPin {
   id: string;
   kind: string;
+  /** Granular `geo_pois.subtype` or `geo_places.kind` (e.g. `peak`, `saddle`, `spring`, `bus_stop`, `village`). */
+  subtype?: string | null;
   name: string;
   sub?: string | null;
   lat: number;
@@ -129,6 +185,45 @@ export interface MapStageProps {
   fireLayer?: GeoCollection | null;
   /** Clic sur la carte en mode placement de waypoint. */
   onMapClick?: (lngLat: [number, number]) => void;
+  /** Mode FSM du HUD polymorphe (`EXPLORE` / `GPS_ACTIVE` / `SOS`). */
+  explorerMode?: ExplorerMode;
+  /** Pré-réglage cartographique actif (style vectoriel adaptatif). */
+  activePreset?: ExplorerPresetId;
+  /** Sport actif en mode GPS (conserve les calques pertinents, décharge le reste). */
+  activeSport?: Sport | null;
+  /** Modèle d'URL tuiles RainViewer (injecté depuis `/api/explorer/v2/radar`). */
+  radarTileTemplate?: string | null;
+  /** Données GeoJSON des couches unifiées (hazards, airspace, pokedex, social). */
+  unifiedGeojson?: Record<string, GeoCollection | null | undefined>;
+  /** Notifié si le plafond de 2 calques rasters analytiques évince un calque. */
+  onUnifiedLayerEvict?: (evictedKeys: string[]) => void;
+  /** Entité actuellement sélectionnée (halo circulaire + modèle 3D héroïque sur la carte). */
+  selectedFeature?: {
+    id: string;
+    coordinates: [number, number];
+    kind?: string;
+    label?: string;
+  } | null;
+  /** Clic unifié sur une couche interactive (risque, bouteille, Pokédex, social). */
+  onUnifiedFeatureClick?: (feature: MapInteractiveSelection) => void;
+  /** Clic sur un itinéraire (`xp-routes-line` / `xp-routes-casing`). */
+  onRouteClick?: (routeId: string, name: string | null, coordinates: [number, number]) => void;
+  /** Catégorie active du tiroir pour prioriser intelligemment les objets 3D. */
+  activeCategory?: string | null;
+  /** Itinéraires personnalisés générés vers un POI (recommandé + alternatives). */
+  poiItineraries?: ComputedItinerary[] | null;
+  /** Identifiant de l'itinéraire actuellement sélectionné sur la carte. */
+  selectedItineraryId?: string | null;
+  /** Affiche aussi les alternatives en pointillés cliquables sur la carte. */
+  showItineraryAlternatives?: boolean;
+  /** Callback déclenché quand l'utilisateur clique une alternative directement sur la carte. */
+  onSelectItinerary?: (id: string) => void;
+  /** État temps réel d'activité carte (geste en cours, tuiles, décodage 3D GLB). */
+  onMapActivityChange?: (activity: {
+    isMoving: boolean;
+    tilesLoading: boolean;
+    glbPendingCount: number;
+  }) => void;
 }
 
 const TERRAIN_SOURCE = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
@@ -161,7 +256,7 @@ function markMap(name: 'map:first-paint' | 'map:interactive'): void {
  * Un seul composant monte la carte ; changer de niveau ne recrée jamais la
  * carte. Projection globe aux niveaux 0–1, mercator à partir du niveau 2.
  */
-export default function MapStage({
+const MapStage = React.memo(function MapStage({
   level,
   center,
   zoom,
@@ -209,18 +304,44 @@ export default function MapStage({
   highlightedSegment = null,
   fireLayer = null,
   onMapClick,
+  explorerMode = 'EXPLORE',
+  activePreset = 'hiking',
+  activeSport = null,
+  radarTileTemplate = null,
+  unifiedGeojson,
+  onUnifiedLayerEvict,
+  selectedFeature = null,
+  onUnifiedFeatureClick,
+  onRouteClick,
+  activeCategory = 'explorer',
+  poiItineraries = null,
+  selectedItineraryId = null,
+  showItineraryAlternatives = false,
+  onSelectItinerary,
+  onMapActivityChange,
 }: MapStageProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const threeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const vfxCanvasRef = useRef<HTMLCanvasElement | null>(null);
   // Double garde : même si un appelant transmet une source non vérifiée, elle
   // n'est jamais chargée. Le registre reste la source de vérité.
   const nationalSource = nationalTopo?.status === 'verified' ? nationalTopo : null;
   const mapRef = useRef<MapLibreMap | null>(null);
+  const three3DRef = useRef<ExplorerThree3DController | null>(null);
+  const vfxRef = useRef<MapVfxController | null>(null);
   const [overlay, setOverlay] = useState<Array<{ pin: MapPin; x: number; y: number }>>([]);
   const [distanceScreen, setDistanceScreen] = useState<
     Array<{ marker: DistanceMarker; x: number; y: number }>
   >([]);
   const [clusters, setClusters] = useState<PinCluster[]>([]);
   const [meScreen, setMeScreen] = useState<{ x: number; y: number } | null>(null);
+  const [hoverTip, setHoverTip] = useState<{
+    x: number;
+    y: number;
+    title: string;
+    sub?: string;
+  } | null>(null);
+  const lastHoverCheckRef = useRef(0);
   const [ready, setReady] = useState(false);
   const movedToRef = useRef<string>('');
   const orbitRef = useRef<number | null>(null);
@@ -239,6 +360,46 @@ export default function MapStage({
   onMapClickRef.current = onMapClick;
   const plannerMapPickRef = useRef(plannerMapPick);
   plannerMapPickRef.current = plannerMapPick;
+  const onUnifiedFeatureClickRef = useRef(onUnifiedFeatureClick);
+  onUnifiedFeatureClickRef.current = onUnifiedFeatureClick;
+  const onRouteClickRef = useRef(onRouteClick);
+  onRouteClickRef.current = onRouteClick;
+  const onSelectItineraryRef = useRef(onSelectItinerary);
+  onSelectItineraryRef.current = onSelectItinerary;
+  const onCountryClickRef = useRef(onCountryClick);
+  onCountryClickRef.current = onCountryClick;
+  const onRegionClickRef = useRef(onRegionClick);
+  onRegionClickRef.current = onRegionClick;
+  const onPinClickRef = useRef(onPinClick);
+  onPinClickRef.current = onPinClick;
+  const pinsRef = useRef(pins);
+  pinsRef.current = pins;
+  const reducedMotionRef = useRef(reducedMotion);
+  reducedMotionRef.current = reducedMotion;
+  const sheetHeightPxRef = useRef(sheetHeightPx);
+  sheetHeightPxRef.current = sheetHeightPx;
+  const selectedFeatureRef = useRef(selectedFeature);
+  selectedFeatureRef.current = selectedFeature;
+  const selectedIdRef = useRef(selectedId);
+  selectedIdRef.current = selectedId;
+  const onMapActivityChangeRef = useRef(onMapActivityChange);
+  onMapActivityChangeRef.current = onMapActivityChange;
+  const mapActivityRef = useRef({ isMoving: false, tilesLoading: false, glbPendingCount: 0 });
+  const emitMapActivity = (
+    patch: Partial<{ isMoving: boolean; tilesLoading: boolean; glbPendingCount: number }>,
+  ) => {
+    const prev = mapActivityRef.current;
+    const next = { ...prev, ...patch };
+    if (
+      next.isMoving === prev.isMoving &&
+      next.tilesLoading === prev.tilesLoading &&
+      next.glbPendingCount === prev.glbPendingCount
+    ) {
+      return;
+    }
+    mapActivityRef.current = next;
+    onMapActivityChangeRef.current?.(next);
+  };
 
   // ── création de la carte (une seule fois) ──────────────────────────────
   useEffect(() => {
@@ -246,14 +407,18 @@ export default function MapStage({
     setReady(false);
     setDistanceScreen([]);
     setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
+    registerSlopeProtocol({ addProtocol, removeProtocol });
+    registerContourProtocol({ addProtocol, removeProtocol });
 
     let map: MapLibreMap;
     try {
+      const initialZoom = Number.isFinite(zoom) ? zoom : 1.6;
       map = new MapLibreMap({
         container: containerRef.current,
         style: OPENFREEMAP_STYLE_URL,
         center: Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1]) ? center : [2.35, 48.85],
-        zoom: Number.isFinite(zoom) ? zoom : 1.6,
+        zoom: initialZoom,
+        pitch: initialZoom >= 8 ? 48 : 0,
         attributionControl: false,
         dragRotate: true,
         pitchWithRotate: true,
@@ -261,6 +426,7 @@ export default function MapStage({
         ...SMOOTH_MAPLIBRE_OPTIONS,
       });
       applySmoothMapPhysics(map);
+      applyExplorerSilkyPhysics(map);
       mapRef.current = map;
     } catch (caught) {
       console.error('[MapStage] MapLibre creation caught:', caught);
@@ -308,9 +474,16 @@ export default function MapStage({
 
     map.on('load', () => {
       map.setProjection({ type: 'globe' });
+      const bootHeight = map.getContainer()?.clientHeight || 844;
+      const bootPadding = focusTargetPadding(sheetHeightPxRef.current, bootHeight);
+      try {
+        map.setPadding(bootPadding);
+      } catch {
+        /* ignore */
+      }
       // 3.1 Animation cinématique au démarrage :
       // La Terre est d'abord entièrement visible (globe).
-      // Après 300 ms, zoom vers la position de l'utilisateur à l'échelle ville (durée <= 2 s).
+      // Après 100 ms, zoom vers la position de l'utilisateur centré au-dessus du tiroir.
       startupTimer = window.setTimeout(() => {
         if (!mapRef.current) return;
         const target =
@@ -319,8 +492,11 @@ export default function MapStage({
             : Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])
               ? center
               : [2.35, 48.85];
-        cinematicStartupZoom(map, target as [number, number], reducedMotion);
-      }, 300);
+        cinematicStartupZoom(map, target as [number, number], reducedMotion, {
+          sheetHeightPx: sheetHeightPxRef.current,
+          viewportHeightPx: map.getContainer()?.clientHeight || 844,
+        });
+      }, 100);
       try {
         map.setSky({
           'sky-color': 'rgba(233,238,231,0.0)',
@@ -371,48 +547,8 @@ export default function MapStage({
         if (!map.getSource('xp-fire-zones')) {
           map.addSource('xp-fire-zones', { type: 'geojson', data: EMPTY as never });
         }
-        if (!map.getSource('xp-terrain')) {
-          map.addSource('xp-terrain', {
-            type: 'raster-dem',
-            tiles: [TERRAIN_SOURCE],
-            encoding: 'terrarium',
-            tileSize: 256,
-            maxzoom: 13,
-            attribution: 'Relief : AWS Terrain Tiles (open data)',
-          });
-        }
-        if (!map.getSource('xp-terrain-hillshade')) {
-          map.addSource('xp-terrain-hillshade', {
-            type: 'raster-dem',
-            tiles: [TERRAIN_SOURCE],
-            encoding: 'terrarium',
-            tileSize: 256,
-            maxzoom: 13,
-          });
-        }
-        if (!map.getSource('xp-satellite')) {
-          map.addSource('xp-satellite', {
-            type: 'raster',
-            tiles: [
-              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            ],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: '© Esri · Earthstar Geographics',
-          });
-        }
-        const cycleKey = process.env.NEXT_PUBLIC_THUNDERFOREST_API_KEY?.trim();
-        if (cycleKey && !map.getSource('xp-cycle')) {
-          map.addSource('xp-cycle', {
-            type: 'raster',
-            tiles: [
-              `https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=${encodeURIComponent(cycleKey)}`,
-            ],
-            tileSize: 256,
-            maxzoom: 19,
-            attribution: '© OpenCycleMap · © OpenStreetMap contributors',
-          });
-        }
+        // NOTE PERF : `xp-terrain`, `xp-terrain-hillshade`, `xp-satellite` et `xp-cycle`
+        // sont créés paresseusement au premier besoin (évite 4 pipelines raster/DEM au boot globe).
         if (!map.getSource('xp-community-heatmap')) {
           map.addSource('xp-community-heatmap', { type: 'geojson', data: EMPTY as never });
         }
@@ -439,13 +575,20 @@ export default function MapStage({
             id: 'xp-countries-fill',
             type: 'fill',
             source: 'xp-countries',
-            paint: { 'fill-color': '#5B7F55', 'fill-opacity': 0.13 },
+            paint: {
+              'fill-color': '#5B7F55',
+              'fill-opacity': territoryFillOpacityExpression('country', false) as never,
+            },
           });
           map.addLayer({
             id: 'xp-countries-line',
             type: 'line',
             source: 'xp-countries',
-            paint: { 'line-color': '#17402C', 'line-width': 0.8, 'line-opacity': 0.32 },
+            paint: {
+              'line-color': '#17402C',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 1.5, 0.8, 6, 1.3] as never,
+              'line-opacity': territoryLineOpacityExpression('country', false) as never,
+            },
           });
         }
         if (!map.getLayer('xp-regions-fill')) {
@@ -453,13 +596,20 @@ export default function MapStage({
             id: 'xp-regions-fill',
             type: 'fill',
             source: 'xp-regions',
-            paint: { 'fill-color': '#2F6F78', 'fill-opacity': 0.1 },
+            paint: {
+              'fill-color': '#2F6F78',
+              'fill-opacity': territoryFillOpacityExpression('region', false) as never,
+            },
           });
           map.addLayer({
             id: 'xp-regions-line',
             type: 'line',
             source: 'xp-regions',
-            paint: { 'line-color': '#2F6F78', 'line-width': 0.9, 'line-opacity': 0.45 },
+            paint: {
+              'line-color': '#2F6F78',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 4.5, 0.85, 8.5, 1.1] as never,
+              'line-opacity': territoryLineOpacityExpression('region', false) as never,
+            },
           });
         }
         if (!map.getLayer('xp-routes-casing')) {
@@ -628,44 +778,6 @@ export default function MapStage({
             },
           });
         }
-        if (!map.getLayer('xp-satellite-layer')) {
-          map.addLayer(
-            {
-              id: 'xp-satellite-layer',
-              type: 'raster',
-              source: 'xp-satellite',
-              layout: { visibility: 'none' },
-              paint: { 'raster-opacity': 1 },
-            },
-            'xp-countries-fill',
-          );
-        }
-        if (!map.getLayer('xp-hillshade')) {
-          map.addLayer({
-            id: 'xp-hillshade',
-            type: 'hillshade',
-            source: 'xp-terrain-hillshade',
-            layout: { visibility: 'none' },
-            paint: {
-              'hillshade-shadow-color': '#17402C',
-              'hillshade-highlight-color': '#FFFFFF',
-              'hillshade-accent-color': '#5B7F55',
-              'hillshade-exaggeration': 0.35,
-            },
-          });
-        }
-        if (map.getSource('xp-cycle') && !map.getLayer('xp-cycle-layer')) {
-          map.addLayer(
-            {
-              id: 'xp-cycle-layer',
-              type: 'raster',
-              source: 'xp-cycle',
-              layout: { visibility: 'none' },
-              paint: { 'raster-opacity': 0.96 },
-            },
-            'xp-countries-fill',
-          );
-        }
         if (!map.getLayer('xp-surfaces-line')) {
           map.addLayer({
             id: 'xp-surfaces-line',
@@ -816,21 +928,162 @@ export default function MapStage({
             },
           });
         }
+        // ── Itinéraires personnalisés POI (recommandé + alternatives + approche multimodale) ──
+        if (!map.getSource('xp-poi-itineraries')) {
+          map.addSource('xp-poi-itineraries', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getSource('xp-poi-itinerary-nodes')) {
+          map.addSource('xp-poi-itinerary-nodes', { type: 'geojson', data: EMPTY as never });
+        }
+        if (!map.getLayer('xp-poi-itinerary-alt-hit')) {
+          map.addLayer({
+            id: 'xp-poi-itinerary-alt-hit',
+            type: 'line',
+            source: 'xp-poi-itineraries',
+            filter: ['==', ['get', 'selected'], false],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#000000', 'line-opacity': 0.01, 'line-width': 18 },
+          });
+        }
+        if (!map.getLayer('xp-poi-itinerary-alt-line')) {
+          map.addLayer({
+            id: 'xp-poi-itinerary-alt-line',
+            type: 'line',
+            source: 'xp-poi-itineraries',
+            filter: ['==', ['get', 'selected'], false],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#475569',
+              'line-width': 4,
+              'line-opacity': 0.72,
+              'line-dasharray': [2.2, 1.6],
+            },
+          });
+        }
+        if (!map.getLayer('xp-poi-itinerary-main-casing')) {
+          map.addLayer({
+            id: 'xp-poi-itinerary-main-casing',
+            type: 'line',
+            source: 'xp-poi-itineraries',
+            filter: ['==', ['get', 'selected'], true],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#FFFFFF',
+              'line-width': 9,
+              'line-opacity': 0.92,
+            },
+          });
+        }
+        if (!map.getLayer('xp-poi-itinerary-main-line')) {
+          map.addLayer({
+            id: 'xp-poi-itinerary-main-line',
+            type: 'line',
+            source: 'xp-poi-itineraries',
+            filter: ['==', ['get', 'selected'], true],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': [
+                'case',
+                ['==', ['get', 'legKind'], 'approach_car'],
+                '#1D4ED8',
+                ['==', ['get', 'legKind'], 'approach_transit'],
+                '#0369A1',
+                '#0E8F5B',
+              ],
+              'line-width': 5.2,
+              'line-opacity': 0.98,
+            },
+          });
+        }
+        if (!map.getLayer('xp-poi-itinerary-nodes-circle')) {
+          map.addLayer({
+            id: 'xp-poi-itinerary-nodes-circle',
+            type: 'circle',
+            source: 'xp-poi-itinerary-nodes',
+            paint: {
+              'circle-radius': [
+                'match',
+                ['get', 'nodeRole'],
+                'destination',
+                8,
+                'hub',
+                7,
+                6.5,
+              ],
+              'circle-color': [
+                'match',
+                ['get', 'nodeRole'],
+                'start',
+                '#0E8F5B',
+                'hub',
+                '#D97706',
+                'destination',
+                '#C85A32',
+                '#0E8F5B',
+              ],
+              'circle-stroke-color': '#FFFFFF',
+              'circle-stroke-width': 2.5,
+            },
+          });
+        }
       };
 
       ensureSources();
 
-      // Fond Explorer : eau et terres sauge, étiquettes masquées sur le globe.
+      // Enregistrement des sprites vectoriels Retina (2x) pour tous les calques unifiés.
+      registerExplorerMapSprites(map);
+
+      // Couche Three.js 3D flottante style Neopolis (canvas WebGL dédié synchronisé au relief 3D).
+      let unsubGlbPending: (() => void) | null = null;
       try {
-        for (const layer of map.getStyle().layers ?? []) {
-          if (layer.type === 'background') {
-            map.setPaintProperty(layer.id, 'background-color', '#E9EEE7');
-          } else if (layer.type === 'fill' && /water|ocean|sea/i.test(layer.id)) {
-            map.setPaintProperty(layer.id, 'fill-color', '#D9E4DB');
-          }
+        if (!three3DRef.current && threeCanvasRef.current) {
+          const controller = createExplorerThree3DLayer();
+          controller.setReducedMotion(Boolean(reducedMotionRef.current));
+          controller.attach(map, threeCanvasRef.current);
+          unsubGlbPending = controller.onPendingGlbChange((count) => {
+            emitMapActivity({ glbPendingCount: count });
+          });
+          three3DRef.current = controller;
         }
       } catch {
-        /* style inattendu : on garde le fond d'origine */
+        /* contexte WebGL 3D indisponible : les marqueurs 2D restent actifs */
+      }
+      (map as unknown as { __unsubGlbPending?: (() => void) | null }).__unsubGlbPending = unsubGlbPending;
+
+      // Moteur VFX cinétique (filets de vitesse zoom/pan, ondes de toucher, sonar d'arrivée).
+      try {
+        if (!vfxRef.current && vfxCanvasRef.current) {
+          const vfx = createMapVfxEngine();
+          vfx.setReducedMotion(Boolean(reducedMotionRef.current));
+          vfx.attach(map, vfxCanvasRef.current);
+          vfxRef.current = vfx;
+        }
+      } catch {
+        /* canvas 2D VFX indisponible : la carte reste 100% fonctionnelle */
+      }
+
+      // Cartographie LKDV Alpine Topographic + ciel atmosphérique + couches vectorielles plein air.
+      const cartoMap = asCartoMap(map);
+      if (cartoMap) {
+        const isSatBoot = mapBaseStyle === 'satellite';
+        const isNatBoot = mapBaseStyle === 'national' && Boolean(nationalSource);
+        applyExplorerBaseCartography(cartoMap, {
+          theme,
+          mapBaseStyle,
+          isSatelliteActive: isSatBoot,
+        });
+        applyExplorerSky(cartoMap, theme, isSatBoot);
+        const profile = syncPresetVectorCartography(cartoMap, {
+          activePreset,
+          layerVisibility,
+          theme,
+          isSatelliteActive: isSatBoot,
+          isNationalActive: isNatBoot,
+          isGpsLive: explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS',
+        });
+        applyZoomResponsiveCartography(cartoMap, map.getZoom(), {
+          showAlpinePeaks: profile.showAlpinePeaks,
+        });
       }
 
       setReady(true);
@@ -838,37 +1091,211 @@ export default function MapStage({
       onReady?.();
       markMap('map:interactive');
 
-      const handleCountry = (event: {
-        features?: Array<{ properties?: Record<string, unknown> }>;
-        lngLat?: { lng: number; lat: number };
-      }) => {
-        const props = event.features?.[0]?.properties;
-        const iso = typeof props?.iso_a2 === 'string' ? props.iso_a2 : null;
-        const name = typeof props?.name === 'string' ? props.name : '';
-        if (!iso || !onCountryClick) return;
-        const target = event.lngLat ?? map.getCenter();
-        onCountryClick(iso, name, [target.lng, target.lat]);
-      };
+      map.on(
+        'click',
+        (event: {
+          point?: { x: number; y: number };
+          lngLat?: { lng: number; lat: number };
+        }) => {
+          if (plannerMapPickRef.current) {
+            if (event.lngLat) {
+              onMapClickRef.current?.([event.lngLat.lng, event.lngLat.lat]);
+            }
+            return;
+          }
 
-      const handleRegion = (event: {
-        features?: Array<{ properties?: Record<string, unknown> }>;
-        lngLat?: { lng: number; lat: number };
-      }) => {
-        const props = event.features?.[0]?.properties;
-        const group =
-          (typeof props?.group === 'string' && props.group.trim().length > 0 ? props.group : null) ||
-          (typeof props?.name === 'string' && props.name.trim().length > 0 ? props.name : null);
-        if (!group || !onRegionClick) return;
-        const target = event.lngLat ?? map.getCenter();
-        onRegionClick(group, [target.lng, target.lat]);
-      };
+          if (!event.point) return;
 
-      map.on('click', 'xp-countries-fill', handleCountry as never);
-      map.on('click', 'xp-regions-fill', handleRegion as never);
-      map.on('click', (event: { lngLat?: { lng: number; lat: number } }) => {
-        if (!plannerMapPickRef.current || !event.lngLat) return;
-        onMapClickRef.current?.([event.lngLat.lng, event.lngLat.lat]);
-      });
+          // Micro-VFX tactile immédiat au point de contact
+          vfxRef.current?.spawnTapRipple(event.point.x, event.point.y);
+
+          // 0. Hit-test prioritaire sur les objets 3D flottants Neopolis (POIs, carnets, bouteilles, clubs, Pokédex)
+          const picked3D = three3DRef.current?.pickAtPoint(event.point.x, event.point.y, 44);
+          if (picked3D) {
+            three3DRef.current?.triggerSelectionJuice(picked3D.id);
+            vfxRef.current?.spawnArrivalBurst(
+              event.point.x,
+              event.point.y,
+              accentHexFor3DKind(picked3D.kind),
+            );
+            if (picked3D.sourceCategory === 'pin') {
+              const matchedPin: MapPin =
+                pinsRef.current.find((p) => p.id === picked3D.id) ?? {
+                  id: picked3D.id,
+                  kind: picked3D.kind,
+                  name: picked3D.label ?? 'Point d’intérêt',
+                  sub: picked3D.eleM != null ? `${Math.round(picked3D.eleM)} m` : undefined,
+                  lat: picked3D.lat,
+                  lon: picked3D.lng,
+                };
+              onPinClickRef.current?.(matchedPin);
+              return;
+            } else {
+              onUnifiedFeatureClickRef.current?.({
+                kind: picked3D.sourceCategory,
+                id: picked3D.id,
+                sourceId: `xp-3d-${picked3D.sourceCategory}`,
+                properties: picked3D.properties ?? { id: picked3D.id, name: picked3D.label ?? '' },
+                coordinates: [picked3D.lng, picked3D.lat],
+              });
+              return;
+            }
+          }
+
+          const styleLayers = map.getStyle()?.layers ?? [];
+          const interactiveLayers: string[] = [];
+          for (const layer of styleLayers) {
+            if (layer?.id && isInteractiveMapLayerId(layer.id)) {
+              interactiveLayers.push(layer.id);
+            }
+          }
+
+          let rendered: ReturnType<MapLibreMap['queryRenderedFeatures']> = [];
+          if (interactiveLayers.length > 0) {
+            try {
+              const hitTolerancePx = 12;
+              rendered = map.queryRenderedFeatures(
+                [
+                  [event.point.x - hitTolerancePx, event.point.y - hitTolerancePx],
+                  [event.point.x + hitTolerancePx, event.point.y + hitTolerancePx],
+                ],
+                {
+                  layers: interactiveLayers,
+                },
+              );
+            } catch {
+              rendered = [];
+            }
+          }
+
+          // Clic libre sur la carte : recentre automatiquement en douceur le point touché
+          // dans la zone visible au-dessus du tiroir pour ne jamais rester hors cadre.
+          if (!rendered || rendered.length === 0) {
+            if (
+              event.lngLat &&
+              Number.isFinite(event.lngLat.lng) &&
+              Number.isFinite(event.lngLat.lat)
+            ) {
+              centerAt(
+                map,
+                [event.lngLat.lng, event.lngLat.lat],
+                reducedMotionRef.current,
+                {
+                  sheetHeightPx: sheetHeightPxRef.current,
+                  viewportHeightPx: map.getContainer()?.clientHeight || 844,
+                },
+              );
+            }
+            return;
+          }
+
+          const fallbackTarget = event.lngLat ?? map.getCenter();
+          const fallbackCoords: [number, number] = [fallbackTarget.lng, fallbackTarget.lat];
+
+          const candidates: PickableMapFeature[] = [];
+          for (const feature of rendered) {
+            const layerId = feature.layer?.id ?? '';
+            const sourceId =
+              typeof feature.source === 'string' && feature.source.length > 0
+                ? feature.source
+                : typeof (feature.layer as { source?: unknown } | undefined)?.source === 'string'
+                  ? String((feature.layer as { source?: unknown }).source)
+                  : '';
+            let coords: [number, number] = fallbackCoords;
+            const geom = feature.geometry as { type?: string; coordinates?: unknown } | undefined;
+            if (
+              geom?.type === 'Point' &&
+              Array.isArray(geom.coordinates) &&
+              typeof geom.coordinates[0] === 'number' &&
+              typeof geom.coordinates[1] === 'number' &&
+              Number.isFinite(geom.coordinates[0]) &&
+              Number.isFinite(geom.coordinates[1])
+            ) {
+              coords = [geom.coordinates[0], geom.coordinates[1]];
+            }
+            candidates.push({
+              layerId,
+              sourceId,
+              properties: (feature.properties ?? {}) as Record<string, unknown>,
+              coordinates: coords,
+            });
+          }
+
+          const picked = pickHighestPriorityFeature(candidates);
+          if (!picked) {
+            if (
+              event.lngLat &&
+              Number.isFinite(event.lngLat.lng) &&
+              Number.isFinite(event.lngLat.lat)
+            ) {
+              centerAt(
+                map,
+                [event.lngLat.lng, event.lngLat.lat],
+                reducedMotionRef.current,
+                {
+                  sheetHeightPx: sheetHeightPxRef.current,
+                  viewportHeightPx: map.getContainer()?.clientHeight || 844,
+                },
+              );
+            }
+            return;
+          }
+
+          if (picked.isCluster) {
+            const cHeight = map.getContainer()?.clientHeight || 844;
+            map.easeTo({
+              center: picked.coordinates,
+              zoom: Math.min(15, map.getZoom() + 2.2),
+              padding: focusTargetPadding(sheetHeightPxRef.current, cHeight),
+              duration: reducedMotionRef.current ? 0 : 580,
+              easing: easeCinematicOut,
+              essential: true,
+            });
+            return;
+          }
+
+          if (picked.kind === 'itinerary') {
+            if (picked.id) {
+              onSelectItineraryRef.current?.(picked.id);
+            }
+            return;
+          }
+
+          if (picked.kind === 'route') {
+            const routeName =
+              typeof picked.properties.name === 'string' && picked.properties.name.trim().length > 0
+                ? picked.properties.name
+                : null;
+            onRouteClickRef.current?.(picked.id, routeName, picked.coordinates);
+            return;
+          }
+
+          if (picked.kind === 'region') {
+            const props = picked.properties;
+            const group =
+              (typeof props.group === 'string' && props.group.trim().length > 0
+                ? props.group
+                : null) ||
+              (typeof props.name === 'string' && props.name.trim().length > 0 ? props.name : null);
+            if (group) {
+              onRegionClickRef.current?.(group, picked.coordinates);
+            }
+            return;
+          }
+
+          if (picked.kind === 'country') {
+            const props = picked.properties;
+            const iso = typeof props.iso_a2 === 'string' ? props.iso_a2 : null;
+            const name = typeof props.name === 'string' ? props.name : '';
+            if (iso) {
+              onCountryClickRef.current?.(iso, name, picked.coordinates);
+            }
+            return;
+          }
+
+          onUnifiedFeatureClickRef.current?.(picked);
+        },
+      );
     });
 
     const reportBearing = () => {
@@ -881,12 +1308,66 @@ export default function MapStage({
     };
     // `rotate` couvre le geste et les `easeTo` de la boussole ; `moveend`
     // rattrape une rotation terminée sans dernier événement intermédiaire.
+    const onMoveStartActivity = () => {
+      setHoverTip(null);
+      three3DRef.current?.setMoving(true);
+      emitMapActivity({ isMoving: true });
+    };
+    let tilesLoadingTimer: number | null = null;
+    const onDataLoadingActivity = (ev?: { dataType?: string }) => {
+      if (ev?.dataType === 'source' || ev?.dataType === 'style') {
+        // Debounce transient tile loads so panning never spams React re-renders
+        if (tilesLoadingTimer === null && !mapActivityRef.current.tilesLoading) {
+          tilesLoadingTimer = window.setTimeout(() => {
+            tilesLoadingTimer = null;
+            emitMapActivity({ tilesLoading: true });
+          }, 220);
+        }
+      }
+    };
+    const onMapIdleActivity = () => {
+      if (tilesLoadingTimer !== null) {
+        window.clearTimeout(tilesLoadingTimer);
+        tilesLoadingTimer = null;
+      }
+      three3DRef.current?.setMoving(false);
+      emitMapActivity({ tilesLoading: false, isMoving: false });
+    };
+
+    // Progressive throttled viewport streaming during continuous pan so new elements
+    // start loading while the user keeps moving (never blocking gesture frames!)
+    let lastPanViewportMs = 0;
+    let panViewportTimer: number | null = null;
+    const onMoveProgressViewport = () => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastPanViewportMs >= 420) {
+        lastPanViewportMs = now;
+        reportViewport();
+      } else if (panViewportTimer === null) {
+        panViewportTimer = window.setTimeout(() => {
+          panViewportTimer = null;
+          lastPanViewportMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+          reportViewport();
+        }, 420 - (now - lastPanViewportMs));
+      }
+    };
+
     map.on('rotate', reportBearing);
     map.on('dragstart', reportUserPan);
     map.on('rotatestart', reportUserPan);
+    map.on('movestart', onMoveStartActivity);
+    map.on('move', onMoveProgressViewport);
+    map.on('dataloading', onDataLoadingActivity as never);
+    map.on('idle', onMapIdleActivity);
     reportBearing();
 
     map.on('moveend', () => {
+      if (panViewportTimer !== null) {
+        window.clearTimeout(panViewportTimer);
+        panViewportTimer = null;
+      }
+      three3DRef.current?.setMoving(false);
+      emitMapActivity({ isMoving: false });
       reportBearing();
       reportViewport();
       if (suppressMoveEnd.current) return;
@@ -896,12 +1377,25 @@ export default function MapStage({
       onMoveEnd?.([c.lng, c.lat], z);
     });
 
+    const orbitTimerRef = orbitRef;
     return () => {
       if (startupTimer) window.clearTimeout(startupTimer);
-      if (orbitRef.current) window.clearInterval(orbitRef.current);
+      if (tilesLoadingTimer !== null) window.clearTimeout(tilesLoadingTimer);
+      if (panViewportTimer !== null) window.clearTimeout(panViewportTimer);
+      if (orbitTimerRef.current) window.clearInterval(orbitTimerRef.current);
       map.off('rotate', reportBearing);
       map.off('dragstart', reportUserPan);
       map.off('rotatestart', reportUserPan);
+      map.off('movestart', onMoveStartActivity);
+      map.off('move', onMoveProgressViewport);
+      map.off('dataloading', onDataLoadingActivity as never);
+      map.off('idle', onMapIdleActivity);
+      const cleanupGlb = (map as unknown as { __unsubGlbPending?: (() => void) | null }).__unsubGlbPending;
+      cleanupGlb?.();
+      three3DRef.current?.dispose();
+      three3DRef.current = null;
+      vfxRef.current?.dispose();
+      vfxRef.current = null;
       map.remove();
       mapRef.current = null;
       setReady(false);
@@ -967,6 +1461,91 @@ export default function MapStage({
     const source = map.getSource('xp-access-route') as GeoJSONSource | undefined;
     if (source) source.setData((accessRouteGeometry ?? EMPTY) as never);
   }, [accessRouteGeometry, ready]);
+
+  // ── Itinéraires personnalisés POI (recommandé + alternatives) ────────────
+  const lastFittedItineraryKeyRef = useRef<string>('');
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const lineSource = map.getSource('xp-poi-itineraries') as GeoJSONSource | undefined;
+    const nodeSource = map.getSource('xp-poi-itinerary-nodes') as GeoJSONSource | undefined;
+    if (!lineSource || !nodeSource) return;
+
+    const list = poiItineraries ?? [];
+    if (list.length === 0) {
+      lineSource.setData(EMPTY as never);
+      nodeSource.setData(EMPTY as never);
+      lastFittedItineraryKeyRef.current = '';
+      return;
+    }
+
+    const activeId = selectedItineraryId ?? list[0]?.id ?? null;
+    const lineFeatures: Array<Record<string, unknown>> = [];
+    const nodeFeatures: Array<Record<string, unknown>> = [];
+
+    for (const it of list) {
+      const isSelected = it.id === activeId;
+      if (!isSelected && !showItineraryAlternatives) continue;
+      for (const leg of it.legs) {
+        if (leg.coordinates.length < 2) continue;
+        lineFeatures.push({
+          type: 'Feature',
+          properties: {
+            itineraryId: it.id,
+            role: it.role,
+            roleLabel: it.roleLabel,
+            legKind: leg.kind,
+            selected: isSelected,
+            durationP50Min: it.durationP50Min,
+            dplusM: it.dplusM,
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: leg.coordinates,
+          },
+        });
+      }
+      if (isSelected && it.geojson.geometry.coordinates.length >= 2) {
+        const coords = it.geojson.geometry.coordinates;
+        nodeFeatures.push({
+          type: 'Feature',
+          properties: { nodeRole: 'start', label: it.legs[0]?.fromLabel ?? 'Départ' },
+          geometry: { type: 'Point', coordinates: coords[0] },
+        });
+        if (it.legs.length > 1) {
+          const hubCoord = it.legs[0]?.coordinates[it.legs[0].coordinates.length - 1];
+          if (hubCoord) {
+            nodeFeatures.push({
+              type: 'Feature',
+              properties: { nodeRole: 'hub', label: it.legs[0]?.toLabel ?? 'Relais' },
+              geometry: { type: 'Point', coordinates: hubCoord },
+            });
+          }
+        }
+        nodeFeatures.push({
+          type: 'Feature',
+          properties: { nodeRole: 'destination', label: it.title },
+          geometry: { type: 'Point', coordinates: coords[coords.length - 1] },
+        });
+      }
+    }
+
+    lineSource.setData({ type: 'FeatureCollection', features: lineFeatures } as never);
+    nodeSource.setData({ type: 'FeatureCollection', features: nodeFeatures } as never);
+
+    // Fit bounds once when the active itinerary changes
+    const activeIt = list.find((item) => item.id === activeId) ?? list[0];
+    const fitKey = `${activeIt?.id ?? ''}:${activeIt?.geojson.geometry.coordinates.length ?? 0}`;
+    if (activeIt && fitKey !== lastFittedItineraryKeyRef.current) {
+      lastFittedItineraryKeyRef.current = fitKey;
+      const bounds = boundsOfTrack(activeIt.geojson.geometry);
+      if (bounds) {
+        const vw = map.getContainer()?.clientWidth || 390;
+        const pad = overviewPadding(vw, sheetHeightPxRef.current);
+        overviewOf(map, bounds, pad, reducedMotionRef.current);
+      }
+    }
+  }, [poiItineraries, selectedItineraryId, showItineraryAlternatives, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1059,39 +1638,61 @@ export default function MapStage({
     }
   }, [fireLayer, layerVisibility?.fire, ready]);
 
-  // ── thème ──────────────────────────────────────────────────────────────
+  // ── thème & contours territoriaux ──────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     const dark = theme === 'dark';
+    const isSat = mapBaseStyle === 'satellite' && !(mapBaseStyle === 'national' && Boolean(nationalSource));
     try {
       if (map.getLayer('xp-countries-fill')) {
         map.setPaintProperty('xp-countries-fill', 'fill-color', dark ? '#8FB79B' : '#5B7F55');
-        map.setPaintProperty('xp-countries-fill', 'fill-opacity', dark ? 0.18 : 0.13);
+        map.setPaintProperty(
+          'xp-countries-fill',
+          'fill-opacity',
+          territoryFillOpacityExpression('country', dark) as never,
+        );
       }
       if (map.getLayer('xp-countries-line')) {
-        map.setPaintProperty('xp-countries-line', 'line-color', dark ? '#DCEFE2' : '#17402C');
-        map.setPaintProperty('xp-countries-line', 'line-opacity', dark ? 0.4 : 0.32);
+        map.setPaintProperty('xp-countries-line', 'line-color', dark || isSat ? '#DCEFE2' : '#17402C');
+        map.setPaintProperty(
+          'xp-countries-line',
+          'line-opacity',
+          territoryLineOpacityExpression('country', dark) as never,
+        );
+      }
+      if (map.getLayer('xp-regions-fill')) {
+        map.setPaintProperty(
+          'xp-regions-fill',
+          'fill-opacity',
+          territoryFillOpacityExpression('region', dark) as never,
+        );
       }
       if (map.getLayer('xp-regions-line')) {
-        map.setPaintProperty('xp-regions-line', 'line-color', dark ? '#7FB3C8' : '#2F6F78');
+        map.setPaintProperty('xp-regions-line', 'line-color', dark || isSat ? '#BAE6FD' : '#2F6F78');
+        map.setPaintProperty(
+          'xp-regions-line',
+          'line-opacity',
+          territoryLineOpacityExpression('region', dark) as never,
+        );
       }
-      map.setSky({
-        'sky-color': dark ? 'rgba(20,26,23,0)' : 'rgba(233,238,231,0)',
-        'horizon-color': dark ? '#141a17' : '#e9eee7',
-        'fog-color': dark ? '#1c2420' : '#eef2ed',
-        'sky-horizon-blend': 0.5,
-        'horizon-fog-blend': 0.6,
-        'fog-ground-blend': 0.7,
-      } as never);
+      const cartoMap = asCartoMap(map);
+      if (cartoMap) {
+        applyExplorerBaseCartography(cartoMap, {
+          theme,
+          mapBaseStyle,
+          isSatelliteActive: isSat,
+        });
+        applyExplorerSky(cartoMap, theme, isSat);
+      }
     } catch {
       /* propriétés absentes : aucune conséquence */
     }
     const canvas = map.getCanvas();
     if (canvas?.style) {
-      canvas.style.filter = dark ? 'brightness(0.72) saturate(0.85) contrast(1.02)' : '';
+      canvas.style.filter = '';
     }
-  }, [theme, ready]);
+  }, [theme, mapBaseStyle, nationalSource, ready]);
 
   // ── fond national officiel (K3.05) ────────────────────────────────────
   useEffect(() => {
@@ -1154,29 +1755,17 @@ export default function MapStage({
     }
   }, [nationalSource, ready]);
 
-  // ── projection, fond et relief selon le niveau et le style ─────────────
+  // ── projection, fond, cartographie adaptative par preset et relief 3D ───
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    try {
-      map.setProjection({ type: level <= 1 ? 'globe' : 'mercator' });
-    } catch {
-      /* projection non supportée */
-    }
-    // Étiquettes : masquées sur le globe (niveau 0–1), visibles dès la région.
-    try {
-      for (const layer of map.getStyle().layers ?? []) {
-        if (layer.type !== 'symbol') continue;
-        map.setLayoutProperty(layer.id, 'visibility', level <= 1 ? 'none' : 'visible');
-      }
-    } catch {
-      /* aucune couche d'étiquettes */
-    }
 
+    const cartoMap = asCartoMap(map);
+    const cycleKey = process.env.NEXT_PUBLIC_THUNDERFOREST_API_KEY?.trim();
     const isNational = mapBaseStyle === 'national' && Boolean(nationalSource);
     const isSat = mapBaseStyle === 'satellite' && !isNational;
-    const isCycle = mapBaseStyle === 'cycle' && Boolean(map.getLayer('xp-cycle-layer')) && !isNational;
-    // « national » (ou « cycle » sans clé fournisseur) retombe sur le relief.
+    const isCycle = mapBaseStyle === 'cycle' && Boolean(cycleKey) && !isNational;
+    const isGps = explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS';
     const isRelief =
       (mapBaseStyle === 'relief' ||
         !mapBaseStyle ||
@@ -1184,12 +1773,72 @@ export default function MapStage({
         (mapBaseStyle === 'cycle' && !isCycle)) &&
       !isNational;
 
-    if (map.getLayer('xp-satellite-layer')) {
+    // 1. Couches vectorielles plein air (sentiers rando/trail, VTT, voies navigables, parcs, sommets 3D)
+    const presetProfile = cartoMap
+      ? syncPresetVectorCartography(cartoMap, {
+          activePreset,
+          layerVisibility,
+          theme,
+          isSatelliteActive: isSat,
+          isNationalActive: isNational,
+          isGpsLive: isGps,
+        })
+      : resolvePresetCartoProfile(activePreset, layerVisibility, isGps);
+
+    // 2. Fond hybride Satellite (inséré SOUS les étiquettes, sommets, sentiers et itinéraires!)
+    const symbolAnchor = cartoMap ? findFirstSymbolAnchor(cartoMap) : undefined;
+    if (isSat && !map.getSource('xp-satellite')) {
+      map.addSource('xp-satellite', {
+        type: 'raster',
+        tiles: [
+          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: '© Esri · Earthstar Geographics',
+      });
+    }
+    if (isSat && !map.getLayer('xp-satellite-layer') && map.getSource('xp-satellite')) {
+      map.addLayer(
+        {
+          id: 'xp-satellite-layer',
+          type: 'raster',
+          source: 'xp-satellite',
+          layout: { visibility: 'visible' },
+          paint: { 'raster-opacity': 1, 'raster-contrast': 0.06, 'raster-saturation': 0.08 },
+        },
+        symbolAnchor,
+      );
+    } else if (map.getLayer('xp-satellite-layer')) {
       map.setLayoutProperty('xp-satellite-layer', 'visibility', isSat ? 'visible' : 'none');
     }
-    if (map.getLayer('xp-cycle-layer')) {
+
+    if (isCycle && cycleKey && !map.getSource('xp-cycle')) {
+      map.addSource('xp-cycle', {
+        type: 'raster',
+        tiles: [
+          `https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=${encodeURIComponent(cycleKey)}`,
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: '© OpenCycleMap · © OpenStreetMap contributors',
+      });
+    }
+    if (isCycle && !map.getLayer('xp-cycle-layer') && map.getSource('xp-cycle')) {
+      map.addLayer(
+        {
+          id: 'xp-cycle-layer',
+          type: 'raster',
+          source: 'xp-cycle',
+          layout: { visibility: 'visible' },
+          paint: { 'raster-opacity': 0.96 },
+        },
+        symbolAnchor,
+      );
+    } else if (map.getLayer('xp-cycle-layer')) {
       map.setLayoutProperty('xp-cycle-layer', 'visibility', isCycle ? 'visible' : 'none');
     }
+
     if (map.getLayer('xp-national-topo-layer')) {
       map.setLayoutProperty(
         'xp-national-topo-layer',
@@ -1198,35 +1847,116 @@ export default function MapStage({
       );
     }
 
-    const updateTerrainAndHillshade = () => {
+    // 3. Gardes d'état strictes sur zoom : projection, étiquettes, ombrage relief & DEM 3D.
+    let lastTerrain: boolean | null = null;
+    let lastHillshade: boolean | null = null;
+    let lastGlobe: boolean | null = null;
+    let lastLabelsAll: boolean | null = null;
+
+    const updateZoomCartography = () => {
       const z = map.getZoom();
-      const terrainAllowed = layerVisibility?.terrain3d !== false;
+      const shouldBeGlobe = z < GLOBE_TO_MERCATOR_ZOOM;
+      const shouldShowAllLabels = z >= LABELS_SHOW_ALL_ZOOM;
+
+      if (cartoMap && (shouldBeGlobe !== lastGlobe || shouldShowAllLabels !== lastLabelsAll)) {
+        lastGlobe = shouldBeGlobe;
+        lastLabelsAll = shouldShowAllLabels;
+        applyZoomResponsiveCartography(cartoMap, z, {
+          showAlpinePeaks: presetProfile.showAlpinePeaks,
+        });
+      }
+
+      const terrainAllowed = layerVisibility?.terrain3d !== false && !isGps;
       const hillshadeAllowed = layerVisibility?.hillshade !== false;
-      const showTerrain = isRelief && terrainAllowed && (level >= 3 || z >= 9.5);
-      const showHillshade = isRelief && hillshadeAllowed && (level >= 2 || z >= 7.5);
+      const showTerrain = (isRelief || isSat) && terrainAllowed && (level >= 2 || z >= 7.0);
+      const showHillshade = (isRelief || isSat) && hillshadeAllowed && (level >= 2 || z >= 5.5);
 
-      if (map.getLayer('xp-hillshade')) {
-        map.setLayoutProperty(
-          'xp-hillshade',
-          'visibility',
-          showHillshade ? 'visible' : 'none',
-        );
+      if (showHillshade !== lastHillshade) {
+        lastHillshade = showHillshade;
+        if (showHillshade) {
+          if (!map.getSource('xp-terrain-hillshade')) {
+            map.addSource('xp-terrain-hillshade', {
+              type: 'raster-dem',
+              tiles: [TERRAIN_SOURCE],
+              encoding: 'terrarium',
+              tileSize: 256,
+              maxzoom: 13,
+            });
+          }
+          const paint = hillshadePaintForTheme(theme, presetProfile.hillshadeExaggeration, isSat);
+          if (!map.getLayer('xp-hillshade')) {
+            const hillshadeAnchor = cartoMap ? findHillshadeBeforeId(cartoMap) : undefined;
+            map.addLayer(
+              {
+                id: 'xp-hillshade',
+                type: 'hillshade',
+                source: 'xp-terrain-hillshade',
+                layout: { visibility: 'visible' },
+                paint: paint as never,
+              },
+              hillshadeAnchor,
+            );
+          } else {
+            map.setLayoutProperty('xp-hillshade', 'visibility', 'visible');
+            for (const [k, v] of Object.entries(paint)) {
+              try {
+                map.setPaintProperty('xp-hillshade', k, v as never);
+              } catch {
+                /* ignore */
+              }
+            }
+          }
+        } else if (map.getLayer('xp-hillshade')) {
+          map.setLayoutProperty('xp-hillshade', 'visibility', 'none');
+        }
+      } else if (showHillshade && map.getLayer('xp-hillshade')) {
+        const paint = hillshadePaintForTheme(theme, presetProfile.hillshadeExaggeration, isSat);
+        for (const [k, v] of Object.entries(paint)) {
+          try {
+            map.setPaintProperty('xp-hillshade', k, v as never);
+          } catch {
+            /* ignore */
+          }
+        }
       }
-      try {
-        map.setTerrain(
-          showTerrain ? { source: 'xp-terrain', exaggeration: 1.3 } : null,
-        );
-      } catch {
-        /* DEM indisponible */
+
+      if (showTerrain !== lastTerrain) {
+        lastTerrain = showTerrain;
+        try {
+          if (showTerrain && !map.getSource('xp-terrain')) {
+            map.addSource('xp-terrain', {
+              type: 'raster-dem',
+              tiles: [TERRAIN_SOURCE],
+              encoding: 'terrarium',
+              tileSize: 256,
+              maxzoom: 13,
+              attribution: 'Relief : AWS Terrain Tiles (open data)',
+            });
+          }
+          map.setTerrain(
+            showTerrain ? { source: 'xp-terrain', exaggeration: 1.5 } : null,
+          );
+        } catch {
+          /* DEM indisponible */
+        }
       }
     };
 
-    updateTerrainAndHillshade();
-    map.on('zoom', updateTerrainAndHillshade);
+    updateZoomCartography();
+    map.on('zoom', updateZoomCartography);
     return () => {
-      map.off('zoom', updateTerrainAndHillshade);
+      map.off('zoom', updateZoomCartography);
     };
-  }, [level, mapBaseStyle, nationalSource, layerVisibility?.terrain3d, layerVisibility?.hillshade, ready]);
+  }, [
+    level,
+    theme,
+    mapBaseStyle,
+    nationalSource,
+    activePreset,
+    explorerMode,
+    layerVisibility,
+    ready,
+  ]);
 
   // ── calques de données interactifs ─────────────────────────────────────
   useEffect(() => {
@@ -1257,6 +1987,13 @@ export default function MapStage({
   }, [layerVisibility, ready]);
 
   // ── couches dynamiques C01/C02/C03 (heatmaps, vélo, feux, surfaces, lieux, highlights) ──
+  const lastDynamicLayerGeoRef = useRef<Map<string, unknown>>(new Map());
+  useEffect(() => {
+    if (!ready) {
+      lastDynamicLayerGeoRef.current.clear();
+    }
+  }, [ready]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -1266,9 +2003,11 @@ export default function MapStage({
       geo: GeoCollection | null | undefined,
       visible: boolean,
     ) => {
+      const nextData = visible && geo ? geo : EMPTY;
       const source = map.getSource(sourceId) as GeoJSONSource | undefined;
-      if (source) {
-        source.setData((visible && geo ? geo : EMPTY) as never);
+      if (source && lastDynamicLayerGeoRef.current.get(sourceId) !== nextData) {
+        source.setData(nextData as never);
+        lastDynamicLayerGeoRef.current.set(sourceId, nextData);
       }
       if (map.getLayer(layerId)) {
         map.setLayoutProperty(
@@ -1297,6 +2036,411 @@ export default function MapStage({
     firesGeo,
     highlightsGeo,
   ]);
+
+  // ── couches unifiées Explorer (hazards, radar, airspace, light pollution, GBIF, Pokédex, social) + déchargement déterministe GPS ──
+  const onUnifiedLayerEvictRef = useRef(onUnifiedLayerEvict);
+  onUnifiedLayerEvictRef.current = onUnifiedLayerEvict;
+  const lastDisposedModeRef = useRef<ExplorerMode | null>(null);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS') {
+      disposeNonEssentialMapLayers(map, activeSport ?? undefined);
+      lastDisposedModeRef.current = explorerMode;
+    } else if (lastDisposedModeRef.current === 'GPS_ACTIVE' || lastDisposedModeRef.current === 'SOS') {
+      restoreMapTileCacheBudget(map);
+      lastDisposedModeRef.current = explorerMode;
+    }
+    const res = syncUnifiedOverlayLayers(map, {
+      layerVisibility: layerVisibility ?? {},
+      mode: explorerMode,
+      activeSport: activeSport ?? undefined,
+      radarTileTemplate,
+      geojsonDataBySource: (unifiedGeojson ?? {}) as Record<string, GeoJSON.FeatureCollection | null | undefined>,
+    });
+    if (res.evictedKeys.length > 0) {
+      onUnifiedLayerEvictRef.current?.(res.evictedKeys);
+    }
+  }, [ready, explorerMode, activeSport, layerVisibility, radarTileTemplate, unifiedGeojson]);
+
+  // ── halo de sélection forest léger (monté paresseusement uniquement si selectedFeature != null) ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const SOURCE_ID = 'xp-selected-highlight';
+    const HALO_LAYER_ID = 'xp-selected-highlight-halo';
+    const RING_LAYER_ID = 'xp-selected-highlight-ring';
+
+    const hasValidCoords =
+      Boolean(selectedFeature) &&
+      Array.isArray(selectedFeature?.coordinates) &&
+      Number.isFinite(selectedFeature.coordinates[0]) &&
+      Number.isFinite(selectedFeature.coordinates[1]);
+
+    const suppress2DRingFor3D = Boolean(
+      three3DRef.current && explorerMode !== 'GPS_ACTIVE' && explorerMode !== 'SOS',
+    );
+
+    if (!hasValidCoords || !selectedFeature || suppress2DRingFor3D) {
+      const existingSource = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+      if (existingSource) {
+        existingSource.setData(EMPTY as never);
+      }
+      if (map.getLayer(HALO_LAYER_ID)) {
+        map.setLayoutProperty(HALO_LAYER_ID, 'visibility', 'none');
+      }
+      if (map.getLayer(RING_LAYER_ID)) {
+        map.setLayoutProperty(RING_LAYER_ID, 'visibility', 'none');
+      }
+      return;
+    }
+
+    const pointCollection: GeoCollection = {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: { id: selectedFeature.id },
+          geometry: {
+            type: 'Point',
+            coordinates: [selectedFeature.coordinates[0], selectedFeature.coordinates[1]],
+          },
+        },
+      ],
+    };
+
+    const existingSource = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    if (!existingSource) {
+      map.addSource(SOURCE_ID, {
+        type: 'geojson',
+        data: pointCollection as never,
+      });
+    } else {
+      existingSource.setData(pointCollection as never);
+    }
+
+    if (!map.getLayer(HALO_LAYER_ID)) {
+      map.addLayer({
+        id: HALO_LAYER_ID,
+        type: 'circle',
+        source: SOURCE_ID,
+        paint: {
+          'circle-radius': 18,
+          'circle-color': '#17402C',
+          'circle-opacity': 0.22,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#96BA8E',
+          'circle-stroke-opacity': 0.85,
+        },
+      });
+    } else {
+      map.setLayoutProperty(HALO_LAYER_ID, 'visibility', 'visible');
+    }
+
+    if (!map.getLayer(RING_LAYER_ID)) {
+      map.addLayer({
+        id: RING_LAYER_ID,
+        type: 'circle',
+        source: SOURCE_ID,
+        paint: {
+          'circle-radius': 8,
+          'circle-color': '#17402C',
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#FFFFFF',
+        },
+      });
+    } else {
+      map.setLayoutProperty(RING_LAYER_ID, 'visibility', 'visible');
+    }
+
+    if (reducedMotion) return;
+
+    let rafId = 0;
+    const startMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const animatePulse = (nowMs: number) => {
+      const elapsed = (nowMs - startMs) % 1800;
+      const t = (Math.sin((elapsed / 1800) * Math.PI * 2) + 1) / 2;
+      try {
+        if (map.getLayer(HALO_LAYER_ID)) {
+          map.setPaintProperty(HALO_LAYER_ID, 'circle-radius', 15 + t * 9);
+          map.setPaintProperty(HALO_LAYER_ID, 'circle-opacity', 0.28 - t * 0.14);
+        }
+      } catch {
+        return;
+      }
+      rafId = window.requestAnimationFrame(animatePulse);
+    };
+    rafId = window.requestAnimationFrame(animatePulse);
+
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [ready, selectedFeature, reducedMotion, explorerMode]);
+
+  // ── synchronisation de la couche Three.js 3D flottante (Neopolis) ──────
+  useEffect(() => {
+    const controller = three3DRef.current;
+    if (!controller || !ready) return;
+
+    const isGps = explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS';
+    controller.setEnabled(!isGps);
+    controller.setReducedMotion(Boolean(reducedMotion));
+    controller.setSelectedId(selectedFeature?.id ?? selectedId ?? null);
+    controller.setActiveCategory(activeCategory ?? 'explorer');
+    vfxRef.current?.setEnabled(!isGps);
+    vfxRef.current?.setReducedMotion(Boolean(reducedMotion));
+
+    const mapHeight = mapRef.current?.getContainer()?.clientHeight || 844;
+    controller.setSafeBounds(60, Math.max(140, mapHeight - sheetHeightPx - 8));
+
+    if (isGps) {
+      controller.setItems([]);
+      return;
+    }
+
+    const cLng = Array.isArray(center) && Number.isFinite(center[0]) ? center[0] : 2.35;
+    const cLat = Array.isArray(center) && Number.isFinite(center[1]) ? center[1] : 48.85;
+    const distSq = (lng: number, lat: number) => (lng - cLng) ** 2 + (lat - cLat) ** 2;
+    const liveZoom = mapRef.current?.getZoom?.() ?? zoom;
+    const lodBudget = lod3DBudgetForZoom(liveZoom);
+
+    const items: Array<{ item: Floating3DItem; score: number }> = [];
+    const seen = new Set<string>();
+
+    // 0. Entité actuellement sélectionnée (toujours rendue en 3D héroïque même hors cluster)
+    if (
+      selectedFeature &&
+      Number.isFinite(selectedFeature.coordinates[0]) &&
+      Number.isFinite(selectedFeature.coordinates[1])
+    ) {
+      const selKind = normalize3DEntityKind(selectedFeature.kind ?? 'spot');
+      const selCategory: Floating3DItem['sourceCategory'] =
+        selKind === 'carnet' ||
+        selKind === 'bottle' ||
+        selKind === 'club' ||
+        selKind === 'story' ||
+        selKind === 'friend'
+          ? selKind
+          : selKind === 'club_event'
+            ? 'club'
+            : selKind === 'pokedex' || selKind.startsWith('pokedex_')
+              ? 'pokedex'
+              : selKind === 'fire' ||
+                  selKind === 'flood' ||
+                  selKind === 'seismic' ||
+                  selKind === 'aircraft' ||
+                  selKind === 'rescue'
+                ? 'hazard'
+                : 'pin';
+      seen.add(selectedFeature.id);
+      items.push({
+        score: -1,
+        item: {
+          id: selectedFeature.id,
+          kind: selKind,
+          lng: selectedFeature.coordinates[0],
+          lat: selectedFeature.coordinates[1],
+          label: selectedFeature.label,
+          selected: true,
+          sourceCategory: selCategory,
+        },
+      });
+    }
+
+    // 1. POIs stables (alimentés directement depuis le cache spatial `pins`, et non `overlay` DOM,
+    // pour éliminer définitivement tout scintillement en pan/zoom!)
+    for (const pin of pins) {
+      if (!pin || pin.kind === 'country') continue;
+      if (!Number.isFinite(pin.lon) || !Number.isFinite(pin.lat)) continue;
+      if (seen.has(pin.id)) continue;
+      const resolvedPinKind = normalize3DEntityKind(pin.kind, pin.subtype);
+      const isPinSelected = pin.id === selectedId || pin.id === selectedFeature?.id;
+      if (!lodBudget.allowKind(resolvedPinKind, isPinSelected)) continue;
+      seen.add(pin.id);
+      const eleMatch = pin.sub ? /(\d[\d\s]*)\s*m/i.exec(pin.sub) : null;
+      const eleM = eleMatch ? Number(eleMatch[1].replace(/\s+/g, '')) : null;
+      items.push({
+        score: distSq(pin.lon, pin.lat) * 0.85,
+        item: {
+          id: pin.id,
+          kind: resolvedPinKind,
+          lng: pin.lon,
+          lat: pin.lat,
+          eleM: Number.isFinite(eleM) ? eleM : null,
+          label: pin.name,
+          selected: isPinSelected,
+          sourceCategory: 'pin',
+        },
+      });
+    }
+
+    // 2. Objets unifiés actifs (Carnets, Bouteilles, Clubs, Sorties, Stories, Amis, Pokédex taxonomique, Risques)
+    const lv = layerVisibility ?? {};
+    const unifiedSpecs: Array<{
+      sourceId: string;
+      visKey: string;
+      kind: Floating3DItem['kind'];
+      sourceCategory: Floating3DItem['sourceCategory'];
+    }> = [
+      { sourceId: 'xp-social-bottles', visKey: 'socialBottles', kind: 'bottle', sourceCategory: 'bottle' },
+      { sourceId: 'xp-social-carnets', visKey: 'socialCarnets', kind: 'carnet', sourceCategory: 'carnet' },
+      { sourceId: 'xp-social-clubs', visKey: 'socialClubs', kind: 'club', sourceCategory: 'club' },
+      { sourceId: 'xp-social-events', visKey: 'socialClubs', kind: 'club_event', sourceCategory: 'club' },
+      { sourceId: 'xp-social-stories', visKey: 'socialStories', kind: 'story', sourceCategory: 'story' },
+      { sourceId: 'xp-social-friends', visKey: 'socialFriends', kind: 'friend', sourceCategory: 'friend' },
+      { sourceId: 'xp-pokedex-species', visKey: 'pokedexSpecies', kind: 'pokedex', sourceCategory: 'pokedex' },
+      { sourceId: 'xp-hazard-fires', visKey: 'hazardFires', kind: 'fire', sourceCategory: 'hazard' },
+      { sourceId: 'xp-hazard-floods', visKey: 'hazardFloods', kind: 'flood', sourceCategory: 'hazard' },
+      { sourceId: 'xp-hazard-seismic', visKey: 'hazardSeismic', kind: 'seismic', sourceCategory: 'hazard' },
+      { sourceId: 'xp-airspace-aircraft', visKey: 'airspaceAircraft', kind: 'aircraft', sourceCategory: 'hazard' },
+    ];
+
+    for (const spec of unifiedSpecs) {
+      if (!lv[spec.visKey]) continue;
+      const collection = unifiedGeojson?.[spec.sourceId];
+      if (!collection || !Array.isArray(collection.features)) continue;
+      for (const feat of collection.features) {
+        const geom = feat?.geometry as { type?: string; coordinates?: unknown } | undefined;
+        if (geom?.type !== 'Point' || !Array.isArray(geom.coordinates)) continue;
+        const lng = Number(geom.coordinates[0]);
+        const lat = Number(geom.coordinates[1]);
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
+        const props = (feat.properties ?? {}) as Record<string, unknown>;
+        // Never mount 3D pins at synthetic/fallback coordinates for GPS-less stories or out-of-area records
+        if (props.hasExactCoords === false) continue;
+        const rawId = props.id ?? props.taxonId ?? props.icao24 ?? props.callsign ?? `${spec.sourceId}:${lng.toFixed(4)},${lat.toFixed(4)}`;
+        const id = String(rawId);
+        const key = `${spec.sourceCategory}:${id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const headingRaw = props.heading ?? props.true_track;
+        const resolvedKind =
+          spec.sourceId === 'xp-pokedex-species'
+            ? normalize3DEntityKind('pokedex', undefined, {
+                iconicTaxon: typeof props.iconicTaxon === 'string' ? props.iconicTaxon : null,
+                kingdom: typeof props.kingdom === 'string' ? props.kingdom : null,
+              })
+            : spec.kind;
+        items.push({
+          score: distSq(lng, lat),
+          item: {
+            id,
+            kind: resolvedKind,
+            lng,
+            lat,
+            label: String(props.title ?? props.name ?? props.commonName ?? props.callsign ?? ''),
+            headingDeg: typeof headingRaw === 'number' ? headingRaw : null,
+            selected: id === selectedFeature?.id,
+            sourceCategory: spec.sourceCategory,
+            properties: props,
+          },
+        });
+      }
+    }
+
+    // 3. Couches locales vélo (atelier, réparation, borne VAE), favoris & highlights en 3D
+    const extraGeoSpecs: Array<{
+      collection: GeoCollection | null | undefined;
+      enabled: boolean;
+      defaultKind: Floating3DItem['kind'];
+      prefix: string;
+    }> = [
+      { collection: bikePoisGeo, enabled: lv.bikePois === true, defaultKind: 'bike_shop', prefix: 'bike' },
+      { collection: savedPlacesGeo, enabled: lv.savedPlaces === true, defaultKind: 'saved_place', prefix: 'saved' },
+      { collection: highlightsGeo, enabled: lv.highlights !== false, defaultKind: 'saved_place', prefix: 'highlight' },
+    ];
+
+    for (const extra of extraGeoSpecs) {
+      if (!extra.enabled || !extra.collection?.features?.length) continue;
+      for (const feat of extra.collection.features) {
+        const geom = feat?.geometry as { type?: string; coordinates?: unknown } | undefined;
+        if (geom?.type !== 'Point' || !Array.isArray(geom.coordinates)) continue;
+        const lng = Number(geom.coordinates[0]);
+        const lat = Number(geom.coordinates[1]);
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue;
+        const props = (feat.properties ?? {}) as Record<string, unknown>;
+        const id = String(props.id ?? `${extra.prefix}:${lng.toFixed(4)},${lat.toFixed(4)}`);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const rawCat = typeof props.category === 'string' ? props.category : null;
+        const resolvedKind = rawCat
+          ? normalize3DEntityKind(extra.defaultKind, rawCat, { category: rawCat })
+          : extra.defaultKind;
+        items.push({
+          score: distSq(lng, lat) * 0.95,
+          item: {
+            id,
+            kind: resolvedKind,
+            lng,
+            lat,
+            label: String(props.name ?? props.title ?? ''),
+            selected: id === selectedId || id === selectedFeature?.id,
+            sourceCategory: 'pin',
+            properties: props,
+          },
+        });
+      }
+    }
+
+    const filteredForLod = items.filter((entry) =>
+      lodBudget.allowKind(entry.item.kind, Boolean(entry.item.selected)),
+    );
+    const balancedItems = selectBalanced3DItems(filteredForLod, {
+      zoom: liveZoom,
+      activeCategory,
+      maxTotal: Math.min(MAX_FLOATING_3D_ITEMS, lodBudget.maxItems),
+    });
+    controller.setItems(balancedItems);
+  }, [
+    ready,
+    explorerMode,
+    reducedMotion,
+    selectedId,
+    selectedFeature,
+    activeCategory,
+    pins,
+    layerVisibility,
+    unifiedGeojson,
+    bikePoisGeo,
+    savedPlacesGeo,
+    highlightsGeo,
+    center,
+    zoom,
+    sheetHeightPx,
+  ]);
+
+  // ── protection WebGL context loss (mobile Safari / WKWebView) ──
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const canvas = map.getCanvas?.();
+    if (!canvas) return;
+    const onLost = (e: Event) => {
+      e.preventDefault();
+    };
+    const onRestored = () => {
+      registerExplorerMapSprites(map);
+      if (explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS') {
+        disposeNonEssentialMapLayers(map, activeSport ?? undefined);
+      }
+      syncUnifiedOverlayLayers(map, {
+        layerVisibility: layerVisibility ?? {},
+        mode: explorerMode,
+        activeSport: activeSport ?? undefined,
+        zoom,
+        radarTileTemplate,
+        geojsonDataBySource: (unifiedGeojson ?? {}) as Record<string, GeoJSON.FeatureCollection | null | undefined>,
+      });
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+    return () => {
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+    };
+  }, [ready, explorerMode, activeSport, layerVisibility, zoom, radarTileTemplate, unifiedGeojson]);
 
   // ── pente réelle de l'itinéraire sélectionné (K3.04) ────────────────────
   useEffect(() => {
@@ -1341,26 +2485,86 @@ export default function MapStage({
   }, [cameraIntent, paused, reducedMotion, ready]);
 
   // ── intentions de caméra (plongée, révélation, suivi, vue d'ensemble, survol) ──
+  // On suit l'identité de l'objet `cameraIntent` via un compteur monotone afin qu'un
+  // second clic sur le même élément 3D ou le bouton Ma Position recentre TOUJOURS la carte.
+  const lastIntentObjRef = useRef<CameraIntent | null | undefined>(undefined);
+  const intentSeqRef = useRef(0);
+  const intentChangedThisRender = cameraIntent !== lastIntentObjRef.current;
+  if (intentChangedThisRender) {
+    lastIntentObjRef.current = cameraIntent;
+    intentSeqRef.current += 1;
+  }
+
+  // ── cadrage dynamique continu au-dessus du tiroir (ne jamais être hors cadre) ──
+  const lastAppliedSheetHeightRef = useRef<number | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS') return;
+    if (lastAppliedSheetHeightRef.current === sheetHeightPx) return;
+    const prevHeight = lastAppliedSheetHeightRef.current;
+    lastAppliedSheetHeightRef.current = sheetHeightPx;
+
+    const cHeight = map.getContainer()?.clientHeight || 844;
+    const nextPad = focusTargetPadding(sheetHeightPx, cHeight);
+
+    // Si une intention caméra (`reveal` / `level` / `follow`) part dans ce même rendu,
+    // elle applique déjà le nouveau `padding` + boucle fermée 3D : on évite un double `easeTo`.
+    if (prevHeight === null || (intentChangedThisRender && cameraIntent && cameraIntent.type !== 'none')) {
+      if (prevHeight === null) {
+        try {
+          map.setPadding(nextPad);
+        } catch {
+          /* ignore */
+        }
+      }
+      return;
+    }
+
+    const activeTarget = selectedFeatureRef.current?.coordinates;
+    const hasActiveTarget =
+      Array.isArray(activeTarget) &&
+      Number.isFinite(activeTarget[0]) &&
+      Number.isFinite(activeTarget[1]);
+
+    suppressMoveEnd.current = true;
+    window.setTimeout(() => {
+      suppressMoveEnd.current = false;
+    }, 450);
+
+    map.easeTo({
+      ...(hasActiveTarget ? { center: activeTarget } : {}),
+      padding: nextPad,
+      duration: reducedMotion ? 0 : 380,
+      easing: easeCinematicOut,
+      essential: true,
+    });
+  }, [ready, sheetHeightPx, explorerMode, reducedMotion, intentChangedThisRender, cameraIntent]);
+
   const intentKey = cameraIntent
-    ? cameraIntent.type === 'level'
-      ? `level:${cameraIntent.level}:${cameraIntent.center.join(',')}`
-      : cameraIntent.type === 'reveal'
-        ? `reveal:${cameraIntent.center.join(',')}`
-        : cameraIntent.type === 'bearing'
-          ? `bearing:${cameraIntent.northUp}:${cameraIntent.bearingDeg ?? ''}`
-          : cameraIntent.type === 'zoom'
-            ? `zoom:${cameraIntent.zoom}`
-            : cameraIntent.type === 'flyover'
-            ? `flyover:${cameraIntent.routeId}`
-            : cameraIntent.type === 'follow'
-              ? `follow:${me ? `${me.lat.toFixed(5)},${me.lng.toFixed(5)}` : center.join(',')}`
-              : cameraIntent.type
+    ? `${intentSeqRef.current}:${
+        cameraIntent.type === 'level'
+          ? `level:${cameraIntent.level}:${cameraIntent.center.join(',')}`
+          : cameraIntent.type === 'reveal'
+            ? `reveal:${cameraIntent.center.join(',')}`
+            : cameraIntent.type === 'bearing'
+              ? `bearing:${cameraIntent.northUp}:${cameraIntent.bearingDeg ?? ''}`
+              : cameraIntent.type === 'zoom'
+                ? `zoom:${cameraIntent.zoom}`
+                : cameraIntent.type === 'flyover'
+                  ? `flyover:${cameraIntent.routeId}`
+                  : cameraIntent.type === 'follow'
+                    ? `follow:${me ? `${me.lat.toFixed(5)},${me.lng.toFixed(5)}` : center.join(',')}`
+                    : cameraIntent.type
+      }`
     : '';
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !cameraIntent) return;
     const container = map.getContainer();
+    const viewportHeightPx = container.clientHeight || 844;
+    const livePadding = focusTargetPadding(sheetHeightPxRef.current, viewportHeightPx);
 
     if (cameraIntent.type === 'level') {
       if (!Number.isFinite(cameraIntent.center?.[0]) || !Number.isFinite(cameraIntent.center?.[1])) return;
@@ -1368,26 +2572,69 @@ export default function MapStage({
       window.setTimeout(() => {
         suppressMoveEnd.current = false;
       }, 1500);
-      flyToLevel(map, cameraIntent.center, cameraIntent.level, reducedMotion);
+      flyToLevel(map, cameraIntent.center, cameraIntent.level, reducedMotion, {
+        sheetHeightPx: sheetHeightPxRef.current,
+        viewportHeightPx,
+      });
       return;
     }
     if (cameraIntent.type === 'bearing') {
       if (cameraIntent.northUp) {
-        map.easeTo({ bearing: 0, duration: reducedMotion ? 0 : 400 });
+        map.easeTo({
+          bearing: 0,
+          padding: livePadding,
+          duration: reducedMotion ? 0 : 420,
+          easing: easeCinematicOut,
+          essential: true,
+        });
       } else if (typeof cameraIntent.bearingDeg === 'number' && Number.isFinite(cameraIntent.bearingDeg)) {
-        map.easeTo({ bearing: cameraIntent.bearingDeg, duration: reducedMotion ? 0 : 350 });
+        map.easeTo({
+          bearing: cameraIntent.bearingDeg,
+          padding: livePadding,
+          duration: reducedMotion ? 0 : 380,
+          easing: easeCinematicOut,
+          essential: true,
+        });
       }
       return;
     }
     if (cameraIntent.type === 'zoom') {
       if (Number.isFinite(cameraIntent.zoom)) {
-        map.easeTo({ zoom: cameraIntent.zoom, duration: reducedMotion ? 0 : 350 });
+        map.easeTo({
+          zoom: cameraIntent.zoom,
+          padding: livePadding,
+          duration: reducedMotion ? 0 : 380,
+          easing: easeCinematicOut,
+          essential: true,
+        });
       }
       return;
     }
     if (cameraIntent.type === 'reveal') {
       if (!Number.isFinite(cameraIntent.center?.[0]) || !Number.isFinite(cameraIntent.center?.[1])) return;
-      revealAt(map, cameraIntent.center, reducedMotion);
+      const targetCenter = cameraIntent.center;
+      const viewportWidthPx = container.clientWidth || 390;
+      revealAt(map, targetCenter, reducedMotion, {
+        targetZoom: cameraIntent.zoom,
+        sheetHeightPx: sheetHeightPxRef.current,
+        viewportWidthPx,
+        viewportHeightPx,
+        onArrive: () => {
+          const activeId = selectedFeatureRef.current?.id ?? selectedIdRef.current ?? null;
+          if (activeId) {
+            three3DRef.current?.triggerSelectionJuice(activeId);
+          }
+          try {
+            const pt = map.project(targetCenter);
+            if (pt && Number.isFinite(pt.x) && Number.isFinite(pt.y)) {
+              const kind = normalize3DEntityKind(selectedFeatureRef.current?.kind ?? 'spot');
+              vfxRef.current?.spawnArrivalBurst(pt.x, pt.y, accentHexFor3DKind(kind));
+            }
+          } catch {
+            /* ignore */
+          }
+        },
+      });
       return;
     }
     if (cameraIntent.type === 'follow') {
@@ -1451,7 +2698,25 @@ export default function MapStage({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+
+    const hasDistanceMarkers = Boolean(distanceMarkers && distanceMarkers.length > 0);
+    const hasMe = Boolean(me && Number.isFinite(me.lng) && Number.isFinite(me.lat));
+    if (pins.length === 0 && !hasDistanceMarkers && !hasMe) {
+      setOverlay((current) => (current.length === 0 ? current : []));
+      setClusters((current) => (current.length === 0 ? current : []));
+      setDistanceScreen((current) => (current.length === 0 ? current : []));
+      setMeScreen((current) => (current === null ? current : null));
+      return;
+    }
+
     let frame = 0;
+
+    const cachedChromeBottomRef = { current: 64 };
+    const measureChrome = () => {
+      const chrome = document.querySelector('.xp20-top-chrome, .xp-chrome') as HTMLElement | null;
+      cachedChromeBottomRef.current = chrome?.getBoundingClientRect().bottom ?? 64;
+    };
+    measureChrome();
 
     const project = () => {
       frame = 0;
@@ -1463,8 +2728,7 @@ export default function MapStage({
       const sheetTop = cHeight - sheetHeightPx;
       // Bande haute occupée par la capsule et les boutons ronds : aucun repère
       // ni pastille ne doit s'y trouver (04_CARTE §1).
-      const chrome = document.querySelector('.xp-chrome') as HTMLElement | null;
-      const chromeBottom = chrome?.getBoundingClientRect().bottom ?? 96;
+      const chromeBottom = cachedChromeBottomRef.current;
 
       for (const pin of pins) {
         if (!pin || !Number.isFinite(pin.lon) || !Number.isFinite(pin.lat)) continue;
@@ -1504,10 +2768,14 @@ export default function MapStage({
           );
         return same ? current : clustered.clusters;
       });
+      const zNow = map.getZoom();
+      const effectiveLevel: Level = (
+        Math.max(level, zNow >= 9.5 ? 3 : zNow >= 6.5 ? 2 : zNow >= 4.2 ? 1 : 0) as Level
+      );
       const kept = selectVisiblePins(
         clustered.pins,
         {
-          level,
+          level: effectiveLevel,
           sheetTop,
           viewport: {
             width: cWidth,
@@ -1573,7 +2841,9 @@ export default function MapStage({
                 : { x: point.x, y: point.y },
             );
           }
-        } catch {}
+        } catch {
+          /* ignore projection errors during map transitions */
+        }
       }
     };
 
@@ -1585,12 +2855,14 @@ export default function MapStage({
     project();
     map.on('move', schedule);
     map.on('zoom', schedule);
-    map.on('render', schedule);
+    map.on('moveend', schedule);
+    window.addEventListener('resize', measureChrome);
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
       map.off('move', schedule);
       map.off('zoom', schedule);
-      map.off('render', schedule);
+      map.off('moveend', schedule);
+      window.removeEventListener('resize', measureChrome);
     };
   }, [distanceMarkers, level, me, pins, ready, sheetHeightPx]);
 
@@ -1602,6 +2874,69 @@ export default function MapStage({
       data-level={level}
       data-ready={ready ? '1' : '0'}
       data-pins={pins.length}
+      onPointerMove={(event) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const rx = event.clientX - rect.left;
+        const ry = event.clientY - rect.top;
+        three3DRef.current?.setPointerScreenPos(rx, ry);
+
+        // Desktop-only pointer hover tooltip & interactive cursor feedback (throttled to 40 ms)
+        if (event.pointerType !== 'mouse') return;
+        const now = performance.now();
+        if (now - lastHoverCheckRef.current < 40) return;
+        lastHoverCheckRef.current = now;
+
+        const map = mapRef.current;
+        const canvas = map?.getCanvas?.();
+        const hovered3D = three3DRef.current?.pickAtPoint(rx, ry, 34);
+        if (hovered3D && hovered3D.label) {
+          if (canvas) canvas.style.cursor = 'pointer';
+          const screenPos = three3DRef.current?.getScreenPos(hovered3D.id);
+          setHoverTip({
+            x: screenPos ? screenPos.x : rx,
+            y: (screenPos ? screenPos.y : ry) - 28,
+            title: hovered3D.label,
+            sub: hovered3D.eleM != null ? `${Math.round(hovered3D.eleM)} m` : undefined,
+          });
+          return;
+        }
+
+        if (map && ready && map.getLayer('xp-routes-line')) {
+          try {
+            const routeHits = map.queryRenderedFeatures(
+              [
+                [rx - 10, ry - 10],
+                [rx + 10, ry + 10],
+              ],
+              { layers: ['xp-routes-line'] },
+            );
+            const firstRoute = routeHits?.[0];
+            if (firstRoute) {
+              const rName =
+                typeof firstRoute.properties?.name === 'string' && firstRoute.properties.name.trim()
+                  ? firstRoute.properties.name.trim()
+                  : 'Itinéraire';
+              if (canvas) canvas.style.cursor = 'pointer';
+              setHoverTip({ x: rx, y: ry - 18, title: rName });
+              return;
+            }
+          } catch {
+            /* ignore query error during style transitions */
+          }
+        }
+
+        if (canvas && canvas.style.cursor === 'pointer') {
+          canvas.style.cursor = '';
+        }
+        setHoverTip((prev) => (prev ? null : prev));
+      }}
+      onPointerLeave={() => {
+        three3DRef.current?.setPointerScreenPos(null, null);
+        const canvas = mapRef.current?.getCanvas?.();
+        if (canvas && canvas.style.cursor === 'pointer') canvas.style.cursor = '';
+        setHoverTip(null);
+      }}
       {...(longPressHandlers as Record<string, unknown>)}
     >
       {!ready ? (
@@ -1609,6 +2944,18 @@ export default function MapStage({
           <span />
         </div>
       ) : null}
+      <canvas
+        ref={threeCanvasRef}
+        className="xp-three-overlay"
+        data-testid="xp-three-overlay"
+        aria-hidden="true"
+      />
+      <canvas
+        ref={vfxCanvasRef}
+        className="xp-vfx-overlay"
+        data-testid="xp-vfx-overlay"
+        aria-hidden="true"
+      />
       <div className="xp-map-overlay" aria-hidden={false}>
         {distanceScreen.map(({ marker, x, y }) => (
           <span
@@ -1643,20 +2990,34 @@ export default function MapStage({
               node.onclick = () => {
                 const map = mapRef.current;
                 if (!map) return;
+                vfxRef.current?.spawnTapRipple(cluster.x, cluster.y);
                 map.easeTo({
                   center: map.unproject([cluster.x, cluster.y]),
                   zoom: Math.min(16, map.getZoom() + 2),
-                  duration: reducedMotion ? 0 : 500,
+                  padding: focusTargetPadding(
+                    sheetHeightPxRef.current,
+                    map.getContainer()?.clientHeight || 844,
+                  ),
+                  duration: reducedMotion ? 0 : 580,
+                  easing: easeCinematicOut,
+                  essential: true,
                 });
               };
             }}
             onClick={() => {
               const map = mapRef.current;
               if (!map) return;
+              vfxRef.current?.spawnTapRipple(cluster.x, cluster.y);
               map.easeTo({
                 center: map.unproject([cluster.x, cluster.y]),
                 zoom: Math.min(16, map.getZoom() + 2),
-                duration: reducedMotion ? 0 : 500,
+                padding: focusTargetPadding(
+                  sheetHeightPxRef.current,
+                  map.getContainer()?.clientHeight || 844,
+                ),
+                duration: reducedMotion ? 0 : 580,
+                easing: easeCinematicOut,
+                essential: true,
               });
             }}
             aria-label={`${cluster.count} repères groupés — zoomer`}
@@ -1664,29 +3025,79 @@ export default function MapStage({
             {cluster.count}
           </button>
         ))}
-        {overlay.map(({ pin, x, y }) => (
-          <button
-            key={pin.id}
-            type="button"
-            className="xp-pin"
-            data-pin={pin.id}
-            data-selected={pin.id === selectedId ? 'true' : 'false'}
-            style={{ transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)` }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onPinClick?.(pin);
-            }}
-            aria-label={`${pin.name}${pin.sub ? `, ${pin.sub}` : ''}`}
+        {overlay.map(({ pin, x, y }) => {
+          const pinKind = (pin.kind ?? '').toLowerCase();
+          // Local 3D models (POIs, summits, refuges, water, bivouacs, spots) are self-explanatory in 3D:
+          // render ONLY a clean invisible 44×44px accessible hit target over the floating 3D object
+          // (no title pill clutter under 3D elements — tapping opens full details in the drawer below).
+          if (pinKind !== 'country') {
+            const live3DPos = three3DRef.current?.getScreenPos(pin.id);
+            const hitX = live3DPos ? live3DPos.x : x;
+            const hitY = live3DPos ? live3DPos.y : y - 18;
+            return (
+              <button
+                key={pin.id}
+                type="button"
+                className="xp-pin-hit"
+                data-pin={pin.id}
+                data-kind={pinKind}
+                data-selected={pin.id === selectedId ? 'true' : 'false'}
+                style={{
+                  transform: `translate3d(${hitX}px, ${hitY}px, 0) translate(-50%, -50%)`,
+                }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  const kind3D = normalize3DEntityKind(pin.kind);
+                  three3DRef.current?.triggerSelectionJuice(pin.id);
+                  vfxRef.current?.spawnTapRipple(hitX, hitY, accentHexFor3DKind(kind3D));
+                  onPinClick?.(pin);
+                }}
+                aria-label={`${pin.name}${pin.sub ? `, ${pin.sub}` : ''}`}
+              />
+            );
+          }
+
+          return (
+            <button
+              key={pin.id}
+              type="button"
+              className="xp-pin"
+              data-pin={pin.id}
+              data-kind={pinKind}
+              data-selected={pin.id === selectedId ? 'true' : 'false'}
+              style={{
+                transform: `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`,
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                onPinClick?.(pin);
+              }}
+              aria-label={`${pin.name}${pin.sub ? `, ${pin.sub}` : ''}`}
+            >
+              <span className="xp-pin-ico" data-tone={pin.tone ?? 'ink'} aria-hidden="true">
+                <Compass size={11} strokeWidth={2.4} />
+              </span>
+              <span className="xp-pin-text">
+                <span className="xp-pin-title">{pin.name}</span>
+                {pin.sub ? <span className="xp-pin-sub">{pin.sub}</span> : null}
+              </span>
+            </button>
+          );
+        })}
+        {hoverTip ? (
+          <div
+            className="xp20-hover-tip"
+            style={{ left: hoverTip.x, top: hoverTip.y }}
+            aria-hidden="true"
           >
-            <span className="xp-pin-ico" data-tone={pin.tone ?? 'ink'} aria-hidden="true" />
-            <span className="xp-pin-text">
-              <span className="xp-pin-title">{pin.name}</span>
-              {pin.sub ? <span className="xp-pin-sub">{pin.sub}</span> : null}
-            </span>
-          </button>
-        ))}
+            <span>{hoverTip.title}</span>
+            {hoverTip.sub ? <span className="xp20-hover-tip-sub">{hoverTip.sub}</span> : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );
-}
+});
+
+export default MapStage;
 

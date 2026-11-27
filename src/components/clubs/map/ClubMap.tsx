@@ -43,13 +43,17 @@ import type {
   Club3DBaseStyle,
   ClubMapOutingTrack,
   ClubMapSelection,
+  ClubOutdoorOverlayId,
+  ClubOutdoorOverlaysState,
   ClubRichMapPayload,
   ClubZoomStage,
 } from './clubMapTypes';
 import { snapPointAlongTrack } from './clubTrackGeometry';
 import {
   CLUB_MAX_PITCH,
+  DEFAULT_CLUB_OUTDOOR_OVERLAYS,
   applyClub3DStyleMode,
+  applyClubOutdoorOverlays,
   attachClubDemFallback,
   attachOpenFreeMapLibertyEnhancement,
   clubSkyForMode,
@@ -61,11 +65,7 @@ import {
 } from './createClub3DStyle';
 import {
   buildActiveSlopeData,
-  buildCountryAreaGeoJSON,
-  buildMassifSilhouettesGeoJSON,
   buildOutingTracksGeoJSON,
-  buildPostsClusterGeoJSON,
-  buildUpcomingBadgesGeoJSON,
   computeStoryBloomItems,
   filterRichPayloadByPole,
   getClubStageConfig,
@@ -73,10 +73,12 @@ import {
   type StoryBloomItem,
 } from './clubZoomHierarchy';
 import {
+  enforceCameraTerrainClearance,
   flyToCountryCamera,
   flyToMassifCamera,
   flyToMicroSpotCamera,
   flyToOutingCamera,
+  resolveCollisionFreeCamera,
   startClubDroneFlyover,
   startSummit360Panorama,
   type NearbyAlpinePeak,
@@ -106,9 +108,19 @@ export interface ClubMapFocus {
 }
 
 export interface ClubMapAction {
-  kind: 'open-outing' | 'open-massif' | 'open-member' | 'open-kit' | 'open-post' | 'rsvp-outing';
+  kind:
+    | 'open-outing'
+    | 'open-massif'
+    | 'open-member'
+    | 'open-kit'
+    | 'open-pokedex'
+    | 'open-post'
+    | 'open-story'
+    | 'rsvp-outing';
   id: string;
   outingId?: string;
+  handle?: string;
+  storyIds?: string[];
 }
 
 export interface ClubMapProps {
@@ -261,28 +273,44 @@ function hasWebGL(): boolean {
   }
 }
 
+function isMapStyleReady(map: MapLibreMap): boolean {
+  try {
+    return Boolean(map.getStyle());
+  } catch {
+    return false;
+  }
+}
+
 function ensureSource(
   map: MapLibreMap,
   id: string,
   data: unknown,
   extra?: { lineMetrics?: boolean; cluster?: boolean; clusterMaxZoom?: number; clusterRadius?: number },
 ) {
-  if (!map.isStyleLoaded()) return;
-  const source = map.getSource(id) as GeoJSONSource | undefined;
-  if (source) {
-    source.setData(data as never);
-    return;
+  if (!isMapStyleReady(map)) return;
+  try {
+    const source = map.getSource(id) as GeoJSONSource | undefined;
+    if (source) {
+      source.setData(data as never);
+      return;
+    }
+    map.addSource(id, {
+      type: 'geojson',
+      data: data as never,
+      ...(extra ?? {}),
+    });
+  } catch {
+    /* Style en transition momentanée : resynchronisé sur styledata */
   }
-  map.addSource(id, {
-    type: 'geojson',
-    data: data as never,
-    ...(extra ?? {}),
-  });
 }
 
 function ensureLayer(map: MapLibreMap, id: string, create: () => void) {
-  if (!map.isStyleLoaded()) return;
-  if (!map.getLayer(id)) create();
+  if (!isMapStyleReady(map)) return;
+  try {
+    if (!map.getLayer(id)) create();
+  } catch {
+    /* Couche ajoutée dès que le style est prêt */
+  }
 }
 
 function bottomBarOverlap(container: HTMLElement): number {
@@ -396,6 +424,8 @@ export function ClubMap({
   const pillarsCtrlRef = useRef<ClubThreePillarsController | null>(null);
   const droneStopRef = useRef<(() => void) | null>(null);
   const summit360StopRef = useRef<(() => void) | null>(null);
+  const scrubberProgressRef = useRef(0);
+  const lastDroneStateSyncMsRef = useRef(0);
   const hasInitialRichFramedRef = useRef<string | null>(null);
   const lastFlySelectionKeyRef = useRef<string>('null');
 
@@ -411,6 +441,9 @@ export function ClubMap({
     variant === 'carnet' ? 'topo' : 'satellite',
   );
   const [style3DMode, setStyle3DMode] = useState<Club3DBaseStyle>('topo3d');
+  const [outdoorOverlays, setOutdoorOverlays] = useState<ClubOutdoorOverlaysState>(
+    DEFAULT_CLUB_OUTDOOR_OVERLAYS,
+  );
   const [demProvider, setDemProvider] = useState<ClubDemProvider>('mapterhorn');
   const [zoomStage, setZoomStage] = useState<ClubZoomStage>('massif');
   const [bearing, setBearing] = useState(0);
@@ -418,7 +451,8 @@ export function ClubMap({
   const [scrubberProgress, setScrubberProgress] = useState(0);
   const [isDronePlaying, setIsDronePlaying] = useState(false);
   const [isSummit360Active, setIsSummit360Active] = useState(false);
-  const [pillarsEnabled, setPillarsEnabled] = useState(true);
+  const [pillarsEnabled, setPillarsEnabled] = useState(false);
+  const [styleEpoch, setStyleEpoch] = useState(0);
   const [online, setOnline] = useState(true);
   const [year, setYear] = useState<number | null>(null);
   const [zoomBand, setZoomBand] = useState<MapZoomBand>('region');
@@ -434,11 +468,25 @@ export function ClubMap({
   const style3DModeRef = useRef(style3DMode);
   const demProviderRef = useRef(demProvider);
   const activeSelectionRef = useRef(activeSelection);
+  const effectiveFullscreenRef = useRef(effectiveFullscreen);
   useEffect(() => {
     style3DModeRef.current = style3DMode;
     demProviderRef.current = demProvider;
     activeSelectionRef.current = activeSelection;
-  }, [style3DMode, demProvider, activeSelection]);
+    effectiveFullscreenRef.current = effectiveFullscreen;
+  }, [style3DMode, demProvider, activeSelection, effectiveFullscreen]);
+
+  const requestExpandOnUserInteraction = useCallback(() => {
+    if (isCarnet || effectiveFullscreenRef.current) return;
+    if (onToggleFullscreenRef.current) {
+      onToggleFullscreenRef.current(true);
+    } else if (typeof window !== 'undefined') {
+      const state = (window as unknown as { __lkdvGetState?: () => { G?: { forceMapBig?: boolean } } })
+        .__lkdvGetState?.();
+      if (state?.G) state.G.forceMapBig = true;
+      (window as unknown as { __lkdvCompteAct?: (a: string) => void }).__lkdvCompteAct?.('mapbig');
+    }
+  }, [isCarnet]);
 
   const selectRich = useCallback(
     (next: ClubMapSelection) => {
@@ -448,6 +496,38 @@ export function ClubMap({
       onSelectRef.current?.(next);
     },
     [selection],
+  );
+
+  const dispatchAction = useCallback(
+    (
+      action: ClubMapAction,
+      legacyFallback?: { type: string; id: string; outingId?: string; title?: string; subtitle?: string },
+    ) => {
+      if (onActionRef.current) {
+        onActionRef.current(action);
+        return;
+      }
+      if (action.kind === 'open-outing') {
+        const clubOpenOuting = (window as unknown as { __lkdvClubMapOpenOuting?: (id: string) => void })
+          .__lkdvClubMapOpenOuting;
+        if (clubOpenOuting) {
+          clubOpenOuting(action.id);
+          return;
+        }
+      }
+      if (action.kind === 'open-massif') {
+        const clubOpenMassif = (window as unknown as { __lkdvClubMapOpenMassif?: (id: string) => void })
+          .__lkdvClubMapOpenMassif;
+        if (clubOpenMassif) {
+          clubOpenMassif(action.id);
+          return;
+        }
+      }
+      if (legacyFallback) {
+        window.dispatchEvent(new CustomEvent('lkdv:club-map-action', { detail: legacyFallback }));
+      }
+    },
+    [],
   );
 
   // Détecte automatiquement `.phone.outdoor` et `.phone.mapbig` si les props ne sont pas passées
@@ -612,10 +692,10 @@ export function ClubMap({
       center: DEFAULT_CENTER,
       zoom: isCarnet ? 6.1 : 8.2,
       minZoom: 1.2,
-      maxZoom: 18,
-      maxPitch: isCarnet ? 70 : CLUB_MAX_PITCH,
-      pitch: isCarnet ? 0 : 48,
+      pitch: isCarnet ? 0 : 42,
       bearing: isCarnet ? 0 : -14,
+      maxZoom: isCarnet ? 18 : 15.6,
+      maxPitch: isCarnet ? 70 : CLUB_MAX_PITCH,
       dragRotate: true,
       pitchWithRotate: true,
       touchPitch: true,
@@ -678,33 +758,78 @@ export function ClubMap({
       }
     });
 
-    const syncZoomAndBearing = () => {
+    let lastProjMode: 'globe' | 'mercator' | null = null;
+
+    const syncDiscreteZoomState = () => {
       const z = instance.getZoom();
-      setZoomBand(resolveMapZoomConfig(z).band);
-      setZoomStage(resolveClubZoomStage(z, activeSelectionRef.current));
-      setScale(z < 4 ? 'globe' : z < 11 ? 'massif' : 'sentier');
-      setBearing(instance.getBearing());
-      if (!isCarnet && instance.isStyleLoaded()) {
-        syncClubProjectionAndTerrain(
-          instance,
-          z,
-          demProviderRef.current,
-          style3DModeRef.current,
-        );
+      const nextBand = resolveMapZoomConfig(z).band;
+      const nextStage = resolveClubZoomStage(z, activeSelectionRef.current);
+      const nextScale: MapScale = z < 4 ? 'globe' : z < 11 ? 'massif' : 'sentier';
+      setZoomBand((prev) => (prev === nextBand ? prev : nextBand));
+      setZoomStage((prev) => (prev === nextStage ? prev : nextStage));
+      setScale((prev) => (prev === nextScale ? prev : nextScale));
+      if (!isCarnet && isMapStyleReady(instance)) {
+        const wantMode: 'globe' | 'mercator' = z < 3.6 ? 'globe' : 'mercator';
+        if (lastProjMode !== wantMode) {
+          lastProjMode = syncClubProjectionAndTerrain(
+            instance,
+            z,
+            demProviderRef.current,
+            style3DModeRef.current,
+          );
+        }
       }
     };
 
-    const syncRotate = () => {
-      setBearing(instance.getBearing());
+    const syncCompassDomOnly = () => {
+      const b = instance.getBearing();
+      const needle = containerRef.current?.parentElement?.querySelector<HTMLElement>(
+        '.lkdv-map-compass-needle',
+      );
+      if (needle) {
+        needle.style.transform = `rotate(${-b}deg)`;
+      }
     };
 
-    instance.on('zoom', syncZoomAndBearing);
-    instance.on('rotate', syncRotate);
+    const onMoveEnd = () => {
+      syncDiscreteZoomState();
+      setBearing((prev) => {
+        const next = Math.round(instance.getBearing());
+        return prev === next ? prev : next;
+      });
+    };
+
+    const onIdleEnsure = () => {
+      if (!isCarnet && !instance.getSource('club-tracks')) {
+        setStyleEpoch((n) => n + 1);
+      }
+    };
+
+    const onUserGestureStart = (ev: { originalEvent?: unknown }) => {
+      if (ev?.originalEvent) {
+        requestExpandOnUserInteraction();
+      }
+    };
+
+    instance.on('dragstart', onUserGestureStart);
+    instance.on('zoomstart', onUserGestureStart);
+    instance.on('rotatestart', onUserGestureStart);
+    instance.on('pitchstart', onUserGestureStart);
+    instance.on('zoom', syncDiscreteZoomState);
+    instance.on('rotate', syncCompassDomOnly);
+    instance.on('moveend', onMoveEnd);
+    instance.on('idle', onIdleEnsure);
     instance.on('move', () => {
       if (isCarnet) return;
-      for (const entry of hierarchyMarkerRefs.current) {
-        const occluded = isLngLatOccludedOnGlobe(instance, entry.lng, entry.lat);
-        entry.marker.getElement().style.display = occluded ? 'none' : '';
+      // Ne jamais interférer pendant un survol Drone ou Panorama 360° déjà protégé
+      if (!droneStopRef.current && !summit360StopRef.current) {
+        enforceCameraTerrainClearance(instance);
+      }
+      if (instance.getZoom() < 3.8 && hierarchyMarkerRefs.current.length > 0) {
+        for (const entry of hierarchyMarkerRefs.current) {
+          const occluded = isLngLatOccludedOnGlobe(instance, entry.lng, entry.lat);
+          entry.marker.getElement().style.display = occluded ? 'none' : '';
+        }
       }
     });
 
@@ -752,6 +877,12 @@ export function ClubMap({
     });
   }, [map, ready, isCarnet, style3DMode, effectiveOutdoor, solarHour, filteredRichData?.center]);
 
+  // Synchronise les réseaux ouverts (GR/Rando Waymarked, Lacs navigables OpenSeaMap/IGN Hydro, VTT, Vélo, Ski)
+  useEffect(() => {
+    if (!map || !ready || isCarnet) return;
+    applyClubOutdoorOverlays(map, outdoorOverlays);
+  }, [map, ready, isCarnet, outdoorOverlays, styleEpoch]);
+
   // Synchronise le zoomStage quand une sortie est sélectionnée/désélectionnée
   useEffect(() => {
     if (!map || !ready || isCarnet) return;
@@ -759,56 +890,14 @@ export function ClubMap({
   }, [map, ready, isCarnet, activeSelection]);
 
   // =========================================================================
-  // MOTEUR CARTE 3D CLUB (`richClubData`)
+  // MOTEUR CARTE 3D CLUB (`richClubData`) — Tracés épurés, zéro pollution visuelle
   // =========================================================================
   useEffect(() => {
     if (!map || !ready || !isRichClubMode || !filteredRichData) return;
 
     const activeOutingId = activeOuting?.id ?? null;
 
-    // 1. Country & Massif silhouettes
-    ensureSource(map, 'club-country-area', buildCountryAreaGeoJSON(filteredRichData));
-    ensureLayer(map, 'club-country-fill', () => {
-      map.addLayer({
-        id: 'club-country-fill',
-        type: 'fill',
-        source: 'club-country-area',
-        paint: { 'fill-color': '#5B7F55', 'fill-opacity': 0.16 },
-      });
-    });
-    ensureLayer(map, 'club-country-line', () => {
-      map.addLayer({
-        id: 'club-country-line',
-        type: 'line',
-        source: 'club-country-area',
-        paint: { 'line-color': '#17402C', 'line-width': 1.6, 'line-opacity': 0.4 },
-      });
-    });
-
-    ensureSource(map, 'club-massif-silhouettes', buildMassifSilhouettesGeoJSON(filteredRichData));
-    ensureLayer(map, 'club-massif-silhouettes-fill', () => {
-      map.addLayer({
-        id: 'club-massif-silhouettes-fill',
-        type: 'fill',
-        source: 'club-massif-silhouettes',
-        paint: { 'fill-color': '#2f6b45', 'fill-opacity': 0.16 },
-      });
-    });
-    ensureLayer(map, 'club-massif-silhouettes-line', () => {
-      map.addLayer({
-        id: 'club-massif-silhouettes-line',
-        type: 'line',
-        source: 'club-massif-silhouettes',
-        paint: {
-          'line-color': '#17402C',
-          'line-width': 1.5,
-          'line-dasharray': [3, 2],
-          'line-opacity': 0.48,
-        },
-      });
-    });
-
-    // 2. Tous les tracés de sorties en 3D drapée
+    // 1. Tous les tracés de sorties en 3D drapée (visibles à toutes les échelles)
     ensureSource(
       map,
       'club-tracks',
@@ -820,12 +909,24 @@ export function ClubMap({
         type: 'line',
         source: 'club-tracks',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#ffffff', 'line-width': 26, 'line-opacity': 0.01 },
+        paint: { 'line-color': '#ffffff', 'line-width': 30, 'line-opacity': 0.01 },
       });
       map.on('click', 'club-tracks-hit', (ev: MapLayerMouseEvent) => {
         const id = ev.features?.[0]?.properties?.id;
         if (id) {
-          selectRich({ kind: 'outing', id: String(id) });
+          const outingId = String(id);
+          selectRich({ kind: 'outing', id: outingId });
+          const currentData = filteredRichDataRef.current;
+          const clickedOuting = currentData?.outings.find((o) => o.id === outingId);
+          if (clickedOuting) {
+            flyToOutingCamera(map, clickedOuting, {
+              isFullscreen: Boolean(document.getElementById('phone')?.classList.contains('mapbig')),
+            });
+          }
+          dispatchAction(
+            { kind: 'open-outing', id: outingId, outingId },
+            { type: 'outing', id: outingId, title: clickedOuting?.title },
+          );
         }
       });
       map.on('mouseenter', 'club-tracks-hit', () => {
@@ -842,7 +943,11 @@ export function ClubMap({
         type: 'line',
         source: 'club-tracks',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#FFFFFF', 'line-width': 5.5, 'line-opacity': 0.78 },
+        paint: {
+          'line-color': '#FFFFFF',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 4.2, 8, 6.2, 13, 8.2] as never,
+          'line-opacity': 0.86,
+        },
       });
     });
 
@@ -856,8 +961,8 @@ export function ClubMap({
         paint: {
           'line-color': '#34d399',
           'line-width': 11,
-          'line-blur': 6,
-          'line-opacity': 0.58,
+          'line-blur': 5,
+          'line-opacity': 0.55,
         },
       });
     });
@@ -869,7 +974,11 @@ export function ClubMap({
         source: 'club-tracks',
         filter: ['==', ['get', 'status'], 'completed'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#17402C', 'line-width': 3.2, 'line-opacity': 0.92 },
+        paint: {
+          'line-color': '#17402C',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2.4, 8, 3.8, 13, 5.0] as never,
+          'line-opacity': 0.94,
+        },
       });
     });
 
@@ -882,9 +991,9 @@ export function ClubMap({
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': '#e09f3e',
-          'line-width': 3.4,
-          'line-dasharray': [2.2, 1.8],
-          'line-opacity': 0.95,
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2.6, 8, 4.0, 13, 5.2] as never,
+          'line-dasharray': [2.2, 1.6],
+          'line-opacity': 0.96,
         },
       });
     });
@@ -896,11 +1005,15 @@ export function ClubMap({
         source: 'club-tracks',
         filter: ['==', ['get', 'status'], 'live'],
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#10b981', 'line-width': 4, 'line-opacity': 0.98 },
+        paint: {
+          'line-color': '#10b981',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2.8, 8, 4.4, 13, 5.6] as never,
+          'line-opacity': 0.98,
+        },
       });
     });
 
-    // 3. Source mono-feature dédiée `club-active-slope` (`lineMetrics: true`)
+    // 2. Source mono-feature dédiée `club-active-slope` (`lineMetrics: true`)
     const slopeData = activeOuting ? buildActiveSlopeData(activeOuting) : null;
     ensureSource(
       map,
@@ -914,7 +1027,7 @@ export function ClubMap({
         type: 'line',
         source: 'club-active-slope',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#FFFFFF', 'line-width': 9, 'line-opacity': 0.92 },
+        paint: { 'line-color': '#FFFFFF', 'line-width': 9.5, 'line-opacity': 0.95 },
       });
     });
     ensureLayer(map, 'club-active-slope-line', () => {
@@ -923,7 +1036,7 @@ export function ClubMap({
         type: 'line',
         source: 'club-active-slope',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#2f6b45', 'line-width': 5, 'line-opacity': 0.98 },
+        paint: { 'line-color': '#2f6b45', 'line-width': 5.4, 'line-opacity': 0.98 },
       });
     });
 
@@ -943,142 +1056,7 @@ export function ClubMap({
       }
     }
 
-    // 4. Badges J-x sur départs à venir
-    ensureSource(map, 'club-upcoming-badges', buildUpcomingBadgesGeoJSON(filteredRichData.outings));
-    ensureLayer(map, 'club-upcoming-badges-bg', () => {
-      map.addLayer({
-        id: 'club-upcoming-badges-bg',
-        type: 'circle',
-        source: 'club-upcoming-badges',
-        paint: {
-          'circle-radius': 11,
-          'circle-color': '#e09f3e',
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 1.8,
-        },
-      });
-      map.on('click', 'club-upcoming-badges-bg', (ev: MapLayerMouseEvent) => {
-        const id = ev.features?.[0]?.properties?.id;
-        if (id) selectRich({ kind: 'outing', id: String(id) });
-      });
-    });
-    ensureLayer(map, 'club-upcoming-badges-label', () => {
-      map.addLayer({
-        id: 'club-upcoming-badges-label',
-        type: 'symbol',
-        source: 'club-upcoming-badges',
-        layout: {
-          'text-field': ['get', 'badge'] as never,
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 8.5,
-          'text-allow-overlap': true,
-        },
-        paint: { 'text-color': '#ffffff' },
-      });
-    });
-
-    // 5. Clusters WebGL natifs des posts (`cluster: true`)
-    ensureSource(
-      map,
-      'club-posts',
-      buildPostsClusterGeoJSON(filteredRichData.posts),
-      { cluster: true, clusterMaxZoom: 12.2, clusterRadius: 42 },
-    );
-    ensureLayer(map, 'club-posts-clusters', () => {
-      map.addLayer({
-        id: 'club-posts-clusters',
-        type: 'circle',
-        source: 'club-posts',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': [
-            'step',
-            ['get', 'point_count'],
-            '#2f6b45',
-            10,
-            '#17402C',
-            30,
-            '#c89a3b',
-          ] as never,
-          'circle-radius': ['step', ['get', 'point_count'], 14, 10, 18, 30, 22] as never,
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 2,
-          'circle-opacity': 0.92,
-        },
-      });
-      map.on('click', 'club-posts-clusters', (ev: MapLayerMouseEvent) => {
-        const feature = ev.features?.[0];
-        const clusterId = feature?.properties?.cluster_id;
-        const src = map.getSource('club-posts') as GeoJSONSource | undefined;
-        if (src && feature && typeof clusterId === 'number' && feature.geometry.type === 'Point') {
-          const coords = feature.geometry.coordinates as [number, number];
-          src
-            .getClusterExpansionZoom(clusterId)
-            .then((zoom) => {
-              map.easeTo({
-                center: coords,
-                zoom: Math.min(14, zoom + 0.5),
-                duration: prefersReducedMotion() ? 0 : 500,
-              });
-            })
-            .catch(() => undefined);
-        }
-      });
-      map.on('mouseenter', 'club-posts-clusters', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'club-posts-clusters', () => {
-        map.getCanvas().style.cursor = '';
-      });
-    });
-    ensureLayer(map, 'club-posts-cluster-count', () => {
-      map.addLayer({
-        id: 'club-posts-cluster-count',
-        type: 'symbol',
-        source: 'club-posts',
-        filter: ['has', 'point_count'],
-        layout: {
-          'text-field': ['concat', '📷 ', ['to-string', ['get', 'point_count']]] as never,
-          'text-font': ['Noto Sans Regular'],
-          'text-size': 10,
-          'text-allow-overlap': true,
-        },
-        paint: { 'text-color': '#ffffff' },
-      });
-    });
-    ensureLayer(map, 'club-posts-unclustered', () => {
-      map.addLayer({
-        id: 'club-posts-unclustered',
-        type: 'circle',
-        source: 'club-posts',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-radius': 6.5,
-          'circle-color': '#38bdf8',
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-width': 2,
-          'circle-opacity': 0.95,
-        },
-      });
-      map.on('click', 'club-posts-unclustered', (ev: MapLayerMouseEvent) => {
-        const props = ev.features?.[0]?.properties;
-        if (props?.id) {
-          selectRich({
-            kind: 'post',
-            id: String(props.id),
-            outingId: props.outingId ? String(props.outingId) : undefined,
-          });
-        }
-      });
-      map.on('mouseenter', 'club-posts-unclustered', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'club-posts-unclustered', () => {
-        map.getCanvas().style.cursor = '';
-      });
-    });
-
-    // 6. Bille lumineuse 3D synchronisée avec le scrubber & le drone
+    // 3. Bille lumineuse 3D synchronisée avec le scrubber & le drone
     ensureSource(map, 'club-scrubber-orb', EMPTY_FC);
     ensureLayer(map, 'club-scrubber-orb-halo', () => {
       map.addLayer({
@@ -1107,38 +1085,153 @@ export function ClubMap({
       });
     });
 
-    // 7. Piliers lumineux 3D Three.js
-    if (!pillarsCtrlRef.current) {
-      pillarsCtrlRef.current = createClubThreePillarsLayer('club-three-pillars');
-      if (!map.getLayer('club-three-pillars')) {
-        map.addLayer(pillarsCtrlRef.current.layer);
+    // 4. Piliers 3D natifs MapLibre (fill-extrusion + halos au sol, terrain-draped & toujours visibles)
+    const buildPillarRing = (lng: number, lat: number, radiusM: number): [number, number][] => {
+      const steps = 10;
+      const latRad = (lat * Math.PI) / 180;
+      const dLat = radiusM / 111_320;
+      const dLng = radiusM / (111_320 * Math.max(0.2, Math.cos(latRad)));
+      const ring: [number, number][] = [];
+      for (let i = 0; i <= steps; i += 1) {
+        const a = (i / steps) * Math.PI * 2;
+        ring.push([lng + Math.cos(a) * dLng, lat + Math.sin(a) * dLat]);
+      }
+      return ring;
+    };
+
+    const pillarTargets: Array<{
+      id: string;
+      lng: number;
+      lat: number;
+      color: string;
+      heightM: number;
+      radiusM: number;
+    }> = [];
+
+    if (pillarsEnabled) {
+      for (const item of storyBloomItems) {
+        pillarTargets.push({
+          id: item.id,
+          lng: item.lng,
+          lat: item.lat,
+          color: item.color || '#f5c451',
+          heightM: item.kind === 'summit' ? 520 : item.kind === 'pokedex' ? 320 : 360,
+          radiusM: item.kind === 'summit' ? 68 : 44,
+        });
+      }
+      if (activeOuting && activeOuting.coords.length > 0) {
+        const startPt = activeOuting.coords[0];
+        pillarTargets.push({
+          id: `pillar-start-${activeOuting.id}`,
+          lng: startPt[0],
+          lat: startPt[1],
+          color: '#2d6a4f',
+          heightM: 340,
+          radiusM: 52,
+        });
+        const summitPt = activeOuting.coords.reduce(
+          (best, cur) => (cur[2] > best[2] ? cur : best),
+          activeOuting.coords[0],
+        );
+        pillarTargets.push({
+          id: `pillar-summit-${activeOuting.id}`,
+          lng: summitPt[0],
+          lat: summitPt[1],
+          color: '#f5c451',
+          heightM: 580,
+          radiusM: 72,
+        });
+      } else if (pillarTargets.length === 0) {
+        for (const o of filteredRichData.outings.slice(0, 12)) {
+          const summitPt =
+            o.coords.length > 0
+              ? o.coords.reduce((best, cur) => (cur[2] > best[2] ? cur : best), o.coords[0])
+              : ([o.lng, o.lat, o.elevationM] as [number, number, number]);
+          pillarTargets.push({
+            id: `pillar-outing-${o.id}`,
+            lng: summitPt[0],
+            lat: summitPt[1],
+            color: o.status === 'live' ? '#e09f3e' : o.status === 'upcoming' ? '#2d6a4f' : '#f5c451',
+            heightM: 460,
+            radiusM: 64,
+          });
+        }
       }
     }
-    pillarsCtrlRef.current.setEnabled(pillarsEnabled);
-    pillarsCtrlRef.current.setPillars(
-      stageConfig.showStoryBloom
-        ? storyBloomItems.map((item) => ({
-            id: item.id,
-            lng: item.lng,
-            lat: item.lat,
-            ele: item.ele,
-            color: item.color,
-            heightM: item.kind === 'summit' ? 230 : 155,
-          }))
-        : [],
-    );
 
-    // 8. Morphing de visibilité & opacité selon l'échelle courante
+    const pillarsPolyFC: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: pillarTargets.map((pt) => ({
+        type: 'Feature',
+        properties: {
+          id: pt.id,
+          color: pt.color,
+          height: pt.heightM,
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [buildPillarRing(pt.lng, pt.lat, pt.radiusM)],
+        },
+      })),
+    };
+
+    const pillarsBaseFC: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: pillarTargets.map((pt) => ({
+        type: 'Feature',
+        properties: {
+          id: pt.id,
+          color: pt.color,
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [pt.lng, pt.lat],
+        },
+      })),
+    };
+
+    ensureSource(map, 'club-pillars-base', pillarsBaseFC);
+    ensureLayer(map, 'club-pillars-base-glow', () => {
+      map.addLayer({
+        id: 'club-pillars-base-glow',
+        type: 'circle',
+        source: 'club-pillars-base',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 8, 13, 18, 16, 26],
+          'circle-color': ['coalesce', ['get', 'color'], '#f5c451'],
+          'circle-opacity': 0.52,
+          'circle-blur': 0.65,
+        },
+      });
+    });
+
+    ensureSource(map, 'club-pillars-3d', pillarsPolyFC);
+    ensureLayer(map, 'club-pillars-3d-extrusion', () => {
+      map.addLayer({
+        id: 'club-pillars-3d-extrusion',
+        type: 'fill-extrusion',
+        source: 'club-pillars-3d',
+        paint: {
+          'fill-extrusion-color': ['coalesce', ['get', 'color'], '#f5c451'],
+          'fill-extrusion-height': ['coalesce', ['get', 'height'], 400],
+          'fill-extrusion-base': 0,
+          'fill-extrusion-opacity': 0.78,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      });
+    });
+
+    if (pillarsCtrlRef.current) {
+      pillarsCtrlRef.current.setEnabled(false);
+      pillarsCtrlRef.current.setPillars([]);
+    }
+
+    // 5. Visibilité et atténuation des tracés inactifs lorsqu'une sortie est inspectée
     const setVis = (id: string, visible: boolean) => {
       if (map.getLayer(id)) {
         map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
       }
     };
-
-    setVis('club-country-fill', stageConfig.showCountryTint);
-    setVis('club-country-line', stageConfig.showCountryTint);
-    setVis('club-massif-silhouettes-fill', stageConfig.showMassifSilhouettes);
-    setVis('club-massif-silhouettes-line', stageConfig.showMassifSilhouettes);
 
     setVis('club-tracks-hit', stageConfig.showTracks3D);
     setVis('club-tracks-casing', stageConfig.showTracks3D);
@@ -1151,33 +1244,26 @@ export function ClubMap({
     setVis('club-active-slope-casing', hasSlope);
     setVis('club-active-slope-line', hasSlope);
 
-    setVis('club-upcoming-badges-bg', stageConfig.showUpcomingBadges);
-    setVis('club-upcoming-badges-label', stageConfig.showUpcomingBadges);
-
-    setVis('club-posts-clusters', stageConfig.showPostClusters);
-    setVis('club-posts-cluster-count', stageConfig.showPostClusters);
-    setVis('club-posts-unclustered', stageConfig.showPostClusters);
-
     const dimOp = stageConfig.dimInactiveTracksOpacity;
     if (map.getLayer('club-tracks-casing')) {
       map.setPaintProperty(
         'club-tracks-casing',
         'line-opacity',
-        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.85, dimOp * 0.6] : 0.76,
+        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.9, dimOp * 0.65] : 0.86,
       );
     }
     if (map.getLayer('club-tracks-completed')) {
       map.setPaintProperty(
         'club-tracks-completed',
         'line-opacity',
-        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp] : 0.92,
+        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp] : 0.94,
       );
     }
     if (map.getLayer('club-tracks-upcoming')) {
       map.setPaintProperty(
         'club-tracks-upcoming',
         'line-opacity',
-        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp] : 0.95,
+        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp] : 0.96,
       );
     }
     if (map.getLayer('club-tracks-live')) {
@@ -1191,12 +1277,13 @@ export function ClubMap({
       map.setPaintProperty(
         'club-tracks-live-glow',
         'line-opacity',
-        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp * 0.6] : 0.58,
+        activeOutingId ? ['case', ['==', ['get', 'id'], activeOutingId], 0.0, dimOp * 0.6] : 0.55,
       );
     }
   }, [
     map,
     ready,
+    styleEpoch,
     isRichClubMode,
     filteredRichData,
     activeOuting,
@@ -1204,11 +1291,14 @@ export function ClubMap({
     storyBloomItems,
     pillarsEnabled,
     selectRich,
+    dispatchAction,
   ]);
 
-  // Synchronise la bille 3D sur la trace sélectionnée
+  // Synchronise la bille 3D sur la trace sélectionnée (hors mode Drone qui pilote directement la source à 60 fps)
   useEffect(() => {
+    scrubberProgressRef.current = scrubberProgress;
     if (!map || !ready || !isRichClubMode) return;
+    if (isDronePlaying) return;
     if (!activeOuting) {
       ensureSource(map, 'club-scrubber-orb', EMPTY_FC);
       return;
@@ -1224,10 +1314,10 @@ export function ClubMap({
         },
       ],
     });
-  }, [map, ready, isRichClubMode, activeOuting, scrubberProgress]);
+  }, [map, ready, isRichClubMode, activeOuting, scrubberProgress, isDronePlaying]);
 
-  // Marqueurs DOM hiérarchiques : Planétaire (blason + pays), Pays (capsules massifs),
-  // Massif/Sentier (membres live + cascade Story Bloom) avec culling d'horizon globe.
+  // Marqueurs DOM épurés : uniquement les membres localisés (sans étiquettes parasites)
+  // et les points associés à la sortie active (Story Bloom), ouvrant directement le bon tiroir / fiche / profil.
   useEffect(() => {
     if (!map || !ready || !isRichClubMode || !filteredRichData) return;
 
@@ -1236,7 +1326,6 @@ export function ClubMap({
 
     const addMarker = (el: HTMLElement, lng: number, lat: number, anchorMode: 'center' | 'bottom' = 'center') => {
       const occluded = isLngLatOccludedOnGlobe(map, lng, lat);
-      // Wrapper neutre sans transform/animation CSS afin de ne jamais écraser le translate3d(x,y) de MapLibre
       const host = document.createElement('div');
       host.className = 'lkdv-club-marker-host';
       host.style.display = occluded ? 'none' : '';
@@ -1245,59 +1334,16 @@ export function ClubMap({
         .setLngLat([lng, lat])
         .addTo(map);
       hierarchyMarkerRefs.current.push({ marker, lng, lat });
+      return marker;
     };
 
-    // 1. Planétaire : Blason pulsant du club + pilule Pays interactive
-    if (stageConfig.showCountryPill) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'lkdv-club-country-pill';
-      const flag = filteredRichData.countrySummary.code === 'FR' ? '🇫🇷' : '🏔️';
-      const crest = document.createElement('span');
-      crest.className = 'lkdv-club-country-crest';
-      crest.textContent = filteredRichData.clubName.slice(0, 2).toUpperCase();
-      const label = document.createElement('span');
-      label.textContent = `${flag} ${filteredRichData.countrySummary.name} · ${filteredRichData.countrySummary.outings} sorties · ${filteredRichData.countrySummary.members} membres`;
-      btn.append(crest, label);
-      btn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        selectRich({ kind: 'country', id: filteredRichData.countrySummary.code });
-        flyToCountryCamera(map, filteredRichData.center);
-      });
-      addMarker(btn, filteredRichData.center[0], filteredRichData.center[1]);
-    }
-
-    // 2. Pays : Capsules Massifs agrégées
-    if (stageConfig.showMassifCapsules) {
-      for (const massif of filteredRichData.massifs) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'lkdv-club-massif-capsule';
-        if (activeSelection?.kind === 'massif' && activeSelection.id === massif.id) {
-          btn.classList.add('is-selected');
-        }
-        const name = document.createElement('span');
-        name.textContent = massif.name;
-        const count = document.createElement('b');
-        count.textContent = `${massif.outings} sortie${massif.outings > 1 ? 's' : ''}`;
-        btn.append(name, count);
-        btn.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          selectRich({ kind: 'massif', id: massif.id, name: massif.name });
-          flyToMassifCamera(map, massif.center);
-        });
-        addMarker(btn, massif.center[0], massif.center[1]);
-      }
-    }
-
-    // 3. Massif / Sentier : Membres en partage live (avatars cerclés)
-    if (stageConfig.showLiveMembers) {
+    // 1. Membres avec partage de localisation activé (pastilles avatar sobres)
+    if (stageConfig.showLiveMembers && !activeOuting) {
       for (const member of filteredRichData.liveMembers) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `lkdv-club-live-member${member.fuzzy ? ' is-fuzzy' : ''}`;
-        btn.title = `${member.name} (@${member.handle}) · ${member.role}`;
-        btn.setAttribute('aria-label', `${member.name}, en partage live`);
+        btn.setAttribute('aria-label', `${member.name}, ouvrir le profil ou la fiche membre`);
         if (member.avatarUrl) {
           const img = document.createElement('img');
           img.src = member.avatarUrl;
@@ -1317,12 +1363,26 @@ export function ClubMap({
           ev.stopPropagation();
           selectRich({ kind: 'member', id: member.id });
           flyToMicroSpotCamera(map, [member.lng, member.lat]);
+          dispatchAction(
+            { kind: 'open-member', id: member.id, handle: member.handle },
+            { type: 'member', id: member.id, title: member.name },
+          );
         });
         addMarker(btn, member.lng, member.lat);
       }
     }
 
-    // 4. Story Bloom en cascade (stagger: 55 ms) sur la sortie active
+    // 2. Points associés à la sortie active (Pokédex, Kits utilisés, Posts, Membres, Sommet)
+    // avec dé-chevauchement écran automatique (offset radial + masquage doux en cas de collision).
+    const bloomEntries: Array<{
+      marker: Marker;
+      btn: HTMLButtonElement;
+      lng: number;
+      lat: number;
+      kind: string;
+      title: string;
+    }> = [];
+
     if (stageConfig.showStoryBloom && storyBloomItems.length > 0) {
       for (const item of storyBloomItems) {
         const btn = document.createElement('button');
@@ -1330,38 +1390,187 @@ export function ClubMap({
         btn.className = `lkdv-club-bloom-pin is-${item.kind}`;
         btn.style.animationDelay = `${item.staggerMs}ms`;
         btn.style.setProperty('--bloom-accent', item.color);
-        btn.title = `${item.title} · ${item.subtitle}`;
         btn.setAttribute('aria-label', `${item.title} : ${item.subtitle}`);
 
-        const ico = document.createElement('span');
-        ico.className = 'lkdv-club-bloom-ico';
-        ico.textContent = item.emoji;
+        if (item.kind === 'story' && item.mediaUrl) {
+          const thumb = document.createElement('img');
+          thumb.src = item.mediaUrl;
+          thumb.alt = '';
+          thumb.className = 'lkdv-club-bloom-story-thumb';
+          btn.append(thumb);
+        } else {
+          const ico = document.createElement('span');
+          ico.className = 'lkdv-club-bloom-ico';
+          ico.textContent = item.emoji;
+          btn.append(ico);
+        }
 
         const lbl = document.createElement('span');
         lbl.className = 'lkdv-club-bloom-label';
         lbl.textContent = item.title;
+        btn.append(lbl);
 
-        btn.append(ico, lbl);
+        if (item.kind === 'story' && (item.clusterCount ?? 1) > 1) {
+          const badge = document.createElement('span');
+          badge.className = 'lkdv-club-bloom-story-count';
+          badge.textContent = `×${item.clusterCount}`;
+          btn.append(badge);
+        }
         btn.addEventListener('click', (ev) => {
           ev.stopPropagation();
-          if (item.kind === 'pokedex') {
+          flyToMicroSpotCamera(map, [item.lng, item.lat]);
+          if (item.kind === 'story') {
+            dispatchAction(
+              {
+                kind: 'open-story',
+                id: item.sourceId,
+                outingId: item.outingId,
+                storyIds: item.storyIds,
+              },
+              { type: 'story', id: item.sourceId, outingId: item.outingId, title: item.title },
+            );
+          } else if (item.kind === 'pokedex') {
             selectRich({ kind: 'pokedex', id: item.sourceId, outingId: item.outingId });
+            dispatchAction(
+              { kind: 'open-pokedex', id: item.sourceId, outingId: item.outingId },
+              { type: 'pokedex', id: item.sourceId, outingId: item.outingId, title: item.title },
+            );
           } else if (item.kind === 'kit') {
             selectRich({ kind: 'kit', id: item.sourceId, outingId: item.outingId });
+            dispatchAction(
+              { kind: 'open-kit', id: item.sourceId, outingId: item.outingId },
+              { type: 'kit', id: item.sourceId, outingId: item.outingId, title: item.title },
+            );
           } else if (item.kind === 'post') {
             selectRich({ kind: 'post', id: item.sourceId, outingId: item.outingId });
+            dispatchAction(
+              { kind: 'open-post', id: item.sourceId, outingId: item.outingId },
+              { type: 'post', id: item.sourceId, outingId: item.outingId, title: item.title },
+            );
           } else if (item.kind === 'member') {
             selectRich({ kind: 'member', id: item.sourceId });
+            dispatchAction(
+              { kind: 'open-member', id: item.sourceId, handle: item.memberHandle },
+              { type: 'member', id: item.sourceId, title: item.title },
+            );
           } else {
             selectRich({ kind: 'outing', id: item.outingId });
+            dispatchAction(
+              { kind: 'open-outing', id: item.outingId, outingId: item.outingId },
+              { type: 'outing', id: item.outingId, title: item.title },
+            );
           }
-          flyToMicroSpotCamera(map, [item.lng, item.lat]);
         });
-        addMarker(btn, item.lng, item.lat, 'bottom');
+        const marker = addMarker(btn, item.lng, item.lat, 'bottom');
+        bloomEntries.push({
+          marker,
+          btn,
+          lng: item.lng,
+          lat: item.lat,
+          kind: item.kind,
+          title: item.title,
+        });
       }
     }
 
+    let declutterRaf = 0;
+    const priorityRank = (kind: string) =>
+      kind === 'summit'
+        ? 0
+        : kind === 'story'
+          ? 1
+          : kind === 'pokedex'
+            ? 2
+            : kind === 'post'
+              ? 3
+              : kind === 'kit'
+                ? 4
+                : 5;
+    const CANDIDATE_OFFSETS: Array<[number, number]> = [
+      [0, 0],
+      [0, -30],
+      [0, 30],
+      [54, -24],
+      [-54, -24],
+      [58, 24],
+      [-58, 24],
+    ];
+
+    const declutterBloomMarkers = () => {
+      if (bloomEntries.length === 0) return;
+      const container = map.getContainer();
+      const vw = container?.clientWidth || 390;
+      const vh = container?.clientHeight || 420;
+      const bottomSafe = vh < 380 ? 116 : 156;
+      const placed: Array<[number, number, number, number]> = [];
+
+      const ordered = [...bloomEntries].sort(
+        (a, b) => priorityRank(a.kind) - priorityRank(b.kind),
+      );
+
+      for (const entry of ordered) {
+        let projected: { x: number; y: number };
+        try {
+          projected = map.project([entry.lng, entry.lat]);
+        } catch {
+          continue;
+        }
+        const w = Math.min(148, Math.max(72, entry.title.length * 6.2 + 34));
+        const h = 26;
+        const pad = 5;
+
+        let chosen: [number, number] | null = null;
+        for (const [dx, dy] of CANDIDATE_OFFSETS) {
+          const left = projected.x + dx - w / 2 - pad;
+          const right = projected.x + dx + w / 2 + pad;
+          const top = projected.y + dy - h - pad;
+          const bottom = projected.y + dy + pad;
+
+          // Reste hors des zones HUD (sélecteur haut-gauche, rail droit, scrubber bas)
+          if (left < 6 || right > vw - 52 || top < 6 || bottom > vh - bottomSafe) continue;
+          if (left < 194 && top < 84) continue;
+
+          const overlaps = placed.some(
+            ([pl, pt, pr, pb]) => !(right < pl || left > pr || bottom < pt || top > pb),
+          );
+          if (!overlaps) {
+            chosen = [dx, dy];
+            placed.push([left, top, right, bottom]);
+            break;
+          }
+        }
+
+        if (chosen) {
+          entry.marker.setOffset(chosen);
+          delete entry.btn.dataset.decluttered;
+        } else {
+          entry.btn.dataset.decluttered = 'true';
+        }
+      }
+    };
+
+    const scheduleDeclutter = () => {
+      if (declutterRaf) return;
+      declutterRaf = requestAnimationFrame(() => {
+        declutterRaf = 0;
+        declutterBloomMarkers();
+      });
+    };
+
+    if (bloomEntries.length > 0) {
+      scheduleDeclutter();
+      map.on('move', scheduleDeclutter);
+      map.on('moveend', declutterBloomMarkers);
+      map.on('zoomend', declutterBloomMarkers);
+    }
+
     return () => {
+      if (declutterRaf) cancelAnimationFrame(declutterRaf);
+      if (bloomEntries.length > 0) {
+        map.off('move', scheduleDeclutter);
+        map.off('moveend', declutterBloomMarkers);
+        map.off('zoomend', declutterBloomMarkers);
+      }
       for (const item of hierarchyMarkerRefs.current) item.marker.remove();
       hierarchyMarkerRefs.current = [];
     };
@@ -1370,10 +1579,11 @@ export function ClubMap({
     ready,
     isRichClubMode,
     filteredRichData,
+    activeOuting,
     stageConfig,
     storyBloomItems,
-    activeSelection,
     selectRich,
+    dispatchAction,
   ]);
 
   // Cadrage initial de la carte 3D du club
@@ -1404,9 +1614,9 @@ export function ClubMap({
             map.getContainer(),
           ),
           maxZoom: 9.8,
-          pitch: 46,
+          pitch: 40,
           bearing: -14,
-          duration: prefersReducedMotion() ? 0 : 900,
+          duration: prefersReducedMotion() ? 0 : 850,
           essential: true,
         },
       );
@@ -1414,9 +1624,10 @@ export function ClubMap({
       map.flyTo({
         center: filteredRichData.center,
         zoom: 8.6,
-        pitch: 46,
+        pitch: 40,
         bearing: -14,
-        duration: prefersReducedMotion() ? 0 : 900,
+        curve: 1.85,
+        duration: prefersReducedMotion() ? 0 : 850,
         essential: true,
       });
     }
@@ -1442,7 +1653,8 @@ export function ClubMap({
     } else if (activeSelection.kind === 'outing') {
       const outing = filteredRichData.outings.find((o) => o.id === activeSelection.id);
       if (outing) {
-        setScrubberProgress(0.5);
+        scrubberProgressRef.current = 0;
+        setScrubberProgress(0);
         flyToOutingCamera(map, outing, { isFullscreen: effectiveFullscreen });
       }
     } else if (activeSelection.kind === 'post') {
@@ -1480,19 +1692,16 @@ export function ClubMap({
     return () => window.removeEventListener('lkdv:club-live-camp', onLiveCamp);
   }, [isRichClubMode, selectRich]);
 
-  // Clic vide sur la carte -> ferme le callout / sélection
+  // Clic vide sur la carte -> désélectionne la sortie active
   useEffect(() => {
     if (!map) return;
     const close = (event: { point: { x: number; y: number } }) => {
       if (isRichClubMode) {
-        const hitLayers = [
-          'club-tracks-hit',
-          'club-upcoming-badges-bg',
-          'club-upcoming-badges-label',
-          'club-posts-clusters',
-          'club-posts-unclustered',
-        ].filter((layer) => Boolean(map.getLayer(layer)));
-        const hits = map.queryRenderedFeatures(event.point as never, { layers: hitLayers });
+        const hitLayers = ['club-tracks-hit'].filter((layer) => Boolean(map.getLayer(layer)));
+        const hits =
+          hitLayers.length > 0
+            ? map.queryRenderedFeatures(event.point as never, { layers: hitLayers })
+            : [];
         if (hits.length === 0) selectRich(null);
         return;
       }
@@ -1958,57 +2167,13 @@ export function ClubMap({
   }, [map, ready, isCarnet, markers, livePosition, publicZone]);
 
   // =========================================================================
-  // ANCRE DU CALLOUT (mode riche ET mode legacy)
+  // ANCRE DU CALLOUT (uniquement mode legacy Compte ; ZÉRO tooltip en mode Club 3D)
   // =========================================================================
-  const resolvedRichCallout = useMemo(() => {
-    if (!isRichClubMode || !filteredRichData || !activeSelection) return null;
-    if (activeSelection.kind === 'country') {
-      return {
-        kind: 'country' as const,
-        data: filteredRichData.countrySummary,
-        lngLat: filteredRichData.center,
-      };
-    }
-    if (activeSelection.kind === 'massif') {
-      const m = filteredRichData.massifs.find((x) => x.id === activeSelection.id);
-      return m ? { kind: 'rich-massif' as const, data: m, lngLat: m.center } : null;
-    }
-    if (activeSelection.kind === 'outing') {
-      const o = filteredRichData.outings.find((x) => x.id === activeSelection.id);
-      return o
-        ? {
-            kind: 'rich-outing' as const,
-            data: o,
-            lngLat: [o.peak[0], o.peak[1]] as [number, number],
-          }
-        : null;
-    }
-    if (activeSelection.kind === 'post') {
-      const p = filteredRichData.posts.find((x) => x.id === activeSelection.id);
-      return p ? { kind: 'post' as const, data: p, lngLat: [p.lng, p.lat] as [number, number] } : null;
-    }
-    if (activeSelection.kind === 'pokedex') {
-      const pkx = filteredRichData.pokedex.find((x) => x.id === activeSelection.id);
-      return pkx
-        ? { kind: 'pokedex' as const, data: pkx, lngLat: [pkx.lng, pkx.lat] as [number, number] }
-        : null;
-    }
-    if (activeSelection.kind === 'kit') {
-      const k = filteredRichData.kits.find((x) => x.id === activeSelection.id);
-      return k ? { kind: 'kit' as const, data: k, lngLat: [k.lng, k.lat] as [number, number] } : null;
-    }
-    if (activeSelection.kind === 'member') {
-      const m = filteredRichData.liveMembers.find((x) => x.id === activeSelection.id);
-      return m ? { kind: 'member' as const, data: m, lngLat: [m.lng, m.lat] as [number, number] } : null;
-    }
-    return null;
-  }, [isRichClubMode, filteredRichData, activeSelection]);
-
   const calloutTargetLngLat = useMemo<[number, number] | null>(() => {
-    if (resolvedRichCallout) return resolvedRichCallout.lngLat;
+    if (isRichClubMode) return null;
     if (resolvedLegacy) return [resolvedLegacy.position.lng, resolvedLegacy.position.lat];
     return null;
-  }, [resolvedRichCallout, resolvedLegacy]);
+  }, [isRichClubMode, resolvedLegacy]);
 
   useEffect(() => {
     if (!map || !calloutTargetLngLat) {
@@ -2092,6 +2257,7 @@ export function ClubMap({
   const handleZoomStage = useCallback(
     (stage: ClubZoomStage) => {
       if (!map || !filteredRichData) return;
+      requestExpandOnUserInteraction();
       stopChoreography();
       const center = filteredRichData.center;
       const reduced = prefersReducedMotion();
@@ -2106,19 +2272,12 @@ export function ClubMap({
           essential: true,
         });
       } else if (stage === 'country') {
-        selectRich({ kind: 'country', id: filteredRichData.countrySummary.code });
+        selectRich(null);
         flyToCountryCamera(map, center);
       } else if (stage === 'massif') {
-        const target =
-          filteredRichData.massifs[0]?.center ?? center;
-        map.flyTo({
-          center: target,
-          zoom: 9.6,
-          pitch: 52,
-          bearing: -16,
-          duration: reduced ? 0 : 1200,
-          essential: true,
-        });
+        selectRich(null);
+        const target = filteredRichData.massifs[0]?.center ?? center;
+        flyToMassifCamera(map, target);
       } else {
         const targetOuting =
           activeOuting ??
@@ -2129,11 +2288,12 @@ export function ClubMap({
         }
       }
     },
-    [map, filteredRichData, activeOuting, selectRich, stopChoreography],
+    [map, filteredRichData, activeOuting, selectRich, stopChoreography, requestExpandOnUserInteraction],
   );
 
   const handleRecenter = useCallback(() => {
     if (!map) return;
+    requestExpandOnUserInteraction();
     stopChoreography();
     if (isCarnet && traceBounds) {
       fitBoundsSafely(
@@ -2220,10 +2380,12 @@ export function ClubMap({
     context.mode,
     effectiveFullscreen,
     stopChoreography,
+    requestExpandOnUserInteraction,
   ]);
 
   const handleLayers = useCallback(() => {
     if (!map) return;
+    requestExpandOnUserInteraction();
     if (isRichClubMode) {
       const order: Club3DBaseStyle[] = ['topo3d', 'ign-ortho', 'ign-topo', 'dusk'];
       const next = order[(order.indexOf(style3DMode) + 1) % order.length];
@@ -2242,52 +2404,59 @@ export function ClubMap({
       map.setLayoutProperty('atlas-tile-topo', 'visibility', next === 'topo' ? 'visible' : 'none');
     }
     setTileMode(next);
-  }, [map, isRichClubMode, style3DMode, tileMode]);
+  }, [map, isRichClubMode, style3DMode, tileMode, requestExpandOnUserInteraction]);
 
   const handleResetNorth = useCallback(() => {
     if (!map) return;
+    requestExpandOnUserInteraction();
     stopChoreography();
     map.easeTo({
       bearing: 0,
       pitch: map.getZoom() < 5.5 ? 0 : 48,
       duration: prefersReducedMotion() ? 0 : 500,
     });
-  }, [map, stopChoreography]);
+  }, [map, stopChoreography, requestExpandOnUserInteraction]);
 
   const handleZoomIn = useCallback(() => {
+    requestExpandOnUserInteraction();
     map?.zoomIn({ duration: prefersReducedMotion() ? 0 : 300 });
-  }, [map]);
+  }, [map, requestExpandOnUserInteraction]);
 
   const handleZoomOut = useCallback(() => {
+    requestExpandOnUserInteraction();
     map?.zoomOut({ duration: prefersReducedMotion() ? 0 : 300 });
-  }, [map]);
+  }, [map, requestExpandOnUserInteraction]);
 
   const handleToggleDrone = useCallback(() => {
     if (!map || !activeOuting) return;
     if (isDronePlaying) {
       stopChoreography();
+      setScrubberProgress(scrubberProgressRef.current);
       return;
     }
     stopChoreography();
     setIsDronePlaying(true);
+    lastDroneStateSyncMsRef.current = 0;
+    const currentProg = scrubberProgressRef.current;
     droneStopRef.current = startClubDroneFlyover({
       map,
       outing: activeOuting,
-      startProgress: scrubberProgress >= 0.96 ? 0 : scrubberProgress,
-      onRequestFullscreen: (next) => {
-        if (onToggleFullscreenRef.current) {
-          onToggleFullscreenRef.current(next);
-        } else if (next && !effectiveFullscreen) {
-          (window as unknown as { __lkdvCompteAct?: (a: string) => void }).__lkdvCompteAct?.('mapbig');
+      startProgress: currentProg >= 0.95 ? 0 : currentProg,
+      onProgress: (p) => {
+        scrubberProgressRef.current = p;
+        const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        if (now - lastDroneStateSyncMsRef.current >= 85 || p >= 1) {
+          lastDroneStateSyncMsRef.current = now;
+          setScrubberProgress(p);
         }
       },
-      onProgress: (p) => setScrubberProgress(p),
       onStop: () => {
         droneStopRef.current = null;
         setIsDronePlaying(false);
+        setScrubberProgress(scrubberProgressRef.current);
       },
     });
-  }, [map, activeOuting, isDronePlaying, scrubberProgress, effectiveFullscreen, stopChoreography]);
+  }, [map, activeOuting, isDronePlaying, stopChoreography]);
 
   const handleToggleSummit360 = useCallback(() => {
     if (!map || !activeOuting) return;
@@ -2329,47 +2498,25 @@ export function ClubMap({
         summit360StopRef.current();
         summit360StopRef.current = null;
       }
+      const safePose = resolveCollisionFreeCamera(
+        map,
+        {
+          center: [activeOuting.peak[0], activeOuting.peak[1]],
+          zoom: 13.1,
+          pitch: Math.min(48, CLUB_MAX_PITCH),
+          bearing: pk.bearing,
+        },
+        activeOuting.peak[2],
+      );
       map.easeTo({
-        center: [activeOuting.peak[0], activeOuting.peak[1]],
-        zoom: 13.7,
-        pitch: CLUB_MAX_PITCH,
-        bearing: pk.bearing,
+        center: safePose.center,
+        zoom: safePose.zoom,
+        pitch: safePose.pitch,
+        bearing: safePose.bearing,
         duration: prefersReducedMotion() ? 0 : 750,
       });
     },
     [map, activeOuting],
-  );
-
-  const dispatchAction = useCallback(
-    (
-      action: ClubMapAction,
-      legacyFallback?: { type: string; id: string; title?: string; subtitle?: string },
-    ) => {
-      if (onActionRef.current) {
-        onActionRef.current(action);
-        return;
-      }
-      if (action.kind === 'open-outing') {
-        const clubOpenOuting = (window as unknown as { __lkdvClubMapOpenOuting?: (id: string) => void })
-          .__lkdvClubMapOpenOuting;
-        if (clubOpenOuting) {
-          clubOpenOuting(action.id);
-          return;
-        }
-      }
-      if (action.kind === 'open-massif') {
-        const clubOpenMassif = (window as unknown as { __lkdvClubMapOpenMassif?: (id: string) => void })
-          .__lkdvClubMapOpenMassif;
-        if (clubOpenMassif) {
-          clubOpenMassif(action.id);
-          return;
-        }
-      }
-      if (legacyFallback) {
-        window.dispatchEvent(new CustomEvent('lkdv:club-map-action', { detail: legacyFallback }));
-      }
-    },
-    [],
   );
 
   const handleLegacyOpen = useCallback(
@@ -2426,8 +2573,18 @@ export function ClubMap({
   const carnetEmptyHint = emptyHint ?? 'L’auteur n’a pas joint de trace GPS à ce carnet.';
   const regionLabel = isRichClubMode || hasClubData ? 'Carte 3D du club' : isCarnet ? 'Carte du carnet' : 'Carte de tes sorties';
 
+  const handleToggleOutdoorOverlay = useCallback(
+    (id: ClubOutdoorOverlayId) => {
+      requestExpandOnUserInteraction();
+      setOutdoorOverlays((prev) => ({ ...prev, [id]: !prev[id] }));
+    },
+    [requestExpandOnUserInteraction],
+  );
+
   const hasScrubberVisible = Boolean(isRichClubMode && activeOuting && ready && !fallback && !contextMode);
-  const attributionText = isRichClubMode ? getClubBaseAttribution(style3DMode, demProvider) : undefined;
+  const attributionText = isRichClubMode
+    ? getClubBaseAttribution(style3DMode, demProvider, outdoorOverlays)
+    : undefined;
 
   return (
     <div
@@ -2539,7 +2696,16 @@ export function ClubMap({
           zoomStage={isRichClubMode ? effectiveZoomStage : undefined}
           onZoomStage={isRichClubMode ? handleZoomStage : undefined}
           styleMode={isRichClubMode ? style3DMode : undefined}
-          onStyleMode={isRichClubMode ? setStyle3DMode : undefined}
+          onStyleMode={
+            isRichClubMode
+              ? (nextMode) => {
+                  requestExpandOnUserInteraction();
+                  setStyle3DMode(nextMode);
+                }
+              : undefined
+          }
+          outdoorOverlays={isRichClubMode ? outdoorOverlays : undefined}
+          onToggleOutdoorOverlay={isRichClubMode ? handleToggleOutdoorOverlay : undefined}
           bearing={bearing}
           onResetNorth={!isCarnet ? handleResetNorth : undefined}
           isFullscreen={effectiveFullscreen}
@@ -2559,7 +2725,15 @@ export function ClubMap({
           solarHour={solarHour}
           onSolarHourChange={setSolarHour}
           pillarsEnabled={pillarsEnabled}
-          onTogglePillars={() => setPillarsEnabled((prev) => !prev)}
+          onTogglePillars={() =>
+            setPillarsEnabled((prev) => {
+              const next = !prev;
+              if (next && map && map.getPitch() < 48) {
+                map.easeTo({ pitch: 60, duration: 600 });
+              }
+              return next;
+            })
+          }
           bearing={bearing}
           onFocusPeak={handleFocusSummitPeak}
           onCloseOuting={() => {
@@ -2569,111 +2743,7 @@ export function ClubMap({
         />
       ) : null}
 
-      {anchor &&
-      resolvedRichCallout &&
-      !fallback &&
-      !isDronePlaying &&
-      !(effectiveFullscreen && onAction && resolvedRichCallout.kind === 'post') ? (
-        <div className="lkdv-map-callout-anchor" style={{ left: anchor.x, top: anchor.y }}>
-          {resolvedRichCallout.kind === 'country' ? (
-            <ClubMapCallout
-              kind="country"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={() => {
-                if (map && filteredRichData) flyToCountryCamera(map, filteredRichData.center);
-              }}
-            />
-          ) : resolvedRichCallout.kind === 'rich-massif' ? (
-            <ClubMapCallout
-              kind="rich-massif"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={(id) => dispatchAction({ kind: 'open-massif', id }, { type: 'massif', id })}
-            />
-          ) : resolvedRichCallout.kind === 'rich-outing' ? (
-            <ClubMapCallout
-              kind="rich-outing"
-              data={resolvedRichCallout.data}
-              onClose={() => {
-                stopChoreography();
-                selectRich(null);
-              }}
-              onOpen={(id) =>
-                dispatchAction(
-                  { kind: 'open-outing', id, outingId: id },
-                  { type: 'outing', id, title: resolvedRichCallout.data.title },
-                )
-              }
-              onStartDrone={handleToggleDrone}
-            />
-          ) : resolvedRichCallout.kind === 'post' ? (
-            <ClubMapCallout
-              kind="post"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={(id) =>
-                dispatchAction(
-                  { kind: 'open-post', id, outingId: resolvedRichCallout.data.outingId },
-                  {
-                    type: 'post',
-                    id,
-                    title: resolvedRichCallout.data.spot,
-                    subtitle: resolvedRichCallout.data.authorName,
-                  },
-                )
-              }
-            />
-          ) : resolvedRichCallout.kind === 'pokedex' ? (
-            <ClubMapCallout
-              kind="pokedex"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={(outingId) =>
-                dispatchAction(
-                  { kind: 'open-outing', id: outingId, outingId },
-                  {
-                    type: 'pokedex',
-                    id: outingId,
-                    title: resolvedRichCallout.data.commonName,
-                    subtitle: resolvedRichCallout.data.outingTitle,
-                  },
-                )
-              }
-            />
-          ) : resolvedRichCallout.kind === 'kit' ? (
-            <ClubMapCallout
-              kind="kit"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={(id) =>
-                dispatchAction(
-                  { kind: 'open-kit', id, outingId: resolvedRichCallout.data.outingId },
-                  {
-                    type: 'kit',
-                    id,
-                    title: resolvedRichCallout.data.title,
-                  },
-                )
-              }
-            />
-          ) : (
-            <ClubMapCallout
-              kind="member"
-              data={resolvedRichCallout.data}
-              onClose={() => selectRich(null)}
-              onOpen={(id) =>
-                dispatchAction(
-                  { kind: 'open-member', id },
-                  { type: 'member', id, title: resolvedRichCallout.data.name },
-                )
-              }
-            />
-          )}
-        </div>
-      ) : null}
-
-      {anchor && !resolvedRichCallout && resolvedLegacy && !fallback ? (
+      {anchor && !isRichClubMode && resolvedLegacy && !fallback ? (
         <div className="lkdv-map-callout-anchor" style={{ left: anchor.x, top: anchor.y }}>
           {resolvedLegacy.kind === 'outing' ? (
             <ClubMapCallout

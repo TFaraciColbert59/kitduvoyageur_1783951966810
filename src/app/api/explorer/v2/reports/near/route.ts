@@ -45,7 +45,10 @@ export async function GET(request: Request) {
       { headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' } },
     );
   } catch (error) {
-    console.error('[explorer-v2] reports near', error);
-    return NextResponse.json({ error: 'indisponible' }, { status: 503 });
+    console.warn('[explorer-v2] reports near degraded:', error instanceof Error ? error.message : String(error));
+    return NextResponse.json(
+      { reports: [], degraded: true },
+      { status: 200, headers: { 'Cache-Control': 'public, s-maxage=30' } },
+    );
   }
 }

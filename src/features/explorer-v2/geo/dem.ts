@@ -68,3 +68,64 @@ export function sampleTileElevation(
   const py = Math.min(size - 1, Math.max(0, Math.floor((yf - Math.floor(yf)) * size)));
   return Math.round(tile[py * size + px]);
 }
+
+/**
+ * Altitude bilinéaire lissée d'un point (lng, lat) sur une tuile DEM décodée.
+ * Évite les marches d'escalier artificielles lors du calcul des pentes d'arêtes.
+ */
+export function sampleTileElevationBilinear(
+  tile: Float32Array,
+  size: number,
+  lng: number,
+  lat: number,
+  zoom: number,
+): number {
+  const xf = lonToTileX(lng, zoom);
+  const yf = latToTileY(lat, zoom);
+  const fx = (xf - Math.floor(xf)) * size - 0.5;
+  const fy = (yf - Math.floor(yf)) * size - 0.5;
+  const x0 = Math.min(size - 1, Math.max(0, Math.floor(fx)));
+  const y0 = Math.min(size - 1, Math.max(0, Math.floor(fy)));
+  const x1 = Math.min(size - 1, x0 + 1);
+  const y1 = Math.min(size - 1, y0 + 1);
+  const tx = Math.min(1, Math.max(0, fx - x0));
+  const ty = Math.min(1, Math.max(0, fy - y0));
+
+  const z00 = tile[y0 * size + x0];
+  const z10 = tile[y0 * size + x1];
+  const z01 = tile[y1 * size + x0];
+  const z11 = tile[y1 * size + x1];
+  const z0 = z00 + (z10 - z00) * tx;
+  const z1 = z01 + (z11 - z01) * tx;
+  return z0 + (z1 - z0) * ty;
+}
+
+/**
+ * Pente locale (degrés, opérateur Horn 3×3) autour d'un point sur une tuile Terrarium décodée.
+ */
+export function sampleTileSlopeDeg(
+  tile: Float32Array,
+  size: number,
+  lng: number,
+  lat: number,
+  zoom: number,
+): number {
+  const xf = lonToTileX(lng, zoom);
+  const yf = latToTileY(lat, zoom);
+  const px = Math.min(size - 2, Math.max(1, Math.floor((xf - Math.floor(xf)) * size)));
+  const py = Math.min(size - 2, Math.max(1, Math.floor((yf - Math.floor(yf)) * size)));
+
+  const cellM = (156_543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+  if (!Number.isFinite(cellM) || cellM <= 0.1) return 0;
+
+  const at = (x: number, y: number) => tile[y * size + x];
+  const dzdx =
+    (at(px + 1, py - 1) + 2 * at(px + 1, py) + at(px + 1, py + 1) -
+      (at(px - 1, py - 1) + 2 * at(px - 1, py) + at(px - 1, py + 1))) /
+    (8 * cellM);
+  const dzdy =
+    (at(px - 1, py + 1) + 2 * at(px, py + 1) + at(px + 1, py + 1) -
+      (at(px - 1, py - 1) + 2 * at(px, py - 1) + at(px + 1, py - 1))) /
+    (8 * cellM);
+  return Math.atan(Math.hypot(dzdx, dzdy)) * (180 / Math.PI);
+}

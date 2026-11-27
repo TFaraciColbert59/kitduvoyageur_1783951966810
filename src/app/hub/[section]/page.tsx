@@ -66,6 +66,7 @@ export default async function HubSectionPage({
   searchParams: Promise<{
     product_id?: string;
     id?: string;
+    groupId?: string;
     route?: string;
     onglet?: string;
     jour?: string;
@@ -85,10 +86,16 @@ export default async function HubSectionPage({
   if (def.id === 'preparation') redirect('/compas?etape=kit');
 
   const data = await getHubAdventureData();
+  const explicitGroupId = sp.groupId?.trim() || undefined;
+  const resolvedGroupId =
+    def.id === 'groupe'
+      ? explicitGroupId ?? (data.adventure.nature === 'collectif' ? data.adventure.id : undefined)
+      : undefined;
+  const canServeSection =
+    isHubSectionServable(def, data.adventure.nature) || Boolean(resolvedGroupId);
 
   if (flags?.hub_camp_v1) {
-    const servable = isHubSectionServable(def, data.adventure.nature);
-    const serverSectionNode = servable ? (
+    const serverSectionNode = canServeSection ? (
       <>
         {def.id === 'inventaire' && <HubInventaireSection productId={sp.product_id} />}
         {def.id === 'kit' && <HubKitSection />}
@@ -100,10 +107,10 @@ export default async function HubSectionPage({
         {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
           <HubVoyagesLiesSection adventure={data.adventure} />
         )}
-        {data.adventure.nature === 'collectif' && def.id === 'groupe' && (
-          <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
+        {resolvedGroupId && (
+          <HubGroupeCockpit groupId={resolvedGroupId} initialTab={sp.onglet} />
         )}
-        {data.adventure.nature === 'sortie' && data.trip && (
+        {data.adventure.nature === 'sortie' && data.trip && !resolvedGroupId && (
           <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
         )}
       </>
@@ -122,7 +129,7 @@ export default async function HubSectionPage({
     );
   }
 
-  if (!isHubSectionServable(def, data.adventure.nature)) notFound();
+  if (!canServeSection) notFound();
 
   const content = (
     <div className="space-y-2.5">
@@ -137,10 +144,10 @@ export default async function HubSectionPage({
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
         <HubVoyagesLiesSection adventure={data.adventure} />
       )}
-      {data.adventure.nature === 'collectif' && def.id === 'groupe' && (
-        <HubGroupeCockpit groupId={data.adventure.id} initialTab={sp.onglet} />
+      {resolvedGroupId && (
+        <HubGroupeCockpit groupId={resolvedGroupId} initialTab={sp.onglet} />
       )}
-      {data.adventure.nature === 'sortie' && data.trip && (
+      {data.adventure.nature === 'sortie' && data.trip && !resolvedGroupId && (
         <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
       )}
     </div>

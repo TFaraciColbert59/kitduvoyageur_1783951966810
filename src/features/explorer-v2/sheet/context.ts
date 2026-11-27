@@ -14,6 +14,8 @@ import type {
   GeoCollection,
 } from '../data/hooks';
 import type { ExplorerStore } from '../state/store';
+import type { TerritorialEncyclopediaData, UnifiedLayerItem } from '../types/encyclopedia';
+import type { AdaptiveOverviewBundle } from '../unifiedBridge';
 import type { Sport, SportSelection } from '../state/types';
 import type { SearchViewport } from '../searchArea';
 import type { RouteSlopeState } from '../data/useRouteSlope';
@@ -149,6 +151,16 @@ export interface SheetContext {
     onShowCoverage: (geoJson: OfflineCoverageFeatureCollection) => void;
     onLaunchShortcut: (deepLinkUri: string) => void;
   };
+  /** Encyclopédie territoriale multi-échelles (Monde → Secteur naturel). */
+  encyclopedia?: TerritorialEncyclopediaData | null;
+  /** Calques unifiés temps réel + fraîcheur pour UnifiedLayersSheet. */
+  unifiedLayers?: {
+    items: readonly UnifiedLayerItem[];
+    onToggle: (layerId: string) => void;
+    onResetClean: () => void;
+  };
+  /** Synthèse du moteur adaptatif & physiologique. */
+  adaptive?: AdaptiveOverviewBundle | null;
   locale: string;
 }
 

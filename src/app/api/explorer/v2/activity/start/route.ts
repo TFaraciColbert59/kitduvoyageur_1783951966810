@@ -4,6 +4,8 @@ import {
   parseActivityStartBody,
   parseStartActivityRpcResult,
 } from '@/features/explorer-v2/server/activityStart';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +49,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!token) {
     return json({ error: 'authentification requise' }, 401);
   }
+
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-activity-start',
+    limit: 30,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
 
   const parsed = parseActivityStartBody(await request.json().catch(() => null));
   if (!parsed.ok) {

@@ -29,8 +29,9 @@ Ce repository contient des configurations, des règles, des skills et des agents
   - `obsidian-cli` : Pilotage en ligne de commande de coffres Obsidian, recherche et automatisation
   - `defuddle` : Extraction de markdown propre et concis depuis des pages web pour économiser les tokens
 
-## Règle Permanente UX & Interaction Design
+## Règle Permanente UX, Design System & Interaction Design
 
+> **Règle Design System LKDV (OBLIGATOIRE POUR TOUTE L'APP) :** Consulter et appliquer strictement [`.agents/rules/lkdv-design-system.md`](.agents/rules/lkdv-design-system.md) et [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) pour TOUT écran ou drawer. Réutiliser systématiquement les composants canoniques (`ClubGearProductCard`, `KitCard`, `KitProductSheetV2`, `SlotShell`, `SortMenuButton`, `ClubPokedexDrawerBody`, `StoryArchiveDrawer`, `ComposerMenuSheet`, `AttachmentDrawer`). Ne jamais réinventer de cartes produits/kits ad hoc, placer les sous-drawers et filtres en bas à droite, le CTA primaire en bas à gauche, et les boutons de fermeture en pilule `×` sans libellé.
 > **Règle Permanente :** Les skills `apple-ui-designer` et Aura `interaction-design` doivent être appliqués pour toute décision relative aux layouts mobiles, hiérarchies visuelles, microinteractions et transitions natives iOS/Apple.
 > **Règle Superpowers :** Pour toute tâche de développement majeure, appliquer le workflow de Superpowers (Brainstorming -> Plan d'implémentation -> Subagent-driven / TDD -> Vérification).
 

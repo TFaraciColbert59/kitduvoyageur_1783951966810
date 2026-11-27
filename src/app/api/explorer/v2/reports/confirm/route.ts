@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +9,15 @@ const bodySchema = z.object({
   reportId: z.string().uuid(),
   verdict: z.enum(['present', 'gone']),
 });
+
+function safeUpstreamStatus(status: number): number {
+  if (status === 401) return 401;
+  if (status === 403) return 403;
+  if (status === 404) return 404;
+  if (status === 409) return 409;
+  if (status === 400 || status === 422) return 400;
+  return 503;
+}
 
 /**
  * Confirmation communautaire : « toujours là » (`explorer_confirm_report`) ou
@@ -18,6 +29,15 @@ export async function POST(request: Request) {
   if (!authorization?.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'authentification requise' }, { status: 401 });
   }
+
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-reports-confirm',
+    limit: 30,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'verdict invalide' }, { status: 400 });
 
@@ -33,7 +53,8 @@ export async function POST(request: Request) {
       body: JSON.stringify({ p_report_id: parsed.data.reportId }),
     });
     if (!res.ok) {
-      return NextResponse.json({ error: 'refusé', detail: (await res.text()).slice(0, 200) }, { status: res.status });
+      console.warn('[explorer-v2] reports confirm rejected', res.status);
+      return NextResponse.json({ error: 'refusé' }, { status: safeUpstreamStatus(res.status) });
     }
     return NextResponse.json({ status: 'ok', result: await res.json() });
   } catch (error) {

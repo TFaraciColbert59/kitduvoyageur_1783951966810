@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { pgrest } from '@/lib/explorer-v2/pgrest';
+import { createClient } from '@/lib/supabase/server';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 const bodySchema = z.object({
-  // La politique `trips_insert_policy` exige `user_id = auth.uid()` : le client
-  // transmet son propre identifiant, RLS rejette toute usurpation.
-  userId: z.string().uuid(),
   title: z.string().min(3).max(120),
   destination: z.string().max(160).optional(),
   countryCode: z
@@ -41,24 +42,86 @@ const bodySchema = z.object({
   partySize: z.number().int().min(1).max(50).default(4),
 });
 
+function bearerToken(header: string | null): string {
+  const match = header ? /^Bearer\s+(\S+)\s*$/i.exec(header) : null;
+  return match?.[1] ?? '';
+}
+
+function safeUpstreamStatus(status: number): number {
+  if (status === 401) return 401;
+  if (status === 403) return 403;
+  if (status === 409) return 409;
+  if (status === 400 || status === 422) return 400;
+  return 503;
+}
+
 /**
- * Création d'un départ (P6-07). Le jeton utilisateur est requis : la ligne est
- * écrite avec `user_id = auth.uid()` par la politique `trips`.
+ * Création d'un départ (P6-07). L'identifiant `user_id` est toujours dérivé
+ * côté serveur depuis l'utilisateur vérifié (`auth.getUser`), jamais depuis
+ * le corps client.
  */
 export async function POST(request: Request) {
-  const authorization = request.headers.get('authorization');
-  if (!authorization?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'authentification requise' }, { status: 401 });
-  }
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'départ invalide', details: parsed.error.issues }, { status: 400 });
-  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) return NextResponse.json({ error: 'configuration absente' }, { status: 503 });
 
-  const { userId, title, destination, countryCode, startDate, endDate, activity, partySize } = parsed.data;
+  const token = bearerToken(request.headers.get('authorization'));
+  let userId: string | null = null;
+  let postgrestAuthHeader: string | null = null;
+
+  if (token) {
+    try {
+      const authClient = createSupabaseClient(url, anon, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const {
+        data: { user },
+        error,
+      } = await authClient.auth.getUser(token);
+      if (!error && user) {
+        userId = user.id;
+        postgrestAuthHeader = `Bearer ${token}`;
+      }
+    } catch {
+      return NextResponse.json({ error: 'indisponible' }, { status: 503 });
+    }
+  } else {
+    try {
+      const serverClient = await createClient();
+      const {
+        data: { user },
+        error,
+      } = await serverClient.auth.getUser();
+      if (!error && user) {
+        userId = user.id;
+        const { data: sessionData } = await serverClient.auth.getSession();
+        if (sessionData.session?.access_token) {
+          postgrestAuthHeader = `Bearer ${sessionData.session.access_token}`;
+        }
+      }
+    } catch {
+      // Session absente
+    }
+  }
+
+  if (!userId || !postgrestAuthHeader) {
+    return NextResponse.json({ error: 'authentification requise' }, { status: 401 });
+  }
+
+  const limited = await enforceRateLimit(userId, {
+    scope: 'explorer-v2-trips-write',
+    limit: 15,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'départ invalide' }, { status: 400 });
+  }
+
+  const { title, destination, countryCode, startDate, endDate, activity, partySize } = parsed.data;
   const slug = `${title
     .toLowerCase()
     .normalize('NFD')
@@ -72,7 +135,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         apikey: anon,
-        Authorization: authorization,
+        Authorization: postgrestAuthHeader,
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
       },
@@ -93,7 +156,8 @@ export async function POST(request: Request) {
       ]),
     });
     if (!res.ok) {
-      return NextResponse.json({ error: 'refusé', detail: (await res.text()).slice(0, 200) }, { status: res.status });
+      console.warn('[explorer-v2] trips rejected', res.status);
+      return NextResponse.json({ error: 'refusé' }, { status: safeUpstreamStatus(res.status) });
     }
     const rows = (await res.json()) as Array<{ id: string; slug: string }>;
     return NextResponse.json({ status: 'created', trip: rows[0] ?? null });
@@ -105,6 +169,14 @@ export async function POST(request: Request) {
 
 /** Départs publics ouverts, filtrables par pays. */
 export async function GET(request: Request) {
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-trips-read',
+    limit: 60,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
   const params = new URL(request.url).searchParams;
   const iso = params.get('iso');
   const filter = iso && /^[A-Z]{2}$/.test(iso) ? `&destination_country_code=eq.${iso}` : '';

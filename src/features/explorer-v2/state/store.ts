@@ -32,6 +32,25 @@ import { LEVEL_ZOOM, SCENES, type SceneName } from './scenes';
 import { createSplitsState } from '../activity/splits';
 import { newClientSessionId } from '../activity/localSession';
 import { clearStrengthDraft, writeStrengthDraft } from '../strength/storage';
+import {
+  legacyLevelToSpatialScale,
+  resolveSpatialScale,
+  type SpatialScale,
+} from './spatialScale';
+import {
+  computeLayerVisibilityForPreset,
+  NEW_UNIFIED_LAYERS_DEFAULT_FALSE,
+  type ExplorerPresetId,
+} from './presets';
+import {
+  canTransitionMode,
+  computeGpsActiveLayerVisibility,
+  INITIAL_SAFETY_CORRIDOR,
+  type ExplorerMode,
+  type ExploreSnapshot,
+  type HudContrastMode,
+  type SafetyCorridorState,
+} from './hudMachine';
 
 export const DETENT_RATIO: Record<Detent, number> = {
   peek: 0,
@@ -103,7 +122,7 @@ interface ExplorerActions {
   setHeatmapSubDrawer: (sub: 'community' | 'personal' | null) => void;
   setCommunityHeatmap: (patch: Partial<CommunityHeatmapState>) => void;
   setPersonalHeatmap: (patch: Partial<PersonalHeatmapState>) => void;
-  toggleSavedPlace: (place: Omit<SavedPlace, 'savedAt'>) => boolean;
+  toggleSavedPlace: (place: Omit<SavedPlace, 'savedAt'>, userKey?: string | null) => boolean;
   hydrateSavedPlaces: (userKey?: string | null) => void;
   addCapturedMedia: (item: CapturedLiveMedia) => void;
   /** Réglage local de préparation : active ou coupe la pause automatique. */
@@ -116,6 +135,24 @@ interface ExplorerActions {
   storeStrengthLog: (log: StrengthLog) => boolean;
   /** Efface le brouillon local et l’état mémoire (la suppression serveur est demandée par l’écran). */
   clearStrengthLog: () => void;
+  /** Applique atomiquement un preset d'activité (ou conserve les couches sur `'custom'`). */
+  applyPreset: (presetId: ExplorerPresetId) => void;
+  /** Met à jour l'échelle spatiale 6 niveaux. */
+  setSpatialScale: (scale: SpatialScale) => void;
+  /** Met à jour le mode de contraste du HUD GPS (`standard`, `sunlight`, `night-red`). */
+  setHudContrast: (contrast: HudContrastMode) => void;
+  /** Entre en mode préparation pré-départ (`PREFLIGHT`). */
+  enterPreflight: () => void;
+  /** Entre en mode suivi GPS actif (`GPS_ACTIVE`) en capturant l'instantané et en déchargeant les couches lourdes. */
+  enterGpsActive: () => void;
+  /** Quitte le mode GPS actif (`EXPLORE`) et restaure l'instantané d'exploration capturé. */
+  exitGpsActive: () => void;
+  /** Déclenche le mode d'urgence haute visibilité (`SOS`). */
+  triggerSos: () => void;
+  /** Annule le mode `SOS` et revient vers `GPS_ACTIVE` (si séance active) ou `EXPLORE`. */
+  cancelSos: () => void;
+  /** Met à jour la synthèse du corridor de sécurité autour de la trace. */
+  updateSafetyCorridor: (patch: Partial<SafetyCorridorState>) => void;
 }
 
 export type ExplorerStore = ExplorerState & ExplorerActions;
@@ -130,6 +167,17 @@ export const AUTO_PAUSE_STORAGE_KEY = 'lkdv.explorer.pauseAuto';
  * Repasse à `false` dès qu'une écriture réussit.
  */
 let autoPausePersistenceFailed = false;
+
+/**
+ * Scope utilisateur actif pour « Mes lieux enregistrés » (invariant C-PRIV).
+ * Mis à jour par `hydrateSavedPlaces(user?.id ?? null)` pour éviter toute fuite
+ * entre comptes différents sur un même appareil.
+ */
+let activeSavedPlacesScope: string | null = null;
+
+function normalizeSavedPlacesScope(userKey?: string | null): string | null {
+  return typeof userKey === 'string' && userKey.trim().length > 0 ? userKey.trim() : null;
+}
 
 const initialState: ExplorerState = {
   level: 0,
@@ -175,6 +223,13 @@ const initialState: ExplorerState = {
     comparePeriod: null,
   },
   savedPlaces: [],
+  mode: 'EXPLORE',
+  spatialScale: 'world',
+  activePreset: 'hiking',
+  lastPresetId: 'hiking',
+  hudContrast: 'standard',
+  exploreSnapshot: null,
+  safetyCorridor: INITIAL_SAFETY_CORRIDOR,
   layerVisibility: {
     routes: true,
     walkRoutes: true,
@@ -195,6 +250,7 @@ const initialState: ExplorerState = {
     highlights: true,
     distanceMarkers: true,
     fire: true,
+    ...NEW_UNIFIED_LAYERS_DEFAULT_FALSE,
   },
 };
 
@@ -254,6 +310,22 @@ function activityStarted(
   };
 }
 
+function captureExploreSnapshot(state: ExplorerState): ExploreSnapshot {
+  return {
+    capturedAt: Date.now(),
+    layerVisibility: { ...(state.layerVisibility ?? {}) },
+    activePreset: state.activePreset ?? 'hiking',
+    lastPresetId: state.lastPresetId ?? 'hiking',
+    sheet: state.sheet,
+    detent: state.detent,
+    tab: state.tab,
+    spatialScale: state.spatialScale ?? legacyLevelToSpatialScale(state.level),
+    zoom: state.zoom,
+    center: [state.center[0], state.center[1]],
+    mapBaseStyle: state.mapBaseStyle,
+  };
+}
+
 export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   ...initialState,
 
@@ -269,6 +341,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   setLevel: (level, center, geo) => {
     set((state) => ({
       level,
+      spatialScale: legacyLevelToSpatialScale(level),
       geo: geo ?? state.geo,
       center: center ?? state.center,
       zoom: LEVEL_ZOOM[level],
@@ -280,6 +353,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   openCountry: (iso, center, name) => {
     set({
       level: 1,
+      spatialScale: 'country',
       geo: iso,
       regionId: undefined,
       placeId: undefined,
@@ -298,6 +372,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   openRegion: (regionId, center, name) => {
     set({
       level: 2,
+      spatialScale: 'region',
       regionId,
       placeId: undefined,
       selection: undefined,
@@ -315,6 +390,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
   openPlace: (placeId, center, name) => {
     set({
       level: 3,
+      spatialScale: 'city',
       placeId,
       selection: undefined,
       center,
@@ -333,6 +409,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     const next = (level > 0 ? level - 1 : 0) as Level;
     set({
       level: next,
+      spatialScale: legacyLevelToSpatialScale(next),
       regionId: next < 2 ? undefined : get().regionId,
       placeId: next < 3 ? undefined : get().placeId,
       selection: undefined,
@@ -529,23 +606,41 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     emit('mini', { mini });
   },
 
-  setCenter: (center, zoom) => set({ center, zoom }),
+  setCenter: (center, zoom) =>
+    set((state) => ({
+      center,
+      zoom,
+      spatialScale: resolveSpatialScale(zoom, state.spatialScale ?? 'world'),
+    })),
 
   setCamera: (camera) => set({ camera }),
 
   showToast: (toast) => {
     toastSeq += 1;
-    set({ toast: { ...toast, id: toastSeq } });
+    const currentId = toastSeq;
+    set({ toast: { ...toast, id: currentId } });
     emit('toast', { title: toast.title });
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        if (get().toast?.id === currentId) {
+          set({ toast: undefined });
+        }
+      }, 2800);
+    }
   },
 
   dismissToast: () => set({ toast: undefined }),
 
   startActivity: (sport, sessionId = null, selection, clientSessionId) => {
-    const route = routeSnapshotFor(get().selection, get().trailRoute);
+    const state = get();
+    const route = routeSnapshotFor(state.selection, state.trailRoute);
     const activity = activityStarted(sport, sessionId, selection, route, clientSessionId);
+    const snapshot = state.exploreSnapshot ?? captureExploreSnapshot(state);
     set({
       activity,
+      mode: 'GPS_ACTIVE',
+      exploreSnapshot: snapshot,
+      layerVisibility: computeGpsActiveLayerVisibility(state.layerVisibility),
       // Une nouvelle séance ne peut plus hériter de la sélection précédente :
       // le hors-trace lit exclusivement `activity.route`, figé ci-dessus.
       selection: undefined,
@@ -609,9 +704,23 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     }),
 
   stopActivity: () => {
-    const current = get().activity;
+    const state = get();
+    const current = state.activity;
+    const snapshot = state.exploreSnapshot;
     set({
       activity: undefined,
+      mode: 'EXPLORE',
+      hudContrast: 'standard',
+      exploreSnapshot: null,
+      ...(snapshot
+        ? {
+            layerVisibility: { ...snapshot.layerVisibility },
+            activePreset: snapshot.activePreset,
+            lastPresetId: snapshot.lastPresetId,
+            spatialScale: snapshot.spatialScale,
+            mapBaseStyle: snapshot.mapBaseStyle ?? state.mapBaseStyle,
+          }
+        : {}),
       summary: current ? { ...current, endedAt: Date.now() } : null,
       // La séance terminée garde sa copie dans `summary` ; la suivante repart
       // sans itinéraire tant que l'utilisateur n'en a pas choisi un.
@@ -651,6 +760,7 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
 
   toggleLayer: (layerId) =>
     set((state) => ({
+      activePreset: 'custom',
       layerVisibility: {
         ...state.layerVisibility,
         // Une clé absente est visible par défaut (sauf `slope`, déclaré false) :
@@ -682,17 +792,24 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       },
     })),
 
-  toggleSavedPlace: (place) => {
-    const current = get().savedPlaces ?? loadSavedPlaces(null);
+  toggleSavedPlace: (place, userKey) => {
+    const scope =
+      userKey !== undefined ? normalizeSavedPlacesScope(userKey) : activeSavedPlacesScope;
+    if (userKey !== undefined) {
+      activeSavedPlacesScope = scope;
+    }
+    const current = get().savedPlaces ?? loadSavedPlaces(scope);
     const { places: list, saved } = toggleSavedPlaceInList(current, place);
-    writeSavedPlaces(list, null);
+    writeSavedPlaces(list, scope);
     set({ savedPlaces: list });
     emit('saved-place-toggle', { id: place.id, saved });
     return saved;
   },
 
   hydrateSavedPlaces: (userKey) => {
-    set({ savedPlaces: loadSavedPlaces(userKey ?? null) });
+    const scope = normalizeSavedPlacesScope(userKey);
+    activeSavedPlacesScope = scope;
+    set({ savedPlaces: loadSavedPlaces(scope) });
   },
 
   addCapturedMedia: (item) =>
@@ -737,6 +854,103 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     set({ strength: undefined });
     clearStrengthDraft();
     emit('strength-clear', {});
+  },
+
+  applyPreset: (presetId) => {
+    set((state) => ({
+      activePreset: presetId,
+      lastPresetId: presetId === 'custom' ? (state.lastPresetId ?? 'hiking') : presetId,
+      layerVisibility: computeLayerVisibilityForPreset(presetId, state.layerVisibility),
+    }));
+    emit('preset', { presetId });
+  },
+
+  setSpatialScale: (spatialScale) => {
+    set({ spatialScale });
+    emit('spatial-scale', { spatialScale });
+  },
+
+  setHudContrast: (hudContrast) => {
+    set({ hudContrast });
+    emit('hud-contrast', { hudContrast });
+  },
+
+  enterPreflight: () => {
+    const currentMode: ExplorerMode = get().mode ?? 'EXPLORE';
+    if (!canTransitionMode(currentMode, 'PREFLIGHT')) return;
+    set({ mode: 'PREFLIGHT' });
+    emit('mode', { from: currentMode, to: 'PREFLIGHT' });
+  },
+
+  enterGpsActive: () => {
+    const state = get();
+    const currentMode: ExplorerMode = state.mode ?? 'EXPLORE';
+    if (!canTransitionMode(currentMode, 'GPS_ACTIVE')) return;
+    const snapshot = state.exploreSnapshot ?? captureExploreSnapshot(state);
+    set({
+      mode: 'GPS_ACTIVE',
+      exploreSnapshot: snapshot,
+      layerVisibility: computeGpsActiveLayerVisibility(state.layerVisibility),
+    });
+    emit('mode', { from: currentMode, to: 'GPS_ACTIVE' });
+  },
+
+  exitGpsActive: () => {
+    const state = get();
+    const currentMode: ExplorerMode = state.mode ?? 'EXPLORE';
+    if (!canTransitionMode(currentMode, 'EXPLORE')) return;
+    const snapshot = state.exploreSnapshot;
+    set({
+      mode: 'EXPLORE',
+      exploreSnapshot: null,
+      ...(snapshot
+        ? {
+            layerVisibility: { ...snapshot.layerVisibility },
+            activePreset: snapshot.activePreset,
+            lastPresetId: snapshot.lastPresetId,
+            sheet: snapshot.sheet,
+            detent: snapshot.detent,
+            tab: snapshot.tab,
+            spatialScale: snapshot.spatialScale,
+            mapBaseStyle: snapshot.mapBaseStyle ?? state.mapBaseStyle,
+          }
+        : {}),
+    });
+    emit('mode', { from: currentMode, to: 'EXPLORE' });
+  },
+
+  triggerSos: () => {
+    const state = get();
+    const currentMode: ExplorerMode = state.mode ?? 'EXPLORE';
+    if (!canTransitionMode(currentMode, 'SOS')) return;
+    set({
+      mode: 'SOS',
+      sheet: 'sos',
+    });
+    emit('mode', { from: currentMode, to: 'SOS' });
+  },
+
+  cancelSos: () => {
+    const state = get();
+    const currentMode: ExplorerMode = state.mode ?? 'EXPLORE';
+    if (currentMode !== 'SOS') return;
+    const nextMode: ExplorerMode = state.activity ? 'GPS_ACTIVE' : 'EXPLORE';
+    if (!canTransitionMode('SOS', nextMode)) return;
+    set({
+      mode: nextMode,
+      sheet: nextMode === 'GPS_ACTIVE' ? 'live' : (state.exploreSnapshot?.sheet ?? 'level'),
+    });
+    emit('mode', { from: 'SOS', to: nextMode });
+  },
+
+  updateSafetyCorridor: (patch) => {
+    set((state) => ({
+      safetyCorridor: {
+        ...(state.safetyCorridor ?? INITIAL_SAFETY_CORRIDOR),
+        ...patch,
+        updatedAt: patch.updatedAt ?? Date.now(),
+      },
+    }));
   },
 }));
 

@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
         maxAllowedKm2: MAX_OVERPASS_GEODESIC_AREA_KM2,
         items: [],
       },
-      { status: 400 },
+      { status: 200 },
     );
   }
 

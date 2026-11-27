@@ -430,12 +430,26 @@ export interface ClubChannel {
   createdAt: string;
 }
 
+export type ClubChannelMessageType =
+  | 'text'
+  | 'image'
+  | 'audio'
+  | 'gpx'
+  | 'trail'
+  | 'product'
+  | 'kit'
+  | 'file'
+  | 'video'
+  | 'post';
+
 export interface ClubChannelMessage {
   id: string;
   channelId: string;
   clubId: string;
   authorId: string;
   body: string;
+  messageType?: ClubChannelMessageType;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
   editedAt?: string | null;
   hiddenByModeratorId?: string | null;

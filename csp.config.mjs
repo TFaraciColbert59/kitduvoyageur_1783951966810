@@ -25,11 +25,11 @@
 
 export const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://hcaptcha.com https://*.hcaptcha.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://www.googletagmanager.com https://va.vercel-scripts.com https://hcaptcha.com https://*.hcaptcha.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hcaptcha.com https://*.hcaptcha.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https: https://upload.wikimedia.org",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://*.arcgisonline.com https://s3.amazonaws.com https://tiles.openfreemap.org https://tiles.mapterhorn.com https://data.geopf.fr https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://va.vercel-scripts.com https://*.arcgis.com https://*.arcgisonline.com https://s3.amazonaws.com https://tiles.openfreemap.org https://tiles.mapterhorn.com https://data.geopf.fr https://tile.waymarkedtrails.org https://tiles.openseamap.org https://gibs.earthdata.nasa.gov https://api.gbif.org https://tilecache.rainviewer.com https://hcaptcha.com https://*.hcaptcha.com https://api.stripe.com",
   'frame-src https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com',
   "worker-src 'self' blob:",
   'report-uri /api/csp-report',

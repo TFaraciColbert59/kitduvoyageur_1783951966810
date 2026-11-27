@@ -278,30 +278,80 @@ export function ClubOutingScrubberHud({
       </div>
 
       {solarOpen ? (
-        <div className="lkdv-map-solar-row">
-          <span className="lkdv-map-solar-label">
-            ☀️ {solarHour !== null ? formatHourLabel(solarHour) : '13h'}
-          </span>
-          <input
-            type="range"
-            min={6}
-            max={21}
-            step={0.5}
-            value={solarHour ?? 13}
-            aria-label="Heure d'illumination solaire du relief 3D"
-            onChange={(e) => onSolarHourChange(parseFloat(e.target.value))}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="lkdv-map-solar-row">
+            <span className="lkdv-map-solar-label">
+              ☀️ {solarHour !== null ? formatHourLabel(solarHour) : '13h'}
+            </span>
+            <input
+              type="range"
+              min={6}
+              max={21}
+              step={0.5}
+              value={solarHour ?? 13}
+              aria-label="Heure d'illumination solaire du relief 3D"
+              onChange={(e) => onSolarHourChange(parseFloat(e.target.value))}
+            />
+            {solarHour !== null ? (
+              <button
+                type="button"
+                className="lkdv-map-solar-reset"
+                onClick={() => {
+                  onSolarHourChange(null);
+                  setSolarOpen(false);
+                }}
+              >
+                Auto
+              </button>
+            ) : null}
+          </div>
           {solarHour !== null ? (
-            <button
-              type="button"
-              className="lkdv-map-solar-reset"
-              onClick={() => {
-                onSolarHourChange(null);
-                setSolarOpen(false);
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+                fontSize: 10.5,
+                fontWeight: 600,
+                color: '#1f427a',
+                padding: '0 2px',
               }}
             >
-              Auto
-            </button>
+              <span>
+                Soleil :{' '}
+                {solarHour < 10
+                  ? 'Est'
+                  : solarHour < 12
+                    ? 'Sud-Est'
+                    : solarHour < 14
+                      ? 'Sud'
+                      : solarHour < 17
+                        ? 'Sud-Ouest'
+                        : 'Ouest'}
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#0a1e4a',
+                    display: 'inline-block',
+                  }}
+                />
+                Versants à l’ombre :{' '}
+                {solarHour < 10
+                  ? 'O / NO'
+                  : solarHour < 12
+                    ? 'NO / N'
+                    : solarHour < 14
+                      ? 'Nord'
+                      : solarHour < 17
+                        ? 'N / NE'
+                        : 'E / SE'}
+              </span>
+            </div>
           ) : null}
         </div>
       ) : null}

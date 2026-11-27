@@ -203,16 +203,10 @@ let _MOCK_MASSIFS = [
   { id: "m4", name: "Écrins", reg: "HAUTES-ALPES", outings: 2, km: 44, dplus: 2240, x: 258, y: 174, r: 18, cacheMb: 19, cached: false },
   { id: "m5", name: "Corse — Aiguilles de Bavella", reg: "CORSE (GR20)", outings: 2, km: 38, dplus: 2180, x: 280, y: 220, r: 20, cacheMb: 16, cached: true }
 ];
-let MASSIFS = JSON.parse(JSON.stringify(_MOCK_MASSIFS));
+let MASSIFS = [];
 
-let _MOCK_OUTINGS = [
-  { id: "o1", title: "Trek des 3 Vallées, Pyrénées", mass: "Hautes-Pyrénées", date: "12–15 oct. · J-4", km: 58, dplus: 3420, maxAlt: 2640, status: "upcoming", ready: 82, comp: ["Тоny", "Léa", "Marc", "Sarah"], kit: "k1", x: 96, y: 174 },
-  { id: "o2", title: "Boucle du Lac Blanc", mass: "Mont-Blanc", date: "18 sept. 2026", km: 12, dplus: 950, maxAlt: 2352, status: "done", proven: true, comp: ["Тоny", "Léa"], kit: "k4", x: 266, y: 118 },
-  { id: "o3", title: "Traversée des Hauts Plateaux", mass: "Vercors", date: "29–30 août 2026", km: 34, dplus: 1600, maxAlt: 2020, status: "done", proven: true, comp: ["Тоny", "Marc", "Yanis"], kit: "k2", x: 232, y: 158 },
-  { id: "o4", title: "Tour du Néouvielle", mass: "Hautes-Pyrénées", date: "11–13 août 2026", km: 41, dplus: 2380, maxAlt: 2450, status: "done", proven: true, comp: ["Тоny", "Léa", "Inès"], kit: "k1", x: 114, y: 184 },
-  { id: "o5", title: "Aiguilles de Bavella (GR20)", mass: "Corse", date: "24–26 juin 2026", km: 28, dplus: 1820, maxAlt: 1660, status: "done", proven: true, comp: ["Тоny", "Marc"], kit: "k1", x: 280, y: 220 }
-];
-let OUTINGS = JSON.parse(JSON.stringify(_MOCK_OUTINGS));
+let _MOCK_OUTINGS = [];
+let OUTINGS = [];
 
 /* Visuels de couverture des sorties : partagés par la carte et le drawer de sortie */
 const OUTING_COVERS = [
@@ -224,13 +218,8 @@ const OUTING_COVERS = [
   'https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=600'
 ];
 
-let _MOCK_CARNETS = [
-  { id: "ca2", title: "Reflet du Mont-Blanc au Lac Blanc", short: "Mont-Blanc 🇮🇹🇫🇷", mass: "Haute-Savoie", massId: "m2", date: "Publié · 19 sept.", status: "pub", photos: 9, species: ["Bouquetin des Alpes"], likes: 64, views: 420, quote: "Montée avant 7 h pour le miroir parfait sans vent.", x: 292, y: 104, h: 200 },
-  { id: "ca1", title: "Trois jours autour du Néouvielle", short: "Néouvielle", mass: "Hautes-Pyrénées", massId: "m1", date: "Publié · 15 août", status: "pub", photos: 18, species: ["Gentiane de Koch", "Marmotte"], likes: 48, views: 312, quote: "Lacs glacés à l'aube et granit doré au camp d'Aubert.", x: 70, y: 158, h: 165 },
-  { id: "ca3", title: "Glacier Blanc & Pré de Mme Carle", short: "Écrins", mass: "Écrins", massId: "m4", date: "Publié · 14 juil.", status: "pub", photos: 15, species: ["Aigle royal", "Edelweiss"], likes: 39, views: 255, quote: "Traces de crampons sur le névé matinal.", x: 282, y: 184, h: 32 },
-  { id: "ca0", title: "Traversée du Vercors, bivouac", short: "Vercors", mass: "Vercors", massId: "m3", date: "Brouillon prêt · 30 août", status: "draft", photos: 12, species: ["Gypaète barbu", "Chamois"], likes: 27, views: 180, quote: "Bivouac sous les étoiles au pas de l'Aiguille, source du km 14 à sec.", x: 204, y: 146, h: 145 }
-];
-let CARNETS = JSON.parse(JSON.stringify(_MOCK_CARNETS));
+let _MOCK_CARNETS = [];
+let CARNETS = [];
 
 let _MOCK_SPECIES = [
   { id: "sp1", n: "Gypaète barbu", lat: "Gypaetus barbatus", mass: "Vercors", date: "30 août", conf: "98 %", x: 228, y: 152 },
@@ -325,16 +314,16 @@ const S = {
   prof: "km",
   vis: 1, // 0: Privée, 1: Communauté, 2: Publique
   profile: {
-    handle: "tony_frc",
-    name: "Тоny",
-    followersCount: 1080,
-    followingCount: 142,
-    followersLabel: "1 080",
-    bioLine: "· Alpes & Pyrénées · Bivouac léger",
+    handle: "club",
+    name: "Club LKDV",
+    followersCount: 0,
+    followingCount: 0,
+    followersLabel: "0",
+    bioLine: "",
     avatarUrl: null,
     isGuest: false,
-    isDemo: true,
-    storeCreditEur: 42.50
+    isDemo: false,
+    storeCreditEur: 0
   },
   orient: { terrain: "montagne", autonomy: "bivouac_1_2", priority: "legerete", experience: "regulier" },
   traveller: { nationality: "France", residence: "France", home: "Lyon", currency: "EUR (€)", tz: "Europe/Paris" },
@@ -1669,7 +1658,11 @@ let openSheet = function(k = "step", tab = 0, det = "card", extra = {}) {
   const wasBig = !!S.big;
   if (S.big) { S.big = false; applyShell(); }
   syncCardBounds();
-  if (wasBig) setTimeout(syncCardBounds, 620);
+  if (wasBig) {
+    requestAnimationFrame(syncCardBounds);
+    setTimeout(syncCardBounds, 120);
+    setTimeout(syncCardBounds, 620);
+  }
   captureSheetOpener();
   S.sh = { k, tab, page: 0, det, ...extra };
   if (S.sh.det !== "closed") S.sh.det = "card";
@@ -2411,17 +2404,17 @@ S.extraHl = [];
 S.spPins = [];
 S.traveller.nats = ['France'];
 S.profile = {
-  handle: 'tony_frc',
-  name: 'Тоny',
-  followersLabel: '1 080',
-  followersCount: 1080,
-  followingCount: 339,
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-  bioLine: 'IT·FR · Haute montagne · Minimalisme',
-  sigText: '14 sorties · 182 km · 13,4 km D+',
+  handle: 'club',
+  name: 'Club LKDV',
+  followersLabel: '0',
+  followersCount: 0,
+  followingCount: 0,
+  avatarUrl: null,
+  bioLine: '',
+  sigText: '',
   isGuest: false,
-  storeCreditEur: 42.50,
-  loyaltyPoints: 1450
+  storeCreditEur: 0,
+  loyaltyPoints: 0
 };
 S.vaultData = { ffcam: '', blood: '', doctor: '' };
 S.invs.forEach(p => {
@@ -2882,7 +2875,13 @@ let bindIgSwipe = function () {
     if (e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (S.sh || (S.igTab !== 0 && S.igTab !== 1)) return;
     const target = e.target;
-    if (target && target.closest && target.closest('.lkdv-glass-overlay')) return;
+    if (
+      target &&
+      target.closest &&
+      target.closest('.lkdv-glass-overlay, .lkdv-ig-hl-row, .ig-hl-row, [data-no-swipe]')
+    ) {
+      return;
+    }
     if (igSwipe && igSwipe.view) {
       igSwipe.view.classList.remove('swiping');
       igSwipe.view.style.transform = '';
@@ -2919,11 +2918,15 @@ let bindIgSwipe = function () {
   }, { passive: false });
 
   const endSwipe = function (e) {
-    if (!igSwipe || e.pointerId !== igSwipe.id) return;
+    if (!igSwipe || (typeof e.pointerId === 'number' && e.pointerId !== igSwipe.id)) return;
     const st = igSwipe;
     igSwipe = null;
-    if (!st.active) return;
-    const canceled = e.type === 'pointercancel';
+    if (!st.active) {
+      st.view.classList.remove('swiping');
+      st.view.style.transform = '';
+      return;
+    }
+    const canceled = e.type === 'pointercancel' || e.type === 'lostpointercapture';
     const hasX = typeof e.clientX === 'number';
     const dx = (!canceled && hasX) ? e.clientX - st.x : st.dx;
     const dy = (!canceled && hasX) ? e.clientY - st.y : st.dy;
@@ -2937,8 +2940,9 @@ let bindIgSwipe = function () {
     if (!canceled && ((st.edge && dx < -SWIPE_MIN) || (dx < -SWIPE_STRONG && Math.abs(dy) < SWIPE_MAX_Y))) swipeTo(st.view, 0, 'out-right', 'in-left');
     else settle(st.view);
   };
-  top.addEventListener('pointerup', endSwipe);
-  top.addEventListener('pointercancel', endSwipe);
+  window.addEventListener('pointerup', endSwipe);
+  window.addEventListener('pointercancel', endSwipe);
+  top.addEventListener('lostpointercapture', endSwipe);
 };
 
 /* ---------- Menu de visibilité + vue visiteur (3) ---------- */
@@ -4211,7 +4215,7 @@ var EXA = {
   },
   openClubDrawer: v => {
     const parts = String(v || '0:0').split(':');
-    const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 4);
+    const dTab = clamp(parseInt(parts[0], 10) || 0, 0, 5);
     const dSub = clamp(parseInt(parts[1], 10) || 0, 0, 3);
     openSheet('club_drawer', dTab, 'card', { drawerTab: dTab, drawerSubTab: dSub });
     haptic(8);
@@ -4264,6 +4268,9 @@ var EXA = {
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('lkdv:club-select-outing', { detail: { outingId: resolvedId } }));
+      if (typeof window.__lkdvClubMapOpenOuting === 'function') {
+        window.__lkdvClubMapOpenOuting(resolvedId);
+      }
     }
     haptic(10);
   },

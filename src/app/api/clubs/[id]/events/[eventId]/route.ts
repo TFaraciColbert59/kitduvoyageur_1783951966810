@@ -146,18 +146,87 @@ export async function GET(
 
     const registrations = user ? await loadEventRegistrations(supabase, eventId) : [];
     const manager = isManager(bundle);
+    const isClubMember = Boolean(
+      bundle.viewerMembership && bundle.viewerMembership.status === 'active',
+    );
     const eventCounts = {
-      registered: event.registeredCount ?? registrations.filter((registration) => registration.status === 'registered').length,
+      registered:
+        event.registeredCount ??
+        registrations.filter((registration) => registration.status === 'registered').length,
       waitlist: registrations.filter((registration) => registration.status === 'waitlist').length,
     };
-    const visibleRegistrations = manager
-      ? registrations
-      : registrations.filter((registration) => registration.userId === user?.id);
 
-    const [latestRevision, routeSyncState, attendanceRecords] = await Promise.all([
+    const rosterUserIds = Array.from(
+      new Set<string>([
+        ...(event.organizerId ? [event.organizerId] : []),
+        ...registrations.map((r) => r.userId).filter(Boolean),
+      ]),
+    );
+    const profileById = new Map<
+      string,
+      { fullName: string; handle: string; avatarUrl: string | null }
+    >();
+    if (rosterUserIds.length > 0 && (manager || isClubMember || event.visibility === 'public')) {
+      const { data: profiles } = await supabase
+        .from('public_profiles')
+        .select('id, full_name, username, avatar_url')
+        .in('id', rosterUserIds);
+      for (const p of (profiles ?? []) as Row[]) {
+        const pid = String(p.id ?? '');
+        if (!pid) continue;
+        profileById.set(pid, {
+          fullName: String(p.full_name ?? p.username ?? 'Membre du club'),
+          handle: String(p.username ?? ''),
+          avatarUrl: typeof p.avatar_url === 'string' ? p.avatar_url : null,
+        });
+      }
+    }
+
+    const memberRoleByUserId = new Map<string, string>();
+    for (const m of bundle.members) {
+      if (m.userId) memberRoleByUserId.set(m.userId, m.role);
+    }
+
+    const enrichedRegistrations = registrations.map((reg) => {
+      const prof = profileById.get(reg.userId);
+      return {
+        ...reg,
+        fullName: prof?.fullName ?? 'Membre du club',
+        handle: prof?.handle ?? '',
+        avatarUrl: prof?.avatarUrl ?? null,
+        clubRole: memberRoleByUserId.get(reg.userId) ?? 'member',
+      };
+    });
+
+    const visibleRegistrations =
+      manager || isClubMember || event.visibility === 'public'
+        ? enrichedRegistrations
+        : enrichedRegistrations.filter((registration) => registration.userId === user?.id);
+
+    const organizerProfile = event.organizerId
+      ? {
+          userId: event.organizerId,
+          ...(profileById.get(event.organizerId) ?? {
+            fullName: 'Encadrant du club',
+            handle: '',
+            avatarUrl: null,
+          }),
+          clubRole: memberRoleByUserId.get(event.organizerId) ?? 'admin',
+        }
+      : null;
+
+    const [latestRevision, routeSyncState, attendanceRecords, rawEventExtras] = await Promise.all([
       loadLatestRevision(supabase, eventId),
       user ? loadRouteSync(supabase, eventId, user.id) : Promise.resolve(null),
       manager ? loadAttendanceRecords(supabase, eventId) : Promise.resolve([]),
+      supabase
+        .from('club_events')
+        .select(
+          'level, distance_km, elevation_gain_m, elevation_loss_m, max_altitude_m, duration_label, safety_checklist, safety_notes, kit_id, standard_kit_id, cover_url, recurrence',
+        )
+        .eq('id', eventId)
+        .maybeSingle()
+        .then((r) => (r.error ? null : (r.data as Row | null))),
     ]);
 
     const coHosts = event.coHostClubIds.length
@@ -171,7 +240,54 @@ export async function GET(
 
     return json({
       data: {
-        event,
+        event: {
+          ...event,
+          ...(rawEventExtras
+            ? {
+                level: rawEventExtras.level ?? null,
+                distanceKm:
+                  typeof rawEventExtras.distance_km === 'number'
+                    ? rawEventExtras.distance_km
+                    : Number(rawEventExtras.distance_km) || null,
+                elevationGainM:
+                  typeof rawEventExtras.elevation_gain_m === 'number'
+                    ? rawEventExtras.elevation_gain_m
+                    : null,
+                elevationLossM:
+                  typeof rawEventExtras.elevation_loss_m === 'number'
+                    ? rawEventExtras.elevation_loss_m
+                    : null,
+                maxAltitudeM:
+                  typeof rawEventExtras.max_altitude_m === 'number'
+                    ? rawEventExtras.max_altitude_m
+                    : null,
+                durationLabel:
+                  typeof rawEventExtras.duration_label === 'string'
+                    ? rawEventExtras.duration_label
+                    : null,
+                safetyChecklist: Array.isArray(rawEventExtras.safety_checklist)
+                  ? (rawEventExtras.safety_checklist as string[])
+                  : null,
+                safetyNotes:
+                  typeof rawEventExtras.safety_notes === 'string'
+                    ? rawEventExtras.safety_notes
+                    : null,
+                kitId:
+                  typeof rawEventExtras.kit_id === 'string' ? rawEventExtras.kit_id : null,
+                standardKitId:
+                  typeof rawEventExtras.standard_kit_id === 'string'
+                    ? rawEventExtras.standard_kit_id
+                    : null,
+                coverUrl:
+                  typeof rawEventExtras.cover_url === 'string' ? rawEventExtras.cover_url : null,
+                recurrence:
+                  typeof rawEventExtras.recurrence === 'string'
+                    ? rawEventExtras.recurrence
+                    : null,
+              }
+            : {}),
+        },
+        organizerProfile,
         club: bundle.club,
         coHostClubs,
         registrations: visibleRegistrations,

@@ -26,12 +26,46 @@
 /* La carte React remplace l'ancien SVG, ses contrôles et son panneau. */
 .mapzone .map-scale-selector,
 .mapzone #mctl,
-.mapzone #mgrab,
 .mapzone #tm,
 .mapzone #map-loading-bar,
 .mapzone .map-badge-3d,
 .mapzone .btn-3d-fullscreen {
   display: none !important;
+}
+
+/* Encoche centrale en haut de la carte du bas (identique à Profil / Carnet) */
+.lkdv-clubs-v8 .mapzone #mgrab {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 25 !important;
+  width: 68px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  cursor: grab !important;
+  pointer-events: auto !important;
+}
+
+.lkdv-clubs-v8 .mapzone #mgrab span {
+  display: block !important;
+  width: 38px !important;
+  height: 4.5px !important;
+  border-radius: 999px !important;
+  background: rgba(23, 43, 36, 0.36) !important;
+  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.75) !important;
+  transition: width 160ms ease, background 160ms ease !important;
+}
+
+.lkdv-clubs-v8 .mapzone #mgrab:hover span,
+.lkdv-clubs-v8 .mapzone #mgrab:active span {
+  width: 46px !important;
+  background: rgba(23, 64, 44, 0.62) !important;
 }
 
 .lkdv-map-loading {
@@ -127,6 +161,15 @@
   pointer-events: none;
 }
 
+/* Sur la page Club, le drawer haut (data-det="card") laisse la carte du bas visible et interactive */
+.lkdv-clubs-v8 .phone.sheet-open[data-det="card"] .lkdv-map-hud {
+  opacity: 1;
+  pointer-events: none;
+}
+.lkdv-clubs-v8 .phone.sheet-open[data-det="card"] .lkdv-map-hud button {
+  pointer-events: auto;
+}
+
 .phone.sheet-open .lkdv-map-state {
   display: none;
 }
@@ -135,7 +178,7 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  z-index: 7;
+  z-index: 62;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -147,8 +190,14 @@
   pointer-events: auto;
 }
 
-.lkdv-map-scale {
-  position: relative;
+/* Neutralise le position:absolute de compte-map.css / carnet-map.css quand il est bundlé sur la même session */
+.lkdv-clubs-v8 .lkdv-map-top-left .lkdv-map-scale,
+.lkdv-map-top-left .lkdv-map-scale {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -1241,35 +1290,116 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 26px;
-  padding: 0 10px;
-  border: 0.5px solid rgba(255, 255, 255, 0.85);
+  height: 28px;
+  padding: 0 11px;
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  backdrop-filter: blur(18px) saturate(180%);
+  background: rgba(255, 255, 255, 0.68);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.76),
+    rgba(255, 255, 255, 0.45) 55%,
+    rgba(255, 255, 255, 0.56)
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 2px 8px rgba(23, 43, 36, 0.12);
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
   color: #17402c;
   font: 600 10.5px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
   cursor: pointer;
 }
 
+.lkdv-map-overlay-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(23, 64, 44, 0.14);
+  color: #17402c;
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
 .lkdv-map-style-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-width: min(296px, calc(100vw - 88px));
+  max-height: min(360px, calc(100vh - 220px));
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 8px;
+  border-radius: 16px;
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.8);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.86),
+    rgba(255, 255, 255, 0.58) 55%,
+    rgba(255, 255, 255, 0.68)
+  );
+  -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(28px) saturate(180%) brightness(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 43, 36, 0.14),
+    0 8px 22px rgba(23, 43, 36, 0.12);
+}
+
+.lkdv-map-style-popover::-webkit-scrollbar {
+  display: none;
+}
+
+.lkdv-map-legend-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: 2px 2px 1px;
+}
+
+.lkdv-map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 10px/1.2 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  color: rgba(23, 64, 44, 0.88);
+}
+
+.lkdv-map-legend-swatch {
+  flex: none;
+  display: block;
+}
+
+.lkdv-map-popover-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lkdv-map-popover-section + .lkdv-map-popover-section {
+  padding-top: 6px;
+  border-top: 0.5px solid rgba(23, 64, 44, 0.12);
+}
+
+.lkdv-map-popover-label {
+  font: 700 9px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(23, 64, 44, 0.65);
+  padding-left: 2px;
+}
+
+.lkdv-map-popover-row {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  max-width: min(290px, calc(100vw - 88px));
-  padding: 5px;
-  border-radius: 16px;
-  border: 0.5px solid rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.86);
-  -webkit-backdrop-filter: blur(22px) saturate(190%);
-  backdrop-filter: blur(22px) saturate(190%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 8px 24px rgba(16, 32, 24, 0.18);
 }
 
 .lkdv-map-style-popover button {
@@ -1438,26 +1568,90 @@
   }
 }
 
-/* Éclosion Story Bloom en cascade */
+/* Éclosion Story Bloom en cascade — même texture Liquid Glass que les boutons de la carte */
 .lkdv-club-bloom-pin {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 156px;
+  max-width: 148px;
   height: 24px;
-  padding: 0 8px 0 4px;
+  padding: 0 8px 0 5px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--bloom-accent, #17402c) 55%, #ffffff);
-  background: rgba(255, 255, 255, 0.88);
-  -webkit-backdrop-filter: blur(14px) saturate(180%);
-  backdrop-filter: blur(14px) saturate(180%);
+  border: 0.75px solid rgba(47, 107, 69, 0.45);
+  background: rgba(255, 255, 255, 0.68);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.76),
+    rgba(255, 255, 255, 0.45) 55%,
+    rgba(255, 255, 255, 0.56)
+  );
+  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(20px) saturate(180%) brightness(1.04);
   box-shadow:
-    inset 0 1px 0 #fff,
-    0 4px 14px rgba(16, 32, 24, 0.18);
-  color: #172b24;
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(23, 64, 44, 0.22),
+    0 6px 16px rgba(23, 43, 36, 0.14);
+  color: #17402c;
   font: 600 10px/1 -apple-system, "SF Pro Text", Inter, system-ui, sans-serif;
   cursor: pointer;
-  animation: lkdvBloomPop 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: opacity 160ms ease;
+  animation: lkdvBloomPop 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lkdv-club-bloom-pin[data-decluttered='true'] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.lkdv-club-bloom-pin.is-pokedex {
+  border-color: rgba(47, 107, 69, 0.52);
+}
+
+.lkdv-club-bloom-pin.is-post {
+  border-color: rgba(146, 86, 36, 0.42);
+}
+
+/* Pastille compacte de stories (rassemblée avec miniature circulaire + compteur ×N) */
+.lkdv-club-bloom-pin.is-story {
+  height: 24px;
+  padding: 2px 7px 2px 2px;
+  gap: 5px;
+  border-color: rgba(23, 64, 44, 0.56);
+}
+
+.lkdv-club-bloom-story-thumb {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #17402c;
+  flex: none;
+  display: block;
+}
+
+.lkdv-club-bloom-story-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #17402c;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lkdv-club-bloom-pin.is-summit {
+  border: 0.75px solid rgba(23, 64, 44, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45),
+    0 0 0 0.5px rgba(47, 107, 69, 0.32),
+    0 6px 16px rgba(23, 43, 36, 0.14);
 }
 
 .lkdv-club-bloom-ico {
@@ -1551,6 +1745,57 @@
   margin: 0 auto;
 }
 
+/* Quand la carte est repliée, le scrubber passe en pilule compacte sur une seule ligne */
+.phone:not(.mapbig) .lkdv-map-scrubber {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 999px;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-head {
+  display: contents;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-title {
+  order: 1;
+  min-width: 0;
+  flex: 1;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-title strong {
+  font-size: 11px;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-title span,
+.phone:not(.mapbig) .lkdv-map-scrubber-profile,
+.phone:not(.mapbig) .lkdv-map-solar-row {
+  display: none;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-actions {
+  order: 2;
+  flex: none;
+  gap: 4px;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-actions .lkdv-map-scrubber-btn {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-actions .lkdv-map-scrubber-btn:not(:first-child) {
+  display: none;
+}
+
+.phone:not(.mapbig) .lkdv-map-scrubber-close {
+  order: 3;
+  width: 20px;
+  height: 20px;
+}
+
 @media (max-width: 600px) {
   .lkdv-clubs-v8 .phone:not(.mapbig) .lkdv-map-scrubber {
     bottom: calc(82px + env(safe-area-inset-bottom, 0px));
@@ -1559,6 +1804,13 @@
 
 .phone.sheet-open .lkdv-map-scrubber {
   display: none;
+}
+
+/* Sur la page Club, quand la fiche sortie est ouverte en haut (data-det="card"),
+   le scrubber & le bouton Drone 3D restent accessibles sur la carte du bas */
+.lkdv-clubs-v8 .phone.sheet-open[data-det="card"] .lkdv-map-scrubber {
+  display: flex;
+  bottom: 12px;
 }
 
 .lkdv-map-scrubber-head {

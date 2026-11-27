@@ -12,8 +12,8 @@ import { hubSectionRegistry } from '@/features/hub/registry/hubSectionRegistry';
 
 describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
   it('RED-1: possession — les écrans fonctionnels pointent vers leurs sections hub', () => {
-    // `/materiel` est la surface d'entrée Matériel : plus de redirection 307.
-    expect(resolveLegacyRedirect('/materiel')).toBeNull();
+    // `/materiel` redirige vers la section inventaire du hub.
+    expect(resolveLegacyRedirect('/materiel')?.destination).toBe('/hub/inventaire');
     expect(resolveLegacyRedirect('/materiel/inventaire')?.destination).toBe('/hub/inventaire');
     expect(resolveLegacyRedirect('/materiel/kits')?.destination).toBe('/hub/kit');
     // L'ancien cockpit « Préparation » est l'étape Kit du Compas (préparateur unique).
@@ -75,9 +75,15 @@ describe('H-AUTO-42 — resolveLegacyRedirect : table statique', () => {
 });
 
 describe('Étape 2 — cas dynamiques groupes/équipages', () => {
-  it('DYN-1: /groupes/[id] → /hub/groupe', () => {
-    expect(resolveLegacyRedirect('/groupes/abc123')).toEqual({ destination: '/hub/groupe' });
-    expect(resolveLegacyRedirect('/groupes/abc/extra')).toEqual({ destination: '/hub/groupe' });
+  it('DYN-1: /groupes/[id] → /hub/groupe?groupId=[id]', () => {
+    expect(resolveLegacyRedirect('/groupes/abc123')).toEqual({
+      destination: '/hub/groupe',
+      setParams: { groupId: 'abc123' },
+    });
+    expect(resolveLegacyRedirect('/groupes/abc/extra')).toEqual({
+      destination: '/hub/groupe',
+      setParams: { groupId: 'abc' },
+    });
   });
 
   it('DYN-2: /equipages/[slug] → /hub/groupe (équipage fusionné)', () => {

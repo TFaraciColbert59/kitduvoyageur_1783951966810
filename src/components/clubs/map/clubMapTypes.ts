@@ -6,7 +6,22 @@ export type ClubZoomStage = 'planetary' | 'country' | 'massif' | 'trail';
 
 export type Club3DBaseStyle = 'topo3d' | 'ign-ortho' | 'ign-topo' | 'dusk';
 
+export type ClubOutdoorOverlayId = 'hiking' | 'nautical' | 'mtb' | 'cycling' | 'slopes';
+
+export type ClubOutdoorOverlaysState = Record<ClubOutdoorOverlayId, boolean>;
+
 export type ClubTrackCoord = [lng: number, lat: number, ele?: number];
+
+export interface ClubMapOutingRouteHydration {
+  routeId: string;
+  osmRelationId?: number | null;
+  ref?: string | null;
+  network?: string | null;
+  km?: number | null;
+  dplus?: number | null;
+  maxAlt?: number | null;
+  coords: ClubTrackCoord[];
+}
 
 export interface ClubMapOutingTrack {
   id: string;
@@ -24,6 +39,8 @@ export interface ClubMapOutingTrack {
   maxParticipants: number | null;
   rsvpJoined: boolean;
   leaderName: string;
+  leaderHandle?: string;
+  leaderId?: string;
   poleId?: string;
   isApproximateRoute?: boolean;
   coords: ClubTrackCoord[];
@@ -49,8 +66,15 @@ export interface ClubMapPokedexItem {
   latinName?: string;
   outingId: string;
   outingTitle: string;
+  observerId?: string;
   observerName: string;
+  observerAvatarUrl?: string | null;
   observedAt: string;
+  spot?: string;
+  citation?: string;
+  imageUrl?: string | null;
+  wikipediaUrl?: string | null;
+  kingdom?: 'faune' | 'flore' | 'geologie';
   confidence?: string;
   lat: number;
   lng: number;
@@ -98,6 +122,23 @@ export interface ClubRichMapMassifSummary {
   postsCount: number;
 }
 
+export interface ClubMapStoryPin {
+  id: string;
+  outingId: string;
+  outingTitle: string;
+  authorId: string;
+  authorName: string;
+  authorHandle: string;
+  authorAvatarUrl?: string | null;
+  imageUrl: string;
+  caption: string;
+  spot?: string | null;
+  lat: number;
+  lng: number;
+  trackProgress: number;
+  createdAt: string;
+}
+
 export interface ClubRichMapPayload {
   clubId: string;
   clubName: string;
@@ -114,6 +155,7 @@ export interface ClubRichMapPayload {
   pokedex: ClubMapPokedexItem[];
   kits: ClubMapKitUsage[];
   posts: ClubMapPostPin[];
+  stories?: ClubMapStoryPin[];
 }
 
 export type ClubMapSelection =

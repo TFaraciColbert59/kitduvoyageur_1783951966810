@@ -1,0 +1,15 @@
+[package]
+name = "lkdv-route-core"
+version = "0.1.0"
+edition = "2021"
+description = "Zero-dependency Rust/WASM personalized, biomechanical, hazard-aware outdoor routing & admissible alternatives kernel for Le Kit du Voyageur."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

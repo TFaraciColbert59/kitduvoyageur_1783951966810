@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import sharp from 'sharp';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
   decimateTrack,
   resampleTrack,
@@ -72,6 +74,14 @@ async function elevationAt(lng: number, lat: number, zoom: number): Promise<numb
  * navigateur, une seule implémentation à maintenir.
  */
 export async function POST(request: Request) {
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-profile',
+    limit: 30,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: 'trace invalide' }, { status: 400 });

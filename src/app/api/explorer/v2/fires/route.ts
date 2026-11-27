@@ -61,7 +61,21 @@ export async function GET(request: NextRequest) {
   });
   if (limited) return limited;
 
-  const viewport = parseOptionalBbox(request.nextUrl.searchParams);
+  const normalizedParams = new URLSearchParams(request.nextUrl.searchParams);
+  if (!normalizedParams.has('min_lat') && normalizedParams.has('minLat')) {
+    normalizedParams.set('min_lat', normalizedParams.get('minLat') ?? '');
+  }
+  if (!normalizedParams.has('max_lat') && normalizedParams.has('maxLat')) {
+    normalizedParams.set('max_lat', normalizedParams.get('maxLat') ?? '');
+  }
+  if (!normalizedParams.has('min_lng') && normalizedParams.has('minLng')) {
+    normalizedParams.set('min_lng', normalizedParams.get('minLng') ?? '');
+  }
+  if (!normalizedParams.has('max_lng') && normalizedParams.has('maxLng')) {
+    normalizedParams.set('max_lng', normalizedParams.get('maxLng') ?? '');
+  }
+
+  const viewport = parseOptionalBbox(normalizedParams);
   if (!viewport.ok) return viewport.response;
   if (!viewport.bbox) {
     return NextResponse.json(

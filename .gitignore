@@ -202,3 +202,6 @@ handoff/explorer-v2/maquette/
 
 # Matériel de briefing des agents : pas du code source.
 kit-studio-bundle/
+
+# Rust / WASM build targets
+crates/*/target/

@@ -1061,11 +1061,16 @@ function LevelTabs(ctx: SheetContext): SheetTab[] {
   }
 
   return [
-    { id: 'autour', label: 'Autour', icon: 'target', render: () => <PoiSummaryTab ctx={ctx} /> },
-    { id: 'randos', label: 'Randos', icon: 'hike', render: () => <RoutesTab ctx={ctx} /> },
-    { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="ici" /> },
-    { id: 'amis', label: 'Amis', icon: 'users', render: () => <EmptyAmis /> },
-  ];
+      {
+        id: 'autour',
+        label: 'Autour',
+        icon: 'target',
+        render: () => <PoiSummaryTab ctx={ctx} />,
+      },
+      { id: 'randos', label: 'Randos', icon: 'hike', render: () => <RoutesTab ctx={ctx} /> },
+      { id: 'carnets', label: 'Carnets', icon: 'book', render: () => <CarnetsTab ctx={ctx} where="ici" /> },
+      { id: 'amis', label: 'Amis', icon: 'users', render: () => <EmptyAmis /> },
+    ];
 }
 
 function explorerSportToRouteSport(sport: Sport | null | undefined): RouteSport {

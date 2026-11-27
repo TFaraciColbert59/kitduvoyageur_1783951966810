@@ -14,13 +14,30 @@ export type ViewportParseResult =
   | { ok: false; response: NextResponse };
 
 const BBOX_KEYS = ['min_lng', 'min_lat', 'max_lng', 'max_lat'] as const;
+const CAMEL_TO_SNAKE_BBOX: ReadonlyArray<readonly [string, string]> = [
+  ['minLng', 'min_lng'],
+  ['minLat', 'min_lat'],
+  ['maxLng', 'max_lng'],
+  ['maxLat', 'max_lat'],
+];
 
 export function parseOptionalBbox(searchParams: URLSearchParams): ViewportParseResult {
-  const hasAny = BBOX_KEYS.some((key) => searchParams.has(key));
+  const hasCamel = CAMEL_TO_SNAKE_BBOX.some(([camel]) => searchParams.has(camel));
+  let normalized = searchParams;
+  if (hasCamel) {
+    normalized = new URLSearchParams(searchParams.toString());
+    for (const [camel, snake] of CAMEL_TO_SNAKE_BBOX) {
+      if (!normalized.has(snake) && normalized.has(camel)) {
+        const val = normalized.get(camel);
+        if (val !== null) normalized.set(snake, val);
+      }
+    }
+  }
+  const hasAny = BBOX_KEYS.some((key) => normalized.has(key));
   if (!hasAny) {
     return { ok: true, bbox: null, clamped: false };
   }
-  const parsed = parseBboxQuery(searchParams);
+  const parsed = parseBboxQuery(normalized);
   if (!parsed.ok) {
     return {
       ok: false,

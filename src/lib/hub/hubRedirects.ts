@@ -24,8 +24,9 @@ export interface LegacyRedirect {
  */
 export const LEGACY_REDIRECTS: Record<string, string> = {
   // ── Possession : les écrans fonctionnels vivent dans le hub ──
-  // La surface /materiel est supprimée : les sous-routes historiques restent
-  // des liens profonds vers les sections canoniques du hub.
+  // La surface /materiel est supprimée : la racine et les sous-routes historiques
+  // restent des liens profonds vers les sections canoniques du hub.
+  '/materiel': '/hub/inventaire',
   '/materiel/inventaire': '/hub/inventaire',
   '/materiel/kits': '/hub/kit',
   '/materiel/depart': '/hub/depart',
@@ -53,7 +54,7 @@ export const LEGACY_REDIRECTS: Record<string, string> = {
  * Cas dynamiques :
  * - /materiel/depart/[id] → /hub/depart?id=[id] (l'id 'none' = cockpit vitrine,
  *   il est préservé tel quel pour une sémantique identique) ;
- * - /groupes/[id] et /equipages/[slug] → /hub/groupe ;
+ * - /groupes/[id] → /hub/groupe?groupId=[id] et /equipages/[slug] → /hub/groupe ;
  * - /voyages/[slug] et /voyages/[slug]/[section] restent des SHIMS serveur
  *   (changement d'aventure active puis redirection) — non gérés ici.
  */
@@ -86,7 +87,13 @@ export function resolveLegacyRedirect(pathname: string): LegacyRedirect | null {
     return { destination: '/hub/depart', setParams: { id } };
   }
 
-  if (pathname.startsWith('/groupes/')) return { destination: '/hub/groupe' };
+  const groupesPrefix = '/groupes/';
+  if (pathname.startsWith(groupesPrefix)) {
+    const rest = pathname.slice(groupesPrefix.length);
+    const id = rest.split('/')[0];
+    if (id) return { destination: '/hub/groupe', setParams: { groupId: id } };
+    return { destination: '/hub/groupe' };
+  }
   if (pathname.startsWith('/equipages/')) return { destination: '/hub/groupe' };
 
   return null;

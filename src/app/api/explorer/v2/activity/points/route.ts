@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +64,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   const token = bearerToken(request.headers.get('authorization'));
   if (!token) return json({ error: 'authentification requise' }, 401);
 
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-activity-points',
+    limit: 120,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return json({ error: 'progression invalide' }, 400);
 
@@ -104,18 +114,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (!res.ok) {
-      const detail = (await res.text()).slice(0, 200);
+      const rawText = await res.text().catch(() => '');
+      const isClosed = rawText.includes('séance déjà close') || rawText.includes('déjà close');
       const status =
         res.status === 401
           ? 401
           : res.status === 403
             ? 403
-            : detail.includes('séance déjà close') || detail.includes('déjà close')
+            : isClosed
               ? 409
               : res.status === 400 || res.status === 422
                 ? 400
                 : 503;
-      return json({ error: 'progression refusée', detail }, status);
+      console.warn('[explorer-v2] activity/points rejected', res.status);
+      return json(
+        { error: isClosed ? 'séance déjà close' : 'progression refusée' },
+        status,
+      );
     }
 
     const payload = await res.json().catch(() => null);

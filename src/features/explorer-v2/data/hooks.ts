@@ -1,13 +1,19 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   isSearchableViewport,
   viewportQueryParams,
   type SearchViewport,
 } from '../searchArea';
 import type { SearchRoute, Sport } from '../state/types';
+import { readZone, type ZoneRecord } from '../offline/zone';
+import { quantizePlaceQuery } from './spatialLoader';
+import type { PoiDetailPayload } from '@/app/api/explorer/v2/poi-detail/route';
+import type { RouteDetailPayload } from '@/app/api/explorer/v2/route-detail/route';
+
+export type { PoiDetailPayload, RouteDetailPayload };
 
 export type Position = [number, number];
 
@@ -46,6 +52,7 @@ export interface PoiItem {
   ele_m: number | null;
   potable: boolean | null;
   capacity: number | null;
+  imageUrl?: string | null;
 }
 
 export interface RouteItem {
@@ -196,16 +203,42 @@ export function geometryBounds(geometry: GeoFeature['geometry']): [number, numbe
   return [w, s, e, n];
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+async function fetchJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(url, { headers: { Accept: 'application/json' }, signal });
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
   return (await res.json()) as T;
+}
+
+function useSettledValue<T>(value: T, key: string, delayMs: number, paused = false): T {
+  const [settled, setSettled] = useState<T>(value);
+  const lastEmitRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (paused) return;
+    const now = Date.now();
+    // Leading + trailing throttle: first element fetch fires immediately (0 ms!),
+    // while continuous pans stream cleanly at `delayMs` cadence without stalling!
+    if (delayMs <= 0 || now - lastEmitRef.current >= delayMs) {
+      lastEmitRef.current = now;
+      setSettled(value);
+      return;
+    }
+    const remaining = Math.max(16, delayMs - (now - lastEmitRef.current));
+    const timer = setTimeout(() => {
+      lastEmitRef.current = Date.now();
+      setSettled(value);
+    }, remaining);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, delayMs, paused]);
+
+  return settled;
 }
 
 export function useCountriesGeo() {
   return useQuery({
     queryKey: ['xp', 'countries-geo'],
-    queryFn: () => fetchJson<GeoCollection>('/data/explorer-v2/countries.geojson'),
+    queryFn: ({ signal }) => fetchJson<GeoCollection>('/data/explorer-v2/countries.geojson', signal),
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 24 * 60 * 60 * 1000,
   });
@@ -216,7 +249,7 @@ export function useRegionsGeo(iso: string | null) {
   return useQuery({
     queryKey: ['xp', 'regions-geo', cleanIso],
     enabled: !!cleanIso,
-    queryFn: () => fetchJson<GeoCollection>(`/data/explorer-v2/regions/${cleanIso}.geojson`),
+    queryFn: ({ signal }) => fetchJson<GeoCollection>(`/data/explorer-v2/regions/${cleanIso}.geojson`, signal),
     staleTime: 24 * 60 * 60 * 1000,
     retry: 1,
   });
@@ -227,18 +260,215 @@ export function useCountryDetails(iso: string | null) {
   return useQuery({
     queryKey: ['xp', 'country', cleanIso],
     enabled: !!cleanIso,
-    queryFn: () => fetchJson<{ countries: CountryDetails[] }>(`/api/explorer/v2/countries?iso=${cleanIso}`),
+    queryFn: ({ signal }) => fetchJson<{ countries: CountryDetails[] }>(`/api/explorer/v2/countries?iso=${cleanIso}`, signal),
     staleTime: 60 * 60 * 1000,
     select: (data) => data.countries?.[0] ?? null,
   });
 }
 
-export function usePlace(lat: number, lng: number, zoom: number, enabled = true) {
+function isOfflinePoiItem(value: unknown): value is PoiItem {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.id === 'string' &&
+    typeof record.lat === 'number' &&
+    Number.isFinite(record.lat) &&
+    typeof record.lon === 'number' &&
+    Number.isFinite(record.lon)
+  );
+}
+
+function isOfflineRouteItem(value: unknown): value is RouteItem {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.id === 'number' && Number.isFinite(record.id);
+}
+
+function buildOfflinePlaceResponse(zone: ZoneRecord | null): PlaceResponse {
+  const pois: PoiItem[] = Array.isArray(zone?.pois)
+    ? zone.pois.filter(isOfflinePoiItem)
+    : [];
+  const routes: RouteItem[] = Array.isArray(zone?.routes)
+    ? zone.routes.filter(isOfflineRouteItem)
+    : [];
+
+  const water = pois.filter(
+    (p) => p.kind === 'water' || p.subtype === 'drinking_water' || p.subtype === 'spring',
+  ).length;
+  const refuges = pois.filter(
+    (p) =>
+      p.kind === 'shelter' ||
+      p.kind === 'refuge' ||
+      p.subtype === 'alpine_hut' ||
+      p.subtype === 'wilderness_hut' ||
+      p.subtype === 'refuge',
+  ).length;
+
+  const bounds = zone?.bounds;
+  const window =
+    bounds &&
+    Number.isFinite(bounds.north) &&
+    Number.isFinite(bounds.south) &&
+    Number.isFinite(bounds.east) &&
+    Number.isFinite(bounds.west)
+      ? {
+          dLat: Math.max(0.01, Math.abs(bounds.north - bounds.south) / 2),
+          dLng: Math.max(0.01, Math.abs(bounds.east - bounds.west) / 2),
+        }
+      : { dLat: 0.05, dLng: 0.05 };
+
+  return {
+    place: {
+      regionName: zone ? 'Zone hors ligne' : null,
+      placeName: zone ? 'Zone hors ligne' : null,
+      countryCode: null,
+      elevationM: null,
+      counts: {
+        routes: routes.length,
+        water,
+        refuges,
+        reports: 0,
+      },
+    },
+    pois,
+    routes,
+    window,
+  };
+}
+
+function isAbortError(error: unknown, signal?: AbortSignal): boolean {
+  if (signal?.aborted) return true;
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException) {
+    return error.name === 'AbortError';
+  }
+  return error instanceof Error && error.name === 'AbortError';
+}
+
+async function fetchPlaceWithOfflineFallback(
+  url: string,
+  signal?: AbortSignal,
+): Promise<PlaceResponse> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    const zone = await readZone().catch(() => null);
+    return buildOfflinePlaceResponse(zone);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Accept: 'application/json' }, signal });
+  } catch (error) {
+    if (isAbortError(error, signal)) throw error;
+    const zone = await readZone().catch(() => null);
+    if (zone || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      return buildOfflinePlaceResponse(zone);
+    }
+    throw error;
+  }
+
+  if (!res.ok) throw new Error(`${url} → ${res.status}`);
+  return (await res.json()) as PlaceResponse;
+}
+
+export function usePlace(
+  lat: number,
+  lng: number,
+  zoom: number,
+  enabled = true,
+  options?: { paused?: boolean; debounceMs?: number },
+) {
+  const quantized = quantizePlaceQuery(lat, lng, zoom);
+  const settled = useSettledValue(
+    quantized,
+    quantized.key,
+    options?.debounceMs ?? 200,
+    Boolean(options?.paused),
+  );
+
   return useQuery({
-    queryKey: ['xp', 'place', lat.toFixed(3), lng.toFixed(3), Math.round(zoom)],
+    queryKey: ['xp', 'place', settled.key],
     enabled,
-    queryFn: () => fetchJson<PlaceResponse>(`/api/explorer/v2/place?lat=${lat}&lng=${lng}&zoom=${zoom}`),
+    networkMode: 'always',
+    queryFn: ({ signal }) =>
+      fetchPlaceWithOfflineFallback(
+        `/api/explorer/v2/place?lat=${settled.lat}&lng=${settled.lng}&zoom=${settled.zoomBucket}`,
+        signal,
+      ),
     staleTime: 5 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
+    placeholderData: (prev) => prev,
+  });
+}
+
+export function usePoiDetail(
+  poi: {
+    id: string;
+    name?: string;
+    kind?: string;
+    subtype?: string | null;
+    lat: number;
+    lon: number;
+    ele_m?: number | null;
+    potable?: boolean | null;
+    capacity?: number | null;
+  } | null,
+  enabled = true,
+) {
+  const active = Boolean(enabled && poi && Number.isFinite(poi.lat) && Number.isFinite(poi.lon));
+  return useQuery({
+    queryKey: ['xp', 'poi-detail', poi?.id ?? null],
+    enabled: active,
+    queryFn: ({ signal }) => {
+      const p = poi!;
+      const qs = new URLSearchParams({
+        id: p.id,
+        lat: String(p.lat),
+        lng: String(p.lon),
+      });
+      if (p.name) qs.set('name', p.name);
+      if (p.kind) qs.set('kind', p.kind);
+      if (p.subtype) qs.set('subtype', p.subtype);
+      if (typeof p.ele_m === 'number' && Number.isFinite(p.ele_m)) qs.set('ele_m', String(p.ele_m));
+      if (typeof p.potable === 'boolean') qs.set('potable', String(p.potable));
+      if (typeof p.capacity === 'number' && Number.isFinite(p.capacity)) {
+        qs.set('capacity', String(p.capacity));
+      }
+      return fetchJson<PoiDetailPayload>(`/api/explorer/v2/poi-detail?${qs.toString()}`, signal);
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    retry: 1,
+  });
+}
+
+export function useRouteDetail(
+  route: {
+    id: number | string;
+    name?: string | null;
+    distance_km?: number | null;
+    anchor?: [number, number] | null;
+  } | null,
+  enabled = true,
+) {
+  const active = Boolean(enabled && route && String(route.id).length > 0);
+  return useQuery({
+    queryKey: ['xp', 'route-detail', route ? String(route.id) : null],
+    enabled: active,
+    queryFn: ({ signal }) => {
+      const r = route!;
+      const qs = new URLSearchParams({ id: String(r.id) });
+      if (r.name) qs.set('name', r.name);
+      if (typeof r.distance_km === 'number' && Number.isFinite(r.distance_km)) {
+        qs.set('distanceKm', String(r.distance_km));
+      }
+      if (r.anchor && Number.isFinite(r.anchor[0]) && Number.isFinite(r.anchor[1])) {
+        qs.set('lng', String(r.anchor[0]));
+        qs.set('lat', String(r.anchor[1]));
+      }
+      return fetchJson<RouteDetailPayload>(`/api/explorer/v2/route-detail?${qs.toString()}`, signal);
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    retry: 1,
   });
 }
 
@@ -277,9 +507,10 @@ export function useWeather(lat: number | null, lng: number | null) {
   return useQuery({
     queryKey: ['xp', 'weather', lat?.toFixed(2), lng?.toFixed(2)],
     enabled: lat !== null && lng !== null,
-    queryFn: () => fetchJson<WeatherResponse>(`/api/explorer/v2/weather?lat=${lat}&lng=${lng}`),
+    queryFn: ({ signal }) => fetchJson<WeatherResponse>(`/api/explorer/v2/weather?lat=${lat}&lng=${lng}`, signal),
     staleTime: 30 * 60 * 1000,
     retry: 1,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -326,20 +557,23 @@ export interface TerrainReport {
 /** Signalements terrain réels autour d'un point (RPC a5, lecture publique). */
 export function useReportsNear(lat: number, lng: number, enabled = true) {
   return useQuery({
-    queryKey: ['xp', 'reports', lat.toFixed(3), lng.toFixed(3)],
+    queryKey: ['xp', 'reports', lat.toFixed(2), lng.toFixed(2)],
     enabled,
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       fetchJson<{ reports: TerrainReport[] }>(
         `/api/explorer/v2/reports/near?lat=${lat}&lng=${lng}&radius=5000`,
+        signal,
       ),
     staleTime: 2 * 60 * 1000,
+    placeholderData: (prev) => prev,
     select: (data) => data.reports,
   });
 }
 
-export function useContent(kind: 'carnets' | 'trips', iso: string | null) {
+export function useContent(kind: 'carnets' | 'trips', iso: string | null, enabled = true) {
   return useQuery({
     queryKey: ['xp', 'content', kind, iso],
+    enabled,
     queryFn: () =>
       fetchJson<{ kind: string; items: Array<CarnetItem | TripItem> }>(
         `/api/explorer/v2/content?kind=${kind}${iso ? `&iso=${iso}` : ''}&limit=6`,

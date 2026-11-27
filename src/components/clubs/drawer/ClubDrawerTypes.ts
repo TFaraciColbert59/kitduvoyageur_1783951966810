@@ -1,6 +1,7 @@
 import type { ClubCapability, ClubRole, MembershipStatus } from '@/features/clubs/types';
 import type { ClubG02Section } from '../g02/ClubG02Screen';
 import type { ClubFeedPostItem } from '../feed/ClubInlineFeed';
+import type { ClubMapPokedexItem } from '../map/clubMapTypes';
 
 export type ClubVisibility = 'public' | 'prive' | 'secret';
 
@@ -96,29 +97,94 @@ export interface ClubMemberData {
 
 export type ClubOutingStatus = 'upcoming' | 'live' | 'completed' | 'cancelled';
 
+export interface ClubOutingPaceGroup {
+  id: string;
+  label: string;
+  speedLabel?: string | null;
+  capacity?: number | null;
+}
+
+export interface ClubOutingTransportBooking {
+  id: string;
+  transportId: string;
+  userId: string;
+  userName: string;
+  userHandle: string;
+  userAvatarUrl: string | null;
+  leg: 'aller_retour' | 'aller' | 'retour';
+  pickupNote?: string | null;
+  hasBulkyGear: boolean;
+}
+
+export interface ClubOutingTransportItem {
+  id: string;
+  eventId: string;
+  clubId: string;
+  organizerId: string;
+  organizerName: string;
+  organizerHandle: string;
+  organizerAvatarUrl: string | null;
+  direction: 'aller_retour' | 'aller' | 'retour';
+  mode: 'carpool' | 'minibus_club' | 'train' | 'bus' | 'bike' | 'foot';
+  outboundFromLabel: string;
+  outboundFromLat?: number | null;
+  outboundFromLng?: number | null;
+  outboundDepartureAt?: string | null;
+  outboundToLabel?: string | null;
+  returnFromLabel?: string | null;
+  returnFromLat?: number | null;
+  returnFromLng?: number | null;
+  returnDepartureAt?: string | null;
+  returnToLabel?: string | null;
+  seatsTotal: number;
+  seatsLeftAller: number;
+  seatsLeftRetour: number;
+  gearNotes?: string | null;
+  costShareCents: number;
+  notes?: string | null;
+  bookings: ClubOutingTransportBooking[];
+  myBookingLeg: 'aller_retour' | 'aller' | 'retour' | null;
+}
+
 export interface ClubOutingData {
   id: string;
   clubId: string;
   title: string;
+  description?: string | null;
   date: string;
   startsAtIso?: string;
+  endsAtIso?: string | null;
   dateLabel?: string;
   massif: string;
+  meetingPoint?: string | null;
+  sport?: string | null;
+  level?: string | null;
   km: number;
   dplus: number;
+  dminus?: number;
   maxAlt: number;
+  durationLabel?: string | null;
   status: ClubOutingStatus;
+  organizerId?: string | null;
   leaderName: string;
   leaderHandle: string;
+  leaderAvatarUrl?: string | null;
   participantsCount: number;
   maxParticipants: number;
+  waitlistEnabled?: boolean;
+  waitlistCount?: number;
+  paceGroups?: ClubOutingPaceGroup[];
   rsvpJoined: boolean;
   carpoolCity: string;
   carpoolSeatsLeft: number;
   requiredGear: string[];
+  safetyChecklist?: string[] | null;
+  safetyNotes?: string | null;
+  kitId?: string | null;
+  standardKitId?: string | null;
   lat: number;
   lng: number;
-  routeTrace?: Array<[number, number]> | null;
+  routeTrace?: Array<[number, number] | [number, number, number]> | null;
   coverUrl?: string;
   weatherSummary?: string;
 }
@@ -207,6 +273,8 @@ export interface ClubDrawerIntent {
   subTab?: number;
   outingId?: string;
   memberId?: string;
+  kitId?: string;
+  pokedexId?: string;
   initialSection?: ClubG02Section;
   searchQuery?: string;
 }
@@ -241,6 +309,8 @@ export interface ClubDrawerData {
   outings: ClubOutingData[];
   vaultGear: ClubGearVaultItem[];
   standardKits: ClubStandardKit[];
+  pokedexItems?: ClubMapPokedexItem[];
+  onPokedexObservationCreated?: (item: ClubMapPokedexItem) => void;
   challenges: ClubChallengeItem[];
   chatMessages: ClubChatMessage[];
   posts: ClubFeedPostItem[];
@@ -285,6 +355,8 @@ export interface ClubDrawerHostProps {
   outings: ClubOutingData[];
   vaultGear: ClubGearVaultItem[];
   standardKits: ClubStandardKit[];
+  pokedexItems?: ClubMapPokedexItem[];
+  onPokedexObservationCreated?: (item: ClubMapPokedexItem) => void;
   challenges: ClubChallengeItem[];
   chatMessages: ClubChatMessage[];
   posts: ClubFeedPostItem[];
@@ -387,7 +459,7 @@ export interface ClubDrawerHostProps {
 
 export type ExplorerLensId = 'my-clubs' | 'discover-clubs' | 'search-all';
 export type CordeeLensId = 'members-all' | 'members-guides' | 'members-binomes';
-export type MemberDetailLensId = 'm-stats' | 'm-outings' | 'm-gear' | 'm-media';
+export type MemberDetailLensId = 'm-stats' | 'm-outings' | 'm-gear' | 'm-media' | 'm-pokedex';
 
 export interface ClubExplorerDrawerBodyProps {
   lensId: ExplorerLensId;

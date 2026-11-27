@@ -25,13 +25,17 @@ import { useClubMapContext } from './map/useClubMapContext';
 import type {
   ClubMapKitUsage,
   ClubMapLiveMember,
+  ClubMapOutingRouteHydration,
   ClubMapOutingTrack,
   ClubMapPokedexItem,
   ClubMapPostPin,
   ClubMapSelection,
+  ClubMapStoryPin,
   ClubRichMapMassifSummary,
   ClubRichMapPayload,
 } from './map/clubMapTypes';
+import type { ArchivedStoryItem } from '@/app/api/stories/archive/route';
+import { ClubHighlightManageDrawer } from './feed/ClubHighlightManageDrawer';
 import { buildOutingTrackGeometry, snapPointAlongTrack } from './map/clubTrackGeometry';
 import { fetchPublicProfilesWith } from '@/lib/queries/publicProfilesCore';
 import { createGroupFromClub } from '@/features/tribu/actions/createGroupFromClub';
@@ -47,6 +51,7 @@ import {
 import { METRIC_LABELS, METRIC_UNITS } from './g02/model';
 import type { ClubG02Section } from './g02/ClubG02Screen';
 import { ClubIsland, type ClubIslandToast } from './drawer/ClubIsland';
+import { useClubCapabilities } from './drawer/admin/useClubCapabilities';
 import { ClubRuntimeOverlays } from './drawer/ClubRuntimeOverlays';
 import { resolveMassifCoords } from './drawer/ClubSharedUi';
 import type {
@@ -68,9 +73,17 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const isUuid = (val?: string | null): val is string => Boolean(val && UUID_RE.test(val));
 
 interface ClubMapActionPayload {
-  kind: 'open-outing' | 'open-massif' | 'open-member' | 'open-kit' | 'open-post' | 'rsvp-outing';
+  kind:
+    | 'open-outing'
+    | 'open-massif'
+    | 'open-member'
+    | 'open-kit'
+    | 'open-pokedex'
+    | 'open-post'
+    | 'rsvp-outing';
   id: string;
   outingId?: string;
+  handle?: string;
 }
 
 function slugifyMassif(raw?: string | null): string {
@@ -161,21 +174,33 @@ function triggerBrowserDownload(filename: string, content: string, mimeType: str
 function buildGpxXml(outings: any[], handle: string): string {
   const now = new Date().toISOString();
   const trks = (outings || []).map((o: any, idx: number) => {
-    const latBase = 45.83 + idx * 0.08;
-    const lonBase = 6.86 + idx * 0.12;
-    const pts = [
-      [latBase, lonBase, 1200],
-      [latBase + 0.02, lonBase + 0.03, 1750],
-      [latBase + 0.05, lonBase + 0.07, 2400],
-      [latBase + 0.08, lonBase + 0.11, 2810],
-      [latBase + 0.05, lonBase + 0.14, 2100],
-      [latBase, lonBase, 1200],
-    ].map(([lat, lon, ele]) => {
-      return `      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`;
-    }).join('\n');
+    const realTrace = Array.isArray(o.routeTrace) && o.routeTrace.length >= 2 ? o.routeTrace : null;
+    const pts = realTrace
+      ? realTrace
+          .map((pt: number[]) => {
+            const lon = Number(pt[0]);
+            const lat = Number(pt[1]);
+            const ele = Number.isFinite(Number(pt[2])) ? Math.round(Number(pt[2])) : 1400;
+            return `      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`;
+          })
+          .join('\n')
+      : (() => {
+          const latBase = Number.isFinite(Number(o.lat)) ? Number(o.lat) : 45.83 + idx * 0.08;
+          const lonBase = Number.isFinite(Number(o.lng)) ? Number(o.lng) : 6.86 + idx * 0.12;
+          return [
+            [latBase, lonBase, 1200],
+            [latBase + 0.02, lonBase + 0.03, 1750],
+            [latBase + 0.05, lonBase + 0.07, 2400],
+            [latBase + 0.08, lonBase + 0.11, 2810],
+            [latBase + 0.05, lonBase + 0.14, 2100],
+            [latBase, lonBase, 1200],
+          ]
+            .map(([lat, lon, ele]) => `      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`)
+            .join('\n');
+        })();
     return `  <trk>
     <name>${String(o.title || 'Sortie LKDV').replace(/[<>&]/g, '')}</name>
-    <desc>${o.mass || 'Alpes'} · ${o.km || 20} km · D+ ${o.dplus || 1000} m</desc>
+    <desc>${o.mass || o.massif || 'Alpes'} · ${o.km || 20} km · D+ ${o.dplus || 1000} m</desc>
     <trkseg>
 ${pts}
     </trkseg>
@@ -328,16 +353,16 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   const [communityCreateKind, setCommunityCreateKind] = useState<CreateKindV2>('post');
   const [communityCreatePrefill, setCommunityCreatePrefill] = useState<Record<string, unknown> | null>(null);
 
-  // Club Stories (daily 24h story on club avatar + Stories à la une in club feed)
+  // Club Stories (daily 24h story on club avatar + real DB Stories à la une & archive)
   const [clubHighlights, setClubHighlights] = useState<ClubStoryHighlight[]>([]);
+  const [clubArchiveStories, setClubArchiveStories] = useState<ArchivedStoryItem[]>([]);
   const [storyViewerState, setStoryViewerState] = useState<{
-    mode: 'daily' | 'highlights';
+    mode: 'daily' | 'highlights' | 'track';
     startIndex: number;
+    trackStoryIds?: string[];
   } | null>(null);
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
-  const [highlightTitleDraft, setHighlightTitleDraft] = useState('');
-  const [highlightCoverDraft, setHighlightCoverDraft] = useState('');
-  const [highlightCaptionDraft, setHighlightCaptionDraft] = useState('');
+  const [isCreatingHighlight, setIsCreatingHighlight] = useState(false);
 
   // Club rich interactive state
   const [clubsDirectory, setClubsDirectory] = useState<ClubItemData[]>(INITIAL_CLUBS_DIRECTORY);
@@ -412,6 +437,17 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     }
   }, [showIslandToast, triggerAct]);
 
+  const activeHandleRef = useRef(activeHandle);
+  const userIdRef = useRef(user?.id);
+  const routerRef = useRef(router);
+  const signOutRef = useRef(signOut);
+  useEffect(() => {
+    activeHandleRef.current = activeHandle;
+    userIdRef.current = user?.id;
+    routerRef.current = router;
+    signOutRef.current = signOut;
+  }, [activeHandle, router, signOut, user?.id]);
+
   // Setup runtime & real browser/API action handlers (1:1 with CompteLiquidGlassV8 + Club portals)
   useEffect(() => {
     const el = containerRef.current;
@@ -469,6 +505,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             subTab: merged.subTab,
             outingId: merged.outingId,
             memberId: merged.memberId,
+            kitId: pending?.kitId,
+            pokedexId: pending?.pokedexId,
             initialSection: merged.initialSection,
           });
         };
@@ -499,12 +537,16 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       const mapNode = el.querySelector<HTMLElement>('#maplibre-compte-canvas');
       if (mapNode) setMapRoot(mapNode);
       (window as any).__lkdvClubMapOpenOuting = (id: string) => {
-        pendingDrawerIntentRef.current = { tab: 2, outingId: id };
+        const nextIntent = { tab: 2, subTab: 0, outingId: id };
+        pendingDrawerIntentRef.current = nextIntent;
         triggerAct('openClubDrawer', '2:0');
+        setDrawerIntent({ nonce: Date.now(), ...nextIntent });
       };
       (window as any).__lkdvClubMapOpenMassif = () => {
-        pendingDrawerIntentRef.current = { tab: 2 };
+        const nextIntent = { tab: 2, subTab: 0 };
+        pendingDrawerIntentRef.current = nextIntent;
         triggerAct('openClubDrawer', '2:0');
+        setDrawerIntent({ nonce: Date.now(), ...nextIntent });
       };
       cleanup = runtime.initClubLiquidGlassRuntime(el);
       const initialFeedEl = el.querySelector('#lkdv-club-feed-root') as HTMLElement | null;
@@ -574,11 +616,11 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       };
 
       (window as any).__lkdvOnAction = async (action: string, val: any, S: any) => {
-        const handle = S?.profile?.handle || activeHandle || 'club';
+        const handle = S?.profile?.handle || activeHandleRef.current || 'club';
         const clubUrl = `${window.location.origin}/clubs/${clubId}`;
 
         if (action === 'navtab' && typeof val === 'string') {
-          router.push(val);
+          routerRef.current.push(val);
           return;
         }
 
@@ -595,12 +637,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         if (action === 'openUserProfile' && typeof val === 'string') {
           const cleanHandle = val.replace(/^@/, '').trim();
           if (cleanHandle) {
-            router.push(`/profil/${encodeURIComponent(cleanHandle)}`);
+            routerRef.current.push(`/profil/${encodeURIComponent(cleanHandle)}`);
             return;
           }
         }
 
-        if (action === 'createGroupFromClub' && user?.id) {
+        if (action === 'createGroupFromClub' && userIdRef.current) {
           try {
             await createGroupFromClub({
               clubId,
@@ -653,8 +695,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           }
         } else if (action === 'signout') {
           try {
-            await signOut();
-            router.push('/connexion');
+            await signOutRef.current();
+            routerRef.current.push('/connexion');
           } catch (_) {}
         }
       };
@@ -698,14 +740,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         syncProfileRef.current();
       }
 
-      const prefetchDrawer = () => {
-        void loadClubDrawerHost().catch(() => {});
-      };
-      if (typeof window.requestIdleCallback === 'function') {
-        window.requestIdleCallback(prefetchDrawer, { timeout: 4000 });
-      } else {
-        window.setTimeout(prefetchDrawer, 2000);
-      }
+      // Précharge immédiatement le tiroir Club pour que le tout premier clic sur un tracé ouvre la fiche sans délai
+      void loadClubDrawerHost().catch(() => {});
     }).catch((error) => {
       console.error('[ClubLiquidGlassV8] chargement du moteur de carte impossible', error);
     });
@@ -721,7 +757,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       cleanup = null;
       initializedRef.current = false;
     };
-  }, [activeHandle, clubId, initialTab, router, signOut, user?.id]);
+  }, [clubId, initialTab]);
 
   // Hydrate dynamically with live Supabase club data (2-step public_profiles resolution)
   const syncClubProfile = useCallback(async () => {
@@ -1066,15 +1102,40 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               ? `il y a ${Math.round(diffMin / 60)} h`
               : `il y a ${Math.round(diffMin / 1440)} j`;
         const kind: ClubFeedPostItem['kind'] = t.media_url ? 'media' : 'text';
-        const titleLower = String(t.title || t.content || '').toLowerCase();
-        const matchedEvent = eventRows.find((ev: any) => {
-          const evTitle = String(ev.title || '').toLowerCase();
-          const evLoc = String(ev.location || ev.meeting_place || '').toLowerCase();
-          return (
-            (evLoc && evLoc.length >= 3 && titleLower.includes(evLoc)) ||
-            (evTitle && evTitle.length >= 4 && titleLower.includes(evTitle.slice(0, 10)))
-          );
-        });
+        const haystack = `${String(t.title || '')} ${String(t.content || '')}`
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+        let matchedEvent: any = undefined;
+        let bestMatchScore = 0;
+        for (const ev of eventRows) {
+          const evTitleNorm = String(ev.title || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .split('(')[0]
+            .trim();
+          const evTitleHead = evTitleNorm.split(/[—–-]/)[0].trim();
+          const evLocNorm = String(ev.location || ev.meeting_place || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+          let score = 0;
+          if (evTitleNorm.length >= 6 && haystack.includes(evTitleNorm)) {
+            score = 100 + evTitleNorm.length;
+          } else if (evTitleHead.length >= 5 && haystack.includes(evTitleHead)) {
+            score = 60 + evTitleHead.length;
+          } else if (evLocNorm.length >= 4) {
+            const locParts = evLocNorm.split(/[·,]/).map((s) => s.trim()).filter((s) => s.length >= 4);
+            for (const part of locParts) {
+              if (haystack.includes(part)) score = Math.max(score, 20 + part.length);
+            }
+          }
+          if (score > bestMatchScore) {
+            bestMatchScore = score;
+            matchedEvent = ev;
+          }
+        }
         const angle = (postIdx * 2.39996) % (Math.PI * 2);
         const radius = 0.012 + (postIdx % 4) * 0.008;
         const resolvedLat =
@@ -1160,8 +1221,15 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           carpoolSeatsLeft: Number(ev.carpool_seats ?? 0),
           requiredGear: Array.isArray(ev.required_gear) ? ev.required_gear : [],
           rsvpJoined: false,
-          lat: Number(ev.lat ?? clubCoords.lat),
-          lng: Number(ev.lng ?? clubCoords.lng),
+          ...(() => {
+            const evMassifLabel =
+              ev.massif || ev.location || ev.meeting_place || ev.title || clubRow.location_label || '';
+            const evCoords = resolveMassifCoords(evMassifLabel, clubCoords.lat, clubCoords.lng);
+            return {
+              lat: typeof ev.lat === 'number' && Number.isFinite(ev.lat) ? ev.lat : evCoords.lat,
+              lng: typeof ev.lng === 'number' && Number.isFinite(ev.lng) ? ev.lng : evCoords.lng,
+            };
+          })(),
           routeTrace: Array.isArray(ev.route_trace)
             ? ev.route_trace
             : Array.isArray(ev.routeTrace)
@@ -1197,6 +1265,25 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             const pkxList = Array.isArray(mj?.data?.pokedex)
               ? (mj.data.pokedex as ClubMapPokedexItem[])
               : [];
+            const outingRoutes = (mj?.data?.outingRoutes &&
+            typeof mj.data.outingRoutes === 'object'
+              ? mj.data.outingRoutes
+              : {}) as Record<string, ClubMapOutingRouteHydration>;
+            if (Object.keys(outingRoutes).length > 0) {
+              mappedOutings = mappedOutings.map((o) => {
+                const hr = outingRoutes[o.id];
+                if (!hr || !Array.isArray(hr.coords) || hr.coords.length < 2) return o;
+                return {
+                  ...o,
+                  routeTrace: hr.coords,
+                  km: typeof hr.km === 'number' && hr.km > 0 ? hr.km : o.km,
+                  dplus: typeof hr.dplus === 'number' && hr.dplus > 0 ? hr.dplus : o.dplus,
+                  maxAlt: typeof hr.maxAlt === 'number' && hr.maxAlt > 0 ? hr.maxAlt : o.maxAlt,
+                  lng: hr.coords[0][0],
+                  lat: hr.coords[0][1],
+                };
+              });
+            }
             setMapLiveMembers(liveList);
             setClubPokedex(pkxList);
           } catch {
@@ -1702,15 +1789,19 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   const handleToggleOutingRsvp = useCallback(
-    (outingId: string) => {
+    async (outingId: string) => {
+      const current = clubOutings.find((o) => o.id === outingId);
+      const nextJoined = current ? !current.rsvpJoined : true;
       setClubOutings((prev) =>
         prev.map((o) => {
           if (o.id !== outingId) return o;
-          const nextJoined = !o.rsvpJoined;
           return {
             ...o,
             rsvpJoined: nextJoined,
-            participantsCount: Math.max(0, Math.min(o.maxParticipants, o.participantsCount + (nextJoined ? 1 : -1))),
+            participantsCount: Math.max(
+              0,
+              Math.min(o.maxParticipants, o.participantsCount + (nextJoined ? 1 : -1)),
+            ),
           };
         }),
       );
@@ -1719,15 +1810,41 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           p.outingId === outingId
             ? {
                 ...p,
-                rsvpJoined: !p.rsvpJoined,
-                outingSeatsLeft: Math.max(0, (p.outingSeatsLeft ?? 2) + (p.rsvpJoined ? 1 : -1)),
+                rsvpJoined: nextJoined,
+                outingSeatsLeft: Math.max(0, (p.outingSeatsLeft ?? 2) + (nextJoined ? -1 : 1)),
               }
             : p,
         ),
       );
-      showIslandToast('Inscription cordée mise à jour ✓', 'Place réservée avec check-list kit liée');
+
+      if (user?.id && isUuid(activeClub.id) && isUuid(outingId) && typeof fetch === 'function') {
+        try {
+          const res = await fetch(
+            `/api/clubs/${encodeURIComponent(activeClub.id)}/events/${encodeURIComponent(outingId)}`,
+            {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: nextJoined ? 'register' : 'cancel' }),
+            },
+          );
+          if (!res.ok) {
+            const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
+            if (errPayload?.error === 'CAPACITY_FULL') {
+              showIslandToast('Sortie complète', 'Activez la liste d’attente ou choisissez un autre groupe.');
+            }
+          }
+        } catch {
+          // keep optimistic UI state
+        }
+      }
+
+      showIslandToast(
+        nextJoined ? 'Inscription enregistrée ✓' : 'Inscription annulée',
+        nextJoined ? 'Ta place est réservée sur la sortie' : 'Ta place a été libérée',
+      );
     },
-    [showIslandToast],
+    [activeClub.id, clubOutings, showIslandToast, user?.id],
   );
 
   const handleBorrowGear = useCallback(
@@ -2434,6 +2551,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
   );
 
   // Strict DB-backed authorization for Stories à la une creation/editing
+  const { canAccessAdmin } = useClubCapabilities(activeClub, user?.id ?? null);
   const canManageClubStories = Boolean(
     user?.id &&
       (activeClub.createdBy === user.id ||
@@ -2445,93 +2563,35 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         )),
   );
 
-  // Hydrate or derive Stories à la une for the active club
-  useEffect(() => {
-    if (!activeClub.id) return;
-    const storageKey = `lkdv.clubHighlights.v1.${activeClub.id}`;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = window.localStorage.getItem(storageKey);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setClubHighlights(parsed);
-            return;
-          }
-        }
-      } catch {
-        // ignore
+  // Hydrate real DB Stories à la une + Archives for the active club
+  const loadClubStoryHighlights = useCallback(async () => {
+    if (!activeClub.id || !isUuid(activeClub.id)) return;
+    try {
+      const res = await fetch(
+        `/api/clubs/${encodeURIComponent(activeClub.id)}/story-highlights`,
+        { cache: 'no-store' },
+      );
+      if (!res.ok) return;
+      const payload = (await res.json()) as {
+        data?: {
+          highlights?: ClubStoryHighlight[];
+          stories?: ArchivedStoryItem[];
+        };
+      };
+      if (Array.isArray(payload.data?.highlights)) {
+        setClubHighlights(payload.data.highlights);
       }
+      if (Array.isArray(payload.data?.stories)) {
+        setClubArchiveStories(payload.data.stories);
+      }
+    } catch {
+      /* ignore transient fetch failure */
     }
+  }, [activeClub.id]);
 
-    const sampleViewers = clubMembers.slice(0, 5).map((m, idx) => ({
-      id: m.id || m.handle,
-      name: m.name,
-      handle: m.handle,
-      role: m.role,
-      avatarUrl: m.avatarUrl,
-      viewedAt: idx === 0 ? 'il y a 14 min' : idx === 1 ? 'il y a 1 h' : `il y a ${idx + 1} h`,
-    }));
-
-    const coverBase = activeClub.coverUrl || '/assets/images/account-bg.webp';
-    const diverseCovers = [
-      '/assets/images/mountain-1.jpg',
-      '/assets/images/club-bivouac.jpg',
-      '/assets/images/club-trail.jpg',
-      '/assets/images/journal-refuge.jpg',
-    ];
-    const defaultHighlights: ClubStoryHighlight[] = [
-      {
-        id: 'hl-sorties',
-        title: 'Sorties',
-        coverUrl: clubOutings[0]?.coverUrl || diverseCovers[0],
-        subtitle: activeClub.nextOutingTitle || 'Reconnaissances & départs du club',
-        createdAtLabel: 'À la une',
-        slides: [
-          {
-            id: 'hl-sorties-s1',
-            image: clubOutings[0]?.coverUrl || diverseCovers[0],
-            caption: `${activeClub.name} · ${activeClub.nextOutingTitle || 'Sorties & traces vérifiées'}`,
-          },
-        ],
-        viewsCount: Math.max(sampleViewers.length, activeClub.membersCount || 7),
-        viewers: sampleViewers,
-      },
-      {
-        id: 'hl-terrain',
-        title: activeClub.massif || 'Terrain',
-        coverUrl: diverseCovers[1],
-        subtitle: `Reconnaissances ${activeClub.massif}`,
-        createdAtLabel: 'À la une',
-        slides: [
-          {
-            id: 'hl-terrain-s1',
-            image: diverseCovers[1],
-            caption: `${activeClub.massif} · Conditions & traces du club`,
-          },
-        ],
-        viewsCount: Math.max(sampleViewers.length, Math.round((activeClub.membersCount || 6) * 0.85)),
-        viewers: sampleViewers.slice(0, 4),
-      },
-      {
-        id: 'hl-charte',
-        title: 'Esprit Club',
-        coverUrl: diverseCovers[2] || coverBase,
-        subtitle: activeClub.charter,
-        createdAtLabel: 'À la une',
-        slides: [
-          {
-            id: 'hl-charte-s1',
-            image: diverseCovers[2] || coverBase,
-            caption: activeClub.charter || `Bienvenue dans ${activeClub.name}`,
-          },
-        ],
-        viewsCount: Math.max(sampleViewers.length, activeClub.membersCount || 5),
-        viewers: sampleViewers.slice(0, 3),
-      },
-    ];
-    setClubHighlights(defaultHighlights);
-  }, [activeClub.charter, activeClub.coverUrl, activeClub.id, activeClub.massif, activeClub.membersCount, activeClub.name, activeClub.nextOutingTitle, clubMembers, clubOutings]);
+  useEffect(() => {
+    void loadClubStoryHighlights();
+  }, [loadClubStoryHighlights]);
 
   const richClubMapPayload = useMemo<ClubRichMapPayload>(() => {
     const baseLat = Number.isFinite(activeClub.lat) ? activeClub.lat : 45.9237;
@@ -2571,6 +2631,7 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
           maxParticipants: o.maxParticipants ?? null,
           rsvpJoined: Boolean(o.rsvpJoined),
           leaderName: o.leaderName || activeClub.name,
+          leaderHandle: o.leaderHandle || undefined,
           poleId,
           isApproximateRoute: geom.isApproximateRoute,
           coords: geom.coords,
@@ -2737,6 +2798,33 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
               fuzzy: !liveOuting,
             }));
 
+    const stories: ClubMapStoryPin[] = clubArchiveStories
+      .filter((st) => Boolean(st.outingId && outingById.has(st.outingId)))
+      .map((st, idx) => {
+        const linked = outingById.get(st.outingId!)!;
+        const progress =
+          typeof st.trackProgress === 'number' && Number.isFinite(st.trackProgress)
+            ? st.trackProgress
+            : Number((0.18 + ((idx * 0.19) % 0.64)).toFixed(3));
+        const snapped = snapPointAlongTrack(linked.coords, progress);
+        return {
+          id: st.id,
+          outingId: linked.id,
+          outingTitle: linked.title,
+          authorId: st.authorId,
+          authorName: st.authorName,
+          authorHandle: st.authorHandle,
+          authorAvatarUrl: st.authorAvatarUrl,
+          imageUrl: st.imageUrl,
+          caption: st.caption,
+          spot: st.spot,
+          lat: typeof st.lat === 'number' && Number.isFinite(st.lat) ? st.lat : snapped[1],
+          lng: typeof st.lng === 'number' && Number.isFinite(st.lng) ? st.lng : snapped[0],
+          trackProgress: progress,
+          createdAt: st.createdAt,
+        };
+      });
+
     return {
       clubId: activeClub.id,
       clubName: activeClub.name,
@@ -2753,12 +2841,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
       pokedex,
       kits,
       posts,
+      stories,
     };
   }, [
     activeClub.id,
     activeClub.lat,
     activeClub.lng,
     activeClub.massif,
+    clubArchiveStories,
     activeClub.membersCount,
     activeClub.name,
     activeClub.poles,
@@ -2882,32 +2972,91 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     [ensureFeedTabAndScrollToPost, isMapFullscreen],
   );
 
+  const openDrawerDirect = useCallback(
+    (next: Omit<ClubDrawerIntent, 'nonce'>) => {
+      const t = Math.min(5, Math.max(0, next.tab ?? 0));
+      const s = Math.min(3, Math.max(0, next.subTab ?? 0));
+      pendingDrawerIntentRef.current = next;
+      triggerAct('openClubDrawer', `${t}:${s}`);
+      setDrawerIntent({ nonce: Date.now(), ...next });
+    },
+    [triggerAct],
+  );
+
   const handleClubMapAction = useCallback(
     (action: ClubMapActionPayload) => {
       if (action.kind === 'open-outing') {
-        pendingDrawerIntentRef.current = { tab: 2, subTab: 0, outingId: action.outingId || action.id };
-        triggerAct('openClubDrawer', '2:0');
+        const oid = action.outingId || action.id;
+        setMapSelection({ kind: 'outing', id: oid });
+        openDrawerDirect({ tab: 2, subTab: 0, outingId: oid });
+      } else if (action.kind === 'open-story') {
+        const ids =
+          Array.isArray(action.storyIds) && action.storyIds.length > 0
+            ? action.storyIds
+            : [action.id];
+        setStoryViewerState({ mode: 'track', startIndex: 0, trackStoryIds: ids });
+      } else if (action.kind === 'open-pokedex') {
+        openDrawerDirect({
+          tab: 5,
+          subTab: 0,
+          pokedexId: action.id,
+          outingId: action.outingId,
+        });
       } else if (action.kind === 'rsvp-outing') {
         handleToggleOutingRsvp(action.outingId || action.id);
       } else if (action.kind === 'open-kit') {
-        if (action.id && standardKits.some((k) => k.id === action.id)) {
-          handleCloneKit(action.id);
-        }
-        pendingDrawerIntentRef.current = { tab: 3, subTab: 1 };
-        triggerAct('openClubDrawer', '3:1');
+        openDrawerDirect({ tab: 3, subTab: 1, kitId: action.id });
       } else if (action.kind === 'open-member') {
-        pendingDrawerIntentRef.current = { tab: 1, subTab: 0, memberId: action.id };
-        triggerAct('openClubDrawer', '1:0');
+        const cleanHandle = (action.handle || '').replace(/^@/, '').trim();
+        const found = clubMembers.find(
+          (m) =>
+            m.id === action.id ||
+            m.userId === action.id ||
+            (cleanHandle && m.handle.toLowerCase() === cleanHandle.toLowerCase()),
+        );
+        const hasRole =
+          found &&
+          (found.rawRole === 'founder' ||
+            found.rawRole === 'admin' ||
+            found.rawRole === 'moderator' ||
+            found.rawRole === 'volunteer' ||
+            found.role === 'Fondateur' ||
+            found.role === 'Guide & Sécurité' ||
+            found.role === 'Encadrant' ||
+            found.role === 'Bénévole');
+        if (found && hasRole) {
+          openDrawerDirect({ tab: 1, subTab: 0, memberId: found.id });
+        } else {
+          const targetHandle = (found?.handle || cleanHandle || action.id).replace(/^@/, '').trim();
+          if (targetHandle && !isUuid(targetHandle)) {
+            router.push(`/profil/${encodeURIComponent(targetHandle)}`);
+          } else if (found) {
+            openDrawerDirect({ tab: 1, subTab: 0, memberId: found.id });
+          } else {
+            openDrawerDirect({ tab: 1, subTab: 0 });
+          }
+        }
       } else if (action.kind === 'open-massif') {
-        pendingDrawerIntentRef.current = { tab: 2, subTab: 0 };
-        triggerAct('openClubDrawer', '2:0');
+        openDrawerDirect({ tab: 2, subTab: 0 });
       } else if (action.kind === 'open-post') {
         handleToggleMapFullscreen(false);
+        if (drawerMount) {
+          triggerAct('closeSheet');
+        }
         setMapSelection({ kind: 'post', id: action.id, outingId: action.outingId });
         ensureFeedTabAndScrollToPost(action.id);
       }
     },
-    [ensureFeedTabAndScrollToPost, handleCloneKit, handleToggleMapFullscreen, handleToggleOutingRsvp, standardKits, triggerAct],
+    [
+      clubMembers,
+      drawerMount,
+      ensureFeedTabAndScrollToPost,
+      handleToggleMapFullscreen,
+      handleToggleOutingRsvp,
+      openDrawerDirect,
+      router,
+      triggerAct,
+    ],
   );
 
   useEffect(() => {
@@ -2983,73 +3132,90 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     return () => window.removeEventListener('lkdv:club-map-action', onMapAction);
   }, [ensureFeedTabAndScrollToPost, handleToggleMapFullscreen, showIslandToast, triggerAct]);
 
-  const persistHighlights = useCallback(
-    (next: ClubStoryHighlight[]) => {
-      setClubHighlights(next);
-      if (typeof window !== 'undefined' && activeClub.id) {
-        try {
-          window.localStorage.setItem(`lkdv.clubHighlights.v1.${activeClub.id}`, JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-      }
-    },
-    [activeClub.id],
-  );
-
   const openHighlightEditor = useCallback(
     (highlightId: string) => {
       if (!canManageClubStories) return;
       const found = clubHighlights.find((h) => h.id === highlightId);
       if (!found) return;
+      setIsCreatingHighlight(false);
       setEditingHighlightId(found.id);
-      setHighlightTitleDraft(found.title);
-      setHighlightCoverDraft(found.coverUrl);
-      setHighlightCaptionDraft(found.slides[0]?.caption || '');
     },
     [canManageClubStories, clubHighlights],
   );
 
   const handleAddHighlight = useCallback(() => {
     if (!canManageClubStories) return;
-    const pool = [
-      '/assets/images/journal-refuge.jpg',
-      '/assets/images/community-hikers.jpg',
-      '/assets/images/mountain-2.jpg',
-      '/assets/images/club-bivouac.jpg',
-      '/assets/images/club-trail.jpg',
-    ];
-    const coverBase = pool[clubHighlights.length % pool.length] || activeClub.coverUrl || '/assets/images/account-bg.webp';
-    const newHl: ClubStoryHighlight = {
-      id: `hl-${Date.now()}`,
-      title: 'Nouvelle',
-      coverUrl: coverBase,
-      subtitle: activeClub.name,
-      createdAtLabel: 'À l’instant',
-      slides: [
+    setEditingHighlightId(null);
+    setIsCreatingHighlight(true);
+  }, [canManageClubStories]);
+
+  const handleSaveHighlight = useCallback(
+    async (payload: {
+      highlightId?: string;
+      title: string;
+      coverUrl: string;
+      coverStoryId: string | null;
+      storyIds: string[];
+    }) => {
+      if (!activeClub.id || !isUuid(activeClub.id)) return;
+      const isPatch = Boolean(payload.highlightId && isUuid(payload.highlightId));
+      const res = await fetch(
+        `/api/clubs/${encodeURIComponent(activeClub.id)}/story-highlights`,
         {
-          id: `hl-slide-${Date.now()}`,
-          image: coverBase,
-          caption: `${activeClub.name} · Moment fort du club`,
+          method: isPatch ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            isPatch
+              ? {
+                  highlightId: payload.highlightId,
+                  title: payload.title,
+                  coverImageUrl: payload.coverUrl,
+                  coverStoryId: payload.coverStoryId,
+                  storyIds: payload.storyIds,
+                }
+              : {
+                  title: payload.title,
+                  coverImageUrl: payload.coverUrl,
+                  coverStoryId: payload.coverStoryId,
+                  storyIds: payload.storyIds,
+                },
+          ),
         },
-      ],
-      viewsCount: 1,
-      viewers: clubMembers.slice(0, 1).map((m) => ({
-        id: m.id || m.handle,
-        name: m.name,
-        handle: m.handle,
-        role: m.role,
-        avatarUrl: m.avatarUrl,
-        viewedAt: 'À l’instant',
-      })),
-    };
-    const next = [...clubHighlights, newHl];
-    persistHighlights(next);
-    setEditingHighlightId(newHl.id);
-    setHighlightTitleDraft(newHl.title);
-    setHighlightCoverDraft(newHl.coverUrl);
-    setHighlightCaptionDraft(newHl.slides[0]?.caption || '');
-  }, [activeClub.coverUrl, activeClub.name, canManageClubStories, clubHighlights, clubMembers, persistHighlights]);
+      );
+      if (!res.ok) {
+        showIslandToast('Impossible d’enregistrer la story à la une');
+        return;
+      }
+      await loadClubStoryHighlights();
+      showIslandToast(
+        isPatch
+          ? `Story « ${payload.title} » mise à jour ✓`
+          : `Story « ${payload.title} » créée ✓`,
+      );
+    },
+    [activeClub.id, loadClubStoryHighlights, showIslandToast],
+  );
+
+  const handleDeleteHighlight = useCallback(
+    async (highlightId: string) => {
+      if (!activeClub.id || !isUuid(activeClub.id)) return;
+      const res = await fetch(
+        `/api/clubs/${encodeURIComponent(activeClub.id)}/story-highlights`,
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ highlightId }),
+        },
+      );
+      if (!res.ok) {
+        showIslandToast('Impossible de supprimer la story à la une');
+        return;
+      }
+      await loadClubStoryHighlights();
+      showIslandToast('Story à la une supprimée ✓');
+    },
+    [activeClub.id, loadClubStoryHighlights, showIslandToast],
+  );
 
   const handleToggleClubVisibility = useCallback(async () => {
     const nextVisibility = activeClub.visibility === 'public' ? 'prive' : 'public';
@@ -3170,16 +3336,14 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
     return clubOutings.find((o) => o.id === mapSelection.id) ?? null;
   }, [clubOutings, mapSelection]);
 
-  const fullscreenPeekPost = useMemo(() => {
-    if (!isMapFullscreen || mapSelection?.kind !== 'post') return null;
-    return clubPosts.find((p) => p.id === mapSelection.id) ?? null;
-  }, [clubPosts, isMapFullscreen, mapSelection]);
+  void phonePortalRoot;
 
   return (
     <div
       className="lkdv-compte-v8 lkdv-club-v8 lkdv-clubs-v8"
       data-theme="light"
       data-club-drawer-open={drawerMount ? 'true' : 'false'}
+      data-admin-access={canAccessAdmin ? 'true' : 'false'}
     >
       <style dangerouslySetInnerHTML={{ __html: DRAWER_V2_CSS }} />
       <div className="sr-only" aria-hidden="true" inert>
@@ -3203,56 +3367,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                 onToggleFullscreen={handleToggleMapFullscreen}
                 isOutdoor={isOutdoor}
                 onAction={handleClubMapAction}
-                contextMode={Boolean(drawerMount)}
+                contextMode={false}
               />
             </ClubMapBoundary>,
             mapRoot,
-          )
-        : null}
-      {phonePortalRoot && fullscreenPeekPost
-        ? createPortal(
-            <div
-              className="club-map-peek-card"
-              role="dialog"
-              aria-label={`Aperçu publication de ${fullscreenPeekPost.authorName}`}
-            >
-              {fullscreenPeekPost.mediaUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={fullscreenPeekPost.mediaUrl}
-                  alt={fullscreenPeekPost.spot || fullscreenPeekPost.authorName}
-                  className="club-map-peek-card__thumb"
-                />
-              ) : null}
-              <div className="club-map-peek-card__body">
-                <div className="club-map-peek-card__meta">
-                  <b>{fullscreenPeekPost.authorName}</b>
-                  <span>{fullscreenPeekPost.spot}</span>
-                </div>
-                <p className="club-map-peek-card__caption">{fullscreenPeekPost.caption}</p>
-                <div className="club-map-peek-card__actions">
-                  <button
-                    type="button"
-                    className="club-map-peek-card__cta"
-                    onClick={() => {
-                      handleToggleMapFullscreen(false);
-                      ensureFeedTabAndScrollToPost(fullscreenPeekPost.id);
-                    }}
-                  >
-                    Voir dans le fil
-                  </button>
-                  <button
-                    type="button"
-                    className="club-map-peek-card__close"
-                    onClick={() => setMapSelection(null)}
-                    aria-label="Fermer l’aperçu"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            </div>,
-            phonePortalRoot,
           )
         : null}
       {feedRoot &&
@@ -3335,6 +3453,10 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             outings={clubOutings}
             vaultGear={vaultGear}
             standardKits={standardKits}
+            pokedexItems={richClubMapPayload.pokedex}
+            onPokedexObservationCreated={(item) =>
+              setClubPokedex((prev) => [item, ...prev])
+            }
             challenges={challenges}
             chatMessages={chatMessages}
             posts={clubPosts}
@@ -3350,7 +3472,12 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             onToggleRsvpOuting={handleToggleOutingRsvp}
             onCreateGroupFromOuting={handleCreateGroupFromOuting}
             onDownloadGpx={(o) => {
-              triggerAct('export', 'gpx');
+              import('./drawer/outing/outingUtils')
+                .then(({ downloadRealOutingGpx }) => {
+                  const ok = downloadRealOutingGpx(o);
+                  if (!ok) triggerAct('export', 'gpx');
+                })
+                .catch(() => triggerAct('export', 'gpx'));
               showIslandToast(`Trace GPX · ${o.title}`, `${o.km} km · +${o.dplus} m téléchargée`);
             }}
             onFlyToCoords={(lat, lng, label) => {
@@ -3434,19 +3561,43 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
                           ],
                   } satisfies StoryUser,
                 ]
-              : clubHighlights.map(
-                  (hl): StoryUser => ({
-                    id: hl.id,
-                    name: `${activeClub.name} · ${hl.title}`,
-                    avatarUrl: hl.coverUrl || activeClub.coverUrl,
-                    time: hl.createdAtLabel || 'À la une',
-                    slides: hl.slides.map((s) => ({
-                      storyId: hl.id,
-                      image: s.image || hl.coverUrl,
-                      caption: s.caption,
-                    })),
-                  }),
-                )
+              : storyViewerState.mode === 'track'
+                ? (() => {
+                    const wanted = new Set(storyViewerState.trackStoryIds ?? []);
+                    const picked = clubArchiveStories.filter((s) => wanted.has(s.id));
+                    return picked.map(
+                      (st): StoryUser => ({
+                        id: st.id,
+                        name: st.authorName,
+                        avatarUrl: st.authorAvatarUrl || activeClub.coverUrl,
+                        time: st.spot || st.outingTitle || 'Story du club',
+                        slides: [
+                          {
+                            storyId: st.id,
+                            image: st.imageUrl,
+                            caption: st.caption
+                              ? `${st.caption} — par ${st.authorName}`
+                              : `Par ${st.authorName}`,
+                          },
+                        ],
+                      }),
+                    );
+                  })()
+                : clubHighlights.map(
+                    (hl): StoryUser => ({
+                      id: hl.id,
+                      name: `${activeClub.name} · ${hl.title}`,
+                      avatarUrl: hl.coverUrl || activeClub.coverUrl,
+                      time: hl.createdAtLabel || 'À la une',
+                      slides: hl.slides.map((s) => ({
+                        storyId: hl.id,
+                        image: s.image || hl.coverUrl,
+                        caption: s.authorName
+                          ? `${s.caption || ''} — par ${s.authorName}`.trim()
+                          : s.caption,
+                      })),
+                    }),
+                  )
           }
           startUser={storyViewerState.startIndex}
           onClose={() => setStoryViewerState(null)}
@@ -3473,9 +3624,8 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
             canManageClubStories
               ? (slide) => {
                   if (slide.storyId && clubHighlights.some((h) => h.id === slide.storyId)) {
-                    persistHighlights(clubHighlights.filter((h) => h.id !== slide.storyId));
+                    void handleDeleteHighlight(slide.storyId);
                     setStoryViewerState(null);
-                    showIslandToast('Story à la une retirée ✓');
                   }
                 }
               : undefined
@@ -3483,222 +3633,24 @@ export function ClubLiquidGlassV8({ clubId = 'cl1', initialTab }: ClubLiquidGlas
         />
       ) : null}
 
-      {canManageClubStories && editingHighlightId
-        ? (() => {
-            const hl = clubHighlights.find((h) => h.id === editingHighlightId);
-            if (!hl) return null;
-            return (
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-label={`Gestion et vues de la story à la une ${hl.title}`}
-                onClick={() => setEditingHighlightId(null)}
-                style={{
-                  position: 'fixed',
-                  inset: 0,
-                  zIndex: 3200,
-                  background: 'rgba(12, 22, 18, 0.56)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 16,
-                }}
-              >
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    width: '100%',
-                    maxWidth: 380,
-                    maxHeight: '82vh',
-                    overflowY: 'auto',
-                    borderRadius: 24,
-                    padding: 16,
-                    background: 'rgba(247, 249, 246, 0.96)',
-                    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12,
-                    color: '#172b24',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <b style={{ fontSize: 15, display: 'block' }}>Story à la une · {hl.title}</b>
-                      <small style={{ fontSize: 11.5, color: '#56665d' }}>
-                        Accès réservé aux membres habilités du club
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      className="lkdv-carnet-btn-soft"
-                      style={{ height: 28, padding: '0 10px', fontSize: 11.5 }}
-                      onClick={() => setEditingHighlightId(null)}
-                    >
-                      Fermer
-                    </button>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 8,
-                      padding: 12,
-                      borderRadius: 16,
-                      background: 'rgba(255, 255, 255, 0.82)',
-                    }}
-                  >
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
-                      <span>Titre de la story à la une</span>
-                      <input
-                        type="text"
-                        className="club-glass-input"
-                        value={highlightTitleDraft}
-                        maxLength={24}
-                        onChange={(e) => setHighlightTitleDraft(e.target.value)}
-                      />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
-                      <span>Image de couverture (URL)</span>
-                      <input
-                        type="text"
-                        className="club-glass-input"
-                        value={highlightCoverDraft}
-                        onChange={(e) => setHighlightCoverDraft(e.target.value)}
-                      />
-                    </label>
-                    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, fontWeight: 600 }}>
-                      <span>Légende de la story</span>
-                      <input
-                        type="text"
-                        className="club-glass-input"
-                        value={highlightCaptionDraft}
-                        onChange={(e) => setHighlightCaptionDraft(e.target.value)}
-                      />
-                    </label>
-                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-primary"
-                        style={{ flex: 1, justifyContent: 'center' }}
-                        onClick={() => {
-                          const cleanTitle = highlightTitleDraft.trim() || hl.title;
-                          const cleanCover = highlightCoverDraft.trim() || hl.coverUrl;
-                          const next = clubHighlights.map((item) =>
-                            item.id === hl.id
-                              ? {
-                                  ...item,
-                                  title: cleanTitle,
-                                  coverUrl: cleanCover,
-                                  slides: [
-                                    {
-                                      id: item.slides[0]?.id || `s-${Date.now()}`,
-                                      image: cleanCover,
-                                      caption: highlightCaptionDraft.trim() || item.slides[0]?.caption,
-                                    },
-                                    ...item.slides.slice(1),
-                                  ],
-                                }
-                              : item,
-                          );
-                          persistHighlights(next);
-                          setEditingHighlightId(null);
-                          showIslandToast(`Story « ${cleanTitle} » mise à jour ✓`);
-                        }}
-                      >
-                        Enregistrer
-                      </button>
-                      <button
-                        type="button"
-                        className="lkdv-carnet-btn-soft"
-                        style={{ color: '#a8443a' }}
-                        onClick={() => {
-                          persistHighlights(clubHighlights.filter((item) => item.id !== hl.id));
-                          setEditingHighlightId(null);
-                          showIslandToast('Story à la une supprimée');
-                        }}
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 8,
-                      padding: 12,
-                      borderRadius: 16,
-                      background: 'rgba(255, 255, 255, 0.82)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <b style={{ fontSize: 13 }}>Vues de la story ({hl.viewsCount})</b>
-                      <span className="lkdv-carnet-chip-soft">{hl.viewers.length} membres</span>
-                    </div>
-                    {hl.viewers.length === 0 ? (
-                      <small style={{ color: '#56665d' }}>Aucune vue enregistrée pour le moment.</small>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {hl.viewers.map((v) => (
-                          <div
-                            key={v.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 8,
-                              padding: '6px 8px',
-                              borderRadius: 12,
-                              background: 'rgba(23, 64, 44, 0.04)',
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                              {v.avatarUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={v.avatarUrl}
-                                  alt=""
-                                  style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                              ) : (
-                                <span
-                                  style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: '50%',
-                                    background: '#17402c',
-                                    color: '#fff',
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    display: 'grid',
-                                    placeItems: 'center',
-                                  }}
-                                >
-                                  {v.name.slice(0, 1).toUpperCase()}
-                                </span>
-                              )}
-                              <div style={{ minWidth: 0 }}>
-                                <b style={{ fontSize: 12.5, display: 'block' }}>{v.name}</b>
-                                <small style={{ fontSize: 10.5, color: '#56665d' }}>
-                                  @{v.handle}{v.role ? ` · ${v.role}` : ''}
-                                </small>
-                              </div>
-                            </div>
-                            <small style={{ fontSize: 10.5, color: '#56665d', flexShrink: 0 }}>{v.viewedAt}</small>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })()
-        : null}
+      <ClubHighlightManageDrawer
+        isOpen={Boolean(canManageClubStories && (editingHighlightId || isCreatingHighlight))}
+        clubId={activeClub.id}
+        clubName={activeClub.name}
+        highlight={
+          editingHighlightId
+            ? clubHighlights.find((h) => h.id === editingHighlightId) ?? null
+            : null
+        }
+        isCreating={isCreatingHighlight}
+        archiveStories={clubArchiveStories}
+        onSave={handleSaveHighlight}
+        onDelete={handleDeleteHighlight}
+        onClose={() => {
+          setEditingHighlightId(null);
+          setIsCreatingHighlight(false);
+        }}
+      />
 
       <ClubRuntimeOverlays
         overlay={runtimeOverlay}

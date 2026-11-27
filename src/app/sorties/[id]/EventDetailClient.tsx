@@ -2,7 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Compass } from 'lucide-react';
 import { lkvConfirm } from '@/components/ui/dialogs';
 import { cancelClubEventAction } from './cancelClubEventAction';
 import HeaderBackButton from '@/components/ui/HeaderBackButton';
@@ -100,7 +102,14 @@ const ACTIVITY_LABEL: Record<string, string> = {
 };
 
 function coords(event: EventDetailData): { lat: number; lng: number } | null {
-  if (event.lat != null && event.lng != null) return { lat: event.lat, lng: event.lng };
+  if (
+    event.lat != null &&
+    event.lng != null &&
+    Number.isFinite(event.lat) &&
+    Number.isFinite(event.lng)
+  ) {
+    return { lat: event.lat, lng: event.lng };
+  }
   const coordinates = event.meetingGeom?.coordinates;
   if (Array.isArray(coordinates) && coordinates.length === 2) {
     const [lng, lat] = coordinates;
@@ -167,6 +176,13 @@ export default function EventDetailClient({
 
   const stamp = formatDateStamp(event.startsAt ?? `${event.eventDate}T09:00:00+01:00`);
   const meeting = coords(event);
+  const explorerHref = useMemo(() => {
+    if (meeting) {
+      return `/explorer?sortie=${encodeURIComponent(event.id)}&lat=${meeting.lat}&lng=${meeting.lng}&z=14`;
+    }
+    const query = event.location.trim();
+    return query ? `/explorer?q=${encodeURIComponent(query)}` : null;
+  }, [event.id, event.location, meeting]);
   const spotsLeft = Math.max(0, event.maxParticipants - event.currentParticipants);
   const full = event.maxParticipants > 0 && spotsLeft === 0;
   const cancelled = event.cancelled || cancelledLocally;
@@ -477,7 +493,7 @@ export default function EventDetailClient({
         </section>
       ) : null}
 
-      {meeting || event.meetingPoint ? (
+      {meeting || event.meetingPoint || explorerHref ? (
         <section className="lkdv-event-card lkdv-event-section" aria-label="Rendez-vous">
           <h2 className="lkdv-event-h2">Rendez-vous</h2>
           {meeting ? (
@@ -496,6 +512,31 @@ export default function EventDetailClient({
             {event.startsAt ? ` · ${formatTime(event.startsAt)}` : ''}
             {event.location ? ` · ${event.location}` : ''}
           </p>
+          {explorerHref ? (
+            <div>
+              <Link
+                href={explorerHref}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  minHeight: 38,
+                  padding: '0 13px',
+                  borderRadius: 999,
+                  background: 'var(--bar-glass-bg)',
+                  WebkitBackdropFilter: 'var(--bar-glass-blur)',
+                  backdropFilter: 'var(--bar-glass-blur)',
+                  boxShadow: 'var(--bar-glass-shadow)',
+                  color: 'var(--lkv-primary)',
+                  font: '600 12px/1 var(--font-sans)',
+                  textDecoration: 'none',
+                }}
+              >
+                <Compass size={14} aria-hidden="true" />
+                <span>Ouvrir dans Explorer</span>
+              </Link>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

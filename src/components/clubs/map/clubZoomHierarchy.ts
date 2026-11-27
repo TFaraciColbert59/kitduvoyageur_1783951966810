@@ -58,36 +58,38 @@ export function getClubStageConfig(
   stage: ClubZoomStage,
   hasActiveOuting: boolean,
 ): ClubZoomStageConfig {
+  // Architecture épurée "Tracés-first" : zéro capsules massifs empilées, zéro badges parasites.
+  // Les tracés des sorties sont affichés directement à toutes les échelles et réagissent au clic.
   switch (stage) {
     case 'planetary':
       return {
         stage,
-        showCountryPill: true,
-        showCountryTint: true,
+        showCountryPill: false,
+        showCountryTint: false,
         showMassifCapsules: false,
         showMassifSilhouettes: false,
-        showTracks3D: false,
+        showTracks3D: true,
         showUpcomingBadges: false,
         showLiveMembers: false,
         showPostClusters: false,
-        showActiveSlope: false,
+        showActiveSlope: hasActiveOuting,
         showStoryBloom: false,
-        dimInactiveTracksOpacity: 0.25,
+        dimInactiveTracksOpacity: hasActiveOuting ? 0.18 : 0.88,
       };
     case 'country':
       return {
         stage,
         showCountryPill: false,
-        showCountryTint: true,
-        showMassifCapsules: true,
-        showMassifSilhouettes: true,
-        showTracks3D: false,
+        showCountryTint: false,
+        showMassifCapsules: false,
+        showMassifSilhouettes: false,
+        showTracks3D: true,
         showUpcomingBadges: false,
         showLiveMembers: false,
         showPostClusters: false,
-        showActiveSlope: false,
-        showStoryBloom: false,
-        dimInactiveTracksOpacity: 0.35,
+        showActiveSlope: hasActiveOuting,
+        showStoryBloom: hasActiveOuting,
+        dimInactiveTracksOpacity: hasActiveOuting ? 0.18 : 0.92,
       };
     case 'massif':
       return {
@@ -97,12 +99,12 @@ export function getClubStageConfig(
         showMassifCapsules: false,
         showMassifSilhouettes: false,
         showTracks3D: true,
-        showUpcomingBadges: true,
+        showUpcomingBadges: false,
         showLiveMembers: true,
-        showPostClusters: true,
-        showActiveSlope: false,
-        showStoryBloom: false,
-        dimInactiveTracksOpacity: hasActiveOuting ? 0.15 : 0.92,
+        showPostClusters: false,
+        showActiveSlope: hasActiveOuting,
+        showStoryBloom: hasActiveOuting,
+        dimInactiveTracksOpacity: hasActiveOuting ? 0.18 : 0.94,
       };
     case 'trail':
       return {
@@ -112,12 +114,12 @@ export function getClubStageConfig(
         showMassifCapsules: false,
         showMassifSilhouettes: false,
         showTracks3D: true,
-        showUpcomingBadges: true,
+        showUpcomingBadges: false,
         showLiveMembers: true,
-        showPostClusters: true,
+        showPostClusters: false,
         showActiveSlope: hasActiveOuting,
         showStoryBloom: hasActiveOuting,
-        dimInactiveTracksOpacity: hasActiveOuting ? 0.15 : 0.92,
+        dimInactiveTracksOpacity: hasActiveOuting ? 0.16 : 0.96,
       };
   }
 }
@@ -410,13 +412,14 @@ export function buildActiveSlopeData(outing: ClubMapOutingTrack): ActiveSlopeRes
   };
 }
 
-export type StoryBloomKind = 'pokedex' | 'kit' | 'post' | 'member' | 'summit';
+export type StoryBloomKind = 'pokedex' | 'kit' | 'post' | 'story' | 'member' | 'summit';
 
 export interface StoryBloomItem {
   id: string;
   sourceId: string;
   kind: StoryBloomKind;
   outingId: string;
+  memberHandle?: string;
   title: string;
   subtitle: string;
   emoji: string;
@@ -427,12 +430,15 @@ export interface StoryBloomItem {
   color: string;
   staggerMs: number;
   mediaUrl?: string | null;
+  storyIds?: string[];
+  clusterCount?: number;
 }
 
 export const STORY_BLOOM_COLORS: Record<StoryBloomKind, string> = {
   pokedex: '#e09f3e',
   kit: '#2d8a5b',
   post: '#38bdf8',
+  story: '#17402c',
   member: '#e06d53',
   summit: '#f5c451',
 };
@@ -501,7 +507,7 @@ export function computeStoryBloomItems(
     });
   }
 
-  const directPosts = payload.posts.filter((p) => p.outingId === outing.id).slice(0, 8);
+  const directPosts = payload.posts.filter((p) => p.outingId === outing.id).slice(0, 3);
   for (const post of directPosts) {
     const progress =
       typeof post.trackProgress === 'number'
@@ -525,6 +531,52 @@ export function computeStoryBloomItems(
     });
   }
 
+  // Stories réelles du club sur le tracé — regroupées automatiquement en grappes compactes
+  // lorsqu'elles sont proches ou nombreuses (<= 2 pastilles compactes par tracé).
+  const outingStories = (payload.stories ?? [])
+    .filter((s) => s.outingId === outing.id)
+    .sort((a, b) => a.trackProgress - b.trackProgress);
+  if (outingStories.length > 0) {
+    const clusters: Array<typeof outingStories> = [];
+    for (const st of outingStories) {
+      const last = clusters[clusters.length - 1];
+      const lastRef = last?.[last.length - 1];
+      if (last && lastRef && (Math.abs(st.trackProgress - lastRef.trackProgress) <= 0.24 || clusters.length >= 2)) {
+        last.push(st);
+      } else {
+        clusters.push([st]);
+      }
+    }
+    for (let cIdx = 0; cIdx < clusters.length; cIdx += 1) {
+      const group = clusters[cIdx];
+      const lead = group[0];
+      const avgProg =
+        group.reduce((acc, s) => acc + s.trackProgress, 0) / Math.max(1, group.length);
+      const snapped = snapPointAlongTrack(outing.coords, avgProg);
+      const authorsLabel = Array.from(new Set(group.map((g) => g.authorName))).slice(0, 2).join(', ');
+      raw.push({
+        id: `bloom-story-${outing.id}-${cIdx}`,
+        sourceId: lead.id,
+        kind: 'story',
+        outingId: outing.id,
+        title: group.length > 1 ? `${group.length} stories` : lead.spot || lead.authorName.split(' ')[0],
+        subtitle:
+          group.length > 1
+            ? `${group.length} stories par ${authorsLabel}`
+            : `Story par ${lead.authorName}`,
+        emoji: '✨',
+        lng: Number.isFinite(lead.lng) && group.length === 1 ? lead.lng : snapped[0],
+        lat: Number.isFinite(lead.lat) && group.length === 1 ? lead.lat : snapped[1],
+        ele: snapped[2] || outing.maxAlt * 0.74,
+        trackProgress: avgProg,
+        color: STORY_BLOOM_COLORS.story,
+        mediaUrl: lead.imageUrl,
+        storyIds: group.map((g) => g.id),
+        clusterCount: group.length,
+      });
+    }
+  }
+
   // Chef de cordée & membres en partage live à proximité (< 18 km)
   let addedLiveMember = false;
   for (const member of payload.liveMembers) {
@@ -536,6 +588,7 @@ export function computeStoryBloomItems(
       raw.push({
         id: `bloom-member-${member.id}`,
         sourceId: member.id,
+        memberHandle: member.handle,
         kind: 'member',
         outingId: outing.id,
         title: member.name,
@@ -551,11 +604,16 @@ export function computeStoryBloomItems(
     }
   }
 
-  if (!addedLiveMember && outing.leaderName) {
-    const cordeePt = snapPointAlongTrack(outing.coords, 0.16);
+  if (
+    !addedLiveMember &&
+    outing.leaderName &&
+    outing.leaderName.trim().toLowerCase() !== payload.clubName.trim().toLowerCase()
+  ) {
+    const cordeePt = snapPointAlongTrack(outing.coords, 0.06);
     raw.push({
       id: `bloom-leader-${outing.id}`,
-      sourceId: outing.id,
+      sourceId: outing.leaderId || outing.leaderHandle || outing.id,
+      memberHandle: outing.leaderHandle,
       kind: 'member',
       outingId: outing.id,
       title: outing.leaderName,
@@ -564,31 +622,53 @@ export function computeStoryBloomItems(
       lng: cordeePt[0],
       lat: cordeePt[1],
       ele: cordeePt[2],
-      trackProgress: 0.16,
+      trackProgress: 0.06,
       color: STORY_BLOOM_COLORS.member,
     });
   }
 
-  // Sommet / point culminant
+  // Sommet / point culminant (icône + altitude uniquement, sans libellé)
   const peak = outing.peak;
+  const peakAltM = Math.round(peak[2] || outing.maxAlt);
   raw.push({
     id: `bloom-summit-${outing.id}`,
     sourceId: outing.id,
     kind: 'summit',
     outingId: outing.id,
-    title: `Sommet · ${Math.round(peak[2] || outing.maxAlt)} m`,
+    title: `${peakAltM} m`,
     subtitle: `${outing.massif} · +${outing.dplus} m D+`,
     emoji: '🏔️',
     lng: peak[0],
     lat: peak[1],
     ele: peak[2] || outing.maxAlt,
     trackProgress: 0.5,
-    color: STORY_BLOOM_COLORS.summit,
+    color: '#17402c',
   });
 
   raw.sort((a, b) => a.trackProgress - b.trackProgress);
-  return raw.map((item, idx) => ({
-    ...item,
-    staggerMs: idx * 55,
-  }));
+
+  // Écarte légèrement sur la trace les points trop proches pour éviter toute superposition
+  const minProgressGap = raw.length > 8 ? 0.065 : 0.085;
+  let lastProgress = -1;
+  return raw.slice(0, 10).map((item, idx) => {
+    let adjustedProgress = item.trackProgress;
+    if (item.kind !== 'summit' && lastProgress >= 0 && adjustedProgress - lastProgress < minProgressGap) {
+      adjustedProgress = Math.min(0.96, lastProgress + minProgressGap);
+      const resnapped = snapPointAlongTrack(outing.coords, adjustedProgress);
+      lastProgress = adjustedProgress;
+      return {
+        ...item,
+        lng: resnapped[0],
+        lat: resnapped[1],
+        ele: resnapped[2] || item.ele,
+        trackProgress: adjustedProgress,
+        staggerMs: idx * 45,
+      };
+    }
+    lastProgress = adjustedProgress;
+    return {
+      ...item,
+      staggerMs: idx * 45,
+    };
+  });
 }

@@ -7,6 +7,14 @@ import type { SearchViewport } from '../searchArea';
 import type { SearchCriteriaOverrides, SmartRankedRoute } from '../search/searchQueryParser';
 import type { RouteDraft } from '@/features/adventure-prep/routeRevision';
 import type { MultiDayPlan } from '@/features/planning/models';
+import type { SpatialScale } from './spatialScale';
+import type { AtomicExplorerPresetId, ExplorerPresetId } from './presets';
+import type {
+  ExplorerMode,
+  ExploreSnapshot,
+  HudContrastMode,
+  SafetyCorridorState,
+} from './hudMachine';
 
 export type Level = 0 | 1 | 2 | 3;
 
@@ -557,6 +565,20 @@ export interface ExplorerState {
   personalHeatmap?: PersonalHeatmapState;
   /** Lieux favoris enregistrés localement (K3.11). */
   savedPlaces?: import('../savedPlaces').SavedPlace[];
+  /** Mode courant du HUD polymorphe (Track A+E). */
+  mode?: ExplorerMode;
+  /** Échelle spatiale 6 niveaux avec hystérésis (Monde → Secteur naturel). */
+  spatialScale?: SpatialScale;
+  /** Preset d'activité actif ('custom' dès qu'une couche est modifiée manuellement). */
+  activePreset?: ExplorerPresetId;
+  /** Dernier preset atomique appliqué (hors 'custom'). */
+  lastPresetId?: AtomicExplorerPresetId;
+  /** Mode de contraste du HUD GPS actif. */
+  hudContrast?: HudContrastMode;
+  /** Instantané de l'état d'exploration capturé avant le passage en `GPS_ACTIVE`. */
+  exploreSnapshot?: ExploreSnapshot | null;
+  /** Résumé temps réel du corridor de sécurité autour de la trace active. */
+  safetyCorridor?: SafetyCorridorState;
   /** Scène de test/parité (?scene=), désactivée en production. */
   scene?: string;
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { clientIpFromHeaders } from '@/lib/rate-limit';
+import { enforceRateLimit } from '@/lib/rate-limit/routes';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +18,14 @@ const bodySchema = z.object({
     .optional(),
 });
 
+function safeUpstreamStatus(status: number): number {
+  if (status === 401) return 401;
+  if (status === 403) return 403;
+  if (status === 409) return 409;
+  if (status === 400 || status === 422) return 400;
+  return 503;
+}
+
 /**
  * Alerte SOS (05_DONNEES §5, RLS `sos_alerts_owner_rw`).
  *
@@ -28,6 +38,14 @@ export async function POST(request: Request) {
   if (!authorization?.startsWith('Bearer ')) {
     return NextResponse.json({ error: 'authentification requise' }, { status: 401 });
   }
+
+  const limited = await enforceRateLimit(clientIpFromHeaders(request.headers), {
+    scope: 'explorer-v2-sos',
+    limit: 10,
+    windowMs: 60_000,
+    failMode: 'open',
+  });
+  if (limited) return limited;
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
@@ -64,8 +82,8 @@ export async function POST(request: Request) {
       ]),
     });
     if (!res.ok) {
-      const detail = await res.text();
-      return NextResponse.json({ error: 'refusé', detail: detail.slice(0, 200) }, { status: res.status });
+      console.warn('[explorer-v2] sos rejected', res.status);
+      return NextResponse.json({ error: 'refusé' }, { status: safeUpstreamStatus(res.status) });
     }
     const rows = (await res.json()) as Array<{ id: string; created_at: string }>;
     return NextResponse.json({ status: 'recorded', alert: rows[0] ?? null });

@@ -1,7 +1,12 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/api/serviceClient';
-import type { ClubMapLiveMember, ClubMapPokedexItem } from '@/components/clubs/map/clubMapTypes';
+import type {
+  ClubMapLiveMember,
+  ClubMapOutingRouteHydration,
+  ClubMapPokedexItem,
+  ClubTrackCoord,
+} from '@/components/clubs/map/clubMapTypes';
 import { buildOutingTrackGeometry, snapPointAlongTrack } from '@/components/clubs/map/clubTrackGeometry';
 import { dbFailure, errorJson, isUuid, json, optionalUser } from '../../_lib/http';
 import { canReadClub, loadClubBundle } from '../../_lib/db';
@@ -133,6 +138,17 @@ function isEventLive(ev: ParsedEvent, nowMs: number): boolean {
 }
 
 function matchEventForMoment(moment: Row, events: ParsedEvent[]): ParsedEvent | null {
+  // 0. Exact event_id link stored in moment_meta (real outing-bound observations)
+  const meta =
+    moment.moment_meta && typeof moment.moment_meta === 'object'
+      ? (moment.moment_meta as Row)
+      : null;
+  const metaEventId = asString(meta?.event_id);
+  if (metaEventId) {
+    const exact = events.find((ev) => ev.id === metaEventId);
+    if (exact) return exact;
+  }
+
   const text = `${normalizeText(moment.lieu)} ${normalizeText(moment.citation)}`.trim();
   const createdMs = moment.created_at ? Date.parse(String(moment.created_at)) : NaN;
 
@@ -156,6 +172,66 @@ function matchEventForMoment(moment: Row, events: ParsedEvent[]): ParsedEvent | 
   }
 
   return null;
+}
+
+function extractTraceFromGeoJson(geojson: unknown): ClubTrackCoord[] | null {
+  if (!geojson || typeof geojson !== 'object') return null;
+  const g = geojson as { type?: string; coordinates?: unknown; geometry?: unknown };
+  if (g.type === 'Feature' && g.geometry) return extractTraceFromGeoJson(g.geometry);
+  if (g.type === 'LineString' && Array.isArray(g.coordinates)) {
+    const pts: ClubTrackCoord[] = [];
+    for (const pt of g.coordinates) {
+      if (Array.isArray(pt) && pt.length >= 2) {
+        const lng = Number(pt[0]);
+        const lat = Number(pt[1]);
+        const ele = pt.length >= 3 && Number.isFinite(Number(pt[2])) ? Number(pt[2]) : undefined;
+        if (Number.isFinite(lng) && Number.isFinite(lat)) {
+          pts.push(ele !== undefined ? [lng, lat, ele] : [lng, lat]);
+        }
+      }
+    }
+    return pts.length >= 2 ? pts : null;
+  }
+  if (g.type === 'MultiLineString' && Array.isArray(g.coordinates)) {
+    const flat: ClubTrackCoord[] = [];
+    for (const line of g.coordinates) {
+      if (!Array.isArray(line)) continue;
+      for (const pt of line) {
+        if (Array.isArray(pt) && pt.length >= 2) {
+          const lng = Number(pt[0]);
+          const lat = Number(pt[1]);
+          const ele = pt.length >= 3 && Number.isFinite(Number(pt[2])) ? Number(pt[2]) : undefined;
+          if (Number.isFinite(lng) && Number.isFinite(lat)) {
+            flat.push(ele !== undefined ? [lng, lat, ele] : [lng, lat]);
+          }
+        }
+      }
+    }
+    if (flat.length < 2) return null;
+    if (flat.length <= 160) return flat;
+    const step = (flat.length - 1) / 139;
+    const sampled: ClubTrackCoord[] = [];
+    for (let i = 0; i < 140; i += 1) {
+      sampled.push(flat[Math.min(flat.length - 1, Math.round(i * step))]);
+    }
+    return sampled;
+  }
+  return null;
+}
+
+function normalizeTagTrace3d(raw: unknown): ClubTrackCoord[] | null {
+  if (!Array.isArray(raw) || raw.length < 2) return null;
+  const coords: ClubTrackCoord[] = [];
+  for (const pt of raw) {
+    if (!Array.isArray(pt) || pt.length < 2) continue;
+    const lng = Number(pt[0]);
+    const lat = Number(pt[1]);
+    const ele = pt.length >= 3 && Number.isFinite(Number(pt[2])) ? Number(pt[2]) : undefined;
+    if (Number.isFinite(lng) && Number.isFinite(lat)) {
+      coords.push(ele !== undefined ? [lng, lat, ele] : [lng, lat]);
+    }
+  }
+  return coords.length >= 2 ? coords : null;
 }
 
 export async function GET(
@@ -199,7 +275,7 @@ export async function GET(
       activeUserIds.unshift(bundle.club.createdBy);
     }
 
-    // 2. Load club_events for live-window detection and strict Pokédex correlation
+    // 2. Load club_events for live-window detection, real GPS route hydration, and strict Pokédex correlation
     const { data: eventRows, error: eventErr } = await db
       .from('club_events')
       .select('*')
@@ -208,46 +284,140 @@ export async function GET(
       .limit(200);
     if (eventErr) return dbFailure('GET club_map_events', eventErr);
 
-    const parsedEvents: ParsedEvent[] = asArray<Row>(eventRows)
-      .filter((ev) => !ev.cancelled_at)
-      .map((ev, index) => {
-        const title = asString(ev.title) ?? 'Sortie';
-        const massif = asString(ev.massif) ?? asString(ev.location) ?? bundle.club.zoneLabel ?? '';
-        const location = asString(ev.location) ?? '';
-        const rawStart = asString(ev.starts_at) ?? asString(ev.event_date);
-        const rawEnd = asString(ev.ends_at);
-        const startsAtMs = rawStart && Number.isFinite(Date.parse(rawStart)) ? Date.parse(rawStart) : null;
-        const endsAtMs = rawEnd && Number.isFinite(Date.parse(rawEnd)) ? Date.parse(rawEnd) : null;
-        const dateLabel =
-          startsAtMs !== null
-            ? new Date(startsAtMs).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-            : '';
+    const activeEventRows = asArray<Row>(eventRows).filter((ev) => !ev.cancelled_at);
 
-        const built = buildOutingTrackGeometry({
-          id: String(ev.id ?? ''),
-          title,
-          massif,
-          lat: asNumber(ev.lat),
-          lng: asNumber(ev.lng),
-          km: asNumber(ev.distance_km) ?? asNumber(ev.km),
-          dplus: asNumber(ev.elevation_gain_m) ?? asNumber(ev.dplus),
-          maxAlt: asNumber(ev.max_alt),
-          routeTrace: ev.route_trace ?? ev.routeTrace,
-          index,
-        });
+    // 2b. Hydrate real GPS routes linked via club_events.route_id -> hiking_routes + trail_metadata
+    const numericRouteIds = Array.from(
+      new Set(
+        activeEventRows
+          .map((ev) => asString(ev.route_id))
+          .filter((rid): rid is string => Boolean(rid && /^\d+$/.test(rid)))
+          .map((rid) => Number(rid)),
+      ),
+    );
 
-        return {
-          id: String(ev.id ?? ''),
-          title,
-          massif,
-          location,
-          startsAtMs,
-          endsAtMs,
-          dateLabel,
-          placeTerms: extractPlaceTerms({ massif, location, title }),
-          coords: built.coords,
-        };
+    const routeHydrationByRouteId = new Map<string, ClubMapOutingRouteHydration>();
+    if (numericRouteIds.length > 0) {
+      const [{ data: hrRows }, { data: metaRows }] = await Promise.all([
+        db
+          .from('hiking_routes')
+          .select('id, osm_relation_id, ref, network, distance_km, tags')
+          .in('id', numericRouteIds)
+          .limit(200),
+        db
+          .from('trail_metadata')
+          .select('trail_id, elevation_gain, max_elevation')
+          .in('trail_id', numericRouteIds)
+          .limit(200),
+      ]);
+
+      const metaByTrailId = new Map<string, Row>();
+      for (const mr of asArray<Row>(metaRows)) {
+        metaByTrailId.set(String(mr.trail_id ?? ''), mr);
+      }
+
+      const missingGeomRouteIds: number[] = [];
+      const rowByRouteId = new Map<string, Row>();
+      for (const hr of asArray<Row>(hrRows)) {
+        const rid = String(hr.id ?? '');
+        if (!rid) continue;
+        rowByRouteId.set(rid, hr);
+        const tags = (hr.tags && typeof hr.tags === 'object' ? (hr.tags as Row) : {}) as Row;
+        const coords = normalizeTagTrace3d(tags.trace_3d);
+        const meta = metaByTrailId.get(rid);
+        if (coords) {
+          routeHydrationByRouteId.set(rid, {
+            routeId: rid,
+            osmRelationId: asNumber(hr.osm_relation_id),
+            ref: asString(hr.ref),
+            network: asString(hr.network),
+            km: asNumber(hr.distance_km),
+            dplus: asNumber(meta?.elevation_gain) ?? asNumber(tags.elevation_gain_m),
+            maxAlt: asNumber(meta?.max_elevation) ?? asNumber(tags.max_elevation_m),
+            coords,
+          });
+        } else if (Number.isFinite(Number(rid))) {
+          missingGeomRouteIds.push(Number(rid));
+        }
+      }
+
+      // Fallback: fetch PostGIS geom via get_route_geojson for routes without precomputed trace_3d
+      if (missingGeomRouteIds.length > 0 && typeof db.rpc === 'function') {
+        await Promise.all(
+          missingGeomRouteIds.slice(0, 30).map(async (numId) => {
+            try {
+              const { data: gj } = await db.rpc('get_route_geojson', { p_route_id: numId });
+              const parsed = typeof gj === 'string' ? JSON.parse(gj) : gj;
+              const coords = extractTraceFromGeoJson(parsed);
+              if (!coords) return;
+              const rid = String(numId);
+              const hr = rowByRouteId.get(rid);
+              const meta = metaByTrailId.get(rid);
+              routeHydrationByRouteId.set(rid, {
+                routeId: rid,
+                osmRelationId: asNumber(hr?.osm_relation_id),
+                ref: asString(hr?.ref),
+                network: asString(hr?.network),
+                km: asNumber(hr?.distance_km),
+                dplus: asNumber(meta?.elevation_gain),
+                maxAlt: asNumber(meta?.max_elevation),
+                coords,
+              });
+            } catch {
+              /* fallback to approximate geometry */
+            }
+          }),
+        );
+      }
+    }
+
+    const outingRoutes: Record<string, ClubMapOutingRouteHydration> = {};
+
+    const parsedEvents: ParsedEvent[] = activeEventRows.map((ev, index) => {
+      const eventId = String(ev.id ?? '');
+      const title = asString(ev.title) ?? 'Sortie';
+      const massif = asString(ev.massif) ?? asString(ev.location) ?? bundle.club.zoneLabel ?? '';
+      const location = asString(ev.location) ?? '';
+      const rawStart = asString(ev.starts_at) ?? asString(ev.event_date);
+      const rawEnd = asString(ev.ends_at);
+      const startsAtMs = rawStart && Number.isFinite(Date.parse(rawStart)) ? Date.parse(rawStart) : null;
+      const endsAtMs = rawEnd && Number.isFinite(Date.parse(rawEnd)) ? Date.parse(rawEnd) : null;
+      const dateLabel =
+        startsAtMs !== null
+          ? new Date(startsAtMs).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+          : '';
+
+      const rid = asString(ev.route_id);
+      const hydratedRoute = rid ? routeHydrationByRouteId.get(rid) : undefined;
+      if (hydratedRoute && eventId) {
+        outingRoutes[eventId] = hydratedRoute;
+      }
+
+      const built = buildOutingTrackGeometry({
+        id: eventId,
+        title,
+        massif,
+        lat: asNumber(ev.lat),
+        lng: asNumber(ev.lng),
+        km: hydratedRoute?.km ?? asNumber(ev.distance_km) ?? asNumber(ev.km),
+        dplus: hydratedRoute?.dplus ?? asNumber(ev.elevation_gain_m) ?? asNumber(ev.dplus),
+        maxAlt: hydratedRoute?.maxAlt ?? asNumber(ev.max_alt),
+        routeTrace: hydratedRoute?.coords ?? ev.route_trace ?? ev.routeTrace,
+        index,
       });
+
+      return {
+        id: eventId,
+        title,
+        massif,
+        location,
+        startsAtMs,
+        endsAtMs,
+        dateLabel,
+        placeTerms: extractPlaceTerms({ massif, location, title }),
+        coords: built.coords,
+      };
+    });
 
     const nowMs = Date.now();
     const hasLiveOuting = parsedEvents.some((ev) => isEventLive(ev, nowMs));
@@ -301,7 +471,7 @@ export async function GET(
       for (const chunk of idChunks) {
         const { data: moments, error: momentErr } = await db
           .from('carnet_moments')
-          .select('id, auteur_id, auteur_nom, lieu, citation, identified_species, created_at')
+          .select('id, auteur_id, auteur_nom, lieu, citation, image_url, identified_species, moment_meta, created_at')
           .in('auteur_id', chunk)
           .not('identified_species', 'is', null)
           .order('created_at', { ascending: false })
@@ -320,13 +490,17 @@ export async function GET(
 
           for (let sIdx = 0; sIdx < speciesList.length; sIdx += 1) {
             const sp = (speciesList[sIdx] ?? {}) as Row;
-            const group = normalizeText(sp.group ?? sp.kingdom);
-            if (group && EXCLUDED_KINGDOMS.has(group)) continue;
+            const rawGroup = normalizeText(sp.group ?? sp.kingdom);
+            const resolvedKingdom: 'faune' | 'flore' | 'geologie' =
+              rawGroup === 'flore' || rawGroup === 'plantae' || rawGroup === 'fungi'
+                ? 'flore'
+                : rawGroup === 'geologie' || rawGroup === 'geology' || rawGroup === 'milieux'
+                  ? 'geologie'
+                  : 'faune';
 
             const commonName = asString(sp.common_name ?? sp.commonName ?? sp.name ?? sp.n);
             const latinName = asString(sp.scientific_name ?? sp.latinName ?? sp.latin ?? sp.lat) ?? undefined;
             if (!commonName) continue;
-            if (NON_FAUNA_RE.test(commonName) || (latinName && NON_FAUNA_RE.test(latinName))) continue;
 
             const authorId = asString(mr.auteur_id) ?? '';
             const authorProf = profileMap.get(authorId);
@@ -342,7 +516,13 @@ export async function GET(
                 : undefined;
 
             const itemId = `${String(mr.id ?? '')}-${sIdx}`;
-            const trackProgress = Number((0.18 + hashUnit(`pokedex:${itemId}`) * 0.66).toFixed(3));
+            const metaObj =
+              mr.moment_meta && typeof mr.moment_meta === 'object' ? (mr.moment_meta as Row) : null;
+            const metaProgress = asNumber(metaObj?.track_progress);
+            const trackProgress =
+              metaProgress !== null && metaProgress >= 0.05 && metaProgress <= 0.95
+                ? Number(metaProgress.toFixed(3))
+                : Number((0.18 + hashUnit(`pokedex:${itemId}`) * 0.66).toFixed(3));
             const [snappedLng, snappedLat] = snapPointAlongTrack(matchedEvent.coords, trackProgress);
 
             pokedex.push({
@@ -351,8 +531,15 @@ export async function GET(
               latinName,
               outingId: matchedEvent.id,
               outingTitle: matchedEvent.title,
+              observerId: authorId || undefined,
               observerName,
+              observerAvatarUrl: asString(authorProf?.avatar_url) ?? null,
               observedAt,
+              spot: asString(mr.lieu) ?? undefined,
+              citation: asString(mr.citation) ?? undefined,
+              imageUrl: asString(mr.image_url) ?? null,
+              wikipediaUrl: asString(sp.wikipedia_url ?? sp.wikipediaUrl) ?? null,
+              kingdom: resolvedKingdom,
               confidence,
               lat: snappedLat,
               lng: snappedLng,
@@ -367,6 +554,7 @@ export async function GET(
       data: {
         liveMembers,
         pokedex,
+        outingRoutes,
       },
     });
   } catch (err) {

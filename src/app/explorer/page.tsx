@@ -4,6 +4,10 @@ import { headers } from 'next/headers';
 import { preconnect, preload } from 'react-dom';
 import { OPENFREEMAP_STYLE_URL } from '@/components/map/engine/standardBase';
 import ExplorerV2 from '@/features/explorer-v2/ExplorerV2';
+import {
+  parseExplorerDeepLink,
+  resolveCountryCenter,
+} from '@/features/explorer-v2/deepLink';
 import { isSceneName, sceneEnabled } from '@/features/explorer-v2/state/scenes';
 
 export const metadata: Metadata = {
@@ -25,7 +29,7 @@ export const dynamic = 'force-dynamic';
 const OPENFREEMAP_PLANET_TILEJSON_URL = `${new URL(OPENFREEMAP_STYLE_URL).origin}/planet`;
 
 interface ExplorerPageProps {
-  searchParams?: Promise<{ v2?: string; scene?: string; lat?: string; lng?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 /**
@@ -42,10 +46,12 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
   // précharge sur cette requête pour qu'elle soit réutilisée, et le même mode
   // aligne la connexion préchauffée sur celle de la requête réelle.
   preconnect(new URL(OPENFREEMAP_STYLE_URL).origin, { crossOrigin: 'anonymous' });
+  preconnect('https://s3.amazonaws.com', { crossOrigin: 'anonymous' });
   preload(OPENFREEMAP_STYLE_URL, { as: 'fetch', crossOrigin: 'anonymous' });
   // Deuxième saut obligatoire : le style `positron` pointe vers ce TileJSON (≈19 Ko,
   // mis en cache une heure) qui donne l'URL versionnée des tuiles vectorielles.
   preload(OPENFREEMAP_PLANET_TILEJSON_URL, { as: 'fetch', crossOrigin: 'anonymous' });
+  preload('/data/explorer-v2/countries.geojson', { as: 'fetch', crossOrigin: 'anonymous' });
 
   const [resolvedSearchParams, h] = await Promise.all([
     searchParams ? searchParams : Promise.resolve(undefined),
@@ -55,23 +61,40 @@ export default async function ExplorerPage({ searchParams }: ExplorerPageProps) 
   const host = h.get('host') ?? '';
   const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
 
+  const deepLink = parseExplorerDeepLink(resolvedSearchParams);
+
   const scene =
-    (isLocal || sceneEnabled()) && resolvedSearchParams?.scene && isSceneName(resolvedSearchParams.scene)
-      ? resolvedSearchParams.scene
+    (isLocal || sceneEnabled()) && deepLink.scene && isSceneName(deepLink.scene)
+      ? deepLink.scene
       : null;
 
-  const queryLat = Number.parseFloat(resolvedSearchParams?.lat ?? '');
-  const queryLng = Number.parseFloat(resolvedSearchParams?.lng ?? '');
-  const initialCenter =
-    Number.isFinite(queryLat) && Number.isFinite(queryLng) && Math.abs(queryLat) <= 90
-      ? ([queryLng, queryLat] as [number, number])
-      : (() => {
-          const lat = Number.parseFloat(h.get('x-vercel-ip-latitude') ?? '');
-          const lng = Number.parseFloat(h.get('x-vercel-ip-longitude') ?? '');
-          return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
-            ? ([lng, lat] as [number, number])
-            : null;
-        })();
+  const countryFallback = !deepLink.hasExplicitLocation
+    ? resolveCountryCenter(deepLink.country)
+    : null;
 
-  return <ExplorerV2 initialScene={scene} initialCenter={initialCenter} />;
+  const hasExplicitUrlLocation = deepLink.hasExplicitLocation || Boolean(countryFallback);
+
+  const initialZoom = deepLink.zoom ?? countryFallback?.zoom ?? null;
+
+  const initialCenter =
+    deepLink.hasExplicitLocation && deepLink.lng !== null && deepLink.lat !== null
+      ? ([deepLink.lng, deepLink.lat] as [number, number])
+      : countryFallback
+        ? countryFallback.center
+        : (() => {
+            const lat = Number.parseFloat(h.get('x-vercel-ip-latitude') ?? '');
+            const lng = Number.parseFloat(h.get('x-vercel-ip-longitude') ?? '');
+            return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+              ? ([lng, lat] as [number, number])
+              : null;
+          })();
+
+  return (
+    <ExplorerV2
+      initialScene={scene}
+      initialCenter={initialCenter}
+      initialZoom={initialZoom}
+      hasExplicitUrlLocation={hasExplicitUrlLocation}
+    />
+  );
 }

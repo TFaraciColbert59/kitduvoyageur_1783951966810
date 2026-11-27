@@ -2,7 +2,9 @@
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Compass } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import type {
@@ -477,7 +479,7 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
       showIsland('Signalement envoyé');
       setReportTarget(null);
     },
-    [canWrite, currentUserId, reportTarget, requireAuth, showIsland, supabase]
+    [canWrite, currentUserId, detail.id, reportTarget, requireAuth, showIsland, supabase]
   );
 
   // URL query params synchronization (?commentaires=1, ?jour=N&tiroir=X)
@@ -503,9 +505,10 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
     }
   }, []);
 
+  const { registerView } = engagement;
   useEffect(() => {
-    void engagement.registerView();
-  }, [engagement.registerView]);
+    void registerView();
+  }, [registerView]);
 
   // Réduction des animations : préférence OS par défaut, choix explicite
   // conservé dans `localStorage` (popover Affichage).
@@ -591,20 +594,21 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
 
   /* Les anciens carnets gardent les extrémités visibles de la trace complète.
      Les tiroirs choisissent leurs marqueurs à travers les couches de la carte. */
+  const { markers: layerMarkers } = layers;
   const mapMarkers = useMemo(() => {
-    if (dayTraces.length > 0 || drawerOpen) return layers.markers;
+    if (dayTraces.length > 0 || drawerOpen) return layerMarkers;
     const tracePoints = parsePositions(detail.trace);
-    if (tracePoints.length < 2) return layers.markers;
+    if (tracePoints.length < 2) return layerMarkers;
     const start = tracePoints[0];
     const end = tracePoints[tracePoints.length - 1];
-    const endpointMarkers: typeof layers.markers = [
+    const endpointMarkers: typeof layerMarkers = [
       { id: 'trace-start', lat: start.lat, lng: start.lng, title: 'Départ', type: 'start' },
       { id: 'trace-end', lat: end.lat, lng: end.lng, title: 'Arrivée', type: 'end' },
     ];
-    return layers.markers.some((marker) => marker.type === 'start')
-      ? layers.markers
-      : endpointMarkers.concat(layers.markers);
-  }, [dayTraces.length, detail.trace, drawerOpen, layers.markers]);
+    return layerMarkers.some((marker) => marker.type === 'start')
+      ? layerMarkers
+      : endpointMarkers.concat(layerMarkers);
+  }, [dayTraces.length, detail.trace, drawerOpen, layerMarkers]);
 
   const focusMoment = useCallback(
     (moment: CarnetMomentItem) => {
@@ -893,6 +897,27 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
   }, [showLive, live, detail.nights, detail.place]);
   const zoneLabel = live.publicZone?.zoneLabel ?? detail.place.locality ?? null;
 
+  const explorerCarnetHref = useMemo(() => {
+    const params = new URLSearchParams({ carnet: detail.id });
+    let coords: { lat: number; lng: number } | null = homeFocus;
+    if (!coords) {
+      const tracePoints = parsePositions(detail.trace);
+      if (tracePoints.length > 0) {
+        coords = { lat: tracePoints[0].lat, lng: tracePoints[0].lng };
+      } else {
+        const firstDayPoint = detail.days.find((d) => d.points.length > 0)?.points[0];
+        if (firstDayPoint) {
+          coords = { lat: firstDayPoint.lat, lng: firstDayPoint.lng };
+        }
+      }
+    }
+    if (coords && Number.isFinite(coords.lat) && Number.isFinite(coords.lng)) {
+      params.set('lat', coords.lat.toFixed(5));
+      params.set('lng', coords.lng.toFixed(5));
+    }
+    return `/explorer?${params.toString()}`;
+  }, [detail.id, detail.trace, detail.days, homeFocus]);
+
   return (
     <div
       className={`lkdv-carnet-v2-root lkdv-compte-v8 ${mapBig ? 'mapbig' : ''} ${outdoor ? 'outdoor' : ''} ${overlayOpen ? 'overlay-open' : ''} ${isEditing ? 'editing' : ''}`}
@@ -1113,6 +1138,22 @@ export function CarnetScreenV2({ detail: detailProp, simulate = null }: CarnetSc
           homeFocus={homeFocus}
         />
         {drawerOpen && !isAccountDrawer ? <CarnetMapBadge activeDay={activeDay} /> : null}
+        {!drawerOpen ? (
+          <Link
+            href={explorerCarnetHref}
+            className="lkdv-ig-open"
+            style={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              zIndex: 5,
+              textDecoration: 'none',
+            }}
+          >
+            <Compass size={14} aria-hidden="true" />
+            <span>Ouvrir dans Explorer</span>
+          </Link>
+        ) : null}
 
         {/* Grab handle : tap ou glisser > 20 px (maquette `.mgrab`) */}
         <button

@@ -72,7 +72,7 @@ describe('C01 bike-pois API (K3.10)', () => {
     );
     const res = await getBikePois(req);
     const json = await res.json();
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
     expect(json.status).toBe('zoom_required');
     expect(json.code).toBe('VIEWPORT_TOO_LARGE');
     expect(json.items).toEqual([]);

@@ -217,12 +217,20 @@ export function mapChannelRow(row: Row): ClubChannel {
 }
 
 export function mapMessageRow(row: Row): ClubChannelMessage {
+  const rawType = asString(row.message_type);
+  const messageType = (rawType || 'text') as ClubChannelMessage['messageType'];
+  const metadata =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : null;
   return {
     id: String(row.id ?? ''),
     channelId: String(row.channel_id ?? ''),
     clubId: String(row.club_id ?? ''),
     authorId: String(row.author_id ?? ''),
     body: asString(row.body) ?? '',
+    messageType,
+    metadata,
     createdAt: iso(row.created_at),
     editedAt: asString(row.edited_at) ? iso(row.edited_at) : null,
     hiddenByModeratorId: asString(row.hidden_by_moderator_id),

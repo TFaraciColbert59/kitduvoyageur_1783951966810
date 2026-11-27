@@ -26,13 +26,23 @@ export interface ClubStoryHighlight {
   id: string;
   title: string;
   coverUrl: string;
+  coverStoryId?: string | null;
   subtitle?: string;
   massif?: string;
   createdAtLabel?: string;
   slides: Array<{
     id: string;
+    storyId?: string;
     image: string;
     caption?: string;
+    authorId?: string;
+    authorName?: string;
+    authorHandle?: string;
+    authorAvatarUrl?: string | null;
+    outingId?: string | null;
+    outingTitle?: string | null;
+    spot?: string | null;
+    createdAt?: string;
   }>;
   viewsCount: number;
   viewers: ClubStoryViewerEntry[];
@@ -533,53 +543,56 @@ export function ClubInlineFeed({
   );
 
   const [visiblePostCount, setVisiblePostCount] = useState(18);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressFiredRef = useRef(false);
 
-  const { filteredPosts, usedOutingMassifFallback } = useMemo(() => {
+  const clearLongPress = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressOriginRef.current = null;
+  };
+
+  const filteredPosts = useMemo(() => {
     const base = selectedPole
       ? (posts || []).filter((post) => matchesPole(post, selectedPole))
       : (posts || []);
 
     if (mapSelection?.kind === 'massif') {
-      const massifFiltered = base.filter((post) =>
+      return base.filter((post) =>
         matchesMassifTarget([post.massif, post.spot, post.caption], mapSelection.name, mapSelection.id),
       );
-      return { filteredPosts: massifFiltered, usedOutingMassifFallback: false };
     }
 
     if (mapSelection?.kind === 'outing' && selectedOuting) {
       const direct = base.filter((post) => post.outingId === selectedOuting.id);
       if (direct.length > 0) {
-        return { filteredPosts: direct, usedOutingMassifFallback: false };
+        return direct;
       }
-      const fallback = base.filter((post) =>
+      return base.filter((post) =>
         matchesMassifTarget([post.massif, post.spot, post.caption], selectedOuting.massif),
       );
-      return { filteredPosts: fallback, usedOutingMassifFallback: fallback.length > 0 };
     }
 
-    return { filteredPosts: base, usedOutingMassifFallback: false };
+    return base;
   }, [mapSelection, posts, selectedOuting, selectedPole]);
 
   const filteredHighlights = useMemo(() => {
-    if (mapSelection?.kind === 'massif') {
-      return highlights.filter((hl) =>
-        matchesMassifTarget(
-          [hl.massif, hl.title, hl.subtitle, hl.slides[0]?.caption],
-          mapSelection.name,
-          mapSelection.id,
-        ),
-      );
-    }
-    if (mapSelection?.kind === 'outing' && selectedOuting) {
-      const matching = highlights.filter((hl) =>
-        matchesMassifTarget(
-          [hl.massif, hl.title, hl.subtitle, hl.slides[0]?.caption],
-          selectedOuting.massif,
-        ),
-      );
-      return matching.length > 0 ? matching : highlights;
-    }
-    return highlights;
+    const targetName =
+      mapSelection?.kind === 'massif'
+        ? mapSelection.name
+        : mapSelection?.kind === 'outing' && selectedOuting
+          ? selectedOuting.massif
+          : null;
+    if (!targetName) return highlights;
+    const targetId = mapSelection?.kind === 'massif' ? mapSelection.id : undefined;
+    return [...highlights].sort((a, b) => {
+      const aMatch = matchesMassifTarget([a.massif, a.title, a.subtitle, a.slides[0]?.caption], targetName, targetId) ? 0 : 1;
+      const bMatch = matchesMassifTarget([b.massif, b.title, b.subtitle, b.slides[0]?.caption], targetName, targetId) ? 0 : 1;
+      return aMatch - bMatch;
+    });
   }, [highlights, mapSelection, selectedOuting]);
 
   useEffect(() => {
@@ -800,75 +813,12 @@ export function ClubInlineFeed({
       </div>
     ) : null;
 
-  const activeOutingCapsule =
-    mapSelection?.kind === 'outing' && selectedOuting ? (
-      <div
-        className="club-active-outing-capsule"
-        role="region"
-        aria-label={`Sortie sélectionnée : ${selectedOuting.title}`}
-      >
-        <div className="club-active-outing-capsule__head">
-          <div className="club-active-outing-capsule__titles">
-            <span className="club-active-outing-capsule__kicker">
-              {selectedOuting.status === 'live'
-                ? '● En direct'
-                : selectedOuting.status === 'completed'
-                  ? 'Sortie effectuée'
-                  : 'Sortie à venir'}{' '}
-              · {selectedOuting.massif}
-            </span>
-            <b>{selectedOuting.title}</b>
-            <small>
-              {selectedOuting.dateLabel || selectedOuting.date} · {selectedOuting.km} km · +
-              {Number(selectedOuting.dplus || 0).toLocaleString('fr-FR')} m
-              {selectedOuting.maxAlt ? ` · ${selectedOuting.maxAlt} m` : ''}
-            </small>
-          </div>
-          {onClearMapSelection ? (
-            <button
-              type="button"
-              className="club-active-outing-capsule__close"
-              onClick={onClearMapSelection}
-              aria-label="Fermer le focus sortie"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-        <div className="club-active-outing-capsule__actions">
-          <button
-            type="button"
-            className={`club-post-rsvp-pill ${selectedOuting.rsvpJoined ? 'joined' : ''}`}
-            onClick={() =>
-              onToggleOutingRsvpById
-                ? onToggleOutingRsvpById(selectedOuting.id)
-                : onToggleRsvp('', selectedOuting.id)
-            }
-            aria-pressed={Boolean(selectedOuting.rsvpJoined)}
-          >
-            {selectedOuting.rsvpJoined ? 'Inscrit ✓' : 'Je viens'}
-          </button>
-          <button
-            type="button"
-            className="club-active-outing-capsule__detail"
-            onClick={() => onOpenOutingDetail(selectedOuting.id)}
-          >
-            Fiche sortie
-          </button>
-          {usedOutingMassifFallback ? (
-            <span className="club-active-outing-capsule__hint">Posts du massif</span>
-          ) : null}
-        </div>
-      </div>
-    ) : null;
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {polesBottomRightDock && cardHost ? createPortal(polesBottomRightDock, cardHost) : polesBottomRightDock}
       {massifBanner}
-      {activeOutingCapsule}
       {/* Stories à la une du club (dans le fil d'actu, style identique à Carnet) */}
-      {filteredHighlights.length > 0 || (canManageStories && mapSelection?.kind !== 'massif') ? (
+      {filteredHighlights.length > 0 || canManageStories ? (
         <div
           className="lkdv-ig-hl-row"
           role="group"
@@ -880,13 +830,47 @@ export function ClubInlineFeed({
               key={hl.id}
               type="button"
               className="lkdv-ig-hl"
-              onClick={() => onOpenHighlight?.(hl.id)}
+              onPointerDown={(e) => {
+                if (!canManageStories || e.button === 2) return;
+                clearLongPress();
+                longPressFiredRef.current = false;
+                longPressOriginRef.current = { x: e.clientX, y: e.clientY };
+                longPressTimerRef.current = window.setTimeout(() => {
+                  longPressFiredRef.current = true;
+                  longPressTimerRef.current = null;
+                  onEditHighlight?.(hl.id);
+                }, 440);
+              }}
+              onPointerMove={(e) => {
+                if (!longPressOriginRef.current) return;
+                const dist = Math.hypot(
+                  e.clientX - longPressOriginRef.current.x,
+                  e.clientY - longPressOriginRef.current.y,
+                );
+                if (dist > 8) clearLongPress();
+              }}
+              onPointerUp={() => clearLongPress()}
+              onPointerLeave={() => clearLongPress()}
+              onPointerCancel={() => clearLongPress()}
+              onClick={() => {
+                if (longPressFiredRef.current) {
+                  longPressFiredRef.current = false;
+                  return;
+                }
+                onOpenHighlight?.(hl.id);
+              }}
               onContextMenu={(e) => {
                 if (!canManageStories) return;
                 e.preventDefault();
+                clearLongPress();
                 onEditHighlight?.(hl.id);
               }}
-              aria-label={`Story à la une ${hl.title}`}
+              aria-label={
+                canManageStories
+                  ? `Story à la une ${hl.title} (appuyer longtemps pour gérer)`
+                  : `Story à la une ${hl.title}`
+              }
+              title={canManageStories ? `${hl.title} — rester appuyé pour modifier` : hl.title}
               style={{ flex: '0 0 auto' }}
             >
               <div className="lkdv-ig-hl-ring">

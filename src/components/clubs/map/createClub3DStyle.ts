@@ -15,11 +15,15 @@ import {
   isOpenFreeMapError,
   prepareVectorBase,
 } from '@/components/map/engine/standardBase';
-import type { Club3DBaseStyle } from './clubMapTypes';
+import type {
+  Club3DBaseStyle,
+  ClubOutdoorOverlayId,
+  ClubOutdoorOverlaysState,
+} from './clubMapTypes';
 
-export const CLUB_GLOBE_SWITCH_ZOOM = 5.5;
-export const CLUB_DEFAULT_TERRAIN_EXAGGERATION = 1.32;
-export const CLUB_MAX_PITCH = 74;
+export const CLUB_GLOBE_SWITCH_ZOOM = 3.6;
+export const CLUB_DEFAULT_TERRAIN_EXAGGERATION = 1.0;
+export const CLUB_MAX_PITCH = 56;
 
 export const OPENFREEMAP_LIBERTY_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 export const OPENFREEMAP_PLANET_URL = 'https://tiles.openfreemap.org/planet';
@@ -33,6 +37,66 @@ export const IGN_ORTHO_TILES =
   'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
 export const IGN_PLAN_V2_TILES =
   'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+export const IGN_HYDRO_TILES =
+  'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=HYDROGRAPHY.HYDROGRAPHY&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}';
+
+export const WAYMARKED_HIKING_TILES = 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png';
+export const WAYMARKED_CYCLING_TILES = 'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png';
+export const WAYMARKED_MTB_TILES = 'https://tile.waymarkedtrails.org/mtb/{z}/{x}/{y}.png';
+export const WAYMARKED_SLOPES_TILES = 'https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png';
+export const OPENSEAMAP_SEAMARK_TILES = 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png';
+
+export const DEFAULT_CLUB_OUTDOOR_OVERLAYS: ClubOutdoorOverlaysState = {
+  hiking: true,
+  nautical: true,
+  mtb: false,
+  cycling: false,
+  slopes: false,
+};
+
+export const CLUB_OUTDOOR_OVERLAY_OPTIONS: Array<{
+  id: ClubOutdoorOverlayId;
+  label: string;
+  shortLabel: string;
+  hint: string;
+  accent: string;
+}> = [
+  {
+    id: 'hiking',
+    label: 'GR, GRP & Randonnées',
+    shortLabel: 'GR & Rando',
+    hint: 'Waymarked Trails · GR, GRP, PR, TMB et sentiers balisés (OSM)',
+    accent: '#c2410c',
+  },
+  {
+    id: 'nautical',
+    label: 'Lacs navigables & Cours d’eau',
+    shortLabel: 'Lacs & Nautique',
+    hint: 'OpenSeaMap & IGN Hydrographie · lacs navigables, ports, canoë & torrents',
+    accent: '#0369a1',
+  },
+  {
+    id: 'mtb',
+    label: 'Sentiers VTT',
+    shortLabel: 'VTT',
+    hint: 'Waymarked Trails MTB · singles et parcours VTT balisés (OSM)',
+    accent: '#7c3aed',
+  },
+  {
+    id: 'cycling',
+    label: 'Véloroutes & Voies vertes',
+    shortLabel: 'Vélo',
+    hint: 'Waymarked Trails Cycling · EuroVelo, cols et véloroutes (OSM)',
+    accent: '#0f766e',
+  },
+  {
+    id: 'slopes',
+    label: 'Ski & Pistes hivernales',
+    shortLabel: 'Ski & Pistes',
+    hint: 'Waymarked Trails Slopes · pistes alpines, nordiques et ski de rando',
+    accent: '#2563eb',
+  },
+];
 
 export const CLUB_3D_STYLE_OPTIONS: Array<{
   id: Club3DBaseStyle;
@@ -51,10 +115,25 @@ export const CLUB_SOURCE_IDS = {
   openMapTiles: 'club-openmaptiles',
   ignOrtho: 'club-ign-ortho',
   ignTopo: 'club-ign-topo',
+  ignHydro: 'club-ign-hydro',
+  waymarkedHiking: 'club-waymarked-hiking',
+  waymarkedCycling: 'club-waymarked-cycling',
+  waymarkedMtb: 'club-waymarked-mtb',
+  waymarkedSlopes: 'club-waymarked-slopes',
+  openSeaMap: 'club-openseamap-seamark',
   demTerrainPrimary: 'club-dem-terrain',
   demHillshadePrimary: 'club-dem-hillshade',
   demTerrainAws: 'club-dem-terrain-aws',
   demHillshadeAws: 'club-dem-hillshade-aws',
+} as const;
+
+export const CLUB_OUTDOOR_LAYER_IDS = {
+  hiking: 'club-overlay-waymarked-hiking',
+  nauticalHydro: 'club-overlay-ign-hydro',
+  nauticalSeamark: 'club-overlay-openseamap',
+  mtb: 'club-overlay-waymarked-mtb',
+  cycling: 'club-overlay-waymarked-cycling',
+  slopes: 'club-overlay-waymarked-slopes',
 } as const;
 
 export const CLUB_BASE_LAYER_IDS = {
@@ -83,19 +162,42 @@ const VECTOR_LAYER_IDS = [
 
 export type ClubDemProvider = 'mapterhorn' | 'aws';
 
-export function getClubBaseAttribution(mode: Club3DBaseStyle, dem: ClubDemProvider): string {
+export function getClubBaseAttribution(
+  mode: Club3DBaseStyle,
+  dem: ClubDemProvider,
+  overlays?: Partial<ClubOutdoorOverlaysState>,
+): string {
   const relief = dem === 'mapterhorn' ? 'Mapterhorn LiDAR' : 'AWS Terrain';
-  if (mode === 'ign-ortho') return `IGN Orthophotos 20 cm · ${relief} · © Esri`;
-  if (mode === 'ign-topo') return `Plan IGN v2 (Etalab 2.0) · ${relief}`;
-  if (mode === 'dusk') return `OpenFreeMap © OpenStreetMap · ${relief}`;
-  return `OpenFreeMap © OpenStreetMap · ${relief}`;
+  const base =
+    mode === 'ign-ortho'
+      ? `IGN Orthophotos 20 cm · ${relief} · © Esri`
+      : mode === 'ign-topo'
+        ? `Plan IGN v2 (Etalab 2.0) · ${relief}`
+        : `OpenFreeMap © OpenStreetMap · ${relief}`;
+  const active = overlays ?? DEFAULT_CLUB_OUTDOOR_OVERLAYS;
+  const extras: string[] = [];
+  if (active.hiking || active.mtb || active.cycling || active.slopes) {
+    extras.push('Waymarked Trails');
+  }
+  if (active.nautical) {
+    extras.push('OpenSeaMap · IGN Hydro');
+  }
+  return extras.length > 0 ? `${base} · ${extras.join(' · ')}` : base;
 }
 
 export function createClub3DStyle(
   mode: Club3DBaseStyle = 'topo3d',
-  options: { projection?: 'globe' | 'mercator'; isOutdoor?: boolean } = {},
+  options: {
+    projection?: 'globe' | 'mercator';
+    isOutdoor?: boolean;
+    overlays?: Partial<ClubOutdoorOverlaysState>;
+  } = {},
 ): StyleSpecification {
   const { projection = 'mercator', isOutdoor = false } = options;
+  const overlays: ClubOutdoorOverlaysState = {
+    ...DEFAULT_CLUB_OUTDOOR_OVERLAYS,
+    ...(options.overlays ?? {}),
+  };
   const isVectorStyle = mode === 'topo3d' || mode === 'dusk';
   const isDusk = mode === 'dusk';
 
@@ -125,12 +227,60 @@ export function createClub3DStyle(
       maxzoom: 18,
       attribution: '© IGN Géoplateforme (Etalab 2.0)',
     },
+    [CLUB_SOURCE_IDS.ignHydro]: {
+      type: 'raster',
+      tiles: [IGN_HYDRO_TILES],
+      tileSize: 256,
+      minzoom: 9,
+      maxzoom: 18,
+      attribution: '© IGN Hydrographie (Etalab 2.0)',
+    },
+    [CLUB_SOURCE_IDS.waymarkedHiking]: {
+      type: 'raster',
+      tiles: [WAYMARKED_HIKING_TILES],
+      tileSize: 256,
+      minzoom: 10,
+      maxzoom: 18,
+      attribution: '© Waymarked Trails · OpenStreetMap (ODbL)',
+    },
+    [CLUB_SOURCE_IDS.waymarkedCycling]: {
+      type: 'raster',
+      tiles: [WAYMARKED_CYCLING_TILES],
+      tileSize: 256,
+      minzoom: 10,
+      maxzoom: 18,
+      attribution: '© Waymarked Trails Cycling · OpenStreetMap',
+    },
+    [CLUB_SOURCE_IDS.waymarkedMtb]: {
+      type: 'raster',
+      tiles: [WAYMARKED_MTB_TILES],
+      tileSize: 256,
+      minzoom: 10,
+      maxzoom: 18,
+      attribution: '© Waymarked Trails MTB · OpenStreetMap',
+    },
+    [CLUB_SOURCE_IDS.waymarkedSlopes]: {
+      type: 'raster',
+      tiles: [WAYMARKED_SLOPES_TILES],
+      tileSize: 256,
+      minzoom: 10,
+      maxzoom: 18,
+      attribution: '© Waymarked Trails Slopes · OpenStreetMap',
+    },
+    [CLUB_SOURCE_IDS.openSeaMap]: {
+      type: 'raster',
+      tiles: [OPENSEAMAP_SEAMARK_TILES],
+      tileSize: 256,
+      minzoom: 11,
+      maxzoom: 18,
+      attribution: '© OpenSeaMap contributors',
+    },
     [CLUB_SOURCE_IDS.demTerrainPrimary]: {
       type: 'raster-dem',
       tiles: [MAPTERHORN_DEM_TILES],
       encoding: 'terrarium',
       tileSize: 512,
-      maxzoom: 14,
+      maxzoom: 13,
       attribution: 'Mapterhorn Open DEM',
     },
     [CLUB_SOURCE_IDS.demHillshadePrimary]: {
@@ -138,7 +288,7 @@ export function createClub3DStyle(
       tiles: [MAPTERHORN_DEM_TILES],
       encoding: 'terrarium',
       tileSize: 512,
-      maxzoom: 14,
+      maxzoom: 12,
     },
   };
 
@@ -339,17 +489,122 @@ export function createClub3DStyle(
       },
     },
     {
+      id: CLUB_OUTDOOR_LAYER_IDS.nauticalHydro,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.ignHydro,
+      minzoom: 9.5,
+      layout: { visibility: overlays.nautical ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          9.5,
+          0,
+          11,
+          isDusk ? 0.18 : 0.22,
+          13,
+          isDusk ? 0.28 : 0.32,
+          15,
+          isDusk ? 0.36 : 0.42,
+        ] as never,
+        'raster-saturation': -0.45,
+        'raster-contrast': -0.14,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
+      id: CLUB_OUTDOOR_LAYER_IDS.nauticalSeamark,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.openSeaMap,
+      minzoom: 11.5,
+      layout: { visibility: overlays.nautical ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 11.5, 0, 12.5, 0.42, 14.5, 0.58] as never,
+        'raster-saturation': -0.35,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
+      id: CLUB_OUTDOOR_LAYER_IDS.hiking,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.waymarkedHiking,
+      minzoom: 10,
+      layout: { visibility: overlays.hiking ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          10,
+          0,
+          11.5,
+          isDusk ? 0.2 : 0.22,
+          13.5,
+          isDusk ? 0.3 : 0.34,
+          15.5,
+          isDusk ? 0.4 : 0.44,
+        ] as never,
+        'raster-saturation': -0.66,
+        'raster-contrast': -0.22,
+        'raster-brightness-min': isDusk ? 0 : 0.08,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
+      id: CLUB_OUTDOOR_LAYER_IDS.mtb,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.waymarkedMtb,
+      minzoom: 10,
+      layout: { visibility: overlays.mtb ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0, 11.5, 0.22, 13.5, 0.34, 15.5, 0.44] as never,
+        'raster-saturation': -0.62,
+        'raster-contrast': -0.2,
+        'raster-brightness-min': isDusk ? 0 : 0.06,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
+      id: CLUB_OUTDOOR_LAYER_IDS.cycling,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.waymarkedCycling,
+      minzoom: 10,
+      layout: { visibility: overlays.cycling ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0, 11.5, 0.22, 13.5, 0.34, 15.5, 0.44] as never,
+        'raster-saturation': -0.62,
+        'raster-contrast': -0.2,
+        'raster-brightness-min': isDusk ? 0 : 0.06,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
+      id: CLUB_OUTDOOR_LAYER_IDS.slopes,
+      type: 'raster',
+      source: CLUB_SOURCE_IDS.waymarkedSlopes,
+      minzoom: 10,
+      layout: { visibility: overlays.slopes ? 'visible' : 'none' },
+      paint: {
+        'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10, 0, 11.5, 0.22, 13.5, 0.34, 15.5, 0.44] as never,
+        'raster-saturation': -0.62,
+        'raster-contrast': -0.2,
+        'raster-brightness-min': isDusk ? 0 : 0.06,
+        'raster-fade-duration': 220,
+      },
+    },
+    {
       id: CLUB_BASE_LAYER_IDS.buildings3D,
       type: 'fill-extrusion',
       source: CLUB_SOURCE_IDS.openMapTiles,
       'source-layer': 'building',
-      minzoom: 13,
+      minzoom: 14.5,
       layout: { visibility: mode === 'ign-topo' ? 'none' : 'visible' },
       paint: {
         'fill-extrusion-color': isDusk ? '#4a556e' : '#d8cbb8',
-        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 11] as never,
+        'fill-extrusion-height': ['min', 16, ['coalesce', ['get', 'render_height'], 8]] as never,
         'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0] as never,
-        'fill-extrusion-opacity': mode === 'ign-ortho' ? 0.56 : 0.88,
+        'fill-extrusion-opacity': mode === 'ign-ortho' ? 0.45 : 0.62,
       },
     },
     {
@@ -447,18 +702,18 @@ export function computeSolarHillshade(
   const degFromNorth = (((pos.azimuth * 180) / Math.PI + 180) % 360 + 360) % 360;
   const altitudeDeg = (pos.altitude * 180) / Math.PI;
 
-  const isLowSun = altitudeDeg < 18 || mode === 'dusk';
-  const baseExag = mode === 'dusk' ? 0.78 : mode === 'ign-ortho' ? 0.3 : 0.48;
-  const lowSunBoost = isLowSun ? 0.16 : 0;
-  const outdoorBoost = isOutdoor ? 0.15 : 0;
+  const isLowSun = altitudeDeg < 22 || mode === 'dusk';
+  const baseExag = mode === 'dusk' ? 0.96 : mode === 'ign-ortho' ? 0.84 : 0.9;
+  const lowSunBoost = isLowSun ? 0.08 : 0;
+  const outdoorBoost = isOutdoor ? 0.04 : 0;
 
   return {
     direction: Math.round(degFromNorth),
     altitudeDeg: Number(altitudeDeg.toFixed(1)),
-    exaggeration: Math.min(0.95, baseExag + lowSunBoost + outdoorBoost),
-    highlightColor: isLowSun ? '#ffb178' : '#fffdf4',
-    shadowColor: isLowSun ? '#121b30' : '#1b3428',
-    accentColor: isLowSun ? '#f0643b' : '#5b7f55',
+    exaggeration: Math.min(0.99, baseExag + lowSunBoost + outdoorBoost),
+    highlightColor: isLowSun ? '#ffba6b' : '#fff1b8',
+    shadowColor: isLowSun ? '#06102b' : '#0a1e4a',
+    accentColor: isLowSun ? '#d95d39' : '#1f427a',
   };
 }
 
@@ -571,6 +826,11 @@ export function applyClub3DStyleMode(
         const sun = computeSolarHillshade(solarHour, center[1], center[0], mode, isOutdoor);
         map.setPaintProperty(
           CLUB_BASE_LAYER_IDS.hillshade,
+          'hillshade-illumination-anchor',
+          'map',
+        );
+        map.setPaintProperty(
+          CLUB_BASE_LAYER_IDS.hillshade,
           'hillshade-illumination-direction',
           sun.direction,
         );
@@ -594,6 +854,16 @@ export function applyClub3DStyleMode(
           'hillshade-accent-color',
           sun.accentColor,
         );
+        try {
+          map.setLight({
+            anchor: 'map',
+            color: sun.highlightColor,
+            intensity: 0.65,
+            position: [1.5, sun.direction, Math.max(15, 90 - Math.max(5, sun.altitudeDeg))],
+          });
+        } catch {
+          // ignore if style doesn't accept setLight
+        }
       } else {
         const contrastBoost = isOutdoor ? 0.16 : 0;
         map.setPaintProperty(
@@ -647,6 +917,32 @@ export function applyClub3DStyleMode(
   } catch {
     /* setSky indisponible sur le rendu courant */
   }
+}
+
+/**
+ * Active ou masque les calques plein-air ouverts (GR/Rando Waymarked Trails,
+ * Lacs navigables OpenSeaMap + Hydrographie IGN, VTT, Vélo, Ski/Pistes) sans recharger la carte.
+ */
+export function applyClubOutdoorOverlays(
+  map: MapLibreMap,
+  overlays: ClubOutdoorOverlaysState,
+): void {
+  if (!map.isStyleLoaded()) return;
+  const setVis = (id: string, visible: boolean) => {
+    try {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+      }
+    } catch {
+      /* couche en cours de montage */
+    }
+  };
+  setVis(CLUB_OUTDOOR_LAYER_IDS.hiking, overlays.hiking);
+  setVis(CLUB_OUTDOOR_LAYER_IDS.nauticalHydro, overlays.nautical);
+  setVis(CLUB_OUTDOOR_LAYER_IDS.nauticalSeamark, overlays.nautical);
+  setVis(CLUB_OUTDOOR_LAYER_IDS.mtb, overlays.mtb);
+  setVis(CLUB_OUTDOOR_LAYER_IDS.cycling, overlays.cycling);
+  setVis(CLUB_OUTDOOR_LAYER_IDS.slopes, overlays.slopes);
 }
 
 /**
@@ -745,76 +1041,18 @@ export function attachClubDemFallback(
 }
 
 /**
- * Enrichit optionnellement les couches OpenFreeMap avec le style complet `liberty`
- * via `standardBase.ts` (`prepareVectorBase`), posé sous nos couches club.
+ * No-op conservé pour compatibilité : on n'injecte plus le style complet `liberty`
+ * par-dessus `club-openmaptiles` afin d'éviter la double décodification WebGL et tout lag.
  */
 export function attachOpenFreeMapLibertyEnhancement(
-  map: MapLibreMap,
-  isVectorActive: () => boolean,
+  _map: MapLibreMap,
+  _isVectorActive: () => boolean,
 ): () => void {
-  let cancelled = false;
-  const counter = createFallbackCounter();
-  const addedLayers: string[] = [];
-  const addedSources: string[] = [];
-
-  const cleanupAdded = () => {
-    try {
-      for (const id of addedLayers) if (map.getLayer(id)) map.removeLayer(id);
-      for (const id of addedSources) if (map.getSource(id)) map.removeSource(id);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const onError = (event: unknown) => {
-    if (isOpenFreeMapError(event) && counter.report()) {
-      cleanupAdded();
-    }
-  };
-  map.on('error', onError);
-
-  const abort = new AbortController();
-  const timer =
-    typeof window !== 'undefined' ? window.setTimeout(() => abort.abort(), 5_500) : null;
-
-  fetch(OPENFREEMAP_LIBERTY_STYLE_URL, { signal: abort.signal })
-    .catch(() => fetch(OPENFREEMAP_STYLE_URL, { signal: abort.signal }))
-    .then((res) => (res.ok ? res.json() : null))
-    .then((raw) => {
-      if (cancelled || !raw || !map.isStyleLoaded()) return;
-      const plan = prepareVectorBase(raw, isVectorActive());
-      if (!plan) return;
-      if (plan.glyphs && !map.getGlyphs()) map.setGlyphs(plan.glyphs);
-      if (plan.sprite && map.getSprite().length === 0) map.setSprite(plan.sprite);
-      for (const [id, src] of Object.entries(plan.sources)) {
-        if (!map.getSource(id)) {
-          map.addSource(id, src);
-          addedSources.push(id);
-        }
-      }
-      const beforeId = map.getLayer(CLUB_BASE_LAYER_IDS.hillshade)
-        ? CLUB_BASE_LAYER_IDS.hillshade
-        : undefined;
-      for (const layer of plan.layers) {
-        // Ne pas dupliquer le background ou les bâtiments 3D déjà rendus proprement
-        if (layer.type === 'fill-extrusion' || map.getLayer(layer.id)) continue;
-        map.addLayer(layer, beforeId);
-        addedLayers.push(layer.id);
-      }
-    })
-    .catch(() => {
-      /* Le style vectoriel embarqué sur club-openmaptiles reste actif */
-    })
-    .finally(() => {
-      if (timer !== null && typeof window !== 'undefined') window.clearTimeout(timer);
-    });
-
-  return () => {
-    cancelled = true;
-    abort.abort();
-    if (timer !== null && typeof window !== 'undefined') window.clearTimeout(timer);
-    map.off('error', onError);
-  };
+  void OPENFREEMAP_STYLE_URL;
+  void createFallbackCounter;
+  void isOpenFreeMapError;
+  void prepareVectorBase;
+  return () => undefined;
 }
 
 /**

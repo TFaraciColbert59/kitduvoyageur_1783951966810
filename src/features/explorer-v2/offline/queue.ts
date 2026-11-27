@@ -14,7 +14,7 @@ const STORE = OUTBOX_STORE;
 
 export interface QueuedOperation {
   key: string;
-  kind: 'report' | 'report-confirm' | 'activity.finish';
+  kind: 'report' | 'report-confirm' | 'activity.finish' | 'sos';
   payload: Record<string, unknown>;
   createdAt: number;
   attempts: number;

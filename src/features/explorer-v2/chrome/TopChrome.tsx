@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { XpIcon } from '../ui/XpIcon';
 
 export interface BreadcrumbItem {
@@ -9,7 +8,7 @@ export interface BreadcrumbItem {
   onClick?: () => void;
 }
 
-export function TopChrome({
+export const TopChrome = React.memo(function TopChrome({
   breadcrumb,
   current,
   onSearch,
@@ -67,6 +66,29 @@ export function TopChrome({
         </button>
       </div>
 
+      {offline ? (
+        <span
+          role="status"
+          aria-live="polite"
+          style={{
+            height: 32,
+            padding: '0 10px',
+            borderRadius: 999,
+            background: '#FEF3C7',
+            color: '#2b1f05',
+            border: '1px solid rgba(185, 138, 46, 0.5)',
+            fontSize: 11.5,
+            fontWeight: 700,
+            display: 'inline-flex',
+            alignItems: 'center',
+            flex: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {offlinePending > 0 ? `Hors ligne (${offlinePending})` : 'Hors ligne'}
+        </span>
+      ) : null}
+
       {onBack ? (
         <button type="button" className="xp-icon-btn" onClick={onBack} aria-label="Revenir au niveau supérieur">
           <XpIcon name="chevl" size={17} />
@@ -85,4 +107,4 @@ export function TopChrome({
       )}
     </div>
   );
-}
+});

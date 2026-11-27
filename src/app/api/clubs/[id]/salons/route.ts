@@ -58,6 +58,10 @@ const postSchema = z.discriminatedUnion('action', [
       action: z.literal('post_message'),
       channelId: z.string().uuid(),
       body: z.string().trim().min(1).max(2000),
+      messageType: z
+        .enum(['text', 'image', 'audio', 'gpx', 'trail', 'product', 'kit', 'file', 'video', 'post'])
+        .optional(),
+      metadata: z.record(z.string(), z.unknown()).nullable().optional(),
     })
     .strict(),
   z
@@ -287,15 +291,28 @@ export async function POST(
         canPostAnnouncementsOverride: canPostAnnouncements,
       });
       if (!posted.ok) return respondClubResult(posted);
+      const messageType = action.messageType ?? 'text';
+      const metadata = action.metadata ?? null;
       const { error } = await supabase.from('club_channel_messages').insert({
         id: posted.data.id,
         channel_id: channel.id,
         club_id: id,
         author_id: user.id,
         body: posted.data.body,
+        message_type: messageType,
+        metadata,
       });
       if (error) return dbFailure('POST message', error);
-      return json({ data: posted.data }, 201);
+      return json(
+        {
+          data: {
+            ...posted.data,
+            messageType,
+            metadata,
+          },
+        },
+        201,
+      );
     }
 
     if (action.action === 'moderate') {

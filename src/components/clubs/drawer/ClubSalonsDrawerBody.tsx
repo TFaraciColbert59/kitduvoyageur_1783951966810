@@ -1,29 +1,88 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import dynamic from 'next/dynamic';
 import {
   Calendar,
-  ChevronDown,
+  Check,
   ChevronLeft,
   ChevronRight,
-  Copy,
-  CornerUpLeft,
-  Flag,
   Hash,
   Lock,
   Megaphone,
+  Menu,
   MessageCircle,
-  Plus,
   Search,
-  Send,
-  Trash2,
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import type { ClubChannel, ClubChannelKind, ClubChannelMessage } from '@/features/clubs';
+import type {
+  ClubChannel,
+  ClubChannelKind,
+  ClubChannelMessage,
+  ClubChannelMessageType,
+} from '@/features/clubs';
+import type {
+  KitMessageMeta,
+  Message,
+  ProductMessageMeta,
+  TrailMessageMeta,
+} from '@/features/messaging/types/messaging.types';
+import { messagingService } from '@/features/messaging/services/messagingService';
+import { useResolvedAttachmentUrl } from '@/features/messaging/hooks/useAttachmentUrl';
+import { AttachmentDrawer } from '@/features/messaging/components/AttachmentDrawer';
+import { TraceMap } from '@/features/messaging/components/TraceMap';
+import { resolveTrailCoordinates } from '@/features/messaging/data/realTrailsData';
+import { AudioPlayerBubble } from '@/features/messaging/components/AudioPlayerBubble';
+import { Icon } from '@/components/ui/Icon';
 import '@/components/messaging/messages-grammar.css';
 import type { ClubItemData, ClubMemberData, ClubToastPayload } from './ClubDrawerTypes';
 import { ClubEmptyCard } from './ClubSharedUi';
+
+const VoiceRecorderBar = dynamic(
+  () => import('@/features/messaging/components/VoiceRecorderBar').then((m) => m.VoiceRecorderBar),
+  { ssr: false },
+);
+const ComposerMenuSheet = dynamic(
+  () => import('@/features/messaging/components/ComposerMenuSheet').then((m) => m.ComposerMenuSheet),
+  { ssr: false },
+);
+
+function SalonAttachmentImage({ content }: { content: string }) {
+  const url = useResolvedAttachmentUrl(content);
+  if (!url) {
+    return (
+      <span
+        style={{
+          display: 'block',
+          width: 180,
+          height: 120,
+          borderRadius: 12,
+          background: 'rgba(23, 64, 44, 0.08)',
+        }}
+        aria-hidden="true"
+      />
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="Photo partagée" loading="lazy" decoding="async" />
+  );
+}
+
+function toMessagingMessage(msg: ClubChannelMessage): Message {
+  return {
+    id: msg.id,
+    conversation_id: msg.channelId,
+    sender_id: msg.authorId,
+    content: msg.body,
+    message_type: (msg.messageType ?? 'text') as Message['message_type'],
+    metadata: (msg.metadata ?? undefined) as Message['metadata'],
+    created_at: msg.createdAt,
+    updated_at: msg.editedAt ?? msg.createdAt,
+  };
+}
 
 interface CachedSalonData {
   channels: ClubChannel[];
@@ -39,12 +98,19 @@ const QUICK_REACTIONS = ['🏔️', '👍', '🔥', '❤️'] as const;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function mapRealtimeMessage(row: Record<string, unknown>): ClubChannelMessage {
+  const rawType = typeof row.message_type === 'string' ? row.message_type : 'text';
+  const metadata =
+    row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+      ? (row.metadata as Record<string, unknown>)
+      : null;
   return {
     id: String(row.id ?? ''),
     channelId: String(row.channel_id ?? ''),
     clubId: String(row.club_id ?? ''),
     authorId: String(row.author_id ?? ''),
     body: typeof row.body === 'string' ? row.body : '',
+    messageType: rawType as ClubChannelMessageType,
+    metadata,
     createdAt: typeof row.created_at === 'string' ? row.created_at : new Date().toISOString(),
     editedAt: typeof row.edited_at === 'string' ? row.edited_at : null,
     hiddenByModeratorId:
@@ -150,6 +216,11 @@ export function ClubSalonsDrawerBody({
 
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [channelMenuOpen, setChannelMenuOpen] = useState(false);
+  const [openAttachment, setOpenAttachment] = useState<Message | null>(null);
+  const channelMenuRef = useRef<HTMLDivElement | null>(null);
   const [replyingTo, setReplyingTo] = useState<{ author: string; excerpt: string } | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,7 +228,8 @@ export function ClubSalonsDrawerBody({
   const [reactionsByMsg, setReactionsByMsg] = useState<Record<string, Record<string, number>>>({});
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const memberByUserId = useMemo(() => {
     const map = new Map<string, ClubMemberData>();
@@ -368,7 +440,9 @@ export function ClubSalonsDrawerBody({
     if (!active) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (selectedMsgId) {
+      if (channelMenuOpen) {
+        setChannelMenuOpen(false);
+      } else if (selectedMsgId) {
         setSelectedMsgId(null);
       } else if (searchOpen) {
         setSearchOpen(false);
@@ -381,7 +455,18 @@ export function ClubSalonsDrawerBody({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [active, replyingTo, searchOpen, selectedMsgId, view]);
+  }, [active, channelMenuOpen, replyingTo, searchOpen, selectedMsgId, view]);
+
+  useEffect(() => {
+    if (!channelMenuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (channelMenuRef.current && !channelMenuRef.current.contains(e.target as Node)) {
+        setChannelMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [channelMenuOpen]);
 
   const activeChannel = useMemo(
     () => channels.find((c) => c.id === activeChannelId) ?? channels[0] ?? null,
@@ -417,6 +502,72 @@ export function ClubSalonsDrawerBody({
     setSelectedMsgId(null);
   };
 
+  const sendSalonMessage = useCallback(
+    async (opts: {
+      body: string;
+      messageType?: ClubChannelMessageType;
+      metadata?: Record<string, unknown> | null;
+      restoreDraftOnError?: string;
+    }) => {
+      if (!activeChannel || !canPost) return false;
+      const bodyClean = opts.body.trim();
+      if (!bodyClean) return false;
+
+      const msgType: ClubChannelMessageType = opts.messageType ?? 'text';
+      const tempId = `temp-${Date.now()}`;
+      const optimistic: ClubChannelMessage = {
+        id: tempId,
+        channelId: activeChannel.id,
+        clubId: activeClub.id,
+        authorId: currentUserId || 'me',
+        body: bodyClean,
+        messageType: msgType,
+        metadata: opts.metadata ?? null,
+        createdAt: new Date().toISOString(),
+      };
+
+      setSending(true);
+      setMessages((prev) => [...prev, optimistic]);
+
+      try {
+        const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/salons`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'post_message',
+            channelId: activeChannel.id,
+            body: bodyClean,
+            messageType: msgType,
+            metadata: opts.metadata ?? null,
+          }),
+        });
+        const payload = (await res.json().catch(() => null)) as {
+          data?: ClubChannelMessage;
+          message?: string;
+          error?: string;
+        } | null;
+        if (!res.ok || !payload?.data) {
+          throw new Error(payload?.message || payload?.error || "Impossible d'envoyer le message.");
+        }
+        setMessages((prev) => prev.map((m) => (m.id === tempId ? payload.data! : m)));
+        salonsCache.delete(`${activeClub.id}:${activeChannel.id}`);
+        return true;
+      } catch (err) {
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        if (opts.restoreDraftOnError) setDraft(opts.restoreDraftOnError);
+        onToast?.({
+          title: 'Envoi impossible',
+          subtitle: err instanceof Error ? err.message : 'Vérifiez votre connexion.',
+        });
+        return false;
+      } finally {
+        setSending(false);
+      }
+    },
+    [activeChannel, activeClub.id, canPost, currentUserId, onToast],
+  );
+
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const rawText = draft.trim();
@@ -426,53 +577,53 @@ export function ClubSalonsDrawerBody({
       ? `> ${replyingTo.author}: ${replyingTo.excerpt}\n${rawText}`
       : rawText;
 
-    const tempId = `temp-${Date.now()}`;
-    const optimistic: ClubChannelMessage = {
-      id: tempId,
-      channelId: activeChannel.id,
-      clubId: activeClub.id,
-      authorId: currentUserId || 'me',
-      body: finalBody,
-      createdAt: new Date().toISOString(),
-    };
-
     setDraft('');
     setReplyingTo(null);
-    setSending(true);
-    setMessages((prev) => [...prev, optimistic]);
-
-    try {
-      const res = await fetch(`/api/clubs/${encodeURIComponent(activeClub.id)}/salons`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'post_message',
-          channelId: activeChannel.id,
-          body: finalBody,
-        }),
-      });
-      const payload = (await res.json().catch(() => null)) as {
-        data?: ClubChannelMessage;
-        message?: string;
-        error?: string;
-      } | null;
-      if (!res.ok || !payload?.data) {
-        throw new Error(payload?.message || payload?.error || "Impossible d'envoyer le message.");
-      }
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? payload.data! : m)));
-      salonsCache.delete(`${activeClub.id}:${activeChannel.id}`);
-    } catch (err) {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      setDraft(rawText);
-      onToast?.({
-        title: 'Envoi impossible',
-        subtitle: err instanceof Error ? err.message : 'Vérifiez votre connexion.',
-      });
-    } finally {
-      setSending(false);
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
     }
+    await sendSalonMessage({
+      body: finalBody,
+      messageType: 'text',
+      restoreDraftOnError: rawText,
+    });
   };
+
+  const handleUploadAndSendFile = useCallback(
+    async (
+      file: File,
+      forcedType?: 'image' | 'gpx' | 'audio' | 'file',
+      extraMeta?: Record<string, unknown>,
+    ) => {
+      if (!activeChannel || !canPost) return;
+      const isGpx =
+        forcedType === 'gpx' ||
+        file.name.toLowerCase().endsWith('.gpx') ||
+        file.type.includes('gpx');
+      const resolvedType: ClubChannelMessageType =
+        forcedType ?? (isGpx ? 'gpx' : file.type.startsWith('image/') ? 'image' : 'file');
+
+      const url = await messagingService.uploadAttachment(activeChannel.id, file);
+      if (!url) {
+        onToast?.({
+          title: 'Téléversement refusé',
+          subtitle: 'Vérifiez votre connexion et la taille du fichier (max 25 Mo).',
+        });
+        return;
+      }
+      await sendSalonMessage({
+        body: url,
+        messageType: resolvedType,
+        metadata: {
+          file_name: file.name,
+          file_size: file.size,
+          url,
+          ...(extraMeta ?? {}),
+        },
+      });
+    },
+    [activeChannel, canPost, onToast, sendSalonMessage],
+  );
 
   const handleDeleteMessage = async (msg: ClubChannelMessage) => {
     try {
@@ -799,10 +950,19 @@ export function ClubSalonsDrawerBody({
                       Boolean(next && next.authorId === msg.authorId && Math.abs(nextMs - curMs) < 120_000);
 
                     const mine = author.isMine;
+                    const msgType: ClubChannelMessageType = msg.messageType ?? 'text';
+                    const isAttachment =
+                      msgType === 'image' ||
+                      msgType === 'product' ||
+                      msgType === 'trail' ||
+                      msgType === 'gpx' ||
+                      msgType === 'kit' ||
+                      msgType === 'post';
                     const parsed = parseReplyPrefix(msg.body);
                     const isSelected = selectedMsgId === msg.id;
                     const reactions = reactionsByMsg[msg.id] || {};
                     const reactionEntries = Object.entries(reactions);
+                    const meta = msg.metadata ?? {};
 
                     return (
                       <React.Fragment key={msg.id}>
@@ -816,16 +976,214 @@ export function ClubSalonsDrawerBody({
 
                             <button
                               type="button"
-                              className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''} tap`}
+                              className={`bub ${mine ? 'mine' : 'other'}${sameAsPrev && sameAsNext ? ' mid' : ''}${isAttachment ? ' bub-attachment' : ''} tap`}
                               onClick={() => setSelectedMsgId((cur) => (cur === msg.id ? null : msg.id))}
                               aria-label={`Message de ${mine ? 'vous' : author.name}, ${formatMsgTime(msg.createdAt)}`}
                             >
-                              {parsed.replyTo ? (
+                              {parsed.replyTo && msgType === 'text' ? (
                                 <span className="bub-quote">
                                   <b>{parsed.replyTo}</b> — {parsed.quote}
                                 </span>
                               ) : null}
-                              {parsed.text}
+
+                              {msgType === 'image' ? (
+                                <span
+                                  className="bub-img"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOpenAttachment(toMessagingMessage(msg));
+                                  }}
+                                >
+                                  <SalonAttachmentImage content={msg.body} />
+                                </span>
+                              ) : msgType === 'product' ? (
+                                <span
+                                  className="mcard"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOpenAttachment(toMessagingMessage(msg));
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      setOpenAttachment(toMessagingMessage(msg));
+                                    }
+                                  }}
+                                >
+                                  {typeof meta.photo_url === 'string' ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      className="mcard-img"
+                                      src={meta.photo_url}
+                                      alt=""
+                                      loading="lazy"
+                                      decoding="async"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  ) : (
+                                    <span className="mcard-ico" aria-hidden="true">
+                                      <Icon name="backpack" className="size-4" />
+                                    </span>
+                                  )}
+                                  <span className="mcard-txt">
+                                    <b>{String(meta.name || msg.body || 'Équipement')}</b>
+                                    <small>
+                                      {typeof meta.price_cents === 'number'
+                                        ? `${(meta.price_cents / 100).toFixed(2).replace('.', ',')} €`
+                                        : 'Équipement partagé'}
+                                    </small>
+                                  </span>
+                                </span>
+                              ) : msgType === 'trail' || msgType === 'gpx' ? (
+                                (() => {
+                                  const trailGeojson =
+                                    (meta.geojson as {
+                                      type: 'LineString';
+                                      coordinates: [number, number][];
+                                    } | null) ??
+                                    (Array.isArray(meta.coordinates) && meta.coordinates.length > 1
+                                      ? {
+                                          type: 'LineString' as const,
+                                          coordinates: meta.coordinates as [number, number][],
+                                        }
+                                      : null) ??
+                                    resolveTrailCoordinates(
+                                      (meta.name as string) ||
+                                        (meta.id as string) ||
+                                        msg.body,
+                                    );
+                                  return (
+                                    <div
+                                      className="mbub-map"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        setOpenAttachment(toMessagingMessage(msg));
+                                      }}
+                                    >
+                                      <TraceMap geojson={trailGeojson} height={160} />
+                                      <div
+                                        style={{
+                                          position: 'absolute',
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          padding: '8px 10px',
+                                          background:
+                                            'linear-gradient(180deg, transparent, rgba(23, 43, 36, 0.92))',
+                                          color: '#fff',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          pointerEvents: 'none',
+                                          zIndex: 10,
+                                        }}
+                                      >
+                                        <b
+                                          style={{
+                                            fontSize: 12,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            maxWidth: '75%',
+                                          }}
+                                        >
+                                          {msgType === 'trail'
+                                            ? String(meta.name || msg.body)
+                                            : String(meta.file_name || 'Tracé GPX')}
+                                        </b>
+                                        <span
+                                          style={{
+                                            fontSize: 10,
+                                            fontWeight: 600,
+                                            background: 'rgba(255,255,255,0.25)',
+                                            padding: '2px 8px',
+                                            borderRadius: 999,
+                                          }}
+                                        >
+                                          Voir
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })()
+                              ) : msgType === 'kit' ? (
+                                <span
+                                  className="mcard mcard-kit"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOpenAttachment(toMessagingMessage(msg));
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      setOpenAttachment(toMessagingMessage(msg));
+                                    }
+                                  }}
+                                >
+                                  <span className="mcard-tile" aria-hidden="true">
+                                    <Icon name="layers" className="size-4" />
+                                  </span>
+                                  <span className="mcard-txt">
+                                    <b>{String(meta.kit_name || msg.body || 'Kit partagé')}</b>
+                                    <small>
+                                      {typeof meta.items_count === 'number'
+                                        ? `Kit de matériel · ${meta.items_count} élément${meta.items_count > 1 ? 's' : ''}`
+                                        : 'Kit de matériel'}
+                                    </small>
+                                  </span>
+                                  <Icon
+                                    name="chevron-right"
+                                    className="size-3.5 mcard-chevron"
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              ) : msgType === 'audio' ? (
+                                <AudioPlayerBubble audioUrl={msg.body} isMine={mine} />
+                              ) : msgType === 'file' || msgType === 'video' ? (
+                                <span
+                                  className="mcard"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setOpenAttachment(toMessagingMessage(msg));
+                                  }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      setOpenAttachment(toMessagingMessage(msg));
+                                    }
+                                  }}
+                                >
+                                  <span className="mcard-ico" aria-hidden="true">
+                                    <Icon
+                                      name={msgType === 'video' ? 'play' : 'paperclip'}
+                                      className="size-4"
+                                    />
+                                  </span>
+                                  <span className="mcard-txt">
+                                    <b>{msgType === 'video' ? 'Vidéo' : 'Fichier'}</b>
+                                    <small>
+                                      {String(meta.file_name || msg.body.split('/').pop() || 'Pièce jointe').slice(0, 42)}
+                                    </small>
+                                  </span>
+                                  <Icon
+                                    name="chevron-right"
+                                    className="size-3.5 mcard-chevron"
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              ) : (
+                                parsed.text
+                              )}
+
                               <span className="bub-time">
                                 {formatMsgTime(msg.createdAt)}
                                 {msg.id.startsWith('temp-') ? '…' : mine ? <span aria-hidden="true">✓</span> : null}
@@ -922,12 +1280,14 @@ export function ClubSalonsDrawerBody({
           </div>
 
           {/* =====================================================================
-              3. SÉLECTEUR DE SALONS EN BAS À DROITE (DÉFILEMENT HORIZONTAL) + COMPOSITEUR
+              3. COMPOSITEUR + HAMBURGER DES SALONS TOUT EN BAS À DROITE
              ===================================================================== */}
           {!error ? (
             <div
+              ref={channelMenuRef}
               style={{
                 flex: 'none',
+                position: 'relative',
                 paddingTop: 8,
                 paddingBottom: 2,
                 borderTop: '1px solid rgba(23, 64, 44, 0.08)',
@@ -936,77 +1296,102 @@ export function ClubSalonsDrawerBody({
                 gap: 6,
               }}
             >
-              {channels.length > 0 ? (
+              {channelMenuOpen && channels.length > 0 ? (
                 <div
-                  data-hscroll="true"
-                  role="tablist"
+                  role="menu"
                   aria-label="Salons du club"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onWheel={(e) => {
-                    const el = e.currentTarget;
-                    if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                      el.scrollLeft += e.deltaY;
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                  }}
                   style={{
+                    position: 'absolute',
+                    right: 0,
+                    bottom: 'calc(100% + 8px)',
+                    zIndex: 45,
+                    minWidth: 236,
+                    maxWidth: 'min(290px, calc(100vw - 36px))',
+                    maxHeight: 280,
+                    overflowY: 'auto',
+                    padding: 8,
+                    borderRadius: 20,
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    border: '0.5px solid rgba(23, 64, 44, 0.14)',
+                    boxShadow:
+                      '0 14px 36px rgba(23, 43, 36, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    gap: 6,
-                    overflowX: 'auto',
-                    scrollbarWidth: 'none',
-                    touchAction: 'pan-x',
-                    overscrollBehaviorX: 'contain',
-                    WebkitOverflowScrolling: 'touch',
-                    padding: '2px 0',
+                    flexDirection: 'column',
+                    gap: 4,
                   }}
                 >
-                  {channels.map((ch, idx) => {
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: '0.07em',
+                      color: '#56665d',
+                      padding: '4px 10px 2px',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Salons du club
+                  </div>
+                  {channels.map((ch) => {
                     const isCur = ch.id === (activeChannel?.id ?? null);
                     return (
                       <button
                         key={ch.id}
                         type="button"
-                        role="tab"
-                        aria-selected={isCur}
+                        role="menuitemradio"
+                        aria-checked={isCur}
                         onClick={() => {
                           setActiveChannelId(ch.id);
                           setSelectedMsgId(null);
                           setSearchQuery('');
                           setSearchOpen(false);
+                          setChannelMenuOpen(false);
                         }}
                         style={{
-                          flex: 'none',
-                          marginLeft: idx === 0 ? 'auto' : undefined,
-                          display: 'inline-flex',
+                          width: '100%',
+                          display: 'flex',
                           alignItems: 'center',
-                          gap: 5,
-                          height: 28,
-                          padding: '0 11px',
-                          borderRadius: 999,
-                          border: isCur
-                            ? '0.5px solid rgba(23, 64, 44, 0.22)'
-                            : '0.5px solid rgba(255, 255, 255, 0.85)',
-                          background: isCur
-                            ? 'linear-gradient(180deg, rgba(150, 186, 142, 0.28), rgba(150, 186, 142, 0.14)), linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.65))'
-                            : 'linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46))',
-                          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                          backdropFilter: 'blur(24px) saturate(180%)',
-                          boxShadow: isCur
-                            ? 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2px 8px rgba(23, 43, 36, 0.08)'
-                            : 'inset 0 1px 0 #fff, 0 2px 6px rgba(23, 43, 36, 0.05)',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                          padding: '8px 10px',
+                          borderRadius: 12,
+                          border: 0,
+                          background: isCur ? 'rgba(23, 64, 44, 0.1)' : 'transparent',
                           color: isCur ? '#17402c' : '#172b24',
-                          fontSize: 11.5,
-                          fontWeight: isCur ? 700 : 600,
-                          whiteSpace: 'nowrap',
+                          fontSize: 12.5,
+                          fontWeight: isCur ? 700 : 500,
+                          textAlign: 'left',
                           cursor: 'pointer',
                         }}
                       >
-                        {channelIcon(ch.kind, 12)}
-                        <span>{ch.name}</span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            minWidth: 0,
+                          }}
+                        >
+                          <span style={{ opacity: isCur ? 1 : 0.65, display: 'inline-flex', flex: 'none' }}>
+                            {channelIcon(ch.kind, 14)}
+                          </span>
+                          <span
+                            style={{
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {ch.name}
+                          </span>
+                        </span>
+                        {isCur ? (
+                          <Check size={14} color="#17402c" style={{ flex: 'none' }} aria-hidden="true" />
+                        ) : ch.readOnlyForMembers ? (
+                          <Lock size={12} color="#56665d" style={{ flex: 'none' }} aria-hidden="true" />
+                        ) : null}
                       </button>
                     );
                   })}
@@ -1030,51 +1415,220 @@ export function ClubSalonsDrawerBody({
               ) : null}
 
               {canPost && activeChannel ? (
-                <form className="mcomposer" onSubmit={handleSendMessage}>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    className="mfield"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    placeholder={`Message dans #${activeChannel.name}…`}
-                    aria-label={`Écrire dans ${activeChannel.name}`}
-                    maxLength={2000}
+                recording ? (
+                  <VoiceRecorderBar
+                    onSendVoiceNote={async (blob, duration) => {
+                      setRecording(false);
+                      const ext = blob.type.includes('mp4')
+                        ? 'm4a'
+                        : blob.type.includes('ogg')
+                          ? 'ogg'
+                          : 'webm';
+                      const file = new File([blob], `voicenote_${Date.now()}.${ext}`, {
+                        type: blob.type || 'audio/webm',
+                      });
+                      await handleUploadAndSendFile(file, 'audio', { duration });
+                    }}
+                    onCancel={() => setRecording(false)}
                   />
-                  <button
-                    type="submit"
-                    className={`lg gbtn msend${draft.trim() ? ' on' : ''}`}
-                    disabled={sending || !draft.trim()}
-                    aria-label="Envoyer le message"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M4.4 12h14.2" />
-                      <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
-                    </svg>
-                  </button>
-                </form>
+                ) : (
+                  <form className="mcomposer" onSubmit={handleSendMessage}>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) void handleUploadAndSendFile(file, 'image');
+                        event.target.value = '';
+                      }}
+                      aria-label="Joindre une photo depuis la galerie"
+                    />
+                    <div className="mfield-wrap" style={{ flex: 1, minWidth: 0 }}>
+                      <textarea
+                        ref={inputRef}
+                        className="mfield"
+                        rows={1}
+                        value={draft}
+                        placeholder="Votre message…"
+                        aria-label={`Écrire dans ${activeChannel.name}`}
+                        enterKeyHint="send"
+                        maxLength={2000}
+                        onChange={(e) => {
+                          setDraft(e.target.value);
+                          const node = e.target;
+                          node.style.height = 'auto';
+                          node.style.height = `${Math.min(Math.max(node.scrollHeight, 36), 110)}px`;
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key === 'Enter' &&
+                            !event.shiftKey &&
+                            typeof window !== 'undefined' &&
+                            window.matchMedia('(pointer: fine)').matches
+                          ) {
+                            event.preventDefault();
+                            void handleSendMessage();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="mfield-mic"
+                        onClick={() => setRecording(true)}
+                        aria-label="Enregistrer une note vocale"
+                      >
+                        <svg
+                          width="17"
+                          height="17"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="9" y="2.8" width="6" height="11" rx="3" />
+                          <path d="M5.6 11.6a6.4 6.4 0 0 0 12.8 0" />
+                          <path d="M12 18.2v3" />
+                        </svg>
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="lg gbtn"
+                      onClick={() => setShareMenuOpen(true)}
+                      aria-label="Partager une photo, un GPX ou un équipement"
+                    >
+                      <Icon name="ellipsis" className="size-4" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="submit"
+                      className={`lg gbtn msend${draft.trim() ? ' on' : ''}`}
+                      disabled={sending || !draft.trim()}
+                      aria-label="Envoyer le message"
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M4.4 12h14.2" />
+                        <path d="M12.8 6.2 18.6 12l-5.8 5.8" />
+                      </svg>
+                    </button>
+                    {channels.length > 0 ? (
+                      <button
+                        type="button"
+                        className={`lg gbtn${channelMenuOpen ? ' on' : ''}`}
+                        onClick={() => setChannelMenuOpen((v) => !v)}
+                        aria-label="Salons du club"
+                        aria-haspopup="menu"
+                        aria-expanded={channelMenuOpen}
+                      >
+                        <Menu size={16} aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </form>
+                )
               ) : activeChannel?.readOnlyForMembers ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    color: '#56665d',
-                    padding: '8px 12px',
-                    borderRadius: 14,
-                    background: 'rgba(23, 64, 44, 0.05)',
-                  }}
-                >
-                  <Lock size={13} aria-hidden="true" />
-                  <span>Salon d’annonces — lecture seule</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      fontSize: 12,
+                      color: '#56665d',
+                      padding: '8px 12px',
+                      borderRadius: 14,
+                      background: 'rgba(23, 64, 44, 0.05)',
+                    }}
+                  >
+                    <Lock size={13} aria-hidden="true" />
+                    <span>Salon d’annonces — lecture seule</span>
+                  </div>
+                  {channels.length > 0 ? (
+                    <button
+                      type="button"
+                      className={`lg gbtn${channelMenuOpen ? ' on' : ''}`}
+                      onClick={() => setChannelMenuOpen((v) => !v)}
+                      aria-label="Salons du club"
+                      aria-haspopup="menu"
+                      aria-expanded={channelMenuOpen}
+                    >
+                      <Menu size={16} aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
           ) : null}
         </>
       )}
+
+      {typeof document !== 'undefined' && activeChannel
+        ? createPortal(
+            <div className="lkdv-messages club-salon-sheet-host">
+              <AttachmentDrawer
+                message={openAttachment}
+                onClose={() => setOpenAttachment(null)}
+              />
+              <ComposerMenuSheet
+                isOpen={shareMenuOpen}
+                onClose={() => setShareMenuOpen(false)}
+                currentUserId={currentUserId ?? ''}
+                onPickPhoto={() => photoInputRef.current?.click()}
+                onSendPhoto={async (file) => {
+                  await handleUploadAndSendFile(file, 'image');
+                  setShareMenuOpen(false);
+                }}
+                onSendGpx={async (file, geojson) => {
+                  await handleUploadAndSendFile(file, 'gpx', {
+                    geojson: geojson ?? null,
+                    coordinates: geojson?.coordinates ?? null,
+                  });
+                  setShareMenuOpen(false);
+                }}
+                onSendProduct={async (meta: ProductMessageMeta) => {
+                  await sendSalonMessage({
+                    body: meta.name,
+                    messageType: 'product',
+                    metadata: meta as unknown as Record<string, unknown>,
+                  });
+                  setShareMenuOpen(false);
+                }}
+                onSendTrail={async (meta: TrailMessageMeta) => {
+                  await sendSalonMessage({
+                    body: meta.name,
+                    messageType: 'trail',
+                    metadata: meta as unknown as Record<string, unknown>,
+                  });
+                  setShareMenuOpen(false);
+                }}
+                onSendKit={async (meta: KitMessageMeta) => {
+                  await sendSalonMessage({
+                    body: meta.kit_name,
+                    messageType: 'kit',
+                    metadata: meta as unknown as Record<string, unknown>,
+                  });
+                  setShareMenuOpen(false);
+                }}
+              />
+            </div>,
+            document.querySelector('.lkdv-clubs-v8 .phone') ?? document.body,
+          )
+        : null}
     </div>
   );
 }

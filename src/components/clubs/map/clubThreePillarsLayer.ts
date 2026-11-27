@@ -209,10 +209,6 @@ export function createClubThreePillarsLayer(
       }
 
       for (const entry of entries) entry.group.visible = true;
-
-      if (!reduced) {
-        mapRef.triggerRepaint();
-      }
     },
     onRemove() {
       clearMeshes();

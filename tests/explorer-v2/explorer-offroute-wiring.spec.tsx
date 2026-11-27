@@ -46,7 +46,6 @@ vi.mock('@/features/explorer-v2/sheet/SheetContent', () => ({
   }),
 }));
 vi.mock('@/features/explorer-v2/chrome/TopChrome', () => ({ TopChrome: () => null }));
-vi.mock('@/features/explorer-v2/chrome/BottomBar', () => ({ ActivityPill: () => null }));
 vi.mock('@/features/explorer-v2/chrome/SosButton', () => ({ SosButton: () => null }));
 vi.mock('@/features/explorer-v2/activity/Countdown', () => ({
   Countdown: () => null,

@@ -224,6 +224,8 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   gap: 8px;
   z-index: 6;
   pointer-events: none;
+  contain: layout style;
+  transform: translateZ(0);
 }
 .xp-chrome > * {
   pointer-events: auto;
@@ -272,15 +274,15 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  opacity: 0.72;
+  color: var(--xp-mut);
   font-weight: 600;
 }
 .xp-icon-btn {
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   background: var(--xp-bar);
   -webkit-backdrop-filter: var(--xp-blur);
@@ -292,12 +294,65 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   flex: none;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   background: var(--xp-thumb);
   box-shadow: var(--xp-thumb-shadow);
   color: var(--xp-ink);
+}
+
+/* ── Rail horizontal des 9 pré-réglages Explorer (Liquid Glass) ─────────── */
+.xp-preset-rail-host {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 56px);
+  left: 0;
+  right: 0;
+  z-index: 8;
+  padding: 0 10px;
+  pointer-events: none;
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+.xp-preset-rail-host > * {
+  pointer-events: auto;
+}
+
+/* ── Modes de contraste terrain HUD GPS (WCAG 2.2 AA / Plein soleil / Nuit rouge) ── */
+.xp-root[data-hud-contrast='sunlight'] {
+  --xp-bar: #ffffff;
+  --xp-blur: none;
+  --xp-txt: #0c1814;
+  --xp-ink: #0c1814;
+  --xp-mut: #172b24;
+  --xp-sheet-bg: #ffffff;
+  --xp-block: #f4f6f5;
+}
+
+.xp-root[data-hud-contrast='night-red'] {
+  --xp-bar: #0a0202;
+  --xp-blur: none;
+  --xp-txt: #ff4d4d;
+  --xp-ink: #ff4d4d;
+  --xp-mut: #cc3b3b;
+  --xp-sheet-bg: #0a0202;
+  --xp-block: #160505;
+}
+
+.xp-root[data-hud-contrast='night-red'] .maplibregl-canvas {
+  filter: brightness(0.42) sepia(1) hue-rotate(-52deg) saturate(2.6);
+}
+
+.xp-root :focus-visible {
+  outline: 2px solid #17402c;
+  outline-offset: 2px;
+}
+
+.xp-root[data-hud-contrast='night-red'] :focus-visible {
+  outline-color: #ff4d4d;
 }
 
 /* ── Feuille (tiroir à crans) ──────────────────────────────────────────── */
@@ -894,10 +949,10 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
 
 .xp-toast {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 56px);
+  top: calc(env(safe-area-inset-top, 0px) + 114px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9;
+  z-index: 15;
   max-width: calc(100% - 32px);
   padding: 9px 14px;
   border-radius: 16px;
@@ -907,6 +962,7 @@ body:has(.xp-root[data-theme]) .lkv-app-background {
   box-shadow: var(--xp-bar-shadow);
   animation: xpToast 0.3s ease both;
   text-align: center;
+  pointer-events: none;
 }
 .xp-toast b {
   display: block;
@@ -1801,8 +1857,7 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   position: absolute;
   left: 14px;
   right: 14px;
-  /* Juste sous la capsule de recherche : ne recouvre jamais la feuille. */
-  top: calc(env(safe-area-inset-top, 0px) + 52px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
   z-index: 4;
   text-align: left;
   font-size: 8.5px;
@@ -1811,6 +1866,9 @@ body[data-explorer-sheet-open='true'] nav[aria-label="Navigation principale"]:no
   opacity: 0.72;
   text-decoration: none;
   pointer-events: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .xp-attribution:hover {
   opacity: 1;

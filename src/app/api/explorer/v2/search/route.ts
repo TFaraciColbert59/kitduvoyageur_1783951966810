@@ -100,6 +100,72 @@ export function parseQuery(q: string): SearchFilters {
   return parseSearchQuery(q);
 }
 
+interface GeocodedPlaceItem {
+  id: string;
+  name: string;
+  admin1: string | null;
+  country: string | null;
+  countryCode: string | null;
+  lat: number;
+  lon: number;
+  elevationM: number | null;
+}
+
+async function fetchGlobalPlaces(q: string): Promise<GeocodedPlaceItem[]> {
+  const trimmed = q.trim();
+  if (trimmed.length < 2) return [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2200);
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmed)}&count=6&language=fr&format=json`;
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!res.ok) return [];
+    const payload = (await res.json().catch(() => null)) as {
+      results?: Array<{
+        id?: number;
+        name?: string;
+        admin1?: string;
+        country?: string;
+        country_code?: string;
+        latitude?: number;
+        longitude?: number;
+        elevation?: number;
+      }>;
+    } | null;
+    if (!Array.isArray(payload?.results)) return [];
+    return payload.results
+      .filter(
+        (r) =>
+          typeof r.name === 'string' &&
+          typeof r.latitude === 'number' &&
+          typeof r.longitude === 'number' &&
+          Number.isFinite(r.latitude) &&
+          Number.isFinite(r.longitude),
+      )
+      .slice(0, 6)
+      .map((r, idx) => ({
+        id: `geo-${r.id ?? idx}`,
+        name: r.name as string,
+        admin1: r.admin1 ?? null,
+        country: r.country ?? null,
+        countryCode: r.country_code ? String(r.country_code).toUpperCase() : null,
+        lat: r.latitude as number,
+        lon: r.longitude as number,
+        elevationM:
+          typeof r.elevation === 'number' && Number.isFinite(r.elevation)
+            ? Math.round(r.elevation)
+            : null,
+      }));
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const parsed = querySchema.safeParse({
@@ -223,7 +289,7 @@ export async function GET(request: Request) {
       maxLng: center.lng + dLng,
       zoom: parsed.data.zoom ?? 12,
     };
-    const [pois, routeRows] = await Promise.all([
+    const [pois, routeRows, places] = await Promise.all([
       rpc<
         Array<{
           id: string;
@@ -263,6 +329,7 @@ export async function GET(request: Request) {
         console.error('[explorer-v2] search routes', error);
         return null;
       }),
+      fetchGlobalPlaces(filters.text || parsed.data.q),
     ]);
 
     const text = filters.text.toLowerCase();
@@ -330,6 +397,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       filters,
       results,
+      places,
       routes,
       adventures,
       zone: viewport,

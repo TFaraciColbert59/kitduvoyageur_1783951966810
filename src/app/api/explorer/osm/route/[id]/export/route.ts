@@ -63,6 +63,46 @@ function extractCoords(geometry: unknown, out: GeoCoord[]): void {
   }
 }
 
+function unwrapCachedRoute(
+  cachedData: unknown
+): { name?: string; geojson?: unknown; geometry?: unknown } | null {
+  if (!cachedData || typeof cachedData !== 'object') return null;
+  const record = cachedData as {
+    route?: unknown;
+    name?: unknown;
+    geojson?: unknown;
+    geometry?: unknown;
+  };
+  const candidate =
+    record.route && typeof record.route === 'object'
+      ? (record.route as { name?: unknown; geojson?: unknown; geometry?: unknown })
+      : record;
+  if (!candidate.geojson && !candidate.geometry) return null;
+  return {
+    name: typeof candidate.name === 'string' ? candidate.name : undefined,
+    geojson: candidate.geojson,
+    geometry: candidate.geometry,
+  };
+}
+
+function extractOverpassRelationElement(raw: unknown, numericOsmId: number): unknown {
+  if (!raw || typeof raw !== 'object') return null;
+  const payload = raw as {
+    type?: unknown;
+    elements?: Array<{ type?: unknown; id?: unknown }>;
+  };
+  if (Array.isArray(payload.elements)) {
+    return (
+      payload.elements.find((e) => e?.type === 'relation' && e?.id === numericOsmId) ??
+      payload.elements.find((e) => e?.type === 'relation') ??
+      payload.elements[0] ??
+      null
+    );
+  }
+  if (payload.type === 'relation') return payload;
+  return null;
+}
+
 function cachedRouteGeometry(cachedRoute: unknown): unknown {
   if (!cachedRoute || typeof cachedRoute !== 'object') return null;
   const route = cachedRoute as { geojson?: unknown; geometry?: unknown };
@@ -124,13 +164,18 @@ export async function GET(
       routeName = hikingRoute.name || routeName;
       if (hikingRoute.osm_relation_id) {
         const cached = osmRouteDetailCache.get(`route-detail:${hikingRoute.osm_relation_id}`);
-        const cachedGeometry = cached?.data?.route ? cachedRouteGeometry(cached.data.route) : null;
+        const cachedRoute = unwrapCachedRoute(cached?.data);
+        const cachedGeometry = cachedRoute ? cachedRouteGeometry(cachedRoute) : null;
         if (cachedGeometry) {
           points = pointsFromGeoJsonGeometry(cachedGeometry);
         } else {
           const raw = await queryRouteDetail(hikingRoute.osm_relation_id);
-          const norm = normalizeOsmRelationDetail(raw);
-          if (norm?.geojson) points = pointsFromGeoJsonGeometry(norm.geojson);
+          const relationElem = extractOverpassRelationElement(raw, hikingRoute.osm_relation_id);
+          const norm = relationElem ? normalizeOsmRelationDetail(relationElem) : null;
+          if (norm?.geojson) {
+            osmRouteDetailCache.set(`route-detail:${hikingRoute.osm_relation_id}`, norm);
+            points = pointsFromGeoJsonGeometry(norm.geojson);
+          }
         }
       }
     }
@@ -142,16 +187,19 @@ export async function GET(
     }
 
     const cached = osmRouteDetailCache.get(`route-detail:${numericOsmId}`);
-    if (cached?.data?.route) {
-      routeName = cached.data.route.name || routeName;
-      points = pointsFromGeoJsonGeometry(cachedRouteGeometry(cached.data.route));
+    const cachedRoute = unwrapCachedRoute(cached?.data);
+    if (cachedRoute) {
+      routeName = cachedRoute.name || routeName;
+      points = pointsFromGeoJsonGeometry(cachedRouteGeometry(cachedRoute));
     } else {
       try {
         const raw = await queryRouteDetail(numericOsmId);
-        const norm = normalizeOsmRelationDetail(raw);
+        const relationElem = extractOverpassRelationElement(raw, numericOsmId);
+        const norm = relationElem ? normalizeOsmRelationDetail(relationElem) : null;
         if (!norm) {
           return fail('not_found', 'Itinéraire OSM introuvable.');
         }
+        osmRouteDetailCache.set(`route-detail:${numericOsmId}`, norm);
         routeName = norm.name || routeName;
         points = pointsFromGeoJsonGeometry(norm.geojson);
       } catch {

@@ -142,17 +142,12 @@ describe('Club Admin V2 UI — Salons publics, Timeline membre & Drawer Admin pa
     const preview = screen.getByTestId('club-member-hero-preview');
     expect(preview.classList.contains('is-collapsed')).toBe(false);
 
-    // Passer sur l'onglet Sorties (m-outings) => auto-replié immédiatement
+    // Passer sur l'onglet Sorties (m-outings) => aperçu retiré sur ce sous-drawer uniquement
     const sortiesTab = screen.getByRole('tab', { name: 'Sorties' });
     fireEvent.click(sortiesTab);
-    expect(screen.getByTestId('club-member-hero-preview').classList.contains('is-collapsed')).toBe(true);
+    expect(screen.queryByTestId('club-member-hero-preview')).toBeNull();
 
-    // Tenter de redéplier en cliquant sur la pilule compacte => reste verrouillé replié
-    const expandBtn = screen.getByLabelText('Déplier l’aperçu : Alexandre Dumas');
-    fireEvent.click(expandBtn);
-    expect(screen.getByTestId('club-member-hero-preview').classList.contains('is-collapsed')).toBe(true);
-
-    // Revenir sur Perf & Stats => se redéplie automatiquement
+    // Revenir sur Perf & Stats => l'aperçu réapparaît déplié
     const statsTab = screen.getByRole('tab', { name: 'Perf & Stats' });
     fireEvent.click(statsTab);
     expect(screen.getByTestId('club-member-hero-preview').classList.contains('is-collapsed')).toBe(false);
@@ -226,14 +221,14 @@ describe('Club Admin V2 UI — Salons publics, Timeline membre & Drawer Admin pa
     );
     expect(screen.queryByLabelText('Administration du club')).toBeNull();
 
-    // 4. Membre avec surcharge individuelle budget.propose_expense -> roue crantée visible !
+    // 4. La roue crantée redondante n'apparaît plus dans le drawer principal (l'accès admin se fait via le bouton en haut à droite de la page)
     const delegatedMemberClub: ClubItemData = {
       ...memberClub,
       viewerCapabilities: ['salons.post', 'feed.post', 'budget.propose_expense'],
     };
     rerenderHost(
       <ClubDrawerHost
-        mode="main"
+        mode="settings"
         currentUserId="u-plain"
         activeClub={delegatedMemberClub}
         clubs={[delegatedMemberClub]}
@@ -261,7 +256,7 @@ describe('Club Admin V2 UI — Salons publics, Timeline membre & Drawer Admin pa
         onCreateNewClub={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText('Administration du club')).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Administration du club' })).toBeTruthy();
 
     // 5. Admin dont TOUS les droits ont été révoqués (viewerCapabilities: []) -> pas de fallback par défaut, roue crantée masquée !
     const revokedAdminClub: ClubItemData = {
