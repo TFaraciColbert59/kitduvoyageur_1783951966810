@@ -58,6 +58,15 @@ export async function optionalUser(supabase: SupabaseClient): Promise<User | nul
   return user ?? null;
 }
 
+/** Session obligatoire ; retourne `{ user }` ou `{ response: 401 }`. */
+export async function requireUser(
+  supabase: SupabaseClient,
+): Promise<{ user: User } | { response: NextResponse }> {
+  const user = await optionalUser(supabase);
+  if (!user) return { response: errorJson('unauthorized', 401) };
+  return { user };
+}
+
 export function clubErrorStatus(code: ClubErrorCode): number {
   switch (code) {
     case 'UNAUTHORIZED':

@@ -7,6 +7,7 @@ import { clientIpFromHeaders } from '@/lib/rate-limit/clientIp';
 
 const CACHE_DIR = path.join(process.cwd(), '.country-cache');
 const CACHE_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
+const memoryCountryCache = new Map<string, { data: CountryDataV2; expiresAt: number }>();
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -41,6 +42,11 @@ interface CacheEnvelope {
 }
 
 function readFromCache(code: string): CountryDataV2 | null {
+  const memKey = code.toLowerCase();
+  const memHit = memoryCountryCache.get(memKey);
+  if (memHit && Date.now() < memHit.expiresAt) {
+    return memHit.data;
+  }
   try {
     const filePath = getCacheFilePath(code);
     if (fs.existsSync(filePath)) {
@@ -48,17 +54,19 @@ function readFromCache(code: string): CountryDataV2 | null {
       const envelope = JSON.parse(raw) as CacheEnvelope;
       // Support both v2 envelope and legacy flat format
       if (envelope.version === 'v2' && envelope.data) {
+        memoryCountryCache.set(memKey, { data: envelope.data, expiresAt: Date.now() + CACHE_TTL_MS });
         return envelope.data;
       }
       return null;
     }
   } catch {
-    // cache miss or corrupt
+    // cache miss or corrupt (or Cloudflare Workers without writable disk)
   }
   return null;
 }
 
 function writeToCache(code: string, data: CountryDataV2) {
+  memoryCountryCache.set(code.toLowerCase(), { data, expiresAt: Date.now() + CACHE_TTL_MS });
   try {
     ensureCacheDir();
     const now = new Date();
@@ -72,7 +80,7 @@ function writeToCache(code: string, data: CountryDataV2) {
     const filePath = getCacheFilePath(code);
     fs.writeFileSync(filePath, JSON.stringify(envelope, null, 2), 'utf-8');
   } catch {
-    // non-fatal
+    // non-fatal on Cloudflare Workers
   }
 }
 

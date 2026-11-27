@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import sharp from 'sharp';
+import { decodePngRgba } from '@/lib/geo/decodePng';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
 import {
@@ -42,9 +42,12 @@ async function loadTile(zoom: number, x: number, y: number): Promise<Float32Arra
   try {
     const res = await fetch(terrariumTileUrl(zoom, x, y), { next: { revalidate: 86400 * 30 } });
     if (!res.ok) return null;
-    const buffer = Buffer.from(await res.arrayBuffer());
-    const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const elevations = decodeTerrariumTile(data as TileDecoderInput, info.width, info.channels);
+    const decoded = decodePngRgba(await res.arrayBuffer());
+    const elevations = decodeTerrariumTile(
+      decoded.data as TileDecoderInput,
+      decoded.width,
+      decoded.channels,
+    );
     if (tileCache.size >= MAX_TILES) {
       const oldest = tileCache.keys().next().value;
       if (oldest) tileCache.delete(oldest);

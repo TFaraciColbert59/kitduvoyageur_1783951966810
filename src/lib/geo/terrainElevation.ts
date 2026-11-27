@@ -1,5 +1,5 @@
 import 'server-only';
-import sharp from 'sharp';
+import { decodePngRgba } from './decodePng';
 
 /**
  * Altitudes depuis les « Terrain Tiles » (AWS Open Data, format Terrarium) :
@@ -45,10 +45,9 @@ async function loadTile(x: number, y: number, zoom: number): Promise<Uint8Array 
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return null;
-    const png = Buffer.from(await res.arrayBuffer());
-    const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-    if (info.width !== SIZE || info.height !== SIZE || info.channels !== 3) return null;
-    return new Uint8Array(data);
+    const decoded = decodePngRgba(await res.arrayBuffer());
+    if (decoded.width !== SIZE || decoded.height !== SIZE || decoded.channels !== 4) return null;
+    return decoded.data;
   } catch {
     return null;
   }
@@ -90,7 +89,7 @@ export async function terrainElevations(
       const t = tileOf(lon, lat, zoom);
       const data = await tile(t.x, t.y, zoom);
       if (!data) return null;
-      const i = (t.py * SIZE + t.px) * 3;
+      const i = (t.py * SIZE + t.px) * 4;
       const h = decodeTerrarium(data[i], data[i + 1], data[i + 2]);
       // Mer et vides de données (≈ −32768) : pas une altitude.
       return h < -500 ? null : Math.round(h);

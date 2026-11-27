@@ -8,7 +8,7 @@
  * - NOAA Offline Daylight (`computeOfflineDaylight`) & Ridge Wind (`computeEffectiveRidgeWind`)
  */
 
-import sharp from 'sharp';
+import { decodePngRgba } from '@/lib/geo/decodePng';
 import { computeEffectiveRidgeWind, computeOfflineDaylight } from '../adaptive/environment';
 import {
   decodeTerrariumTile,
@@ -108,12 +108,12 @@ async function fetchDemTile(zoom: number, x: number, y: number): Promise<Float32
     });
     clearTimeout(timer);
     if (!res.ok) return null;
-    const arrBuf = await res.arrayBuffer();
-    const { data, info } = await sharp(Buffer.from(arrBuf))
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-    const tile = decodeTerrariumTile(data, info.width || TILE_SIZE, info.channels || 4);
+    const decoded = decodePngRgba(await res.arrayBuffer());
+    const tile = decodeTerrariumTile(
+      decoded.data,
+      decoded.width || TILE_SIZE,
+      decoded.channels || 4,
+    );
     if (demTileCache.size > 60) {
       const oldestKey = demTileCache.keys().next().value;
       if (oldestKey) demTileCache.delete(oldestKey);

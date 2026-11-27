@@ -9,7 +9,18 @@ export default defineConfig({
     assets: {
       htmlHandling: "none",
       notFoundHandling: "none",
-      runWorkerFirst: ["/*", "!/_next/static/*", "!/*/_next/static/*"],
+      runWorkerFirst: [
+        "/*",
+        "!/_next/static/*",
+        "!/*/_next/static/*",
+        "!/models/*",
+        "!/draco/*",
+        "!/wasm/*",
+        "!/assets/*",
+        "!/images/*",
+        "!/maplibre/*",
+        "!/explorer-v2-sw.js",
+      ],
     },
     env: {
       ASSETS: bindings.assets(),

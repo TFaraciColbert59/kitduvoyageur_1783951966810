@@ -21,7 +21,12 @@ export default defineConfig({
       },
     }),
   ],
-  build: { cssMinify: false },
+  build: { cssMinify: false, sourcemap: false },
+  environments: {
+    rsc: { build: { sourcemap: false } },
+    ssr: { build: { sourcemap: false } },
+    client: { build: { sourcemap: false } },
+  },
   resolve: {
     alias: {
       "sharp": path.resolve(import.meta.dirname, "empty-stub.js"),
