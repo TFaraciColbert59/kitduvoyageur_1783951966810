@@ -1,5 +1,5 @@
 import type { AIRequest, AIResponse } from '../providers/types';
-import type { TrailAiEnrichment } from '@/features/explorer-osm/domain/types';
+import type { TrailAiEnrichment } from '@/lib/geo/types';
 
 export const TRAIL_AI_ENRICHMENT_SPEC = {
   tier: 'fast' as const,

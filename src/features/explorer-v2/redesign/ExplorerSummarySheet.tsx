@@ -1017,7 +1017,7 @@ export function ExplorerSummarySheet({
                         <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
                       </button>
                     ) : (
-                      <Link href="/itineraire" className="xp20-sum-row">
+                      <Link href="/explorer?mode=plan" className="xp20-sum-row">
                         <span className="xp20-sum-row-ico" style={{ background: 'rgba(23, 64, 44, 0.14)', color: '#17402C' }}>
                           <Pencil size={16} aria-hidden="true" />
                         </span>

@@ -4,8 +4,6 @@ export { default as TerrainReportCard } from './components/TerrainReportCard';
 export type { TerrainReportCardProps } from './components/TerrainReportCard';
 export { default as TerrainReportsList } from './components/TerrainReportsList';
 export type { TerrainReportsListProps } from './components/TerrainReportsList';
-export { default as TerrainLiveLayer } from './components/TerrainLiveLayer';
-export type { TerrainLiveLayerProps } from './components/TerrainLiveLayer';
 export { default as TerrainLiveCockpitControl } from './components/TerrainLiveCockpitControl';
 export type { TerrainLiveCockpitControlProps } from './components/TerrainLiveCockpitControl';
 export { useTerrainReports } from './hooks/useTerrainReports';

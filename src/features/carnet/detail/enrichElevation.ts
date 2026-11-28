@@ -1,6 +1,6 @@
 import 'server-only';
 import { parseTraceSegments } from '@/features/compte/map/geometry';
-import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { haversineDistanceKm } from '@/lib/geo/geometry';
 import { canExposeElevationProfile } from '@/features/compte/domain/metricVisibility';
 import { appUserAgent } from '@/lib/userAgent';
 import type { CarnetDetail, ElevationPoint } from './types';

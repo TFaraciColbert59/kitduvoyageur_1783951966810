@@ -33,7 +33,7 @@ const navigation = read('src/components/mobile-nav/navigation/NavigationPlateau.
 const tabs = read('src/components/ui/Tabs.tsx');
 const liquidGlass = read('src/styles/liquid-glass.css');
 const tailwindStyles = read('src/styles/tailwind.css');
-const tailwind = read('tailwind.config.js');
+const tailwind = read('tailwind.config.cjs');
 
 function getThemeScript(): string {
   const match = layout.match(/id="lkdv-theme-init"[\s\S]*?__html: `([\s\S]*?)`/);

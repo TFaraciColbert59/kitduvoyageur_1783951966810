@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completion } from '@rocketnew/llm-sdk';
+import { directLlmCompletion as completion } from '@/lib/ai/directLlmFetch';
 import fs from 'fs';
 import path from 'path';
 import type { CountryDataV2 } from '@/types/country';

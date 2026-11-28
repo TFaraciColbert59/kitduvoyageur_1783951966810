@@ -53,11 +53,11 @@ export interface MapTrail {
   max_elevation?: number | null;
   avg_slope?: number | null;
   max_slope?: number | null;
-  elevation_profile?: import('@/features/explorer-osm/domain/types').ElevationProfilePoint[];
+  elevation_profile?: import('@/lib/geo/types').ElevationProfilePoint[];
   surface?: string | null;
   trail_visibility?: string | null;
   dog_friendly?: string | null;
-  ai_enrichment?: import('@/features/explorer-osm/domain/types').TrailAiEnrichment | null;
+  ai_enrichment?: import('@/lib/geo/types').TrailAiEnrichment | null;
 }
 
 // Keep MapRefuge as alias for backwards compat

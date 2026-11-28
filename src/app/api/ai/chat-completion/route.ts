@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completion } from '@rocketnew/llm-sdk';
+import { directLlmCompletion as completion } from '@/lib/ai/directLlmFetch';
 import { createClient } from '@/lib/supabase/server';
 import { askAI } from '@/lib/ai/askAI';
 import { askAIStream } from '@/lib/ai/askAIStream';

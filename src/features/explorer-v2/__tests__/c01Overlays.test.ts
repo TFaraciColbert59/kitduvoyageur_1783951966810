@@ -10,13 +10,13 @@ import {
 import { normalizeBikeOverpassElements, GET as getBikePois } from '@/app/api/explorer/v2/bike-pois/route';
 import { parseFirmsCsv, GET as getFires } from '@/app/api/explorer/v2/fires/route';
 import { GET as getSurfaces } from '@/app/api/explorer/v2/surfaces/route';
-import * as overpassAdapter from '@/features/explorer-osm/adapters/overpassAdapter';
+import * as overpassAdapter from '@/lib/geo/overpassAdapter';
 
 vi.mock('@/lib/rate-limit/routes', () => ({
   enforceRateLimit: vi.fn(async () => null),
 }));
 
-vi.mock('@/features/explorer-osm/services/cacheService', () => ({
+vi.mock('@/lib/geo/cacheService', () => ({
   overpassCircuitBreaker: { isOpen: () => false },
 }));
 

@@ -15,7 +15,7 @@ import {
   buildRouteTcx,
   validateRouteImportInput,
 } from '@/features/hiking/import/routeImport';
-import { osmRouteDetailCache } from '@/features/explorer-osm/services/cacheService';
+import { osmRouteDetailCache } from '@/lib/geo/cacheService';
 import { GET as exportOsmRoute } from '@/app/api/explorer/osm/route/[id]/export/route';
 import { TraceImportDrawer } from '@/components/compte/drawer/sortie/TraceImportDrawer';
 

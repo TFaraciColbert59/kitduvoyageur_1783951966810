@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { haversineDistanceKm } from '@/lib/geo/geometry';
 import { buildDays, buildSummary } from '../days';
 import type { HikeSessionRow, MomentRow } from '../types';
 

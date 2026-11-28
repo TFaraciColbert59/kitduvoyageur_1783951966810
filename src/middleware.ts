@@ -22,7 +22,7 @@ const APP_ROUTES = [
   '/messagerie',
   '/compte',
   '/compas',
-  '/carnets',
+  '/carnets/',
   '/clubs',
   '/sorties',
   '/profil',
@@ -31,7 +31,9 @@ const APP_ROUTES = [
 ];
 
 function isAppRoute(pathname: string) {
-  return APP_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
+  return APP_ROUTES.some((r) =>
+    r.endsWith('/') ? pathname.startsWith(r) : pathname === r || pathname.startsWith(r + '/')
+  );
 }
 
 /** Présence d'une session Supabase (cookie `sb-…-auth-token`, découpé ou non). */
@@ -149,13 +151,6 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // ─── /catalogue → /boutique redirects (301) ──────────────────────────────────
-  if (pathname === '/catalogue' || pathname.startsWith('/catalogue/')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/boutique';
-    return NextResponse.redirect(url, { status: 301 });
-  }
-
   // ─── H5/H-AUTO-42 : redirects 307 du hub (matrice pur, testée) ────────────────
   // La table statique + le cas dynamique /materiel/depart/[id] vivent dans
   // src/lib/hub/hubRedirects.ts (resolver pur). Le clone d'URL conserve la
@@ -191,12 +186,9 @@ export const config = {
     '/communaute/:path*',
     '/messagerie',
     '/messagerie/:path*',
-    '/explorer',
-    '/explorer/:path*',
     '/compte',
     '/compas',
     '/compas/:path*',
-    '/carnets',
     '/carnets/:path*',
     '/clubs/:path*',
     '/sorties/:path*',

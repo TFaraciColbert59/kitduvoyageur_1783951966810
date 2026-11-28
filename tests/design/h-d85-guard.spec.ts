@@ -33,7 +33,7 @@ const SCOPE_DIRS = ['src/features/hub', 'src/app/hub', 'src/components/mobile-na
 /** Hexes canoniques = valeurs brutes déclarées dans tokens.css + tailwind.config.js. */
 function canonicalHex(): Set<string> {
   const found = new Set(['#ffffff', '#fff', '#000000', '#000']);
-  for (const f of ['src/styles/tokens.css', 'tailwind.config.js']) {
+  for (const f of ['src/styles/tokens.css', 'tailwind.config.cjs']) {
     const full = path.join(ROOT, f);
     if (!fs.existsSync(full)) continue;
     const content = fs.readFileSync(full, 'utf8');

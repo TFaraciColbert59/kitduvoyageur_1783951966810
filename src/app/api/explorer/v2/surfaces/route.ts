@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { parseOptionalBbox, VIEWPORT_RATE_LIMIT } from '@/lib/geo/requestViewport';
 import { clientIpFromHeaders } from '@/lib/rate-limit';
 import { enforceRateLimit } from '@/lib/rate-limit/routes';
-import { executeOverpassQuery } from '@/features/explorer-osm/adapters/overpassAdapter';
+import { executeOverpassQuery } from '@/lib/geo/overpassAdapter';
 import {
   calculateBboxGeodesicAreaKm2,
   MAX_OVERPASS_GEODESIC_AREA_KM2,
-} from '@/features/explorer-osm/domain/geometry';
-import { overpassCircuitBreaker } from '@/features/explorer-osm/services/cacheService';
+} from '@/lib/geo/geometry';
+import { overpassCircuitBreaker } from '@/lib/geo/cacheService';
 import { analyzeSurfaces, type SurfaceSectionInput } from '@/features/routes/analysis/surfaces';
 
 export const dynamic = 'force-dynamic';

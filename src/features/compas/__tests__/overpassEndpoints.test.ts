@@ -11,7 +11,7 @@ vi.mock('../server/sharedCache', () => ({
 import { lookupStagePois, OVERPASS_ENDPOINTS } from '../server/stagePoiLookup';
 import { OVERPASS_ENDPOINTS as SITE_ENDPOINTS, resetOverpassQueue } from '@/lib/overpass';
 import { __resetAmenityCache, fetchAmenitiesNear } from '@/lib/queries/amenities';
-import { executeOverpassQuery } from '@/features/explorer-osm/adapters/overpassAdapter';
+import { executeOverpassQuery } from '@/lib/geo/overpassAdapter';
 import { lookupWaterSources } from '@/features/trips/connectors/realDataConnectors';
 
 /**

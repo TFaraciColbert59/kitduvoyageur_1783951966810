@@ -1,4 +1,4 @@
-import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { haversineDistanceKm } from '@/lib/geo/geometry';
 import type { ElevationPoint, HikeSessionRow } from './types';
 
 export type { ElevationPoint } from './types';

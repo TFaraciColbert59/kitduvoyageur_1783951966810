@@ -20,7 +20,7 @@
  */
 
 import { parseTraceSegments } from '@/features/compte/map/geometry';
-import { haversineDistanceKm } from '@/features/explorer-osm/domain/geometry';
+import { haversineDistanceKm } from '@/lib/geo/geometry';
 import { parseMomentMeta, resolveMomentType } from './momentTypes';
 import type {
   CarnetDay,

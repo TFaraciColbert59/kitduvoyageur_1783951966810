@@ -8,7 +8,7 @@
  * l'état `provider_unconfigured`, sans appel réseau.
  */
 
-import { completion } from '@rocketnew/llm-sdk';
+import { directLlmCompletion as completion } from '@/lib/ai/directLlmFetch';
 import type {
   AssistantCompletionPort,
   AssistantCompletionRequest,

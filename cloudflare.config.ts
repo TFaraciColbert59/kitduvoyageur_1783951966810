@@ -19,7 +19,6 @@ export default defineConfig({
         "!/assets/*",
         "!/images/*",
         "!/icons/*",
-        "!/materiel/*",
         "!/videos/*",
         "!/data/*",
         "!/maplibre/*",

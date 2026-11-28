@@ -60,7 +60,7 @@ const CALLED: Array<{ named: string; file: string; pattern: RegExp }> = [
   // Plan 1.4 : l'Explorer et les services à proximité passent aussi par private.coffee, via la file commune.
   { named: 'Overpass (private.coffee)', file: 'src/lib/overpass.ts', pattern: /overpass\.private\.coffee/ },
   { named: 'Overpass (private.coffee)', file: 'src/lib/queries/amenities.ts', pattern: /@\/lib\/overpass/ },
-  { named: 'Overpass (private.coffee)', file: 'src/features/explorer-osm/adapters/overpassAdapter.ts', pattern: /@\/lib\/overpass/ },
+  { named: 'Overpass (private.coffee)', file: 'src/lib/geo/overpassAdapter.ts', pattern: /@\/lib\/overpass/ },
   { named: 'Nominatim', file: 'src/features/compas/server/placeLookup.ts', pattern: /nominatim\.openstreetmap\.org\/(?:search|reverse)/ },
   { named: 'Nominatim', file: 'src/features/compas/server/officialAlerts.ts', pattern: /nominatim\.openstreetmap\.org\/reverse/ },
   { named: 'Esri (ArcGIS)', file: 'src/components/map/engine/createMapStyle.ts', pattern: /static-map-tiles-api\.arcgis\.com/ },
