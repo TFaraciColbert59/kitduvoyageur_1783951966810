@@ -317,7 +317,7 @@ export function HubCockpitTiles({
                 transition={{ duration: 0.16 }}
               >
                 {daySteps.length > 0 ? (
-                  daySteps.slice(0, 4).map((step, index) => {
+                  daySteps.slice(0, 3).map((step, index) => {
                     const exec = executionFor(step.id);
                     const status = exec?.status ?? 'planned';
                     return (
