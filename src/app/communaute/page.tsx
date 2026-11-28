@@ -10,7 +10,12 @@ import { CommunityFeedShell } from '@/features/community/feed/CommunityFeedShell
 import { CommunityFeedTopBar } from '@/features/community/feed/CommunityFeedTopBar';
 import { CommunityFeed } from '@/features/community/feed/CommunityFeed';
 import type { CreateKind } from '@/features/community/create/CreateDrawer';
+import type { CreateKindV2 } from '@/features/community/v2/create/engine/createSchemasV2';
 import type { SectionTabId } from '@/features/community/sections/CommunityTabSelector';
+import {
+  buildAllFormPrefillsFromOuting,
+  readExplorerOutingHandoff,
+} from '@/features/explorer-v2/outingHandoff';
 // Feuilles du chantier Communauté v2 (coque + contenu) : importées au niveau de
 // la page, seules surfaces qui les utilisent (chargées avec la route).
 import '@/styles/communaute-v2.css';
@@ -70,6 +75,9 @@ function CommunauteFeedContent() {
   // premier carnet », « Organiser une sortie », « Créer un club ») ouvre Création
   // sur le bon type, avec un préremplissage éventuel (club, kit, lieu).
   const [createPrefill, setCreatePrefill] = useState<Record<string, unknown> | null>(null);
+  const [createPrefillsByKind, setCreatePrefillsByKind] = useState<
+    Partial<Record<CreateKindV2, Record<string, unknown>>> | null
+  >(null);
 
   useEffect(() => {
     if (createOpen) setCreateMounted(true);
@@ -99,6 +107,62 @@ function CommunauteFeedContent() {
 
   const initialPostId = searchParams?.get('post') ?? null;
   const initialCommentId = searchParams?.get('comment') ?? null;
+
+  // Deep-link support from Explorer post-activity summary (?create=carnet|post|story|sortie|kit|club&fromOuting=1, ?tab=clubs|carnets|sorties)
+  const deepLinkHandledRef = React.useRef(false);
+  useEffect(() => {
+    if (deepLinkHandledRef.current || !searchParams) return;
+    const createParam = searchParams.get('create')?.trim().toLowerCase() ?? null;
+    const shareSession = searchParams.get('shareSession')?.trim() ?? null;
+    const attachSessionId = searchParams.get('attachSessionId')?.trim() ?? null;
+    const fromOuting = searchParams.get('fromOuting') === '1';
+    const titleParam = searchParams.get('title')?.trim() ?? null;
+    const tabParam = searchParams.get('tab')?.trim().toLowerCase() ?? null;
+
+    if (
+      createParam === 'carnet' ||
+      createParam === 'post' ||
+      createParam === 'story' ||
+      createParam === 'club' ||
+      createParam === 'sortie' ||
+      createParam === 'kit' ||
+      shareSession ||
+      fromOuting
+    ) {
+      deepLinkHandledRef.current = true;
+      const targetKind: CreateKind =
+        createParam === 'carnet' ||
+        createParam === 'post' ||
+        createParam === 'story' ||
+        createParam === 'club' ||
+        createParam === 'sortie' ||
+        createParam === 'kit'
+          ? createParam
+          : 'post';
+      setCreateKind(targetKind);
+
+      // Hydrate ALL 6 forms from the full harvested Explorer outing telemetry
+      const handoff = readExplorerOutingHandoff();
+      if (handoff) {
+        setCreatePrefillsByKind(buildAllFormPrefillsFromOuting(handoff));
+      } else if (titleParam || attachSessionId || shareSession) {
+        setCreatePrefill({
+          ...(titleParam ? { title: titleParam } : {}),
+          ...(attachSessionId ? { sessionId: attachSessionId } : {}),
+          ...(shareSession ? { sessionId: shareSession } : {}),
+        });
+      }
+      setCreateOpen(true);
+      return;
+    }
+
+    if (tabParam === 'carnets' || tabParam === 'clubs' || tabParam === 'sorties') {
+      deepLinkHandledRef.current = true;
+      setSectionsTab(tabParam as SectionTabId);
+      setSectionsSearch(false);
+      setSectionsOpen(true);
+    }
+  }, [searchParams]);
 
   const requireAuth = useCallback(() => {
     const anonymous = Boolean(user?.id && user.is_anonymous);
@@ -204,6 +268,7 @@ function CommunauteFeedContent() {
             onCreated={handleCreatedV2}
             onRequireAuth={requireAuth}
             initialPrefill={createPrefill}
+            initialPrefillsByKind={createPrefillsByKind}
             onCreateRequested={handleCreateRequestedV2}
           />
         ) : (

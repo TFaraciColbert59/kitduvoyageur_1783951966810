@@ -734,13 +734,22 @@ const MapStage = React.memo(function MapStage({
             paint: { 'line-color': '#DC2626', 'line-width': 1.5, 'line-opacity': 0.85 },
           });
         }
+        if (!map.getLayer('xp-planner-line-casing')) {
+          map.addLayer({
+            id: 'xp-planner-line-casing',
+            type: 'line',
+            source: 'xp-planner-line',
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#FFFFFF', 'line-width': 7.5, 'line-opacity': 0.92 },
+          });
+        }
         if (!map.getLayer('xp-planner-line')) {
           map.addLayer({
             id: 'xp-planner-line',
             type: 'line',
             source: 'xp-planner-line',
             layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#2F6F78', 'line-width': 4, 'line-opacity': 0.95 },
+            paint: { 'line-color': '#17402C', 'line-width': 4.5, 'line-opacity': 0.96 },
           });
         }
         if (!map.getLayer('xp-planner-points')) {
@@ -749,10 +758,43 @@ const MapStage = React.memo(function MapStage({
             type: 'circle',
             source: 'xp-planner-points',
             paint: {
-              'circle-radius': 6,
-              'circle-color': '#FFFFFF',
+              'circle-radius': 9,
+              'circle-color': [
+                'case',
+                ['==', ['get', 'role'], 'start'],
+                '#15803D',
+                ['==', ['get', 'role'], 'end'],
+                '#DC2626',
+                '#FFFFFF',
+              ],
               'circle-stroke-width': 2.5,
-              'circle-stroke-color': '#17402C',
+              'circle-stroke-color': [
+                'case',
+                ['any', ['==', ['get', 'role'], 'start'], ['==', ['get', 'role'], 'end']],
+                '#FFFFFF',
+                '#17402C',
+              ],
+            },
+          });
+        }
+        if (!map.getLayer('xp-planner-point-labels')) {
+          map.addLayer({
+            id: 'xp-planner-point-labels',
+            type: 'symbol',
+            source: 'xp-planner-points',
+            layout: {
+              'text-field': ['to-string', ['get', 'num']],
+              'text-size': 10,
+              'text-allow-overlap': true,
+              'text-ignore-placement': true,
+            },
+            paint: {
+              'text-color': [
+                'case',
+                ['any', ['==', ['get', 'role'], 'start'], ['==', ['get', 'role'], 'end']],
+                '#FFFFFF',
+                '#17402C',
+              ],
             },
           });
         }
@@ -1098,6 +1140,9 @@ const MapStage = React.memo(function MapStage({
           lngLat?: { lng: number; lat: number };
         }) => {
           if (plannerMapPickRef.current) {
+            if (event.point) {
+              vfxRef.current?.spawnTapRipple(event.point.x, event.point.y);
+            }
             if (event.lngLat) {
               onMapClickRef.current?.([event.lngLat.lng, event.lngLat.lat]);
             }
@@ -1579,20 +1624,32 @@ const MapStage = React.memo(function MapStage({
       );
     }
     if (ptsSource) {
+      const totalPts = plannerDraft?.points.length ?? 0;
       ptsSource.setData(
         plannerDraft
           ? ({
               type: 'FeatureCollection',
               features: plannerDraft.points.map((pt, index) => ({
                 type: 'Feature',
-                properties: { index, kind: pt.semanticKind ?? 'via' },
+                properties: {
+                  index,
+                  num: index + 1,
+                  role: index === 0 ? 'start' : index === totalPts - 1 && totalPts > 1 ? 'end' : 'via',
+                  kind: pt.semanticKind ?? 'via',
+                },
                 geometry: { type: 'Point', coordinates: [pt.lon, pt.lat] },
               })),
             } as never)
           : (EMPTY as never),
       );
     }
-  }, [plannerDraft, plannerLineHidden, ready]);
+    try {
+      const canvas = map.getCanvas();
+      if (canvas) canvas.style.cursor = plannerMapPick ? 'crosshair' : '';
+    } catch {
+      // ignore
+    }
+  }, [plannerDraft, plannerLineHidden, plannerMapPick, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -2185,7 +2242,10 @@ const MapStage = React.memo(function MapStage({
     if (!controller || !ready) return;
 
     const isGps = explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS';
-    controller.setEnabled(!isGps);
+    const gps3DPins = isGps
+      ? pins.filter((p) => p && p.kind !== 'country' && Number.isFinite(p.lon) && Number.isFinite(p.lat))
+      : [];
+    controller.setEnabled(!isGps || gps3DPins.length > 0);
     controller.setReducedMotion(Boolean(reducedMotion));
     controller.setSelectedId(selectedFeature?.id ?? selectedId ?? null);
     controller.setActiveCategory(activeCategory ?? 'explorer');
@@ -2193,10 +2253,32 @@ const MapStage = React.memo(function MapStage({
     vfxRef.current?.setReducedMotion(Boolean(reducedMotion));
 
     const mapHeight = mapRef.current?.getContainer()?.clientHeight || 844;
-    controller.setSafeBounds(60, Math.max(140, mapHeight - sheetHeightPx - 8));
+    // En mode GPS actif, utiliser la hauteur réelle du tiroir GPS + bottom bar (~275px)
+    const effectiveSheetHeight = isGps ? Math.min(275, Math.round(mapHeight * 0.35)) : sheetHeightPx;
+    controller.setSafeBounds(56, Math.max(220, mapHeight - effectiveSheetHeight - 6));
 
     if (isGps) {
-      controller.setItems([]);
+      // En mode GPS actif : n'afficher en 3D que les balises Live, signalements et repères actifs (max 10, 60 FPS)
+      const liveItems: Floating3DItem[] = gps3DPins.slice(0, 10).map((pin) => {
+        const resolvedKind = normalize3DEntityKind(pin.kind, pin.subtype);
+        const sourceCategory: Floating3DItem['sourceCategory'] =
+          resolvedKind === 'safety_report' || resolvedKind === 'danger'
+            ? 'hazard'
+            : 'pin';
+        return {
+          id: pin.id,
+          kind: resolvedKind,
+          lng: pin.lon,
+          lat: pin.lat,
+          label: pin.name,
+          selected: pin.id === selectedId || pin.id === selectedFeature?.id,
+          sourceCategory,
+        };
+      });
+      controller.setItems(liveItems);
+      if (selectedId && liveItems.some((it) => it.id === selectedId)) {
+        controller.triggerSelectionJuice(selectedId);
+      }
       return;
     }
 
@@ -2725,7 +2807,9 @@ const MapStage = React.memo(function MapStage({
       if (!container) return;
       const cWidth = container.clientWidth || 390;
       const cHeight = container.clientHeight || 844;
-      const sheetTop = cHeight - sheetHeightPx;
+      const isGpsOverlay = explorerMode === 'GPS_ACTIVE' || explorerMode === 'SOS';
+      const effectiveSheetPx = isGpsOverlay ? Math.min(275, Math.round(cHeight * 0.35)) : sheetHeightPx;
+      const sheetTop = cHeight - effectiveSheetPx;
       // Bande haute occupée par la capsule et les boutons ronds : aucun repère
       // ni pastille ne doit s'y trouver (04_CARTE §1).
       const chromeBottom = cachedChromeBottomRef.current;

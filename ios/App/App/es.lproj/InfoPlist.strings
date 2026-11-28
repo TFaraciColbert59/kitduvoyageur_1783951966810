@@ -1,3 +1,8 @@
-/* Textos visibles del Info.plist, en español (PLAN-100 6.4), registro usted. El nombre de la app es una marca: no se traduce. */
+/* Textos visibles del Info.plist, en español (Lot 00 App Store Compliance). */
 "CFBundleDisplayName" = "Le Kit du Voyageur";
-"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur usa su ubicación para situar el punto de partida y el recorrido de su viaje. Solo se lee mientras la app está abierta, nunca en segundo plano. En Compas, se solicita solo cuando hace falta, sin seguimiento, y se redondea a aproximadamente 1 km para preparar el recorrido. Nunca se muestra a nadie sin su consentimiento.";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur usa su ubicación para centrar el mapa Explorer, preparar itinerarios y registrar sus salidas outdoor (distancia, recorrido, desnivel y avisos fuera de ruta).";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Permita el acceso en segundo plano para que Le Kit du Voyageur siga registrando su traza GPS, desnivel y baliza de seguridad en vivo con la pantalla bloqueada durante una salida. El uso continuo del GPS en segundo plano puede reducir notablemente la autonomía de la batería.";
+"NSMotionUsageDescription" = "Le Kit du Voyageur utiliza el barómetro, el podómetro y el sensor de movimiento para calcular un desnivel preciso sin ruido GPS, activar la pausa automática y detectar desplazamientos en vehículo.";
+"NSBluetoothAlwaysUsageDescription" = "Le Kit du Voyageur se conecta por Bluetooth a sus sensores deportivos (banda cardíaca, potenciómetro, cadencia o rodillo FTMS) para registrar métricas en tiempo real incluso con la pantalla bloqueada.";
+"NSHealthShareUsageDescription" = "Le Kit du Voyageur lee sus entrenamientos e indicadores de recuperación (frecuencia cardíaca en reposo, VFC, sueño) desde Salud de Apple para adaptar las estimaciones de esfuerzo y evitar duplicados. Estos datos nunca se usan para publicidad.";
+"NSHealthUpdateUsageDescription" = "Le Kit du Voyageur guarda sus salidas finalizadas (distancia, desnivel, energía activa y ruta GPS) en Salud de Apple.";

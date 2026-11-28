@@ -12,6 +12,8 @@ import {
   LocateFixed,
   Map as MapIcon,
   MapPin,
+  Pencil,
+  Play,
   WifiOff,
   X,
 } from 'lucide-react';
@@ -54,6 +56,17 @@ export interface ExplorerMapChromeProps {
   /** Optional bookmark drawer trigger in explore mode. */
   onOpenSavedPlaces?: () => void;
   savedPlacesCount?: number;
+  /** Route planner HUD mode active (toggled via top-right Pencil button). */
+  plannerActive?: boolean;
+  onTogglePlanner?: () => void;
+  plannerStats?: {
+    pointsCount: number;
+    distanceKm: number | null;
+    durationMin: number | null;
+    mapPick: boolean;
+  } | null;
+  /** Launch sport activity sheet button moved to top-right to free drawer selector width. */
+  onOpenSportLaunch?: () => void;
 }
 
 interface BaseStyleOption {
@@ -84,6 +97,10 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
   compactLive = false,
   onOpenSavedPlaces,
   savedPlacesCount = 0,
+  plannerActive = false,
+  onTogglePlanner,
+  plannerStats = null,
+  onOpenSportLaunch,
 }: ExplorerMapChromeProps) {
   const [styleOpen, setStyleOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -140,7 +157,39 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
       data-compact-live={compactLive ? 'true' : undefined}
     >
       <div className="xp20-top-left">
-        {!compactLive ? (
+        {!compactLive && plannerActive ? (
+          <div
+            className="xp20-loc-pill xp20-planner-top-pill"
+            data-testid="xp20-planner-top-pill"
+            role="status"
+            aria-live="polite"
+          >
+            {onTogglePlanner ? (
+              <button
+                type="button"
+                className="xp20-loc-back xp20-tactile"
+                onClick={onTogglePlanner}
+                aria-label="Quitter l'éditeur d'itinéraire"
+                title="Quitter le traceur"
+              >
+                <X size={15} strokeWidth={2.3} aria-hidden="true" />
+              </button>
+            ) : null}
+            <div className="xp20-planner-top-info">
+              <span
+                className={`xp20-planner-top-dot${plannerStats?.mapPick ? ' is-live' : ''}`}
+                aria-hidden="true"
+              />
+              <span className="xp20-loc-label">
+                {plannerStats && plannerStats.distanceKm != null && plannerStats.pointsCount >= 2
+                  ? `${plannerStats.distanceKm.toFixed(1)} km · ${plannerStats.pointsCount} pts`
+                  : plannerStats && plannerStats.pointsCount === 1
+                    ? '1 pt · Touchez pour tracer'
+                    : 'Traceur · Touchez la carte'}
+              </span>
+            </div>
+          </div>
+        ) : !compactLive ? (
           <div className="xp20-loc-pill">
             {canGoBack && onBack ? (
               <button
@@ -309,6 +358,26 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
             )}
           </button>
 
+          {!compactLive && onTogglePlanner ? (
+            <>
+              <span className="xp20-map-stack-sep" aria-hidden="true" />
+              <button
+                type="button"
+                className="xp20-map-stack-btn xp20-planner-pencil-btn xp20-tactile"
+                data-testid="xp20-planner-pencil-btn"
+                data-active={plannerActive ? 'true' : undefined}
+                aria-pressed={plannerActive}
+                onClick={onTogglePlanner}
+                aria-label={
+                  plannerActive ? 'Quitter le créateur d’itinéraire' : 'Créer un itinéraire sur la carte'
+                }
+                title={plannerActive ? 'Quitter le traceur' : 'Tracer un itinéraire'}
+              >
+                <Pencil size={16} strokeWidth={2.1} aria-hidden="true" />
+              </button>
+            </>
+          ) : null}
+
           {!compactLive && onOpenSavedPlaces ? (
             <>
               <span className="xp20-map-stack-sep" aria-hidden="true" />
@@ -353,6 +422,19 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
             </>
           ) : null}
         </div>
+
+        {!compactLive && !plannerActive && onOpenSportLaunch ? (
+          <button
+            type="button"
+            className="xp20-sport-launch-btn xp20-top-launch-btn xp20-tactile"
+            aria-label="Démarrer une activité"
+            title="Démarrer une activité"
+            data-testid="xp20-sport-launch-btn"
+            onClick={onOpenSportLaunch}
+          >
+            <Play size={17} fill="currentColor" strokeWidth={2} aria-hidden="true" />
+          </button>
+        ) : null}
 
         {styleOpen ? (
           <div

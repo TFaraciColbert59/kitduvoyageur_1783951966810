@@ -33,12 +33,20 @@ export interface SafetyReportOfflinePayload {
   lng: number;
 }
 
+export interface SafetyReportSubmittedPayload {
+  category: string;
+  label: string;
+  note: string;
+  lat: number;
+  lng: number;
+}
+
 export interface SafetyReportModalProps {
   open: boolean;
   coords: [number, number];
   placeName?: string | null;
   onClose: () => void;
-  onSubmitted?: () => void;
+  onSubmitted?: (report?: SafetyReportSubmittedPayload) => void;
   onSubmitOffline?: (payload: SafetyReportOfflinePayload) => void;
 }
 
@@ -192,7 +200,13 @@ export function SafetyReportModal({
           lng,
         });
         setStatus('offline_queued');
-        onSubmitted?.();
+        onSubmitted?.({
+          category: selectedOption.id,
+          label: selectedOption.label,
+          note: trimmedNote,
+          lat,
+          lng,
+        });
       } else {
         setErrorDetail('Connexion indisponible. Réessayez dès le retour du réseau.');
         setStatus('error');
@@ -247,7 +261,13 @@ export function SafetyReportModal({
       }
 
       setStatus('sent');
-      onSubmitted?.();
+      onSubmitted?.({
+        category: selectedOption.id,
+        label: selectedOption.label,
+        note: trimmedNote,
+        lat,
+        lng,
+      });
     } catch {
       if (onSubmitOffline && typeof navigator !== 'undefined' && !navigator.onLine) {
         onSubmitOffline({
@@ -257,7 +277,13 @@ export function SafetyReportModal({
           lng,
         });
         setStatus('offline_queued');
-        onSubmitted?.();
+        onSubmitted?.({
+          category: selectedOption.id,
+          label: selectedOption.label,
+          note: trimmedNote,
+          lat,
+          lng,
+        });
         return;
       }
       setErrorDetail('Erreur réseau lors de l’envoi du signalement.');

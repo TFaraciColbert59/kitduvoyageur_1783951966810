@@ -694,6 +694,19 @@ function StoryBody({
       });
       setActiveSlideIndex(0);
     }
+    if (typeof prefill.caption === 'string' && prefill.caption && !form.getValues('caption')?.trim()) {
+      form.setValue('caption', prefill.caption, { shouldDirty: true });
+    }
+    if (prefill.stickers && typeof prefill.stickers === 'object') {
+      form.setValue(
+        'stickers',
+        { ...form.getValues('stickers'), ...(prefill.stickers as StoryFormValuesV2['stickers']) },
+        { shouldDirty: true },
+      );
+    }
+    if (Array.isArray(prefill.textLayers) && prefill.textLayers.length > 0 && (form.getValues('textLayers')?.length ?? 0) === 0) {
+      form.setValue('textLayers', prefill.textLayers as StoryTextLayerV2[], { shouldDirty: true });
+    }
   }, [form, prefill, prefillNonce, savedModifiersRef, setActiveSlideIndex]);
 
   const handleTriggerFileInput = useCallback(() => {

@@ -86,6 +86,11 @@ export interface CreateSheetV2Props {
    */
   initialPrefill?: Record<string, unknown> | null;
   /**
+   * Préremplissage multi-types (ex. sortie terminée depuis Explorer : adapte
+   * simultanément Carnet, Publication, Story, Sortie, Kit et Club).
+   */
+  initialPrefillsByKind?: Partial<Record<CreateKindV2, Record<string, unknown>>> | null;
+  /**
    * Enchaînement interne : fin de Club → « Organiser la première sortie »
    * (`{clubId, clubName}`), fin de Kit → Sortie (`{kitId, kitName}`).
    * La page peut aussi l'utiliser pour ouvrir Création depuis ses états vides.
@@ -127,6 +132,7 @@ export function CreateSheetV2({
   onCreated,
   onRequireAuth,
   initialPrefill = null,
+  initialPrefillsByKind = null,
   onCreateRequested,
 }: CreateSheetV2Props) {
   const isGuest = !user?.id || user.is_anonymous === true;
@@ -168,14 +174,24 @@ export function CreateSheetV2({
     setIsland(null);
     setDetail(null);
     finishedRef.current = false;
-    if (initialPrefill) {
-      setPrefillByKind((current) => ({
-        ...current,
-        [initialKind]: { ...(current[initialKind] ?? {}), ...initialPrefill },
-      }));
+    if (initialPrefillsByKind || initialPrefill) {
+      setPrefillByKind((current) => {
+        const next: Partial<Record<CreateKindV2, Record<string, unknown>>> = { ...current };
+        if (initialPrefillsByKind) {
+          for (const [k, vals] of Object.entries(initialPrefillsByKind)) {
+            if (!vals) continue;
+            const kindKey = k as CreateKindV2;
+            next[kindKey] = { ...(next[kindKey] ?? {}), ...vals };
+          }
+        }
+        if (initialPrefill) {
+          next[initialKind] = { ...(next[initialKind] ?? {}), ...initialPrefill };
+        }
+        return next;
+      });
       setPrefillNonce((nonce) => nonce + 1);
     }
-  }, [initialKind, initialPrefill, open]);
+  }, [initialKind, initialPrefill, initialPrefillsByKind, open]);
 
   // Écoute des notifications d'erreur/alerte Dynamic Island iPhone (ex. tracé trop long d'un coup).
   useEffect(() => {

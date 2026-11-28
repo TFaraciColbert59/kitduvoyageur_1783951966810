@@ -157,6 +157,10 @@ export function priorityFor3DEntity(kind: string, selected: boolean, distToCente
   if (selected) return 10_000;
   let base = 60;
   switch (kind) {
+    case 'live_beacon':
+    case 'safety_report':
+      base = 148;
+      break;
     case 'rescue':
     case 'danger':
     case 'fire':

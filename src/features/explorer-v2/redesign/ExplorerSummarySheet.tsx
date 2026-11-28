@@ -1,37 +1,77 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
+  AlertTriangle,
+  Award,
+  Backpack,
+  BarChart3,
   BookOpen,
   Camera,
   Check,
+  ChevronRight,
   Clock,
   CloudOff,
+  Compass,
   Download,
+  Flame,
   Gauge,
+  Leaf,
   MapPin,
   Mountain,
+  Pencil,
   RefreshCw,
   Route,
+  Scissors,
+  Send,
   Share2,
   Sparkles,
   Trash2,
   TrendingUp,
+  Users,
+  Video,
   X,
 } from 'lucide-react';
 import { AnimatedNumber, StackSlideView } from '@/components/carnet/v2/CarnetDrawerMotion';
 import type { SummarySavedState } from '../activity/finishOutcome';
+import type { WeatherSnapshot } from '../adaptive/types';
 import type { GeoCollection } from '../data/hooks';
-import type { ActivityState, Sport } from '../state/types';
+import { formatPrimarySpeedMetric, resolveActivityProfile } from '../specs/resolveActivityProfile';
+import type { SafetyCorridorState } from '../state/hudMachine';
+import type { ActivityState, Sport, StrengthLog } from '../state/types';
+import type { HudContrastVariant } from './primitives/ExplorerNonModalSheet';
 import { RouteMiniTraceSvg } from './components/RouteMiniTraceSvg';
+import {
+  decimateTrackLngLat,
+  saveExplorerOutingHandoff,
+} from '../outingHandoff';
+
+const LazySummaryExpertAnalysisSubDrawer = lazy(() =>
+  import('./summary/SummaryExpertAnalysisSubDrawer').then((m) => ({
+    default: m.SummaryExpertAnalysisSubDrawer,
+  })),
+);
+
+const LazySummaryPrivacyCropSubDrawer = lazy(() =>
+  import('./summary/SummaryPrivacyCropSubDrawer').then((m) => ({
+    default: m.SummaryPrivacyCropSubDrawer,
+  })),
+);
 
 export interface ExplorerSummaryPoint {
   lat: number;
   lng: number;
   ele?: number | null;
   t?: number;
+  speed?: number | null;
+  acc?: number | null;
+  hr?: number | null;
+  speedKmh?: number | null;
+  cad?: number | null;
+  powerW?: number | null;
 }
 
 export interface ExplorerSummaryWaypoint {
@@ -60,7 +100,31 @@ export interface ExplorerSummarySheetProps {
   onAddToCarnet?: () => void;
   onShareOuting?: () => void;
   onDiscard?: () => void;
+  onSaveAsRoute?: (title: string) => void;
+  onLaunchBottle?: () => void;
+  onOpenPokedex?: () => void;
+  onOpenSafetyReport?: () => void;
+  /** Enriched outing context harvested from Explorer for full form auto-fill & expert analysis. */
+  locationLabel?: string | null;
+  centerCoords?: [number, number] | null;
+  weatherLabel?: string | null;
+  weather?: WeatherSnapshot | null;
+  packWeightKg?: number | null;
+  bodyWeightKg?: number | null;
+  strengthLog?: StrengthLog | null;
+  safetyCorridor?: SafetyCorridorState | null;
+  userId?: string | null;
+  contrast?: HudContrastVariant;
+  glovesMode?: boolean;
+  onProfileCursorChange?: (
+    cursor: { lon: number; lat: number; distanceM: number; elevationM: number | null } | null,
+  ) => void;
+  onHighlightSegment?: (
+    segment: { coordinates: Array<[number, number]>; label?: string } | null,
+  ) => void;
 }
+
+type SummaryTab = 'overview' | 'connect';
 
 const SPORT_FALLBACK_LABELS: Record<Sport, string> = {
   rando: 'Rando',
@@ -74,12 +138,17 @@ const SPORT_FALLBACK_LABELS: Record<Sport, string> = {
   famille: 'Famille',
 };
 
-const RPE_LEVELS: ReadonlyArray<{ value: number; label: string }> = [
-  { value: 1, label: 'Facile' },
-  { value: 2, label: 'Modéré' },
-  { value: 3, label: 'Soutenu' },
-  { value: 4, label: 'Difficile' },
-  { value: 5, label: 'Max' },
+const RPE_LEVELS: ReadonlyArray<{ value: number; label: string; color: string; bg: string }> = [
+  { value: 1, label: 'Très facile', color: '#15803D', bg: 'rgba(21, 128, 61, 0.14)' },
+  { value: 2, label: 'Facile', color: '#15803D', bg: 'rgba(21, 128, 61, 0.14)' },
+  { value: 3, label: 'Léger', color: '#16A34A', bg: 'rgba(22, 163, 74, 0.14)' },
+  { value: 4, label: 'Modéré', color: '#65A30D', bg: 'rgba(101, 163, 13, 0.15)' },
+  { value: 5, label: 'Confort +', color: '#CA8A04', bg: 'rgba(202, 138, 4, 0.15)' },
+  { value: 6, label: 'Soutenu', color: '#D97706', bg: 'rgba(217, 119, 6, 0.15)' },
+  { value: 7, label: 'Exigeant', color: '#EA580C', bg: 'rgba(234, 88, 12, 0.15)' },
+  { value: 8, label: 'Difficile', color: '#DC2626', bg: 'rgba(220, 38, 38, 0.14)' },
+  { value: 9, label: 'Très dur', color: '#B91C1C', bg: 'rgba(185, 28, 28, 0.15)' },
+  { value: 10, label: 'Maximal', color: '#991B1B', bg: 'rgba(153, 27, 27, 0.16)' },
 ];
 
 function formatDurationClock(totalSeconds: number): string {
@@ -89,6 +158,20 @@ function formatDurationClock(totalSeconds: number): string {
   const s = safe % 60;
   if (h > 0) return `${h}h${String(m).padStart(2, '0')}`;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatOutingTimestamp(ms: number): string {
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(ms));
+  } catch {
+    return 'Aujourd’hui';
+  }
 }
 
 function buildDefaultTitle(sportName: string, startedAt: number, routeName?: string | null): string {
@@ -102,6 +185,24 @@ function buildDefaultTitle(sportName: string, startedAt: number, routeName?: str
   } catch {
     return `Sortie ${sportName}`;
   }
+}
+
+function estimateCaloriesKcal(sport: Sport, elapsedS: number, distanceM: number, elevGainM: number): number {
+  const hours = Math.max(0, elapsedS) / 3600;
+  const km = Math.max(0, distanceM) / 1000;
+  const metBySport: Record<Sport, number> = {
+    rando: 6.0,
+    trail: 9.5,
+    velo: 7.5,
+    course: 9.8,
+    escalade: 7.5,
+    ski: 7.0,
+    kayak: 5.5,
+    bivouac: 4.5,
+    famille: 4.0,
+  };
+  const met = metBySport[sport] ?? 6.0;
+  return Math.max(0, Math.round(Math.max(met * 70 * hours, (km * 55 + elevGainM * 0.45) * 0.85)));
 }
 
 function escapeXml(raw: string): string {
@@ -209,21 +310,47 @@ export function ExplorerSummarySheet({
   onAddToCarnet,
   onShareOuting,
   onDiscard,
+  onSaveAsRoute,
+  onLaunchBottle,
+  onOpenPokedex,
+  onOpenSafetyReport,
+  locationLabel = null,
+  centerCoords = null,
+  weatherLabel = null,
+  weather = null,
+  packWeightKg = null,
+  bodyWeightKg = null,
+  strengthLog = null,
+  userId = null,
+  contrast = 'standard',
+  glovesMode = false,
+  onProfileCursorChange,
+  onHighlightSegment,
 }: ExplorerSummarySheetProps) {
-  const resolvedSportLabel = sportLabel || summary.selection?.variantLabel || SPORT_FALLBACK_LABELS[summary.sport] || 'Sortie';
+  const resolvedSportLabel =
+    sportLabel || summary.selection?.variantLabel || SPORT_FALLBACK_LABELS[summary.sport] || 'Sortie';
   const defaultTitle = useMemo(
     () => buildDefaultTitle(resolvedSportLabel, summary.startedAt, summary.route?.name),
     [resolvedSportLabel, summary.startedAt, summary.route?.name],
   );
 
+  const [activeTab, setActiveTab] = useState<SummaryTab>('overview');
   const [title, setTitle] = useState(defaultTitle);
-  const [rpe, setRpe] = useState<number>(3);
+  const [rpe, setRpe] = useState<number>(5);
   const [notes, setNotes] = useState('');
   const [dirty, setDirty] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [routeSavedFeedback, setRouteSavedFeedback] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+
+  const activeProfile = useMemo(
+    () => resolveActivityProfile(summary.selection?.variantId || summary.sport),
+    [summary.selection?.variantId, summary.sport],
+  );
 
   const distanceMetric = useMemo(() => {
     const m = Math.max(0, summary.distanceM || 0);
@@ -239,51 +366,33 @@ export function ExplorerSummarySheet({
       ? summary.movingS
       : Math.max(0, Math.round((summary.endedAt - summary.startedAt) / 1000));
   const elevGainM = Math.max(0, Math.round(summary.elevGainM || 0));
+  const caloriesKcal = useMemo(
+    () => estimateCaloriesKcal(summary.sport, elapsedS, summary.distanceM || 0, elevGainM),
+    [summary.sport, elapsedS, summary.distanceM, elevGainM],
+  );
 
-  const avgSpeedLabel = useMemo(() => {
-    if (elapsedS < 5 || (summary.distanceM || 0) <= 0) return null;
-    const kmh = (summary.distanceM / 1000) / (elapsedS / 3600);
-    if (!Number.isFinite(kmh) || kmh <= 0) return null;
-    if (units === 'imperial') {
-      return `${(kmh * 0.621371).toFixed(1).replace('.', ',')} mph`;
+  const speedMetric = useMemo(() => {
+    if (elapsedS < 5 || (summary.distanceM || 0) <= 0) {
+      const unitBySpec =
+        activeProfile.algorithms.primarySpeedUnit === 'min_per_km'
+          ? 'min/km'
+          : activeProfile.algorithms.primarySpeedUnit === 'min_per_100m'
+            ? 'min/100m'
+            : activeProfile.algorithms.primarySpeedUnit === 'm_per_h_vam'
+              ? 'm/h'
+              : activeProfile.algorithms.primarySpeedUnit === 'knots'
+                ? 'nd'
+                : 'km/h';
+      return { value: '0,0', unit: unitBySpec };
     }
-    return `${kmh.toFixed(1).replace('.', ',')} km/h`;
-  }, [elapsedS, summary.distanceM, units]);
-
-  const elevationBounds = useMemo(() => {
-    if (!points || points.length === 0) return null;
-    let minEle = Infinity;
-    let maxEle = -Infinity;
-    for (const pt of points) {
-      if (pt.ele !== null && pt.ele !== undefined && Number.isFinite(pt.ele)) {
-        if (pt.ele < minEle) minEle = pt.ele;
-        if (pt.ele > maxEle) maxEle = pt.ele;
-      }
-    }
-    if (!Number.isFinite(minEle) || !Number.isFinite(maxEle)) return null;
-    return { minM: Math.round(minEle), maxM: Math.round(maxEle) };
-  }, [points]);
-
-  const isSynced =
-    summarySaved === 'saved' ||
-    summarySaved === 'already_finished' ||
-    summarySaved === 'already_finished_without_summary' ||
-    summarySaved === 'local';
-  const canRetry =
-    summarySaved === 'failed' ||
-    summarySaved === 'unauthenticated' ||
-    summarySaved === 'conflict';
-
-  const syncLabel =
-    summarySaved === 'saved' || summarySaved === 'already_finished'
-      ? 'Enregistré'
-      : summarySaved === 'local'
-        ? 'Enregistré localement'
-        : summarySaved === 'unauthenticated'
-          ? 'Connexion requise'
-          : summarySaved === 'failed' || summarySaved === 'conflict'
-            ? 'En attente de synchro'
-            : 'En attente hors ligne';
+    const formatted = formatPrimarySpeedMetric(activeProfile, {
+      distanceM: summary.distanceM || 0,
+      movingS: elapsedS,
+      elevGainM,
+      units,
+    });
+    return { value: formatted.valueText, unit: formatted.unitLabel };
+  }, [activeProfile, elapsedS, elevGainM, summary.distanceM, units]);
 
   const trackGeo = useMemo<unknown>(() => {
     if (activityTrack) return activityTrack;
@@ -300,8 +409,136 @@ export function ExplorerSummarySheet({
     return summary.route?.geojson ?? null;
   }, [activityTrack, points, summary.route?.geojson, summary.startedAt, summaryId]);
 
+  const resolvedPoints = useMemo<ReadonlyArray<ExplorerSummaryPoint>>(() => {
+    if (points && points.length > 0) return points;
+    return extractPointsFromGeoJson(trackGeo);
+  }, [points, trackGeo]);
+
+  const elevationBounds = useMemo(() => {
+    if (resolvedPoints.length === 0) return null;
+    let minEle = Infinity;
+    let maxEle = -Infinity;
+    for (const pt of resolvedPoints) {
+      if (pt.ele !== null && pt.ele !== undefined && Number.isFinite(pt.ele)) {
+        if (pt.ele < minEle) minEle = pt.ele;
+        if (pt.ele > maxEle) maxEle = pt.ele;
+      }
+    }
+    if (!Number.isFinite(minEle) || !Number.isFinite(maxEle)) return null;
+    return { minM: Math.round(minEle), maxM: Math.round(maxEle) };
+  }, [resolvedPoints]);
+
+  const isSynced =
+    summarySaved === 'saved' ||
+    summarySaved === 'already_finished' ||
+    summarySaved === 'already_finished_without_summary' ||
+    summarySaved === 'local';
+  const canRetry =
+    summarySaved === 'failed' ||
+    summarySaved === 'unauthenticated' ||
+    summarySaved === 'conflict';
+
+  const syncLabel =
+    summarySaved === 'saved' || summarySaved === 'already_finished'
+      ? 'Synchronisé'
+      : summarySaved === 'local'
+        ? 'Local'
+        : summarySaved === 'unauthenticated'
+          ? 'Connexion requise'
+          : summarySaved === 'failed' || summarySaved === 'conflict'
+            ? 'En attente'
+            : 'Hors ligne';
+
+  const hasTrackLine = resolvedPoints.length >= 2;
   const resolvedPhotosCount = photosCount ?? summary.capturedMedia?.length ?? 0;
   const resolvedWaypointsCount = waypoints?.length ?? 0;
+  const activeRpeMeta = RPE_LEVELS[Math.max(0, Math.min(9, rpe - 1))];
+
+  const carnetHref = summaryId
+    ? `/communaute?create=carnet&fromOuting=1&attachSessionId=${encodeURIComponent(summaryId)}`
+    : '/communaute?create=carnet&fromOuting=1';
+  const communityPostHref = summaryId
+    ? `/communaute?create=post&fromOuting=1&shareSession=${encodeURIComponent(summaryId)}`
+    : '/communaute?create=post&fromOuting=1';
+  const storyHref = '/communaute?create=story&fromOuting=1';
+  const sortieHref = '/communaute?create=sortie&fromOuting=1';
+  const kitCreateHref = '/communaute?create=kit&fromOuting=1';
+  const clubCreateHref = '/communaute?create=club&fromOuting=1';
+
+  // Persist the complete harvested outing telemetry live into sessionStorage so ANY form
+  // opened from this summary (Carnet, Post, Story, Sortie, Kit, Club) auto-fills seamlessly!
+  useEffect(() => {
+    const rawPts =
+      points && points.length >= 2 ? points : extractPointsFromGeoJson(trackGeo);
+    const track = decimateTrackLngLat(rawPts, 350);
+    let elevLossM = 0;
+    for (let i = 1; i < rawPts.length; i += 1) {
+      const prev = rawPts[i - 1]?.ele;
+      const cur = rawPts[i]?.ele;
+      if (typeof prev === 'number' && typeof cur === 'number' && cur < prev) {
+        elevLossM += prev - cur;
+      }
+    }
+    const resolvedCenter: [number, number] | null =
+      track[0] ?? centerCoords ?? null;
+
+    saveExplorerOutingHandoff({
+      savedAt: Date.now(),
+      sessionId: summaryId,
+      title: title.trim() || defaultTitle,
+      sport: summary.sport,
+      sportLabel: resolvedSportLabel,
+      startedAt: summary.startedAt,
+      endedAt: summary.endedAt,
+      distanceKm: Number((Math.max(0, summary.distanceM || 0) / 1000).toFixed(2)),
+      movingS: elapsedS,
+      elevGainM,
+      elevLossM: Math.round(elevLossM),
+      maxAltitudeM: elevationBounds?.maxM ?? null,
+      minAltitudeM: elevationBounds?.minM ?? null,
+      avgSpeedLabel: `${speedMetric.value} ${speedMetric.unit}`,
+      caloriesKcal,
+      rpe,
+      notes: notes.trim(),
+      locationLabel: locationLabel?.trim() || 'Explorer',
+      center: resolvedCenter,
+      weatherLabel: weatherLabel ?? null,
+      track,
+      waypoints: (waypoints ?? []).map((wp) => ({
+        id: wp.id,
+        kind: wp.kind,
+        label: wp.label,
+        lat: wp.lat,
+        lng: wp.lng,
+      })),
+      photosCount: resolvedPhotosCount,
+    });
+  }, [
+    caloriesKcal,
+    centerCoords,
+    defaultTitle,
+    elapsedS,
+    elevGainM,
+    elevationBounds?.maxM,
+    elevationBounds?.minM,
+    locationLabel,
+    notes,
+    points,
+    resolvedPhotosCount,
+    resolvedSportLabel,
+    rpe,
+    speedMetric.unit,
+    speedMetric.value,
+    summary.distanceM,
+    summary.endedAt,
+    summary.sport,
+    summary.startedAt,
+    summaryId,
+    title,
+    trackGeo,
+    waypoints,
+    weatherLabel,
+  ]);
 
   const handleSaveDetails = useCallback(async () => {
     if (!onSaveDetails || savingDetails) return;
@@ -314,7 +551,7 @@ export function ExplorerSummarySheet({
       });
       setDirty(false);
       setSavedFeedback(true);
-      window.setTimeout(() => setSavedFeedback(false), 2000);
+      window.setTimeout(() => setSavedFeedback(false), 2200);
     } finally {
       setSavingDetails(false);
     }
@@ -332,10 +569,11 @@ export function ExplorerSummarySheet({
     const blob = new Blob([xml], { type: 'application/gpx+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    const slug = (title.trim() || defaultTitle)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'sortie';
+    const slug =
+      (title.trim() || defaultTitle)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '') || 'sortie';
     link.href = url;
     link.download = `${slug}.gpx`;
     document.body.appendChild(link);
@@ -362,593 +600,632 @@ export function ExplorerSummarySheet({
     }
   }, [onShareOuting, title, defaultTitle, distanceMetric, elapsedS, elevGainM]);
 
-  const actionTileStyle: React.CSSProperties = {
-    height: 42,
-    padding: '0 12px',
-    borderRadius: 15,
-    border: '0.5px solid rgba(23, 64, 44, 0.14)',
-    background: 'rgba(255, 255, 255, 0.86)',
-    color: '#172B24',
-    fontSize: 12.5,
-    fontWeight: 700,
-    textDecoration: 'none',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    cursor: 'pointer',
-    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.92)',
-  };
+  const handleSaveRouteClick = useCallback(() => {
+    if (!onSaveAsRoute) return;
+    onSaveAsRoute(title.trim() || defaultTitle);
+    setRouteSavedFeedback(true);
+    window.setTimeout(() => setRouteSavedFeedback(false), 2500);
+  }, [onSaveAsRoute, title, defaultTitle]);
 
   return (
     <StackSlideView stackKey={`summary-${summaryId ?? summary.startedAt}`}>
-      <div
-        data-testid="xp20-summary-sheet"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          minHeight: 0,
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            padding: '4px 12px 10px',
-            borderBottom: '0.5px solid rgba(23, 64, 44, 0.08)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+      <div className="xp20-sum-root" data-testid="xp20-summary-sheet">
+        {/* 1. Pinned Header */}
+        <header className="xp20-sum-header">
+          <div className="xp20-sum-header-left">
             <button
               type="button"
-              className="xp20-close-pill"
+              className="xp20-close-pill xp20-tactile"
               onClick={onDone}
-              aria-label="Fermer"
+              aria-label="Fermer le résumé"
             >
               <X size={15} aria-hidden="true" />
             </button>
-            <div style={{ minWidth: 0 }}>
-              <strong
-                style={{
-                  display: 'block',
-                  fontSize: 15,
-                  fontWeight: 800,
-                  color: '#172B24',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1.15,
-                }}
-              >
-                Sortie terminée
-              </strong>
-              <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#56665D' }}>
-                {resolvedSportLabel}
+            <div className="xp20-sum-title-block">
+              <strong>Sortie terminée</strong>
+              <span>
+                {resolvedSportLabel} · {formatOutingTimestamp(summary.startedAt)}
               </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+          <div className="xp20-sum-header-pills">
             {xpEarned !== null && xpEarned > 0 ? (
-              <span
-                style={{
-                  height: 24,
-                  padding: '0 8px',
-                  borderRadius: 999,
-                  background: 'rgba(185, 138, 46, 0.16)',
-                  color: '#7C5610',
-                  fontSize: 11,
-                  fontWeight: 800,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
+              <span className="xp20-sum-xp-pill">
                 <Sparkles size={11} aria-hidden="true" />+{Math.round(xpEarned)} XP
               </span>
             ) : null}
-
-            <span
-              style={{
-                height: 24,
-                padding: '0 9px',
-                borderRadius: 999,
-                background: isSynced
-                  ? 'rgba(150, 186, 142, 0.28)'
-                  : 'rgba(185, 138, 46, 0.16)',
-                color: isSynced ? '#17402C' : '#7C5610',
-                fontSize: 11,
-                fontWeight: 700,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              {isSynced ? (
-                <Check size={12} aria-hidden="true" />
-              ) : (
-                <CloudOff size={12} aria-hidden="true" />
-              )}
+            <span className={`xp20-sum-sync-pill${isSynced ? ' is-ok' : ''}`}>
+              {isSynced ? <Check size={11} aria-hidden="true" /> : <CloudOff size={11} aria-hidden="true" />}
               <span>{syncLabel}</span>
             </span>
           </div>
+        </header>
+
+        {/* 2. Clean 2-Tab Segmented Switcher (Bilan / Connecter à l'app) */}
+        <div className="xp20-sum-seg-wrap">
+          <div className="xp20-sum-seg" role="tablist" aria-label="Sections du résumé">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'overview'}
+              className={`xp20-sum-seg-btn${activeTab === 'overview' ? ' is-active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              <span>Bilan &amp; Notes</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'connect'}
+              className={`xp20-sum-seg-btn${activeTab === 'connect' ? ' is-active' : ''}`}
+              onClick={() => setActiveTab('connect')}
+            >
+              <span>Connecter à l’app</span>
+              <span className="xp20-sum-seg-count">13</span>
+            </button>
+          </div>
         </div>
 
-        {/* Scrollable Body */}
-        <div
-          style={{
-            flex: '1 1 auto',
-            minHeight: 0,
-            overflowY: 'auto',
-            padding: '12px 12px calc(36px + var(--safe-bottom, 0px))',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 11,
-          }}
-        >
-          {/* 3 Hero KPIs */}
-          <div className="xp20-kpi-row">
-            <div className="xp20-kpi-pill">
-              <Route size={14} color="#17402C" aria-hidden="true" />
-              <strong style={{ fontSize: 17, fontWeight: 800, color: '#172B24' }}>
-                <AnimatedNumber
-                  value={distanceMetric.value}
-                  suffix={distanceMetric.suffix}
-                  maximumFractionDigits={distanceMetric.decimals}
-                />
-              </strong>
-              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#56665D' }}>Distance</span>
-            </div>
-
-            <div className="xp20-kpi-pill">
-              <Clock size={14} color="#17402C" aria-hidden="true" />
-              <strong style={{ fontSize: 17, fontWeight: 800, color: '#172B24' }}>
-                {formatDurationClock(elapsedS)}
-              </strong>
-              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#56665D' }}>Durée</span>
-            </div>
-
-            <div className="xp20-kpi-pill">
-              <TrendingUp size={14} color="#17402C" aria-hidden="true" />
-              <strong style={{ fontSize: 17, fontWeight: 800, color: '#172B24' }}>
-                <AnimatedNumber value={elevGainM} prefix="+" suffix=" m" />
-              </strong>
-              <span style={{ fontSize: 10.5, fontWeight: 600, color: '#56665D' }}>D+</span>
-            </div>
-          </div>
-
-          {/* Recorded track SVG preview + secondary elevation / waypoints / photos chips */}
-          <div
-            className="club-glass-card"
-            style={{
-              padding: 8,
-              borderRadius: 20,
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                width: '100%',
-                height: 128,
-                borderRadius: 14,
-                background: '#EFF4EE',
-                overflow: 'hidden',
-              }}
-            >
-              <RouteMiniTraceSvg geojson={trackGeo} width={320} height={128} />
-            </div>
-
-            {avgSpeedLabel || elevationBounds || resolvedWaypointsCount > 0 || resolvedPhotosCount > 0 ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '0 2px 2px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#394D43',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
+        {/* 3. Scrollable Tab Body */}
+        <div className="xp20-sum-scroll">
+          <AnimatePresence mode="wait" initial={false}>
+            {activeTab === 'overview' ? (
+              <motion.div
+                key="tab-overview"
+                className="xp20-sum-pane"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
               >
-                {avgSpeedLabel ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '3px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(23, 64, 44, 0.07)',
-                    }}
-                  >
-                    <Gauge size={11} aria-hidden="true" />
-                    {avgSpeedLabel}
-                  </span>
-                ) : null}
-                {elevationBounds ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '3px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(23, 64, 44, 0.07)',
-                    }}
-                  >
-                    <Mountain size={11} aria-hidden="true" />
-                    {elevationBounds.minM}–{elevationBounds.maxM} m
-                  </span>
-                ) : null}
-                {resolvedWaypointsCount > 0 ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '3px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(150, 186, 142, 0.24)',
-                      color: '#17402C',
-                    }}
-                  >
-                    <MapPin size={11} aria-hidden="true" />
-                    {resolvedWaypointsCount} repère{resolvedWaypointsCount > 1 ? 's' : ''}
-                  </span>
-                ) : null}
-                {resolvedPhotosCount > 0 ? (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '3px 8px',
-                      borderRadius: 999,
-                      background: 'rgba(150, 186, 142, 0.24)',
-                      color: '#17402C',
-                    }}
-                  >
-                    <Camera size={11} aria-hidden="true" />
-                    {resolvedPhotosCount} photo{resolvedPhotosCount > 1 ? 's' : ''}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+                {/* Hero Performance Card */}
+                <section className="xp20-sum-hero" aria-label="Performance">
+                  {hasTrackLine ? (
+                    <div className="xp20-sum-trace-stage">
+                      <RouteMiniTraceSvg geojson={trackGeo} width={340} height={96} />
+                      <div className="xp20-sum-trace-badges">
+                        {elevationBounds ? (
+                          <span className="xp20-sum-mini-pill">
+                            <Mountain size={10} aria-hidden="true" />
+                            {elevationBounds.minM}–{elevationBounds.maxM} m
+                          </span>
+                        ) : null}
+                        {resolvedWaypointsCount > 0 ? (
+                          <span className="xp20-sum-mini-pill is-accent">
+                            <MapPin size={10} aria-hidden="true" />
+                            {resolvedWaypointsCount} repère{resolvedWaypointsCount > 1 ? 's' : ''}
+                          </span>
+                        ) : null}
+                        {resolvedPhotosCount > 0 ? (
+                          <span className="xp20-sum-mini-pill is-accent">
+                            <Camera size={10} aria-hidden="true" />
+                            {resolvedPhotosCount} photo{resolvedPhotosCount > 1 ? 's' : ''}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
 
-          {/* Editable Outing Details (Title + RPE Effort + Notes) */}
-          <div
-            className="club-glass-card"
-            style={{
-              borderRadius: 20,
-              padding: '11px 12px',
-              background: 'rgba(255, 255, 255, 0.82)',
-              border: '0.5px solid rgba(23, 64, 44, 0.12)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-            }}
-          >
-            <div>
-              <label
-                htmlFor="xp20-summary-title"
-                style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#56665D', marginBottom: 4 }}
-              >
-                Titre de la sortie
-              </label>
-              <input
-                id="xp20-summary-title"
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setDirty(true);
-                }}
-                placeholder={defaultTitle}
-                style={{
-                  width: '100%',
-                  height: 38,
-                  padding: '0 11px',
-                  borderRadius: 12,
-                  border: '0.5px solid rgba(23, 64, 44, 0.18)',
-                  background: '#FFFFFF',
-                  color: '#172B24',
-                  fontSize: 13.5,
-                  fontWeight: 700,
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
+                  <div className="xp20-sum-stats-grid">
+                    <div className="xp20-sum-stat">
+                      <span className="xp20-sum-stat-ico is-forest">
+                        <Route size={15} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-stat-copy">
+                        <strong>
+                          <AnimatedNumber
+                            value={distanceMetric.value}
+                            suffix={distanceMetric.suffix}
+                            maximumFractionDigits={distanceMetric.decimals}
+                          />
+                        </strong>
+                        <span>Distance</span>
+                      </div>
+                    </div>
 
-            {/* 5-level RPE Effort Selector */}
-            <div>
-              <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#56665D', marginBottom: 5 }}>
-                Ressenti d’effort (RPE)
-              </span>
-              <div
-                role="radiogroup"
-                aria-label="Niveau d'effort ressenti"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                  gap: 5,
-                }}
-              >
-                {RPE_LEVELS.map((level) => {
-                  const selected = rpe === level.value;
-                  return (
-                    <button
-                      key={level.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => {
-                        setRpe(level.value);
+                    <div className="xp20-sum-stat">
+                      <span className="xp20-sum-stat-ico is-sky">
+                        <Clock size={15} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-stat-copy">
+                        <strong>{formatDurationClock(elapsedS)}</strong>
+                        <span>Durée</span>
+                      </div>
+                    </div>
+
+                    <div className="xp20-sum-stat">
+                      <span className="xp20-sum-stat-ico is-amber">
+                        <TrendingUp size={15} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-stat-copy">
+                        <strong>
+                          <AnimatedNumber value={elevGainM} prefix="+" suffix=" m" />
+                        </strong>
+                        <span>Dénivelé D+</span>
+                      </div>
+                    </div>
+
+                    <div className="xp20-sum-stat">
+                      <span className="xp20-sum-stat-ico is-coral">
+                        <Gauge size={15} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-stat-copy">
+                        <strong>
+                          {speedMetric.value} <small>{speedMetric.unit}</small>
+                        </strong>
+                        <span>
+                          <Flame size={10} aria-hidden="true" /> {caloriesKcal} kcal
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Journal Card (Title + Effort RPE 1..10 + Notes) */}
+                <section className="xp20-sum-card" aria-label="Détails de la sortie">
+                  <div className="xp20-sum-field">
+                    <label htmlFor="xp20-summary-title">Titre</label>
+                    <input
+                      id="xp20-summary-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
                         setDirty(true);
                       }}
-                      style={{
-                        height: 32,
-                        borderRadius: 10,
-                        border: selected
-                          ? '1px solid #17402C'
-                          : '0.5px solid rgba(23, 64, 44, 0.14)',
-                        background: selected ? '#17402C' : 'rgba(255, 255, 255, 0.9)',
-                        color: selected ? '#FBFAF6' : '#172B24',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        padding: '0 4px',
-                        whiteSpace: 'nowrap',
-                      }}
+                      placeholder={defaultTitle}
+                    />
+                  </div>
+
+                  <div className="xp20-sum-field">
+                    <div className="xp20-sum-rpe-head">
+                      <span>Effort ressenti (RPE)</span>
+                      <span
+                        className="xp20-sum-rpe-pill"
+                        style={{ color: activeRpeMeta.color, background: activeRpeMeta.bg }}
+                      >
+                        {rpe}/10 · {activeRpeMeta.label}
+                      </span>
+                    </div>
+                    <div
+                      className="xp20-sum-rpe-scale"
+                      role="radiogroup"
+                      aria-label="Niveau d'effort ressenti de 1 à 10"
                     >
-                      {level.label}
+                      {RPE_LEVELS.map((level) => {
+                        const selected = rpe === level.value;
+                        return (
+                          <button
+                            key={level.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            aria-label={`Effort ${level.value} sur 10 : ${level.label}`}
+                            className={`xp20-sum-rpe-dot xp20-tactile${selected ? ' is-selected' : ''}`}
+                            style={
+                              selected
+                                ? { background: level.color, borderColor: level.color, color: '#FFFFFF' }
+                                : undefined
+                            }
+                            onClick={() => {
+                              setRpe(level.value);
+                              setDirty(true);
+                            }}
+                          >
+                            {level.value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="xp20-sum-field">
+                    <label htmlFor="xp20-summary-notes">Notes de terrain</label>
+                    <textarea
+                      id="xp20-summary-notes"
+                      rows={2}
+                      value={notes}
+                      onChange={(e) => {
+                        setNotes(e.target.value);
+                        setDirty(true);
+                      }}
+                      placeholder="Conditions du sentier, météo, sensations…"
+                    />
+                  </div>
+
+                  {onSaveDetails && (dirty || savedFeedback) ? (
+                    <button
+                      type="button"
+                      className={`xp20-sum-save-btn xp20-tactile${savedFeedback ? ' is-saved' : ''}`}
+                      disabled={savingDetails || (!dirty && savedFeedback)}
+                      onClick={() => void handleSaveDetails()}
+                    >
+                      <Check size={14} aria-hidden="true" />
+                      <span>
+                        {savingDetails
+                          ? 'Enregistrement…'
+                          : savedFeedback
+                            ? 'Modifications enregistrées'
+                            : 'Enregistrer les notes'}
+                      </span>
                     </button>
-                  );
-                })}
-              </div>
-            </div>
+                  ) : null}
+                </section>
 
-            {/* Short Notes */}
-            <div>
-              <label
-                htmlFor="xp20-summary-notes"
-                style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#56665D', marginBottom: 4 }}
-              >
-                Notes de terrain
-              </label>
-              <textarea
-                id="xp20-summary-notes"
-                rows={2}
-                value={notes}
-                onChange={(e) => {
-                  setNotes(e.target.value);
-                  setDirty(true);
-                }}
-                placeholder="Conditions du sentier, météo, sensations…"
-                style={{
-                  width: '100%',
-                  padding: '8px 11px',
-                  borderRadius: 12,
-                  border: '0.5px solid rgba(23, 64, 44, 0.18)',
-                  background: '#FFFFFF',
-                  color: '#172B24',
-                  fontSize: 12.5,
-                  fontWeight: 500,
-                  resize: 'none',
-                  boxSizing: 'border-box',
-                  fontFamily: 'inherit',
-                }}
-              />
-            </div>
+                {/* Clean 1-Row Quick Tools Strip (4 equal icon+label pills, zero overflow) */}
+                <div className="xp20-sum-tools-bar" aria-label="Outils trace">
+                  <button
+                    type="button"
+                    className="xp20-sum-tool-chip xp20-tactile"
+                    data-testid="xp20-summary-analysis-trigger"
+                    onClick={() => setAnalysisOpen(true)}
+                  >
+                    <BarChart3 size={16} aria-hidden="true" />
+                    <span>Analyse</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="xp20-sum-tool-chip xp20-tactile"
+                    data-testid="xp20-summary-privacy-trigger"
+                    onClick={() => setPrivacyOpen(true)}
+                  >
+                    <Scissors size={16} aria-hidden="true" />
+                    <span>Crop</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="xp20-sum-tool-chip xp20-tactile"
+                    onClick={handleExportGpxClick}
+                  >
+                    <Download size={16} aria-hidden="true" />
+                    <span>GPX</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="xp20-sum-tool-chip xp20-tactile"
+                    onClick={handleShareClick}
+                  >
+                    <Share2 size={16} aria-hidden="true" />
+                    <span>{shareFeedback ?? 'Partager'}</span>
+                  </button>
+                </div>
 
-            {onSaveDetails && (dirty || savedFeedback) ? (
-              <button
-                type="button"
-                disabled={savingDetails || (!dirty && savedFeedback)}
-                onClick={() => void handleSaveDetails()}
-                style={{
-                  height: 36,
-                  borderRadius: 999,
-                  border: 0,
-                  background: savedFeedback ? 'rgba(46, 125, 79, 0.16)' : '#17402C',
-                  color: savedFeedback ? '#17402C' : '#FBFAF6',
-                  fontSize: 12.5,
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  cursor: savingDetails ? 'default' : 'pointer',
-                }}
-              >
-                <Check size={14} aria-hidden="true" />
-                <span>
-                  {savingDetails
-                    ? 'Enregistrement…'
-                    : savedFeedback
-                      ? 'Détails enregistrés'
-                      : 'Enregistrer les détails'}
-                </span>
-              </button>
-            ) : null}
-          </div>
-
-          {/* 2x2 Action Grid */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-              gap: 8,
-            }}
-          >
-            <button type="button" onClick={handleExportGpxClick} style={actionTileStyle}>
-              <Download size={14} color="#17402C" aria-hidden="true" />
-              <span>Exporter GPX</span>
-            </button>
-
-            {onAddToCarnet ? (
-              <button type="button" onClick={onAddToCarnet} style={actionTileStyle}>
-                <BookOpen size={14} color="#17402C" aria-hidden="true" />
-                <span>Ajouter à un Carnet</span>
-              </button>
-            ) : (
-              <Link href="/carnets" style={actionTileStyle}>
-                <BookOpen size={14} color="#17402C" aria-hidden="true" />
-                <span>Ajouter à un Carnet</span>
-              </Link>
-            )}
-
-            <Link href="/compte/activites" style={actionTileStyle}>
-              <Activity size={14} color="#17402C" aria-hidden="true" />
-              <span>Mes sorties</span>
-            </Link>
-
-            <button type="button" onClick={handleShareClick} style={actionTileStyle}>
-              <Share2 size={14} color="#17402C" aria-hidden="true" />
-              <span>{shareFeedback ?? 'Partager'}</span>
-            </button>
-          </div>
-
-          {/* Primary Footer Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 'auto', paddingTop: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {canRetry ? (
+                {/* Clean Callout to Interconnections Tab */}
                 <button
                   type="button"
-                  onClick={onRetrySync}
-                  style={{
-                    flex: '0 0 auto',
-                    height: 46,
-                    padding: '0 16px',
-                    borderRadius: 999,
-                    border: '0.5px solid rgba(23, 64, 44, 0.2)',
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    color: '#17402C',
-                    fontSize: 13,
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    cursor: 'pointer',
-                  }}
+                  className="xp20-sum-bridge-banner xp20-card-press"
+                  onClick={() => setActiveTab('connect')}
                 >
-                  <RefreshCw size={14} aria-hidden="true" />
-                  <span>Réessayer</span>
+                  <div className="xp20-sum-bridge-icons" aria-hidden="true">
+                    <span style={{ background: '#FEF3C7', color: '#B45309' }}>
+                      <BookOpen size={13} />
+                    </span>
+                    <span style={{ background: '#DCFCE7', color: '#15803D' }}>
+                      <Video size={13} />
+                    </span>
+                    <span style={{ background: '#E0F2FE', color: '#0369A1' }}>
+                      <Send size={13} />
+                    </span>
+                    <span style={{ background: '#F3E8FF', color: '#6D28D9' }}>
+                      <Award size={13} />
+                    </span>
+                  </div>
+                  <div className="xp20-sum-bridge-copy">
+                    <strong>Connecter au reste de l’app</strong>
+                    <span>Carnet, Communauté, Clubs, Voyages, Traceur, Sac…</span>
+                  </div>
+                  <ChevronRight size={16} className="xp20-sum-row-arrow" aria-hidden="true" />
                 </button>
-              ) : null}
-
-              <button
-                type="button"
-                onClick={onDone}
-                style={{
-                  flex: '1 1 auto',
-                  height: 46,
-                  borderRadius: 999,
-                  border: 0,
-                  background: 'linear-gradient(180deg, #1f543a, #17402c)',
-                  color: '#FBFAF6',
-                  fontSize: 14,
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 20px rgba(23, 64, 44, 0.22)',
-                }}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="tab-connect"
+                className="xp20-sum-pane"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
               >
-                Terminer
-              </button>
-            </div>
+                {/* Group 1: Raconter & Partager */}
+                <div className="xp20-sum-group">
+                  <span className="xp20-sum-group-label">Raconter &amp; Partager</span>
+                  <div className="xp20-sum-list">
+                    {onAddToCarnet ? (
+                      <button type="button" className="xp20-sum-row" onClick={onAddToCarnet}>
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(217, 119, 6, 0.14)', color: '#B45309' }}>
+                          <BookOpen size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Créer un Carnet de voyage</strong>
+                          <span>Récit illustré avec vos photos et la trace GPS</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <Link href={carnetHref} className="xp20-sum-row">
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(217, 119, 6, 0.14)', color: '#B45309' }}>
+                          <BookOpen size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Créer un Carnet de voyage</strong>
+                          <span>Récit illustré avec vos photos et la trace GPS</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </Link>
+                    )}
 
-            {/* Subtle 2-tap inline discard button */}
-            {onDiscard ? (
-              confirmDiscard ? (
-                <div
-                  role="alert"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    padding: '7px 10px',
-                    borderRadius: 14,
-                    background: 'rgba(185, 28, 28, 0.08)',
-                    border: '0.5px solid rgba(185, 28, 28, 0.25)',
-                  }}
-                >
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: '#991B1B' }}>
-                    Supprimer cette sortie ?
-                  </span>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDiscard(false)}
-                      style={{
-                        height: 28,
-                        padding: '0 10px',
-                        borderRadius: 999,
-                        border: '0.5px solid rgba(23, 64, 44, 0.2)',
-                        background: '#FFFFFF',
-                        color: '#172B24',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onDiscard}
-                      style={{
-                        height: 28,
-                        padding: '0 10px',
-                        borderRadius: 999,
-                        border: 0,
-                        background: '#991B1B',
-                        color: '#FFFFFF',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Confirmer
-                    </button>
+                    <Link href={communityPostHref} className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(21, 128, 61, 0.14)', color: '#15803D' }}>
+                        <Video size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Publier dans la Communauté</strong>
+                        <span>Billet prérempli avec stats, lieu et notes</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    <Link href={storyHref} className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(234, 88, 12, 0.13)', color: '#C2410C' }}>
+                        <Camera size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Partager en Story</strong>
+                        <span>Stickers lieu, distance, altitude &amp; météo</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    <Link href={sortieHref} className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(79, 70, 229, 0.13)', color: '#4338CA' }}>
+                        <Users size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Proposer cette Sortie en groupe</strong>
+                        <span>Activité, tracé, niveau et sécurité préremplis</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    <Link href={clubCreateHref} className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(99, 102, 241, 0.13)', color: '#3730A3' }}>
+                        <Users size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Créer ou rejoindre un Club</strong>
+                        <span>Zone, sport et message d’accueil préremplis</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
                   </div>
                 </div>
-              ) : (
+
+                {/* Group 2: Carte, Voyages & Terrain */}
+                <div className="xp20-sum-group">
+                  <span className="xp20-sum-group-label">Carte, Voyages &amp; Terrain</span>
+                  <div className="xp20-sum-list">
+                    {onSaveAsRoute ? (
+                      <button type="button" className="xp20-sum-row" onClick={handleSaveRouteClick}>
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(23, 64, 44, 0.14)', color: '#17402C' }}>
+                          {routeSavedFeedback ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>{routeSavedFeedback ? 'Tracé enregistré !' : 'Enregistrer comme itinéraire'}</strong>
+                          <span>Sauver dans Mes parcours et ouvrir le traceur</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </button>
+                    ) : (
+                      <Link href="/itineraire" className="xp20-sum-row">
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(23, 64, 44, 0.14)', color: '#17402C' }}>
+                          <Pencil size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Enregistrer comme itinéraire</strong>
+                          <span>Ouvrir dans le traceur sur la carte 3D</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </Link>
+                    )}
+
+                    <Link href="/hub/itineraire" className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(13, 148, 136, 0.14)', color: '#0F766E' }}>
+                        <Compass size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Raccorder à un Voyage</strong>
+                        <span>Ajouter cette étape dans votre Compas / Hub</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    {onLaunchBottle ? (
+                      <button type="button" className="xp20-sum-row" onClick={onLaunchBottle}>
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(2, 132, 199, 0.14)', color: '#0369A1' }}>
+                          <Send size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Déposer une Bouteille à la mer</strong>
+                          <span>Laisser un message géolocalisé à cet endroit</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </button>
+                    ) : null}
+
+                    {onOpenSafetyReport ? (
+                      <button type="button" className="xp20-sum-row" onClick={onOpenSafetyReport}>
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(220, 38, 38, 0.12)', color: '#B91C1C' }}>
+                          <AlertTriangle size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Signaler un point terrain</strong>
+                          <span>Danger, arbre tombé, eau tarie ou sentier coupé</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Group 3: Équipement, Nature & Progression */}
+                <div className="xp20-sum-group">
+                  <span className="xp20-sum-group-label">Équipement, Nature &amp; Suivi</span>
+                  <div className="xp20-sum-list">
+                    <Link href={kitCreateHref} className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(180, 83, 9, 0.13)', color: '#9A3412' }}>
+                        <Backpack size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Créer le Kit de cette sortie</strong>
+                        <span>Saison, nom et contexte déjà renseignés</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    {onOpenPokedex ? (
+                      <button type="button" className="xp20-sum-row" onClick={onOpenPokedex}>
+                        <span className="xp20-sum-row-ico" style={{ background: 'rgba(101, 163, 13, 0.15)', color: '#4D7C0F' }}>
+                          <Leaf size={16} aria-hidden="true" />
+                        </span>
+                        <div className="xp20-sum-row-copy">
+                          <strong>Pokédex Nature</strong>
+                          <span>Consigner la faune et la flore observées</span>
+                        </div>
+                        <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                      </button>
+                    ) : null}
+
+                    <Link href="/progression" className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(124, 58, 237, 0.13)', color: '#6D28D9' }}>
+                        <Award size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Progression &amp; Badges</strong>
+                        <span>Consulter votre niveau, XP et défis</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+
+                    <Link href="/compte/activites" className="xp20-sum-row">
+                      <span className="xp20-sum-row-ico" style={{ background: 'rgba(23, 43, 36, 0.1)', color: '#172B24' }}>
+                        <Activity size={16} aria-hidden="true" />
+                      </span>
+                      <div className="xp20-sum-row-copy">
+                        <strong>Historique de mes sorties</strong>
+                        <span>Toutes vos activités, filtres et statistiques</span>
+                      </div>
+                      <ChevronRight size={15} className="xp20-sum-row-arrow" aria-hidden="true" />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 4. Sticky Frosted Footer */}
+        <footer className="xp20-sum-footer">
+          {confirmDiscard && onDiscard ? (
+            <div className="xp20-sum-discard-bar" role="alert">
+              <span>Supprimer cette sortie ?</span>
+              <div className="xp20-sum-discard-actions">
                 <button
                   type="button"
-                  onClick={() => setConfirmDiscard(true)}
-                  style={{
-                    height: 32,
-                    border: 0,
-                    background: 'transparent',
-                    color: '#7C4242',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 5,
-                    cursor: 'pointer',
-                  }}
+                  className="xp20-sum-discard-cancel"
+                  onClick={() => setConfirmDiscard(false)}
                 >
-                  <Trash2 size={13} aria-hidden="true" />
-                  <span>Ignorer / Supprimer</span>
+                  Annuler
                 </button>
-              )
+                <button
+                  type="button"
+                  className="xp20-sum-discard-confirm"
+                  onClick={onDiscard}
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="xp20-sum-footer-row">
+            {onDiscard ? (
+              <button
+                type="button"
+                className="xp20-sum-trash-btn xp20-tactile"
+                onClick={() => setConfirmDiscard((v) => !v)}
+                aria-label="Supprimer cette sortie"
+                title="Supprimer cette sortie"
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
             ) : null}
+
+            {canRetry ? (
+              <button
+                type="button"
+                className="xp20-sum-retry-btn xp20-tactile"
+                onClick={onRetrySync}
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>Synchro</span>
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              className="xp20-sum-done-btn xp20-tactile"
+              onClick={onDone}
+            >
+              <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+              <span>Terminer</span>
+            </button>
           </div>
-        </div>
+        </footer>
       </div>
+
+      {analysisOpen ? (
+        <Suspense fallback={null}>
+          <LazySummaryExpertAnalysisSubDrawer
+            open={analysisOpen}
+            onOpenChange={setAnalysisOpen}
+            profile={activeProfile}
+            summary={summary}
+            points={resolvedPoints}
+            distanceM={summary.distanceM || 0}
+            movingS={elapsedS}
+            elevGainM={elevGainM}
+            rpe={rpe}
+            units={units}
+            title={title.trim() || defaultTitle}
+            notes={notes.trim()}
+            waypoints={waypoints ?? []}
+            locationLabel={locationLabel}
+            centerCoords={centerCoords}
+            weather={weather}
+            packWeightKg={packWeightKg}
+            bodyWeightKg={bodyWeightKg}
+            strengthLog={strengthLog}
+            userId={userId}
+            contrast={contrast}
+            glovesMode={glovesMode}
+            onProfileCursorChange={onProfileCursorChange}
+            onHighlightSegment={onHighlightSegment}
+          />
+        </Suspense>
+      ) : null}
+
+      {privacyOpen ? (
+        <Suspense fallback={null}>
+          <LazySummaryPrivacyCropSubDrawer
+            open={privacyOpen}
+            onOpenChange={setPrivacyOpen}
+            sessionId={summaryId}
+            totalPoints={resolvedPoints.length}
+            onExportGpx={handleExportGpxClick}
+          />
+        </Suspense>
+      ) : null}
     </StackSlideView>
   );
 }

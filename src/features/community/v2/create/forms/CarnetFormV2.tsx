@@ -360,9 +360,16 @@ function CarnetBody({
   const prefillValues = useMemo(() => {
     if (!prefill) return null;
     const mapped: Record<string, unknown> = {};
-    for (const key of ['title', 'destination', 'startDate', 'endDate', 'visibility']) {
-      if (typeof prefill[key] === 'string') mapped[key] = prefill[key];
+    for (const key of ['title', 'destination', 'startDate', 'endDate', 'visibility', 'description', 'postContent']) {
+      if (typeof prefill[key] === 'string' && prefill[key]) mapped[key] = prefill[key];
     }
+    for (const key of ['nbJours', 'distanceKm', 'deniveleM', 'startLat', 'startLng']) {
+      if (typeof prefill[key] === 'number' && Number.isFinite(prefill[key])) mapped[key] = prefill[key];
+    }
+    if (typeof prefill.postEnabled === 'boolean') mapped.postEnabled = prefill.postEnabled;
+    if (Array.isArray(prefill.tags) && prefill.tags.length > 0) mapped.tags = prefill.tags;
+    if (Array.isArray(prefill.trace) && prefill.trace.length >= 2) mapped.trace = prefill.trace;
+    if (Array.isArray(prefill.days) && prefill.days.length > 0) mapped.days = prefill.days;
     return Object.keys(mapped).length > 0 ? mapped : null;
   }, [prefill]);
 

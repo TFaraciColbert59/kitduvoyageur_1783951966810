@@ -199,11 +199,16 @@ export async function syncPendingPoints(
   do {
     const chunk = pending.filter((point) => point.seq > cursor).slice(0, POINT_BATCH_SIZE);
     try {
+      const lastSeq = chunk.length > 0 ? chunk[chunk.length - 1]!.seq : cursor;
+      const safeDistanceM = Math.max(0, Math.round(Number.isFinite(current.distanceM) ? current.distanceM : 0));
+      const safeElevGainM = Math.max(0, Math.round(Number.isFinite(current.elevGainM) ? current.elevGainM : 0));
+      const safeMovingS = Math.max(0, Math.round(Number.isFinite(current.movingS) ? current.movingS : 0));
       const response = await resolveFetch(deps)('/api/explorer/v2/activity/points', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Idempotency-Key': `activity.points:${current.clientSessionId}:${lastSeq}`,
         },
         body: JSON.stringify({
           sessionId: ensured.sessionId,
@@ -211,9 +216,9 @@ export async function syncPendingPoints(
           endedAt: current.endedAt,
           points: chunk.map(pointBody),
           metrics: {
-            distanceM: current.distanceM,
-            elevGainM: current.elevGainM,
-            movingS: current.movingS,
+            distanceM: safeDistanceM,
+            elevGainM: safeElevGainM,
+            movingS: safeMovingS,
             paused: current.paused,
           },
         }),
@@ -350,4 +355,30 @@ export async function finishSessionById(
 
 export async function loadSessionForSync(clientSessionId: string): Promise<LocalSessionRecord | null> {
   return readLocalSession(clientSessionId);
+}
+
+/**
+ * Supprime / abandonne proprement une séance côté serveur lorsqu'elle est
+ * écartée depuis l'écran de résumé (`onDiscard`). Best-effort idempotent.
+ */
+export async function discardServerSession(
+  sessionId: string,
+  deps: SessionSyncDeps = {},
+): Promise<boolean> {
+  if (!isUuid(sessionId)) return false;
+  const token = await resolveToken(deps);
+  if (!token) return false;
+  try {
+    const response = await resolveFetch(deps)('/api/explorer/v2/activity/discard', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }

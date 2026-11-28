@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { haptic } from '../state/haptics';
 
 /**
  * Compte à rebours de départ d'activité : 3 · 2 · 1 (09_DESIGN §5).
- * Chaque chiffre : échelle 1,4 → 1 + fondu, 1 s, haptique `rigid`.
+ * Chaque chiffre : ressort 1,45 → 1 + fondu, 1 s, haptique `rigid`.
  */
 export function Countdown({
   seconds = 3,
@@ -40,16 +41,43 @@ export function Countdown({
   }, [remaining, seconds, onDone]);
 
   return (
-    <div className="xp-countdown" role="status" aria-live="assertive" aria-label={`Départ dans ${remaining}`}>
-      <span key={remaining} className="xp-countdown-digit">
-        {remaining > 0 ? remaining : 'GO'}
-      </span>
+    <motion.div
+      className="xp-countdown"
+      role="status"
+      aria-live="assertive"
+      aria-label={`Départ dans ${remaining}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      style={{ zIndex: 60 }}
+    >
+      <AnimatePresence mode="popLayout">
+        <motion.span
+          key={remaining}
+          className="xp-countdown-digit"
+          initial={{ opacity: 0, scale: 1.48 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.72 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 28, mass: 0.7 }}
+        >
+          {remaining > 0 ? remaining : 'GO'}
+        </motion.span>
+      </AnimatePresence>
       {onCancel ? (
-        <button type="button" className="xp-countdown-cancel" onClick={onCancel} aria-label="Annuler le départ">
+        <motion.button
+          type="button"
+          className="xp-countdown-cancel xp20-tactile"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 32, delay: 0.08 }}
+          onClick={onCancel}
+          aria-label="Annuler le départ"
+        >
           Annuler
-        </button>
+        </motion.button>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 

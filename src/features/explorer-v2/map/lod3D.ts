@@ -37,6 +37,8 @@ const TIER_1_HERO_KINDS = new Set<Floating3DEntityKind>([
   'rescue',
   'seismic',
   'danger',
+  'safety_report',
+  'live_beacon',
 ]);
 
 const TIER_3_LOCAL_KINDS = new Set<Floating3DEntityKind>([
@@ -116,6 +118,8 @@ export function minZoomFor3DKind(kind: Floating3DEntityKind): number {
     case 'seismic':
     case 'rescue':
     case 'danger':
+    case 'safety_report':
+    case 'live_beacon':
     case 'aircraft':
       return 3.5;
     default:
@@ -132,6 +136,8 @@ export function subtypeQuotaFor3DKind(
   zoom: number,
   activeCategory?: string | null,
 ): number {
+  if (kind === 'live_beacon') return 1;
+  if (kind === 'safety_report' || kind === 'danger') return 4;
   if (kind === 'bus_stop') return zoom >= 15 ? 3 : 2;
   if (kind === 'parking') return zoom >= 15 ? 3 : 2;
   if (kind === 'train_station') return 2;
@@ -216,7 +222,13 @@ export function resolve3DVisualProfile(
     (options.activeCategory === 'community' &&
       (kind === 'bottle' || kind === 'carnet' || kind === 'club' || kind === 'club_event' || kind === 'story')) ||
     (options.activeCategory === 'safety' &&
-      (kind === 'fire' || kind === 'flood' || kind === 'seismic' || kind === 'rescue' || kind === 'danger'));
+      (kind === 'fire' ||
+        kind === 'flood' ||
+        kind === 'seismic' ||
+        kind === 'rescue' ||
+        kind === 'danger' ||
+        kind === 'safety_report' ||
+        kind === 'live_beacon'));
 
   const showRing = hovered || (lodMode === 'full' && (tier === 1 || isCategoryFocus));
 

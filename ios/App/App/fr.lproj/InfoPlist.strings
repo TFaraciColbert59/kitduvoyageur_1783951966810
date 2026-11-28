@@ -1,3 +1,8 @@
-/* Textes visibles de l'Info.plist, en français (PLAN-100 6.4). Le texte d'origine, à la lettre. */
+/* Textes visibles de l'Info.plist, en français (Lot 00 App Store Compliance). */
 "CFBundleDisplayName" = "Le Kit du Voyageur";
-"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur utilise ta position pour situer le départ et le trajet de ton voyage. Elle n’est lue que lorsque l’app est ouverte, jamais en arrière-plan. Dans le Compas, elle est demandée ponctuellement, sans suivi, et arrondie à environ 1 km pour préparer le trajet. Elle n’est montrée à personne sans ton accord.";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur utilise ta position pour centrer la carte Explorer, préparer tes itinéraires et enregistrer tes sorties outdoor (distance, tracé, dénivelé et guidage hors-trace).";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Autorise l’accès en arrière-plan pour que Le Kit du Voyageur continue d’enregistrer ta trace GPS, ton dénivelé et ton Beacon de sécurité lorsque l’écran de l’iPhone est verrouillé pendant une sortie. L’utilisation continue du GPS en arrière-plan peut réduire sensiblement l’autonomie de la batterie.";
+"NSMotionUsageDescription" = "Le Kit du Voyageur utilise le baromètre, le podomètre et le capteur de mouvement pour calculer un dénivelé précis sans bruit GPS, déclencher l’auto-pause et détecter un oubli d’arrêt en voiture.";
+"NSBluetoothAlwaysUsageDescription" = "Le Kit du Voyageur se connecte en Bluetooth à tes capteurs sportifs (ceinture cardio, capteur de puissance vélo, cadence ou home-trainer FTMS) pour enregistrer tes métriques en temps réel, même écran verrouillé.";
+"NSHealthShareUsageDescription" = "Le Kit du Voyageur lit tes séances et indicateurs de récupération (fréquence cardiaque au repos, HRV, sommeil) depuis Apple Santé pour adapter tes estimations d’effort et éviter les doublons. Ces données ne sont jamais partagées à des fins publicitaires.";
+"NSHealthUpdateUsageDescription" = "Le Kit du Voyageur enregistre tes sorties terminées (distance, dénivelé, énergie active et parcours GPS) dans Apple Santé afin de centraliser ton historique sportif.";

@@ -149,6 +149,7 @@ export const BLE_GATT_SERVICES = {
   RUNNING_SPEED_AND_CADENCE: 0x1814,
   CYCLING_SPEED_AND_CADENCE: 0x1816,
   CYCLING_POWER: 0x1818,
+  FITNESS_MACHINE: 0x1826,
   BATTERY: 0x180f,
 } as const;
 
@@ -157,10 +158,42 @@ export const BLE_GATT_CHARACTERISTICS = {
   RSC_MEASUREMENT: 0x2a53,
   CSC_MEASUREMENT: 0x2a5b,
   CYCLING_POWER_MEASUREMENT: 0x2a63,
+  FTMS_TREADMILL_DATA: 0x2acd,
+  FTMS_ROWER_DATA: 0x2ad1,
+  FTMS_INDOOR_BIKE_DATA: 0x2ad2,
+  FTMS_CONTROL_POINT: 0x2ad9,
   BATTERY_LEVEL: 0x2a19,
 } as const;
 
-export type BleServiceKind = 'heart_rate' | 'cycling_sc' | 'cycling_power' | 'running_sc';
+export type BleServiceKind =
+  | 'heart_rate'
+  | 'cycling_sc'
+  | 'cycling_power'
+  | 'running_sc'
+  | 'fitness_machine';
+
+export interface DecodedFtmsIndoorBikeFrame {
+  kind: 'ftms_indoor_bike';
+  instantaneousSpeedKmh: number | null;
+  instantaneousCadenceRpm: number | null;
+  instantaneousPowerWatts: number | null;
+  heartRateBpm: number | null;
+}
+
+export interface DecodedFtmsTreadmillFrame {
+  kind: 'ftms_treadmill';
+  instantaneousSpeedKmh: number | null;
+  inclinePct: number | null;
+  totalDistanceM: number | null;
+}
+
+export interface DecodedFtmsRowerFrame {
+  kind: 'ftms_rower';
+  strokeRateSpm: number | null;
+  strokeCount: number | null;
+  instantaneousPaceSec500m: number | null;
+  instantaneousPowerWatts: number | null;
+}
 
 export type SensorContactStatus = 'not_supported' | 'no_contact' | 'contact_detected';
 
@@ -209,7 +242,10 @@ export type DecodedBleFrame =
   | DecodedHeartRateFrame
   | DecodedCscFrame
   | DecodedCyclingPowerFrame
-  | DecodedRscFrame;
+  | DecodedRscFrame
+  | DecodedFtmsIndoorBikeFrame
+  | DecodedFtmsTreadmillFrame
+  | DecodedFtmsRowerFrame;
 
 // ============================================================================
 // Machine d'états capteurs (appairage / reconnexion / batterie)

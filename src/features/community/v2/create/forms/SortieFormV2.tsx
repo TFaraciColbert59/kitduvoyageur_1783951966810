@@ -1098,11 +1098,41 @@ function SortieBody({
     if (typeof prefill.clubId === 'string' && prefill.clubId) mapped.clubId = prefill.clubId;
     if (typeof prefill.kitId === 'string' && prefill.kitId) mapped.kitId = prefill.kitId;
     if (typeof prefill.place === 'string' && prefill.place) mapped.location = prefill.place;
+    for (const key of [
+      'activity',
+      'title',
+      'location',
+      'destination',
+      'meetingPoint',
+      'startTime',
+      'endTime',
+      'level',
+      'duration',
+      'description',
+    ]) {
+      if (typeof prefill[key] === 'string' && prefill[key]) mapped[key] = prefill[key];
+    }
     if (typeof prefill.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(prefill.date)) {
       mapped.date = prefill.date;
     }
-    // Pont Publication → Sortie : le titre (ou la légende) est repris (maquette L2864).
-    if (typeof prefill.title === 'string' && prefill.title) mapped.title = prefill.title;
+    for (const key of [
+      'nbJours',
+      'meetingLat',
+      'meetingLng',
+      'startLat',
+      'startLng',
+      'distanceKm',
+      'elevationGainM',
+      'deniveleM',
+      'elevationLossM',
+      'maxAltitudeM',
+    ]) {
+      if (typeof prefill[key] === 'number' && Number.isFinite(prefill[key])) mapped[key] = prefill[key];
+    }
+    if (Array.isArray(prefill.trace) && prefill.trace.length >= 2) mapped.trace = prefill.trace;
+    if (Array.isArray(prefill.safetyChecklist) && prefill.safetyChecklist.length > 0) {
+      mapped.safetyChecklist = prefill.safetyChecklist;
+    }
     return Object.keys(mapped).length > 0 ? mapped : null;
   }, [prefill]);
 

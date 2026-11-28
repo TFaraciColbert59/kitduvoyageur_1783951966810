@@ -164,14 +164,30 @@ describe('explorer-v2 redesign · selectExplorerMapContext', () => {
     expect(base).toEqual(snapshot);
   });
 
-  it('exports the exact 5-category order', () => {
+  it('exports the exact 6-category order including activities (Rando, GR & Activités)', () => {
     expect(EXPLORER_CATEGORY_ORDER).toEqual([
       'explorer',
+      'activities',
       'layers',
       'pokedex',
       'safety',
       'community',
     ]);
+  });
+
+  it('activates routes, walkRoutes, bikeRoutes and distanceMarkers when category is activities', () => {
+    const base = { routes: false, walkRoutes: false, bikeRoutes: false, distanceMarkers: false };
+    const result = selectExplorerMapContext({
+      detent: 'mid',
+      category: 'activities',
+      lensId: 'all',
+      userLayerVisibility: base,
+      hasInteracted: true,
+    });
+    expect(result.routes).toBe(true);
+    expect(result.walkRoutes).toBe(true);
+    expect(result.bikeRoutes).toBe(true);
+    expect(result.distanceMarkers).toBe(true);
   });
 });
 
@@ -226,17 +242,12 @@ describe('explorer-v2 redesign · ExplorerGlassDrawer', () => {
     return { ...utils, onDetentChange, onCategoryChange, onOpenSportLaunch };
   }
 
-  it('renders 5 CapsuleTabs categories and top-right Sport launch button', () => {
-    const { onOpenSportLaunch } = renderDrawer({ detent: 'peek' });
+  it('renders 6 full-width CapsuleTabs categories inside the drawer header', () => {
+    renderDrawer({ detent: 'peek' });
 
     const tablist = screen.getByRole('tablist', { name: 'Catégories Explorer' });
     const tabs = tablist.querySelectorAll('[role="tab"]');
-    expect(tabs.length).toBe(5);
-
-    const sportBtn = screen.getByRole('button', { name: 'Démarrer une activité' });
-    expect(sportBtn).toBeTruthy();
-    fireEvent.click(sportBtn);
-    expect(onOpenSportLaunch).toHaveBeenCalledTimes(1);
+    expect(tabs.length).toBe(6);
   });
 
   it('dispatches lkdv-toggle-bottom-bar (hide: false in peek, hide: true in mid/full) and restores on unmount', () => {

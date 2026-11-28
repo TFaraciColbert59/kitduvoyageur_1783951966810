@@ -21,6 +21,8 @@ const pointSchema = z
 const bodySchema = z
   .object({
     sessionId: z.string().uuid(),
+    /** Bail d'écrivain multi-device optionnel (Lot 00+). */
+    writerLeaseId: z.string().uuid().nullable().optional(),
     points: z.array(pointSchema).max(200),
     /** Heure réelle du premier point, pour une séance créée hors ligne. */
     startedAt: z.number().int().min(946_684_800_000).max(4_102_444_800_000).nullable().optional(),
@@ -28,9 +30,10 @@ const bodySchema = z
     endedAt: z.number().int().min(946_684_800_000).max(4_102_444_800_000).nullable().optional(),
     metrics: z
       .object({
-        distanceM: z.number().int().min(0).max(100_000_000),
-        elevGainM: z.number().int().min(0).max(10_000_000),
-        movingS: z.number().int().min(0).max(100_000_000),
+        // Accepte les flottants issus du tracker GPS/baro, arrondis avant RPC integer.
+        distanceM: z.number().finite().min(0).max(100_000_000),
+        elevGainM: z.number().finite().min(0).max(10_000_000),
+        movingS: z.number().finite().min(0).max(100_000_000),
         paused: z.boolean(),
       })
       .strict(),
@@ -100,9 +103,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       body: JSON.stringify({
         p_session: parsed.data.sessionId,
         p_points: points,
-        p_distance_m: parsed.data.metrics.distanceM,
-        p_elev_gain_m: parsed.data.metrics.elevGainM,
-        p_moving_s: parsed.data.metrics.movingS,
+        p_distance_m: Math.round(parsed.data.metrics.distanceM),
+        p_elev_gain_m: Math.round(parsed.data.metrics.elevGainM),
+        p_moving_s: Math.round(parsed.data.metrics.movingS),
         p_paused: parsed.data.metrics.paused,
         p_started_at: parsed.data.startedAt
           ? new Date(parsed.data.startedAt).toISOString()

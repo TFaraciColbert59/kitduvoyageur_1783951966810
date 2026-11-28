@@ -1,3 +1,8 @@
-/* Visible Info.plist texts, in English (PLAN-100 6.4). The app name is a brand: not translated. */
+/* Visible Info.plist texts, in English (Lot 00 App Store Compliance). */
 "CFBundleDisplayName" = "Le Kit du Voyageur";
-"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur uses your location to find the starting point and route of your trip. It is only read while the app is open, never in the background. In Compas, it is asked for only when needed, without tracking, and rounded to about 1 km to plan the route. It is never shown to anyone without your consent.";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur uses your location to center the Explorer map, plan itineraries, and record your outdoor activities (distance, route track, elevation gain, and off-route guidance).";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Allow background location so Le Kit du Voyageur can keep recording your GPS track, elevation gain, and live safety Beacon while your iPhone screen is locked during an outing. Continued use of GPS running in the background can significantly decrease battery life.";
+"NSMotionUsageDescription" = "Le Kit du Voyageur uses the barometer, pedometer, and motion sensor to compute accurate elevation gain without GPS noise, trigger auto-pause, and detect forgotten stops in a vehicle.";
+"NSBluetoothAlwaysUsageDescription" = "Le Kit du Voyageur connects via Bluetooth to your sports sensors (heart rate strap, cycling power meter, cadence sensor, or FTMS trainer) to record live metrics even while the screen is locked.";
+"NSHealthShareUsageDescription" = "Le Kit du Voyageur reads your workouts and recovery indicators (resting heart rate, HRV, sleep) from Apple Health to adapt effort estimates and prevent duplicate activities. This data is never shared for advertising.";
+"NSHealthUpdateUsageDescription" = "Le Kit du Voyageur saves your completed outings (distance, elevation gain, active energy, and GPS route) to Apple Health so your activity history stays unified.";

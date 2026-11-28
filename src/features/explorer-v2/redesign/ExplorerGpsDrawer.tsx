@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Activity,
   AlertTriangle,
   ArrowUp,
+  BarChart3,
   Camera,
   Check,
-  ChevronDown,
-  ChevronUp,
   Copy,
   CornerUpLeft,
   CornerUpRight,
@@ -28,6 +29,7 @@ import {
   RotateCcw,
   Send,
   ShieldAlert,
+  SlidersHorizontal,
   Square,
   Tent,
   TrendingUp,
@@ -38,8 +40,35 @@ import {
 import { AnimatedNumber } from '@/components/carnet/v2/CarnetDrawerMotion';
 import { SortMenuButton, type SortMenuGroup } from '@/components/ui/drawer/SortMenuButton';
 import { useWakeLock } from '../hud/useWakeLock';
+import { resolveActivityProfile } from '../specs/resolveActivityProfile';
 import type { ExplorerMode, HudContrastMode, SafetyCorridorState } from '../state/hudMachine';
 import type { ActivityState } from '../state/types';
+import { GpsCockpitGrid } from './hud/GpsCockpitGrid';
+import type { LiveSplitRow, LiveTelemetrySample } from './hud/GpsTelemetrySubDrawer';
+
+const LazyGpsTelemetrySubDrawer = lazy(() =>
+  import('./hud/GpsTelemetrySubDrawer').then((m) => ({ default: m.GpsTelemetrySubDrawer })),
+);
+const LazyGpsSafetySosSubDrawer = lazy(() =>
+  import('./hud/GpsSafetySosSubDrawer').then((m) => ({ default: m.GpsSafetySosSubDrawer })),
+);
+const LazyGpsTerrainControlsSubDrawer = lazy(() =>
+  import('./hud/GpsTerrainControlsSubDrawer').then((m) => ({
+    default: m.GpsTerrainControlsSubDrawer,
+  })),
+);
+const LazyStrengthLoggerHevyView = lazy(() =>
+  import('./views/StrengthLoggerHevyView').then((m) => ({ default: m.StrengthLoggerHevyView })),
+);
+const LazyPoolLapsSwolfView = lazy(() =>
+  import('./views/PoolLapsSwolfView').then((m) => ({ default: m.PoolLapsSwolfView })),
+);
+const LazySkiRunsLiftsView = lazy(() =>
+  import('./views/SkiRunsLiftsView').then((m) => ({ default: m.SkiRunsLiftsView })),
+);
+const LazyMultisportLegsView = lazy(() =>
+  import('./views/MultisportLegsView').then((m) => ({ default: m.MultisportLegsView })),
+);
 
 export interface ExplorerGpsTurnByTurn {
   instruction: string;
@@ -110,6 +139,32 @@ export interface ExplorerGpsDrawerProps {
 
 const STOP_HOLD_MS = 800;
 const SOS_COUNTDOWN_S = 3;
+
+type GpsDrawerDetent = 'peek' | 'mid' | 'full';
+
+function nextGpsTapDetent(current: GpsDrawerDetent): GpsDrawerDetent {
+  if (current === 'peek') return 'mid';
+  if (current === 'mid') return 'full';
+  return 'peek';
+}
+
+function resolveGpsDraggedDetent(
+  current: GpsDrawerDetent,
+  deltaY: number,
+  velocityY: number,
+): GpsDrawerDetent {
+  const pulledUp = deltaY < -36 || velocityY < -0.4;
+  const pulledDown = deltaY > 36 || velocityY > 0.4;
+  if (pulledUp) {
+    if (current === 'peek') return deltaY < -190 ? 'full' : 'mid';
+    return 'full';
+  }
+  if (pulledDown) {
+    if (current === 'full') return deltaY > 210 ? 'peek' : 'mid';
+    return 'peek';
+  }
+  return current;
+}
 
 const QUICK_WAYPOINT_CHIPS: ReadonlyArray<{
   kind: QuickWaypointKind;
@@ -215,7 +270,17 @@ export function ExplorerGpsDrawer({
 }: ExplorerGpsDrawerProps) {
   useWakeLock(true);
 
-  const [expanded, setExpanded] = useState(false);
+  const [drawerDetent, setDrawerDetent] = useState<GpsDrawerDetent>('mid');
+  const [dragging, setDragging] = useState(false);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const grabDragRef = useRef<{
+    pointerId: number;
+    startY: number;
+    startTime: number;
+    lastY: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressGrabClickRef = useRef(false);
   const [waypointPopoverOpen, setWaypointPopoverOpen] = useState(false);
   const [holdProgress, setHoldProgress] = useState(0);
   const [stopTapHint, setStopTapHint] = useState(false);
@@ -223,6 +288,29 @@ export function ExplorerGpsDrawer({
   const [sosCountdown, setSosCountdown] = useState(SOS_COUNTDOWN_S);
   const [beaconCopied, setBeaconCopied] = useState(false);
   const [coordsCopied, setCoordsCopied] = useState(false);
+  const [telemetryOpen, setTelemetryOpen] = useState(false);
+  const [safetySosOpen, setSafetySosOpen] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [glovesMode, setGlovesMode] = useState(false);
+  const [rainLockActive, setRainLockActive] = useState(false);
+  const [bivouacSleepActive, setBivouacSleepActive] = useState(false);
+  const [telemetrySamples, setTelemetrySamples] = useState<LiveTelemetrySample[]>([]);
+  const [liveSplits, setLiveSplits] = useState<LiveSplitRow[]>([]);
+  const splitTrackerRef = useRef<{ lastKm: number; lastTimeS: number; lastEleM: number }>({
+    lastKm: 0,
+    lastTimeS: 0,
+    lastEleM: 0,
+  });
+
+  const activeProfile = useMemo(
+    () =>
+      resolveActivityProfile(
+        activity.selection?.catalogSlug || activity.selection?.variantId || activity.sport,
+      ),
+    [activity.selection?.catalogSlug, activity.selection?.variantId, activity.sport],
+  );
+  const [customFields, setCustomFields] = useState<string[] | null>(null);
+  const effectiveFields = customFields ?? [...activeProfile.ui.cockpitGridFields];
 
   // Elapsed clock state that freezes cleanly while paused (never resets to 00:00)
   const [clockState, setClockState] = useState(() => ({
@@ -240,12 +328,22 @@ export function ExplorerGpsDrawer({
   const stopHintTimerRef = useRef<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
 
-  // Keep global NavigationBar hidden while in GPS_ACTIVE / SOS
+  // Garder la bottom bar globale VISIBLE en `peek` et `mid` pour continuer à naviguer
+  // librement dans l'app pendant la sortie (masquée uniquement en `full` plein écran).
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    document.documentElement.dataset.explorerSheetOpen = 'true';
-    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: true } }));
+    const hideBar = drawerDetent === 'full';
+    if (hideBar) {
+      document.documentElement.dataset.explorerSheetOpen = 'true';
+    } else {
+      delete document.documentElement.dataset.explorerSheetOpen;
+    }
+    window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: hideBar } }));
+  }, [drawerDetent]);
+
+  useEffect(() => {
     return () => {
+      if (typeof window === 'undefined') return;
       delete document.documentElement.dataset.explorerSheetOpen;
       window.dispatchEvent(new CustomEvent('lkdv-toggle-bottom-bar', { detail: { hide: false } }));
     };
@@ -481,12 +579,71 @@ export function ExplorerGpsDrawer({
   const inkPrimary = isNightRed ? '#FCA5A5' : isSunlight ? '#0B1F17' : '#172B24';
   const inkSecondary = isNightRed ? '#F87171' : isSunlight ? '#172B24' : '#56665D';
 
-  const showRerouteBanner = Boolean(
-    reroute && reroute.state && reroute.state !== 'on_route' && reroute.state !== 'idle',
+  const hasActiveGuidance = Boolean(
+    activity.route?.geojson || turnByTurn?.instruction || (reroute && reroute.state && reroute.state !== 'on_route' && reroute.state !== 'idle'),
   );
-  const showSecondaryTelemetry =
-    (currentAltitudeM !== null && Number.isFinite(currentAltitudeM)) ||
-    (currentSpeedKmh !== null && Number.isFinite(currentSpeedKmh));
+  const showRerouteBanner = Boolean(
+    hasActiveGuidance &&
+      reroute &&
+      reroute.state &&
+      reroute.state !== 'on_route' &&
+      reroute.state !== 'idle',
+  );
+  const safeAltitudeM =
+    currentAltitudeM !== null && Number.isFinite(currentAltitudeM) ? currentAltitudeM : 0;
+  const safeSpeedKmh =
+    currentSpeedKmh !== null && Number.isFinite(currentSpeedKmh) ? Math.max(0, currentSpeedKmh) : 0;
+
+  // Record lightweight live telemetry curve samples (max 48 pts) & automatic per-km splits
+  useEffect(() => {
+    const distM = Math.max(0, activity.distanceM || 0);
+    setTelemetrySamples((prev) => {
+      const now = Date.now();
+      const last = prev[prev.length - 1];
+      if (
+        last &&
+        now - last.t < 4000 &&
+        Math.abs(distM - last.distanceM) < 8 &&
+        Math.abs(safeAltitudeM - last.altitudeM) < 1 &&
+        Math.abs(safeSpeedKmh - last.speedKmh) < 0.4
+      ) {
+        return prev;
+      }
+      const next = [...prev, { t: now, distanceM: distM, altitudeM: safeAltitudeM, speedKmh: safeSpeedKmh }];
+      return next.length > 48 ? next.slice(next.length - 48) : next;
+    });
+
+    const completedKm = Math.floor(distM / 1000);
+    const tracker = splitTrackerRef.current;
+    if (completedKm > tracker.lastKm) {
+      const deltaS = Math.max(1, displayedSeconds - tracker.lastTimeS);
+      const speed = Number((3600 / deltaS).toFixed(1));
+      const min = Math.floor(deltaS / 60);
+      const sec = deltaS % 60;
+      const paceLabel =
+        activeProfile.algorithms.primarySpeedUnit === 'min_per_km'
+          ? `${min}:${String(sec).padStart(2, '0')}/km`
+          : `${speed.toFixed(1).replace('.', ',')} km/h`;
+      const elevDeltaM = Math.round(safeAltitudeM - tracker.lastEleM);
+      tracker.lastKm = completedKm;
+      tracker.lastTimeS = displayedSeconds;
+      tracker.lastEleM = safeAltitudeM;
+      setLiveSplits((prev) => [
+        ...prev,
+        { kmIndex: completedKm, paceLabel, speedKmh: speed, elevDeltaM },
+      ]);
+    }
+  }, [activity.distanceM, safeAltitudeM, safeSpeedKmh, displayedSeconds, activeProfile.algorithms.primarySpeedUnit]);
+
+  const liveGradePct = useMemo(() => {
+    if (telemetrySamples.length < 2) return 0;
+    const prev = telemetrySamples[telemetrySamples.length - 2];
+    const last = telemetrySamples[telemetrySamples.length - 1];
+    const dDist = last.distanceM - prev.distanceM;
+    if (dDist < 12) return 0;
+    const raw = ((last.altitudeM - prev.altitudeM) / dDist) * 100;
+    return Math.max(-25, Math.min(25, Number(raw.toFixed(1))));
+  }, [telemetrySamples]);
 
   const sosCoordReadout = useMemo(() => {
     if (!currentCoords || !Number.isFinite(currentCoords[0]) || !Number.isFinite(currentCoords[1])) {
@@ -556,6 +713,72 @@ export function ExplorerGpsDrawer({
     onMarkWaypoint();
   }, [onDropWaypoint, onMarkWaypoint]);
 
+  const handleGrabberPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 && event.pointerType === 'mouse') return;
+    grabDragRef.current = {
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      startTime: performance.now(),
+      lastY: event.clientY,
+      moved: false,
+    };
+    suppressGrabClickRef.current = false;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* ignore */
+    }
+    setDragging(true);
+    setDragOffsetY(0);
+  }, []);
+
+  const handleGrabberPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      const ref = grabDragRef.current;
+      if (!ref || ref.pointerId !== event.pointerId) return;
+      const rawDy = event.clientY - ref.startY;
+      ref.lastY = event.clientY;
+      if (Math.abs(rawDy) >= 8) ref.moved = true;
+      let clamped = rawDy;
+      if (drawerDetent === 'full' && rawDy < 0) clamped = rawDy * 0.2;
+      else if (drawerDetent === 'peek' && rawDy > 0) clamped = rawDy * 0.2;
+      setDragOffsetY(Math.max(-220, Math.min(220, clamped)));
+    },
+    [drawerDetent],
+  );
+
+  const finishGrabberDrag = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>, cancelled: boolean) => {
+      const ref = grabDragRef.current;
+      if (!ref || ref.pointerId !== event.pointerId) return;
+      grabDragRef.current = null;
+      try {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        /* ignore */
+      }
+      setDragging(false);
+      setDragOffsetY(0);
+      if (cancelled || !ref.moved) return;
+      suppressGrabClickRef.current = true;
+      const dy = ref.lastY - ref.startY;
+      const dt = Math.max(1, performance.now() - ref.startTime);
+      const next = resolveGpsDraggedDetent(drawerDetent, dy, dy / dt);
+      if (next !== drawerDetent) setDrawerDetent(next);
+    },
+    [drawerDetent],
+  );
+
+  const handleGrabberClick = useCallback(() => {
+    if (suppressGrabClickRef.current) {
+      suppressGrabClickRef.current = false;
+      return;
+    }
+    setDrawerDetent((prev) => nextGpsTapDetent(prev));
+  }, []);
+
   const toolPillStyle: React.CSSProperties = {
     height: 28,
     padding: '0 8px',
@@ -581,29 +804,45 @@ export function ExplorerGpsDrawer({
 
   return (
     <>
-      <section
+      <motion.section
         className="xp20-gps-drawer"
         data-testid="xp20-gps-drawer"
         data-mode={mode}
+        data-detent={drawerDetent}
         data-hud-contrast={contrast !== 'standard' ? contrast : undefined}
         aria-label="Suivi GPS actif"
+        initial={{ opacity: 0, y: 44, scale: 0.97 }}
+        animate={{ opacity: 1, y: dragOffsetY, scale: dragging ? 0.992 : 1 }}
+        transition={
+          dragging
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 420, damping: 34, mass: 0.78 }
+        }
         style={{
           position: 'fixed',
           left: 10,
           right: 10,
-          bottom: 'calc(var(--safe-bottom, 0px) + 10px)',
+          bottom:
+            drawerDetent === 'full'
+              ? 'calc(var(--safe-bottom, 0px) + 10px)'
+              : 'calc(var(--safe-bottom, 0px) + 78px)',
           maxWidth: 430,
+          maxHeight: drawerDetent === 'full' ? '80dvh' : undefined,
+          overflowY: drawerDetent === 'full' ? 'auto' : 'visible',
+          WebkitOverflowScrolling: 'touch',
           margin: '0 auto',
           zIndex: 24,
           borderRadius: 26,
-          padding: '8px 12px 12px',
+          padding: drawerDetent === 'peek' ? '4px 12px 10px' : '4px 12px 12px',
           background: isNightRed
             ? '#140404'
             : isSunlight
               ? '#FFFFFF'
               : 'linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(251, 250, 246, 0.94) 100%)',
-          backdropFilter: isNightRed || isSunlight ? 'none' : 'blur(32px) saturate(1.15)',
-          WebkitBackdropFilter: isNightRed || isSunlight ? 'none' : 'blur(32px) saturate(1.15)',
+          backdropFilter: isNightRed || isSunlight ? 'none' : 'blur(14px) saturate(1.15)',
+          WebkitBackdropFilter: isNightRed || isSunlight ? 'none' : 'blur(14px) saturate(1.15)',
+          contain: 'layout style paint',
+          willChange: 'transform',
           border: isNightRed
             ? '1px solid rgba(220, 38, 38, 0.5)'
             : isSunlight
@@ -618,7 +857,160 @@ export function ExplorerGpsDrawer({
           boxSizing: 'border-box',
         }}
       >
-        {/* Top HUD Header: Visible Safety Corridor handle + Sport pill + Field Tools + Direct SOS */}
+        {/* Centered Explorer-style Grabber Notch (encoche) for peek / mid / full */}
+        <button
+          type="button"
+          className="xp20-gps-grab"
+          data-testid="xp20-gps-grabber"
+          aria-label={
+            drawerDetent === 'peek'
+              ? 'Ouvrir le panneau GPS'
+              : drawerDetent === 'mid'
+                ? 'Agrandir le cockpit GPS'
+                : 'Refermer le panneau GPS'
+          }
+          onPointerDown={handleGrabberPointerDown}
+          onPointerMove={handleGrabberPointerMove}
+          onPointerUp={(e) => finishGrabberDrag(e, false)}
+          onPointerCancel={(e) => finishGrabberDrag(e, true)}
+          onClick={handleGrabberClick}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: 22,
+            margin: '0 0 4px',
+            padding: 0,
+            border: 0,
+            background: 'transparent',
+            cursor: dragging ? 'grabbing' : 'grab',
+            touchAction: 'none',
+          }}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              width: dragging ? 52 : 40,
+              height: 4.5,
+              borderRadius: 999,
+              background: isNightRed
+                ? 'rgba(248, 113, 113, 0.55)'
+                : isSunlight
+                  ? '#0B1F17'
+                  : dragging
+                    ? 'rgba(23, 64, 44, 0.44)'
+                    : 'rgba(23, 43, 36, 0.24)',
+              transition: 'width 180ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 160ms ease',
+            }}
+          />
+        </button>
+
+        {/* PEEK DETENT: ultra-compact single-row HUD leaving ~88% of map visible */}
+        {drawerDetent === 'peek' ? (
+          <motion.div
+            key="gps-peek"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 460, damping: 34, mass: 0.7 }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            <button
+              type="button"
+              className="xp20-tactile"
+              onClick={() => setDrawerDetent('mid')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flex: '1 1 auto',
+                minWidth: 0,
+                border: 0,
+                background: 'transparent',
+                padding: '2px 0',
+                color: inkPrimary,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span
+                className={!isPaused ? 'xp20-pulse-dot' : undefined}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: isPaused ? '#D97706' : '#2E7D4F',
+                  color: isPaused ? '#D97706' : '#2E7D4F',
+                  flex: 'none',
+                }}
+              />
+              <strong style={{ fontSize: 16, fontWeight: 900, letterSpacing: '-0.02em' }}>
+                {distanceDisplay.value}
+                {distanceDisplay.suffix}
+              </strong>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: inkSecondary }}>
+                {formatElapsedClock(displayedSeconds)}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: inkSecondary }}>
+                +{elevGainM} m
+              </span>
+            </button>
+
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+              <button
+                type="button"
+                className="xp20-tactile"
+                onClick={onTogglePause}
+                aria-label={isPaused ? 'Reprendre' : 'Mettre en pause'}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  border: 0,
+                  background: isNightRed ? '#7F1D1D' : '#17402C',
+                  color: '#FBFAF6',
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                {isPaused ? <Play size={15} fill="currentColor" /> : <Pause size={15} />}
+              </button>
+              <button
+                type="button"
+                className="xp20-tactile"
+                onClick={onMarkWaypoint}
+                aria-label="Poser un repère"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 999,
+                  border: '0.5px solid rgba(23, 64, 44, 0.18)',
+                  background: isNightRed ? '#220606' : '#FFFFFF',
+                  color: inkPrimary,
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <MapPin size={15} />
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="gps-mid-full"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.75 }}
+          >
+        {/* Top HUD Header: Sport pill + Field Tools + Direct SOS (Corridor removed) */}
         <div
           style={{
             display: 'flex',
@@ -629,80 +1021,11 @@ export function ExplorerGpsDrawer({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-            {/* High-contrast Safety Corridor toggle handle */}
-            <button
-              type="button"
-              className="xp20-gps-grab"
-              onClick={() => setExpanded((v) => !v)}
-              aria-expanded={expanded}
-              aria-label={expanded ? 'Masquer le corridor de sécurité' : 'Afficher le corridor de sécurité'}
-              style={{
-                position: 'relative',
-                left: 'auto',
-                top: 'auto',
-                margin: 0,
-                height: 28,
-                padding: '0 10px',
-                borderRadius: 999,
-                border: isNightRed
-                  ? '1px solid rgba(248, 113, 113, 0.5)'
-                  : isSunlight
-                    ? '1.5px solid #0B1F17'
-                    : '0.5px solid rgba(23, 64, 44, 0.22)',
-                background: isNightRed
-                  ? '#2B0808'
-                  : isSunlight
-                    ? '#0B1F17'
-                    : expanded
-                      ? '#17402C'
-                      : 'rgba(23, 64, 44, 0.09)',
-                color: isNightRed
-                  ? '#FECACA'
-                  : isSunlight || expanded
-                    ? '#FBFAF6'
-                    : '#17402C',
-                fontSize: 11,
-                fontWeight: 800,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                cursor: 'pointer',
-                flex: 'none',
-              }}
-            >
-              {expanded ? (
-                <ChevronDown size={13} aria-hidden="true" />
-              ) : (
-                <ChevronUp size={13} aria-hidden="true" />
-              )}
-              <span>Corridor</span>
-              {hazardCount > 0 ? (
-                <span
-                  aria-label={`${hazardCount} risque${hazardCount > 1 ? 's' : ''}`}
-                  style={{
-                    minWidth: 15,
-                    height: 15,
-                    padding: '0 4px',
-                    borderRadius: 999,
-                    background: '#DC2626',
-                    color: '#FFFFFF',
-                    fontSize: 9.5,
-                    fontWeight: 800,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {hazardCount}
-                </span>
-              ) : null}
-            </button>
-
             {sportLabel ? (
               <span
                 style={{
                   height: 26,
-                  padding: '0 9px',
+                  padding: '0 10px',
                   borderRadius: 999,
                   background: isNightRed
                     ? 'rgba(127, 29, 29, 0.35)'
@@ -710,17 +1033,31 @@ export function ExplorerGpsDrawer({
                       ? '#F1F5F2'
                       : 'rgba(150, 186, 142, 0.24)',
                   color: isNightRed ? '#FECACA' : '#17402C',
-                  fontSize: 11,
+                  fontSize: 11.5,
                   fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
+                  gap: 5,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  maxWidth: 110,
+                  maxWidth: 148,
                 }}
               >
-                {sportLabel}
+                <span
+                  className={!isPaused ? 'xp20-pulse-dot' : undefined}
+                  aria-hidden="true"
+                  style={{
+                    width: 6.5,
+                    height: 6.5,
+                    borderRadius: 999,
+                    background: isPaused ? '#D97706' : '#2E7D4F',
+                    color: isPaused ? '#D97706' : '#2E7D4F',
+                    flex: 'none',
+                  }}
+                />
+                <Activity size={12} aria-hidden="true" style={{ flex: 'none' }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{sportLabel}</span>
               </span>
             ) : null}
           </div>
@@ -729,6 +1066,7 @@ export function ExplorerGpsDrawer({
             {onToggleAudio ? (
               <button
                 type="button"
+                className="xp20-tactile"
                 onClick={onToggleAudio}
                 aria-label={audioMuted ? 'Activer le guidage vocal' : 'Couper le guidage vocal'}
                 aria-pressed={!audioMuted}
@@ -745,6 +1083,7 @@ export function ExplorerGpsDrawer({
             {onToggleBeacon ? (
               <button
                 type="button"
+                className="xp20-tactile"
                 onClick={onToggleBeacon}
                 aria-label={beaconActive ? 'Désactiver la balise Live' : 'Activer la balise Live'}
                 aria-pressed={beaconActive}
@@ -756,18 +1095,20 @@ export function ExplorerGpsDrawer({
                       : 'rgba(46, 125, 79, 0.16)'
                     : toolPillStyle.background,
                   color: beaconActive ? (isNightRed ? '#FECACA' : '#17402C') : inkPrimary,
-                  borderColor: beaconActive ? 'rgba(46, 125, 79, 0.45)' : undefined,
+                  border: beaconActive ? '1px solid rgba(46, 125, 79, 0.45)' : toolPillStyle.border,
                 }}
               >
                 <Radio size={13} aria-hidden="true" />
                 {beaconActive ? (
                   <span
+                    className="xp20-pulse-dot"
                     aria-hidden="true"
                     style={{
                       width: 6,
                       height: 6,
                       borderRadius: 999,
                       background: '#2E7D4F',
+                      color: '#2E7D4F',
                     }}
                   />
                 ) : null}
@@ -788,6 +1129,7 @@ export function ExplorerGpsDrawer({
                 />
                 <button
                   type="button"
+                  className="xp20-tactile"
                   onClick={() => photoInputRef.current?.click()}
                   aria-label="Prendre une photo géolocalisée"
                   style={toolPillStyle}
@@ -800,6 +1142,7 @@ export function ExplorerGpsDrawer({
             {onOpenReport ? (
               <button
                 type="button"
+                className="xp20-tactile"
                 onClick={onOpenReport}
                 aria-label="Signaler un danger terrain"
                 style={toolPillStyle}
@@ -811,6 +1154,7 @@ export function ExplorerGpsDrawer({
             {/* Direct tactile SOS 112 pill */}
             <button
               type="button"
+              className="xp20-tactile"
               onClick={openSosCountdown}
               aria-label={`Urgence SOS ${emergencyNumber}`}
               style={{
@@ -1011,7 +1355,7 @@ export function ExplorerGpsDrawer({
         ) : null}
 
         {/* Crisp Liquid Glass Turn-by-Turn Banner */}
-        {turnByTurn && turnByTurn.instruction ? (
+        {hasActiveGuidance && turnByTurn && turnByTurn.instruction ? (
           <div
             data-testid="xp20-tbt-banner"
             style={{
@@ -1120,7 +1464,8 @@ export function ExplorerGpsDrawer({
         ) : null}
 
         {/* Compact Climb Progress Chip */}
-        {climbCard &&
+        {hasActiveGuidance &&
+        climbCard &&
         (climbCard.name ||
           climbCard.remainingGainM !== null ||
           climbCard.avgGradePct !== null) ? (
@@ -1394,43 +1739,43 @@ export function ExplorerGpsDrawer({
           </div>
         </div>
 
-        {/* Optional 2nd telemetry row: Altitude + Speed */}
-        {showSecondaryTelemetry ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              padding: '4px 10px 8px',
-              fontSize: 11.5,
-              fontWeight: 700,
-              color: inkSecondary,
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {currentAltitudeM !== null && Number.isFinite(currentAltitudeM) ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Mountain size={12} aria-hidden="true" />
-                {units === 'imperial'
-                  ? `${Math.round(currentAltitudeM * 3.28084)} ft`
-                  : `${Math.round(currentAltitudeM)} m`}
-              </span>
-            ) : null}
-            {currentSpeedKmh !== null && Number.isFinite(currentSpeedKmh) ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Gauge size={12} aria-hidden="true" />
-                {units === 'imperial'
-                  ? `${(currentSpeedKmh * 0.621371).toFixed(1).replace('.', ',')} mph`
-                  : `${currentSpeedKmh.toFixed(1).replace('.', ',')} km/h`}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
+        {/* 2nd telemetry row: Altitude + Speed (always shows 0 instead of dashes) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 12,
+            padding: '4px 10px 8px',
+            fontSize: 11.5,
+            fontWeight: 700,
+            color: inkSecondary,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Mountain size={12} aria-hidden="true" />
+            {units === 'imperial'
+              ? `${Math.round(safeAltitudeM * 3.28084)} ft`
+              : `${Math.round(safeAltitudeM)} m`}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Gauge size={12} aria-hidden="true" />
+            {units === 'imperial'
+              ? `${(safeSpeedKmh * 0.621371).toFixed(1).replace('.', ',')} mph`
+              : `${safeSpeedKmh.toFixed(1).replace('.', ',')} km/h`}
+          </span>
+        </div>
 
-        {/* Expandable 3 km safety corridor + GPS accuracy mini-panel */}
-        {expanded ? (
-          <div
+        {/* Full detent: Adaptive cockpit + GPS telemetry + 3 expert buttons */}
+        <AnimatePresence initial={false}>
+        {drawerDetent === 'full' ? (
+          <motion.div
+            key="gps-full-cockpit"
+            initial={{ opacity: 0, y: 12, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.985 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.75 }}
             style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -1492,14 +1837,84 @@ export function ExplorerGpsDrawer({
                   ? `±${Math.round(gpsAccuracyM)} m`
                   : 'GPS'}
             </span>
-          </div>
+
+            {/* Cockpit adaptatif & vue spécialisée sport (Muscu Hevy / Piscine SWOLF / Ski / Multisport) */}
+            <div style={{ width: '100%', marginTop: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Suspense fallback={null}>
+                {activeProfile.ui.defaultView === 'strength_logger_hevy' ? (
+                  <LazyStrengthLoggerHevyView />
+                ) : activeProfile.ui.defaultView === 'pool_laps_swolf' ? (
+                  <LazyPoolLapsSwolfView />
+                ) : activeProfile.ui.defaultView === 'ski_runs_lifts' ? (
+                  <LazySkiRunsLiftsView
+                    runsCount={0}
+                    verticalDescentM={0}
+                    liftAscentExcludedM={0}
+                    maxSpeedKmh={currentSpeedKmh ?? 0}
+                  />
+                ) : activeProfile.ui.defaultView === 'multisport_legs' ? (
+                  <LazyMultisportLegsView />
+                ) : (
+                  <GpsCockpitGrid
+                    profile={activeProfile}
+                    units={units}
+                    customFieldOrder={effectiveFields}
+                    telemetry={{
+                      distanceM: activity.distanceM || 0,
+                      movingS: displayedSeconds,
+                      elevGainM,
+                      altitudeM: currentAltitudeM,
+                    }}
+                  />
+                )}
+              </Suspense>
+
+              {/* 3 boutons 1-tap vers les sous-tiroirs experts */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 6 }}>
+                <button
+                  type="button"
+                  className="xp20-tactile"
+                  onClick={() => setTelemetryOpen(true)}
+                  style={{ ...toolPillStyle, height: 36, width: '100%' }}
+                >
+                  <BarChart3 size={13} aria-hidden="true" />
+                  <span>Télémétrie</span>
+                </button>
+                <button
+                  type="button"
+                  className="xp20-tactile"
+                  onClick={() => setSafetySosOpen(true)}
+                  style={{ ...toolPillStyle, height: 36, width: '100%' }}
+                >
+                  <ShieldAlert size={13} aria-hidden="true" />
+                  <span>Fiche SOS</span>
+                </button>
+                <button
+                  type="button"
+                  className="xp20-tactile"
+                  onClick={() => setControlsOpen(true)}
+                  style={{ ...toolPillStyle, height: 36, width: '100%' }}
+                >
+                  <SlidersHorizontal size={13} aria-hidden="true" />
+                  <span>Contrôles</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
         ) : null}
+        </AnimatePresence>
 
         {/* Quick wrapped Waypoint chip popover (all 5 chips visible with zero clipping) */}
+        <AnimatePresence>
         {waypointPopoverOpen && onDropWaypoint ? (
-          <div
+          <motion.div
+            key="gps-waypoint-popover"
             role="menu"
             aria-label="Choisir un type de repère"
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 460, damping: 32, mass: 0.7 }}
             style={{
               display: 'flex',
               flexWrap: 'wrap',
@@ -1519,11 +1934,15 @@ export function ExplorerGpsDrawer({
                 : '0.5px solid rgba(23, 64, 44, 0.14)',
             }}
           >
-            {QUICK_WAYPOINT_CHIPS.map((chip) => (
-              <button
+            {QUICK_WAYPOINT_CHIPS.map((chip, idx) => (
+              <motion.button
                 key={chip.kind}
                 type="button"
                 role="menuitem"
+                className="xp20-tactile"
+                initial={{ opacity: 0, scale: 0.88 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 480, damping: 30, delay: idx * 0.025 }}
                 onClick={() => {
                   onDropWaypoint({ kind: chip.kind, label: chip.label });
                   setWaypointPopoverOpen(false);
@@ -1550,10 +1969,11 @@ export function ExplorerGpsDrawer({
               >
                 {chip.icon}
                 <span>{chip.label}</span>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         ) : null}
+        </AnimatePresence>
 
         {/* Bottom action row: 3 tactile >= 52px pills + SortMenuButton */}
         <div
@@ -1566,6 +1986,7 @@ export function ExplorerGpsDrawer({
           {/* Pause / Reprendre */}
           <button
             type="button"
+            className="xp20-tactile"
             onClick={onTogglePause}
             aria-label={isPaused ? 'Reprendre' : 'Mettre en pause'}
             style={{
@@ -1604,6 +2025,7 @@ export function ExplorerGpsDrawer({
           {/* Repère */}
           <button
             type="button"
+            className="xp20-tactile"
             onClick={handleRepereButtonClick}
             aria-label="Poser un repère"
             aria-expanded={onDropWaypoint ? waypointPopoverOpen : undefined}
@@ -1714,7 +2136,76 @@ export function ExplorerGpsDrawer({
             label="Contraste et sécurité"
           />
         </div>
-      </section>
+          </motion.div>
+        )}
+      </motion.section>
+
+      {/* Sous-tiroirs experts lazy-loaded (Télémétrie / Fiche SOS / Contrôles & @dnd-kit) */}
+      {telemetryOpen ? (
+        <Suspense fallback={null}>
+          <LazyGpsTelemetrySubDrawer
+            open={telemetryOpen}
+            onOpenChange={setTelemetryOpen}
+            profile={activeProfile}
+            distanceM={activity.distanceM || 0}
+            movingS={displayedSeconds}
+            elevGainM={elevGainM}
+            altitudeM={safeAltitudeM}
+            speedKmh={safeSpeedKmh}
+            gpsAccuracyM={gpsAccuracyM}
+            isDeadReckoning={isDeadReckoning}
+            units={units}
+            samples={telemetrySamples}
+            gradePct={liveGradePct}
+            splits={liveSplits}
+            contrast={contrast}
+            glovesMode={glovesMode}
+          />
+        </Suspense>
+      ) : null}
+
+      {safetySosOpen ? (
+        <Suspense fallback={null}>
+          <LazyGpsSafetySosSubDrawer
+            open={safetySosOpen}
+            onOpenChange={setSafetySosOpen}
+            coords={currentCoords}
+            altitudeM={currentAltitudeM}
+            accuracyM={gpsAccuracyM}
+            beaconActive={beaconActive}
+            beaconShareUrl={beaconShareUrl}
+            onToggleBeacon={onToggleBeacon}
+            onOpenTerrainReport={onOpenReport}
+            emergencyNumber={emergencyNumber}
+            contrast={contrast}
+            glovesMode={glovesMode}
+          />
+        </Suspense>
+      ) : null}
+
+      {controlsOpen ? (
+        <Suspense fallback={null}>
+          <LazyGpsTerrainControlsSubDrawer
+            open={controlsOpen}
+            onOpenChange={setControlsOpen}
+            sportSlug={activeProfile.identity.slugId}
+            contrast={contrast}
+            onContrastChange={onContrastChange}
+            glovesMode={glovesMode}
+            onToggleGlovesMode={setGlovesMode}
+            rainLockActive={rainLockActive}
+            onToggleRainLock={setRainLockActive}
+            bivouacSleepActive={bivouacSleepActive}
+            onToggleBivouacSleep={() => setBivouacSleepActive((v) => !v)}
+            audioMuted={audioMuted}
+            onToggleAudio={onToggleAudio}
+            autoPauseEnabled={autoPauseEnabled}
+            onToggleAutoPause={onToggleAutoPause}
+            cockpitFields={effectiveFields}
+            onReorderCockpitFields={setCustomFields}
+          />
+        </Suspense>
+      ) : null}
 
       {/* Portaled 3-second SOS countdown modal with Coordinates Readout & SMS share */}
       {sosModalOpen && typeof document !== 'undefined'
@@ -1855,7 +2346,7 @@ export function ExplorerGpsDrawer({
                       Alt.{' '}
                       {currentAltitudeM !== null && Number.isFinite(currentAltitudeM)
                         ? `${Math.round(currentAltitudeM)} m`
-                        : '—'}
+                        : '0 m'}
                     </span>
                     <span>
                       Précision{' '}
@@ -1863,7 +2354,7 @@ export function ExplorerGpsDrawer({
                         ? `±${Math.round(gpsAccuracyM)} m`
                         : isDeadReckoning
                           ? 'Estimé'
-                          : '—'}
+                          : '±0 m'}
                     </span>
                   </div>
                 </div>

@@ -239,11 +239,11 @@ export default function RootLayout({
 
         {process.env.NODE_ENV !== 'production' && (
           // Dev : script externe same-origin (autorisé par CSP) pour purger tout
-          // ancien Service Worker `/sw.js` et `lkdv-static-*` avant les chunks.
+          // ancien Service Worker `/sw.js` et `lkdv-static-*` sans collision d'hydratation React 19.
           <Script
             id="service-worker-dev-cleanup"
             src="/dev-sw-cleanup.js"
-            strategy="beforeInteractive"
+            strategy="afterInteractive"
           />
         )}
       </head>

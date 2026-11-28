@@ -38,7 +38,17 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Le Kit du Voyageur utilise l’appareil photo pour ajouter une photo à une publication, une story, un carnet ou un kit. Aucune photo n’est publiée sans ton accord.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Le Kit du Voyageur utilise ta position pour situer le départ et le trajet de ton voyage. Elle n’est lue que lorsque l’app est ouverte, jamais en arrière-plan. Dans le Compas, elle est demandée ponctuellement, sans suivi, et arrondie à environ 1 km pour préparer le trajet. Elle n’est montrée à personne sans ton accord.</string>
+	<string>Le Kit du Voyageur utilise ta position pour centrer la carte Explorer, préparer tes itinéraires et enregistrer tes sorties outdoor (distance, tracé, dénivelé et guidage hors-trace).</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Autorise l’accès en arrière-plan pour que Le Kit du Voyageur continue d’enregistrer ta trace GPS, ton dénivelé et ton Beacon de sécurité lorsque l’écran de l’iPhone est verrouillé pendant une sortie. L’utilisation continue du GPS en arrière-plan peut réduire sensiblement l’autonomie de la batterie.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Le Kit du Voyageur utilise le baromètre, le podomètre et le capteur de mouvement pour calculer un dénivelé précis sans bruit GPS, déclencher l’auto-pause et détecter un oubli d’arrêt en voiture.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Le Kit du Voyageur se connecte en Bluetooth à tes capteurs sportifs (ceinture cardio, capteur de puissance vélo, cadence ou home-trainer FTMS) pour enregistrer tes métriques en temps réel, même écran verrouillé.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Le Kit du Voyageur lit tes séances et indicateurs de récupération (fréquence cardiaque au repos, HRV, sommeil) depuis Apple Santé pour adapter tes estimations d’effort et éviter les doublons. Ces données ne sont jamais partagées à des fins publicitaires.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Le Kit du Voyageur enregistre tes sorties terminées (distance, dénivelé, énergie active et parcours GPS) dans Apple Santé afin de centraliser ton historique sportif.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Le Kit du Voyageur utilise Face ID pour sécuriser l’accès à votre compte et confirmer vos actions sensibles.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -72,7 +82,15 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>bluetooth-central</string>
+		<string>audio</string>
+		<string>remote-notification</string>
+		<string>processing</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -98,7 +116,7 @@
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<false/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>

@@ -2,6 +2,9 @@ import type {
   ComputedCscMetrics,
   DecodedCscFrame,
   DecodedCyclingPowerFrame,
+  DecodedFtmsIndoorBikeFrame,
+  DecodedFtmsRowerFrame,
+  DecodedFtmsTreadmillFrame,
   DecodedHeartRateFrame,
   DecodedRscFrame,
   SensorContactStatus,
@@ -263,4 +266,155 @@ export function decodeBatteryLevel(input: DataView | Uint8Array): number | null 
   const level = view.getUint8(0);
   if (level > 100) return null;
   return level;
+}
+
+/**
+ * Décode FTMS Indoor Bike Data (0x2AD2, service 0x1826).
+ */
+export function decodeFtmsIndoorBikeData(
+  input: DataView | Uint8Array,
+): DecodedFtmsIndoorBikeFrame | null {
+  const view = toDataView(input);
+  if (view.byteLength < 2) return null;
+  const flags = view.getUint16(0, true);
+  let offset = 2;
+
+  let instantaneousSpeedKmh: number | null = null;
+  if ((flags & 0x0001) === 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousSpeedKmh = view.getUint16(offset, true) / 100;
+    offset += 2;
+  }
+  if ((flags & 0x0002) !== 0) offset += 2; // Avg Speed
+
+  let instantaneousCadenceRpm: number | null = null;
+  if ((flags & 0x0004) !== 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousCadenceRpm = view.getUint16(offset, true) * 0.5;
+    offset += 2;
+  }
+  if ((flags & 0x0008) !== 0) offset += 2; // Avg Cadence
+  if ((flags & 0x0010) !== 0) offset += 3; // Total Distance uint24
+  if ((flags & 0x0020) !== 0) offset += 2; // Resistance Level sint16
+
+  let instantaneousPowerWatts: number | null = null;
+  if ((flags & 0x0040) !== 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousPowerWatts = view.getInt16(offset, true);
+    offset += 2;
+  }
+  if ((flags & 0x0080) !== 0) offset += 2; // Avg Power
+  if ((flags & 0x0100) !== 0) offset += 5; // Expended Energy
+
+  let heartRateBpm: number | null = null;
+  if ((flags & 0x0200) !== 0 && offset + 1 <= view.byteLength) {
+    heartRateBpm = view.getUint8(offset);
+  }
+
+  return {
+    kind: 'ftms_indoor_bike',
+    instantaneousSpeedKmh,
+    instantaneousCadenceRpm,
+    instantaneousPowerWatts,
+    heartRateBpm,
+  };
+}
+
+/**
+ * Décode FTMS Treadmill Data (0x2ACD, service 0x1826).
+ */
+export function decodeFtmsTreadmillData(
+  input: DataView | Uint8Array,
+): DecodedFtmsTreadmillFrame | null {
+  const view = toDataView(input);
+  if (view.byteLength < 2) return null;
+  const flags = view.getUint16(0, true);
+  let offset = 2;
+
+  let instantaneousSpeedKmh: number | null = null;
+  if ((flags & 0x0001) === 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousSpeedKmh = view.getUint16(offset, true) / 100;
+    offset += 2;
+  }
+  if ((flags & 0x0002) !== 0) offset += 2; // Avg Speed
+
+  let totalDistanceM: number | null = null;
+  if ((flags & 0x0004) !== 0) {
+    if (offset + 3 > view.byteLength) return null;
+    totalDistanceM =
+      view.getUint8(offset) | (view.getUint8(offset + 1) << 8) | (view.getUint8(offset + 2) << 16);
+    offset += 3;
+  }
+
+  let inclinePct: number | null = null;
+  if ((flags & 0x0008) !== 0) {
+    if (offset + 4 > view.byteLength) return null;
+    inclinePct = view.getInt16(offset, true) / 10;
+  }
+
+  return {
+    kind: 'ftms_treadmill',
+    instantaneousSpeedKmh,
+    inclinePct,
+    totalDistanceM,
+  };
+}
+
+/**
+ * Décode FTMS Rower Data (0x2AD1, service 0x1826 — Concept2 PM5 / WaterRower).
+ */
+export function decodeFtmsRowerData(
+  input: DataView | Uint8Array,
+): DecodedFtmsRowerFrame | null {
+  const view = toDataView(input);
+  if (view.byteLength < 2) return null;
+  const flags = view.getUint16(0, true);
+  let offset = 2;
+
+  let strokeRateSpm: number | null = null;
+  let strokeCount: number | null = null;
+  if ((flags & 0x0001) === 0) {
+    if (offset + 3 > view.byteLength) return null;
+    strokeRateSpm = view.getUint8(offset) * 0.5;
+    strokeCount = view.getUint16(offset + 1, true);
+    offset += 3;
+  }
+  if ((flags & 0x0002) !== 0) offset += 1; // Avg Stroke Rate
+  if ((flags & 0x0004) !== 0) offset += 3; // Total Distance uint24
+
+  let instantaneousPaceSec500m: number | null = null;
+  if ((flags & 0x0008) !== 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousPaceSec500m = view.getUint16(offset, true);
+    offset += 2;
+  }
+  if ((flags & 0x0010) !== 0) offset += 2; // Avg Pace
+
+  let instantaneousPowerWatts: number | null = null;
+  if ((flags & 0x0020) !== 0) {
+    if (offset + 2 > view.byteLength) return null;
+    instantaneousPowerWatts = view.getInt16(offset, true);
+  }
+
+  return {
+    kind: 'ftms_rower',
+    strokeRateSpm,
+    strokeCount,
+    instantaneousPaceSec500m,
+    instantaneousPowerWatts,
+  };
+}
+
+/**
+ * Encode une commande FTMS Control Point (0x2AD9) : Set Target Power (OpCode 0x05)
+ * pour piloter un home-trainer en mode ERG (Lot 11 / V3).
+ */
+export function encodeFtmsSetTargetPowerErg(targetWatts: number): Uint8Array {
+  const clamped = Math.max(0, Math.min(2000, Math.round(targetWatts)));
+  const buf = new Uint8Array(3);
+  const view = new DataView(buf.buffer);
+  view.setUint8(0, 0x05); // OpCode Set Target Power
+  view.setInt16(1, clamped, true);
+  return buf;
 }

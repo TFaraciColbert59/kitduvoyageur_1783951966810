@@ -1,3 +1,8 @@
-/* Testi visibili dell’Info.plist, in italiano (PLAN-100 6.4), registro Lei. Il nome dell’app è un marchio: non tradotto. */
+/* Testi visibili dell'Info.plist, in italiano (Lot 00 App Store Compliance). */
 "CFBundleDisplayName" = "Le Kit du Voyageur";
-"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur usa la Sua posizione per individuare il punto di partenza e il percorso del Suo viaggio. Viene letta solo quando l’app è aperta, mai in secondo piano. Nel Compas viene richiesta solo quando serve, senza tracciamento, e arrotondata a circa 1 km per preparare il percorso. Non viene mostrata a nessuno senza il Suo consenso.";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur usa la Sua posizione per centrare la mappa Explorer, preparare gli itinerari e registrare le uscite outdoor (distanza, traccia, dislivello e avvisi fuori percorso).";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Consenta l’accesso in background affinché Le Kit du Voyageur continui a registrare la traccia GPS, il dislivello e il Beacon di sicurezza anche a schermo bloccato durante un’uscita. L’uso continuo del GPS in background può ridurre sensibilmente la durata della batteria.";
+"NSMotionUsageDescription" = "Le Kit du Voyageur utilizza barometro, pedometro e sensore di movimento per calcolare un dislivello preciso senza rumore GPS, attivare l’auto-pausa e rilevare eventuali tragitti in auto.";
+"NSBluetoothAlwaysUsageDescription" = "Le Kit du Voyageur si connette via Bluetooth ai Suoi sensori sportivi (fascia cardio, misuratore di potenza, cadenza o rullo FTMS) per registrare le metriche in tempo reale anche a schermo bloccato.";
+"NSHealthShareUsageDescription" = "Le Kit du Voyageur legge allenamenti e indicatori di recupero (frequenza cardiaca a riposo, HRV, sonno) da Salute di Apple per adattare le stime di sforzo ed evitare duplicati. Questi dati non vengono mai usati a fini pubblicitari.";
+"NSHealthUpdateUsageDescription" = "Le Kit du Voyageur salva le uscite completate (distanza, dislivello, energia attiva e percorso GPS) in Salute di Apple.";

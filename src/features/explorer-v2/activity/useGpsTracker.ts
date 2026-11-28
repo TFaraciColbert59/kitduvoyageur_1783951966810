@@ -505,16 +505,49 @@ export function useGpsTracker({
   useEffect(() => {
     if (!running || !requiresGps || permission === 'denied') return;
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    let lastAnchor: { lat: number; lng: number } | null = null;
+    const haversineMeters = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+      const R = 6_371_000;
+      const dLat = ((bLat - aLat) * Math.PI) / 180;
+      const dLng = ((bLng - aLng) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((aLat * Math.PI) / 180) *
+          Math.cos((bLat * Math.PI) / 180) *
+          Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
     const id = navigator.geolocation.watchPosition(
       (position) => {
         useExplorerStore.setState({ locationPermission: 'granted' });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const acc = Number.isFinite(position.coords.accuracy) ? position.coords.accuracy : 15;
+        const spd =
+          typeof position.coords.speed === 'number' && Number.isFinite(position.coords.speed)
+            ? position.coords.speed
+            : null;
+
+        // Filtre anti-dérive stationnaire (intérieur / immobile) :
+        // Empêche le point bleu et la distance de bouger quand l'utilisateur est immobile.
+        if (lastAnchor) {
+          const stepM = haversineMeters(lastAnchor.lat, lastAnchor.lng, lat, lng);
+          const noiseFloorM = Math.max(8, Math.min(28, acc * 0.8));
+          const stationarySpeed = spd !== null && spd >= 0 && spd < 0.45;
+          if (stepM < noiseFloorM || (stationarySpeed && stepM < 20)) {
+            return;
+          }
+        }
+        lastAnchor = { lat, lng };
+
         handleFix.current({
           t: position.timestamp,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
+          lat,
+          lng,
           ele: position.coords.altitude,
-          acc: position.coords.accuracy,
-          speed: position.coords.speed,
+          acc,
+          speed: spd,
           receivedAt: monotonicNow(),
         });
       },

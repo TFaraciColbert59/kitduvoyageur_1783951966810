@@ -79,6 +79,8 @@ export type Floating3DEntityKind =
   | 'flood'
   | 'seismic'
   | 'danger'
+  | 'safety_report'
+  | 'live_beacon'
   | 'rescue'
   | 'aircraft'
   | 'spot';
@@ -272,6 +274,14 @@ function matchSpecific3DToken(token: string): Floating3DEntityKind | null {
     case 'mountain_rescue':
     case 'emergency':
       return 'rescue';
+    case 'safety_report':
+    case 'report':
+    case 'signalement':
+      return 'safety_report';
+    case 'live_beacon':
+    case 'beacon':
+    case 'balise':
+      return 'live_beacon';
     case 'danger':
     case 'hazard':
     case 'warning':
@@ -408,7 +418,10 @@ export function accentColorForKind(kind: Floating3DEntityKind): number {
       return 0x0891b2;
     case 'fire':
     case 'danger':
+    case 'safety_report':
       return 0xef4444;
+    case 'live_beacon':
+      return 0x10b981;
     case 'rescue':
       return 0xdc2626;
     case 'seismic':
@@ -879,7 +892,23 @@ function buildProcedural3DModel(
     return { group: g, animatedParts };
   }
 
-  if (kind === 'danger' || kind === 'seismic') {
+  if (kind === 'live_beacon') {
+    const body = new THREE.Mesh(
+      trackGeo(new THREE.CylinderGeometry(0.42, 0.52, 0.95, 16)),
+      mat(0xfbfaf6, 0.35, 0.08),
+    );
+    body.position.y = 0.5;
+    const orb = new THREE.Mesh(
+      trackGeo(new THREE.SphereGeometry(0.32, 16, 16)),
+      mat(0x34d399, 0.2, 0.15, 0x059669),
+    );
+    orb.position.y = 1.32;
+    g.add(body, orb);
+    animatedParts.push({ mesh: orb, role: 'pulse', baseY: 1.32 });
+    return { group: g, animatedParts };
+  }
+
+  if (kind === 'danger' || kind === 'safety_report' || kind === 'seismic') {
     const beacon = new THREE.Mesh(
       trackGeo(new THREE.OctahedronGeometry(0.76, 0)),
       mat(kind === 'seismic' ? 0xf59e0b : 0xdc2626, 0.22, 0.16, 0x991b1b),

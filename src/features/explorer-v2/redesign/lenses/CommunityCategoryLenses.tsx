@@ -1175,7 +1175,7 @@ export function CommunityCarnetsLens({
 }: CommunityCarnetsLensProps) {
   const createCarnetPill = (
     <Link
-      href="/carnets?nouveau=1"
+      href="/communaute?create=carnet"
       style={{
         height: 30,
         padding: '0 12px',

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, GripVertical, MapPin, Minus, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { useFormContext, useFormState } from 'react-hook-form';
 import type { User } from '@supabase/supabase-js';
@@ -12,6 +12,7 @@ import { checkClubSlugV2, createClubWithAdminV2 } from '../createRpc';
 import { ChipsFieldV2 } from '../fields/ChipsV2';
 import { SelectDropdownV2 } from '../fields/SelectDropdownV2';
 import { VisibilityPickerV2 } from '../fields/VisibilityPickerV2';
+import { PrefillApplierV2 } from '../fields/PrefillApplierV2';
 import { TextAreaFieldV2, TextFieldV2, readError } from '../fields/FieldV2';
 import {
   IMAGE_LIMITS,
@@ -764,14 +765,33 @@ function PublicationStep() {
 function ClubBody({
   api,
   user,
+  prefill,
+  prefillNonce = 0,
 }: {
   api: CreateFormEngineApiV2<ClubFormValuesV2>;
   user: User | null;
+  prefill?: Record<string, unknown> | null;
+  prefillNonce?: number;
 }) {
   const values = api.form.watch();
   const [previewCollapsed, setPreviewCollapsed] = useScrollCollapsePreview(api.active);
   const avatarUrl = values.avatar?.[0]?.previewUrl || values.avatar?.[0]?.url || null;
   const slug = values.slug || slugifyClubName(values.name);
+
+  const prefillValues = useMemo(() => {
+    if (!prefill) return null;
+    const mapped: Record<string, unknown> = {};
+    for (const key of ['name', 'locationLabel', 'description', 'welcomeContent']) {
+      if (typeof prefill[key] === 'string' && prefill[key]) mapped[key] = prefill[key];
+    }
+    for (const key of ['zoneLat', 'zoneLng', 'zoneRadiusKm']) {
+      if (typeof prefill[key] === 'number' && Number.isFinite(prefill[key])) mapped[key] = prefill[key];
+    }
+    if (Array.isArray(prefill.activities) && prefill.activities.length > 0) {
+      mapped.activities = prefill.activities;
+    }
+    return Object.keys(mapped).length > 0 ? mapped : null;
+  }, [prefill]);
 
   const focusField = (fieldId: string) => {
     const el = document.getElementById(fieldId);
@@ -798,6 +818,7 @@ function ClubBody({
           </CollapsibleHeroPreview>
         </SheetPreview>
       ) : null}
+      <PrefillApplierV2 values={prefillValues} nonce={prefillNonce} />
       {api.step === 0 ? <IdentiteStep /> : null}
       {api.step === 1 ? <UniversStep /> : null}
       {api.step === 2 ? <AdhesionStep /> : null}
@@ -816,7 +837,7 @@ function ClubBody({
  * tuile vivant, et **une seule RPC atomique** (`create_club_with_admin`).
  * À la fin, « Organiser la première sortie » bascule sur Sortie avec le club.
  */
-export function ClubFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props) {
+export function ClubFormV2({ active, prefill, prefillNonce, onNavChange, stepHosts }: CreateFormV2Props) {
   const { user, reportCreated } = useCreateSheet();
   const defaults = useRef(createDefaultsV2('club')).current;
 
@@ -846,7 +867,7 @@ export function ClubFormV2({ active, onNavChange, stepHosts }: CreateFormV2Props
         }
       }}
     >
-      {(api) => <ClubBody api={api} user={user} />}
+      {(api) => <ClubBody api={api} user={user} prefill={prefill} prefillNonce={prefillNonce} />}
     </CreateFormEngineV2>
   );
 }

@@ -7,6 +7,10 @@ const ConfirmHost = dynamic(() => import('@/components/ui/ConfirmHost'), { ssr: 
 const PromptHost = dynamic(() => import('@/components/ui/PromptHost'), { ssr: false });
 const ToastHost = dynamic(() => import('@/components/ui/ToastHost'), { ssr: false });
 const DynamicIslandHost = dynamic(() => import('@/components/ui/DynamicIslandHost'), { ssr: false });
+const ActiveOutingGlobalPill = dynamic(
+  () => import('@/components/explorer/ActiveOutingGlobalPill'),
+  { ssr: false },
+);
 const ConditionalCursor = dynamic(
   () => import('@/components/ui/CustomCursor').then((m) => ({ default: m.ConditionalCursor })),
   { ssr: false },
@@ -61,6 +65,7 @@ export default function DeferredGlobalHosts() {
       <PromptHost />
       <ToastHost />
       <DynamicIslandHost />
+      <ActiveOutingGlobalPill />
       {idle ? (
         <>
           <ConditionalCursor />

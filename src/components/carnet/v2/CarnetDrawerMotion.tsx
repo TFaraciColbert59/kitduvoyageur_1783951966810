@@ -78,7 +78,15 @@ export function StackSlideView({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={CARNET_SPRING}
-      style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '1 1 auto',
+        minHeight: 0,
+        height: '100%',
+        overflow: 'hidden',
+        gap: '10px',
+      }}
     >
       {children}
     </motion.div>

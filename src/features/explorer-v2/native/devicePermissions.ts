@@ -265,12 +265,17 @@ export function subscribeGeolocationPermissionChange(
 
   let disposed = false;
   let permStatus: PermissionStatus | null = null;
+  let lastEmittedState: LocationPermissionStatus | null = null;
+
+  const emitIfChanged = (state: LocationPermissionStatus) => {
+    if (disposed || state === 'unknown' || state === lastEmittedState) return;
+    lastEmittedState = state;
+    onChange(state);
+  };
 
   const checkNow = () => {
     void probeGeolocationPermission().then((state) => {
-      if (!disposed && state !== 'unknown') {
-        onChange(state);
-      }
+      emitIfChanged(state);
     });
   };
 
@@ -281,11 +286,11 @@ export function subscribeGeolocationPermissionChange(
         if (disposed) return;
         permStatus = status;
         if (status.state === 'granted' || status.state === 'denied' || status.state === 'prompt') {
-          onChange(status.state);
+          emitIfChanged(status.state);
         }
         status.onchange = () => {
           if (!disposed && (status.state === 'granted' || status.state === 'denied' || status.state === 'prompt')) {
-            onChange(status.state);
+            emitIfChanged(status.state);
           }
         };
       })
@@ -431,15 +436,15 @@ export function requestDeviceLocationAndSensors(options?: {
           handleFinalError(err);
           return;
         }
-        // Indoors GPS satellite lock timeout/unavailable -> automatic Wi-Fi/cell fallback!
+        // Indoors GPS satellite lock timeout/unavailable -> fast Wi-Fi/cell fallback!
         if (highAccuracy) {
           navigator.geolocation.getCurrentPosition(
             (fallbackPos) => resolve(toSuccess(fallbackPos, true)),
             handleFinalError,
             {
               enableHighAccuracy: false,
-              timeout: 12_000,
-              maximumAge: 60_000,
+              timeout: 4_500,
+              maximumAge: 300_000,
             },
           );
         } else {
@@ -448,7 +453,7 @@ export function requestDeviceLocationAndSensors(options?: {
       },
       {
         enableHighAccuracy: highAccuracy,
-        timeout: timeoutMs,
+        timeout: highAccuracy ? Math.min(timeoutMs, 3_500) : timeoutMs,
         maximumAge: maximumAgeMs,
       },
     );

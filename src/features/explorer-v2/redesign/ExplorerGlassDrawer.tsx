@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Compass, Layers, Leaf, Play, ShieldAlert, Users } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Compass, Footprints, Layers, Leaf, ShieldAlert, Users } from 'lucide-react';
 import {
   DRAWER_V2_CSS,
   SlotShell,
@@ -33,12 +34,13 @@ export interface ExplorerGlassDrawerProps {
   emptyLabel?: string;
   errorLabel?: string;
   onRetry?: () => void;
-  onOpenSportLaunch: () => void;
+  onOpenSportLaunch?: () => void;
   categoryBadges?: Partial<Record<ExplorerCategory, number | string>>;
   overlayView?: React.ReactNode;
   floatingLeftAction?: React.ReactNode;
   bottomRightFilter?: React.ReactNode;
   forceHideBottomBar?: boolean;
+  hidden?: boolean;
   hudContrast?: 'standard' | 'sunlight' | 'night-red';
 }
 
@@ -46,6 +48,10 @@ const CATEGORY_META: Record<ExplorerCategory, { label: string; icon: React.React
   explorer: {
     label: 'Explorer',
     icon: <Compass size={19} strokeWidth={2} aria-hidden="true" />,
+  },
+  activities: {
+    label: 'Rando, GR & Activités',
+    icon: <Footprints size={19} strokeWidth={2} aria-hidden="true" />,
   },
   layers: {
     label: 'Carte & Calques',
@@ -111,6 +117,7 @@ export function ExplorerGlassDrawer({
   floatingLeftAction,
   bottomRightFilter,
   forceHideBottomBar = false,
+  hidden = false,
   hudContrast = 'standard',
 }: ExplorerGlassDrawerProps) {
   const [dragging, setDragging] = useState(false);
@@ -282,16 +289,6 @@ export function ExplorerGlassDrawer({
           dataSlot
         />
       </div>
-      <button
-        type="button"
-        className="xp20-sport-launch-btn"
-        aria-label="Démarrer une activité"
-        title="Démarrer une activité"
-        data-testid="xp20-sport-launch-btn"
-        onClick={onOpenSportLaunch}
-      >
-        <Play size={19} fill="currentColor" strokeWidth={2} aria-hidden="true" />
-      </button>
     </div>
   );
 
@@ -299,7 +296,9 @@ export function ExplorerGlassDrawer({
     <div
       className="xp20-drawer-wrap"
       data-detent={detent}
+      data-hidden={hidden ? 'true' : 'false'}
       data-hud-contrast={hudContrast !== 'standard' ? hudContrast : undefined}
+      aria-hidden={hidden || undefined}
     >
       <style dangerouslySetInnerHTML={{ __html: DRAWER_V2_CSS }} />
       <section
@@ -349,15 +348,36 @@ export function ExplorerGlassDrawer({
           {children}
         </SlotShell>
 
-        {floatingLeftAction && !overlayView && detent !== 'peek' ? (
-          <div className="xp20-floating-left club-drawer-floating-left">{floatingLeftAction}</div>
-        ) : null}
+        <AnimatePresence>
+          {floatingLeftAction && !overlayView && detent !== 'peek' ? (
+            <motion.div
+              key="floating-left"
+              initial={{ opacity: 0, y: 12, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 460, damping: 34, mass: 0.7 }}
+              className="xp20-floating-left club-drawer-floating-left"
+            >
+              {floatingLeftAction}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
-        {overlayView && detent !== 'peek' ? (
-          <div className="xp20-overlay-layer" data-testid="xp20-overlay-layer">
-            {overlayView}
-          </div>
-        ) : null}
+        <AnimatePresence>
+          {overlayView && detent !== 'peek' ? (
+            <motion.div
+              key="overlay-layer"
+              initial={{ opacity: 0, y: 24, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.988 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.75 }}
+              className="xp20-overlay-layer"
+              data-testid="xp20-overlay-layer"
+            >
+              {overlayView}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </section>
     </div>
   );

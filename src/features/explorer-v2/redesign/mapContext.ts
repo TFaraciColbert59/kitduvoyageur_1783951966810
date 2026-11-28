@@ -9,12 +9,19 @@
  * requests are triggered at mount.
  */
 
-export type ExplorerCategory = 'explorer' | 'layers' | 'pokedex' | 'safety' | 'community';
+export type ExplorerCategory =
+  | 'explorer'
+  | 'activities'
+  | 'layers'
+  | 'pokedex'
+  | 'safety'
+  | 'community';
 
 export type ExplorerDetent = 'peek' | 'mid' | 'full';
 
 export const EXPLORER_CATEGORY_ORDER: readonly ExplorerCategory[] = [
   'explorer',
+  'activities',
   'layers',
   'pokedex',
   'safety',
@@ -44,6 +51,23 @@ export function selectExplorerMapContext({
 
   if (category === 'explorer' || category === 'layers') {
     return userLayerVisibility;
+  }
+
+  if (category === 'activities') {
+    return {
+      ...userLayerVisibility,
+      routes: true,
+      walkRoutes: lensId !== 'bike',
+      bikeRoutes: lensId === 'all' || lensId === 'bike',
+      bikePois: lensId === 'bike' || Boolean(userLayerVisibility.bikePois),
+      distanceMarkers: true,
+      hillshade: true,
+      terrain3d: true,
+      water: true,
+      refuges: true,
+      snow: lensId === 'mountain' || Boolean(userLayerVisibility.snow),
+      slope: lensId === 'mountain' || Boolean(userLayerVisibility.slope),
+    };
   }
 
   if (category === 'pokedex') {

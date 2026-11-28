@@ -1468,6 +1468,15 @@ function KitBody({
     if (typeof prefill.name === 'string' && prefill.name.trim()) {
       api.form.setValue('name', prefill.name.trim(), { shouldDirty: true, shouldValidate: true });
     }
+    if (typeof prefill.description === 'string' && prefill.description.trim()) {
+      api.form.setValue('description', prefill.description.trim(), { shouldDirty: true });
+    }
+    if (typeof prefill.season === 'string' && prefill.season) {
+      api.form.setValue('season', prefill.season as KitFormValuesV2['season'], { shouldDirty: true });
+    }
+    if (Array.isArray(prefill.seasons) && prefill.seasons.length > 0) {
+      api.form.setValue('seasons', prefill.seasons as KitFormValuesV2['seasons'], { shouldDirty: true });
+    }
     if (Array.isArray(prefill.items) && prefill.items.length > 0) {
       api.form.setValue('items', prefill.items as KitItemV2[], {
         shouldDirty: true,

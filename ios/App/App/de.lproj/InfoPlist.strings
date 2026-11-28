@@ -1,3 +1,8 @@
-/* Sichtbare Texte der Info.plist, auf Deutsch (PLAN-100 6.4), Anrede Sie. Der App-Name ist eine Marke: nicht übersetzt. */
+/* Sichtbare Texte der Info.plist, auf Deutsch (Lot 00 App Store Compliance). */
 "CFBundleDisplayName" = "Le Kit du Voyageur";
-"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur verwendet Ihren Standort, um den Startpunkt und die Route Ihrer Reise zu bestimmen. Er wird nur gelesen, während die App geöffnet ist, niemals im Hintergrund. Im Compas wird er nur bei Bedarf abgefragt, ohne Verfolgung, und auf etwa 1 km gerundet, um die Route zu planen. Er wird niemandem ohne Ihre Zustimmung gezeigt.";
+"NSLocationWhenInUseUsageDescription" = "Le Kit du Voyageur verwendet Ihren Standort, um die Explorer-Karte zu zentrieren, Routen zu planen und Ihre Outdoor-Aktivitäten (Distanz, Track, Höhenmeter und Off-Route-Hinweise) aufzuzeichnen.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Erlauben Sie den Standortzugriff im Hintergrund, damit Le Kit du Voyageur Ihre GPS-Route, Höhenmeter und Ihren Live-Sicherheits-Beacon auch bei gesperrtem iPhone-Bildschirm weiter aufzeichnet. Die dauerhafte GPS-Nutzung im Hintergrund kann die Batterielaufzeit erheblich verkürzen.";
+"NSMotionUsageDescription" = "Le Kit du Voyageur nutzt Barometer, Schrittzähler und Bewegungssensoren für präzise Höhenmeter ohne GPS-Rauschen, automatische Pausen und die Erkennung von Autofahrten.";
+"NSBluetoothAlwaysUsageDescription" = "Le Kit du Voyageur verbindet sich per Bluetooth mit Ihren Sportsensoren (Herzfrequenzgurt, Leistungsmesser, Trittfrequenz oder FTMS-Trainer), um Messwerte auch bei gesperrtem Bildschirm aufzuzeichnen.";
+"NSHealthShareUsageDescription" = "Le Kit du Voyageur liest Workouts und Erholungsdaten (Ruhepuls, HRV, Schlaf) aus Apple Health, um Belastungsschätzungen anzupassen und Duplikate zu vermeiden. Diese Daten werden niemals für Werbung verwendet.";
+"NSHealthUpdateUsageDescription" = "Le Kit du Voyageur speichert abgeschlossene Aktivitäten (Distanz, Höhenmeter, aktive Energie und GPS-Route) in Apple Health.";

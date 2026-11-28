@@ -1,6 +1,7 @@
 'use client';
 
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import {
@@ -21,7 +22,10 @@ import type { SlotLens } from '@/components/compte/drawer/SlotShell';
 import type { StoryUser } from '@/components/communaute/StoriesViewer';
 import { ExplorerMapChrome } from './redesign/ExplorerMapChrome';
 import { ExplorerGlassDrawer } from './redesign/ExplorerGlassDrawer';
+import { ExplorerRoutePlannerHud } from './redesign/ExplorerRoutePlannerHud';
 import { ExplorerSportLaunchSheet } from './redesign/ExplorerSportLaunchSheet';
+import { createRouteDraft, type RouteDraft } from '@/features/adventure-prep/routeRevision';
+import { saveRouteToLibrary } from '@/features/routes/library/routeLibrary';
 import { ExplorerPreFlightSheet } from './redesign/ExplorerPreFlightSheet';
 import {
   ExplorerGpsDrawer,
@@ -60,6 +64,14 @@ import {
   type ExplorerSpotRoute,
 } from './redesign/lenses/ExplorerCategoryLenses';
 import { ExplorerPoiDetailView } from './redesign/lenses/ExplorerPoiDetailView';
+import {
+  ACTIVITIES_CATEGORY_LENSES,
+  ActivitiesRoutesLens,
+  mergeOutdoorAndPlaceRoutes,
+  useOutdoorActivityRoutes,
+  type ActivitiesLensGroup,
+  type UnifiedOutdoorRoute,
+} from './redesign/lenses/ActivitiesCategoryLenses';
 import { ExplorerPoiRoutingView } from './redesign/routing/ExplorerPoiRoutingView';
 import type { VerifiedGpsState } from './redesign/routing/RouteOriginSubDrawer';
 import type {
@@ -118,8 +130,18 @@ import {
   type SocialMapKind,
 } from './data/unifiedLayersHooks';
 import { computeOfflineDaylight } from './adaptive';
+import type { WeatherSnapshot } from './adaptive/types';
+import { computePhysiologyAndXp } from './events/consumers/physiologyXpAiConsumer';
+import { resolveActivityProfile } from './specs/resolveActivityProfile';
 import { countCorridorVitalPois } from './map/safetyCorridor';
 import { GpsKalmanFilter } from './hud/kalmanFilter';
+import { speakExplorerCue } from './hud/explorerVoiceCue';
+import {
+  selectCleanLivePins,
+  upsertSafetyReportPin,
+  upsertSessionWaypoint,
+  type TimestampedSafetyPin,
+} from './map/livePinRules';
 import {
   buildAdaptiveOverviewBundle,
   buildUnifiedLayerItems,
@@ -172,6 +194,7 @@ import {
 } from './activity/localSession';
 import {
   defaultAccessToken,
+  discardServerSession,
   ensureServerSession,
   finishSession,
   finishSessionById,
@@ -359,6 +382,17 @@ function normalizeExplorerCategory(raw: string | null | undefined): ExplorerCate
   if (!raw) return null;
   const key = raw.trim().toLowerCase();
   if (key === 'explorer' || key === 'spots' || key === 'territoire') return 'explorer';
+  if (
+    key === 'activities' ||
+    key === 'activites' ||
+    key === 'gr' ||
+    key === 'rando' ||
+    key === 'randonnee' ||
+    key === 'parcours' ||
+    key === 'trails'
+  ) {
+    return 'activities';
+  }
   if (key === 'layers' || key === 'calques' || key === 'carte' || key === 'offline') return 'layers';
   if (key === 'pokedex' || key === 'faune' || key === 'flore' || key === 'nature') return 'pokedex';
   if (key === 'safety' || key === 'securite' || key === 'meteo' || key === 'risques') return 'safety';
@@ -438,6 +472,7 @@ function mapOfflineReportPayload(
 
 const CATEGORY_TITLES: Record<ExplorerCategory, string> = {
   explorer: 'Explorer',
+  activities: 'Rando, GR & Activités',
   layers: 'Carte & Calques',
   pokedex: 'Pokédex',
   safety: 'Sécurité & Terrain',
@@ -446,6 +481,7 @@ const CATEGORY_TITLES: Record<ExplorerCategory, string> = {
 
 const CATEGORY_LENSES_MAP: Record<ExplorerCategory, SlotLens[]> = {
   explorer: EXPLORER_CATEGORY_LENSES,
+  activities: ACTIVITIES_CATEGORY_LENSES,
   layers: LAYERS_CATEGORY_LENSES,
   pokedex: POKEDEX_CATEGORY_LENSES,
   safety: SAFETY_CATEGORY_LENSES,
@@ -724,6 +760,7 @@ function ExplorerV2Inner({
   const [category, setCategoryState] = useState<ExplorerCategory>('explorer');
   const [lensIndexByCategory, setLensIndexByCategory] = useState<Record<ExplorerCategory, number>>({
     explorer: 0,
+    activities: 0,
     layers: 0,
     pokedex: 0,
     safety: 0,
@@ -732,11 +769,18 @@ function ExplorerV2Inner({
   const [hasInteracted, setHasInteracted] = useState<boolean>(
     Boolean(initialScene || hasExplicitUrlLocation),
   );
+  const hasInteractedRef = useRef(hasInteracted);
+  hasInteractedRef.current = hasInteracted;
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('none');
   const [preFlightSport, setPreFlightSport] = useState<Sport>('rando');
   const [preFlightSelection, setPreFlightSelection] = useState<SportSelection | undefined>(undefined);
   const [lastSummaryId, setLastSummaryId] = useState<string | null>(null);
-  const [sessionWaypoints, setSessionWaypoints] = useState<ExplorerSummaryWaypoint[]>([]);
+  const [sessionWaypoints, setSessionWaypoints] = useState<
+    Array<ExplorerSummaryWaypoint & { createdAtMs?: number }>
+  >([]);
+  const [sessionSafetyPins, setSessionSafetyPins] = useState<TimestampedSafetyPin[]>([]);
+  const [lastPlacedPinId, setLastPlacedPinId] = useState<string | null>(null);
+  const [localBeaconActive, setLocalBeaconActive] = useState(false);
   const [sessionPhotosCount, setSessionPhotosCount] = useState<number>(0);
   const [liveTelemetry, setLiveTelemetry] = useState<{
     altitudeM: number | null;
@@ -966,9 +1010,14 @@ function ExplorerV2Inner({
       setHasInteracted(true);
       setOverlayMode('search');
       setDetentState('full');
-    } else if (dl.planner) {
+    } else if (dl.mode === 'plan' || dl.planner) {
       setHasInteracted(true);
-      setOverlayMode('saved');
+      setOverlayMode('none');
+      useExplorerStore.getState().patch({
+        mode: 'PLAN',
+        plannerMapPick: true,
+        ...(dl.planner === 'library' ? { plannerLibraryId: '__open__' } : {}),
+      });
     }
   }, [initialScene, initialCenter, initialZoom, hasExplicitUrlLocation]);
 
@@ -1250,8 +1299,8 @@ function ExplorerV2Inner({
 
       const { seq, promise } = acquireDeviceLocationBounded({
         highAccuracy: opts?.highAccuracy ?? fromGesture,
-        timeoutMs: 5500,
-        maximumAgeMs: fromGesture ? 15_000 : 120_000,
+        timeoutMs: fromGesture ? 5500 : 3500,
+        maximumAgeMs: fromGesture ? 30_000 : 300_000,
         includeSensors: fromGesture,
       });
 
@@ -1272,16 +1321,15 @@ function ExplorerV2Inner({
             errorHint: undefined,
           }));
 
-          const currentZoom = useExplorerStore.getState().zoom;
           const shouldAutoZoom =
             Boolean(opts?.flyTo) ||
             (!initialScene &&
               !hasExplicitUrlLocation &&
               !autoLocatedRef.current &&
-              currentZoom < 5);
+              !hasInteractedRef.current);
           autoLocatedRef.current = true;
           if (shouldAutoZoom) {
-            const targetZoom = opts?.flyTo ? 13 : 11.5;
+            const targetZoom = opts?.flyTo ? 14 : 13.5;
             setHasInteracted(true);
             useExplorerStore.getState().patch({
               locationPermission: 'granted',
@@ -1306,37 +1354,31 @@ function ExplorerV2Inner({
             errorHint: result.instructionsFr,
           }));
         }
+        // Afficher UN SEUL bandeau GPS propre (jamais bandeau + toast empilés en double)
         if (fromGesture || result.reason === 'denied' || result.reason === 'insecure_context') {
           setLocationErrorInfo(result);
-        }
-        if (fromGesture) {
-          useExplorerStore.getState().showToast({
-            title: result.titleFr,
-            sub: result.instructionsFr,
-            tone: 'warn',
-          });
         }
       });
     },
     [acquireDeviceLocationBounded, initialScene, hasExplicitUrlLocation],
   );
 
-  // Watch live OS/browser permission changes (auto-locks as soon as user grants in Settings or dialog)
+  // Watch live OS/browser permission changes (auto-locks ONLY on real permission transition, never in a loop)
   useEffect(() => {
     if (initialScene) return;
+    let initialProbeStarted = false;
     const unsub = subscribeGeolocationPermissionChange((permState) => {
       const prev = useExplorerStore.getState().locationPermission;
       if (prev !== permState) {
         useExplorerStore.getState().patch({ locationPermission: permState });
       }
-      if (permState === 'granted') {
-        setLocationErrorInfo(null);
-        if (!autoLocatedRef.current) {
-          requestPosition({ flyTo: false, fromUserGesture: false, highAccuracy: false });
-        }
+      // Ne relance la localisation que sur une vraie transition ultérieure vers `granted` (jamais en double au montage)
+      if (prev === 'denied' && permState === 'granted' && !autoLocatedRef.current) {
+        requestPosition({ flyTo: false, fromUserGesture: false, highAccuracy: false });
       }
     });
-    if (useExplorerStore.getState().locationPermission !== 'denied') {
+    if (!initialProbeStarted && !autoLocatedRef.current && useExplorerStore.getState().locationPermission !== 'denied') {
+      initialProbeStarted = true;
       requestPosition({ flyTo: false, fromUserGesture: false, highAccuracy: false });
     }
     return unsub;
@@ -1349,6 +1391,7 @@ function ExplorerV2Inner({
     explorerMode === 'GPS_ACTIVE' ||
     explorerMode === 'SOS' ||
     Boolean(state.activity && state.sheet === 'live');
+  const isPlanMode = explorerMode === 'PLAN' && !isGpsLive;
   const hookHudMode: ExplorerHudMode = !online
     ? 'OFFLINE'
     : explorerMode === 'SOS'
@@ -1678,14 +1721,34 @@ function ExplorerV2Inner({
     });
   }, [pois, spotsFilter, spotsSort, state.center, currentViewportBbox]);
 
+  // Live interconnected GR / Rando / Trail / Vélo / VTT / Ski / Eau routes from OSM + PostGIS
+  const activitiesLensGroup: ActivitiesLensGroup =
+    category === 'activities' &&
+    (activeLensId === 'gr' || activeLensId === 'bike' || activeLensId === 'mountain')
+      ? activeLensId
+      : 'all';
+
+  const outdoorRoutesQuery = useOutdoorActivityRoutes({
+    lat: livePlaceLat,
+    lng: livePlaceLng,
+    bbox: currentViewportBbox,
+    group: activitiesLensGroup,
+    enabled: !isGpsLive && canFetchExplorerData && category === 'activities',
+  });
+
+  const unifiedOutdoorRoutes = useMemo<UnifiedOutdoorRoute[]>(
+    () => mergeOutdoorAndPlaceRoutes(routes, outdoorRoutesQuery.data?.routes ?? []),
+    [routes, outdoorRoutesQuery.data?.routes],
+  );
+
   // ── Route Geometry Loading & Off-Route Engine ───────────────────────────
   const activityRoute = state.activity?.route ?? null;
   const trailRouteId = state.trailRoute?.id;
   const trailRouteStatus = state.trailRoute?.status;
   const activityRouteId = activityRoute?.id;
   const activityRouteStatus = activityRoute?.status;
-  const routesRef = useRef(routes);
-  routesRef.current = routes;
+  const routesRef = useRef<ExplorerSpotRoute[]>(routes);
+  routesRef.current = unifiedOutdoorRoutes.length > 0 ? unifiedOutdoorRoutes : routes;
 
   const resetLiveSessionMetadata = useCallback(() => {
     setLastSummaryId(null);
@@ -1694,6 +1757,8 @@ function ExplorerV2Inner({
     setLiveTelemetry({ altitudeM: null, speedKmh: null });
     setBeaconSessionId(null);
     setBeaconShareUrl(null);
+    setLocalBeaconActive(false);
+    setLastPlacedPinId(null);
     sessionPointsRef.current = [];
   }, []);
 
@@ -1718,6 +1783,8 @@ function ExplorerV2Inner({
       sanitizeRouteBeforeLaunch();
       resetLiveSessionMetadata();
       setOverlayMode('none');
+      setDetentState('peek');
+      useExplorerStore.getState().setDetent('peek');
       requestStart(sport, selection);
     },
     [sanitizeRouteBeforeLaunch, resetLiveSessionMetadata, requestStart],
@@ -1728,9 +1795,12 @@ function ExplorerV2Inner({
       sanitizeRouteBeforeLaunch();
       resetLiveSessionMetadata();
       setOverlayMode('none');
+      setDetentState('peek');
+      useExplorerStore.getState().setDetent('peek');
       useExplorerStore
         .getState()
         .startActivity(sport, null, selection, newClientSessionId());
+      speakExplorerCue('Sortie démarrée');
     },
     [sanitizeRouteBeforeLaunch, resetLiveSessionMetadata],
   );
@@ -1877,20 +1947,24 @@ function ExplorerV2Inner({
   }, [state.activity?.clientSessionId, activityRoute]);
 
   const mapRoutes = useMemo(() => {
+    const baseRoutes =
+      category === 'activities' && unifiedOutdoorRoutes.length > 0
+        ? unifiedOutdoorRoutes
+        : routes;
     const active =
       activityRoute?.status === 'ready'
         ? activityRoute
         : state.trailRoute?.status === 'ready'
           ? state.trailRoute
           : null;
-    if (!active?.geojson) return routes;
+    if (!active?.geojson) return baseRoutes;
     const rawNum = Number(active.id);
     const id = Number.isSafeInteger(rawNum)
       ? rawNum
       : -Math.abs(
           Array.from(String(active.id)).reduce((acc, ch) => ((acc * 31 + ch.charCodeAt(0)) | 0), 17) || 1,
         );
-    const existing = routes.find((route) => String(route.id) === active.id);
+    const existing = baseRoutes.find((route) => String(route.id) === active.id);
     const full = {
       id,
       name: active.name ?? existing?.name ?? null,
@@ -1898,9 +1972,9 @@ function ExplorerV2Inner({
       geojson: active.geojson,
     };
     return existing
-      ? routes.map((route) => (String(route.id) === active.id ? { ...route, ...full } : route))
-      : [...routes, full];
-  }, [routes, activityRoute, state.trailRoute]);
+      ? baseRoutes.map((route) => (String(route.id) === active.id ? { ...route, ...full } : route))
+      : [...baseRoutes, full];
+  }, [category, unifiedOutdoorRoutes, routes, activityRoute, state.trailRoute]);
 
   const slopeRoute = useMemo(() => {
     const active = state.activity?.route;
@@ -2666,6 +2740,57 @@ function ExplorerV2Inner({
 
   const [activeGuidedItinerary, setActiveGuidedItinerary] = useState<ComputedItinerary | null>(null);
 
+  const handleTogglePlannerMode = useCallback(() => {
+    const store = useExplorerStore.getState();
+    const currentlyPlan = store.mode === 'PLAN';
+    if (currentlyPlan) {
+      haptic('tab');
+      store.patch({ mode: 'EXPLORE', plannerMapPick: false });
+      return;
+    }
+    haptic('sheet-open');
+    setHasInteracted(true);
+    setOverlayMode('none');
+    store.patch({ mode: 'PLAN', plannerMapPick: true });
+    store.showToast({
+      title: 'Créateur d’itinéraire actif',
+      sub: 'Touchez la carte 3D pour poser vos étapes',
+      tone: 'good',
+    });
+  }, []);
+
+  const handleLaunchPlannerRoute = useCallback((draft: RouteDraft, routeTitle: string) => {
+    haptic('activity-start');
+    const mappedSport: Sport =
+      draft.sport === 'route' || draft.sport === 'gravel'
+        ? 'velo'
+        : draft.sport === 'vtt' || draft.sport === 'enduro'
+          ? 'vtt'
+          : 'rando';
+    const readyRoute: TrailRouteSnapshot = {
+      id: draft.id || `planner-${Date.now()}`,
+      name: routeTitle,
+      geojson: draft.geometry,
+      status: 'ready',
+    };
+    useExplorerStore.setState({
+      mode: 'EXPLORE',
+      plannerMapPick: false,
+      selection: { kind: 'trail', id: readyRoute.id },
+      trailRoute: readyRoute,
+    });
+    setPreFlightSport(mappedSport);
+    setPreFlightSelection(undefined);
+    setHasInteracted(true);
+    setOverlayMode('preflight');
+    setDetentState('mid');
+    useExplorerStore.getState().showToast({
+      title: `Parcours « ${routeTitle} » prêt`,
+      sub: 'Vérifiez le départ puis lancez le guidage GPS',
+      tone: 'good',
+    });
+  }, []);
+
   const handleStartComputedItinerary = useCallback(
     (itinerary: ComputedItinerary) => {
       haptic('activity-start');
@@ -2927,6 +3052,12 @@ function ExplorerV2Inner({
           lng: fix.lng,
           ele: typeof fix.ele === 'number' && Number.isFinite(fix.ele) ? fix.ele : null,
           t: Number.isFinite(fix.t) ? fix.t : nowFixMs,
+          speed: typeof fix.speed === 'number' && Number.isFinite(fix.speed) ? fix.speed : null,
+          speedKmh:
+            typeof fix.speed === 'number' && Number.isFinite(fix.speed) && fix.speed >= 0
+              ? fix.speed * 3.6
+              : null,
+          acc: typeof fix.acc === 'number' && Number.isFinite(fix.acc) ? fix.acc : null,
         });
 
         const current = useExplorerStore.getState();
@@ -3032,6 +3163,12 @@ function ExplorerV2Inner({
             lng: pt.lng,
             ele: pt.ele ?? null,
             t: pt.t,
+            speed: pt.speed ?? null,
+            speedKmh:
+              typeof pt.speed === 'number' && Number.isFinite(pt.speed) && pt.speed >= 0
+                ? pt.speed * 3.6
+                : null,
+            acc: pt.acc ?? null,
           }));
           setRestoredTracker({
             clientSessionId: active.clientSessionId,
@@ -3084,6 +3221,12 @@ function ExplorerV2Inner({
           lng: pt.lng,
           ele: pt.ele ?? null,
           t: pt.t,
+          speed: pt.speed ?? null,
+          speedKmh:
+            typeof pt.speed === 'number' && Number.isFinite(pt.speed) && pt.speed >= 0
+              ? pt.speed * 3.6
+              : null,
+          acc: pt.acc ?? null,
         }));
         useExplorerStore.setState({
           summary,
@@ -3790,6 +3933,94 @@ function ExplorerV2Inner({
     spotsFilter,
     survivalFilter,
   ]);
+
+  const liveOverlayPins = useMemo<MapPin[]>(() => {
+    const refCenter =
+      Array.isArray(state.center) &&
+      Number.isFinite(state.center[0]) &&
+      Number.isFinite(state.center[1])
+        ? state.center
+        : ([2.35, 48.85] as [number, number]);
+
+    const waypointPins: MapPin[] = [];
+    for (const wp of sessionWaypoints) {
+      if (!Number.isFinite(wp.lat) || !Number.isFinite(wp.lng)) continue;
+      waypointPins.push({
+        id: wp.id,
+        kind: wp.kind === 'note' ? 'viewpoint' : wp.kind === 'danger' ? 'safety_report' : wp.kind,
+        name: wp.label,
+        sub: 'Repère sortie',
+        lat: wp.lat,
+        lon: wp.lng,
+        distanceKm: distanceKm(refCenter, [wp.lng, wp.lat]),
+        tone:
+          wp.kind === 'danger'
+            ? 'bad'
+            : wp.kind === 'water'
+              ? 'water'
+              : wp.kind === 'bivouac'
+                ? 'warn'
+                : 'good',
+      });
+    }
+
+    const safetyPins: MapPin[] = [...sessionSafetyPins];
+    const remoteReports = reportsQuery.data?.reports ?? [];
+    for (const r of remoteReports) {
+      if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
+      safetyPins.push({
+        id: `report-${r.id}`,
+        kind: 'safety_report',
+        name: r.description?.slice(0, 42) || 'Signalement terrain',
+        sub: 'Signalement actif',
+        lat: r.lat,
+        lon: r.lng,
+        distanceKm: distanceKm(refCenter, [r.lng, r.lat]),
+        tone: 'bad',
+      });
+    }
+
+    const beaconCoords =
+      me && Number.isFinite(me.lat) && Number.isFinite(me.lng)
+        ? { lat: me.lat, lon: me.lng }
+        : { lat: refCenter[1], lon: refCenter[0] };
+    const beaconPin: MapPin | null =
+      beaconSessionId || localBeaconActive
+        ? {
+            id: 'live-beacon-pin',
+            kind: 'live_beacon',
+            name: 'Balise Live active',
+            sub: beaconSessionId ? 'Position diffusée' : 'Balise locale',
+            lat: beaconCoords.lat,
+            lon: beaconCoords.lon,
+            distanceKm: 0,
+            tone: 'good',
+          }
+        : null;
+
+    return selectCleanLivePins({
+      beaconPin,
+      safetyPins,
+      waypointPins,
+      priorityPinId: lastPlacedPinId,
+    });
+  }, [
+    sessionWaypoints,
+    sessionSafetyPins,
+    reportsQuery.data?.reports,
+    beaconSessionId,
+    localBeaconActive,
+    lastPlacedPinId,
+    me,
+    state.center,
+  ]);
+
+  const mapPins = useMemo<MapPin[]>(() => {
+    if (isGpsLive) return liveOverlayPins;
+    if (liveOverlayPins.length === 0) return pins;
+    const ids = new Set(pins.map((p) => p.id));
+    return [...pins, ...liveOverlayPins.filter((p) => !ids.has(p.id))];
+  }, [isGpsLive, liveOverlayPins, pins]);
 
   // ── Bidirectional Map ↔ Drawer Handlers ─────────────────────────────────
   const onFocusCoordinates = useCallback(
@@ -4864,21 +5095,34 @@ function ExplorerV2Inner({
 
   const handleToggleBeacon = useCallback(() => {
     void (async () => {
-      if (beaconSessionId) {
-        try {
-          await fetch(`/api/live-tracking/sessions/${encodeURIComponent(beaconSessionId)}`, {
-            method: 'DELETE',
-          });
-        } catch {
-          /* ignore stop network error */
-        }
+      if (beaconSessionId || localBeaconActive) {
+        const prevSession = beaconSessionId;
+        setLocalBeaconActive(false);
         setBeaconSessionId(null);
         setBeaconShareUrl(null);
+        setLastPlacedPinId((cur) => (cur === 'live-beacon-pin' ? null : cur));
+        if (prevSession) {
+          try {
+            await fetch(`/api/live-tracking/sessions/${encodeURIComponent(prevSession)}`, {
+              method: 'DELETE',
+            });
+          } catch {
+            /* ignore stop network error */
+          }
+        }
         useExplorerStore.getState().showToast({
           title: 'Balise Live arrêtée',
           tone: 'neutral',
         });
         return;
+      }
+
+      // Apparition 3D immédiate sur la carte (zéro latence réseau)
+      haptic('pin');
+      setLocalBeaconActive(true);
+      setLastPlacedPinId('live-beacon-pin');
+      if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+        speakExplorerCue('Balise Live activée');
       }
 
       try {
@@ -4893,16 +5137,17 @@ function ExplorerV2Inner({
         });
         if (res.status === 401) {
           useExplorerStore.getState().showToast({
-            title: 'Connexion requise',
-            sub: 'Connectez-vous pour activer la balise Live.',
-            tone: 'warn',
+            title: 'Balise locale posée',
+            sub: 'Connectez-vous pour partager un lien Live',
+            tone: 'neutral',
           });
           return;
         }
         if (!res.ok) {
           useExplorerStore.getState().showToast({
-            title: 'Impossible d’activer la balise Live',
-            tone: 'warn',
+            title: 'Balise locale active',
+            sub: 'Partage réseau temporairement indisponible',
+            tone: 'neutral',
           });
           return;
         }
@@ -4912,8 +5157,8 @@ function ExplorerV2Inner({
         const createdSessionId = data.session?.sessionId ?? data.session?.id ?? null;
         if (!createdSessionId) {
           useExplorerStore.getState().showToast({
-            title: 'Session Live indisponible',
-            tone: 'warn',
+            title: 'Balise locale active',
+            tone: 'neutral',
           });
           return;
         }
@@ -4961,33 +5206,53 @@ function ExplorerV2Inner({
         });
       } catch {
         useExplorerStore.getState().showToast({
-          title: 'Balise Live indisponible hors ligne',
-          tone: 'warn',
+          title: 'Balise 3D locale active',
+          sub: 'Hors ligne · visible sur votre carte',
+          tone: 'good',
         });
       }
     })();
-  }, [beaconSessionId, state.activity?.sessionId, locationLabel]);
+  }, [beaconSessionId, localBeaconActive, state.activity?.sessionId, locationLabel, navGuidance.guidance.audioPrefs.channel]);
 
   const handleDropWaypoint = useCallback(
     (wp: { kind: QuickWaypointKind; label: string }) => {
       haptic('pin');
       const coords = me ? ([me.lng, me.lat] as [number, number]) : state.center;
-      const entry: ExplorerSummaryWaypoint = {
+      const entry = {
         id: `wp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         kind: wp.kind,
         label: wp.label,
         lat: coords[1],
         lng: coords[0],
       };
-      setSessionWaypoints((prev) => [...prev, entry]);
+      let outcome: 'added' | 'merged' | 'throttled' = 'added';
+      let activeId = entry.id;
+      setSessionWaypoints((prev) => {
+        const res = upsertSessionWaypoint(prev, entry);
+        outcome = res.status;
+        activeId = res.activeId;
+        return res.next;
+      });
+      if (outcome === 'throttled') {
+        useExplorerStore.getState().showToast({
+          title: 'Repère déjà posé ici',
+          sub: 'Anti-doublon actif',
+          tone: 'neutral',
+        });
+        return;
+      }
+      setLastPlacedPinId(activeId);
       markLap();
+      if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+        speakExplorerCue(`Repère ${wp.label} enregistré`);
+      }
       useExplorerStore.getState().showToast({
-        title: `Repère « ${wp.label} » posé`,
-        sub: 'Ajouté à votre trace',
+        title: outcome === 'merged' ? `Repère « ${wp.label} » mis à jour` : `Repère « ${wp.label} » posé`,
+        sub: outcome === 'merged' ? 'Fusionné avec le repère proche (< 25 m)' : 'Visible en 3D sur la carte',
         tone: 'good',
       });
     },
-    [me, state.center, markLap],
+    [me, state.center, markLap, navGuidance.guidance.audioPrefs.channel],
   );
 
   const handleCapturePhoto = useCallback(
@@ -5212,19 +5477,32 @@ function ExplorerV2Inner({
   const handleDiscardSummary = useCallback(() => {
     const clientSessionId = useExplorerStore.getState().summary?.clientSessionId;
     if (clientSessionId) {
-      void forgetFinishedSession(clientSessionId).catch(() => undefined);
+      void loadSessionForSync(clientSessionId)
+        .then((rec) => {
+          if (rec?.serverSessionId) {
+            return discardServerSession(rec.serverSessionId);
+          }
+          return false;
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          void forgetFinishedSession(clientSessionId).catch(() => undefined);
+        });
     }
     resetLiveSessionMetadata();
     useExplorerStore.setState({ summary: null, sheet: 'level', detent: 'peek' });
     setOverlayMode('none');
     setDetentState('peek');
     useExplorerStore.getState().showToast({
-      title: 'Sortie ignorée',
+      title: 'Sortie supprimée',
       tone: 'neutral',
     });
   }, [resetLiveSessionMetadata]);
 
+  const hasGuidedRoute = Boolean(activity?.route?.geojson || activeGuidedItinerary);
+
   const liveTurnByTurn = useMemo<ExplorerGpsTurnByTurn | null>(() => {
+    if (!hasGuidedRoute) return null;
     const tbt = navGuidance.guidance.turnByTurn;
     if (!tbt.nextManeuver && !tbt.primaryInstruction) return null;
     const remainingM = tbt.progress?.remainingDistanceM ?? null;
@@ -5246,9 +5524,10 @@ function ExplorerV2Inner({
       kind: tbt.nextManeuver?.kind,
       nextInstruction: tbt.secondaryManeuver?.rawInstruction ?? null,
     };
-  }, [navGuidance.guidance.turnByTurn, liveTelemetry.speedKmh, activity?.sport]);
+  }, [hasGuidedRoute, navGuidance.guidance.turnByTurn, liveTelemetry.speedKmh, activity?.sport]);
 
   const liveReroute = useMemo<ExplorerGpsReroute | null>(() => {
+    if (!hasGuidedRoute) return null;
     const rr = navGuidance.guidance.reroute;
     if (rr.status === 'on_route' && !activity?.offRoute) return null;
     return {
@@ -5257,9 +5536,10 @@ function ExplorerV2Inner({
       bearingLabel: bearingLabel(rr.returnBearingDeg ?? activity?.offRouteBearing),
       error: rr.failureReason,
     };
-  }, [navGuidance.guidance.reroute, activity?.offRoute, activity?.offRouteM, activity?.offRouteBearing]);
+  }, [hasGuidedRoute, navGuidance.guidance.reroute, activity?.offRoute, activity?.offRouteM, activity?.offRouteBearing]);
 
   const liveClimbCard = useMemo<ExplorerGpsClimbCard | null>(() => {
+    if (!hasGuidedRoute) return null;
     const cc = navGuidance.guidance.climbCard;
     if (
       cc.status !== 'active_climb' &&
@@ -5277,10 +5557,11 @@ function ExplorerV2Inner({
       avgGradePct: cc.currentGradePct ?? cc.segment?.averageGradePct ?? null,
       remainingDistM: cc.remainingDistanceM,
     };
-  }, [navGuidance.guidance.climbCard]);
+  }, [hasGuidedRoute, navGuidance.guidance.climbCard]);
 
   const hasArrivedLive = Boolean(
-    navGuidance.guidance.turnByTurn.nextManeuver?.kind === 'arrive' &&
+    hasGuidedRoute &&
+      navGuidance.guidance.turnByTurn.nextManeuver?.kind === 'arrive' &&
       navGuidance.guidance.turnByTurn.stage === 'imminent',
   );
 
@@ -5410,6 +5691,92 @@ function ExplorerV2Inner({
             speciesCount={pokedexNearQuery.data?.species?.length ?? null}
             active={isActive}
             onFocusCoordinates={onFocusCoordinates}
+          />
+        );
+      }
+
+      if (category === 'activities') {
+        return (
+          <ActivitiesRoutesLens
+            group={activitiesLensGroup}
+            routes={unifiedOutdoorRoutes}
+            center={state.center}
+            selectedRouteId={selectedRoute?.id ?? null}
+            loading={placeLoading || outdoorRoutesQuery.isLoading}
+            fetchingLive={outdoorRoutesQuery.isFetching}
+            clamped={Boolean(outdoorRoutesQuery.data?.clamped)}
+            locationLabel={locationLabel}
+            onSelectRoute={(route) => {
+              if (route.geojson) {
+                useExplorerStore.setState({
+                  trailRoute: {
+                    id: String(route.id),
+                    name: route.name,
+                    geojson: route.geojson,
+                    status: 'ready',
+                  },
+                });
+              } else if (route.osmRelationId && route.waymarkedTheme) {
+                // Lazy-hydrate full GeoJSON geometry on click for routes beyond the top 8
+                void fetch(
+                  `/api/explorer/v2/outdoor-routes?detailId=${route.osmRelationId}&theme=${route.waymarkedTheme}`,
+                )
+                  .then((r) => (r.ok ? r.json() : null))
+                  .then((payload: { detail?: { geojson?: unknown; distanceKm?: number | null; elevGainM?: number | null; center?: [number, number] | null } } | null) => {
+                    const detail = payload?.detail;
+                    if (!detail?.geojson) return;
+                    const enriched: ExplorerSpotRoute = {
+                      ...route,
+                      geojson: detail.geojson,
+                      distance_km: detail.distanceKm ?? route.distance_km,
+                      elev_gain_m: detail.elevGainM ?? route.elev_gain_m,
+                    };
+                    setSelectedRoute(enriched);
+                    useExplorerStore.setState({
+                      trailRoute: {
+                        id: String(route.id),
+                        name: route.name,
+                        geojson: detail.geojson,
+                        status: 'ready',
+                      },
+                    });
+                    if (detail.center) {
+                      useExplorerStore.getState().setCamera({ type: 'reveal', center: detail.center, zoom: 12.5 });
+                    }
+                  })
+                  .catch(() => undefined);
+              }
+              handleSelectSpotRoute(route);
+            }}
+            onFocusRouteOnMap={(route) => {
+              haptic('pin');
+              if (route.geojson) {
+                useExplorerStore.setState({
+                  trailRoute: {
+                    id: String(route.id),
+                    name: route.name,
+                    geojson: route.geojson,
+                    status: 'ready',
+                  },
+                });
+              }
+              const target = route.centerCoord ?? extractRouteFirstCoord(route.geojson);
+              if (target) {
+                setSelectedFeature({
+                  id: String(route.id),
+                  coordinates: target,
+                  kind: 'trailhead',
+                  label: route.name ?? undefined,
+                });
+                useExplorerStore.getState().setCamera({ type: 'reveal', center: target, zoom: 13.5 });
+              }
+              setDetentState('peek');
+            }}
+            onRefresh={() => {
+              haptic('tab');
+              void outdoorRoutesQuery.refetch();
+            }}
+            onOpenPlanner={handleTogglePlannerMode}
           />
         );
       }
@@ -5626,6 +5993,13 @@ function ExplorerV2Inner({
     },
     [
       category,
+      activitiesLensGroup,
+      unifiedOutdoorRoutes,
+      outdoorRoutesQuery.isLoading,
+      outdoorRoutesQuery.isFetching,
+      outdoorRoutesQuery.data?.clamped,
+      outdoorRoutesQuery.refetch,
+      handleTogglePlannerMode,
       visibleSpotsRoutes,
       visibleSpotsPois,
       pois,
@@ -5727,6 +6101,7 @@ function ExplorerV2Inner({
       return (
         <ExplorerPreFlightSheet
           sport={preFlightSport}
+          catalogSlug={preFlightSelection?.catalogSlug ?? null}
           onChangeSport={(nextSport) => {
             setPreFlightSport(nextSport);
             setPreFlightSelection(undefined);
@@ -6119,6 +6494,32 @@ function ExplorerV2Inner({
     }
 
     if (overlayMode === 'summary' && state.summary) {
+      const summaryProfile = resolveActivityProfile(
+        state.summary.selection?.variantId || state.summary.sport,
+      );
+      const summaryMovingS =
+        state.summary.movingS > 0
+          ? state.summary.movingS
+          : Math.max(0, Math.round((state.summary.endedAt - state.summary.startedAt) / 1000));
+      const summaryXp = computePhysiologyAndXp(summaryProfile, {
+        distanceM: state.summary.distanceM || 0,
+        movingS: summaryMovingS,
+        elevGainM: state.summary.elevGainM || 0,
+        rpe: 5,
+      }).xpEarned;
+      const summaryWeather: WeatherSnapshot | null = currentWeatherHour
+        ? {
+            temperatureC:
+              typeof currentWeatherHour.temperature_c === 'number'
+                ? currentWeatherHour.temperature_c
+                : null,
+            windSpeedKmh:
+              currentWeatherHour.wind_ms != null ? currentWeatherHour.wind_ms * 3.6 : null,
+            precipitationMmH:
+              currentWeatherHour.precip_mm ?? currentWeatherHour.precipitation_mm ?? null,
+          }
+        : null;
+
       return (
         <ExplorerSummarySheet
           summary={state.summary}
@@ -6132,21 +6533,125 @@ function ExplorerV2Inner({
           points={summaryPoints}
           waypoints={sessionWaypoints}
           photosCount={sessionPhotosCount}
+          xpEarned={summaryXp}
+          locationLabel={locationLabel}
+          centerCoords={me ? [me.lng, me.lat] : state.center}
+          weather={summaryWeather}
+          packWeightKg={routingPackWeightKg ?? userCapabilities?.packWeightKg ?? null}
+          bodyWeightKg={userCapabilities?.bodyWeightKg ?? null}
+          strengthLog={state.strength ?? null}
+          safetyCorridor={state.safetyCorridor ?? null}
+          userId={user?.id ?? null}
+          contrast={state.hudContrast ?? 'standard'}
+          onProfileCursorChange={(cursor) => {
+            useExplorerStore.getState().patch({ profileCursor: cursor });
+          }}
+          onHighlightSegment={(segment) => {
+            useExplorerStore.getState().patch({ highlightedSegment: segment });
+          }}
+          weatherLabel={
+            currentWeatherHour && typeof currentWeatherHour.temperature_c === 'number'
+              ? `${Math.round(currentWeatherHour.temperature_c)}°C${
+                  currentWeatherHour.wind_ms != null
+                    ? ` · ${Math.round(currentWeatherHour.wind_ms * 3.6)} km/h`
+                    : ''
+                }`
+              : null
+          }
           onSaveDetails={handleSaveSummaryDetails}
           onExportGpx={handleExportSummaryGpx}
           onAddToCarnet={() => {
             if (typeof window !== 'undefined') {
-              window.location.assign('/carnets?nouveau=1');
+              const target = lastSummaryId
+                ? `/communaute?create=carnet&fromOuting=1&attachSessionId=${encodeURIComponent(lastSummaryId)}`
+                : '/communaute?create=carnet&fromOuting=1';
+              window.location.assign(target);
             }
           }}
           onShareOuting={handleShareOuting}
           onDiscard={handleDiscardSummary}
+          onSaveAsRoute={(routeName) => {
+            const pts = summaryPoints;
+            const sampled =
+              pts.length >= 2
+                ? [
+                    pts[0],
+                    ...(pts.length > 4 ? [pts[Math.floor(pts.length / 3)], pts[Math.floor((pts.length * 2) / 3)]] : []),
+                    pts[pts.length - 1],
+                  ].map((p, idx) => ({
+                    id: `sum-pt-${idx}`,
+                    lat: p.lat,
+                    lon: p.lng,
+                    name: idx === 0 ? 'Départ' : idx === (pts.length > 4 ? 3 : 1) ? 'Arrivée' : `Étape ${idx}`,
+                  }))
+                : [];
+            const coords =
+              pts.length >= 2
+                ? pts.map((p) => [p.lng, p.lat] as [number, number])
+                : [];
+            const mappedSport =
+              state.summary?.sport === 'velo' ? 'route' : 'marche';
+            const draft = createRouteDraft({
+              tripId: `outing-${Date.now()}`,
+              sport: mappedSport,
+              points: sampled,
+              geometry: { type: 'LineString', coordinates: coords },
+              distanceKm: state.summary?.distanceM ? Number((state.summary.distanceM / 1000).toFixed(2)) : null,
+              durationMin: state.summary?.movingS ? Math.round(state.summary.movingS / 60) : null,
+              provider: 'explorer-gps',
+            });
+            saveRouteToLibrary({
+              name: routeName,
+              sourceType: 'created',
+              draft,
+            });
+            useExplorerStore.getState().patch({
+              plannerDraft: draft,
+              plannerTitle: routeName,
+              mode: 'PLAN',
+              plannerMapPick: true,
+              summary: null,
+            });
+            setOverlayMode('none');
+            useExplorerStore.getState().showToast({
+              title: 'Tracé enregistré dans Mes parcours',
+              sub: 'Ouvert dans le créateur d’itinéraire',
+              tone: 'good',
+            });
+          }}
+          onLaunchBottle={() => {
+            haptic('sheet-open');
+            setBottleModalOpen(true);
+          }}
+          onOpenPokedex={() => {
+            haptic('tab');
+            useExplorerStore.setState({ summary: null, sheet: 'level' });
+            setOverlayMode('none');
+            setCategoryState('pokedex');
+            setLensIndexByCategory((prev) => ({ ...prev, pokedex: 0 }));
+            setDetentState('mid');
+          }}
+          onOpenSafetyReport={() => {
+            haptic('sheet-open');
+            setSafetyReportOpen(true);
+          }}
           onRetrySync={() => {
             useExplorerStore.setState({ summarySaved: 'pending' });
             void flushPending();
           }}
           onDone={() => {
-            useExplorerStore.setState({ summary: null, sheet: 'level', detent: 'peek' });
+            const clientSessionId = useExplorerStore.getState().summary?.clientSessionId;
+            if (clientSessionId) {
+              void forgetFinishedSession(clientSessionId).catch(() => undefined);
+            }
+            resetLiveSessionMetadata();
+            useExplorerStore.setState({
+              summary: null,
+              sheet: 'level',
+              detent: 'peek',
+              profileCursor: null,
+              highlightedSegment: null,
+            });
             setOverlayMode('none');
             setDetentState('peek');
           }}
@@ -6182,6 +6687,10 @@ function ExplorerV2Inner({
     state.summary,
     state.summarySaved,
     state.savedPlaces,
+    state.strength,
+    state.safetyCorridor,
+    state.hudContrast,
+    user?.id,
     me,
     selectedRoute,
     selectedPoi,
@@ -6279,8 +6788,8 @@ function ExplorerV2Inner({
         countries={countriesGeo ?? null}
         regions={regionsGeo ?? null}
         routes={mapRoutes}
-        pins={isGpsLive ? EMPTY_PINS : pins}
-        selectedId={state.selection?.id ?? null}
+        pins={mapPins}
+        selectedId={state.selection?.id ?? (isGpsLive ? lastPlacedPinId : null)}
         selectedFeature={selectedFeature}
         reducedMotion={reducedMotion}
         paused={state.orbitPaused}
@@ -6321,9 +6830,19 @@ function ExplorerV2Inner({
           }
           navGuidance.onUserMapPan(bearing);
         }}
-        plannerDraft={state.plannerDraft ?? null}
+        plannerDraft={isPlanMode ? (state.plannerDraft ?? null) : null}
         plannerLineHidden={Boolean(state.plannerLineHidden)}
-        plannerMapPick={Boolean(state.plannerMapPick)}
+        plannerMapPick={Boolean(isPlanMode && state.plannerMapPick)}
+        onMapClick={(coords) => {
+          if (useExplorerStore.getState().plannerMapPick) {
+            haptic('pin');
+            window.dispatchEvent(
+              new CustomEvent('lkdv:planner-map-pick', {
+                detail: { lon: coords[0], lat: coords[1] },
+              }),
+            );
+          }
+        }}
         profileCursor={state.profileCursor ?? null}
         highlightedSegment={state.highlightedSegment ?? null}
         explorerMode={explorerMode}
@@ -6359,7 +6878,12 @@ function ExplorerV2Inner({
       {pendingStart ? (
         <Countdown
           key={`${pendingStart.sport}:${pendingStart.selection?.variantId ?? 'base'}`}
-          onDone={confirmStart}
+          onDone={() => {
+            confirmStart();
+            if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+              speakExplorerCue('Sortie démarrée');
+            }
+          }}
           onCancel={cancelStart}
         />
       ) : null}
@@ -6434,9 +6958,30 @@ function ExplorerV2Inner({
             onOpenSavedPlaces={() => {
               haptic('sheet-open');
               setHasInteracted(true);
+              if (isPlanMode) {
+                useExplorerStore.getState().patch({ mode: 'EXPLORE', plannerMapPick: false });
+              }
               setOverlayMode('saved');
             }}
             savedPlacesCount={state.savedPlaces?.length ?? 0}
+            plannerActive={isPlanMode}
+            onTogglePlanner={handleTogglePlannerMode}
+            plannerStats={
+              isPlanMode
+                ? {
+                    pointsCount: state.plannerDraft?.points?.length ?? 0,
+                    distanceKm: state.plannerDraft?.distanceKm ?? null,
+                    durationMin: state.plannerDraft?.durationMin ?? null,
+                    mapPick: Boolean(state.plannerMapPick),
+                  }
+                : null
+            }
+            onOpenSportLaunch={() => {
+              haptic('sheet-open');
+              setHasInteracted(true);
+              setOverlayMode('sport');
+              setDetentState('mid');
+            }}
           />
 
           <ExplorerGlassDrawer
@@ -6449,18 +6994,28 @@ function ExplorerV2Inner({
             activeLensIndex={activeLensIndex}
             onLensChange={handleLensChange}
             renderLens={renderLens}
-            onOpenSportLaunch={() => {
-              haptic('sheet-open');
-              setHasInteracted(true);
-              setOverlayMode('sport');
-              setDetentState('mid');
-            }}
             categoryBadges={categoryBadges}
             overlayView={overlayView}
             floatingLeftAction={floatingLeftAction}
             bottomRightFilter={bottomRightFilter}
+            forceHideBottomBar={Boolean(pendingStart)}
+            hidden={Boolean(pendingStart) || isPlanMode}
             hudContrast={state.hudContrast ?? 'standard'}
           />
+
+          <AnimatePresence>
+            {isPlanMode ? (
+              <ExplorerRoutePlannerHud
+                key="explorer-route-planner-hud"
+                nearbyPois={pins}
+                mapCenter={state.center}
+                userCoords={me ? [me.lng, me.lat] : null}
+                onClose={handleTogglePlannerMode}
+                onLaunchGuidance={handleLaunchPlannerRoute}
+                onFocusCoords={onFocusCoordinates}
+              />
+            ) : null}
+          </AnimatePresence>
         </>
       ) : null}
 
@@ -6531,30 +7086,45 @@ function ExplorerV2Inner({
             hasArrived={hasArrivedLive}
             onAcceptArrival={() => {
               haptic('activity-start');
+              if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+                speakExplorerCue('Arrivée atteinte, sortie terminée');
+              }
               setActiveGuidedItinerary(null);
               state.stopActivity();
             }}
             audioMuted={navGuidance.guidance.audioPrefs.channel === 'muted'}
-            onToggleAudio={() =>
+            onToggleAudio={() => {
+              const nextChannel =
+                navGuidance.guidance.audioPrefs.channel === 'muted' ? 'all' : 'muted';
               navGuidance.setAudioPrefs({
                 ...navGuidance.guidance.audioPrefs,
-                channel: navGuidance.guidance.audioPrefs.channel === 'muted' ? 'all' : 'muted',
-              })
-            }
+                channel: nextChannel,
+              });
+              if (nextChannel === 'all') {
+                speakExplorerCue('Guidage vocal activé');
+              }
+            }}
             climbCard={liveClimbCard}
-            beaconActive={Boolean(beaconSessionId)}
+            beaconActive={Boolean(beaconSessionId || localBeaconActive)}
             beaconShareUrl={beaconShareUrl}
             onToggleBeacon={handleToggleBeacon}
             onDropWaypoint={handleDropWaypoint}
             onCapturePhoto={handleCapturePhoto}
             onOpenReport={() => setSafetyReportOpen(true)}
-            onTogglePause={() =>
-              state.updateActivity({ paused: !activity.paused, autoPaused: false })
-            }
+            onTogglePause={() => {
+              const nextPaused = !activity.paused;
+              state.updateActivity({ paused: nextPaused, autoPaused: false });
+              if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+                speakExplorerCue(nextPaused ? 'Sortie en pause' : 'Reprise de la sortie');
+              }
+            }}
             onMarkWaypoint={() => {
               handleDropWaypoint({ kind: 'note', label: 'Repère' });
             }}
             onStopActivity={() => {
+              if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+                speakExplorerCue('Sortie terminée');
+              }
               setActiveGuidedItinerary(null);
               state.stopActivity();
             }}
@@ -6631,10 +7201,39 @@ function ExplorerV2Inner({
         coords={me ? [me.lng, me.lat] : state.center}
         placeName={locationLabel}
         onClose={() => setSafetyReportOpen(false)}
-        onSubmitted={() => {
+        onSubmitted={(submitted) => {
+          let wasMerged = false;
+          if (submitted && Number.isFinite(submitted.lat) && Number.isFinite(submitted.lng)) {
+            const incoming: TimestampedSafetyPin = {
+              id: `local-report-${Date.now()}`,
+              kind: 'safety_report',
+              name: submitted.label || 'Signalement terrain',
+              sub: submitted.note || 'Signalé à l’instant',
+              lat: submitted.lat,
+              lon: submitted.lng,
+              tone: 'bad',
+              category: submitted.category,
+              createdAtMs: Date.now(),
+            };
+            let activeId = incoming.id;
+            setSessionSafetyPins((prev) => {
+              const res = upsertSafetyReportPin(prev, incoming);
+              wasMerged = res.merged;
+              activeId = res.activePinId;
+              return res.next;
+            });
+            setLastPlacedPinId(activeId);
+            setSafetyReportOpen(false);
+            if (navGuidance.guidance.audioPrefs.channel !== 'muted') {
+              speakExplorerCue('Signalement posé sur la carte');
+            }
+          }
           void reportsQuery.refetch();
           useExplorerStore.getState().showToast({
-            title: 'Signalement enregistré',
+            title: wasMerged ? 'Signalement mis à jour' : 'Signalement posé en 3D',
+            sub: wasMerged
+              ? 'Fusionné avec le signalement proche (< 35 m)'
+              : 'Visible immédiatement sur votre carte',
             tone: 'good',
           });
         }}

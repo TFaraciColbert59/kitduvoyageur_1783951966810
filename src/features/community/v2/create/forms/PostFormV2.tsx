@@ -682,8 +682,23 @@ function PostBody({
         form.setValue('title', prefill.linkedEventTitle, { shouldDirty: true });
       }
     }
+    if (typeof prefill.title === 'string' && prefill.title && !form.getValues('title')?.trim()) {
+      form.setValue('title', prefill.title, { shouldDirty: true });
+    }
+    if (typeof prefill.content === 'string' && prefill.content && !form.getValues('content')?.trim()) {
+      form.setValue('content', prefill.content, { shouldDirty: true });
+    }
     if (typeof prefill.location === 'string' && prefill.location && !form.getValues('location')?.trim()) {
       form.setValue('location', prefill.location, { shouldDirty: true });
+    }
+    if (typeof prefill.locationLat === 'number' && Number.isFinite(prefill.locationLat)) {
+      form.setValue('locationLat', prefill.locationLat, { shouldDirty: false });
+    }
+    if (typeof prefill.locationLng === 'number' && Number.isFinite(prefill.locationLng)) {
+      form.setValue('locationLng', prefill.locationLng, { shouldDirty: false });
+    }
+    if (Array.isArray(prefill.tags) && prefill.tags.length > 0 && (form.getValues('tags')?.length ?? 0) === 0) {
+      form.setValue('tags', prefill.tags as string[], { shouldDirty: true });
     }
     void sortiesState.reload();
     if (prefill.step === 1) {

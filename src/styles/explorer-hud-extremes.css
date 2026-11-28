@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Lot 07 — Explorer Liquid Glass Layer Separation & Extreme Terrain Modes
+   - Strictly uses LKDV P5 tokens (--lkv-*) for standard mode.
+   - Scopes Sunlight AAA & Night Red OLED (#FF1A1A / #000000) strictly in CSS
+     (never in src/design/tokens.ts, preserving tests/design/tokens-sync.spec.ts).
+   ========================================================================== */
+
+.xp20-hud-surface {
+  --xp-hud-glass-bg: rgba(255, 255, 255, 0.88);
+  --xp-hud-glass-blur: blur(12px) saturate(135%);
+  --xp-hud-sheet-bg: rgba(251, 250, 246, 0.96);
+  --xp-hud-card-bg: var(--lkv-surface-paper, #ffffff);
+  --xp-hud-ink: var(--lkv-text-primary, #172b24);
+  --xp-hud-ink-muted: var(--lkv-text-secondary, #56665d);
+  --xp-hud-accent: var(--lkv-action, #226148);
+  --xp-hud-accent-fg: var(--lkv-on-action, #ffffff);
+  --xp-hud-border: var(--lkv-border, rgba(23, 43, 36, 0.14));
+  --xp-hud-danger: var(--lkv-danger, #a8443a);
+  --xp-hud-touch-min: 44px;
+  --xp-hud-gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plein soleil 2 000 nits — WCAG AAA >= 10:1, suppression blur GPU */
+.xp20-hud-surface[data-hud-contrast='sunlight'] {
+  --xp-hud-glass-bg: rgba(255, 255, 255, 0.96);
+  --xp-hud-glass-blur: none;
+  --xp-hud-sheet-bg: #ffffff;
+  --xp-hud-card-bg: #ffffff;
+  --xp-hud-ink: #09090b;
+  --xp-hud-ink-muted: #27272a;
+  --xp-hud-accent: #17402c;
+  --xp-hud-accent-fg: #ffffff;
+  --xp-hud-border: rgba(9, 9, 11, 0.48);
+}
+
+/* Vision nocturne Rouge OLED — préserve la rhodopsine et économise -45 % OLED */
+.xp20-hud-surface[data-hud-contrast='night-red'] {
+  --xp-hud-glass-bg: #000000;
+  --xp-hud-glass-blur: none;
+  --xp-hud-sheet-bg: #000000;
+  --xp-hud-card-bg: #0a0000;
+  --xp-hud-ink: #ff1a1a;
+  --xp-hud-ink-muted: #991111;
+  --xp-hud-accent: #ff1a1a;
+  --xp-hud-accent-fg: #000000;
+  --xp-hud-border: #4d0808;
+  --xp-hud-danger: #ff1a1a;
+}
+
+/* Mode Gants Épais (-10 °C Montagne / Ski-rando) : cibles >= 60px */
+.xp20-hud-surface[data-gloves-mode='true'] {
+  --xp-hud-touch-min: 60px;
+  --xp-hud-gap: 12px;
+}
+
+.xp20-hud-floating-glass {
+  background: var(--xp-hud-glass-bg);
+  -webkit-backdrop-filter: var(--xp-hud-glass-blur);
+  backdrop-filter: var(--xp-hud-glass-blur);
+  border: 0.5px solid var(--xp-hud-border);
+  color: var(--xp-hud-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 28px rgba(16, 32, 25, 0.14);
+}
+
+.xp20-hud-sheet-panel {
+  background: var(--xp-hud-sheet-bg);
+  border-top: 0.5px solid var(--xp-hud-border);
+  border-top-left-radius: var(--lkv-radius-sheet, 36px);
+  border-top-right-radius: var(--lkv-radius-sheet, 36px);
+  color: var(--xp-hud-ink);
+  box-shadow: 0 -10px 34px rgba(16, 32, 25, 0.14);
+}
+
+.xp20-hud-card {
+  background: var(--xp-hud-card-bg);
+  border: 0.5px solid var(--xp-hud-border);
+  border-radius: var(--lkv-radius-card, 28px);
+  color: var(--xp-hud-ink);
+}
+
+.xp20-hud-btn {
+  min-height: var(--xp-hud-touch-min);
+  min-width: var(--xp-hud-touch-min);
+  border-radius: var(--lkv-radius-button, 20px);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xp20-hud-grabber {
+  width: 40px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--xp-hud-border);
+  margin: 8px auto 6px;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 180ms ease;
+}
+
+.xp20-hud-grabber-hit:active .xp20-hud-grabber,
+.xp20-hud-grabber-hit:hover .xp20-hud-grabber {
+  transform: scaleX(1.18);
+  background: rgba(23, 64, 44, 0.38);
+}
+
+/* ── Nested Sub-Drawer (@base-ui/react/drawer) GPU Spring Animations ───── */
+
+.xp20-nested-backdrop {
+  opacity: 1;
+  transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity;
+}
+
+.xp20-nested-backdrop[data-starting-style],
+.xp20-nested-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.xp20-nested-popup {
+  transform: translate3d(0, 0, 0) scale(1);
+  opacity: 1;
+  transform-origin: bottom center;
+  will-change: transform, opacity;
+  transition:
+    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.xp20-nested-popup[data-starting-style] {
+  transform: translate3d(0, 100%, 0) scale(0.985);
+  opacity: 0.4;
+}
+
+.xp20-nested-popup[data-ending-style] {
+  transform: translate3d(0, 100%, 0) scale(0.985);
+  opacity: 0;
+  transition-duration: 240ms;
+}
+
+.xp20-nested-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Shared Apple Liquid Glass Tactile Micro-Interactions (GPU-only) ───── */
+
+.xp20-tactile {
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 180ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+  will-change: transform;
+}
+
+.xp20-tactile:active {
+  transform: scale(0.94);
+}
+
+.xp20-card-press {
+  transition:
+    transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 200ms ease,
+    border-color 180ms ease;
+  will-change: transform;
+}
+
+.xp20-card-press:active {
+  transform: scale(0.972);
+}
+
+.xp20-card-press .xp20-chevron-nudge {
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.xp20-card-press:hover .xp20-chevron-nudge,
+.xp20-card-press:active .xp20-chevron-nudge {
+  transform: translateX(3px);
+}
+
+.xp20-pulse-dot {
+  position: relative;
+}
+
+.xp20-pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0.35;
+  animation: xp20-dot-pulse 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes xp20-dot-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.45;
+  }
+  70% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+
+@keyframes xp20-cta-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 6px 16px rgba(23, 64, 44, 0.28),
+      0 0 0 0 rgba(34, 97, 72, 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 8px 20px rgba(23, 64, 44, 0.32),
+      0 0 0 6px rgba(34, 97, 72, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp20-nested-backdrop,
+  .xp20-nested-popup,
+  .xp20-tactile,
+  .xp20-card-press,
+  .xp20-hud-grabber {
+    transition: none !important;
+  }
+  .xp20-pulse-dot::after {
+    animation: none !important;
+    display: none;
+  }
+}

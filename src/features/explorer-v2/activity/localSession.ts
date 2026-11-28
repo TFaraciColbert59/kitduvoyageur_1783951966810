@@ -362,6 +362,39 @@ export async function readLatestFinishedSession(): Promise<LocalSessionRecord | 
   return record?.status === 'finished' ? record : null;
 }
 
+/**
+ * Lit l'historique complet des sorties terminées stockées localement dans
+ * IndexedDB (`SESSIONS_STORE`), triées de la plus récente à la plus ancienne.
+ * Alimente CTL/ATL/TSB, ACWR et sorties comparables 100 % hors ligne.
+ */
+export async function readAllFinishedSessions(limit = 90): Promise<LocalSessionRecord[]> {
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 90;
+  const db = await openExplorerDb();
+  if (!db) return [];
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(SESSIONS_STORE, 'readonly');
+      const request = tx.objectStore(SESSIONS_STORE).getAll();
+      request.onsuccess = () => {
+        const raw = Array.isArray(request.result) ? request.result : [];
+        const parsed: LocalSessionRecord[] = [];
+        for (const item of raw) {
+          const rec = parseLocalSessionRecord(item);
+          if (rec && rec.status === 'finished' && rec.endedAt !== null) {
+            parsed.push(rec);
+          }
+        }
+        parsed.sort((a, b) => (b.endedAt ?? b.startedAt) - (a.endedAt ?? a.startedAt));
+        resolve(parsed.slice(0, safeLimit));
+      };
+      request.onerror = () => resolve([]);
+      tx.onabort = () => resolve([]);
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
 export function readLocalSession(clientSessionId: string): Promise<LocalSessionRecord | null> {
   return readRecord(clientSessionId);
 }

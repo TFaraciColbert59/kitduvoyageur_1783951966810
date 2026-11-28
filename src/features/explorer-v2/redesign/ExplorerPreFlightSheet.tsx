@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { lazy, Suspense, useMemo, useState } from 'react';
 import {
   Activity,
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
   Radio,
   RefreshCw,
   Route,
+  SlidersHorizontal,
   Snowflake,
   Sunset,
   Tent,
@@ -28,10 +29,19 @@ import {
   Zap,
 } from 'lucide-react';
 import { StackSlideView } from '@/components/carnet/v2/CarnetDrawerMotion';
+import { resolveActivityProfile } from '../specs/resolveActivityProfile';
 import type { Sport } from '../state/types';
+import type { PreFlightExpertSettings } from './preflight/PreFlightExpertSubDrawer';
+
+const LazyPreFlightExpertSubDrawer = lazy(() =>
+  import('./preflight/PreFlightExpertSubDrawer').then((m) => ({
+    default: m.PreFlightExpertSubDrawer,
+  })),
+);
 
 export interface ExplorerPreFlightSheetProps {
   sport: Sport;
+  catalogSlug?: string | null;
   onChangeSport: (sport: Sport) => void;
   routeName?: string | null;
   routeDistanceKm?: number | null;
@@ -86,6 +96,7 @@ function formatWeightKg(kg: number): string {
 
 export function ExplorerPreFlightSheet({
   sport,
+  catalogSlug = null,
   onChangeSport,
   routeName = null,
   routeDistanceKm = null,
@@ -108,6 +119,19 @@ export function ExplorerPreFlightSheet({
   onClose,
 }: ExplorerPreFlightSheetProps) {
   const [pickedPillId, setPickedPillId] = useState<string | null>(null);
+  const [expertOpen, setExpertOpen] = useState(false);
+  const activeProfile = useMemo(
+    () => resolveActivityProfile(catalogSlug || sport),
+    [catalogSlug, sport],
+  );
+  const [expertSettings, setExpertSettings] = useState<PreFlightExpertSettings>(() => ({
+    beaconEnabled: false,
+    epzRadiusM: activeProfile.privacyAndCompliance.epzRadiusDefaultM,
+    autoPauseEnabled: activeProfile.algorithms.autoPause.defaultEnabled,
+    voiceGuidanceEnabled: true,
+    baroAutoCalibrate: activeProfile.acquisition.barometer.enabled,
+    selectedBleSensors: [],
+  }));
 
   const activePillId = useMemo(() => {
     if (pickedPillId) {
@@ -118,8 +142,11 @@ export function ExplorerPreFlightSheet({
   }, [pickedPillId, sport]);
 
   const activePillLabel = useMemo(
-    () => QUICK_SPORT_PILLS.find((p) => p.id === activePillId)?.label ?? 'Sortie',
-    [activePillId],
+    () =>
+      catalogSlug
+        ? activeProfile.identity.labelFr
+        : QUICK_SPORT_PILLS.find((p) => p.id === activePillId)?.label ?? 'Sortie',
+    [activePillId, activeProfile.identity.labelFr, catalogSlug],
   );
 
   const hasRoute = Boolean(routeName) || routeStatus === 'loading' || routeStatus === 'ready' || routeStatus === 'unavailable';
@@ -157,9 +184,7 @@ export function ExplorerPreFlightSheet({
             top: 0,
             zIndex: 6,
             padding: '4px 12px 10px',
-            background: 'rgba(249, 248, 244, 0.94)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            background: '#F9F8F4',
             borderBottom: '0.5px solid rgba(23, 64, 44, 0.08)',
             display: 'flex',
             flexDirection: 'column',
@@ -233,6 +258,7 @@ export function ExplorerPreFlightSheet({
                   key={pill.id}
                   type="button"
                   role="radio"
+                  className="xp20-tactile"
                   aria-checked={selected}
                   onClick={() => {
                     setPickedPillId(pill.id);
@@ -240,8 +266,8 @@ export function ExplorerPreFlightSheet({
                   }}
                   style={{
                     flex: 'none',
-                    height: 30,
-                    padding: '0 11px',
+                    minHeight: 44,
+                    padding: '0 13px',
                     borderRadius: 999,
                     border: selected
                       ? '0.5px solid rgba(23, 64, 44, 0.35)'
@@ -461,12 +487,14 @@ export function ExplorerPreFlightSheet({
                   GPS
                 </span>
                 <span
+                  className={gpsReady ? 'xp20-pulse-dot' : undefined}
                   aria-hidden="true"
                   style={{
                     width: 8,
                     height: 8,
                     borderRadius: 999,
                     background: gpsReady ? '#2E7D4F' : isGpsDenied ? '#B91C1C' : '#D97706',
+                    color: gpsReady ? '#2E7D4F' : isGpsDenied ? '#B91C1C' : '#D97706',
                   }}
                 />
               </div>
@@ -652,17 +680,78 @@ export function ExplorerPreFlightSheet({
               )}
             </div>
           </div>
+
+          {/* 1-tap Progressive Disclosure -> Expert Pre-Flight Sub-Drawer */}
+          <button
+            type="button"
+            className="xp20-card-press"
+            onClick={() => setExpertOpen(true)}
+            data-testid="xp20-preflight-expert-trigger"
+            style={{
+              minHeight: 46,
+              padding: '0 14px',
+              borderRadius: 18,
+              border: '0.5px solid rgba(23, 64, 44, 0.12)',
+              background: 'rgba(255, 255, 255, 0.88)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 4px 12px rgba(16, 32, 25, 0.04)',
+              color: '#172B24',
+              fontSize: 13,
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 9,
+                  background: 'rgba(23, 64, 44, 0.09)',
+                  color: '#17402C',
+                  display: 'grid',
+                  placeItems: 'center',
+                }}
+              >
+                <SlidersHorizontal size={14} />
+              </span>
+              <span>Réglages experts · BLE, Baro, Beacon, EPZ</span>
+            </span>
+            <ChevronRight size={15} color="#56665D" className="xp20-chevron-nudge" aria-hidden="true" />
+          </button>
         </div>
 
-        {/* Sticky bottom CTA bar */}
+        {expertOpen ? (
+          <Suspense fallback={null}>
+            <LazyPreFlightExpertSubDrawer
+              open={expertOpen}
+              onOpenChange={setExpertOpen}
+              profile={activeProfile}
+              settings={expertSettings}
+              onChangeSettings={(patch) =>
+                setExpertSettings((prev) => ({ ...prev, ...patch }))
+              }
+              offlineReady={offlineReady}
+              onDownloadOffline={onDownloadOffline}
+            />
+          </Suspense>
+        ) : null}
+
+        {/* Sticky bottom CTA bar — toujours visible au bas du tiroir */}
         <div
           style={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 8,
             flex: 'none',
-            padding: '10px 12px calc(var(--safe-bottom, 0px) + 14px)',
-            borderTop: '0.5px solid rgba(23, 64, 44, 0.08)',
-            background: 'rgba(249, 248, 244, 0.94)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            padding: '10px 12px calc(var(--safe-bottom, 0px) + 12px)',
+            borderTop: '0.5px solid rgba(23, 64, 44, 0.1)',
+            background: '#FAF9F5',
+            boxShadow: '0 -8px 20px rgba(16, 32, 25, 0.06)',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -670,6 +759,7 @@ export function ExplorerPreFlightSheet({
         >
           <button
             type="button"
+            className="xp20-tactile"
             onClick={() => onLaunch({ express: false })}
             style={{
               flex: '1 1 auto',
@@ -694,6 +784,7 @@ export function ExplorerPreFlightSheet({
 
           <button
             type="button"
+            className="xp20-tactile"
             onClick={() => onLaunch({ express: true })}
             aria-label="Lancement Express sans compte à rebours"
             title="Démarrer immédiatement sans compte à rebours"

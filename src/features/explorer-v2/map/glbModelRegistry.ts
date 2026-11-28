@@ -66,10 +66,13 @@ export const GLB_ASSET_BY_KIND: Partial<Record<Floating3DEntityKind, string>> = 
   story: '/models/explorer/story.glb',
   friend: '/models/explorer/friend.glb',
 
-  // 8. Risques & Secours
+  // 8. Risques, Signalements, Balises & Secours
   fire: '/models/explorer/fire.glb',
   flood: '/models/explorer/flood.glb',
   rescue: '/models/explorer/rescue.glb',
+  danger: '/models/explorer/safety_report.glb',
+  safety_report: '/models/explorer/safety_report.glb',
+  live_beacon: '/models/explorer/live_beacon.glb',
 };
 
 const TARGET_HEIGHT_UNITS = 2.15;
@@ -81,6 +84,9 @@ const KIND_SCALE_MULTIPLIER: Partial<Record<Floating3DEntityKind, number>> = {
   saddle: 1.12,
   bike_shop: 1.1,
   club_event: 1.08,
+  live_beacon: 1.12,
+  safety_report: 1.1,
+  danger: 1.1,
 };
 
 export interface ExplorerGlbRegistry {
@@ -95,6 +101,8 @@ export interface ExplorerGlbRegistry {
 }
 
 const CORE_PRELOAD_KINDS: readonly Floating3DEntityKind[] = [
+  'live_beacon',
+  'safety_report',
   'summit',
   'water',
   'refuge',
