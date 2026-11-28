@@ -5,14 +5,13 @@
 
 ---
 
-## 1. Réflexe d'Autonomie Systémique (6 Questions Obligatoires Avant de Concevoir)
-1. **Drawer sur place > Redirection** : Peut-on monter le drawer existant (`CreateSheetV2`, `PostSharePanel`, `StoriesViewer`, `FreedomCommentsDrawer`, `ClubDrawerHost`) **directement sur la page courante** en `dynamic(..., { ssr: false })` au lieu d'envoyer l'utilisateur sur une autre route ?
-2. **Interconnexions complètes** : Quels modules LKDV doivent réagir ou être proposés à partir de cet événement ?
-   `Post` · `Story` · `Carnet` · `Club` · `Discussion (Messagerie)` · `Sortie` · `Kit / Usure Matériel` · `Pokédex Nature` · `Progression XP` · `Itinéraire` · `Bouteille à la mer`
-3. **Zéro double saisie** : Quel pont de données (`outingHandoff.ts`, `CreateSheetContext`, `usePostShareTargets`) pré-remplit automatiquement le formulaire ou le partage ?
-4. **Blocs canoniques** : Est-ce que j'utilise bien `IdentityPill`/`PostAuthorPill`, `CommunityStoriesBar`/`StoriesViewer`, `CommunityFeedPost`, `ProductGlassCard`, `SlotShell` (`CapsuleTabs` haut + lentilles/filtre bas-droite) ?
-5. **Moteurs existants** : Le calcul existe-t-il déjà dans `wiki/DATA_FLOWS_AND_ENGINES.md` (télémétrie, DEM, WASM, météo, EXIF, haptique, gestes) ?
-6. **Terrain & Anti-Dette** : Offline montagne OK ? Mobile `390×844` + hiérarchie swipes OK ? Si je crée une v2, je supprime la v1 dans le même commit ?
+## 1. Réflexion Produit & Discernement (Valable pour TOUTE l'App — Jamais Automatique)
+Avant de concevoir ou modifier quoi que ce soit (UX, carte, social, matériel, boutique, mobile, perf, data), passe par ce filtre de jugement — **ne rien ajouter machinalement, uniquement si c'est nécessaire, pratique ou utile à cet instant précis** :
+1. **Utilité réelle > Remplissage** : Est-ce que ce pont ou cette option aide *vraiment* l'utilisateur ici, ou est-ce que ça rajoute du bruit ? Si c'est superflu, ne le mets pas.
+2. **Sur place vs Redirection** : Si l'action reste dans le même flux mental, monter le drawer existant **sur place** (`dynamic(..., { ssr: false })`) ; si l'utilisateur change d'univers, une navigation propre est préférable.
+3. **Vision globale de l'écosystème** : Quelles autres briques LKDV sont *pertinentes* ici ? (`Post`, `Story`, `Carnet`, `Club`, `Messagerie`, `Sortie`, `Kit/Matériel`, `Boutique`, `Pokédex`, `XP`, `Itinéraire`, `Live Tracking`, `Capteurs/Montres`).
+4. **Zéro double saisie & réutilisation** : Existe-t-il déjà un pont (`outingHandoff.ts`, `usePostShareTargets`), un bloc canonique (`CANONICAL_BLOCKS.md`) ou un moteur (`DATA_FLOWS_AND_ENGINES.md`) à réutiliser ?
+5. **Terrain & Anti-Dette** : Fluide en offline montagne, mobile `390×844`, hiérarchie des swipes respectée ? Et si une v2 remplace une v1, supprimer la v1 dans le même commit.
 
 ---
 
