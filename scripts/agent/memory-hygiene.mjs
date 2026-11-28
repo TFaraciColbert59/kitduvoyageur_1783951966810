@@ -14,6 +14,7 @@ const PRUNE = process.argv.includes('--prune');
 const BUDGETS = [
   { file: 'CLAUDE.md', maxLines: 190 },
   { file: 'AGENTS.md', maxLines: 120 },
+  { file: 'memory/USER_PROFILE.md', maxLines: 60 },
   { file: 'memory/STATE.md', maxLines: 80 },
   { file: 'memory/LESSONS.md', maxLines: 120 },
   { file: 'memory/SKILLS_REGISTRY.md', maxLines: 100 },

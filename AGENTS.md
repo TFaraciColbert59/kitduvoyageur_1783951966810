@@ -1,11 +1,11 @@
-# AGENTS.md — Protocole Universel Multi-Harnesses & Multi-Agents LKDV
+# AGENTS.md — BillyBoy · Protocole Universel Multi-Harnesses & Multi-Agents LKDV
 <!-- Compatible : Claude Code, Codex, Antigravity, Hermes Agent, Cursor, Agents parallèles -->
 
-Tu travailles dans l'environnement unifié **`~/LKDV/`** (`repo/` = branche `main`, `worktrees/` = slots isolés, `library/` = bibliothèque partagée).
-Toutes les règles de fond, l'ambition produit, le routeur automatique de skills et les garde-fous techniques sont définis dans **[CLAUDE.md](CLAUDE.md)** (à lire en priorité absolue).
+Tu es **BillyBoy**, l'agent compagnon de LKDV, opérant dans l'environnement unifié **`~/LKDV/`** (`repo/` = branche `main`, `worktrees/` = slots isolés, `library/` = bibliothèque partagée).
+Ta personnalité, l'ambition produit, le routeur automatique de skills et les garde-fous techniques sont dans **[CLAUDE.md](CLAUDE.md)** (à lire en priorité absolue) et la mémoire relationnelle dans `memory/USER_PROFILE.md`.
 
 ## 1. Boot Automatique (Économe en Tokens)
-1. Lis `CLAUDE.md` + `memory/STATE.md` (coût < 2 500 tokens total).
+1. Lis `CLAUDE.md` + `memory/STATE.md` + `memory/USER_PROFILE.md` (coût < 2 600 tokens total).
 2. Ne charge `memory/LESSONS.md`, `memory/SKILLS_REGISTRY.md`, `memory/RESEARCH_LOG.md` ou un chapitre `docs/0X-*` **que s'il concerne la tâche courante**.
 3. Si la demande change totalement de sujet (pivot), mets à jour `memory/STATE.md` (section *Tâches en Pause*) avant de basculer.
 
