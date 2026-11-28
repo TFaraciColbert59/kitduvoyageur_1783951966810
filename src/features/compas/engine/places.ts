@@ -5,7 +5,7 @@
  * près de la destination est écarté, jamais deviné.
  */
 
-import { extentIsWorldwide, extentWidthDeg } from './longitude';
+import { extentIsWorldwide, extentWidthDeg, lonInExtent } from './longitude';
 import { matchKey } from './nameKey';
 
 export interface CompasPlace {
@@ -654,6 +654,31 @@ export function withinPlaceExtent(p: { lat: number; lon: number }, extent: reado
   const inLat = p.lat <= n + m && p.lat >= so - m;
   const inLon = w <= e ? p.lon >= w - m && p.lon <= e + m : p.lon >= w - m || p.lon <= e + m;
   return inLat && inLon;
+}
+
+/** Deux emprises [ouest, nord, est, sud] se recouvrent-elles (marge de 0,05°, antiméridien compris) ? */
+export function extentsOverlap(
+  a: readonly [number, number, number, number],
+  b: readonly [number, number, number, number]
+): boolean {
+  const m = 0.05;
+  const lat = a[3] <= b[1] + m && b[3] <= a[1] + m;
+  return lat && (lonInExtent(a[0], b, m) || lonInExtent(b[0], a, m));
+}
+
+/**
+ * Un lieu naturel est-il dans la grande entité (région, département) qu'il remplacerait ? Son point
+ * dans l'emprise ; pour un cours d'eau, son emprise qui recoupe la sienne : le point d'un fleuve est
+ * le centre de son emprise, souvent loin des départements qu'il traverse (« la Loire à vélo » : le
+ * point de la Loire est près d'Orléans, le département de la Loire autour de Saint-Étienne, C-028).
+ * Un sommet homonyme hors de la région reste refusé (« Normandie », 13 oct.).
+ */
+export function naturalInsideBigPlace(
+  p: Pick<CompasPlace, 'lat' | 'lon' | 'osmTag'> & { extent?: CompasPlace['extent'] },
+  bigExtent: readonly [number, number, number, number]
+): boolean {
+  if (withinPlaceExtent(p, bigExtent)) return true;
+  return /^waterway=/.test(p.osmTag ?? '') && p.extent != null && extentsOverlap(p.extent, bigExtent);
 }
 
 /** Le début d'un nom en mots à majuscule (« Népal camp de base… » → « Népal »), s'il est plus court. */

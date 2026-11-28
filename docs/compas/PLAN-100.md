@@ -1598,9 +1598,13 @@ passe (jeux de validation en production, contrôlés en base) et aucun constat
       et retenter les contrôles non testables quand leur condition existe (second compte, alerte en cours).
 - [ ] Jeu « 20 parcours réels » rejoué en production, contrôlé en base.
 - [~] Jeu « 50 demandes nouvelles » (France et Europe) : **50/50 prêtes, 46/50 lieux justes (92 %)** sur aperçu (def2, 21 oct.) ;
-      4 lieux corrigés ensuite (C-023). En production : à rejouer après fusion.
+      4 lieux corrigés ensuite (C-023). En production : à rejouer après fusion. **26 nov., en local** (ni aperçu ni production,
+      conditions dégradées, `phase7/JOURNAL-TESTS.md`) : `main` 50/50 prêtes, **49/50 lieux justes (98 %)** sur la grille
+      `phase7/attendus.json` ; l'écart (C-028, la Loire) est corrigé et rejoué.
 - [~] Jeu « 50 demandes monde » (hors Europe, hémisphère sud, écritures non latines, voyageurs non français, sans GPS) :
-      **50/50 prêtes, 49/50 lieux justes (98 %)** sur aperçu (def2, 21 oct.) ; en production : à rejouer après fusion. Ancien libellé :
+      **50/50 prêtes, 49/50 lieux justes (98 %)** sur aperçu (def2, 21 oct.) ; en production : à rejouer après fusion. **26 nov., en local** :
+      `main` 49/50 prêtes, **44/50 lieux justes (88 %)** sur la grille resserrée (zones : Rocheuses, Svaneti, Cusco, Mendoza, Atacama) ;
+      les six écarts sont corrigés et rejoués (C-027, C-029, C-031). Ancien libellé :
       voyageurs non français, sans GPS.
 - [~] Charge simulée : **analyse mesurée le 20 oct.** (`docs/compas/phase7/CHARGE-SIMULEE.md` : 2,9 crédits Geoapify
       par préparation, donc ≈ 2 900 pour 1 000 : marge négative de 7 %, dégradation propre ; base 353 Mo en régime) ;

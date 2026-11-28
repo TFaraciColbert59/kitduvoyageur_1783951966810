@@ -43,6 +43,42 @@ const REGIONS: Record<string, Region> = {
     bases: { IN: { name: 'Leh', lat: 34.1526, lon: 77.5771 } },
     countries: { IN: 'Inde' },
   },
+  // La carte range la région sous son nom géorgien et fait passer la Basse-Svanétie (Racha-Lechkhumi
+  // et Kvemo Svaneti) devant la Haute-Svanétie, celle des treks (Mestia, Ushguli) ; constat C-029.
+  svaneti: {
+    label: 'Svanétie',
+    bases: { GE: { name: 'Mestia', lat: 43.0458, lon: 42.728 } },
+    countries: { GE: 'Géorgie' },
+  },
+  // Constat C-031 (jeu monde local du 26 nov.) : la carte rend la région administrative ou un sommet homonyme,
+  // loin de l'endroit où l'on va. Coordonnées des villes de base relevées sur OpenStreetMap (Photon, Nominatim).
+  rocheusescanadiennes: {
+    label: 'Rocheuses canadiennes',
+    bases: { CA: { name: 'Banff', lat: 51.1751, lon: -115.5721 } },
+    countries: { CA: 'Canada' },
+  },
+  atacama: {
+    label: 'Désert d’Atacama',
+    bases: { CL: { name: 'San Pedro de Atacama', lat: -22.9108, lon: -68.2001 } },
+    countries: { CL: 'Chili' },
+  },
+  cusco: {
+    label: 'Cusco',
+    bases: { PE: { name: 'Cusco', lat: -13.5171, lon: -71.9785 } },
+    countries: { PE: 'Pérou' },
+  },
+  mendoza: {
+    label: 'Mendoza',
+    bases: { AR: { name: 'Mendoza', lat: -32.8894, lon: -68.8446 } },
+    countries: { AR: 'Argentine' },
+  },
+  // Constat C-032 (C-020 revenu au rejeu local du 26 nov.) : quand Photon répond 503, le repli rend d'abord un
+  // sommet homonyme de l'État de Washington. Le site, relevé sur OpenStreetMap (`tourism=attraction`).
+  machupicchu: {
+    label: 'Machu Picchu',
+    bases: { PE: { name: 'Machu Picchu', lat: -13.1643, lon: -72.545 } },
+    countries: { PE: 'Pérou' },
+  },
   tatry: {
     label: 'Tatras',
     bases: {
@@ -61,6 +97,23 @@ const ALIASES: Record<string, string> = {
   hautesterresdecosse: 'highlands',
   himalayaindienladakh: 'ladakh',
   ladakhinde: 'ladakh',
+  svanetie: 'svaneti',
+  hautesvanetie: 'svaneti',
+  uppersvaneti: 'svaneti',
+  zemosvaneti: 'svaneti',
+  canadarocheuses: 'rocheusescanadiennes',
+  rocheusescanada: 'rocheusescanadiennes',
+  canadianrockies: 'rocheusescanadiennes',
+  montagnesrocheusescanadiennes: 'rocheusescanadiennes',
+  chiliatacama: 'atacama',
+  atacamachili: 'atacama',
+  desertdatacama: 'atacama',
+  atacamadesert: 'atacama',
+  cuzco: 'cusco',
+  peroucusco: 'cusco',
+  cuscoperou: 'cusco',
+  argentinemendoza: 'mendoza',
+  mendozaargentine: 'mendoza',
 };
 
 const key = (s: string) =>

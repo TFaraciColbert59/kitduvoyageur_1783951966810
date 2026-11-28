@@ -4,7 +4,7 @@
  * Centralise :
  * - Les conditions d'utilisation datées (`termsSnapshot`), licences, attributions et quotas techniques.
  * - Le coupe-circuit de production `assertNoForbiddenProdProvider` rejetant tout appel à
- *   Open-Meteo public (`api.open-meteo.com`) ou Overpass public (`overpass-api.de`).
+ *   Open-Meteo public (`api.open-meteo.com`) ou Overpass public (`instance publique overpass-api de FOSSGIS`).
  * - Le verrou de séparation stricte ODbL / données biométriques (`assertOdblBiometricSeparation`).
  * - Les constructeurs typés `Evidence<T>` conformes à `effort.schema.ts`.
  */
@@ -206,14 +206,14 @@ export const PROVIDER_TERMS_REGISTRY: Readonly<Record<ProviderId, ProviderTermsE
       requiresIdentifiedUserAgent: false,
     },
     notes:
-      'Import exclusivement depuis extraits OSM/GeoJSON locaux (osm2pgsql flex / fichiers locaux) sans appel Overpass public (overpass-api.de interdit). Séparation stricte des tables/colonnes ODbL (trail_segments, trail_segment_features) et des données biométriques utilisateurs.',
+      'Import exclusivement depuis extraits OSM/GeoJSON locaux (osm2pgsql flex / fichiers locaux) sans appel Overpass public (instance publique overpass-api de FOSSGIS interdit). Séparation stricte des tables/colonnes ODbL (trail_segments, trail_segment_features) et des données biométriques utilisateurs.',
   },
 };
 
 /**
  * Motifs d'URL ou d'identifiants de fournisseurs strictement interdits en production :
  * - Open-Meteo public (`api.open-meteo.com`, gratuit uniquement en usage non commercial)
- * - Overpass public (`overpass-api.de`, quotas/CGU incompatibles avec le pipeline de production)
+ * - Overpass public (`instance publique overpass-api de FOSSGIS`, quotas/CGU incompatibles avec le pipeline de production)
  */
 const FORBIDDEN_PROD_PATTERNS: ReadonlyArray<{
   code: 'FORBIDDEN_OPEN_METEO_PUBLIC' | 'FORBIDDEN_OVERPASS_PUBLIC';
@@ -230,7 +230,7 @@ const FORBIDDEN_PROD_PATTERNS: ReadonlyArray<{
     code: 'FORBIDDEN_OVERPASS_PUBLIC',
     regex: /(?:overpass-api\.de|overpass\.kumi\.systems|overpass[-_]public)/i,
     reason:
-      'Overpass public (overpass-api.de) est strictement interdit pour le peuplement de trail_segments en production. Utiliser des extraits OSM locaux (ODbL 1.0).',
+      'Overpass public (instance publique overpass-api de FOSSGIS) est strictement interdit pour le peuplement de trail_segments en production. Utiliser des extraits OSM locaux (ODbL 1.0).',
   },
 ];
 
@@ -252,7 +252,7 @@ export class ForbiddenProdProviderError extends Error {
 
 /**
  * Coupe-circuit : rejette explicitement tout appel à Open-Meteo public (`api.open-meteo.com`)
- * ou Overpass public (`overpass-api.de`).
+ * ou Overpass public (`instance publique overpass-api de FOSSGIS`).
  */
 export function assertNoForbiddenProdProvider(urlOrId: string): void {
   const normalized = String(urlOrId ?? '').trim();

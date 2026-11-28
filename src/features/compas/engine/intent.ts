@@ -333,6 +333,26 @@ const ACTIVITY_LEAD = /^(?:rando|randonnee|randonnees|trek|trekking|trail|velo|s
 const FUNCTION_WORD = /^(?:depuis|vers|chez|sur|sous|par|a|le|la|les|l|ce|cet|cette|ces|son|sa|ses|ton|ta|tes|week|weekend|jusqu|apres|avant|pendant|durant|quelques|plusieurs|tout|toute|tous|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)$/;
 const SENTENCE_OPENER = /^(?:je|j|on|nous|il|elle|vous|tu|bonjour|salut|hello|hi|hey|merci|svp|stp|ok|oui|non|mon|ma|mes|un|une|le|la|les|pour|avec|dans|en|au|aux|du|des|de|i|we|my|our)$/;
 const RU_DAYS = /(\d{1,3})\s*(дн(?:я|ей|ь)|дней|суток|недел(?:и|ю|ь|я))/i;
+/** « 三天 » (trois jours), « 两周 » (deux semaines), « 一个星期 », « 三晚 » (trois nuits), « 5天 ». */
+const ZH_SPAN = /([一二两三四五六七八九十]{1,3}|\d{1,3})\s*个?\s*(天|日|晚|夜|周|週|星期|礼拜)/u;
+const ZH_DIGITS: Record<string, number> = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+/** Nombre chinois jusqu'à 99 (« 三 », « 十 », « 十一 », « 二十五 ») ou en chiffres ; autre forme : null. */
+function zhNumber(v: string): number | null {
+  if (/^\d+$/.test(v)) return Number(v);
+  const m = /^([一二两三四五六七八九])?(十)?([一二三四五六七八九])?$/u.exec(v);
+  if (!m || (!m[1] && !m[2])) return null;
+  if (!m[2]) return m[3] ? null : ZH_DIGITS[m[1]!];
+  return (m[1] ? ZH_DIGITS[m[1]] : 1) * 10 + (m[3] ? ZH_DIGITS[m[3]] : 0);
+}
+/** Jours d'une durée dite en chinois : jours, nuits (une journée de plus) ou semaines ; rien de sûr : null. */
+function zhSpanDays(src: string): number | null {
+  const m = ZH_SPAN.exec(src);
+  const n = m ? zhNumber(m[1]) : null;
+  if (!m || n == null || n < 1) return null;
+  if (/^(周|週|星期|礼拜)$/u.test(m[2])) return Math.min(60, n * 7);
+  if (/^(晚|夜)$/u.test(m[2])) return Math.min(60, n + 1);
+  return Math.min(60, n);
+}
 const WEEK_OF = /\b(?:une\s+|1\s+)?semaine\s+(?:de|d'|a|au|aux|en|dans|sur)\s+(?!la\b|l'|du\b|des\b|prochaine|derniere)/;
 const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const RELATIVE_DATE =
@@ -644,7 +664,7 @@ const COMMON_PLACE_WORDS =
  * nombre (« Afrique du Sud », mais « Vercors du 3 au 10 juin »).
  */
 const PLACE_END =
-  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|jusqu['’](?:au|aux|à|a|en)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons)(?=[\s-]|$)/i;
+  /\s(?:(?:du|le|la|les)(?=\s+(?:\d|mois\b|semaine\b|prochaine?\b))|du (?:nord|sud|centre) (?:au|jusqu['’]au) (?:nord|sud|centre)|d['’](?:est|ouest) en (?:est|ouest)|de l['’](?:est|ouest) (?:a|à) l['’](?:est|ouest)|near|around|close to|pr[eè]s de|à côté de|a cote de|jusqu['’](?:au|aux|à|a|en)|pour|avec|en|a|à|à partir|pendant|durant|sur|et|sans|budget|plage|plages|temples?|musees?|fjords?|autour|via|pas|safari|un|une|deux|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|quinze|vingt|cette|ce|tout|toute|semaines?|jours?|nuits?|days?|weeks?|nights?|for|from|to|until|week[- ]?end|début|debut|mi|fin|noël|noel|pâques|paques|toussaint|demain|après-demain|apres-demain|aujourd['’]hui|prochain|prochaine|janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre|depuis|au départ|au depart|en partant|on part|je pars|nous partons|solo|seule?s?|alone)(?=[\s-]|$)/i;
 
 /**
  * Fin d'un lieu de DÉPART, en plus de `PLACE_END` : ce qui continue la phrase
@@ -1279,6 +1299,9 @@ function parseRulesCore(
     // « 5 дней » (russe) : cinq jours ; « 2 недели » : deux semaines.
     const m = RU_DAYS.exec(src)!;
     out.push({ type: 'set_duration', days: Math.min(60, Number(m[1]) * (/^нед/i.test(m[2]) ? 7 : 1)), hours: null });
+  } else if (zhSpanDays(src) != null) {
+    // « 东京三天自由行 » (chinois) : trois jours ; « 两周 » deux semaines ; « 三晚 » trois nuits (constat C-025).
+    out.push({ type: 'set_duration', days: zhSpanDays(src)!, hours: null });
   } else if (WEEK_OF.test(plain)) {
     // « semaine de surf au Pays basque » : une semaine, dite sans nombre (constat C-013).
     out.push({ type: 'set_duration', days: 7, hours: null });

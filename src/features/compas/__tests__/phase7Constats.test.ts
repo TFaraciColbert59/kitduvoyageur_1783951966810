@@ -4,7 +4,7 @@ import { knownRegion } from '../engine/knownRegions';
 import { parseIntentRules } from '../engine/intent';
 import { understandRequest } from '../engine/request';
 import { canonicalCountryName, canonicalPlaceName, splitPlaceCountry } from '../engine/countryNames';
-import { looseRank, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
+import { looseRank, naturalInsideBigPlace, parseGeoapify, plausibleLooseMatch, resemblesQuery, subPlaceQueries, type CompasPlace } from '../engine/places';
 
 // Constats de la phase 7 (docs/compas/phase7/CONSTATS.md) : chaque test rejoue la phrase du jeu qui a révélé le défaut.
 const TODAY = '2026-10-19';
@@ -376,5 +376,150 @@ describe('C-023 · jeux def2 : régions que la carte range sur un homonyme', () 
   it('« Highlands écossais » (et non la Rivière des Écossais du Québec) et « Himalaya indien Ladakh » (et non un hôtel)', () => {
     expect(knownRegion('Highlands écossais', null)).toMatchObject({ countryCode: 'GB', name: 'Highlands écossais' });
     expect(knownRegion('Himalaya indien Ladakh', null)).toMatchObject({ countryCode: 'IN', name: 'Ladakh' });
+  });
+});
+
+describe('C-024 · un mot de groupe dit après le lieu n’est pas dans son nom', () => {
+  const read = (say: string) => parseIntentRules(say, TODAY, 'fr');
+  const dest = (say: string) => read(say).find((a) => a.type === 'set_destination');
+  const party = (say: string) => read(say).find((a) => a.type === 'set_party_size');
+  it('jeu monde n°41 « 3 days in Cape Town solo » → Cape Town, 1 personne', () => {
+    expect(dest('3 days in Cape Town solo')).toMatchObject({ place: 'Cape Town' });
+    expect(party('3 days in Cape Town solo')).toMatchObject({ count: 1 });
+  });
+  it('en français aussi : « 3 jours à Lyon seul », « week-end à Annecy seule »', () => {
+    expect(dest('3 jours à Lyon seul')).toMatchObject({ place: 'Lyon' });
+    expect(dest('week-end à Annecy seule')).toMatchObject({ place: 'Annecy' });
+    expect(party('3 jours à Lyon seul')).toMatchObject({ count: 1 });
+  });
+  it('dit avant le lieu, rien ne change (« 3 days solo in Cape Town », « 3 jours en solo à Lyon »)', () => {
+    expect(dest('3 days solo in Cape Town')).toMatchObject({ place: 'Cape Town' });
+    expect(dest('3 jours en solo à Lyon')).toMatchObject({ place: 'Lyon' });
+  });
+});
+
+describe('C-028 · un fleuve se juge sur son cours, pas sur le centre de son emprise', () => {
+  // Emprises [ouest, nord, est, sud] rendues par Photon le 26 nov. 2026.
+  const loireDepartement: [number, number, number, number] = [3.6884431, 46.2765323, 4.7607591, 45.2310638];
+  const laLoire = { lat: 47.6668145, lon: 1.5159195, osmTag: 'waterway=river', extent: [-2.1776242, 47.9036077, 4.2765483, 44.761382] as [number, number, number, number] };
+  it('jeu France/Europe n°5 « 4 jours de vélo sur la Loire à vélo » : la Loire (fleuve) traverse le département de la Loire', () => {
+    expect(naturalInsideBigPlace(laLoire, loireDepartement)).toBe(true);
+  });
+  it('un sommet homonyme hors de la région reste refusé (« Normandie » ≠ un sommet près du Mont-Dore)', () => {
+    const normandie: [number, number, number, number] = [-1.95, 50.08, 1.8, 48.18];
+    expect(naturalInsideBigPlace({ lat: 45.57, lon: 2.81, osmTag: 'natural=peak', extent: null }, normandie)).toBe(false);
+  });
+  it('un lieu naturel non fluvial dont seule l’emprise recoupe reste refusé', () => {
+    const parcVoisin = { lat: 47.6, lon: 1.5, osmTag: 'boundary=protected_area', extent: [-2.1, 47.9, 4.2, 44.8] as [number, number, number, number] };
+    expect(naturalInsideBigPlace(parcVoisin, loireDepartement)).toBe(false);
+  });
+  it('une rivière loin du département est refusée', () => {
+    const autre = { lat: 43.6, lon: 1.4, osmTag: 'waterway=river', extent: [0.5, 44.2, 2.4, 42.9] as [number, number, number, number] };
+    expect(naturalInsideBigPlace(autre, loireDepartement)).toBe(false);
+  });
+});
+
+describe('C-029 · Svaneti : la Haute-Svanétie des treks, pas la Basse-Svanétie', () => {
+  it('jeu monde n°17 « Géorgie Caucase 7 jours en trek à Svaneti » → base Mestia (Géorgie)', () => {
+    expect(knownRegion('Svaneti', 'GE')).toMatchObject({ countryCode: 'GE', name: 'Svanétie' });
+    expect(knownRegion('Svaneti', null)?.lat).toBeCloseTo(43.0458, 3);
+  });
+  it('les autres écritures : Svanétie, Haute-Svanétie, Upper Svaneti, Zemo Svaneti', () => {
+    for (const name of ['Svanétie', 'Haute-Svanétie', 'Upper Svaneti', 'Zemo Svaneti']) {
+      expect(knownRegion(name, null)?.countryCode, name).toBe('GE');
+    }
+  });
+});
+
+describe('C-032 · Machu Picchu reste au Pérou quand Photon ne répond pas (C-020 revenu)', () => {
+  it('rejeu monde n°7 « trek 4 jours au Machu Picchu, chemin de l’Inca » : le site, jamais le sommet de l’État de Washington', () => {
+    const p = knownRegion('Machu Picchu', null);
+    expect(p).toMatchObject({ countryCode: 'PE', name: 'Machu Picchu' });
+    expect(p!.lat).toBeCloseTo(-13.1643, 3);
+    expect(knownRegion('Machupicchu', null)?.countryCode).toBe('PE');
+  });
+});
+
+describe('C-031 · régions dites avec leur pays : l’endroit où l’on va, pas le centre administratif', () => {
+  const within = (p: ReturnType<typeof knownRegion>, [s, n, w, e]: [number, number, number, number]) =>
+    p != null && p.lat >= s && p.lat <= n && p.lon >= w && p.lon <= e;
+  it('jeu monde n°11 « Canada Rocheuses » → Banff (et non un sommet du nord de la Colombie-Britannique)', () => {
+    const p = knownRegion('Canada Rocheuses', null);
+    expect(p).toMatchObject({ countryCode: 'CA' });
+    expect(within(p, [50.5, 53.5, -119, -114.5])).toBe(true);
+    expect(knownRegion('Canadian Rockies', null)?.countryCode).toBe('CA');
+    // « Rocheuses » seules : deux pays possibles, la table ne tranche pas.
+    expect(knownRegion('Rocheuses', null)).toBeNull();
+  });
+  it('jeu monde n°26 « Chili Atacama » → San Pedro de Atacama (et non la région de Copiapó)', () => {
+    const p = knownRegion('Chili Atacama', null);
+    expect(p).toMatchObject({ countryCode: 'CL' });
+    expect(within(p, [-23.6, -22.3, -68.6, -67.6])).toBe(true);
+    expect(knownRegion('Désert d’Atacama', null)?.countryCode).toBe('CL');
+  });
+  it('jeu monde n°18 « Pérou Cusco » et n°24 « Argentine Mendoza » → la ville, pas la province', () => {
+    expect(within(knownRegion('Pérou Cusco', null), [-13.9, -13.2, -72.4, -71.6])).toBe(true);
+    expect(within(knownRegion('Cuzco', null), [-13.9, -13.2, -72.4, -71.6])).toBe(true);
+    expect(within(knownRegion('Argentine Mendoza', null), [-33.4, -32.5, -69.3, -68.4])).toBe(true);
+  });
+});
+
+describe('C-030 · une ville dite en anglais est cherchée sous son nom français', () => {
+  it('rejeu monde n°41 « Cape Town » → « Le Cap » (Photon, en français, ne connaît pas « Cape Town »)', () => {
+    expect(canonicalPlaceName('Cape Town')).toBe('Le Cap');
+  });
+  it('les autres exonymes anglais courants', () => {
+    const pairs: Array<[string, string]> = [
+      ['London', 'Londres'],
+      ['Lisbon', 'Lisbonne'],
+      ['Seville', 'Séville'],
+      ['Venice', 'Venise'],
+      ['Vienna', 'Vienne'],
+      ['Edinburgh', 'Édimbourg'],
+      ['Copenhagen', 'Copenhague'],
+      ['Geneva', 'Genève'],
+      ['Brussels', 'Bruxelles'],
+      ['Athens', 'Athènes'],
+      ['Beijing', 'Pékin'],
+      ['Seoul', 'Séoul'],
+      ['Tbilisi', 'Tbilissi'],
+      ['Marrakesh', 'Marrakech'],
+      ['Tuscany', 'Toscane'],
+      ['Sardinia', 'Sardaigne'],
+      ['Sicily', 'Sicile'],
+      ['Crete', 'Crète'],
+      ['Corsica', 'Corse'],
+      ['Majorca', 'Majorque'],
+      ['Andalusia', 'Andalousie'],
+      ['Catalonia', 'Catalogne'],
+      ['Bavaria', 'Bavière'],
+      ['Patagonia', 'Patagonie'],
+    ];
+    for (const [en, fr] of pairs) expect(canonicalPlaceName(en), en).toBe(fr);
+  });
+  it('un nom déjà français ou identique reste sans équivalent (Kyoto, Reykjavik, Vercors)', () => {
+    expect(canonicalPlaceName('Kyoto')).toBeNull();
+    expect(canonicalPlaceName('Reykjavik')).toBeNull();
+    expect(canonicalPlaceName('Vercors')).toBeNull();
+  });
+});
+
+describe('C-025 · la durée dite en chinois est lue', () => {
+  const days = (say: string) => parseIntentRules(say, TODAY, 'fr').find((a) => a.type === 'set_duration');
+  it('jeu monde n°32 « 东京三天自由行 » → 3 jours, lieu 东京', () => {
+    expect(days('东京三天自由行')).toMatchObject({ days: 3 });
+    expect(parseIntentRules('东京三天自由行', TODAY, 'fr').find((a) => a.type === 'set_destination')).toMatchObject({ place: '东京' });
+  });
+  it('dix, onze, vingt, deux (两) et les chiffres arabes', () => {
+    expect(days('京都十天')).toMatchObject({ days: 10 });
+    expect(days('北海道十一天')).toMatchObject({ days: 11 });
+    expect(days('西藏二十天')).toMatchObject({ days: 20 });
+    expect(days('上海两天')).toMatchObject({ days: 2 });
+    expect(days('大阪5天')).toMatchObject({ days: 5 });
+  });
+  it('semaines (周, 星期) et nuits (晚, 夜 : une journée de plus)', () => {
+    expect(days('日本两周')).toMatchObject({ days: 14 });
+    expect(days('台湾一个星期')).toMatchObject({ days: 7 });
+    expect(days('香港三晚')).toMatchObject({ days: 4 });
   });
 });

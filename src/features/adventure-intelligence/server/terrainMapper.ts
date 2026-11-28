@@ -3,7 +3,7 @@
  * peuplement ODbL idempotent de `trail_segments` et segmentation fallback `positions_timed` (Lot P2).
  *
  * Respecte strictement :
- * - Zéro appel à Overpass public (`overpass-api.de`) ou Open-Meteo public (`api.open-meteo.com`).
+ * - Zéro appel à Overpass public (`instance publique overpass-api de FOSSGIS`) ou Open-Meteo public (`api.open-meteo.com`).
  * - Séparation stricte ODbL 1.0 : aucune donnée utilisateur ou biométrique dans `trail_segments`
  *   ni `trail_segment_features`.
  * - Fallback `trail_segments = 0` : segmentation directe de `hike_sessions.positions_timed`
@@ -681,7 +681,7 @@ export interface BuildTrailSegmentsOptions {
 /**
  * Construit de manière **idempotente** les lignes `trail_segments` et leurs caractéristiques
  * dérivées depuis des extraits OSM/GeoJSON locaux, sans aucun appel à Overpass public
- * (`overpass-api.de`), et en garantissant la séparation stricte ODbL 1.0 (zéro champ biométrique
+ * (`instance publique overpass-api de FOSSGIS`), et en garantissant la séparation stricte ODbL 1.0 (zéro champ biométrique
  * ou utilisateur).
  */
 export function buildTrailSegmentsFromLocalOsmFeatures(
