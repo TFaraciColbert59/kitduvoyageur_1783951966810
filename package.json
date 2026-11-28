@@ -75,7 +75,8 @@
     "perf:budget": "node scripts/perf/check-bundle-budget.mjs",
     "perf:surfaces": "node scripts/perf/measure-surfaces.mjs",
     "test:unit": "vitest run",
-    "agent:hygiene": "node scripts/agent/memory-hygiene.mjs"
+    "agent:hygiene": "node scripts/agent/memory-hygiene.mjs",
+    "design:audit": "node scripts/agent/design-audit.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
