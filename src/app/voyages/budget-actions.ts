@@ -17,7 +17,6 @@ import { getTripById } from '@/lib/queries-trips';
 
 /** Revalidations budget : pages hub active (pas les routes /voyages legacy). */
 function revalidateBudgetPaths(tripSlug?: string) {
-  revalidatePath('/hub/budget');
   revalidatePath('/hub');
   if (tripSlug) {
     revalidatePath(tripSegmentPath(tripSlug, ''));

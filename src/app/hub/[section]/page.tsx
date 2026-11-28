@@ -9,11 +9,6 @@ import {
   getHubAdventureData,
   getHubTripStats,
 } from '@/features/hub/server/getHubAdventureData';
-import {
-  EMPTY_OVERVIEW,
-  getTripBookingOverview,
-} from '@/features/hub/server/getTripBookingOverview';
-import { ReservationsOverview } from '@/features/hub/components/budget/ReservationsOverview';
 import { MenuBack } from '@/features/hub/components/menu/MenuBack';
 import { hubSectionRegistry, isHubSectionServable } from '@/features/hub/registry/hubSectionRegistry';
 import { HubInventaireSection } from '@/features/hub/components/possession/HubInventaireSection';
@@ -40,7 +35,6 @@ import {
   ParticipantsManager,
   SafetyMobileExperience,
   TeamMobileExperience,
-  TripBudgetView,
   TripChecklistView,
   TripDocumentsView,
   TripExportView,
@@ -77,7 +71,7 @@ export default async function HubSectionPage({
   ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
-  if (!def || def.id === 'gear') notFound();
+  if (!def || def.id === 'gear' || def.id === 'budget') notFound();
   // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
   // (matériel, poids, essai du sac) vit désormais dans son étape Kit.
   if (def.id === 'preparation') redirect('/compas?etape=kit');
@@ -211,22 +205,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
           </div>
         </>
       );
-    case 'budget': {
-      if (!trip.permissions.canManageBudget) notFound();
-      const { data: userData } = await supabase.auth.getUser();
-      const overview = userData?.user
-        ? await getTripBookingOverview(supabase, { tripId: trip.id, userId: userData.user.id })
-        : EMPTY_OVERVIEW;
-      return (
-        <>
-          <ReservationsOverview overview={overview} />
-          <TripBudgetView
-            trip={trip}
-            initialDay={jour && Number.isFinite(Number(jour)) ? Number(jour) : undefined}
-          />
-        </>
-      );
-    }
     case 'docs':
       if (!trip.permissions.canViewDocuments) notFound();
       return (

@@ -459,12 +459,6 @@ export function HubCockpitDrawerPane(props: HubDrawerStateProps): ReactNode {
               onQueued={onExpenseQueued}
             />
           )}
-
-          {!fixture && data.budget && (
-            <Link href="/hub/budget" className={ds.btnSecondary}>
-              Gérer les dépenses complètes <Icon name="chevron-right" size={16} />
-            </Link>
-          )}
         </div>
       );
     }
@@ -1366,7 +1360,6 @@ export function renderHubDrawerDetail(
                   </div>
                 )}
               </div>
-              {!fixture && <Link href="/hub/budget" className={ds.btnSecondary}>Gérer les dépenses</Link>}
             </div>
           ),
         }
@@ -1552,7 +1545,7 @@ export function renderHubDrawerDetail(
                 Voir les options de réservation
               </a>
             )}
-            {!fixture && <Link href={entry.stepId ? '/hub/itineraire' : '/hub/budget'} className={ds.btnSecondary}>Voir dans le voyage</Link>}
+            {!fixture && entry.stepId && <Link href="/hub/itineraire" className={ds.btnSecondary}>Voir dans le voyage</Link>}
           </div>
         ),
       };
