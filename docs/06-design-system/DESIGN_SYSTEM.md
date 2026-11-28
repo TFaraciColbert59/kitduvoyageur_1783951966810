@@ -6,10 +6,11 @@
 > - **`/communaute`** (Communauté V2 : Stories, Posts + Commentaires/Partage, Pilule Utilisateur, Drawers de création)
 > - **Socle de jetons** : `src/design/bank.ts` (compilé par `scripts/generate-design-bank.mjs`, vérifié par `npm run design:check`)
 
-### Architecture de la Documentation Design (3 volets)
+### Architecture de la Documentation Design (4 volets)
 1. **Ce document (`DESIGN_SYSTEM.md`)** — Philosophie ergonomique, Fondations (Palette, Verre, Typographie, Rayons, Espacements, Motion, Interdits).
-2. **[DRAWERS_AND_NAVIGATION.md](DRAWERS_AND_NAVIGATION.md)** — Le Pilier Drawers (sélecteur haut + sous-volets & filtres en **bas à droite**, les 4 modes d'ouverture et adaptation du contenu).
+2. **[DRAWERS_AND_NAVIGATION.md](DRAWERS_AND_NAVIGATION.md)** — Le Pilier Drawers (sélecteur haut + sous-volets & filtres en **bas à droite**, hauteurs/élévations par page, 4 modes d'ouverture, sobriété sans `×` redondant).
 3. **[CANONICAL_BLOCKS.md](CANONICAL_BLOCKS.md)** — Catalogue des **7 blocs identiques partout** (Pilule Utilisateur, Stories, Posts/Commentaires/Partage, Fiches Produits, Aperçus Carnet/Club/Sortie/Kit, Drawers de Création, Cartes du Monde 3D).
+4. **[GESTURES_MOTION_ICONS.md](GESTURES_MOTION_ICONS.md)** — Gestes tactiles, hiérarchie anti-conflit des swipes, loi de sobriété zéro doublon, micro-interactions/haptique et dictionnaire unique d'icônes.
 
 ---
 

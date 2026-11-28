@@ -48,9 +48,9 @@ En fin de tâche importante ou après un bug résolu :
   - Merger dans `main` & purger : `~/LKDV/scripts/merge-agent-slot.sh <nom>`.
 
 ## 6. Vérité Unique Design : `Carnets`, `Clubs` & `Communauté`
-La **seule vérité design** est documentée en 3 volets dans `docs/06-design-system/` (`DESIGN_SYSTEM.md`, `DRAWERS_AND_NAVIGATION.md`, `CANONICAL_BLOCKS.md`), extraite de **`/carnets/[id]` (`CarnetScreenV2`)**, **`/clubs/[id]` (`ClubLiquidGlassV8`)**, **`/communaute`** et `src/design/bank.ts` :
-- **Ergonomie** : **Visuel > Texte**, **Icônes > Libellés**, simplicité visuelle, rangement strict en **Catégories → Sous-catégories**.
-- **Pilier Drawers** : sélecteur de volets principaux en **haut** (`CapsuleTabs 56px`), sous-volets icônes + filtres en **bas à droite** (`right: 10px; bottom: 10px`). **Le contenu s'adapte au mode d'ouverture du drawer, jamais l'inverse.**
+La **seule vérité design** est documentée en 4 volets dans `docs/06-design-system/` (`DESIGN_SYSTEM.md`, `DRAWERS_AND_NAVIGATION.md`, `CANONICAL_BLOCKS.md`, `GESTURES_MOTION_ICONS.md`), extraite de **`/carnets/[id]` (`CarnetScreenV2`)**, **`/clubs/[id]` (`ClubLiquidGlassV8`)**, **`/communaute`** et `src/design/bank.ts` :
+- **Ergonomie & Sobriété** : **Visuel > Texte**, **Icônes > Libellés**, **Catégories → Sous-catégories**, **zéro fonction en double** (pas de croix `×` redondante quand l'encoche centrale contrôle déjà le drawer).
+- **Pilier Drawers & Gestes** : volets principaux en **haut** (`CapsuleTabs 56px`), sous-volets icônes + filtres en **bas à droite** (`right: 10px; bottom: 10px`), hauteurs/crans adaptés par page, **le contenu s'adapte au mode d'ouverture**. Hiérarchie stricte des swipes (carte/sliders → rails Stories → swipe Post → sous-volets drawer → pages principales). Mêmes animations, haptique et icônes Lucide partout.
 - **Blocs identiques partout** : réutiliser les 7 blocs canoniques (`IdentityPill`/`PostAuthorPill`, Stories `CommunityStoriesBar`/`StoriesViewer`, Posts + Commentaires/Partage, `ProductGlassCard`/`ClubGearProductCard`, Aperçus Carnet/Club/Sortie/Kit, Drawers de création `CreateSheetV2`, Cartes 3D MapLibre).
 - **100 % Mode Clair Liquid Glass — Pure Palette Verte LKDV** (`#FBFAF6`, `#172B24`, `#17402C`, `#226148`, verres `g1`/`g2`/`g3`/`gc`). **INTERDIT ABSOLU** : zéro noir pur (`#000`, `#101010`, `#121815`), jamais `.xp20-root` dans un sub-drawer portaled (utiliser `.xp20-exp-scope`).
 

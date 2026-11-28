@@ -23,11 +23,27 @@ flowchart TB
 ```
 
 ### Détails Contractuels de Chaque Zone
-1. **Enveloppe du Drawer V2** :
+1. **Enveloppe du Drawer V2 & Sobriété (Zéro Doublon)** :
+   - **Pas de bouton croix (`×`) redondant** : l'encoche centrée haute (**grabber `38×5px`**) contrôle à la fois les changements d'élévation (swipe `↑` / `↓` ou tap) et la fermeture du drawer.
    - Fond : `linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(251,250,246,0.96) 100%)`
    - Verre : `backdrop-filter: blur(36px) saturate(1.1)`
    - Bordure/Ombre : `inset 0 1px 0 rgba(255,255,255,0.98)`, `inset 0 0 0 0.5px rgba(27,67,50,0.12)`, `0 18px 48px rgba(16,32,25,0.16)`
    - Effacement de la barre basse : dès qu'un drawer s'ouvre, `body.lkdv-dialog-open` masque `.lkdv-floating-tabbar` (`opacity: 0; pointer-events: none; transform: translateY(120%)`).
+
+---
+
+## 1b. Hauteurs & Élévations (Detents) selon les Pages
+
+La hauteur d'un drawer n'est pas figée : elle dépend **du rôle de la page** et de ses paramètres (carte active dessous, mode création, sub-drawer imbriqué) :
+
+| Type de Page / Contexte | Élévations (Detents) | Règle tactile sur l'encoche |
+| :--- | :--- | :--- |
+| **Carte 3D plein écran** (`/explorer`, `/explorer?mode=plan`) | 3 crans : `peek` (~18–22 %), `half` (~48–52 %), `full` (`88–92dvh`) | Swipe `↓` baisse d'un cran ; swipe `↑` monte d'un cran ; la carte reste manipulable au-dessus |
+| **Pages immersives 2 zones** (`/carnets/[id]`, `/clubs/[id]`) | Drawer carte clippée plein cadre (`min(430px, 100vw)`, `radius 24px`) ou mode `.mapbig` (`144px` haut / `1fr` carte) | Swipe `↓` sur l'encoche ferme le drawer et révèle la vue 2 zones |
+| **Sub-Drawer Portaled imbriqué** (`Analyse avancée`, `Crop`, `Partage`) | `92dvh` fixe (portée `.xp20-exp-scope`) | Swipe `↓` ferme le sous-drawer et revient au drawer parent sans le fermer |
+| **Sheets d'action / Formulaires** (`CreateSheetV2`, `SummarySheet`, `Commentaires`) | `75dvh` → `92dvh` (ou adaptatif au contenu si court) | Swipe `↓` ferme (avec `CloseDraftConfirm` si brouillon non sauvegardé) |
+
+*(Voir [GESTURES_MOTION_ICONS.md](GESTURES_MOTION_ICONS.md) pour la hiérarchie complète anti-conflit des swipes.)*
 2. **Sélecteur de Volets Principaux (HAUT)** :
    - Conteneur `.lkdv-slot-topnav` → `.lkdv-slot-selector.lkdv-capsule` de hauteur fixe **`56px`** (`padding: 4px`, verre `gc`).
    - Pastille active glissante `.ig-th` (animation spring).
