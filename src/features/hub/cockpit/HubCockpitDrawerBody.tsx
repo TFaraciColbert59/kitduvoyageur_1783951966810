@@ -1198,11 +1198,6 @@ export function HubCockpitDrawerPane(props: HubDrawerStateProps): ReactNode {
                 </div>
               )}
 
-              {!fixture && (
-                <Link href="/hub/groupe" className={ds.btnSecondary}>
-                  Gérer le groupe & invitations <Icon name="chevron-right" size={16} />
-                </Link>
-              )}
             </>
           )}
 
@@ -1609,7 +1604,6 @@ export function renderHubDrawerDetail(
                   </div>
                 )}
               </DrawerSection>
-              {!fixture && <Link href="/hub/groupe" className={ds.btnSecondary}>Ouvrir le groupe</Link>}
             </div>
           ),
         }

@@ -27,18 +27,14 @@ import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import {
   ChecklistMobileExperience,
   ExportMobileExperience,
-  HubGroupeCockpit,
   ItineraryMobileExperience,
   ItineraryPlannerClient,
   JournalMobileExperience,
-  ParticipantsManager,
   SafetyMobileExperience,
-  TeamMobileExperience,
   TripChecklistView,
   TripExportView,
   TripNotesView,
   TripSafetyView,
-  TripTeamView,
 } from './sectionViews.client';
 
 /**
@@ -69,19 +65,13 @@ export default async function HubSectionPage({
   ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
-  if (!def || def.id === 'gear' || def.id === 'budget' || def.id === 'docs') notFound();
+  if (!def || def.id === 'gear' || def.id === 'budget' || def.id === 'docs' || def.id === 'groupe') notFound();
   // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
   // (matériel, poids, essai du sac) vit désormais dans son étape Kit.
   if (def.id === 'preparation') redirect('/compas?etape=kit');
 
   const data = await getHubAdventureData();
-  const explicitGroupId = sp.groupId?.trim() || undefined;
-  const resolvedGroupId =
-    def.id === 'groupe'
-      ? explicitGroupId ?? (data.adventure.nature === 'collectif' ? data.adventure.id : undefined)
-      : undefined;
-  const canServeSection =
-    isHubSectionServable(def, data.adventure.nature) || Boolean(resolvedGroupId);
+  const canServeSection = isHubSectionServable(def, data.adventure.nature);
 
   if (flags?.hub_camp_v1) {
     const serverSectionNode = canServeSection ? (
@@ -96,10 +86,7 @@ export default async function HubSectionPage({
         {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
           <HubVoyagesLiesSection adventure={data.adventure} />
         )}
-        {resolvedGroupId && (
-          <HubGroupeCockpit groupId={resolvedGroupId} initialTab={sp.onglet} />
-        )}
-        {data.adventure.nature === 'sortie' && data.trip && !resolvedGroupId && (
+        {data.adventure.nature === 'sortie' && data.trip && (
           <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
         )}
       </>
@@ -133,10 +120,7 @@ export default async function HubSectionPage({
       {def.id === 'voyages-lies' && data.adventure.nature === 'collectif' && (
         <HubVoyagesLiesSection adventure={data.adventure} />
       )}
-      {resolvedGroupId && (
-        <HubGroupeCockpit groupId={resolvedGroupId} initialTab={sp.onglet} />
-      )}
-      {data.adventure.nature === 'sortie' && data.trip && !resolvedGroupId && (
+      {data.adventure.nature === 'sortie' && data.trip && (
         <SortieSection sectionId={def.id} slug={data.trip.slug} jour={sp.jour} />
       )}
     </div>
@@ -189,20 +173,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
         </>
       );
     }
-    case 'groupe':
-      return (
-        <>
-          <div className="hidden lg:block space-y-4">
-            <TripTeamView trip={trip} />
-            <div aria-label="Carnet des participants">
-              <ParticipantsManager />
-            </div>
-          </div>
-          <div className="lg:hidden">
-            <TeamMobileExperience trip={trip} />
-          </div>
-        </>
-      );
     case 'checklist': {
       const phaseDetails = getTripPhaseDetails(trip);
       const { data: checklistRows } = await supabase
