@@ -379,7 +379,7 @@ export function HubCockpitDrawerPane(props: HubDrawerStateProps): ReactNode {
                   ))}
                 </DrawerSection>
               ) : (
-                <EmptyBox icon="check" message="Aucune vigilance météo active." />
+                (!isOnline || fixture) && <EmptyBox icon="check" message="Aucune vigilance météo active." />
               )}
             </>
           )}
