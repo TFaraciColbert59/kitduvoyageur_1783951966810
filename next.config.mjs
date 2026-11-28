@@ -116,6 +116,14 @@ const nextConfig = {
     ],
   },
 
+  // Build Vercel (conteneur de 8 Go) : le cache webpack sur disque (PackFileCacheStrategy) est sérialisé
+  // en mémoire à la fin de la compilation et fait tuer le build (SIGKILL, « Out of Memory »). Il ne sert à rien
+  // sur un conteneur neuf à chaque déploiement ; on le coupe là, jamais en local ni en CI.
+  webpack: (config) => {
+    if (process.env.VERCEL) config.cache = false;
+    return config;
+  },
+
   compiler: {
     removeConsole:
       process.env.NODE_ENV === 'production'
