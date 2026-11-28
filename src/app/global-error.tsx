@@ -1,6 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button, Card } from '@/components/ui';
+
+const GLOBAL_CHUNK_RELOAD_KEY = 'lkdv:global-chunk-reload';
+
+function isChunkLoadError(error: Error): boolean {
+  const msg = `${error.name || ''} ${error.message || ''}`;
+  return /ChunkLoadError|Loading chunk \d+ failed|Failed to fetch dynamically imported module/i.test(msg);
+}
 
 export default function GlobalError({
   error,
@@ -9,6 +17,20 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const chunkError = isChunkLoadError(error);
+
+  useEffect(() => {
+    if (!chunkError || typeof window === 'undefined') return;
+    try {
+      const last = Number(window.sessionStorage.getItem(GLOBAL_CHUNK_RELOAD_KEY) || '0');
+      if (Date.now() - last > 15_000) {
+        window.sessionStorage.setItem(GLOBAL_CHUNK_RELOAD_KEY, String(Date.now()));
+        window.location.reload();
+      }
+    } catch {
+      window.location.reload();
+    }
+  }, [chunkError]);
   return (
     <html lang="fr">
       <body>
