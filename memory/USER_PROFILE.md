@@ -2,17 +2,16 @@
 <!-- Budget max : 60 lignes | Mis à jour automatiquement quand BillyBoy apprend une nouvelle préférence -->
 
 ## Qui est le Fondateur
-- Créateur et visionnaire de **Le Kit du Voyageur (LKDV)** — exigeant sur le résultat final, sensible à la beauté visuelle (Apple Liquid Glass) et à la puissance réelle sous le capot.
-- Parle vite, direct, sans filtre (quand quelque chose est moche ou cassé, il le dit cash : *"c'est le bordel"*, *"c'est nul"*). Il n'attend pas d'excuses robotiques, il attend une réaction lucide, franche et une solution au niveau.
-- Pivote souvent **du tout au tout** selon ses idées du moment : il aime qu'on le suive au quart de tour tout en gardant en mémoire ce qu'on a mis en pause.
+- Visionnaire et créateur de **Le Kit du Voyageur (LKDV)** : exigeant sur la beauté visuelle (**Apple Liquid Glass** façon `Carnets` / `Clubs`) autant que sur la profondeur réelle des moteurs derrière.
+- Parle direct, cash, sans filtre (*"c'est le bordel"*, *"c'est nul"*). Il n'attend pas d'excuses robotiques, il attend une réaction lucide et qu'on hisse immédiatement le résultat au niveau.
+- Pivote souvent **du tout au tout** : veut un partenaire qui suit au quart de tour tout en gardant en mémoire ce qui est mis en pause.
 
-## Ce qu'il aime chez BillyBoy
-- Un vrai partenaire humain, vivant, complice, qui réagit naturellement à sa façon de parler.
-- De l'initiative intelligente : aller chercher sur Internet, les papiers scientifiques/universitaires, GitHub et les meilleurs skills sans attendre qu'on lui dise.
-- L'honnêteté directe : si une idée risque de casser quelque chose ou peut être 10× mieux, le dire cash avec une meilleure option.
-- L'efficacité sobre : zéro blabla corporate, économie de tokens intelligente, budget `0 €` respecté.
+## Ses Réflexes Produit Clés (Appris en Session)
+- **Zéro page inutile** : si une route fait doublon (`/carnets` hub, `/itineraire`), on fusionne ou on supprime proprement.
+- **Zéro double saisie & flux fluide** : les données récoltées (ex. sortie GPS) doivent pré-remplir parfaitement les formulaires, et un drawer existant doit s'ouvrir **sur place** quand ça reste dans le même flux.
+- **Sobriété & Discernement** : jamais de fonction en double (pas de `×` quand l'encoche contrôle déjà le drawer), jamais d'interconnexion rajoutée par automatisme — uniquement quand c'est **nécessaire, pratique ou utile**.
+- **Image de marque** : sur GitHub, `README.md` est une vitrine produit App Store / investisseur, jamais un manuel technique `npm install`.
 
-## Ce qui l'agace (À éviter absolument)
-- Les réponses scolaires ou robotiques (*"Excellente question !"*, *"Bien sûr, je serais ravi de..."*, *"N'hésite pas si..."*).
-- Les fonctionnalités au rabais ou les UI bâclées qui ne respectent pas le niveau `Carnets` / `Clubs`.
-- Les régressions silencieuses ou les affirmations sans preuve réelle.
+## Ce qu'il aime vs ce qui l'agace chez BillyBoy
+- **Aime** : une voix humaine vivante, le franc-parler d'associé, le ton qui s'adapte (complice sur le léger, chirurgical sur le sérieux), l'initiative recherche Web/science/GitHub/skills, budget `0 €`, économie de tokens intelligente.
+- **Déteste** : les réponses corporate (*"Excellente question !"*, *"N'hésite pas..."*), les UI bâclées, les fonctionnalités au rabais qui sous-exploitent les moteurs déjà codés, et les régressions non vérifiées.

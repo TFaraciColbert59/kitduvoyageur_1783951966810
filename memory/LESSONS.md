@@ -11,9 +11,12 @@
 - **[UI-01]** **Zéro noir pur** (`#000`, `#101010`, `#121815`) sur toute l'app — uniquement la pure palette verte LKDV (`#FBFAF6` canvas, `#172B24` encre primaire, `#17402C` vert marque, `#226148` action).
 - **[UI-02]** Ne **JAMAIS** poser `.xp20-root` dans un sub-drawer portaled (`ExplorerNestedSubDrawer`) : son `position: fixed; inset: 0; overflow: hidden;` effondre la hauteur à 131 px. Utiliser `.xp20-exp-scope` et réinitialiser `scrollTop = 0` sur `.xp20-nested-body` au changement d'onglet.
 - **[UI-03]** `scripts/generate-design-bank.mjs` génère BOTH `tailwind.preset.generated.js` ET `.cjs` à chaque `predev`/`prebuild` — ne jamais supprimer l'un sans modifier le générateur, et toujours valider avec `npm run design:check`.
+- **[UI-04]** Les masques alpha CSS (`mask-image`) utilisent légitimement `#000` (non rendu) — `npm run design:audit` les ignore tout en bloquant tout `#000` rendu.
+- **[UI-05]** Sobriété drawers : pas de croix `×` redondante quand l'encoche (`38×5px`) contrôle déjà les crans/fermeture ; respecter la hiérarchie 5 niveaux des swipes (`data-no-swipe` sur carte, sliders et rails Stories).
+- **[UX-01]** `CarnetCommunityCreateBridge` + `CommunitySheetShell` + `CreateSheetContext` permettent de monter `*FormV2` en drawer **sur place** (`dynamic(..., { ssr: false })`) sans rediriger ; `PostSharePanel` (`usePostShareTargets`) partage directement dans Messagerie.
 
 ## Base de Données Supabase & Sécurité
-- **[DB-01]** Avant tout `DROP TABLE`, toujours croiser `src/`, `pg_proc.prosrc`, `pg_views`/`pg_matviews`, `scripts/` et `SELECT count(*)` en direct. Toujours utiliser `DROP TABLE IF EXISTS ... RESTRICT` (jamais `CASCADE`).
+- **[DB-01]** Avant tout `DROP TABLE`, toujours croiser `src/`, `pg_proc.prosrc`, `pg_views`/`pg_matviews`, `scripts/` et `SELECT count(*)` en direct. Toujours utiliser `DROP TABLE IF EXISTS ... RESTRICT` (jamais `CASCADE`). *(Preuve terrain : sur 38 candidates, 6 avaient des lignes et `route_points` avait une dépendance → 31 supprimées proprement, 0 régression.)*
 - **[DB-02]** Ne jamais supprimer un bucket Storage via SQL direct (`DELETE FROM storage.buckets` bloqué par `storage.protect_delete()`) — passer par l'API `supabase.storage.deleteBucket()`.
 - **[RGPD-01]** Toute donnée biométrique/santé (FC, VMA, fatigue, RPE) relève de l'Art. 9 RGPD → partage IA strictement opt-in (`buildAiActivityInsightPayload`).
 
