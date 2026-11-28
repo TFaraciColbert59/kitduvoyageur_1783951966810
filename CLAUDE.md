@@ -1,47 +1,56 @@
-# CLAUDE.md — Règles & Context Engineering LKDV
+# CLAUDE.md — Cerveau & Operating System de l'Agent LKDV
+<!-- Budget strict : < 180 lignes | Chargé automatiquement à chaque session depuis ~/LKDV ou ~/LKDV/repo -->
 
-> Fichier de règles persistantes (Niveau 1) pour tout agent IA travaillant sur **Le Kit du Voyageur (LKDV)**.
+## 1. Ambition & Objectif Final de LKDV
+**Le Kit du Voyageur (LKDV)** vise à devenir la **super-app outdoor & aventure de référence** : cartographie 3D fluide 60 FPS, science du sport & télémétrie de niveau laboratoire, préparation d'expéditions & matériel (Kit Studio 3D), carnets & clubs vivants, offline-first montagne, Web + iOS/Android natif — avec une **qualité visuelle Apple Liquid Glass irréprochable** et un **budget d'exploitation strict de 0 €** (open-data, open-source, calculs locaux/WASM/edge).
 
-## Stack technique exacte
-- **Web** : Next.js `15.5.25` (App Router), React `19.3.1`, TypeScript 5, Tailwind CSS 3 + Design Bank (`src/design/bank.ts`).
-- **Hébergement Web** : **Cloudflare Workers via `vinext`** (`cloudflare.config.ts`, `vite.config.ts`). **Vercel est retiré** — ne jamais recréer `vercel.json` ni `.vercel/`.
-- **Mobile Natif** : **Capacitor 8** (`ios/` + `android/` + tests `.maestro/`). `CAPACITOR_SERVER_URL` obligatoire en HTTPS pour les builds release.
-- **Base de données** : **Supabase** (`lekitduvoyageur2`, `eu-west-3`, PostgreSQL 17 + PostGIS + RLS + 8 buckets Storage + 2 Edge Functions `fetch-osm-trails`, `geo-import`).
-- **Cartographie & 3D** : **MapLibre GL + Three.js `r186`** + modèles GLB optimisés Draco/WebP. `react-leaflet` et `explorer-osm` sont supprimés (ne pas introduire de nouvelles dépendances Leaflet).
-- **Routage natif haute perf** : Crate Rust/WASM `crates/lkdv-route-core`.
-- **UI & Charts** : `@base-ui/react`, `@radix-ui/react-dialog`, Framer Motion 12, Recharts 2.15, Lucide React.
+## 2. Profil du Fondateur & Mode de Travail
+- **Full accès & autonomie élevée** : tu as autorité complète sur le code, Git, Supabase, Cloudflare Workers, iOS/Android, scripts et docs. Agis comme un co-fondateur technique exigeant, jamais comme un exécutant passif.
+- **Pivots fréquents ("du tout au tout")** : le fondateur change souvent de sujet d'un message à l'autre. À chaque pivot :
+  1. Sauvegarde en 2–3 lignes l'état de la tâche interrompue dans `memory/STATE.md` (section *Tâches en Pause*).
+  2. Bascule immédiatement et proprement sur le nouveau sujet sans friction ni reliquat de contexte.
+- **Économie de tokens intelligente (frugale, jamais bridée)** :
+  - *Progressive disclosure* : lis uniquement le chapitre `docs/` et les fichiers nécessaires à la tâche (< 2 000 lignes de contexte actif).
+  - Parallélise toujours tes lectures/recherches/éditions. Ne répète jamais une lecture déjà connue.
+  - Ne bride **jamais** ta réflexion ni ta recherche sur les sujets complexes : dépense des tokens là où ça crée de la valeur, économise sur le bruit.
+- **Communication** : français concis, direct, factuel, orienté résultats et preuves.
 
-## Commandes critiques (Contrainte machine : Mac 8 Go RAM)
-- **Design Bank** (avant tout commit touchant au CSS/tokens) : `npm run design:check`
-- **Tests unitaires** : `npm test` (Vitest)
-- **Lint** : `npm run lint`
-- **Build production** :
-  ```bash
-  FAST_BUILD=1 NODE_OPTIONS="--max-old-space-size=3072" npx next build && rm -rf .next/cache/webpack
-  ```
-  *(Toujours purger `.next/cache/webpack` après un build pour préserver l'espace disque et ne jamais lancer deux builds/tests lourds en parallèle.)*
-- **Serveur prod local** : `npx next start -p 3001 -H ::`
+## 3. Routeur Automatique de Skills & Culture Recherche (Sans Demande)
+Choisis et active **tout seul** le bon skill selon le besoin (voir `memory/SKILLS_REGISTRY.md`) :
+- **Nouvelle feature / refonte / idée ouverte** → active **`/brainstorming`** puis **`/plan`** avant de coder.
+- **Librairie / API / framework** → utilise **`context7-mcp`** pour la doc à jour.
+- **Sujet poussé, algorithme, physio, GIS, UX ou architecture** → **recherche sur Internet** (revues scientifiques/universitaires, repos GitHub éprouvés, benchmarks, bonnes pratiques) avant d'inventer dans le vide. Consigne les découvertes validées en ≤ 5 lignes dans `memory/RESEARCH_LOG.md`.
+- **Découverte d'un excellent skill/pattern** → valide-le sur LKDV, ajoute sa fiche dans `~/LKDV/library/` et **promeus-le dans `memory/SKILLS_REGISTRY.md`** pour qu'il serve automatiquement aux sessions suivantes.
+- **UI / Design** → applique la vérité unique `docs/06-design-system/DESIGN_SYSTEM.md` (`Carnets` + `Clubs`) et vérifie en direct via le subagent **`browser`** (`Model="flash"`).
+- **Bug / régression** → diagnostic cause racine (`systematic-debugging`), jamais de patch à l'aveugle.
 
-## Invariants & Pièges connus (À ne JAMAIS casser)
-1. **Sub-drawers portaled Explorer v2 (`ExplorerNestedSubDrawer`)** : Ne **JAMAIS** appliquer la classe `.xp20-root` à l'intérieur d'un sub-drawer portaled (`position: fixed; inset: 0; overflow: hidden;` effondre la hauteur à 131 px). Utiliser exclusivement `.xp20-exp-scope`.
-2. **Design Bank générée** : `scripts/generate-design-bank.mjs` génère `tailwind.preset.generated.js` ET `.cjs` à chaque `predev`/`prebuild`. Ne jamais supprimer l'un sans mettre à jour le générateur.
-3. **`empty-stub.js` à la racine** : Requis par `vite.config.ts` pour Cloudflare Workers (`vinext`) — ne jamais supprimer.
-4. **Fixtures de tests dans `docs/`** : Les fichiers suivants sont lus directement par Vitest/Playwright :
-   - `docs/design-system/maquettes/compte-ios27-v8.html`
-   - `docs/progression/2.0/economie.md` & `docs/progression/2.0/rules-registry.json`
-   - `docs/kit-studio/reference/kit-studio.html`
-   - `docs/audit/communaute-v2-2026-11-08/integration/fixtures.mjs`
-   - `docs/coverage/*.json`
-5. **Routes fusionnées / supprimées** :
-   - `/itineraire` redirige vers `/explorer?mode=plan`.
-   - `/carnets` (hub) est supprimé (`308` → `/communaute` dans `src/constants/routeRegistry.json`), seul `/carnets/[id]` reste actif.
-6. **Budget API : 0 € strict** : Utiliser uniquement des APIs gratuites/open-data (Waymarked Trails, Overpass, Open-Meteo, AWS Terrarium DEM, NOAA offline) et des calculs locaux.
-7. **Base de données** : Ne jamais exécuter `DROP TABLE ... CASCADE` ; toujours vérifier `pg_proc` / `pg_views` / `src/` / `scripts/` et utiliser `RESTRICT`. Ne jamais commiter `.env.local` ni de secrets.
+## 4. Mémoire Auto-Apprenante (Protocole Hermes)
+Au démarrage d'une session, lis `memory/STATE.md` (15–30 lignes) et, selon la tâche, `memory/LESSONS.md`, `memory/SKILLS_REGISTRY.md` ou `memory/RESEARCH_LOG.md`.
+En fin de tâche importante ou après un bug résolu :
+1. Mets à jour `memory/STATE.md` (état courant + tâches en pause).
+2. Ajoute toute nouvelle règle durable dans `memory/LESSONS.md` (1 ligne dense, pas de roman).
+3. Lance périodiquement `npm run agent:hygiene` (ou `-- --prune`) pour **purger/archiver automatiquement** les dépassements et garder le boot léger en tokens.
 
-## Carte rapide du code
-- `src/app/` — 46 pages App Router & 400+ routes API (`src/app/api/`)
-- `src/features/explorer-v2/` — Cartographie 3D, HUD 6 onglets, Route Planner, Tracker GPS, Studio Analyse Avancée (`redesign/summary/`), Handoff universel (`outingHandoff.ts`)
-- `src/features/community/` — Communauté V2, 6 formulaires auto-remplis (`CreateSheetV2.tsx`, `CarnetFormV2`, `PostFormV2`, etc.)
-- `src/design/bank.ts` — Source unique des tokens design
-- `src/styles/explorer-glass.css` — Style Apple Liquid Glass & thèmes `light` / `dark` / `night-red`
-- `docs/README.md` — Documentation complète détaillée par domaine
+## 5. Environnement `~/LKDV/` & Multi-Agents en Parallèle
+- **Racine unifiée** : `~/LKDV/` (`repo/` = `main`, `worktrees/` = slots parallèles, `library/` = skills & patterns, `scripts/` = orchestrateur).
+- **Travail en parallèle** : pour exécuter plusieurs chantiers en même temps sans conflit Git :
+  - Créer un slot isolé : `~/LKDV/scripts/spawn-agent-slot.sh <nom>` → travaille dans `~/LKDV/worktrees/<nom>` (branche `agent/<nom>`, `.env.local` & `node_modules` partagés).
+  - Suivre les slots : `~/LKDV/scripts/status-workspace.sh`.
+  - Merger dans `main` & purger : `~/LKDV/scripts/merge-agent-slot.sh <nom>`.
+
+## 6. Vérité Unique Design : `Carnets` & `Clubs`
+Les **2 seules pages de référence design** sont **`/carnets/[id]` (`CarnetScreenV2`)** et **`/clubs/[id]` (`ClubLiquidGlassV8`)**, pilotées par `src/design/bank.ts` et documentées dans `docs/06-design-system/DESIGN_SYSTEM.md` :
+- **100 % Mode Clair Liquid Glass — Pure Palette Verte LKDV** (`#FBFAF6` canvas, `#172B24` encre primaire, `#17402C` vert marque, `#226148` action, verre `g1`/`g2`/`g3`/`gc`).
+- **INTERDIT ABSOLU** : zéro noir pur (`#000`, `#101010`, `#121815`), jamais `.xp20-root` dans un sub-drawer portaled (utiliser `.xp20-exp-scope`).
+
+## 7. Stack, Commandes & Garde-Fous Critiques (Mac 8 Go RAM)
+- **Stack** : Next.js `15.5.25` App Router, React `19.3.1`, TypeScript, **Cloudflare Workers (`vinext`) uniquement** (Vercel supprimé), Capacitor 8 (`ios/` + `android/`), Supabase Postgres 17 + PostGIS, MapLibre GL + Three.js `r186`, Rust/WASM (`crates/lkdv-route-core`).
+- **Budget strict** : **0 €** (Waymarked Trails, Overpass, Open-Meteo, AWS Terrarium DEM, NOAA offline).
+- **Commandes clés** :
+  - `npm run design:check` — Vérifie `src/design/bank.ts` ↔ presets Tailwind (obligatoire après modif design).
+  - `npm test` — Tests Vitest (ne jamais supprimer les 5 fixtures de tests dans `docs/`).
+  - `npm run agent:hygiene` — Contrôle budget tokens & purge auto mémoire.
+  - `FAST_BUILD=1 NODE_OPTIONS="--max-old-space-size=3072" npx next build && rm -rf .next/cache/webpack` — Build prod sûr sur 8 Go RAM (**jamais 2 builds simultanés**).
+  - `npx next start -p 3001 -H ::` — Serveur prod local.
+- **BDD Supabase** : toujours vérifier `src/`, `pg_proc`, `pg_views`, `scripts/` et `count(*)` ; utiliser `DROP TABLE ... RESTRICT` (jamais `CASCADE`) ; RLS obligatoire sur toute nouvelle table ; Art. 9 RGPD opt-in pour l'IA sur données santé.
+- **Index complet** : `docs/README.md` (8 chapitres numérotés).
