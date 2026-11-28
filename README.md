@@ -1,157 +1,95 @@
 # Le Kit du Voyageur (LKDV)
 
-Plateforme e-commerce et communautaire pour voyageurs outdoor, construite avec Next.js 15, Supabase et Stripe.
+**Plateforme outdoor, cartographie 3D, préparation d'expéditions, communauté et suivi de performance.**
 
-## 🛍️ Fonctionnalités
+Construit avec **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Supabase (PostgreSQL 17 + PostGIS)**, **MapLibre GL + Three.js r186**, **Cloudflare Workers (`vinext`)**, **Capacitor 8 (iOS & Android)** et un moteur de routage **Rust/WASM**.
 
-- **Boutique** — Catalogue produits outdoor, configuration de kit, panier, checkout Stripe
-- **Explorer** — Carte interactive des randonnées (PostGIS), filtres par difficulté/distance
-- **Communauté** — Clubs, groupes, événements, feed, messagerie, carnets de voyage
-- **Compte** — Dashboard voyageur : profil, aventures, carnets, clubs, commandes, badges, inventaire
-- **Pays** — Guides par destination avec données climatiques, danger zones, globe 3D interactif
-- **Admin** — Gestion produits, commandes, contenu (accès restreint)
-- **Mobile** — Design responsive dual-view (desktop Tailwind + mobile inline styles via MobilePageShell)
-- **Terrain** — Hub mobile centralisant GPS, carte, kit, recherche et mode hors ligne
-- **Offline** — Bannière hors ligne, cache localStorage avec TTL, recherches persistantes
-- **Haptique** — Vibrations tactiles sur navigation mobile (BottomTabBar, SearchOverlay, TopBar)
-- **Cockpit de randonnée** 🥾 Suivi GPS en temps réel avec tracé live sur carte, écran de fin avec stats et carnet, import/export GPX, vue 3D terrain, narratives IA post-randonnée, détection de déviation et POIs proches
+---
 
-## 🏗️ Stack Technique
+## Architecture synthétique
 
-| Couche | Technologie |
-|------|------|
-| Frontend | Next.js 15 (App Router), React 19, TypeScript strict, Tailwind CSS |
-| Backend | Supabase (PostgreSQL + PostGIS), RLS par `auth.uid()` |
-| Paiement | Stripe (server-side, webhooks async) |
-| IA | OpenRouter MCP |
-| 3D | react-globe.gl + three.js (globe interactif page Pays) |
-| Cartes | Leaflet + tuiles OSM |
-| Animations | Frame Motion |
+```mermaid
+flowchart TB
+  subgraph Clients
+    Web["Web / PWA (Next.js 15 + React 19)"]
+    iOS["iOS Natif (Capacitor 8 + LiveActivity/HealthKit/BLE)"]
+    Android["Android Natif (Capacitor 8)"]
+  end
 
-## 📦 Installation
+  subgraph Edge["Cloudflare Workers (vinext)"]
+    SSR["App Router SSR / RSC (46 pages)"]
+    API["API Routes REST (400+ endpoints)"]
+    MW["Middleware Auth & Redirects"]
+  end
 
-```bash
-npm install
-# ou
-yarn install
+  subgraph Core["Moteurs Clients & Locaux"]
+    GIS["Explorer v2 (MapLibre GL + Three.js r186 + GLB)"]
+    Phys["Studio Analyse Avancée (20+ moteurs physio/télémétrie)"]
+    WASM["Rust/WASM (crates/lkdv-route-core)"]
+    IDB["Offline IndexedDB (traces GPS, packs tuiles)"]
+  end
+
+  subgraph Data["Supabase (eu-west-3, Postgres 17 + PostGIS)"]
+    PG["PostgreSQL + PostGIS + RLS"]
+    Storage["Storage (8 buckets)"]
+    EdgeFn["Edge Functions (fetch-osm-trails, geo-import)"]
+  end
+
+  subgraph OpenData["APIs Open-Data (0 €)"]
+    OSM["Overpass / Waymarked Trails"]
+    DEM["AWS Terrarium DEM"]
+    Meteo["Open-Meteo / Hazards / NOAA"]
+  end
+
+  Web & iOS & Android --> Edge
+  Web --> Core
+  Edge --> Data
+  Core --> OpenData
 ```
 
-## 🚀 Développement
+---
+
+## Démarrage rapide
 
 ```bash
+# 1. Installer les dépendances
+npm ci
+
+# 2. Configurer les variables d'environnement locales
+cp .env.example .env.local   # Renseigner NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY
+
+# 3. Vérifier la Design Bank (tokens CSS & presets Tailwind)
+npm run design:check
+
+# 4. Lancer le serveur de développement
 npm run dev
-# ou
-yarn dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000)
+### Commandes essentielles
 
-## 🗂️ Structure du projet
+| Action | Commande |
+| :--- | :--- |
+| Développement local | `npm run dev` (port `4000`) |
+| Build production (Mac 8 Go RAM) | `FAST_BUILD=1 NODE_OPTIONS="--max-old-space-size=3072" npx next build` |
+| Serveur production local | `npx next start -p 3001 -H ::` |
+| Tests unitaires (Vitest) | `npm test` |
+| Lint ESLint | `npm run lint` |
+| Vérification Design Bank | `npm run design:check` |
+| Synchronisation Mobile | `CAPACITOR_SERVER_URL=https://lekitduvoyageur.com npx cap sync` |
 
-```
-nextjs/
-    src/
-        app/                    # App Router (pages, layouts, API routes)
-        ├── 🛍️ (shop)           # Boutique, produit, panier, checkout
-        ├── 🗺️ explorer/       # Carte randonnées
-        ├── 💬 communauté/      # Feed, clubs, groupes, événements
-        ├── 📊 compte/          # Dashboard voyageur
-        ├── 🗺️ pays/            # Guides par destination
-        ├── 🥾 terrain/         # Hub terrain mobile (offline, GPS)
-        ├── 🔧 admin/           # Admin (accès restreint)
-        ├── 🖼️ components/   # (vidéo — anciens composants supprimés)
-        components/
-            mobile-nav/         # BottomTabBar, MobileDrawer, MobileNavWrapper, TopBar, OfflineBanner
-            explorer/           # ExplorerMap, InteractiveMap
-            carnet/             # CarnetView, CreateCarnetView
-            communauté/        # CarnetFormModal, ClubFormModal, ClubDetailModal (dynamic imports)
-            terrain/            # TerrainHub
-            search/            # SearchOverlay, useRecentSearches
-            compte/            # Dashboard tabs (dynamic imports)
-            groups/            # Cards groupe voyage (dynamic imports)
-            home/              # 17 sections homepage
-            ui/                # AppImage, LkvIcon, EmptyState, CustomCursor
-        features/
-            hiking/              # Cockpit de randonnée (GPS, stats, carnet, GPX, 3D, IA)
-                components/       # DesktopTopBar, DesktopLeftPanel, DesktopRightPanel, DesktopDockBar, DesktopMapOverlay, CompletionView, HikingCockpitPage
-                hooks/            # useHikingStore (GPS, positions, déviation, météo)
-                types/            # POI, FilterState, etc.
-            hooks/             # useHapticFeedback, useOnlineStatus, useOfflineCache, useRecentSearches
-            lib/
-                supabase/
-                ├── queries-*.ts   # Service layer (queries-compte, queries-carnet, etc.)
-                ├── client.ts      # Client Supabase
-                ├── services/     # Logique métier (cart, auth, stripe)
-                contexts/          # AuthContext, WishlistContext, ToastContext, SearchContext
-                supabase/
-                    migrations/    # Migrations SQL (RLS, triggers, PostGIS) — 66 migrations synchronisées
-                docs/
-                ├── 📋 superpowers/
-                ├── 📋 plans/      # Plans de développement
-                ├── 📋 specs/      # Specs de design
-                ├── 📄 FINAL_DELIVERY_REPORT.md
-                ├── 📄 IMPLEMENTATION_SUMMARY.md
-                CLAUDE.md          # Conventions de développement et design système
-                PROGRESS.md        # Suivi des chantiers
-                next.config.mjs
-```
+---
 
-## 📐 Conventions
+## Documentation complète (`docs/`)
 
-Voir [CLAUDE.md](./CLAUDE.md) pour le design système complet, les patterns responsives, les conventions d'image fallback, l'architecture, et les règles de sécurité.
+Toute la documentation technique, produit, base de données, opérations et décisions d'architecture est centralisée dans **[docs/README.md](docs/README.md)** :
 
-Points clés :
-- **Dual-view** : desktop (Tailwind) + mobile (inline styles via MobilePageShell)
-- **Image fallback** : `src={data.image_url || '/assets/images/no_image.png'}`
-- **Palette** : Foreground/Sage/Stone/Ink — orange `#E4501C` interdit
-- **RLS** : obliger sur toutes les tables Supabase
-- **Dynamic imports** : composants lourds en `next/dynamic` pour réduire le FLJS
-- **États UI** : loading/erreur/vide sur toutes les pages data-driven
-- **Haptique** : `useHapticFeedback` sur interactions mobile clés
-- **`force-dynamic`** : les routes API utilisent `export const dynamic = 'force-dynamic'` pour éviter le cache statique Next.js
+1. **[01 — Architecture globale](docs/01-architecture/ARCHITECTURE.md)** — Stack, App Router, Middleware, Cloudflare Workers (`vinext`), Capacitor iOS/Android, Rust/WASM.
+2. **[02 — Base de données Supabase](docs/02-database-supabase/DATABASE.md)** — PostgreSQL 17 + PostGIS, ERD Mermaid, RLS, Storage, Edge Functions, Migrations.
+3. **[03 — Routes & API REST](docs/03-api-routes/API_AND_ROUTES.md)** — Inventaire des 46 pages App Router et des namespaces API (`/api/*`).
+4. **[04 — Explorer v2 & Cartographie GIS](docs/04-explorer-gis/EXPLORER_V2.md)** — MapLibre + Three.js r186, HUD 6 onglets, Waymarked Trails, Route Planner, Tracker GPS, Studio d'Analyse Avancée (6 volets / 20+ moteurs).
+5. **[05 — Modules Produit](docs/05-modules-produit/MODULES.md)** — Communauté V2 & Handoff universel, Carnets `[id]`, Clubs & Sorties, Messagerie, Boutique & Kit Studio, Profil / Sac / Progression XP.
+6. **[06 — Design System](docs/06-design-system/DESIGN_SYSTEM.md)** — Design Bank (`src/design/bank.ts`), Apple Liquid Glass, thèmes (`light` / `dark` / `night-red`), règles CSS portaled drawers.
+7. **[07 — Opérations, Déploiement & Onboarding](docs/07-operations-deploy/OPERATIONS.md)** — Onboarding dev, env vars, contraintes RAM 8 Go, Cloudflare Workers, iOS/Android, CI/CD, Tests.
+8. **[08 — Décisions (ADR) & Glossaire](docs/08-decisions-glossary/ADR_AND_GLOSSARY.md)** — Architecture Decision Records et glossaire métier/technique.
 
-## 📜 Scripts
-
-- `npm run dev` — Serveur de développement (port 3000)
-- `npm run build` — Build de production
-- `npm run start` — Serveur de production
-- `npm run server` — Alias de `npm run start`
-- `npm run lint` — ESLint
-- `npm run lint:fix` — Corriger automatiquement les erreurs ESLint
-- `npm run format` — Prettier
-- `node scripts/validate-country-cache.mjs` — Valide les fichiers `.country-cache/*.json` (schéma, températures, précipitations, FAQ dupliquées)
-
-## 🔧 CI/CD
-
-Workflow unifié : `.github/workflows/ci.yml`.
-- **Type-check** — `npm run type-check`
-- **ESLint** — `npm run lint`
-- **Tests unitaires & intégration** — `npm test`
-- **Build production** — `npm run build`
-- **E2E Playwright** — activé par la variable de dépôt `LKDV_E2E_ENABLED=true`
-
-Déclenche sur push vers `main` et sur les pull requests vers `main`.
-
-> **Build config** : `typescript.ignoreBuildErrors` est à `false` (depuis PR #14). `eslint.ignoreDuringBuilds` a été remis à `true` lors du chantier hiking (commit f86aac8, 9 août). À remettre à `false` pour restaurer le contrôle ESLint strict.
-
-## ▲ Déploiement
-
-- **Production** : projet Vercel `kitduvoyageur-1783951966810` (équipe `tonyfaracip-3325s-projects`), branche `main`.
-- **Automatique** : chaque push sur `main` déclenche un déploiement de production via l’intégration Git Vercel.
-- **Si l’intégration est perdue** : `vercel git connect https://github.com/TFaraciColbert59/kitduvoyageur_1783951966810 --project prj_AqYb1FBEcyNGTZMVimBJXRDulyXp`.
-- **Compte** : `/compte` reste accessible en visiteur (aperçu de démonstration) ; l’inscription crée un profil réel avec un handle généré par trigger.
-
-## 📚 Documentation
-
-- [CLAUDE.md](./CLAUDE.md) — Conventions de développement et design système
-- [docs/superpowers/plans/](./docs/superpowers/plans/) — Plans de développement
-- [docs/superpowers/specs/](./docs/superpowers/specs/) — Specs de design
-- [docs/FINAL_DELIVERY_REPORT.md](./docs/FINAL_DELIVERY_REPORT.md) — Rapport de livraison
-- [docs/IMPLEMENTATION_SUMMARY.md](./docs/IMPLEMENTATION_SUMMARY.md) — Résumé d'implémentation
-- [PROGRESS.md](./PROGRESS.md) — Suivi des chantiers (Chantiers 1-13)
-
-## 🙌 Acknowledgements
-
-- Built with [Rocket.net](https://rocket.net)
-- Powered by Next.js and React
-- Styled with Tailwind CSS
+Pour les agents IA (Claude Code, Codex, Antigravity), consultez **[CLAUDE.md](CLAUDE.md)** et **[AGENTS.md](AGENTS.md)**.
