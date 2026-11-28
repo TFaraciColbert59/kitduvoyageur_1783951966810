@@ -14,7 +14,8 @@ export type DiscoverySurface =
   | 'clubs'
   | 'messagerie'
   | 'kit-studio'
-  | 'compte';
+  | 'compte'
+  | 'drawer';
 
 export type DiscoveryVisualKind =
   | 'route-draw'
@@ -29,7 +30,11 @@ export type DiscoveryVisualKind =
   | 'messages-share'
   | 'kit-pack'
   | 'compte-gear'
-  | 'club-pulse';
+  | 'club-pulse'
+  | 'drawer-drag'
+  | 'drawer-tabs'
+  | 'drawer-lenses'
+  | 'drawer-filter';
 
 export interface DiscoveryStep {
   readonly id: string;
@@ -203,6 +208,48 @@ export const DISCOVERY_STEPS: readonly DiscoveryStep[] = [
     body: 'Retrouve tes sorties, zones cardio et suivi live ici.',
     visual: 'compte-gear',
     durationMs: 6400,
+  },
+
+  // ── DRAWERS UNIVERSELS (toute l'app : Explorer, Communauté, Carnets, Clubs, Compte) ─
+  {
+    id: 'drawer-grabber',
+    surface: 'drawer',
+    order: 1,
+    anchor: 'drawer-grabber',
+    title: 'Tire ou tape l’encoche',
+    body: 'Glisse vers le haut pour agrandir le tiroir, vers le bas pour le replier.',
+    visual: 'drawer-drag',
+    durationMs: 6800,
+  },
+  {
+    id: 'drawer-top-tabs',
+    surface: 'drawer',
+    order: 2,
+    anchor: 'drawer-top-tabs',
+    title: 'Change de catégorie',
+    body: 'Les volets principaux du tiroir sont toujours réunis ici en haut.',
+    visual: 'drawer-tabs',
+    durationMs: 6400,
+  },
+  {
+    id: 'drawer-lenses',
+    surface: 'drawer',
+    order: 3,
+    anchor: 'drawer-lenses',
+    title: 'Sous-volets & swipe',
+    body: 'Change de vue ici ou glisse horizontalement dans le tiroir.',
+    visual: 'drawer-lenses',
+    durationMs: 6600,
+  },
+  {
+    id: 'drawer-filter',
+    surface: 'drawer',
+    order: 4,
+    anchor: 'drawer-filter',
+    title: 'Trie & filtre la vue',
+    body: 'Affine par distance, date ou pertinence en un tap.',
+    visual: 'drawer-filter',
+    durationMs: 6200,
   },
 ];
 

@@ -314,6 +314,7 @@ export function ExplorerGlassDrawer({
         <button
           type="button"
           className="lkdv-mgrab"
+          data-discover="drawer-grabber"
           aria-label={
             detent === 'peek'
               ? 'Déployer le tiroir Explorer'

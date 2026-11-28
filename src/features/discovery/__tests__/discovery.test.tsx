@@ -94,6 +94,26 @@ describe('Discovery catalog & timeline store', () => {
     expect(pickNextDiscoveryStep('/explorer', getDiscoverySnapshot(), () => true)).toBeNull();
     expect(activateDiscoveryStep('explorer-planner')).toBe(false);
   });
+
+  it('priorise les repères universels drawer quand un tiroir modal ou déployé est ouvert', () => {
+    // Tiroir modal ouvert : ne propose jamais un bouton de page derrière
+    const modalStep = pickNextDiscoveryStep(
+      '/communaute',
+      getDiscoverySnapshot(),
+      (anchor) => anchor === 'community-create' || anchor === 'drawer-grabber',
+      { modalDrawerOpen: true },
+    );
+    expect(modalStep?.id).toBe('drawer-grabber');
+
+    // Tiroir Explorer déployé (mid/full) : priorise les repères tiroir
+    const expandedStep = pickNextDiscoveryStep(
+      '/explorer',
+      getDiscoverySnapshot(),
+      (anchor) => anchor === 'explorer-planner' || anchor === 'drawer-lenses',
+      { drawerExpanded: true },
+    );
+    expect(expandedStep?.id).toBe('drawer-lenses');
+  });
 });
 
 describe('DiscoveryHost DOM orchestration', () => {

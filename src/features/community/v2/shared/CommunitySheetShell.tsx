@@ -570,6 +570,7 @@ export function CommunitySheetShell({
         >
           <div
             className={cx('lkdv-cv2-grab', showClose && 'lkdv-cv2-grab--with-close')}
+            data-discover="drawer-grabber"
             data-cv2-drag
             onPointerDown={onDragStart}
             onPointerMove={onDragMove}
@@ -588,6 +589,7 @@ export function CommunitySheetShell({
             <div
               className="lkdv-cv2-topnav"
               data-testid="cv2-capsule"
+              data-discover="drawer-top-tabs"
               data-cv2-drag
               onPointerDown={onDragStart}
               onPointerMove={onDragMove}
@@ -771,6 +773,7 @@ export function CommunitySheetShell({
                       Boolean(mini.sort) && 'has-sort',
                     )}
                     data-testid="cv2-mini-capsule"
+                    data-discover="drawer-lenses"
                   >
                     <CapsuleTabs
                       items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}
@@ -798,6 +801,7 @@ export function CommunitySheetShell({
                       Boolean(mini.sort) && 'has-sort',
                     )}
                     data-testid="cv2-mini-capsule"
+                    data-discover="drawer-lenses"
                   >
                     <CapsuleTabs
                       items={mini.items.map((item) => ({ id: item.id, label: item.label, icon: item.icon }))}

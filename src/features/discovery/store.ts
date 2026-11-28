@@ -118,31 +118,56 @@ export function useDiscoveryState(): DiscoveryRuntimeState {
   );
 }
 
+export interface PickDiscoveryOptions {
+  /** Vrai si un tiroir modal (Communauté, Création, Compte, Club…) est ouvert au premier plan. */
+  modalDrawerOpen?: boolean;
+  /** Vrai si un tiroir docké (ex. Explorer en mid/full) est actuellement déployé. */
+  drawerExpanded?: boolean;
+}
+
 /**
  * Sélectionne le prochain repère éligible pour le `pathname` courant,
  * en respectant l'ordre strict et en vérifiant que l'ancre est disponible.
+ *
+ * Priorité contextuelle :
+ * - Si un tiroir modal est ouvert, seuls les repères universels `'drawer'` sont
+ *   proposés (jamais un bouton masqué derrière le tiroir).
+ * - Si un tiroir docké est déployé (ex. Explorer `mid`/`full`), les repères `'drawer'`
+ *   passent en priorité devant les contrôles de la carte derrière.
+ * - Sinon, on joue d'abord les repères de la page, puis les repères `'drawer'` visibles.
  */
 export function pickNextDiscoveryStep(
   pathname: string | null | undefined,
   current: DiscoveryRuntimeState,
   isAnchorAvailable: (anchor: string) => boolean,
+  options: PickDiscoveryOptions = {},
 ): DiscoveryStep | null {
   if (!current.enabled) return null;
   if (current.activeStepId) return null;
 
-  const surface = resolveDiscoverySurface(pathname);
-  if (!surface) return null;
-
   const seen = new Set([...current.completedIds, ...current.dismissedIds]);
-  const candidates = getStepsForSurface(surface);
+  const drawerCandidates = getStepsForSurface('drawer');
 
-  for (const step of candidates) {
-    if (seen.has(step.id)) continue;
-    if (isAnchorAvailable(step.anchor)) {
-      return step;
+  const pickFirstAvailable = (steps: DiscoveryStep[]): DiscoveryStep | null => {
+    for (const step of steps) {
+      if (seen.has(step.id)) continue;
+      if (isAnchorAvailable(step.anchor)) return step;
     }
+    return null;
+  };
+
+  if (options.modalDrawerOpen) {
+    return pickFirstAvailable(drawerCandidates);
   }
-  return null;
+
+  const surface = resolveDiscoverySurface(pathname);
+  const pageCandidates = surface ? getStepsForSurface(surface) : [];
+
+  if (options.drawerExpanded) {
+    return pickFirstAvailable(drawerCandidates) ?? pickFirstAvailable(pageCandidates);
+  }
+
+  return pickFirstAvailable(pageCandidates) ?? pickFirstAvailable(drawerCandidates);
 }
 
 export function activateDiscoveryStep(stepId: string): boolean {

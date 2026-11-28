@@ -241,5 +241,103 @@ function renderVisualSvg(kind: DiscoveryVisualKind): React.ReactNode {
           <circle cx="31" cy="27" r="3" fill="#226148" />
         </svg>
       );
+
+    case 'drawer-drag':
+      return (
+        <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+          <rect
+            x="9"
+            y="18"
+            width="26"
+            height="17"
+            rx="6"
+            fill="#D3EBD9"
+            stroke="#17402C"
+            strokeWidth="1.8"
+          />
+          <rect
+            className="lkdv-dv-layer-3"
+            x="16.5"
+            y="22"
+            width="11"
+            height="2.8"
+            rx="1.4"
+            fill="#17402C"
+          />
+          <path
+            className="lkdv-dv-layer-2"
+            d="M18.5 13.5L22 10L25.5 13.5"
+            stroke="#226148"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+
+    case 'drawer-tabs':
+      return (
+        <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+          <rect
+            x="7"
+            y="16"
+            width="30"
+            height="12"
+            rx="6"
+            fill="#D3EBD9"
+            stroke="#226148"
+            strokeWidth="1.5"
+          />
+          <rect
+            className="lkdv-dv-slide-x"
+            x="9.5"
+            y="18.5"
+            width="11"
+            height="7"
+            rx="3.5"
+            fill="#17402C"
+          />
+          <circle cx="25.5" cy="22" r="1.8" fill="#226148" />
+          <circle cx="31.5" cy="22" r="1.8" fill="#226148" />
+        </svg>
+      );
+
+    case 'drawer-lenses':
+      return (
+        <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+          <rect
+            x="9"
+            y="11"
+            width="26"
+            height="15"
+            rx="4.5"
+            fill="#FBFAF6"
+            stroke="#226148"
+            strokeWidth="1.5"
+          />
+          <path
+            className="lkdv-dv-slide-x"
+            d="M15 18.5H27M24 15.5L27 18.5L24 21.5"
+            stroke="#17402C"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <rect x="19" y="29" width="16" height="6" rx="3" fill="#17402C" />
+          <circle cx="23.5" cy="32" r="1.3" fill="#D3EBD9" />
+          <circle cx="27.5" cy="32" r="1.3" fill="#FBFAF6" />
+          <circle cx="31.5" cy="32" r="1.3" fill="#D3EBD9" />
+        </svg>
+      );
+
+    case 'drawer-filter':
+      return (
+        <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+          <path d="M11 16H33M11 22H33M11 28H33" stroke="#226148" strokeWidth="1.8" strokeLinecap="round" />
+          <circle className="lkdv-dv-slide-x" cx="17" cy="16" r="3" fill="#17402C" />
+          <circle cx="26" cy="22" r="3" fill="#D3EBD9" stroke="#17402C" strokeWidth="1.8" />
+          <circle className="lkdv-dv-slide-x" cx="19" cy="28" r="3" fill="#17402C" />
+        </svg>
+      );
   }
 }

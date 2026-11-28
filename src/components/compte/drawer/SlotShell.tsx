@@ -181,6 +181,7 @@ export function SlotShell({
     >
       <div
         className="lkdv-slot-topnav"
+        data-discover={selector ? 'drawer-top-tabs' : undefined}
       >
         {selector}
       </div>
@@ -239,6 +240,7 @@ export function SlotShell({
         <div
           ref={flowRef}
           className={`ig-tabs lkdv-lens-tabs${bottomRightFilter ? ' has-sort' : ''}`}
+          data-discover="drawer-lenses"
           role="tablist"
           aria-label={`Lentilles de ${title}`}
           aria-orientation="horizontal"
@@ -290,6 +292,7 @@ export function SlotShell({
 
       {bottomRightFilter ? (
         <div
+          data-discover="drawer-filter"
           style={{
             position: 'absolute',
             right: 10,

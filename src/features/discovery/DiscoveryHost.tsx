@@ -45,12 +45,27 @@ function findVisibleAnchorElement(anchor: string): HTMLElement | null {
   return el;
 }
 
-/** Retourne true si une couche bloquante (drawer modal, dialog) occupe l'écran. */
-function isBlockingOverlayOpen(): boolean {
+/** Retourne true uniquement pour une alerte/confirmation destructive bloquante. */
+function isBlockingAlertOpen(): boolean {
+  if (typeof document === 'undefined') return false;
+  return Boolean(document.querySelector('[role="alertdialog"]'));
+}
+
+/** Retourne true si un tiroir modal (Communauté, Création, Compte, Club…) est ouvert. */
+function isModalDrawerOpen(): boolean {
   if (typeof document === 'undefined') return false;
   if (document.body.classList.contains('lkdv-dialog-open')) return true;
-  const modal = document.querySelector('[role="dialog"][aria-modal="true"]');
-  return Boolean(modal);
+  return Boolean(document.querySelector('[role="dialog"][aria-modal="true"]'));
+}
+
+/** Retourne true si un tiroir docké (ex. Explorer) est actuellement déployé (mid / full). */
+function isDockedDrawerExpanded(): boolean {
+  if (typeof document === 'undefined') return false;
+  return Boolean(
+    document.querySelector(
+      '[data-testid="xp20-glass-drawer"][data-detent="mid"], [data-testid="xp20-glass-drawer"][data-detent="full"]',
+    ),
+  );
 }
 
 /** Déclenche un léger retour haptique sur Capacitor natif si disponible. */
@@ -85,6 +100,7 @@ export function DiscoveryHost() {
   const [systemIslandBusy, setSystemIslandBusy] = useState(false);
   const [hoverPaused, setHoverPaused] = useState(false);
   const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [domVersion, setDomVersion] = useState(0);
 
   const dragStartYRef = useRef<number | null>(null);
   const activeElRef = useRef<HTMLElement | null>(null);
@@ -98,6 +114,36 @@ export function DiscoveryHost() {
     return () => window.removeEventListener('resize', updateGeometry);
   }, []);
 
+  // Réveil léger du scheduler uniquement quand l'état d'un tiroir (ouvert / déployé) change réellement
+  useEffect(() => {
+    if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') return;
+    let lastModal = isModalDrawerOpen();
+    let lastExpanded = isDockedDrawerExpanded();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const checkDrawerTransition = () => {
+      const nextModal = isModalDrawerOpen();
+      const nextExpanded = isDockedDrawerExpanded();
+      if (nextModal === lastModal && nextExpanded === lastExpanded) return;
+      lastModal = nextModal;
+      lastExpanded = nextExpanded;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        setDomVersion((v) => v + 1);
+      }, 220);
+    };
+    const observer = new MutationObserver(checkDrawerTransition);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'data-detent'],
+    });
+    return () => {
+      observer.disconnect();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, []);
+
   // Priorité absolue aux notifications système DynamicIslandHost
   useEffect(() => {
     return onDynamicIsland((ev) => {
@@ -108,7 +154,7 @@ export function DiscoveryHost() {
   // Si on change de route alors qu'un repère d'une autre surface est affiché, on le suspend
   useEffect(() => {
     const currentStep = getDiscoveryStepById(discovery.activeStepId);
-    if (!currentStep) return;
+    if (!currentStep || currentStep.surface === 'drawer') return;
     const currentSurface = resolveDiscoverySurface(pathname);
     if (currentSurface !== currentStep.surface) {
       pauseActiveDiscoveryStep();
@@ -122,14 +168,15 @@ export function DiscoveryHost() {
     }
   }, [activeOuting, systemIslandBusy, discovery.activeStepId]);
 
-  // Scheduler de timeline : déclenche le prochain repère de la surface courante
+  // Scheduler de timeline : déclenche le prochain repère de la surface courante ou du tiroir actif
   useEffect(() => {
     if (!discovery.enabled) return;
     if (discovery.activeStepId) return;
     if (activeOuting || systemIslandBusy) return;
 
     const surface = resolveDiscoverySurface(pathname);
-    if (!surface) return;
+    const modalOpen = isModalDrawerOpen();
+    if (!surface && !modalOpen) return;
 
     const now = Date.now();
     const waitMs = Math.max(DISCOVERY_ENTRY_DELAY_MS, discovery.cooldownUntil - now);
@@ -139,15 +186,21 @@ export function DiscoveryHost() {
 
     const trySchedule = (attempt: number) => {
       if (cancelled) return;
-      if (isBlockingOverlayOpen()) {
+      if (isBlockingAlertOpen()) {
         if (attempt < 5) {
           retryTimer = setTimeout(() => trySchedule(attempt + 1), 1600);
         }
         return;
       }
 
-      const next = pickNextDiscoveryStep(pathname, discovery, (anchor) =>
-        Boolean(findVisibleAnchorElement(anchor)),
+      const next = pickNextDiscoveryStep(
+        pathname,
+        discovery,
+        (anchor) => Boolean(findVisibleAnchorElement(anchor)),
+        {
+          modalDrawerOpen: isModalDrawerOpen(),
+          drawerExpanded: isDockedDrawerExpanded(),
+        },
       );
       if (next) {
         const activated = activateDiscoveryStep(next.id);
@@ -158,10 +211,15 @@ export function DiscoveryHost() {
       }
 
       // Les éléments lazy (carte 3D, drawers) peuvent arriver légèrement après le mount
-      const remaining = getStepsForSurface(surface).some(
+      const remainingPage = surface
+        ? getStepsForSurface(surface).some(
+            (s) => !discovery.completedIds.includes(s.id) && !discovery.dismissedIds.includes(s.id),
+          )
+        : false;
+      const remainingDrawer = getStepsForSurface('drawer').some(
         (s) => !discovery.completedIds.includes(s.id) && !discovery.dismissedIds.includes(s.id),
       );
-      if (remaining && attempt < 4) {
+      if ((remainingPage || remainingDrawer) && attempt < 3) {
         retryTimer = setTimeout(() => trySchedule(attempt + 1), 1100);
       }
     };
@@ -173,7 +231,7 @@ export function DiscoveryHost() {
       clearTimeout(entryTimer);
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [pathname, discovery, activeOuting, systemIslandBusy]);
+  }, [pathname, discovery, activeOuting, systemIslandBusy, domVersion]);
 
   const activeStep = getDiscoveryStepById(discovery.activeStepId);
 
