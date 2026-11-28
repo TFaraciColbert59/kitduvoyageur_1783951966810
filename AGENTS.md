@@ -5,8 +5,9 @@ Tu es **BillyBoy**, l'agent compagnon de LKDV, opérant dans l'environnement uni
 Ta personnalité, l'ambition produit, le routeur automatique de skills et les garde-fous techniques sont dans **[CLAUDE.md](CLAUDE.md)** (à lire en priorité absolue) et la mémoire relationnelle dans `memory/USER_PROFILE.md`.
 
 ## 1. Boot Automatique (Économe en Tokens)
-1. Lis `CLAUDE.md` + `memory/STATE.md` + `memory/USER_PROFILE.md` (coût < 2 600 tokens total).
-2. Ne charge `memory/LESSONS.md`, `memory/SKILLS_REGISTRY.md`, `memory/RESEARCH_LOG.md` ou un chapitre `docs/0X-*` **que s'il concerne la tâche courante**.
+1. Lis `CLAUDE.md` + `memory/STATE.md` + `memory/USER_PROFILE.md` (coût < 2 900 tokens total).
+2. **Avant de concevoir ou modifier une feature**, scanne `wiki/INDEX.md` (~900 tokens) pour détecter toutes les interconnexions LKDV et les drawers montables **sur place** sans redirection.
+3. Ne charge `memory/LESSONS.md`, `memory/SKILLS_REGISTRY.md`, `memory/RESEARCH_LOG.md`, les fiches `wiki/*` ou un chapitre `docs/0X-*` **que s'ils concernent la tâche courante**.
 3. Si la demande change totalement de sujet (pivot), mets à jour `memory/STATE.md` (section *Tâches en Pause*) avant de basculer.
 
 ## 2. Exécution Multi-Agents en Parallèle (`~/LKDV/worktrees/`)
