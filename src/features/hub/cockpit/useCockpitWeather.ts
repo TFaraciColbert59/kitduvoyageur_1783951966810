@@ -84,15 +84,21 @@ export function useCockpitWeather(data: CockpitData, enabled: boolean) {
     }
   }, [load]);
 
+  const fallbackPoint: Coordinate | null =
+    data.weatherPoint ??
+    data.steps.find((step) => step.coordinate)?.coordinate ??
+    data.route[0]?.[0] ??
+    null;
+
   const loadTrip = useCallback(async () => {
-    if (!data.weatherPoint) return;
+    if (!fallbackPoint) return;
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
     setPending(true);
     setError(null);
     try {
-      const next = await load(data.weatherPoint, data.weather?.place ?? data.location ?? 'Première étape', controller);
+      const next = await load(fallbackPoint, data.weather?.place ?? data.location ?? 'Première étape', controller);
       if (controller.signal.aborted) return;
       setForecast(next);
       setGps(false);
@@ -101,7 +107,7 @@ export function useCockpitWeather(data: CockpitData, enabled: boolean) {
     } finally {
       if (!controller.signal.aborted) setPending(false);
     }
-  }, [data.weatherPoint, data.weather?.place, data.location, load]);
+  }, [fallbackPoint, data.weather?.place, data.location, load]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -109,15 +115,29 @@ export function useCockpitWeather(data: CockpitData, enabled: boolean) {
     const initialize = async () => {
       const permission = await navigator.permissions?.query({ name: 'geolocation' }).catch(() => null);
       if (!active) return;
-      if (permission?.state === 'granted') await locate();
-      else if (data.weatherPoint) await loadTrip();
+      if (permission?.state === 'granted') {
+        try {
+          const position = await getCurrentGeoPosition({ enableHighAccuracy: false, maximumAge: 120_000 }, false);
+          if (!active) return;
+          const controller = new AbortController();
+          request.current = controller;
+          const next = await load([position.longitude, position.latitude], 'Ma position', controller);
+          if (!active || controller.signal.aborted) return;
+          setForecast(next);
+          setGps(true);
+          return;
+        } catch {
+          if (!active) return;
+        }
+      }
+      if (fallbackPoint) await loadTrip();
     };
     void initialize();
     return () => {
       active = false;
       request.current?.abort();
     };
-  }, [enabled, locate, loadTrip, data.weatherPoint]);
+  }, [enabled, load, loadTrip, fallbackPoint]);
 
   return { forecast, pending, error, gps, locate, loadTrip };
 }

@@ -14,5 +14,5 @@ export const metadata = {
 
 export default function HubPreviewPage() {
   if (process.env.LKDV_HUB_RECETTE !== '1') notFound();
-  return <HubCockpit data={cockpitFixture} fixture adventureControl={<AdventureSwitcher variant="dock" />} />;
+  return <HubCockpit data={cockpitFixture} fixture adventureControl={<AdventureSwitcher variant="dock" hideTrigger />} />;
 }

@@ -71,7 +71,7 @@ export default async function HubPage({
       <HubCockpit
         key={cockpit.key}
         data={cockpit}
-        adventureControl={<AdventureSwitcher variant="dock" />}
+        adventureControl={<AdventureSwitcher variant="dock" hideTrigger />}
       />
     );
   }

@@ -27,7 +27,84 @@
   flex-direction: column;
   gap: 14px;
   color: var(--hub-label);
-  padding-bottom: 18px;
+  padding-bottom: 76px;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Barre de sous-volets icônes ancrée en BAS À DROITE (Bible Design DRAWERS_AND_NAVIGATION.md) */
+.lensDockWrap {
+  position: sticky;
+  bottom: 10px;
+  z-index: 15;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  margin-top: 6px;
+}
+
+.lensDock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(23, 43, 36, 0.12);
+  box-shadow:
+    0 10px 28px rgba(23, 64, 44, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  pointer-events: auto;
+}
+
+.lensDockBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--hub-label2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, transform 120ms ease;
+}
+
+.lensDockBtn:active {
+  transform: scale(0.94);
+}
+
+.lensDockBtn[data-active='true'] {
+  background: var(--hub-tint);
+  color: var(--hub-tint-ink);
+  box-shadow: 0 4px 12px rgba(23, 64, 44, 0.24);
+}
+
+.lensDockBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: var(--hub-accent);
+  color: #ffffff;
+  font-size: 9.5px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+.lensDockBtn[data-active='true'] .lensDockBadge {
+  background: #ffffff;
+  color: var(--hub-tint);
 }
 
 /* Segmented Control (mini-capsule interne) */
@@ -504,10 +581,15 @@
 .hourlyRail {
   display: flex;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   padding-bottom: 4px;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
+  box-sizing: border-box;
 }
 
 .hourlyCard {
@@ -652,7 +734,7 @@
   height: 24px;
   border-radius: 999px;
   background: #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(23, 43, 36, 0.2);
 }
 
 /* Wallet highlight card (Paperasse) */

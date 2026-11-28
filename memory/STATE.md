@@ -3,10 +3,9 @@
 _Dernière mise à jour : 2026-11-28_
 
 ## Focus Actuel
-- **Environnement `~/LKDV/`** 100 % actif, versionné et synchronisé sur `origin/main` (`repo/`, `worktrees/`, `library/`, `scripts/`, `wiki/`, `memory/`, `docs/`).
-- **BillyBoy** opérationnel (personnalité humaine adaptative, mémoire auto-apprenante, Wiki IA `wiki/INDEX.md`, Bible Design 5 volets `Carnets`/`Clubs`/`Communauté`, `npm run design:audit` + `npm run agent:hygiene`).
-- **Vitrine GitHub `README.md`** (format App Store / Investisseur) en ligne sur `origin/main`.
-- **Prochaine étape prévue** : Construction de la bibliothèque de skills & patterns dans `~/LKDV/library/` (ou prochain pivot produit).
+- **Hub 2100 (`/hub`)** refondu, modularisé et validé en live (`390×844` + `1440×900`, 0 erreur, 81/81 tests Hub PASS) : Command Bar Liquid Glass + Readiness Ring SVG (`cockpitReadiness.ts`), Bento Spatial, Drawer unifié Bible Design (Capsule 8 volets haut + sous-volets icônes bas-droite + zéro `×`), bridge social in-place lazy (`HubSocialBridge`), fallback météo MET Norway, et dock desktop Liquid Glass centré.
+- **Environnement `~/LKDV/`** + **BillyBoy** + **Wiki IA** + **Bible Design 5 volets** + **README Investisseur** synchronisés sur `origin/main`.
+- **Prochaine étape prévue** : Construction de la bibliothèque de skills & patterns dans `~/LKDV/library/` ou prochain pivot produit.
 
 ## Tâches en Pause (Reprise Rapide après Pivot)
 - **Explorer v2** (en pause volontaire) : 6 onglets + Studio Analyse Avancée 6 volets + Handoff universel livrés & vérifiés. Améliorations naturelles futures : ouvrir `*FormV2` / `PostSharePanel` **en drawer sur place** depuis `ExplorerSummarySheet`, et mapper `'rando'` sans `variantId` dans `resolveActivityProfile`.

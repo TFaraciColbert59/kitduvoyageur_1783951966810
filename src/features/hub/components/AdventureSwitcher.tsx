@@ -415,7 +415,6 @@ export function AdventureSwitcher({
         onClose={closeAll}
         label="Changer de sortie"
         hideCapsule
-        showClose
         capsule={{ items: [{ id: 'hub-sorties', label: 'Sorties', icon: null }], active: 0, onChange: () => undefined }}
         panes={[<div key="sorties" data-cv2-nodrag>{listContent(true)}</div>]}
       /> : <Sheet
