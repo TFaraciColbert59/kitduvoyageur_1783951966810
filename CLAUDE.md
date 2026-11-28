@@ -47,10 +47,12 @@ En fin de tâche importante ou après un bug résolu :
   - Suivre les slots : `~/LKDV/scripts/status-workspace.sh`.
   - Merger dans `main` & purger : `~/LKDV/scripts/merge-agent-slot.sh <nom>`.
 
-## 6. Vérité Unique Design : `Carnets` & `Clubs`
-Les **2 seules pages de référence design** sont **`/carnets/[id]` (`CarnetScreenV2`)** et **`/clubs/[id]` (`ClubLiquidGlassV8`)**, pilotées par `src/design/bank.ts` et documentées dans `docs/06-design-system/DESIGN_SYSTEM.md` :
-- **100 % Mode Clair Liquid Glass — Pure Palette Verte LKDV** (`#FBFAF6` canvas, `#172B24` encre primaire, `#17402C` vert marque, `#226148` action, verre `g1`/`g2`/`g3`/`gc`).
-- **INTERDIT ABSOLU** : zéro noir pur (`#000`, `#101010`, `#121815`), jamais `.xp20-root` dans un sub-drawer portaled (utiliser `.xp20-exp-scope`).
+## 6. Vérité Unique Design : `Carnets`, `Clubs` & `Communauté`
+La **seule vérité design** est documentée en 3 volets dans `docs/06-design-system/` (`DESIGN_SYSTEM.md`, `DRAWERS_AND_NAVIGATION.md`, `CANONICAL_BLOCKS.md`), extraite de **`/carnets/[id]` (`CarnetScreenV2`)**, **`/clubs/[id]` (`ClubLiquidGlassV8`)**, **`/communaute`** et `src/design/bank.ts` :
+- **Ergonomie** : **Visuel > Texte**, **Icônes > Libellés**, simplicité visuelle, rangement strict en **Catégories → Sous-catégories**.
+- **Pilier Drawers** : sélecteur de volets principaux en **haut** (`CapsuleTabs 56px`), sous-volets icônes + filtres en **bas à droite** (`right: 10px; bottom: 10px`). **Le contenu s'adapte au mode d'ouverture du drawer, jamais l'inverse.**
+- **Blocs identiques partout** : réutiliser les 7 blocs canoniques (`IdentityPill`/`PostAuthorPill`, Stories `CommunityStoriesBar`/`StoriesViewer`, Posts + Commentaires/Partage, `ProductGlassCard`/`ClubGearProductCard`, Aperçus Carnet/Club/Sortie/Kit, Drawers de création `CreateSheetV2`, Cartes 3D MapLibre).
+- **100 % Mode Clair Liquid Glass — Pure Palette Verte LKDV** (`#FBFAF6`, `#172B24`, `#17402C`, `#226148`, verres `g1`/`g2`/`g3`/`gc`). **INTERDIT ABSOLU** : zéro noir pur (`#000`, `#101010`, `#121815`), jamais `.xp20-root` dans un sub-drawer portaled (utiliser `.xp20-exp-scope`).
 
 ## 7. Stack, Commandes & Garde-Fous Critiques (Mac 8 Go RAM)
 - **Stack** : Next.js `15.5.25` App Router, React `19.3.1`, TypeScript, **Cloudflare Workers (`vinext`) uniquement** (Vercel supprimé), Capacitor 8 (`ios/` + `android/`), Supabase Postgres 17 + PostGIS, MapLibre GL + Three.js `r186`, Rust/WASM (`crates/lkdv-route-core`).
