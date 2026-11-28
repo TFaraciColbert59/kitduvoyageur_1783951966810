@@ -92,7 +92,11 @@ export default function ClubVerticalTabs({
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Espaces du club">
+      <nav
+        className="min-h-0 flex-1 space-y-[var(--space-1)] overflow-y-auto py-[var(--space-2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="Espaces du club"
+        data-discover="club-tabs"
+      >
         <p className="mb-[var(--space-1)] px-[var(--space-2)] font-mono text-[length:var(--lkv-text-caption-2)] font-bold uppercase tracking-widest text-[color:var(--lkv-text-muted)]">
           Espaces
         </p>

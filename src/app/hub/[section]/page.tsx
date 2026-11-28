@@ -26,9 +26,6 @@ import { HubInvitationsSection } from '@/features/hub/components/collectif/HubIn
 import { HubVoyagesLiesSection } from '@/features/hub/components/collectif/HubVoyagesLiesSection';
 import { loadTripSection } from '@/lib/tripSection';
 import type { DatabaseTripChecklistItem } from '@/lib/supabase/types';
-import { getTripKitDetails } from '@/lib/queries-trip-kit';
-import { getTripItemImages } from '@/features/hub/server/getTripItemImages';
-import { GearSection } from '@/features/hub/components/menu/GearSection';
 import { calculateBudgetSummary } from '@/features/trips/engine/budgetEngine';
 import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine';
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
@@ -80,7 +77,7 @@ export default async function HubSectionPage({
   ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
-  if (!def) notFound();
+  if (!def || def.id === 'gear') notFound();
   // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
   // (matériel, poids, essai du sac) vit désormais dans son étape Kit.
   if (def.id === 'preparation') redirect('/compas?etape=kit');
@@ -198,19 +195,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
             <ItineraryMobileExperience trip={trip} initialSteps={initialSteps} />
           </div>
         </>
-      );
-    }
-    case 'gear': {
-      const result = await getTripKitDetails(slug);
-      if (!result) notFound();
-      const itemImages = await getTripItemImages(result.trip.id);
-      return (
-        <GearSection
-          trip={result.trip}
-          analysis={result.analysis}
-          itemImages={itemImages}
-          availableProducts={result.availableProducts}
-        />
       );
     }
     case 'groupe':

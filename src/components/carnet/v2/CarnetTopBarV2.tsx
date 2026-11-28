@@ -131,6 +131,7 @@ export function CarnetTopBarV2({
           ref={pillRef}
           type="button"
           className="lkdv-title-pill"
+          data-discover="carnet-title"
           onClick={toggleTitleMenu}
           aria-expanded={menuOpen}
           aria-haspopup="menu"
@@ -230,6 +231,7 @@ export function CarnetTopBarV2({
           <button
             type="button"
             className="lkdv-gbtn"
+            data-discover="carnet-add"
             onClick={onCreateMoment}
             aria-label="Ajouter une dépense ou un objet du kit"
           >

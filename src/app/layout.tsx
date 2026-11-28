@@ -21,6 +21,7 @@ import '@/styles/carnet-profile.css';
 import '@/styles/hub-tokens.css';
 import '@/features/posts/ui/post-system.css';
 import '@/components/social-kit/social-kit.css';
+import '@/styles/discovery-coach.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';

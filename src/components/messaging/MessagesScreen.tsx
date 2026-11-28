@@ -1081,6 +1081,7 @@ function MessageComposerBar({
 
       <form
         className="mcomposer"
+        data-discover="messages-compose"
         onSubmit={(event) => {
           event.preventDefault();
           void submit();

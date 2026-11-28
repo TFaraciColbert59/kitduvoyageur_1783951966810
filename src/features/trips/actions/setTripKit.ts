@@ -59,7 +59,6 @@ export async function setTripKit(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath('/hub/kit-voyage');
     revalidatePath('/hub', 'page');
     return { ok: true };
   } catch (err) {

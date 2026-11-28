@@ -322,6 +322,7 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
             type="button"
             className="xp20-map-stack-btn xp20-layers-sync-btn"
             data-testid="xp20-layers-sync-btn"
+            data-discover="explorer-layers"
             data-loading-phase={loadingPhase}
             onClick={() => setStyleOpen((open) => !open)}
             aria-label={loadingPhase === 'idle' ? 'Fond de carte' : `Fond de carte · ${loadingLabel}`}
@@ -365,6 +366,7 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
                 type="button"
                 className="xp20-map-stack-btn xp20-planner-pencil-btn xp20-tactile"
                 data-testid="xp20-planner-pencil-btn"
+                data-discover="explorer-planner"
                 data-active={plannerActive ? 'true' : undefined}
                 aria-pressed={plannerActive}
                 onClick={onTogglePlanner}
@@ -385,6 +387,7 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
                 type="button"
                 className="xp20-map-stack-btn"
                 data-testid="xp20-saved-places-btn"
+                data-discover="explorer-saved"
                 onClick={onOpenSavedPlaces}
                 aria-label={
                   savedPlacesCount > 0
@@ -430,6 +433,7 @@ export const ExplorerMapChrome = React.memo(function ExplorerMapChrome({
             aria-label="Démarrer une activité"
             title="Démarrer une activité"
             data-testid="xp20-sport-launch-btn"
+            data-discover="explorer-play"
             onClick={onOpenSportLaunch}
           >
             <Play size={17} fill="currentColor" strokeWidth={2} aria-hidden="true" />

@@ -30,6 +30,7 @@ export function CommunityFeedTopBar({
         <button
           type="button"
           className="lkdv-pourtoi-pill"
+          data-discover="community-explore"
           aria-label="Explorer et rechercher"
           onClick={() => onOpenSection('carnets')}
         >
@@ -38,7 +39,13 @@ export function CommunityFeedTopBar({
       </div>
 
       <div className="lkdv-top-actions">
-        <button type="button" className="gbtn" aria-label="Créer dans l’application" onClick={onCreate}>
+        <button
+          type="button"
+          className="gbtn"
+          data-discover="community-create"
+          aria-label="Créer dans l’application"
+          onClick={onCreate}
+        >
           <Icon name="plus" size={18} aria-hidden="true" />
         </button>
         <button type="button" className="gbtn" aria-label="Rechercher dans la communauté" onClick={onSearch}>

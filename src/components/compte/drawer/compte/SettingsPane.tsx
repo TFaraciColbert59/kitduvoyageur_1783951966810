@@ -15,7 +15,9 @@ import {
   LogOut,
   MapPin,
   Monitor,
+  Pause,
   Play,
+  RotateCcw,
   Ruler,
   ShieldCheck,
   SlidersHorizontal,
@@ -47,6 +49,13 @@ import {
 import { ActionPill } from '@/components/ui/ActionPill';
 import { OffersSubscriptionDrawer } from '@/components/compte/offers/OffersSubscriptionDrawer';
 import { useLocale } from '@/lib/i18n/context';
+import { showDynamicIsland } from '@/lib/dynamic-island';
+import {
+  getDiscoveryProgress,
+  resetDiscovery,
+  setDiscoveryEnabled,
+  useDiscoveryState,
+} from '@/features/discovery/store';
 import { DrawerError, DrawerSkeleton } from '../shell/DrawerShell';
 import { createClient } from '@/lib/supabase/client';
 import { ConsentSettingsSheet } from './ConsentSettingsSheet';
@@ -589,23 +598,7 @@ export function SettingsPane() {
         </div>
       </section>
 
-      <section className="lkdv-compte-setting-card">
-        <div className="lkdv-compte-setting-head">
-          <span className="lkdv-compte-setting-ico" aria-hidden="true">
-            <Sparkles size={17} />
-          </span>
-          <div>
-            <b>Parcours de découverte</b>
-            <small>Les bases de LKDV, à ton rythme</small>
-          </div>
-          <ActionPill
-            className="lkdv-compte-setting-pill"
-            label="Reprendre le parcours"
-            icon={<Play />}
-            onClick={() => window.dispatchEvent(new Event('lkdv:onboarding-open'))}
-          />
-        </div>
-      </section>
+      <DiscoverySettingsCard />
 
       <section className="lkdv-compte-setting-card">
         <div className="lkdv-compte-setting-head">
@@ -915,6 +908,58 @@ export function SettingsPane() {
       {zonesOpen ? <PrivacyZonesSheet onClose={() => setZonesOpen(false)} /> : null}
       {sportZonesOpen ? <ZoneSettingsSheet onClose={() => setSportZonesOpen(false)} /> : null}
     </div>
+  );
+}
+
+function DiscoverySettingsCard() {
+  const discovery = useDiscoveryState();
+  const { seenCount, totalCount } = getDiscoveryProgress(discovery);
+
+  return (
+    <section className="lkdv-compte-setting-card">
+      <div className="lkdv-compte-setting-head">
+        <span className="lkdv-compte-setting-ico" aria-hidden="true">
+          <Sparkles size={17} />
+        </span>
+        <div>
+          <b>Guide découverte</b>
+          <small>
+            {discovery.enabled
+              ? `${seenCount}/${totalCount} repères vus · non bloquant`
+              : `En pause · ${seenCount}/${totalCount} repères vus`}
+          </small>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label={discovery.enabled ? 'Mettre en pause le guide' : 'Activer le guide'}
+            icon={discovery.enabled ? <Pause /> : <Play />}
+            onClick={() => {
+              const next = !discovery.enabled;
+              setDiscoveryEnabled(next);
+              showDynamicIsland({
+                title: next ? 'Guide découverte activé' : 'Guide découverte en pause',
+                subtitle: next
+                  ? 'Les repères discrets réapparaîtront au fil de ta navigation.'
+                  : 'Tu peux le réactiver ici à tout moment.',
+              });
+            }}
+          />
+          <ActionPill
+            className="lkdv-compte-setting-pill"
+            label="Revoir tous les repères"
+            icon={<RotateCcw />}
+            onClick={() => {
+              resetDiscovery();
+              showDynamicIsland({
+                title: 'Guide découverte réinitialisé',
+                subtitle: 'Les astuces se déclencheront en douceur sur chaque page.',
+              });
+            }}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 

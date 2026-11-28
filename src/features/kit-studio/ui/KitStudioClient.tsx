@@ -331,6 +331,7 @@ export function KitStudioClient(props: KitStudioClientProps) {
           <button
             type="button"
             className="ks-dock-reopen"
+            data-discover="kit-studio-bag"
             onClick={() => useUiStore.getState().setDockOpen(true)}
             aria-label="Rouvrir le tiroir"
           >

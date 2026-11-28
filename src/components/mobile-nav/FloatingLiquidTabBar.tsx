@@ -266,6 +266,7 @@ export function FloatingLiquidTabBar() {
                       : destination.ariaLabel
                 }
                 aria-current={active ? 'page' : undefined}
+                data-discover={`tab-${destination.id}`}
                 className={`lkdv-floating-tab${active ? ' is-active' : ''}`}
                 onPointerEnter={() => {
                   if (!active) {

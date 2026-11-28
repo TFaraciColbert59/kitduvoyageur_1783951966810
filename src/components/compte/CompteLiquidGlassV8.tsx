@@ -112,10 +112,6 @@ const CompteDrawer = dynamic(
   () => import('./drawer/compte/CompteDrawer').then((mod) => mod.CompteDrawer),
   { ssr: false }
 );
-const FirstRunJourney = dynamic(
-  () => import('./onboarding/FirstRunJourney').then((mod) => mod.FirstRunJourney),
-  { ssr: false }
-);
 const OutingBulkAudienceSheet = dynamic(
   () =>
     import('./drawer/sortie/OutingBulkAudienceSheet').then(
@@ -1761,7 +1757,6 @@ export function CompteLiquidGlassV8({ initialTab }: CompteLiquidGlassV8Props) {
         ),
         drawerMount.root
       ) : null}
-      {user ? <FirstRunJourney userId={user.id} /> : null}
       <CompteOverlayHost onChanged={() => { void syncSupabaseProfile(); }} />
       {slotMount ? (
         <ProfileDrawerHost

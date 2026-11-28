@@ -1003,14 +1003,9 @@ export function HubCockpitDrawerPane(props: HubDrawerStateProps): ReactNode {
           )}
 
           {!fixture && (
-            <div className={ds.btnRow}>
-              <Link href="/hub/kit-voyage" className={ds.btnSecondary}>
-                {data.kitId ? 'Gérer le kit' : 'Choisir un kit'}
-              </Link>
-              <Link href={data.kitId ? `/kit-studio?kit=${encodeURIComponent(data.kitId)}` : '/kit-studio'} className={ds.btnSecondary}>
-                Kit Studio 3D <Icon name="chevron-right" size={15} />
-              </Link>
-            </div>
+            <Link href={data.kitId ? `/kit-studio?kit=${encodeURIComponent(data.kitId)}` : '/kit-studio'} className={ds.btnSecondary}>
+              {data.kitId ? 'Configurer le kit dans Kit Studio 3D' : 'Ouvrir Kit Studio 3D'} <Icon name="chevron-right" size={16} />
+            </Link>
           )}
 
           <BottomRightLensDock
