@@ -1111,12 +1111,6 @@ export function HubCockpitDrawerPane(props: HubDrawerStateProps): ReactNode {
             </DrawerSection>
           )}
 
-          {!fixture && data.documents !== null && (
-            <Link href="/hub/documents" className={ds.btnSecondary}>
-              Gérer tous les documents <Icon name="chevron-right" size={16} />
-            </Link>
-          )}
-
           <BottomRightLensDock
             ariaLabel="Sous-vues paperasse"
             value={paperasseTab}
@@ -1571,7 +1565,6 @@ export function renderHubDrawerDetail(
               <div className={ds.card}>
                 <DrawerRow icon="calendar" iconTone={isExpired ? 'bad' : 'neutral'} title="Échéance" subtitle={document.expiration ? dateLabel(document.expiration) : 'Aucune date limite'} />
               </div>
-              {!fixture && <Link href="/hub/documents" className={ds.btnSecondary}>Ouvrir les documents du voyage</Link>}
             </div>
           ),
         }

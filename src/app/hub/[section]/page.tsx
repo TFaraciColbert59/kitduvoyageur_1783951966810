@@ -26,7 +26,6 @@ import { getTripPhaseDetails } from '@/features/trips/engine/temporalPhaseEngine
 import type { PlannerStep } from '@/features/trips/planner/plannerEngine';
 import {
   ChecklistMobileExperience,
-  DocsMobileExperience,
   ExportMobileExperience,
   HubGroupeCockpit,
   ItineraryMobileExperience,
@@ -36,7 +35,6 @@ import {
   SafetyMobileExperience,
   TeamMobileExperience,
   TripChecklistView,
-  TripDocumentsView,
   TripExportView,
   TripNotesView,
   TripSafetyView,
@@ -71,7 +69,7 @@ export default async function HubSectionPage({
   ]);
 
   const def = hubSectionRegistry.find((d) => d.segment === section);
-  if (!def || def.id === 'gear' || def.id === 'budget') notFound();
+  if (!def || def.id === 'gear' || def.id === 'budget' || def.id === 'docs') notFound();
   // Le Compas est le seul préparateur : l'ancien cockpit « Préparation »
   // (matériel, poids, essai du sac) vit désormais dans son étape Kit.
   if (def.id === 'preparation') redirect('/compas?etape=kit');
@@ -202,18 +200,6 @@ async function SortieSection({ sectionId, slug, jour }: { sectionId: string; slu
           </div>
           <div className="lg:hidden">
             <TeamMobileExperience trip={trip} />
-          </div>
-        </>
-      );
-    case 'docs':
-      if (!trip.permissions.canViewDocuments) notFound();
-      return (
-        <>
-          <div className="hidden lg:block">
-            <TripDocumentsView trip={trip} />
-          </div>
-          <div className="lg:hidden">
-            <DocsMobileExperience trip={trip} />
           </div>
         </>
       );
