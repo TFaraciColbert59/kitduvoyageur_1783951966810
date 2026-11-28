@@ -1,0 +1,5195 @@
+{
+  "config": {
+    "argv": [
+      "/Users/fr168256/.hermes/node/bin/node",
+      "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/node_modules/.bin/playwright",
+      "test",
+      "--list"
+    ],
+    "configFile": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/playwright.config.ts",
+    "rootDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "a11y",
+        "name": "a11y",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/a11y",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "a11y-mobile",
+        "name": "a11y-mobile",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/a11y",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "perf",
+        "name": "perf",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "api",
+        "name": "api",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/api",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      },
+      {
+        "outputDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/bundle/etat/preuves/playwright/artefacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "visuel",
+        "name": "visuel",
+        "testDir": "/Users/fr168256/Documents/deepseek-harness/default-workspace/lkdv-control-work/crm/tests/visuel",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "./bundle/etat/preuves/playwright/rapport",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./bundle/etat/preuves/playwright/resultats.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:4100/robots.txt",
+      "reuseExistingServer": true,
+      "timeout": 180000,
+      "stdout": "ignore",
+      "stderr": "pipe"
+    }
+  },
+  "suites": [
+    {
+      "title": "catalogue-144.spec.ts",
+      "file": "catalogue-144.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Catalogue des 144 actions tel qu’il est servi par admin.commands_catalog()",
+          "file": "catalogue-144.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "affiche exactement les 144 actions ACT-001 à ACT-144, sans trou ni doublon",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1f13a1f088cdf4708be6-122c318bee5dc9693575",
+              "file": "catalogue-144.spec.ts",
+              "line": 7,
+              "column": 7
+            },
+            {
+              "title": "chaque ligne porte son pôle, son rôle minimal et ses drapeaux, conformes à catalog.ts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1f13a1f088cdf4708be6-9d54e899685d161f0562",
+              "file": "catalogue-144.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "la recherche filtre les actions sans jamais en inventer",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1f13a1f088cdf4708be6-d5bfe7ec4ba3aaab2775",
+              "file": "catalogue-144.spec.ts",
+              "line": 41,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d01-comptes.spec.ts",
+      "file": "d01-comptes.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D1 — Comptes et identité (pôle MEMB)",
+          "file": "d01-comptes.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-001 — la fiche 360° s’ouvre depuis un cas, données personnelles masquées",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28391f85be055c0ae809-2975c2afc0cb148d1de7",
+              "file": "d01-comptes.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-005 — bannir un membre exige deux personnes : la demande part en validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28391f85be055c0ae809-39244a29a1205fbc7315",
+              "file": "d01-comptes.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ACT-009 — changer un rôle d’équipe est réservé au super admin et validé à deux",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28391f85be055c0ae809-27e6b230a23ae07a345f",
+              "file": "d01-comptes.spec.ts",
+              "line": 39,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d02-publications.spec.ts",
+      "file": "d02-publications.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D2 — Publications communauté (pôle CONF)",
+          "file": "d02-publications.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-016 — Masquer exige un motif, écrit au journal et s’annule pendant 10 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11bd142a2f6abb25d747-6aea5d62cefb1eb405a3",
+              "file": "d02-publications.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-017 — supprimer une publication est réservé au responsable du pôle",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11bd142a2f6abb25d747-2a47ccb882a0d03ae510",
+              "file": "d02-publications.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "ACT-020 — masquer un commentaire depuis un signalement de commentaire",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11bd142a2f6abb25d747-369482a1044bf9ecd1db",
+              "file": "d02-publications.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "ACT-019 — mettre en tendance affiche le raccourci et le message membre avec recours",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "11bd142a2f6abb25d747-1f9891e2f558a485be6d",
+              "file": "d02-publications.spec.ts",
+              "line": 58,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d03-stories.spec.ts",
+      "file": "d03-stories.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D3 — Stories (pôle CONF)",
+          "file": "d03-stories.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-024 — approuver une story puis vérifier le journal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e64e405cc7f011fedcd9-3df2dfa2abdcd12c8da7",
+              "file": "d03-stories.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-025 — retirer une story demande un motif et propose l’annulation 10 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e64e405cc7f011fedcd9-eaeecdb39e284c272d77",
+              "file": "d03-stories.spec.ts",
+              "line": 21,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d04-carnets.spec.ts",
+      "file": "d04-carnets.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D4 — Carnets (pôle CONF)",
+          "file": "d04-carnets.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-029 — forcer un carnet en privé, effet visible et annulable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "186db597e924006ff068-361608da2fd98c21c152",
+              "file": "d04-carnets.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-033 — couper le partage de position en direct ne s’annule pas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "186db597e924006ff068-02ba9814e919c7253009",
+              "file": "d04-carnets.spec.ts",
+              "line": 21,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d05-clubs.spec.ts",
+      "file": "d05-clubs.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D5 — Clubs (pôle CONF)",
+          "file": "d05-clubs.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-036 — suspendre un club part en validation à deux personnes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f00695953a5e56dfda49-ef8ea712389f30451d06",
+              "file": "d05-clubs.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-039 — épingler un sujet l’affiche en tête de liste du club",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "f00695953a5e56dfda49-52fcca3fc18eba1563af",
+              "file": "d05-clubs.spec.ts",
+              "line": 23,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d06-messagerie.spec.ts",
+      "file": "d06-messagerie.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D6 — Groupes, tribus, messagerie (pôle CONF)",
+          "file": "d06-messagerie.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-049 — lire une conversation signalée exige un motif et reste journalisé",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c9e799e4bcb8dd6ae926-eaa3237473dd65c3467f",
+              "file": "d06-messagerie.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-048 — supprimer un message avec motif puis vérifier le journal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c9e799e4bcb8dd6ae926-94f8f5b6bec04755c63c",
+              "file": "d06-messagerie.spec.ts",
+              "line": 23,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d07-lieux.spec.ts",
+      "file": "d07-lieux.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D7 — Lieux et terrain (pôle CONT)",
+          "file": "d07-lieux.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-058 — décider un rapport terrain, avec motif et journal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4d7dbc9c67760f5168a6-94f2257bad507d1eea90",
+              "file": "d07-lieux.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-053 — fusionner deux lieux est réservé au responsable et non annulable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4d7dbc9c67760f5168a6-62de98fa7428d3e295d2",
+              "file": "d07-lieux.spec.ts",
+              "line": 22,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d08-avis.spec.ts",
+      "file": "d08-avis.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D8 — Avis et questions (pôle CONF)",
+          "file": "d08-avis.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-061 — masquer un avis produit depuis sa fiche, motif obligatoire",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4cb0264d187729e20311-385d04840524167fa539",
+              "file": "d08-avis.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-064 — modérer une question/réponse laisse une trace horodatée",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "4cb0264d187729e20311-118b4433db29e2654db4",
+              "file": "d08-avis.spec.ts",
+              "line": 24,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d09-marketplace.spec.ts",
+      "file": "d09-marketplace.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D9 — Marketplace et occasion (pôle COMM)",
+          "file": "d09-marketplace.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-067 — approuver une annonce retire le badge « à vérifier »",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "519abdd10f2dbf6a6083-9c41e81ea790a6a51f6b",
+              "file": "d09-marketplace.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-071 — arbitrer un litige exige deux personnes, jamais un agent (EX-AGT-02)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "519abdd10f2dbf6a6083-dd3bcbe40b5390ab3209",
+              "file": "d09-marketplace.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ACT-070 — traiter un signalement d’annonce laisse une ligne au journal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "519abdd10f2dbf6a6083-9ae3f346a99d352e4606",
+              "file": "d09-marketplace.spec.ts",
+              "line": 28,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d10-catalogue.spec.ts",
+      "file": "d10-catalogue.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D10 — Catalogue (pôle COMM)",
+          "file": "d10-catalogue.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-076 — changer un prix passe par une validation à deux personnes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "453a48ac3fcb8bd56efa-b6ce97052e1bfb9ab8d7",
+              "file": "d10-catalogue.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-077 — un mouvement de stock affiche la quantité avant/après",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "453a48ac3fcb8bd56efa-2c3894411138aab551b9",
+              "file": "d10-catalogue.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ACT-082 — le catalogue d’une seule référence reste consultable en lecture",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "453a48ac3fcb8bd56efa-8ecf98b93f0fa516ec72",
+              "file": "d10-catalogue.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "ACT-075 — modifier un produit écrit une ligne de journal avec avant/après",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "453a48ac3fcb8bd56efa-45ec6263b4c931201625",
+              "file": "d10-catalogue.spec.ts",
+              "line": 35,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d11-commandes.spec.ts",
+      "file": "d11-commandes.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D11 — Commandes et paiements (pôle COMM)",
+          "file": "d11-commandes.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-085 — remboursement en mode solo : saisie du montant obligatoire, tracé, jamais d’agent",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "70933dcd3f31e5f5f2c5-0cb44cd58d63ea49ea01",
+              "file": "d11-commandes.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-086 — annuler une commande exige deux personnes hors mode solo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "70933dcd3f31e5f5f2c5-06566b4526101ce73b5f",
+              "file": "d11-commandes.spec.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "ACT-083 — confirmer une commande met à jour le statut affiché",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "70933dcd3f31e5f5f2c5-22446ed35affcf39c23f",
+              "file": "d11-commandes.spec.ts",
+              "line": 39,
+              "column": 7
+            },
+            {
+              "title": "ACT-087 — rejouer un événement Stripe est réservé au responsable et idempotent",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "70933dcd3f31e5f5f2c5-e03e81fe1e928f62be49",
+              "file": "d11-commandes.spec.ts",
+              "line": 46,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d12-recompenses.spec.ts",
+      "file": "d12-recompenses.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D12 — Récompenses et progression (pôle CROI)",
+          "file": "d12-recompenses.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-093 — corriger un solde de points passe par une validation à deux",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b6415e401ddb58e6dcd1-07c9288a631a1f97e1aa",
+              "file": "d12-recompenses.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-098 — attribuer un badge puis l’annuler pendant 10 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b6415e401ddb58e6dcd1-fe29b04a35d3cdd5b670",
+              "file": "d12-recompenses.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "ACT-092 — refuser un retrait de récompense laisse un motif lisible au journal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b6415e401ddb58e6dcd1-885866b05790bf916363",
+              "file": "d12-recompenses.spec.ts",
+              "line": 30,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d13-linees.spec.ts",
+      "file": "d13-linees.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D13 — Lignées de kits (pôle COMM)",
+          "file": "d13-linees.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-102 — marquer une lignée « souche » demande un motif et laisse une trace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "eaa67622305fb9502fef-edcc90f5d72f2984fac1",
+              "file": "d13-linees.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-104 — annuler une attribution de part créateur est réservé au responsable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "eaa67622305fb9502fef-28e91a0bcf949a31784d",
+              "file": "d13-linees.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ACT-107 — rafraîchir les scores de lignée est idempotent et affiche l’heure du dernier calcul",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "eaa67622305fb9502fef-ed9c8caab4961636e575",
+              "file": "d13-linees.spec.ts",
+              "line": 28,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d14-voyages-sos.spec.ts",
+      "file": "d14-voyages-sos.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D14 — Voyages et sécurité (pôle CONF) — SOS",
+          "file": "d14-voyages-sos.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-109 — SOS : prendre en charge, puis clore avec une note",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c98b7e4c5cdde298e8d7-f81a341b46b619ef97c4",
+              "file": "d14-voyages-sos.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-108 — le tableau SOS de la file place les alertes en urgence haute",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c98b7e4c5cdde298e8d7-4a26a95f2b8054dd4c97",
+              "file": "d14-voyages-sos.spec.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "ACT-110 — un point de contrôle en retard apparaît dans « Délai bientôt »",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c98b7e4c5cdde298e8d7-61635a0c9bee6d68f925",
+              "file": "d14-voyages-sos.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "@mobile SOS sur téléphone : le 112 est visible et joignable sans défilement",
+              "ok": true,
+              "tags": [
+                "mobile"
+              ],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c98b7e4c5cdde298e8d7-619a95def48a76605f17",
+              "file": "d14-voyages-sos.spec.ts",
+              "line": 32,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d15-contenus.spec.ts",
+      "file": "d15-contenus.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D15 — Contenus et pays (pôle CONT)",
+          "file": "d15-contenus.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-116 — publier un guide demande le rôle responsable et journalise",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "86d09ebce961d9f00cbe-2416a28508f09df450ce",
+              "file": "d15-contenus.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-120 — publier un jeu de couverture passe par une validation à deux",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "86d09ebce961d9f00cbe-3ba32ff39cf8300e8219",
+              "file": "d15-contenus.spec.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "ACT-117 — mettre un contenu en avant affiche l’état avant/après",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "86d09ebce961d9f00cbe-8f24c1633993c2bfe66a",
+              "file": "d15-contenus.spec.ts",
+              "line": 26,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d16-affiliation.spec.ts",
+      "file": "d16-affiliation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D16 — Affiliation (pôle CROI)",
+          "file": "d16-affiliation.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-122 — désactiver un partenaire d’affiliation est annulable 10 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73237b02f7b5354fbf30-447b2d17a72599419325",
+              "file": "d16-affiliation.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-125 — valider une conversion exige deux personnes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73237b02f7b5354fbf30-0786edacab6704bb190e",
+              "file": "d16-affiliation.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "ACT-126 — la vue des clics n’expose aucune donnée personnelle",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "73237b02f7b5354fbf30-c108f139ef7ce83db227",
+              "file": "d16-affiliation.spec.ts",
+              "line": 27,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d17-ia.spec.ts",
+      "file": "d17-ia.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D17 — IA et coûts (pôle PRIA)",
+          "file": "d17-ia.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-129 — le coupe-circuit IA arrête les agents et le dit sans jargon",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2dfac5b14f9d816c1cff-72f45904f3664d1b9c9c",
+              "file": "d17-ia.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-128 — relever un quota IA demande le motif et reste annulable",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2dfac5b14f9d816c1cff-a9bc512cda733e492f74",
+              "file": "d17-ia.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ACT-127 — l’usage IA affiche un coût mesuré ou « non renseigné », jamais un chiffre inventé",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2dfac5b14f9d816c1cff-be70692d7307cc5bd23d",
+              "file": "d17-ia.spec.ts",
+              "line": 29,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d18-support.spec.ts",
+      "file": "d18-support.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D18 — Support et notifications (pôle MEMB)",
+          "file": "d18-support.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-132 — répondre à un ticket envoie le message au membre et journalise",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41bc6371c9a072c871d2-77a902a6296b8795cd2a",
+              "file": "d18-support.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-134 — une annonce ciblée passe par une validation à deux : jamais d’envoi de masse direct",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41bc6371c9a072c871d2-ec697a3bc04ca6c48c13",
+              "file": "d18-support.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "ACT-136 — résoudre une alerte d’envoi la sort du compteur",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "41bc6371c9a072c871d2-77c3a6d13fdc0aa39877",
+              "file": "d18-support.spec.ts",
+              "line": 29,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "d19-systeme.spec.ts",
+      "file": "d19-systeme.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "D19 — Système et équipe (pôle TECH)",
+          "file": "d19-systeme.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ACT-144 — gérer l’équipe est réservé au super admin et validé à deux",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "944a474c349108ccf95f-a773d004b2011fd4f31f",
+              "file": "d19-systeme.spec.ts",
+              "line": 12,
+              "column": 7
+            },
+            {
+              "title": "ACT-137 — basculer un drapeau de fonctionnalité est annulable 10 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "944a474c349108ccf95f-17d4763764005de8a6c7",
+              "file": "d19-systeme.spec.ts",
+              "line": 19,
+              "column": 7
+            },
+            {
+              "title": "ACT-141 — lancer une tâche planifiée à la main affiche son identifiant de reprise",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "944a474c349108ccf95f-8a7bf4e0acb09f75218e",
+              "file": "d19-systeme.spec.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "ACT-139 — les erreurs serveur s’affichent avec cause, solution et « Réessayer »",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "944a474c349108ccf95f-324e44295d9371fd0449",
+              "file": "d19-systeme.spec.ts",
+              "line": 33,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "transverses.spec.ts",
+      "file": "transverses.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Sans session — garde-fous de la coque",
+          "file": "transverses.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "une visite non authentifiée renvoie vers /connexion",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-1ce91455f8317893a2a9",
+              "file": "transverses.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "les en-têtes de sécurité sont posés (CSP, cadre interdit, noindex)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-a79733050905130faf60",
+              "file": "transverses.spec.ts",
+              "line": 20,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Connexion et double authentification",
+          "file": "transverses.spec.ts",
+          "line": 34,
+          "column": 6,
+          "specs": [
+            {
+              "title": "un mot de passe faux affiche une phrase métier, jamais un code brut",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-13900d229114a74f260c",
+              "file": "transverses.spec.ts",
+              "line": 35,
+              "column": 7
+            },
+            {
+              "title": "le compte de test se connecte et l’enrôlement TOTP mène à la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-a7c493d460787eca0508",
+              "file": "transverses.spec.ts",
+              "line": 49,
+              "column": 7
+            },
+            {
+              "title": "une session à un seul facteur est renvoyée vers la double authentification",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-2427803ddffc6605430e",
+              "file": "transverses.spec.ts",
+              "line": 58,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "File « À traiter » — groupes, tri, compte à rebours",
+          "file": "transverses.spec.ts",
+          "line": 66,
+          "column": 6,
+          "specs": [
+            {
+              "title": "les groupes apparaissent dans l’ordre urgence haute → délai bientôt → à valider → signalements → contributions",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-52e05af327b129c6f255",
+              "file": "transverses.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "la file respecte le tri EX-INBOX-02 : urgence haute puis délai le plus proche",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-bcdf21bb82fee6d82a38",
+              "file": "transverses.spec.ts",
+              "line": 85,
+              "column": 7
+            },
+            {
+              "title": "le compte à rebours change de ton selon le délai restant",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-0405f1cf9c69c1bf33ef",
+              "file": "transverses.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "les compteurs de la file ne sont jamais vides ni négatifs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-c9abfacb2253a7288172",
+              "file": "transverses.spec.ts",
+              "line": 105,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Clavier et barre de commande",
+          "file": "transverses.spec.ts",
+          "line": 115,
+          "column": 6,
+          "specs": [
+            {
+              "title": "J et K déplacent la sélection sans ouvrir le cas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-859bbd5b4270bf82074f",
+              "file": "transverses.spec.ts",
+              "line": 121,
+              "column": 7
+            },
+            {
+              "title": "Entrée ouvre le cas sélectionné",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-cc4a30f6a0bf9448df50",
+              "file": "transverses.spec.ts",
+              "line": 136,
+              "column": 7
+            },
+            {
+              "title": "⌘K ouvre la barre de commande et Échap la ferme",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-b3df3b1d683cb2062a82",
+              "file": "transverses.spec.ts",
+              "line": 143,
+              "column": 7
+            },
+            {
+              "title": "aucun raccourci global ne s’active dans un champ de saisie",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-52157f47230359ecde33",
+              "file": "transverses.spec.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "le raccourci de chaque bouton est affiché",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-608c90fa4dade7eb8517",
+              "file": "transverses.spec.ts",
+              "line": 161,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Annulation 10 secondes",
+          "file": "transverses.spec.ts",
+          "line": 168,
+          "column": 6,
+          "specs": [
+            {
+              "title": "le toast décompte et « Annuler » rétablit l’état précédent",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-9988cb28543145b2f225",
+              "file": "transverses.spec.ts",
+              "line": 174,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "États vide, erreur, chargement",
+          "file": "transverses.spec.ts",
+          "line": 189,
+          "column": 6,
+          "specs": [
+            {
+              "title": "une file vide affiche un état vide qui dit ce qui apparaîtra",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-55604d7cf16eb329097d",
+              "file": "transverses.spec.ts",
+              "line": 195,
+              "column": 7
+            },
+            {
+              "title": "une erreur affiche la cause, une solution et « Réessayer »",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-56745d9685d229f6e36d",
+              "file": "transverses.spec.ts",
+              "line": 205,
+              "column": 7
+            },
+            {
+              "title": "le chargement affiche des squelettes, jamais un écran blanc",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-6983ae9cd8e3ee1eabf1",
+              "file": "transverses.spec.ts",
+              "line": 213,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Mode solo — auto-validation en deux temps",
+          "file": "transverses.spec.ts",
+          "line": 222,
+          "column": 6,
+          "specs": [
+            {
+              "title": "le bandeau solo et la mention de responsabilité sont visibles",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "25e237823dc89329cb26-c86f69adacb4f1a7eea1",
+              "file": "transverses.spec.ts",
+              "line": 223,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../a11y/clavier.spec.ts",
+      "file": "../a11y/clavier.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Accessibilité — clavier seul",
+          "file": "../a11y/clavier.spec.ts",
+          "line": 11,
+          "column": 6,
+          "specs": [
+            {
+              "title": "décider sans souris : file → cas → motif → masquer → annuler",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-bbd2b18a03aa458c1e59",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "Échap ferme le cas et rend le focus à la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-bad59f416e1e1a0c16c3",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "la barre de commande filtre au clavier et rend la main par Échap",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-89c60fa3d2fa1b16a5f9",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "l’aide clavier « ? » liste les raccourcis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-68c772bf236a3a162418",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 61,
+              "column": 7
+            },
+            {
+              "title": "une fois ouvert, le cas ne laisse pas le focus sortir par Tab",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-445407f4a90e22827d96",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 72,
+              "column": 7
+            },
+            {
+              "title": "décider sans souris : file → cas → motif → masquer → annuler",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-9c2b826f1fc76dc3bef1",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "Échap ferme le cas et rend le focus à la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-fdbabc2acc061dad8bf9",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "la barre de commande filtre au clavier et rend la main par Échap",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-e5340315ab42a2e06e4a",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "l’aide clavier « ? » liste les raccourcis",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-db2f81b8a6775385ed98",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 61,
+              "column": 7
+            },
+            {
+              "title": "une fois ouvert, le cas ne laisse pas le focus sortir par Tab",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "3fcc6304fd31d66bf9c8-3d5de0862c8d0281d2e4",
+              "file": "../a11y/clavier.spec.ts",
+              "line": 72,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../a11y/ecrans.spec.ts",
+      "file": "../a11y/ecrans.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Accessibilité — écrans du CRM",
+          "file": "../a11y/ecrans.spec.ts",
+          "line": 24,
+          "column": 6,
+          "specs": [
+            {
+              "title": "a-traiter — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-d4faa364710a3161e54a",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-confiance — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-fe7de0495eb6ca25ac80",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-membres — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-b3999832374db0663a7e",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-commerce — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-b591df0d635bcb3a0314",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-contenus — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-41abe28b0c2294b73ec2",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-produit-ia — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-42a268476bd17f66731c",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-croissance — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-b33c3372737edf3347d2",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-technique — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-b0924af372bb51f36d1b",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "cas-moderation — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-32bfc17668495df9c88c",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "membre-360 — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-9baea3c20bb743910445",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "commande — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-4b81e23349672e36b5c3",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "valider-demande — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-fb09d2512f0cf9dd77ff",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "equipe-agents — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-a34e260b35532e822c18",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "journal — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-351456e0e0b938025e50",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "sos — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-19f693a395df3e6e34a3",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "catalogue — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-c5a658dd98417c03fff1",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "contenus — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-613ec75d29dd8071caf0",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "reglages — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-490fed357d746c6c681e",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "ia — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-729cff05ee6a1d590631",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "technique — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-2f936dd3ea2b612a487c",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "entrainement — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-baa280f8fff6d43f6427",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "les jetons de couleur respectent les contrastes AA",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-d3d07c43ed5995174170",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 38,
+              "column": 7
+            },
+            {
+              "title": "les cibles tactiles font au moins 44 px",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-715e1d7b14f5e28428d7",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "le focus reste visible au clavier sur la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-c35852ebd3929cd2ff4b",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "chaque écran a un titre unique et une langue déclarée",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-8e9e845472e1b94e9296",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 53,
+              "column": 7
+            },
+            {
+              "title": "a-traiter — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-92cb8c40f01a3c244f36",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-confiance — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-c2b22252fab859e10fe7",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-membres — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-68a060ad9a70b4c60cdd",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-commerce — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-3ef865f01b5b56c05d0a",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-contenus — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-91f7bf2f948190dd4828",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-produit-ia — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-1d044de02685806e9df4",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-croissance — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-f7d83e6ce53754357be1",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "pole-technique — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-241fd9b43f2686076d4c",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "cas-moderation — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-3362d5e56b0b4598e5af",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "membre-360 — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-d8f4d75c827c200593d5",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "commande — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-994b86f0f2d5b0b9b254",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "valider-demande — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-65dad9ce6ad38b945993",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "equipe-agents — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-babcb7530bfb984763b9",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "journal — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-ceede113015785730f6f",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "sos — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-9f0ec68321893c00d5f4",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "catalogue — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-6b4731005d60f3d34010",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "contenus — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-e94dcfb0a6e8f84b0c2f",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "reglages — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-47924a497cdb8d965be1",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "ia — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-5b661d984f20351614b2",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "technique — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-f5e2b09275af8f3d6c07",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "entrainement — 0 violation axe",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-fd797efbab59ec10a567",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 31,
+              "column": 9
+            },
+            {
+              "title": "les jetons de couleur respectent les contrastes AA",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-775afc6e856d47fd4f33",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 38,
+              "column": 7
+            },
+            {
+              "title": "les cibles tactiles font au moins 44 px",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-c888448ca701341f3302",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 43,
+              "column": 7
+            },
+            {
+              "title": "le focus reste visible au clavier sur la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-59410251d5f03b1a96d9",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 48,
+              "column": 7
+            },
+            {
+              "title": "chaque écran a un titre unique et une langue déclarée",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ff9bb67800c0631da9ac-4d2058899cf64e3ec1ce",
+              "file": "../a11y/ecrans.spec.ts",
+              "line": 53,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../a11y/etats.spec.ts",
+      "file": "../a11y/etats.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Accessibilité — états et écrans publics",
+          "file": "../a11y/etats.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "connexion : formulaire accessible, erreur annoncée, cibles ≥ 44 px",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-c0df68669f44f05a1bbb",
+              "file": "../a11y/etats.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "double authentification : code lisible au clavier et au lecteur d’écran",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-0022d559bba4834dc5af",
+              "file": "../a11y/etats.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "accès refusé : message clair, aucun détail technique",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y",
+                  "projectName": "a11y",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-6f6aa901446ec7962631",
+              "file": "../a11y/etats.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "connexion : formulaire accessible, erreur annoncée, cibles ≥ 44 px",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-11a71a075d1e6f2cf737",
+              "file": "../a11y/etats.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "double authentification : code lisible au clavier et au lecteur d’écran",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-b56e98734ed345bff997",
+              "file": "../a11y/etats.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "accès refusé : message clair, aucun détail technique",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "a11y-mobile",
+                  "projectName": "a11y-mobile",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "e5c08cb60cf8629844c2-16ada8e1d25ecee144c3",
+              "file": "../a11y/etats.spec.ts",
+              "line": 30,
+              "column": 7
+            }
+          ],
+          "suites": [
+            {
+              "title": "états de la file",
+              "file": "../a11y/etats.spec.ts",
+              "line": 37,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "file — état vide accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y",
+                      "projectName": "a11y",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-28ddd6259b5647408cc6",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "file — état erreur accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y",
+                      "projectName": "a11y",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-d03f1a96f24aaeca1cc8",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "file — état chargement accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y",
+                      "projectName": "a11y",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-a71719f30687dabb8216",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "cas — décision déjà prise : aucun bouton mort, contexte annoncé",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y",
+                      "projectName": "a11y",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-5524c0f3f35c3490f1df",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 52,
+                  "column": 9
+                },
+                {
+                  "title": "file — état vide accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y-mobile",
+                      "projectName": "a11y-mobile",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-497966f8084ddfba2380",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "file — état erreur accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y-mobile",
+                      "projectName": "a11y-mobile",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-d49f1aa9774e5aac6a7d",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "file — état chargement accessible",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y-mobile",
+                      "projectName": "a11y-mobile",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-03c3d3be376636502757",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 44,
+                  "column": 11
+                },
+                {
+                  "title": "cas — décision déjà prise : aucun bouton mort, contexte annoncé",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y-mobile",
+                      "projectName": "a11y-mobile",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-7c22f11fdcaf952bcedd",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 52,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "mode mobile 390 × 844",
+              "file": "../a11y/etats.spec.ts",
+              "line": 60,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "SOS — contraste des jetons et cibles tactiles sur téléphone",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y",
+                      "projectName": "a11y",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-3fe3d56386ab048e80b9",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 66,
+                  "column": 9
+                },
+                {
+                  "title": "SOS — contraste des jetons et cibles tactiles sur téléphone",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 45000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "a11y-mobile",
+                      "projectName": "a11y-mobile",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "e5c08cb60cf8629844c2-7c4c90c65b6e515fa729",
+                  "file": "../a11y/etats.spec.ts",
+                  "line": 66,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../perf/ouverture-cas.spec.ts",
+      "file": "../perf/ouverture-cas.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Performance — ouverture d’un cas",
+          "file": "../perf/ouverture-cas.spec.ts",
+          "line": 28,
+          "column": 6,
+          "specs": [
+            {
+              "title": "accusé < 100 ms et réponse p95 < 400 ms sur 20 ouvertures",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "perf",
+                  "projectName": "perf",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2d4db49711da56dd2d92-c82a1bdde7bf47399df8",
+              "file": "../perf/ouverture-cas.spec.ts",
+              "line": 34,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Performance — liste de 10 000 lignes virtualisée",
+          "file": "../perf/ouverture-cas.spec.ts",
+          "line": 100,
+          "column": 6,
+          "specs": [
+            {
+              "title": "moins de 200 lignes montées pour 10000 lignes de données",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "perf",
+                  "projectName": "perf",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2d4db49711da56dd2d92-3faadbad24ac90ed4c81",
+              "file": "../perf/ouverture-cas.spec.ts",
+              "line": 134,
+              "column": 7
+            },
+            {
+              "title": "aucune longue tâche > 200 ms pendant 30 défilements",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "perf",
+                  "projectName": "perf",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2d4db49711da56dd2d92-5b72d66174d48e16db3d",
+              "file": "../perf/ouverture-cas.spec.ts",
+              "line": 140,
+              "column": 7
+            },
+            {
+              "title": "le défilement reste fluide : 60 images en moins de 2 s",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "perf",
+                  "projectName": "perf",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2d4db49711da56dd2d92-dad0e5256f9f2877539c",
+              "file": "../perf/ouverture-cas.spec.ts",
+              "line": 156,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Performance — affichage initial",
+          "file": "../perf/ouverture-cas.spec.ts",
+          "line": 175,
+          "column": 6,
+          "specs": [
+            {
+              "title": "LCP < 2000 ms sur la file",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "perf",
+                  "projectName": "perf",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "2d4db49711da56dd2d92-9e0ab86d730f050fe157",
+              "file": "../perf/ouverture-cas.spec.ts",
+              "line": 176,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../api/contrat.spec.ts",
+      "file": "../api/contrat.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Contrat d’API — routes publiques",
+          "file": "../api/contrat.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/health répond 200 et ne révèle aucun secret ni donnée personnelle",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-36e1db83e37becd219e7",
+              "file": "../api/contrat.spec.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "POST /api/mcp sans jeton d’agent est refusé, sans détail interne",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-e05e60d25bbc73f5b708",
+              "file": "../api/contrat.spec.ts",
+              "line": 36,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Contrat d’API — aucune action sans session",
+          "file": "../api/contrat.spec.ts",
+          "line": 44,
+          "column": 6,
+          "specs": [
+            {
+              "title": "/api/cmd sans session : 401 et phrase métier",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-e9f8ccf191660343f9ff",
+              "file": "../api/contrat.spec.ts",
+              "line": 57,
+              "column": 9
+            },
+            {
+              "title": "/api/approve sans session : 401 et phrase métier",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-9861a05afc33cedcdb62",
+              "file": "../api/contrat.spec.ts",
+              "line": 57,
+              "column": 9
+            },
+            {
+              "title": "/api/reject sans session : 401 et phrase métier",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-4749ea30da891f8cee8f",
+              "file": "../api/contrat.spec.ts",
+              "line": 57,
+              "column": 9
+            },
+            {
+              "title": "/api/undo sans session : 401 et phrase métier",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-42e7c4b05e90ce6c24e4",
+              "file": "../api/contrat.spec.ts",
+              "line": 57,
+              "column": 9
+            },
+            {
+              "title": "GET sur une route POST est refusé avec 405 et l’en-tête Allow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-14ea849f19b7b8604f64",
+              "file": "../api/contrat.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "un corps JSON invalide ne produit jamais de pile ni de message zod brut",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-3cc381ed6da23fd1616d",
+              "file": "../api/contrat.spec.ts",
+              "line": 74,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Contrat d’API — avec le compte de test",
+          "file": "../api/contrat.spec.ts",
+          "line": 82,
+          "column": 6,
+          "specs": [
+            {
+              "title": "une commande inconnue est refusée en français (400), sans jargon",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-910d533fdc644f0ca579",
+              "file": "../api/contrat.spec.ts",
+              "line": 87,
+              "column": 7
+            },
+            {
+              "title": "un refus de droits (42501) devient une phrase métier, jamais un code",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-3df2fd7a25c07072160c",
+              "file": "../api/contrat.spec.ts",
+              "line": 95,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Contrat d’API — disponibilité de la base de test",
+          "file": "../api/contrat.spec.ts",
+          "line": 107,
+          "column": 6,
+          "specs": [
+            {
+              "title": "la base Supabase répond pour le projet de test",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api",
+                  "projectName": "api",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "d0732dddc01ef0ef13d4-068a7130d0c0b47a4978",
+              "file": "../api/contrat.spec.ts",
+              "line": 108,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "../visuel/parite.spec.ts",
+      "file": "../visuel/parite.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Registre des différences justifiées",
+          "file": "../visuel/parite.spec.ts",
+          "line": 56,
+          "column": 6,
+          "specs": [
+            {
+              "title": "chaque différence a une justification écrite et chaque écran de la maquette est couvert",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-77d611efe6515154cfe5",
+              "file": "../visuel/parite.spec.ts",
+              "line": 57,
+              "column": 7
+            },
+            {
+              "title": "les captures de référence ont exactement les tailles de la maquette",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-dcbf0e630f81871adc5a",
+              "file": "../visuel/parite.spec.ts",
+              "line": 74,
+              "column": 7
+            },
+            {
+              "title": "le registre couvre les routes du CONTRACT et les deux tailles demandées",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-11da2052ac8893e9afcd",
+              "file": "../visuel/parite.spec.ts",
+              "line": 103,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Captures — écrans publics (aucun identifiant requis)",
+          "file": "../visuel/parite.spec.ts",
+          "line": 112,
+          "column": 6,
+          "specs": [
+            {
+              "title": "connexion — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-587f7b924a3d38bf6bc6",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            },
+            {
+              "title": "double-authentification — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-d3633d04b585a04646d1",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            },
+            {
+              "title": "acces-refuse — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-334f9b261f20cbe0fbd2",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            },
+            {
+              "title": "connexion — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-2285f61f6ec2c1fa4378",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            },
+            {
+              "title": "double-authentification — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-1484f187a8fbc136208b",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            },
+            {
+              "title": "acces-refuse — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-2e360a63b95d4354e7ef",
+              "file": "../visuel/parite.spec.ts",
+              "line": 115,
+              "column": 11
+            }
+          ]
+        },
+        {
+          "title": "Captures — écrans d’équipe",
+          "file": "../visuel/parite.spec.ts",
+          "line": 122,
+          "column": 6,
+          "specs": [
+            {
+              "title": "a-traiter — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-40111e5f9dd1b0217307",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-confiance — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-c097cb7c8eac3b544496",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-membres — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-4001a628e7861befcf80",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-commerce — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-e804718ad9cf4386c2b5",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-contenus — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-2053f87b50e367d6d805",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-produit-ia — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-8c93bec1da9dc2de8dde",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-croissance — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-ef27a271fa41a3dfdb3c",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-technique — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-a86ce26f59c8d9e08f87",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "cas-moderation — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-b43933a4f0db281631ac",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "membre-360 — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-9c93613f0ef8c3d40597",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "commande — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-01df630eef68a4b35d2f",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "valider-demande — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-e18e5cf23f904624769c",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "equipe-agents — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-c875b0ec24019810c421",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "journal — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-8478066752a18c4e5782",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "sos — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-c132e2e85fc03b7b0449",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "catalogue — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-04eb3717555c5b6227db",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "contenus — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-2de0758d5cb987fc1f0b",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "reglages — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-3f668364b859d653b05b",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "ia — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-d1c62ba7dc789999d581",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "technique — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-12d3cd82efd24710cc20",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "entrainement — 1440×1040",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-b48c1073331209f1fdc6",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "a-traiter — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-00dce65b6b3f04b296f8",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-confiance — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-bd934f51a2f1fc922466",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-membres — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-87227a2e8265341d254d",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-commerce — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-0bff73ad770e3896d556",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-contenus — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-05bdb5f6a82f8d400fd5",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-produit-ia — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-5fa1bc65ffdfcbb33d59",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-croissance — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-9d61ed590fd9f4d93dc2",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "pole-technique — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-1a8580261f6316bfbab3",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "cas-moderation — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-8546f9dc645f93d3dec4",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "membre-360 — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-cb99098d42d7a08f7fe6",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "commande — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-1a5eb6728dc98ec66f44",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "valider-demande — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-45fe8e4408cf17b32c3a",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "equipe-agents — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-6929b3bfeb7663720dcd",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "journal — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-d599a449c9b28d14441e",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "sos — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-9d23429fae6002784e6b",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "catalogue — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-1f9765ef5de3f7a7f097",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "contenus — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-a8482e3d29a037067473",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "reglages — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-37229218a4c4201ee376",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "ia — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-ed5e18663d2db388f842",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "technique — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-fa69b6df3c8372ffd55e",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "entrainement — 390×844",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-bd7c5e70f17def7c7313",
+              "file": "../visuel/parite.spec.ts",
+              "line": 130,
+              "column": 11
+            },
+            {
+              "title": "écrit le rapport de différences de la parité",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 45000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "visuel",
+                  "projectName": "visuel",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "824b026b4a7645fdd9d5-fc7d5919f0ba03d22936",
+              "file": "../visuel/parite.spec.ts",
+              "line": 137,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-09T04:28:18.317Z",
+    "duration": 655.367,
+    "expected": 0,
+    "skipped": 222,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
