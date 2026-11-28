@@ -1,95 +1,109 @@
-# Le Kit du Voyageur (LKDV)
+<div align="center">
 
-**Plateforme outdoor, cartographie 3D, préparation d'expéditions, communauté et suivi de performance.**
+<img src="public/logo.png" alt="Le Kit du Voyageur" width="110" />
 
-Construit avec **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Supabase (PostgreSQL 17 + PostGIS)**, **MapLibre GL + Three.js r186**, **Cloudflare Workers (`vinext`)**, **Capacitor 8 (iOS & Android)** et un moteur de routage **Rust/WASM**.
+# Le Kit du Voyageur
 
----
+### La super-app outdoor nouvelle génération — de la préparation au sommet, jusqu'au récit.
 
-## Architecture synthétique
+**Cartographie 3D · Science du Sport · Carnets & Clubs · Matériel 3D · Communauté**
 
-```mermaid
-flowchart TB
-  subgraph Clients
-    Web["Web / PWA (Next.js 15 + React 19)"]
-    iOS["iOS Natif (Capacitor 8 + LiveActivity/HealthKit/BLE)"]
-    Android["Android Natif (Capacitor 8)"]
-  end
+[![Plateformes](https://img.shields.io/badge/Plateformes-Web%20%C2%B7%20iOS%20%C2%B7%20Android-17402C?style=for-the-badge)](https://lekitduvoyageur.com)
+[![Architecture](https://img.shields.io/badge/Edge-Cloudflare%20Workers%20%C2%B7%20PostGIS%20%C2%B7%20WASM-226148?style=for-the-badge)](docs/README.md)
+[![Design](https://img.shields.io/badge/Design-Apple%20Liquid%20Glass-5B7F55?style=for-the-badge)](docs/06-design-system/DESIGN_SYSTEM.md)
+[![Coût Data](https://img.shields.io/badge/Unit%20Economics-Open--Data%200%E2%82%AC-3D6038?style=for-the-badge)](docs/04-explorer-gis/EXPLORER_V2.md)
 
-  subgraph Edge["Cloudflare Workers (vinext)"]
-    SSR["App Router SSR / RSC (46 pages)"]
-    API["API Routes REST (400+ endpoints)"]
-    MW["Middleware Auth & Redirects"]
-  end
-
-  subgraph Core["Moteurs Clients & Locaux"]
-    GIS["Explorer v2 (MapLibre GL + Three.js r186 + GLB)"]
-    Phys["Studio Analyse Avancée (20+ moteurs physio/télémétrie)"]
-    WASM["Rust/WASM (crates/lkdv-route-core)"]
-    IDB["Offline IndexedDB (traces GPS, packs tuiles)"]
-  end
-
-  subgraph Data["Supabase (eu-west-3, Postgres 17 + PostGIS)"]
-    PG["PostgreSQL + PostGIS + RLS"]
-    Storage["Storage (8 buckets)"]
-    EdgeFn["Edge Functions (fetch-osm-trails, geo-import)"]
-  end
-
-  subgraph OpenData["APIs Open-Data (0 €)"]
-    OSM["Overpass / Waymarked Trails"]
-    DEM["AWS Terrarium DEM"]
-    Meteo["Open-Meteo / Hazards / NOAA"]
-  end
-
-  Web & iOS & Android --> Edge
-  Web --> Core
-  Edge --> Data
-  Core --> OpenData
-```
+</div>
 
 ---
 
-## Démarrage rapide
+## La Vision
 
-```bash
-# 1. Installer les dépendances
-npm ci
+Aujourd'hui, un aventurier, un randonneur ou un traileur doit jongler entre **six applications séparées et coûteuses** : une pour la carte, une pour le suivi sportif, une pour préparer son sac, une pour ses photos et récits, une pour son club et une messagerie pour organiser la sortie.
 
-# 2. Configurer les variables d'environnement locales
-cp .env.example .env.local   # Renseigner NEXT_PUBLIC_SUPABASE_URL, ANON_KEY, SERVICE_ROLE_KEY
+**Le Kit du Voyageur (LKDV)** réunit toute la vie outdoor dans **un seul écosystème fluide, natif et visuellement irréprochable**, conçu autour d'un cycle continu :
 
-# 3. Vérifier la Design Bank (tokens CSS & presets Tailwind)
-npm run design:check
+> **Préparer** son itinéraire et son sac → **Vivre** la sortie en sécurité et hors-ligne → **Analyser** sa performance avec une précision scientifique → **Partager** son récit, ses découvertes et son matériel avec sa communauté.
 
-# 4. Lancer le serveur de développement
-npm run dev
-```
+---
 
-### Commandes essentielles
+## L'Expérience Produit
 
-| Action | Commande |
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🗺️ Explorer 3D & Traceur Intégré</h3>
+      <p>
+        Une carte 3D WebGL fluide à 60 FPS enrichie de dioramas 3D, de relief haute précision et des réseaux mondiaux de sentiers balisés (GR, rando, VTT, cyclo, ski). Tracez un itinéraire au doigt directement sur la carte, enregistrez votre sortie GPS même sans réseau et partagez votre position en direct avec vos proches.
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📊 Studio d'Analyse Physiologique</h3>
+      <p>
+        Dès la fin d'une sortie, un studio complet à 6 volets croise plus de <strong>20 moteurs scientifiques</strong> : allure ajustée à la pente (Minetti), charge d'entraînement (Banister CTL/ATL/TSB), détection d'ascensions Cat 1–5, prédictions de course, fatigue musculaire excentrique, stress thermique, hydratation et protocole de récupération 0–48 h.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>📖 Carnets, Clubs & Communauté</h3>
+      <p>
+        Chaque sortie terminée pré-remplit instantanément vos <strong>Carnets de voyage</strong>, <strong>Posts</strong>, <strong>Stories</strong> et <strong>Sorties de Club</strong> sans double saisie. Les Clubs disposent de leur propre carte 3D alpine synchronisée avec le fil, les événements, les salons de discussion et le coffre matériel partagé.
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🎒 Kit Studio 3D, Matériel & Boutique</h3>
+      <p>
+        Composez votre sac à dos en 3D, optimisez chaque gramme, suivez l'usure kilométrique de votre équipement sortie après sortie et accédez à une sélection matériel contextualisée à votre aventure — avec paiement intégré et programme de fidélité.
+      </p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🌿 Pokédex Nature & Progression</h3>
+      <p>
+        Identifiez et géolocalisez la faune et la flore rencontrées sur le terrain pour enrichir votre <strong>Pokédex Nature</strong>, débloquez des badges, relevez des défis de club et suivez votre progression d'explorateur.
+      </p>
+    </td>
+    <td width="50%" valign="top">
+      <h3>✨ Design Apple Liquid Glass</h3>
+      <p>
+        Une signature esthétique <strong>100 % Mode Clair Liquid Glass</strong> inspirée du papier et de la forêt : zéro noir agressif, priorité absolue au visuel et aux icônes, navigation tactile ultra-intuitive, mode haute lisibilité plein soleil et mode nocturne bivouac.
+      </p>
+    </td>
+  </tr>
+</table>
+
+---
+
+## Pourquoi LKDV se Démarque (Thèse Technologique & Économique)
+
+| Pilier | Avantage Stratégique LKDV |
 | :--- | :--- |
-| Développement local | `npm run dev` (port `4000`) |
-| Build production (Mac 8 Go RAM) | `FAST_BUILD=1 NODE_OPTIONS="--max-old-space-size=3072" npx next build` |
-| Serveur production local | `npx next start -p 3001 -H ::` |
-| Tests unitaires (Vitest) | `npm test` |
-| Lint ESLint | `npm run lint` |
-| Vérification Design Bank | `npm run design:check` |
-| Synchronisation Mobile | `CAPACITOR_SERVER_URL=https://lekitduvoyageur.com npx cap sync` |
+| **Unit Economics Exceptionnels (`0 €` de coût data)** | Contrairement aux acteurs dépendants d'APIs cartographiques facturées à l'usage, LKDV s'appuie sur un pipeline 100 % open-data & edge (relief AWS Terrarium décodé côté edge, Waymarked Trails/OSM, Open-Meteo, éphémérides NOAA offline) et des calculs physiologiques/routage locaux en **Rust/WebAssembly**. |
+| **Un Seul Socle · 3 Plateformes Natives** | Web/PWA sur **Cloudflare Workers**, application **iOS native** (Dynamic Island Live Activity, HealthKit, capteurs BLE) et **Android native** partagent une architecture unifiée — réduisant drastiquement le temps de développement et la maintenance. |
+| **Effet Réseau & Rétention Naturelle** | Chaque sortie alimente simultanément la donnée personnelle (télémétrie, usure du sac, Pokédex) et la donnée sociale (Carnets, Clubs, Stories, Messagerie), créant une boucle de rétention organique forte. |
+| **Monétisation Alignée avec l'Usage** | Commerce contextualisé au moment exact où l'utilisateur prépare son sac et mesure l'usure de son matériel, complété par l'écosystème Clubs, Pro et services avancés — sans publicité intrusive. |
+| **Conçu pour le Terrain & la Confiance** | Fonctionnement **offline-first** en montagne (traces GPS, cartes, analyses locales), sécurité terrain (suivi en direct par lien sécurisé) et respect strict du **RGPD Art. 9** sur les données biométriques. |
 
 ---
 
-## Documentation complète (`docs/`)
+## Chiffres Clés de la Plateforme
 
-Toute la documentation technique, produit, base de données, opérations et décisions d'architecture est centralisée dans **[docs/README.md](docs/README.md)** :
+<div align="center">
 
-1. **[01 — Architecture globale](docs/01-architecture/ARCHITECTURE.md)** — Stack, App Router, Middleware, Cloudflare Workers (`vinext`), Capacitor iOS/Android, Rust/WASM.
-2. **[02 — Base de données Supabase](docs/02-database-supabase/DATABASE.md)** — PostgreSQL 17 + PostGIS, ERD Mermaid, RLS, Storage, Edge Functions, Migrations.
-3. **[03 — Routes & API REST](docs/03-api-routes/API_AND_ROUTES.md)** — Inventaire des 46 pages App Router et des namespaces API (`/api/*`).
-4. **[04 — Explorer v2 & Cartographie GIS](docs/04-explorer-gis/EXPLORER_V2.md)** — MapLibre + Three.js r186, HUD 6 onglets, Waymarked Trails, Route Planner, Tracker GPS, Studio d'Analyse Avancée (6 volets / 20+ moteurs).
-5. **[05 — Modules Produit](docs/05-modules-produit/MODULES.md)** — Communauté V2 & Handoff universel, Carnets `[id]`, Clubs & Sorties, Messagerie, Boutique & Kit Studio, Profil / Sac / Progression XP.
-6. **[06 — Design System](docs/06-design-system/DESIGN_SYSTEM.md)** — Design Bank (`src/design/bank.ts`), Apple Liquid Glass, thèmes (`light` / `dark` / `night-red`), règles CSS portaled drawers.
-7. **[07 — Opérations, Déploiement & Onboarding](docs/07-operations-deploy/OPERATIONS.md)** — Onboarding dev, env vars, contraintes RAM 8 Go, Cloudflare Workers, iOS/Android, CI/CD, Tests.
-8. **[08 — Décisions (ADR) & Glossaire](docs/08-decisions-glossary/ADR_AND_GLOSSARY.md)** — Architecture Decision Records et glossaire métier/technique.
+| **46** | **400+** | **20+** | **3** | **0 €** |
+| :---: | :---: | :---: | :---: | :---: |
+| Écrans & expériences produit | Endpoints API & services métier | Moteurs scientifiques & télémétrie | Plateformes (Web · iOS · Android) | Coût variable carto & open-data |
 
-Pour les agents IA (Claude Code, Codex, Antigravity), consultez **[CLAUDE.md](CLAUDE.md)** et **[AGENTS.md](AGENTS.md)**.
+</div>
+
+---
+
+<div align="center">
+
+**Le Kit du Voyageur** — *Pensé pour ceux qui explorent le monde réel.*
+
+<sub>Équipe technique & documentation interne : <a href="docs/README.md">Documentation complète</a></sub>
+
+</div>
